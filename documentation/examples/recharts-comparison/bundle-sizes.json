@@ -1,0 +1,153 @@
+{
+  "method": "Production Vite manifest dependency closures for comparison.html?engine=echarts and ?engine=recharts, all 18 examples. Includes React, shared frame, fixture data, renderer, and integration. Gzip per emitted asset; no double-counted shared chunks. CSS reported separately; fonts excluded. Additional JS is relative to the common comparison shell. This measures transfer size, not runtime performance.",
+  "results": [
+    {
+      "renderer": "ECharts 6.1.0",
+      "javascriptGzipBytes": 497338,
+      "cssGzipBytes": 9144,
+      "additionalJavascriptGzipBytes": 425023,
+      "files": [
+        {
+          "file": "assets/Card-DPdv4iTw.js",
+          "bytes": 32580,
+          "gzipBytes": 11818,
+          "shared": false
+        },
+        {
+          "file": "assets/Card-Dag5KWxv.css",
+          "bytes": 11523,
+          "gzipBytes": 1805,
+          "shared": false
+        },
+        {
+          "file": "assets/Chart-BE1i1-0x.js",
+          "bytes": 77762,
+          "gzipBytes": 29095,
+          "shared": false
+        },
+        {
+          "file": "assets/Chart.extensions-Dg25lG--.js",
+          "bytes": 20223,
+          "gzipBytes": 6875,
+          "shared": true
+        },
+        {
+          "file": "assets/ChartFrame-BuZYADdd.css",
+          "bytes": 1336,
+          "gzipBytes": 538,
+          "shared": false
+        },
+        {
+          "file": "assets/ChartFrame-CE2cfBaS.js",
+          "bytes": 2219,
+          "gzipBytes": 998,
+          "shared": false
+        },
+        {
+          "file": "assets/EChartsExample-DuvDY8Yt.js",
+          "bytes": 1626,
+          "gzipBytes": 962,
+          "shared": false
+        },
+        {
+          "file": "assets/comparison-BmaaAYTa.css",
+          "bytes": 2056,
+          "gzipBytes": 782,
+          "shared": true
+        },
+        {
+          "file": "assets/comparison-Di33HHVm.js",
+          "bytes": 5844,
+          "gzipBytes": 2180,
+          "shared": true
+        },
+        {
+          "file": "assets/index-CzJ1nSGZ.js",
+          "bytes": 1135527,
+          "gzipBytes": 382150,
+          "shared": false
+        },
+        {
+          "file": "assets/preview-ByuVWXch.css",
+          "bytes": 32509,
+          "gzipBytes": 6019,
+          "shared": true
+        },
+        {
+          "file": "assets/preview-CL2caysd.js",
+          "bytes": 202726,
+          "gzipBytes": 63260,
+          "shared": true
+        }
+      ]
+    },
+    {
+      "renderer": "Recharts 3.10.1 + native matrix",
+      "javascriptGzipBytes": 232380,
+      "cssGzipBytes": 9144,
+      "additionalJavascriptGzipBytes": 160065,
+      "files": [
+        {
+          "file": "assets/Card-DPdv4iTw.js",
+          "bytes": 32580,
+          "gzipBytes": 11818,
+          "shared": false
+        },
+        {
+          "file": "assets/Card-Dag5KWxv.css",
+          "bytes": 11523,
+          "gzipBytes": 1805,
+          "shared": false
+        },
+        {
+          "file": "assets/Chart.extensions-Dg25lG--.js",
+          "bytes": 20223,
+          "gzipBytes": 6875,
+          "shared": true
+        },
+        {
+          "file": "assets/ChartFrame-BuZYADdd.css",
+          "bytes": 1336,
+          "gzipBytes": 538,
+          "shared": false
+        },
+        {
+          "file": "assets/ChartFrame-CE2cfBaS.js",
+          "bytes": 2219,
+          "gzipBytes": 998,
+          "shared": false
+        },
+        {
+          "file": "assets/RechartsExample-D3vc1gei.js",
+          "bytes": 521643,
+          "gzipBytes": 147249,
+          "shared": false
+        },
+        {
+          "file": "assets/comparison-BmaaAYTa.css",
+          "bytes": 2056,
+          "gzipBytes": 782,
+          "shared": true
+        },
+        {
+          "file": "assets/comparison-Di33HHVm.js",
+          "bytes": 5844,
+          "gzipBytes": 2180,
+          "shared": true
+        },
+        {
+          "file": "assets/preview-ByuVWXch.css",
+          "bytes": 32509,
+          "gzipBytes": 6019,
+          "shared": true
+        },
+        {
+          "file": "assets/preview-CL2caysd.js",
+          "bytes": 202726,
+          "gzipBytes": 63260,
+          "shared": true
+        }
+      ]
+    }
+  ]
+}

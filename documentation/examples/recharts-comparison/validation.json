@@ -1,0 +1,91 @@
+{
+  "source": "d3074b15eddafdc6a35f3091bd22975aaf696c42",
+  "results": [
+    {
+      "viewport": "desktop",
+      "width": 1440,
+      "examples": 18,
+      "identicalTables": true,
+      "finiteMarks": true,
+      "overflow": false,
+      "missingGap": true,
+      "keyboardZoom": true,
+      "seriesFilter": true,
+      "suppressedCell": true,
+      "suppliedBoxes": true,
+      "predictionBand": true,
+      "signedWaterfallTooltip": true,
+      "scatterSelection": true,
+      "sharedStates": true
+    },
+    {
+      "viewport": "mobile",
+      "width": 390,
+      "examples": 18,
+      "identicalTables": true,
+      "finiteMarks": true,
+      "overflow": false,
+      "missingGap": true,
+      "keyboardZoom": true,
+      "seriesFilter": true,
+      "suppressedCell": true,
+      "suppliedBoxes": true,
+      "predictionBand": true,
+      "signedWaterfallTooltip": true,
+      "scatterSelection": true,
+      "sharedStates": true
+    }
+  ],
+  "refreshCases": [
+    {
+      "responsive": true,
+      "echartsBefore": [
+        30,
+        70
+      ],
+      "echartsAfter": [
+        10,
+        90
+      ],
+      "rechartsDomain": "60,140"
+    },
+    {
+      "responsive": false,
+      "echartsBefore": [
+        12.5,
+        17.5
+      ],
+      "echartsAfter": [
+        6.25,
+        8.75
+      ],
+      "rechartsDomain": "25,35"
+    }
+  ],
+  "timing": [
+    {
+      "engine": "echarts",
+      "samplesMs": [
+        564,
+        568,
+        566,
+        560,
+        556
+      ],
+      "medianMs": 564
+    },
+    {
+      "engine": "recharts",
+      "samplesMs": [
+        547,
+        539,
+        581,
+        556,
+        556
+      ],
+      "medianMs": 556
+    }
+  ],
+  "timingMethod": "Wall time from navigation to all 18 plots drawing marks, five fresh Chromium contexts per renderer, localhost CI runner at 1440px. Includes module fetch, parse, React mount and layout. No network/device throttling; directional evidence only.",
+  "runtimeErrors": []
+}
