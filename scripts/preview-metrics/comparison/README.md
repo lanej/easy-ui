@@ -81,3 +81,11 @@ desktop measurements; they establish no mobile or large-dataset performance clai
 
 Review the screenshots and gaps before deciding on migration. Keep all 18 patterns
 and the six native components through that decision.
+
+## Color preference limitation
+
+Easy UI `defaultTheme` currently reads `theme.light` for both color preferences.
+The selector exercises theme-context and renderer lifecycle changes; it does not
+supply a new dark palette. The comparison uses the default palette consistently
+and avoids a simulated dark background that would misrepresent either renderer.
+A complete dark theme needs a separate set of Easy UI token overrides.

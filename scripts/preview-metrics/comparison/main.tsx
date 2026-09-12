@@ -91,8 +91,8 @@ function App() {
                 setScheme(event.target.value as typeof scheme)
               }
             >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
+              <option value="light">Light preference</option>
+              <option value="dark">Dark preference (default palette)</option>
             </select>
           </label>
           <label>

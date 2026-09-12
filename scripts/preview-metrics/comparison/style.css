@@ -1,10 +1,6 @@
 .engine-comparison {
   max-width: 1600px;
 }
-.engine-comparison[data-scheme="dark"] {
-  background: #172338;
-  color: #edf1f7;
-}
 .engine-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
