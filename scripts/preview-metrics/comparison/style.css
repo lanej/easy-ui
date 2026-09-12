@@ -1,0 +1,131 @@
+.engine-comparison {
+  max-width: 1600px;
+}
+.engine-comparison[data-scheme="dark"] {
+  background: #172338;
+  color: #edf1f7;
+}
+.engine-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.engine-grid.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+.engine-grid > div {
+  min-width: 0;
+}
+.engine-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #627891;
+  margin: 8px 0;
+}
+.comparison-toolbar,
+.plot-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-block: 16px;
+}
+.comparison-toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+.comparison-toolbar select {
+  max-width: 290px;
+}
+.engine-comparison button,
+.engine-comparison select {
+  font: inherit;
+  font-size: 12px;
+  border: 1px solid var(--ezui-color-neutral-300, #bbc7d6);
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: var(--ezui-color-neutral-800, #172b4d);
+  background: var(--ezui-color-neutral-050, white);
+  cursor: pointer;
+}
+.engine-comparison button:focus-visible,
+.engine-comparison select:focus-visible {
+  outline: 2px solid #113abf;
+  outline-offset: 2px;
+}
+.plot-controls {
+  margin: 10px 0 0;
+  gap: 6px;
+}
+.plot-controls button {
+  padding: 3px 6px;
+  font-size: 10px;
+}
+.plot-controls button[aria-pressed="false"] {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+.recharts-plot {
+  min-width: 0;
+  font-size: 11px;
+}
+.exact-tooltip {
+  font-size: 12px;
+  padding: 10px;
+  background: var(--ezui-color-neutral-050, white);
+  color: var(--ezui-color-neutral-800, #172b4d);
+  border: 1px solid #dfe5ed;
+}
+.matrix {
+  min-height: 320px;
+  padding-top: 24px;
+}
+.matrix-grid {
+  display: grid;
+  gap: 3px;
+}
+.matrix-grid button {
+  min-height: 31px;
+  padding: 6px 0;
+  border: none;
+  border-radius: 0;
+  font-size: 10px;
+}
+.matrix-axis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: var(--ezui-color-neutral-600, #50647e);
+}
+.matrix-detail {
+  min-height: 48px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ezui-color-neutral-700, #50647e);
+}
+.matrix-scale {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 18px auto;
+  font-size: 11px;
+}
+.matrix-scale span:nth-child(2) {
+  width: 140px;
+  height: 10px;
+  background: linear-gradient(to right, #eaf0ff, #113abf);
+}
+.engine-comparison output {
+  display: block;
+  margin: 12px 0;
+  font-size: 12px;
+}
+@media (max-width: 800px) {
+  .engine-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

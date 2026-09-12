@@ -1,6 +1,5 @@
 import React, { ReactNode, useEffect, useRef, useState } from "react";
-import { Card } from "../Card";
-import { Text } from "../Text";
+import { ChartFrame } from "./ChartFrame";
 import { useColorScheme, useTheme } from "../Theme";
 import { loadChartEngine, ChartInstance } from "./engine";
 import { themedOption } from "./theme";
@@ -43,140 +42,37 @@ export type ChartProps = {
 
 /** Analytical charts with Easy UI presentation and an optional, lazy ECharts peer. */
 export function Chart({
-  title,
-  description,
   option,
-  dataTable,
-  height = 320,
   renderer = "svg",
-  status = dataTable.rows.length ? "ready" : "empty",
-  notice,
-  actions,
   onSelect,
-  onRowSelect,
-  onRetry,
   onRenderError,
+  height = 320,
   loadingLabel = "Loading chart…",
-  emptyLabel = "No data for this selection",
   errorLabel = "Unable to display this chart",
-  retryLabel = "Retry",
-  dataTableLabel = "View data table",
-  missingValueLabel = "Unavailable",
-  selectRowLabel = "Select row",
   zoomInLabel = "Zoom in",
   zoomOutLabel = "Zoom out",
   resetZoomLabel = "Reset zoom",
+  ...frame
 }: ChartProps) {
-  const plotHeight = Math.max(160, height);
   return (
-    <Card
-      as="section"
-      background="primary"
-      aria-label={title}
-      aria-busy={status === "loading"}
-      padding="3"
+    <ChartFrame
+      {...frame}
+      height={height}
+      loadingLabel={loadingLabel}
+      errorLabel={errorLabel}
     >
-      <div className={styles.root}>
-        <div className={styles.header}>
-          <Text as="h2" variant="heading5">
-            {title}
-          </Text>
-          {actions}
-        </div>
-        <div className={styles.description}>
-          <Text color="neutral.600" variant="caption">
-            {description}
-          </Text>
-        </div>
-        {status === "ready" ? (
-          <ChartPlot
-            option={option}
-            description={description}
-            height={plotHeight}
-            renderer={renderer}
-            onSelect={onSelect}
-            onRenderError={onRenderError}
-            loadingLabel={loadingLabel}
-            errorLabel={errorLabel}
-            zoomLabels={[zoomInLabel, zoomOutLabel, resetZoomLabel]}
-          />
-        ) : (
-          <div
-            className={styles.status}
-            style={{ minHeight: plotHeight }}
-            role={status === "error" ? "alert" : "status"}
-          >
-            {status === "loading"
-              ? loadingLabel
-              : status === "empty"
-                ? emptyLabel
-                : errorLabel}
-            {status === "error" && onRetry && (
-              <button
-                type="button"
-                className={styles.control}
-                onClick={onRetry}
-              >
-                {retryLabel}
-              </button>
-            )}
-          </div>
-        )}
-        {notice && (
-          <Text variant="caption" color="neutral.700">
-            {notice}
-          </Text>
-        )}
-        {status === "ready" && (
-          <details>
-            <summary className={styles.summary}>{dataTableLabel}</summary>
-            <div
-              className={styles.tableScroll}
-              tabIndex={0}
-              role="region"
-              aria-label={`${title} — ${dataTableLabel}`}
-            >
-              <table className={styles.table}>
-                <caption>{title}</caption>
-                <thead>
-                  <tr>
-                    {dataTable.columns.map((label, index) => (
-                      <th key={index} scope="col">
-                        {label}
-                      </th>
-                    ))}
-                    {onRowSelect && <th scope="col">{selectRowLabel}</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {dataTable.rows.map((row) => (
-                    <tr key={row.id}>
-                      {row.values.map((value, index) => (
-                        <td key={index}>
-                          {value === null ? missingValueLabel : value}
-                        </td>
-                      ))}
-                      {onRowSelect && (
-                        <td>
-                          <button
-                            type="button"
-                            className={styles.control}
-                            onClick={() => onRowSelect(row.id)}
-                            aria-label={`${selectRowLabel}: ${row.values[0] ?? row.id}`}
-                          >
-                            {selectRowLabel}
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </details>
-        )}
-      </div>
-    </Card>
+      <ChartPlot
+        option={option}
+        description={frame.description}
+        height={Math.max(160, height)}
+        renderer={renderer}
+        onSelect={onSelect}
+        onRenderError={onRenderError}
+        loadingLabel={loadingLabel}
+        errorLabel={errorLabel}
+        zoomLabels={[zoomInLabel, zoomOutLabel, resetZoomLabel]}
+      />
+    </ChartFrame>
   );
 }
 

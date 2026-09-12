@@ -28,5 +28,15 @@ export default defineConfig({
   css: {
     preprocessorOptions: { scss: { silenceDeprecations: ["legacy-js-api"] } },
   },
-  build: { manifest: true, outDir: "dist", emptyOutDir: true },
+  build: {
+    manifest: true,
+    outDir: "dist",
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        examples: local("./index.html"),
+        comparison: local("./comparison.html"),
+      },
+    },
+  },
 });

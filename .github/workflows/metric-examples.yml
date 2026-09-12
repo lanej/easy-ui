@@ -32,9 +32,12 @@ jobs:
           node-version: "20.x"
       - run: npm ci --no-audit --no-fund
       - run: npm run build
+      - run: npm run check:comparison
       - run: npm run measure
+      - run: npm run measure:comparison
       - run: npx playwright install --with-deps chromium
       - run: npm run capture
+      - run: npm run capture:comparison
       - uses: actions/upload-artifact@v4
         if: always()
         with:

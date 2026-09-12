@@ -5,7 +5,10 @@
   "scripts": {
     "build": "vite build",
     "capture": "node capture.mjs",
-    "measure": "node measure-bundles.mjs"
+    "measure": "node measure-bundles.mjs",
+    "check:comparison": "tsc -p tsconfig.comparison.json",
+    "measure:comparison": "node measure-comparison.mjs",
+    "capture:comparison": "node capture-comparison.mjs"
   },
   "dependencies": {
     "@easypost/easy-ui-tokens": "1.0.0-alpha.17",
@@ -14,10 +17,16 @@
     "overlayscrollbars": "2.3.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
+    "react-is": "19.0.0",
+    "recharts": "3.10.1",
     "sass": "1.89.2",
     "vite": "6.3.5"
   },
   "devDependencies": {
-    "playwright": "1.63.0"
+    "@types/lodash": "4.17.18",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "playwright": "1.63.0",
+    "typescript": "5.5.4"
   }
 }
