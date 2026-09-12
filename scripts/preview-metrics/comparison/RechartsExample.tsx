@@ -851,7 +851,11 @@ function ScatterPlot({
           name="Parcels"
         />
         <Tooltip contentStyle={tooltipStyle} />
-        <Legend wrapperStyle={{ fontSize: 11 }} />
+        <Legend
+          verticalAlign="top"
+          height={30}
+          wrapperStyle={{ fontSize: 11 }}
+        />
         {["A", "B", "C"].map((carrier, i) => (
           <Scatter
             key={carrier}

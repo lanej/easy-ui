@@ -149,12 +149,10 @@ try {
     await ready(page, "both", 1);
     await page.getByLabel("Theme", { exact: true }).selectOption("dark");
     await ready(page, "both", 1);
-    await page
-      .locator('[data-comparison="annotations"]')
-      .screenshot({
-        path: `screenshots/comparison/annotations-dark-${name}.png`,
-        animations: "disabled",
-      });
+    await page.locator('[data-comparison="annotations"]').screenshot({
+      path: `screenshots/comparison/annotations-dark-${name}.png`,
+      animations: "disabled",
+    });
     for (const status of ["loading", "empty", "error"]) {
       await page.getByLabel("State", { exact: true }).selectOption(status);
       assert.equal(await page.locator(".recharts-plot").count(), 0);
@@ -203,6 +201,12 @@ try {
     for (const plot of [e, r])
       await plot.getByRole("button", { name: "Zoom in", exact: true }).click();
     await e.getByRole("button", { name: "Read current window" }).click();
+    await e
+      .locator('output[data-echarts-window]:not([data-echarts-window=""])')
+      .waitFor();
+    const beforeSnapshot = await e
+      .locator("output")
+      .getAttribute("data-echarts-window");
     const before = JSON.parse(
       await e.locator("output").getAttribute("data-echarts-window"),
     );
@@ -210,6 +214,12 @@ try {
       .getByRole("button", { name: "Append data", exact: true })
       .click();
     await e.getByRole("button", { name: "Read current window" }).click();
+    await page.waitForFunction((before) => {
+      const value = document
+        .querySelector('[data-engine="echarts"] output')
+        ?.getAttribute("data-echarts-window");
+      return value && value !== before;
+    }, beforeSnapshot);
     const after = JSON.parse(
       await e.locator("output").getAttribute("data-echarts-window"),
     );
@@ -229,12 +239,10 @@ try {
       echartsAfter: [after.start, after.end],
       rechartsDomain: expected,
     });
-    await page
-      .locator('[data-comparison="refresh"]')
-      .screenshot({
-        path: `screenshots/comparison/refresh-${responsive ? "responsive" : "value"}.png`,
-        animations: "disabled",
-      });
+    await page.locator('[data-comparison="refresh"]').screenshot({
+      path: `screenshots/comparison/refresh-${responsive ? "responsive" : "value"}.png`,
+      animations: "disabled",
+    });
   }
   await page.close();
 
