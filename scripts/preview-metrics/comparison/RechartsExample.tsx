@@ -143,7 +143,14 @@ function SeriesPlot({ kind, example }: ExampleProps) {
             aria-pressed={!hidden.includes(name)}
             onClick={() => toggle(name)}
           >
-            <span style={{ color: palette[i] }}>●</span> {name}
+            <span
+              style={{
+                color: kind === "prediction-band" ? palette[0] : palette[i],
+              }}
+            >
+              ●
+            </span>{" "}
+            {name}
           </button>
         ))}
       </div>
@@ -189,6 +196,17 @@ function SeriesPlot({ kind, example }: ExampleProps) {
             {...axis}
             width={44}
             domain={yDomain}
+            ticks={
+              kind === "stacked-area"
+                ? undefined
+                : kind === "scenario"
+                  ? [-10, 0, 10, 20, 30, 40]
+                  : kind === "cdf"
+                    ? [0, 20, 40, 60, 80, 100]
+                    : kind === "prediction-band"
+                      ? [94, 95, 96, 97, 98, 99, 100]
+                      : [90, 92, 94, 96, 98, 100]
+            }
             allowDataOverflow
             tickFormatter={(value) =>
               kind === "stacked-area" ? String(value) : `${value}%`
@@ -320,6 +338,7 @@ function SeriesPlot({ kind, example }: ExampleProps) {
                     ? "6 4"
                     : undefined
                 }
+                strokeWidth={2}
                 dot={{ r: 2.5 }}
                 activeDot={{ r: 4 }}
                 connectNulls={false}
@@ -729,6 +748,7 @@ function TreeNode({
   depth,
   color,
 }: TreemapNode) {
+  if (depth === 0) return <g />;
   return (
     <g>
       <rect

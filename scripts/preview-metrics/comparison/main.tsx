@@ -57,6 +57,7 @@ function App() {
           <label>
             Renderer{" "}
             <select
+              aria-label="Renderer"
               value={engine}
               onChange={(event) => setEngine(event.target.value)}
             >
@@ -68,6 +69,7 @@ function App() {
           <label>
             Example{" "}
             <select
+              aria-label="Example"
               value={kind}
               onChange={(event) => setKind(event.target.value)}
             >
@@ -83,6 +85,7 @@ function App() {
           <label>
             Theme{" "}
             <select
+              aria-label="Theme"
               value={scheme}
               onChange={(event) =>
                 setScheme(event.target.value as typeof scheme)
@@ -95,6 +98,7 @@ function App() {
           <label>
             State{" "}
             <select
+              aria-label="State"
               value={status}
               onChange={(event) =>
                 setStatus(event.target.value as typeof status)
@@ -169,6 +173,7 @@ function App() {
                 <label>
                   Case{" "}
                   <select
+                    aria-label="Case"
                     value={String(responsive)}
                     onChange={(event) => {
                       setResponsive(event.target.value === "true");
