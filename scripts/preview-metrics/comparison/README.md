@@ -27,18 +27,18 @@ The internal `ChartFrame` owns titles, descriptions, actions, states, and tables
 Each renderer owns its marks and interaction state. Recharts animation is disabled.
 All six native components are unchanged.
 
-| Pattern | Recharts implementation | Remaining tradeoff |
-| --- | --- | --- |
-| Time series, stacked area, CDF, scenarios | ComposedChart, Line, Area | App owns controlled zoom and series visibility |
-| Targets, warning regions, events | ReferenceLine, ReferenceArea, ReferenceDot | Label placement must be reviewed at small widths |
-| Grouped, normalized and labeled bars, histogram | Bar and LabelList | Bin definitions remain application data |
-| Scatter / bubble | Scatter and ZAxis | Area scales with volume; SVG only |
-| Sankey | Sankey with labeled nodes | Current ECharts adjacency emphasis is not reproduced |
-| Heatmaps | Native HTML/CSS matrix | Extra component to maintain; not provided by Recharts |
-| Donut and treemap | Pie and Treemap | Treemap's small leaves use exact-table fallback |
-| Supplied min/P25/median/P75/max | Custom SVG marks on Recharts axes | Marks use the exact table for keyboard access; no invented samples |
-| Prediction interval | Range-valued Area plus observed/predicted Lines | Bounds are supplied model output |
-| Contribution waterfall | Range-valued Bar with signed labels and tooltip | Layout/ledger transformation belongs to the port |
+| Pattern                                         | Recharts implementation                         | Remaining tradeoff                                    |
+| ----------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
+| Time series, stacked area, CDF, scenarios       | ComposedChart, Line, Area                       | App owns controlled zoom and series visibility        |
+| Targets, warning regions, events                | ReferenceLine, ReferenceArea, ReferenceDot      | Label placement must be reviewed at small widths      |
+| Grouped, normalized and labeled bars, histogram | Bar and LabelList                               | Bin definitions remain application data               |
+| Scatter / bubble                                | Scatter and ZAxis                               | Area scales with volume; SVG only                     |
+| Sankey                                          | Sankey with labeled nodes                       | Current ECharts adjacency emphasis is not reproduced  |
+| Heatmaps                                        | Native HTML/CSS matrix                          | Extra component to maintain; not provided by Recharts |
+| Donut and treemap                               | Pie and Treemap                                 | Treemap's small leaves use exact-table fallback       |
+| Supplied min/P25/median/P75/max                 | Bar with custom summary shape                   | Supplied quartiles and tooltip; no invented samples   |
+| Prediction interval                             | Range-valued Area plus observed/predicted Lines | Bounds are supplied model output                      |
+| Contribution waterfall                          | Range-valued Bar with signed labels and tooltip | Layout/ledger transformation belongs to the port      |
 
 The exact tables remain the common keyboard-accessible data path. Recharts adds
 native keyboard tooltips and brushing where supported. This experiment does not

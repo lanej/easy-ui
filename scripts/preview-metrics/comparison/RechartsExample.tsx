@@ -24,9 +24,8 @@ import {
   YAxis,
   ZAxis,
   useXAxisScale,
-  useYAxisScale,
 } from "recharts";
-import type { SankeyNodeProps, TreemapNode } from "recharts";
+import type { BarShapeProps, SankeyNodeProps, TreemapNode } from "recharts";
 import { ChartFrame } from "../../../easy-ui-react/src/Chart/ChartFrame";
 import { HeatMap } from "./HeatMap";
 import { ExampleProps, palette, records, shortDate } from "./fixtures";
@@ -485,53 +484,47 @@ function BarsPlot({ kind, example }: ExampleProps) {
 }
 
 /** Supplied quartiles are drawn directly; never manufacture raw samples. */
-function BoxMarks({ example }: Pick<ExampleProps, "example">) {
-  const xScale = useXAxisScale(),
-    yScale = useYAxisScale();
-  if (!xScale || !yScale) return null;
+function BoxMarks({ payload, y, height }: BarShapeProps) {
+  const xScale = useXAxisScale();
+  if (!xScale) return <g />;
+  const values = payload as {
+    v2: number;
+    v3: number;
+    v4: number;
+    v5: number;
+    v6: number;
+  };
+  const [a, b, c, d, e] = [
+    values.v2,
+    values.v3,
+    values.v4,
+    values.v5,
+    values.v6,
+  ].map((value) => xScale(value) ?? 0);
+  const center = y + height / 2;
   return (
     <g data-box-summaries>
-      {example.dataTable.rows.map((row) => {
-        const [, , min, p25, median, p75, max] = row.values as [
-          string,
-          number,
-          number,
-          number,
-          number,
-          number,
-          number,
-        ];
-        const y = yScale(String(row.values[0])) ?? 0;
-        const [a, b, c, d, e] = [min, p25, median, p75, max].map(
-          (value) => xScale(value) ?? 0,
-        );
-        return (
-          <g key={row.id}>
-            <title>{row.values.join(" · ")}</title>
-            <line x1={a} x2={e} y1={y} y2={y} stroke={palette[0]} />
-            <path
-              d={`M${a},${y - 7}v14 M${e},${y - 7}v14`}
-              stroke={palette[0]}
-            />
-            <rect
-              x={b}
-              y={y - 13}
-              width={d - b}
-              height={26}
-              fill="#dce5ff"
-              stroke={palette[0]}
-            />
-            <line
-              x1={c}
-              x2={c}
-              y1={y - 13}
-              y2={y + 13}
-              stroke={palette[0]}
-              strokeWidth={2}
-            />
-          </g>
-        );
-      })}
+      <line x1={a} x2={e} y1={center} y2={center} stroke={palette[0]} />
+      <path
+        d={`M${a},${center - 7}v14 M${e},${center - 7}v14`}
+        stroke={palette[0]}
+      />
+      <rect
+        x={b}
+        y={center - 13}
+        width={d - b}
+        height={26}
+        fill="#dce5ff"
+        stroke={palette[0]}
+      />
+      <line
+        x1={c}
+        x2={c}
+        y1={center - 13}
+        y2={center + 13}
+        stroke={palette[0]}
+        strokeWidth={2}
+      />
     </g>
   );
 }
@@ -551,18 +544,34 @@ function BoxPlot({ example }: ExampleProps) {
           domain={[0, 8]}
           label={{ value: "Calendar days", position: "bottom", fontSize: 11 }}
         />
-        <YAxis
-          {...axis}
-          type="category"
-          dataKey="name"
-          scale="point"
-          padding={{ top: 35, bottom: 35 }}
-        />
+        <YAxis {...axis} type="category" dataKey="name" />
         <CartesianGrid
           horizontal={false}
           stroke="var(--ezui-color-neutral-200, #dfe5ed)"
         />
-        <BoxMarks example={example} />
+        <Bar
+          dataKey={(row) => [Number(row.v3), Number(row.v5)]}
+          name="P25–P75"
+          maxBarSize={26}
+          isAnimationActive={false}
+          shape={(props) => <BoxMarks {...props} />}
+        />
+        <Tooltip
+          content={({ active, payload }) => {
+            const row = example.dataTable.rows.find(
+              (row) => row.id === payload?.[0]?.payload?.id,
+            );
+            return active && row ? (
+              <div className="exact-tooltip" role="status">
+                {row.values.map((value, i) => (
+                  <div key={i}>
+                    {example.dataTable.columns[i]}: {value}
+                  </div>
+                ))}
+              </div>
+            ) : null;
+          }}
+        />
       </ComposedChart>
     </ResponsiveContainer>
   );
