@@ -70,7 +70,12 @@ export function HeatMap({ kind, example }: ExampleProps) {
                   style={{
                     background:
                       value === null ? "transparent" : `rgb(${rgb.join(",")})`,
-                    color: luminance > 0.179 ? "#000" : "#fff",
+                    color:
+                      value === null
+                        ? "var(--ezui-color-neutral-600, #50647e)"
+                        : luminance > 0.179
+                          ? "#000"
+                          : "#fff",
                   }}
                   onFocus={() => setActive(row.id)}
                   onMouseEnter={() => setActive(row.id)}
