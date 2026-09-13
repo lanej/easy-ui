@@ -257,7 +257,14 @@ export function pressureChart(
   );
   return {
     option: {
-      tooltip: { position: "top" },
+      tooltip: {
+        position: "top",
+        formatter: (params) => {
+          const point = Array.isArray(params) ? params[0] : params;
+          const [x, y, value] = point.value as number[];
+          return `${hubs[y].name} · ${buckets[x]}: ${value < 0 ? "Unavailable" : `${value}%`}`;
+        },
+      },
       grid: { left: 118, right: 22, top: 14, bottom: 85 },
       xAxis: {
         type: "category",
