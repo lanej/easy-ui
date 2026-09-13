@@ -29,6 +29,7 @@ const pages = [
   "api/index.html",
   "comparisons/index.html",
   "comparisons/pricing.html",
+  "comparisons/network.html",
   "comparisons/encodings.html",
   "comparisons/modular/portfolio/index.html",
   "maps/index.html",

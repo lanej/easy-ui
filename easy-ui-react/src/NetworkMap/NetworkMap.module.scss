@@ -78,6 +78,8 @@
   border-top: 1px solid design-token("color.neutral.200");
 }
 .canvas {
+  // Keep marker z-indices inside the map, beneath the selected-facility card.
+  isolation: isolate;
   --map-route: #{design-token("color.primary.600")};
   --map-muted: #{design-token("color.neutral.600")};
   --map-warning: #9b5900;

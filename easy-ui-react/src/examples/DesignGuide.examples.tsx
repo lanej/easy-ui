@@ -29,6 +29,7 @@ function Header({
       <nav aria-label="Examples">
         <a href="./pricing.html">Action lists</a> ·{" "}
         <a href="./encodings.html">Encoding comparisons</a> ·{" "}
+        <a href="./network.html">Network investigation</a> ·{" "}
         <a href={guideRoot + "index.html"}>View Rule guide</a>
       </nav>
       <p className="eyebrow">
