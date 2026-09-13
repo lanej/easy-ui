@@ -111,6 +111,7 @@ export function previewConfig(engine = "full", outDir = "dist") {
             "lodash",
             "@easypost/easy-ui-tokens",
             "echarts",
+            "maplibre-gl",
           ].map((name) => [name, local(`./node_modules/${name}`)]),
         ),
       },
@@ -125,10 +126,12 @@ export function previewConfig(engine = "full", outDir = "dist") {
       rollupOptions: {
         input: process.env.EASY_UI_GUIDE_ONLY
           ? {
+              network: local("./network.html"),
               pricing: local("./pricing.html"),
               encodings: local("./encodings.html"),
             }
           : {
+              network: local("./network.html"),
               pricing: local("./pricing.html"),
               encodings: local("./encodings.html"),
               gallery: local("./index.html"),

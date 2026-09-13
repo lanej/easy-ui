@@ -45,6 +45,7 @@ createRoot(document.getElementById("root")!).render(
         </a>
       </p>
       <p className="note">
+        <a href="./network.html">Network investigation</a> ·{" "}
         <a href="./pricing.html">View Rule design patterns</a> ·{" "}
         <a href="./encodings.html">Encoding comparisons</a>
       </p>

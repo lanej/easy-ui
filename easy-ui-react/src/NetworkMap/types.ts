@@ -105,6 +105,8 @@ export type NetworkMapProps = {
   areas?: readonly MapArea[];
   /** Controlled location selection. */
   selectedFacilityId?: string;
+  /** Show the selected facility card over the map; defaults to true. Set false when a linked panel already provides this context. */
+  showSelectionDetails?: boolean;
   /** Receives marker, equivalent table, Selected leg destination or Latest events selection. */
   onFacilitySelect?: (id: string) => void;
   /** Controlled segment emphasis and Selected leg camera target. */

@@ -1,5 +1,6 @@
 import React from "react";
 import { Meta, StoryObj } from "@storybook/react-vite";
+import { NetworkGuideExample } from "./NetworkGuide.examples";
 import { PricingExample, EncodingExamples } from "./DesignGuide.examples";
 const meta = {
   title: "Patterns/View Rule",
@@ -25,3 +26,10 @@ export const IndividualInvestigation: Story = {
   args: { initialMode: "detail", initialTask: "audit", initialOpen: ["A"] },
 };
 export const Encodings: Story = { render: () => <EncodingExamples /> };
+
+export const NetworkInvestigation: Story = {
+  render: () => <NetworkGuideExample />,
+};
+export const FragmentedNetwork: Story = {
+  render: () => <NetworkGuideExample initialMode="fragmented" />,
+};
