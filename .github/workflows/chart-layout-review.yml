@@ -5,6 +5,7 @@ on:
     paths:
       - ".ui-review/**"
       - ".github/workflows/chart-layout-review.yml"
+      - "easy-ui-react/src/examples/**"
       - "easy-ui-react/src/Chart/**"
       - "easy-ui-react/src/RangePlot/**"
       - "easy-ui-react/src/CompactTimeSeries/**"
