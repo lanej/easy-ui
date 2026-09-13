@@ -28,6 +28,8 @@ const pages = [
   "storybook/iframe.html",
   "api/index.html",
   "comparisons/index.html",
+  "comparisons/pricing.html",
+  "comparisons/encodings.html",
   "comparisons/modular/portfolio/index.html",
   "maps/index.html",
   "maps/lightweight.html",
