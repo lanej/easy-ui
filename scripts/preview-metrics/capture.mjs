@@ -8,8 +8,20 @@ const server = await preview({
 });
 const browser = await chromium.launch();
 const errors = [];
+const outputDir = process.env.EASY_UI_PREVIEW_OUT_DIR ?? "dist";
+const screenshotDir = process.env.EASY_UI_SCREENSHOT_DIR ?? "screenshots";
+const modularCapture = process.env.EASY_UI_MODULAR_CAPTURE === "1";
+function observe(page) {
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error" || message.type() === "warning")
+      errors.push(message.text());
+  });
+}
 const results = [];
-const manifest = JSON.parse(await readFile("dist/.vite/manifest.json", "utf8"));
+const manifest = JSON.parse(
+  await readFile(`${outputDir}/.vite/manifest.json`, "utf8"),
+);
 const analyticalAssets = Object.values(manifest)
   .filter((asset) => asset.isDynamicEntry)
   .map((asset) => asset.file);
@@ -19,7 +31,7 @@ assert.ok(
 );
 
 try {
-  await mkdir("screenshots", { recursive: true });
+  await mkdir(screenshotDir, { recursive: true });
   for (const [name, width] of [
     ["desktop", 1440],
     ["mobile", 390],
@@ -28,13 +40,13 @@ try {
       viewport: { width, height: 1000 },
       deviceScaleFactor: 1,
     });
-    page.on("pageerror", (error) => errors.push(error.message));
+    observe(page);
     await page.goto("http://127.0.0.1:4173", { waitUntil: "networkidle" });
     await page.evaluate(() => document.fonts.ready);
     await page.waitForFunction(
       () =>
         document.querySelectorAll('[data-chart-state="ready"] svg').length ===
-        18,
+        24,
     );
     const gallery = page.getByRole("region", {
       name: "Analytical chart examples",
@@ -53,7 +65,7 @@ try {
     );
     assert.equal(overflow, false, `${name} page overflows horizontally`);
     await gallery.screenshot({
-      path: `screenshots/analytics-${name}.png`,
+      path: `${screenshotDir}/analytics-${name}.png`,
       animations: "disabled",
     });
     const sankey = gallery.getByRole("region", {
@@ -61,7 +73,7 @@ try {
       exact: true,
     });
     await sankey.screenshot({
-      path: `screenshots/sankey-${name}.png`,
+      path: `${screenshotDir}/sankey-${name}.png`,
       animations: "disabled",
     });
 
@@ -71,7 +83,7 @@ try {
     });
     if (name === "mobile") {
       await trend.screenshot({
-        path: "screenshots/time-series-mobile.png",
+        path: `${screenshotDir}/time-series-mobile.png`,
         animations: "disabled",
       });
       await gallery
@@ -80,9 +92,46 @@ try {
           exact: true,
         })
         .screenshot({
-          path: "screenshots/treemap-mobile.png",
+          path: `${screenshotDir}/treemap-mobile.png`,
           animations: "disabled",
         });
+    }
+    if (modularCapture) {
+      for (let i = 0; i < 24; i++) {
+        await page
+          .locator('[data-chart-state="ready"]')
+          .nth(i)
+          .screenshot({
+            path: `${screenshotDir}/chart-${String(i + 1).padStart(2, "0")}-${name}.png`,
+            animations: "disabled",
+          });
+      }
+      // Adjacency emphasis was an important gap in the Recharts experiment.
+      const beforeHover = await sankey.locator("svg").innerHTML();
+      const blueMarks = sankey.locator('svg path[fill="#113abf"]');
+      const nodeIndex = await blueMarks.evaluateAll((paths) =>
+        paths.findIndex((path) => {
+          const box = path.getBoundingClientRect();
+          return box.width <= 16 && box.height > 20;
+        }),
+      );
+      assert.ok(nodeIndex >= 0, "Sankey carrier node must be present");
+      // Links share node colors and may have labels over their centers.
+      await blueMarks.nth(nodeIndex).hover();
+      await page.waitForFunction((before) => {
+        return (
+          document.querySelector('[aria-label="Where parcels go"] svg')
+            ?.innerHTML !== before
+        );
+      }, beforeHover);
+      // ECharts emphasis uses a 300 ms state transition independently of
+      // Playwright's CSS-animation disabling. Capture its settled state.
+      await page.waitForTimeout(350);
+      await sankey.screenshot({
+        path: `${screenshotDir}/sankey-emphasis-${name}.png`,
+        animations: "disabled",
+      });
+      await page.mouse.move(0, 0);
     }
     const beforeZoom = await trend.locator("svg").innerHTML();
     await trend.getByRole("button", { name: "Zoom in", exact: true }).focus();
@@ -126,11 +175,33 @@ try {
     await scatter
       .getByText("Selected cohort: a-ground", { exact: true })
       .waitFor();
-    if (name === "desktop")
+    if (name === "desktop") {
+      // The pointer can remain over the plot after its table scrolls into view.
+      // Capture the keyboard-selected table with the prior tooltip dismissed.
+      await page.mouse.move(0, 0);
+      await scatter
+        .getByText("2,400 parcels", { exact: true })
+        .waitFor({ state: "hidden" });
+      // Focus scrolls the table into view. Align the whole card to an integer
+      // viewport offset before capturing; fractional scroll clipping can change
+      // a few antialiased circle/focus-border pixels between identical builds.
+      await scatter.evaluate((element) =>
+        window.scrollTo({
+          top: Math.floor(element.getBoundingClientRect().top + window.scrollY),
+          behavior: "instant",
+        }),
+      );
+      await page.evaluate(
+        () =>
+          new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          ),
+      );
       await scatter.screenshot({
-        path: "screenshots/analytics-data-table.png",
+        path: `${screenshotDir}/analytics-data-table.png`,
         animations: "disabled",
       });
+    }
     await scatter.getByText("View data table", { exact: true }).click();
 
     const lightweight = page.getByRole("region", {
@@ -138,7 +209,7 @@ try {
       exact: true,
     });
     await lightweight.screenshot({
-      path: `screenshots/lightweight-${name}.png`,
+      path: `${screenshotDir}/lightweight-${name}.png`,
       animations: "disabled",
     });
     assert.equal(
@@ -171,9 +242,16 @@ try {
     for (const [kind, region] of [
       ["native-extensions", native],
       ["analytical-extensions", extensions],
+      [
+        "logistics",
+        page.getByRole("region", {
+          name: "Logistics intelligence examples",
+          exact: true,
+        }),
+      ],
     ]) {
       await region.screenshot({
-        path: `screenshots/${kind}-${name}.png`,
+        path: `${screenshotDir}/${kind}-${name}.png`,
         animations: "disabled",
       });
     }
@@ -190,7 +268,7 @@ try {
     );
     if (name === "desktop")
       await waterfall.screenshot({
-        path: "screenshots/waterfall-tooltip.png",
+        path: `${screenshotDir}/waterfall-tooltip.png`,
         animations: "disabled",
       });
     await page.mouse.move(0, 0);
@@ -211,7 +289,7 @@ try {
     results.push({
       name,
       width,
-      chartCount: 18,
+      chartCount: 24,
       horizontalOverflow: overflow,
       keyboardZoom: true,
       pointerSelection: true,
@@ -229,33 +307,34 @@ try {
   const reviewPage = await browser.newPage({
     viewport: { width: 960, height: 1000 },
   });
-  reviewPage.on("pageerror", (error) => errors.push(error.message));
+  observe(reviewPage);
   await reviewPage.goto("http://127.0.0.1:4173", { waitUntil: "networkidle" });
   await reviewPage.evaluate(() => document.fonts.ready);
   await reviewPage.waitForFunction(
     () =>
-      document.querySelectorAll('[data-chart-state="ready"] svg').length === 18,
+      document.querySelectorAll('[data-chart-state="ready"] svg').length === 24,
   );
   await reviewPage
     .getByRole("region", { name: "Analytical chart examples", exact: true })
     .screenshot({
-      path: "screenshots/analytics-review.png",
+      path: `${screenshotDir}/analytics-review.png`,
       animations: "disabled",
     });
   await reviewPage
     .getByRole("region", { name: "Lightweight chart examples", exact: true })
     .screenshot({
-      path: "screenshots/lightweight-review.png",
+      path: `${screenshotDir}/lightweight-review.png`,
       animations: "disabled",
     });
   for (const [name, label] of [
     ["native-extensions", "Native chart extensions"],
     ["analytical-extensions", "Analytical chart extensions"],
+    ["logistics", "Logistics intelligence examples"],
   ]) {
     await reviewPage
       .getByRole("region", { name: label, exact: true })
       .screenshot({
-        path: `screenshots/${name}-review.png`,
+        path: `${screenshotDir}/${name}-review.png`,
         animations: "disabled",
       });
   }
@@ -264,7 +343,7 @@ try {
     viewport: { width: 960, height: 1000 },
   });
   const lightRequests = [];
-  lightPage.on("pageerror", (error) => errors.push(error.message));
+  observe(lightPage);
   lightPage.on("request", (request) => lightRequests.push(request.url()));
   await lightPage.goto("http://127.0.0.1:4173?portfolio=lightweight", {
     waitUntil: "networkidle",
@@ -284,23 +363,38 @@ try {
   const canvasPage = await browser.newPage({
     viewport: { width: 1440, height: 1000 },
   });
-  canvasPage.on("pageerror", (error) => errors.push(error.message));
+  observe(canvasPage);
   await canvasPage.goto("http://127.0.0.1:4173?renderer=canvas", {
     waitUntil: "networkidle",
   });
   await canvasPage.waitForFunction(
     () =>
-      document.querySelectorAll('[data-chart-state="ready"]').length === 18 &&
+      document.querySelectorAll('[data-chart-state="ready"]').length === 24 &&
       [...document.querySelectorAll('[data-chart-state="ready"]')].every(
         (plot) => plot.querySelector("canvas"),
       ),
   );
-  results.push({ name: "canvas", chartCount: 18 });
+  if (modularCapture) {
+    for (let i = 0; i < 24; i++) {
+      await canvasPage
+        .locator('[data-chart-state="ready"]')
+        .nth(i)
+        .screenshot({
+          path: `${screenshotDir}/chart-${String(i + 1).padStart(2, "0")}-canvas.png`,
+          animations: "disabled",
+        });
+    }
+  }
+  results.push({ name: "canvas", chartCount: 24 });
   await canvasPage.close();
   assert.deepEqual(errors, [], "The examples must not produce browser errors");
   await writeFile(
-    "screenshots/validation.json",
-    JSON.stringify({ results, errors }, null, 2) + "\n",
+    `${screenshotDir}/validation.json`,
+    JSON.stringify(
+      { source: process.env.GITHUB_SHA ?? "local", results, errors },
+      null,
+      2,
+    ) + "\n",
   );
 } finally {
   await browser.close();

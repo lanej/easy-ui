@@ -79,7 +79,7 @@ The Chart examples workflow publishes the runnable gallery and screenshots. Refr
 
 ## Additive expansion
 
-The existing galleries and defaults remain intact. New `CompactTimeSeries` and `RangePlot` native components close the gap between a summary sparkline and a full analytical chart. CompactTimeSeries supports one to three timestamped series, explicit shared domains, sparse axes, line/step interpolation, a labeled reference, markers, and exact accessible observations. RangePlot aligns named benchmarks and an optional supplied interval, including negative domains and equal-bound intervals.
+The existing galleries remain available. Sparklines default to endpoint markers so the boundaries of missing-data gaps are visible; applications can opt out with `markers="none"`. New `CompactTimeSeries` and `RangePlot` native components close the gap between a summary sparkline and a full analytical chart. CompactTimeSeries supports one to three timestamped series, explicit shared domains, sparse axes, line/step interpolation, a labeled reference, markers, and exact accessible observations. RangePlot aligns named benchmarks and an optional supplied interval, including negative domains and equal-bound intervals.
 
 Sparkline adds opt-in observation, segment-endpoint, and global-extrema markers. Nine additional Chart examples demonstrate direct bar labels; target/threshold/event annotations; numeric scenario response; a histogram and cumulative distribution sharing source counts; descriptive box summaries; an explicitly supplied prediction interval; a reconciled contribution waterfall; and weekday/hour rates with counts and insufficient-sample blanks. These fixtures are public and synthetic.
 
@@ -88,3 +88,11 @@ The native examples include report cells and small multiples with shared date an
 The expanded six-component native portfolio measures approximately **16.9 KB gzip JavaScript / 3.5 KB component CSS**, including transitive Easy UI primitives and excluding React/global styles/fonts. Relative to the previous four-component baseline (14.5 KB / 2.8 KB), the two new components plus marker support add approximately **2.4 KB JS / 0.6 KB CSS gzip**. The optional ECharts engine chunk is unchanged at about **382 KB gzip**. The workflow artifact contains exact current measurements and the method.
 
 Geography, a composition strip, and coordinated cross-chart brush/zoom state remain separate follow-ups. No new analytical engine, geography data, or custom-series package is introduced here.
+
+## Logistics intelligence and parcel tracking recipes
+
+Six additional analytical recipes extend the portfolio to 24: fixed-cohort delivery reliability, matched rate competitiveness, price/volume/contribution scenarios, capacity planning, one-parcel event intervals, and multi-warehouse parcel progress. Native BulletChart stories also show observed capacity and forecast overload. These are additive compositions of the existing components, with synthetic records and exact tables.
+
+Mapping is a separate workstream and draft PR covering geographic navigation, parcel and network flow, facility risk, weather, and audience-specific views. The chart PR retains all six non-geographic logistics recipes and the existing eight-series modular preset.
+
+The [logistics Storybook documentation](../../easy-ui-react/src/Chart/Chart.logistics.mdx) defines cohort denominators, sample suppression, forecast boundaries, scan freshness, fee/cost assumptions, shared timestamps. Unknown positions and missing scan intervals must never become interpolated observed locations or implied delivery events.

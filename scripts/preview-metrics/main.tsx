@@ -1,3 +1,4 @@
+import "./audit/console.mjs";
 import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "../../easy-ui-react/src/Theme";
@@ -22,6 +23,15 @@ const AnalyticalExtensions = lazy(() =>
     default: module.AnalyticalExtensions,
   })),
 );
+const LogisticsExamples = lazy(() =>
+  import("../../easy-ui-react/src/Chart/Chart.logistics.stories").then((m) => ({
+    default: m.LogisticsExamples,
+  })),
+);
+const renderer =
+  new URLSearchParams(location.search).get("renderer") === "canvas"
+    ? "canvas"
+    : "svg";
 const lightweightOnly =
   new URLSearchParams(location.search).get("portfolio") === "lightweight";
 
@@ -29,6 +39,11 @@ createRoot(document.getElementById("root")!).render(
   <ThemeProvider colorScheme="light">
     <main>
       <p className="eyebrow">EASY UI · DATA VISUALIZATION</p>
+      <p className="note">
+        <a href="./layout.html">
+          Explore constrained cards and overflow stress cases
+        </a>
+      </p>
       <LightweightExamples />
       <NativeExtensions />
       <section aria-label="Metric state examples">
@@ -40,19 +55,19 @@ createRoot(document.getElementById("root")!).render(
             supportingText="Observed zero"
           />
           <MetricCard
-            label="Average rated cost"
+            label="Average rated cost — unavailable"
             value={null}
             supportingText="Unavailable value"
           />
           <MetricCard
             {...Default.args}
-            label="Average rated cost"
+            label="Average rated cost — loading"
             value="$5.20"
             isLoading
           />
           <MetricCard
             {...MissingObservations.args}
-            label="Average rated cost"
+            label="Average rated cost — missing bucket"
             value="$5.20"
           />
         </div>
@@ -95,6 +110,17 @@ createRoot(document.getElementById("root")!).render(
                   : "svg"
               }
             />
+          </section>
+          <section
+            aria-label="Logistics intelligence examples"
+            className="extension-section"
+          >
+            <h1>Logistics intelligence</h1>
+            <p className="note">
+              Synthetic examples · Delivery promises, rate competitiveness,
+              pricing, capacity, and parcel event progress
+            </p>
+            <LogisticsExamples renderer={renderer} />
           </section>
         </Suspense>
       )}

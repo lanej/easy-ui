@@ -2,12 +2,13 @@ import React from "react";
 import { markerPoints, MarkerMode } from "../visualization/geometry";
 import styles from "./Sparkline.module.scss";
 
+/** Equally spaced observations and the accessible description of their trend. */
 export type SparklineProps = {
   /** Equally spaced observations. Use null for a missing bucket, never zero. */
   values: readonly (number | null)[];
   /** Describe the metric, period, trend, and any missing observations. */
   accessibilityLabel: string;
-  /** Optional observation markers; existing unmarked lines remain the default. */
+  /** Observation markers; defaults to endpoints of each continuous segment. Use none for unmarked lines. */
   markers?: MarkerMode;
 };
 
@@ -22,7 +23,7 @@ const PADDING = 4;
 export function Sparkline({
   values,
   accessibilityLabel,
-  markers = "none",
+  markers = "endpoints",
 }: SparklineProps) {
   const segments = getSegments(values);
 
