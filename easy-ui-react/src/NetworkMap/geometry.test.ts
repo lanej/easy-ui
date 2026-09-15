@@ -1,5 +1,6 @@
 import {
   areaData,
+  facilityPointData,
   geographicBounds,
   placeLabels,
   segmentData,
@@ -80,6 +81,27 @@ it("does not invent measured routes or draw invalid geographic records", () => {
       [1, 1],
     ],
   });
+  expect(data.features[0].properties?.color).toBeUndefined();
+});
+it("passes a caller-supplied color through as a feature property, omitting it when absent", () => {
+  const facilities: MapFacility[] = [
+    { id: "a", label: "A", kind: "hub", coordinates: [0, 0] },
+    { id: "b", label: "B", kind: "hub", coordinates: [1, 1] },
+  ];
+  const base: MapSegment = {
+    id: "one",
+    from: "a",
+    to: "b",
+    label: "A to B",
+    evidence: "transfer",
+  };
+  const data = segmentData(facilities, [
+    { ...base, id: "colored", color: "#ff0000" },
+    { ...base, id: "uncolored" },
+  ]);
+  const byId = new Map(data.features.map((f) => [f.properties?.id, f]));
+  expect(byId.get("colored")?.properties?.color).toBe("#ff0000");
+  expect(byId.get("uncolored")?.properties?.color).toBeUndefined();
 });
 it("closes weather rings without inventing geometry for invalid areas", () => {
   const area: MapArea = {
@@ -117,6 +139,19 @@ it("closes weather rings without inventing geometry for invalid areas", () => {
       },
     ]).features,
   ).toHaveLength(0);
+});
+it("builds one clustering-ready GeoJSON point per valid facility, carrying only its id", () => {
+  const facilities: MapFacility[] = [
+    { id: "a", label: "A", kind: "hub", coordinates: [-122, 38] },
+    { id: "b", label: "B", kind: "hub", coordinates: [NaN, 2] },
+  ];
+  const data = facilityPointData(facilities);
+  expect(data.features).toHaveLength(1);
+  expect(data.features[0]).toEqual({
+    type: "Feature",
+    properties: { id: "a" },
+    geometry: { type: "Point", coordinates: [-122, 38] },
+  });
 });
 it("network examples conserve flow at the hubs and reconcile to carrier throughput", () => {
   for (const id of ["slc", "chi", "dtw"]) {
