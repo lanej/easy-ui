@@ -171,6 +171,19 @@ it("preserves camera and focused markers when observations or selection update, 
   expect(document.activeElement).toBe(marker);
   expect(marker).toHaveClass("maplibregl-marker");
   expect(marker).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByText("Selected facility")).toBeInTheDocument();
+  view.rerender(
+    <NetworkMap
+      {...props}
+      selectedFacilityId="one"
+      showSelectionDetails={false}
+    />,
+  );
+  expect(screen.queryByText("Selected facility")).not.toBeInTheDocument();
+  expect(marker).toHaveAttribute("aria-pressed", "true");
+  expect(document.activeElement).toBe(marker);
+  expect(constructor).toHaveBeenCalledTimes(1);
+  expect(fitBounds).toHaveBeenCalledTimes(1);
   fireEvent.click(marker);
   expect(props.onFacilitySelect).toHaveBeenCalledWith("one");
   view.unmount();
