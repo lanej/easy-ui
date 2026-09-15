@@ -1,0 +1,310 @@
+import assert from "node:assert/strict";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { preview } from "vite";
+import { chromium } from "playwright";
+
+const server = await preview({
+  preview: { host: "127.0.0.1", port: 4173, strictPort: true },
+});
+const browser = await chromium.launch();
+const errors = [];
+const results = [];
+const manifest = JSON.parse(await readFile("dist/.vite/manifest.json", "utf8"));
+const analyticalAssets = Object.values(manifest)
+  .filter((asset) => asset.isDynamicEntry)
+  .map((asset) => asset.file);
+assert.ok(
+  analyticalAssets.length >= 2,
+  "Analytical examples and engine must be separate dynamic entries",
+);
+
+try {
+  await mkdir("screenshots", { recursive: true });
+  for (const [name, width] of [
+    ["desktop", 1440],
+    ["mobile", 390],
+  ]) {
+    const page = await browser.newPage({
+      viewport: { width, height: 1000 },
+      deviceScaleFactor: 1,
+    });
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto("http://127.0.0.1:4173", { waitUntil: "networkidle" });
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForFunction(
+      () =>
+        document.querySelectorAll('[data-chart-state="ready"] svg').length ===
+        18,
+    );
+    const gallery = page.getByRole("region", {
+      name: "Analytical chart examples",
+      exact: true,
+    });
+    assert.equal(await gallery.getByRole("img").count(), 9);
+    for (const svg of await gallery.locator("svg").all()) {
+      assert.ok(
+        (await svg.locator("path").count()) > 0,
+        "Each chart must draw marks",
+      );
+      assert.doesNotMatch(await svg.innerHTML(), /(?:NaN|Infinity)/);
+    }
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    );
+    assert.equal(overflow, false, `${name} page overflows horizontally`);
+    await gallery.screenshot({
+      path: `screenshots/analytics-${name}.png`,
+      animations: "disabled",
+    });
+    const sankey = gallery.getByRole("region", {
+      name: "Where parcels go",
+      exact: true,
+    });
+    await sankey.screenshot({
+      path: `screenshots/sankey-${name}.png`,
+      animations: "disabled",
+    });
+
+    const trend = gallery.getByRole("region", {
+      name: "On-time delivery",
+      exact: true,
+    });
+    if (name === "mobile") {
+      await trend.screenshot({
+        path: "screenshots/time-series-mobile.png",
+        animations: "disabled",
+      });
+      await gallery
+        .getByRole("region", {
+          name: "Volume by origin and service",
+          exact: true,
+        })
+        .screenshot({
+          path: "screenshots/treemap-mobile.png",
+          animations: "disabled",
+        });
+    }
+    const beforeZoom = await trend.locator("svg").innerHTML();
+    await trend.getByRole("button", { name: "Zoom in", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    await page.waitForFunction((before) => {
+      const chart = document.querySelector(
+        '[aria-label="On-time delivery"] [data-chart-state="ready"] svg',
+      );
+      return chart?.innerHTML !== before;
+    }, beforeZoom);
+    await trend
+      .getByRole("button", { name: "Reset zoom", exact: true })
+      .click();
+
+    const scatter = gallery.getByRole("region", {
+      name: "Cost and speed tradeoffs",
+      exact: true,
+    });
+    const marks = scatter.locator('svg path[fill="#113abf"]');
+    const largest = await marks.evaluateAll(
+      (paths) =>
+        paths
+          .map((path, index) => ({
+            index,
+            area:
+              path.getBoundingClientRect().width *
+              path.getBoundingClientRect().height,
+          }))
+          .sort((a, b) => b.area - a.area)[0]?.index,
+    );
+    assert.notEqual(largest, undefined, "Scatter bubbles must be present");
+    await marks.nth(largest).click();
+    await scatter
+      .getByText("Selected cohort: A · Ground", { exact: true })
+      .waitFor();
+    await scatter.getByText("View data table", { exact: true }).click();
+    await scatter
+      .getByRole("button", { name: "Select row: A · Ground", exact: true })
+      .focus();
+    await page.keyboard.press("Enter");
+    await scatter
+      .getByText("Selected cohort: a-ground", { exact: true })
+      .waitFor();
+    if (name === "desktop")
+      await scatter.screenshot({
+        path: "screenshots/analytics-data-table.png",
+        animations: "disabled",
+      });
+    await scatter.getByText("View data table", { exact: true }).click();
+
+    const lightweight = page.getByRole("region", {
+      name: "Lightweight chart examples",
+      exact: true,
+    });
+    await lightweight.screenshot({
+      path: `screenshots/lightweight-${name}.png`,
+      animations: "disabled",
+    });
+    assert.equal(
+      await lightweight
+        .getByRole("list", { name: "June parcel volume by service" })
+        .getByRole("listitem")
+        .count(),
+      3,
+    );
+    assert.equal(
+      await lightweight
+        .getByRole("region", { name: "Compact trend examples", exact: true })
+        .getByRole("img")
+        .count(),
+      4,
+    );
+    const native = page.getByRole("region", {
+      name: "Native chart extensions",
+      exact: true,
+    });
+    const extensions = page.getByRole("region", {
+      name: "Analytical chart extensions",
+      exact: true,
+    });
+    assert.equal(await extensions.getByRole("img").count(), 9);
+    for (const svg of await extensions.locator("svg").all()) {
+      assert.ok((await svg.locator("path").count()) > 0);
+      assert.doesNotMatch(await svg.innerHTML(), /(?:NaN|Infinity)/);
+    }
+    for (const [kind, region] of [
+      ["native-extensions", native],
+      ["analytical-extensions", extensions],
+    ]) {
+      await region.screenshot({
+        path: `screenshots/${kind}-${name}.png`,
+        animations: "disabled",
+      });
+    }
+    const waterfall = extensions.getByRole("region", {
+      name: "From receipts to contribution",
+      exact: true,
+    });
+    await waterfall.locator('svg path[fill="#9b5900"]').first().hover();
+    await waterfall.getByText("Delivery: $-9,000", { exact: true }).waitFor();
+    await waterfall.getByText("Balance: $15,000", { exact: true }).waitFor();
+    assert.doesNotMatch(
+      await waterfall.locator("svg").textContent(),
+      /<br\s*\/?\s*>/,
+    );
+    if (name === "desktop")
+      await waterfall.screenshot({
+        path: "screenshots/waterfall-tooltip.png",
+        animations: "disabled",
+      });
+    await page.mouse.move(0, 0);
+
+    const compact = native.getByRole("figure", {
+      name: "Observed and plan",
+      exact: true,
+    });
+    await compact.getByText("View data", { exact: true }).focus();
+    await page.keyboard.press("Enter");
+    assert.equal(await compact.getByRole("table").isVisible(), true);
+    await compact.getByText("View data", { exact: true }).click();
+    const overview = page.getByRole("region", {
+      name: "Shipping overview example",
+      exact: true,
+    });
+    assert.equal(await overview.getByRole("img").count(), 4);
+    results.push({
+      name,
+      width,
+      chartCount: 18,
+      horizontalOverflow: overflow,
+      keyboardZoom: true,
+      pointerSelection: true,
+      keyboardRowSelection: true,
+      trendCount: 8,
+      barListRows: 3,
+      bulletCharts: 2,
+      compactTimeSeries: 4,
+      rangePlots: 2,
+      compactKeyboardData: true,
+      waterfallTooltip: true,
+    });
+    await page.close();
+  }
+  const reviewPage = await browser.newPage({
+    viewport: { width: 960, height: 1000 },
+  });
+  reviewPage.on("pageerror", (error) => errors.push(error.message));
+  await reviewPage.goto("http://127.0.0.1:4173", { waitUntil: "networkidle" });
+  await reviewPage.evaluate(() => document.fonts.ready);
+  await reviewPage.waitForFunction(
+    () =>
+      document.querySelectorAll('[data-chart-state="ready"] svg').length === 18,
+  );
+  await reviewPage
+    .getByRole("region", { name: "Analytical chart examples", exact: true })
+    .screenshot({
+      path: "screenshots/analytics-review.png",
+      animations: "disabled",
+    });
+  await reviewPage
+    .getByRole("region", { name: "Lightweight chart examples", exact: true })
+    .screenshot({
+      path: "screenshots/lightweight-review.png",
+      animations: "disabled",
+    });
+  for (const [name, label] of [
+    ["native-extensions", "Native chart extensions"],
+    ["analytical-extensions", "Analytical chart extensions"],
+  ]) {
+    await reviewPage
+      .getByRole("region", { name: label, exact: true })
+      .screenshot({
+        path: `screenshots/${name}-review.png`,
+        animations: "disabled",
+      });
+  }
+  await reviewPage.close();
+  const lightPage = await browser.newPage({
+    viewport: { width: 960, height: 1000 },
+  });
+  const lightRequests = [];
+  lightPage.on("pageerror", (error) => errors.push(error.message));
+  lightPage.on("request", (request) => lightRequests.push(request.url()));
+  await lightPage.goto("http://127.0.0.1:4173?portfolio=lightweight", {
+    waitUntil: "networkidle",
+  });
+  assert.equal(await lightPage.locator("[data-chart-state]").count(), 0);
+  assert.equal(
+    lightRequests.some((url) =>
+      analyticalAssets.some((asset) =>
+        new URL(url).pathname.endsWith(`/${asset}`),
+      ),
+    ),
+    false,
+    "Lightweight gallery must not request the analytical engine or fixtures",
+  );
+  results.push({ name: "lightweight-only", analyticalRequests: 0 });
+  await lightPage.close();
+  const canvasPage = await browser.newPage({
+    viewport: { width: 1440, height: 1000 },
+  });
+  canvasPage.on("pageerror", (error) => errors.push(error.message));
+  await canvasPage.goto("http://127.0.0.1:4173?renderer=canvas", {
+    waitUntil: "networkidle",
+  });
+  await canvasPage.waitForFunction(
+    () =>
+      document.querySelectorAll('[data-chart-state="ready"]').length === 18 &&
+      [...document.querySelectorAll('[data-chart-state="ready"]')].every(
+        (plot) => plot.querySelector("canvas"),
+      ),
+  );
+  results.push({ name: "canvas", chartCount: 18 });
+  await canvasPage.close();
+  assert.deepEqual(errors, [], "The examples must not produce browser errors");
+  await writeFile(
+    "screenshots/validation.json",
+    JSON.stringify({ results, errors }, null, 2) + "\n",
+  );
+} finally {
+  await browser.close();
+  await new Promise((resolve, reject) =>
+    server.httpServer.close((error) => (error ? reject(error) : resolve())),
+  );
+}
