@@ -87,6 +87,8 @@ Regional throughput, expected volume, operating capacity, dwell, backlog and con
 
 Facilities have stable IDs; segments reference their endpoints. `selectedFacilityId` and `onFacilitySelect` control selection across markers and table rows. Provide the callback to enable selection. `selectedSegmentId` emphasizes a connection and enables Selected leg. `latestFacilityId` identifies the last observed facility, never an interpolated position.
 
+When a linked panel already shows the selected facility's identity and decision fields, set `showSelectionDetails={false}` to avoid covering geography with a duplicate card. Marker selection, equivalent table selection, and callbacks remain active. The card is visible by default.
+
 `initialView` applies once. Without it, the initial camera fits the supplied facilities. To request a later camera change, supply `focus={{ revision, facilityIds, maxZoom }}` and change `revision`. Data, selection and layer updates preserve manual pan/zoom. Keep the `mapStyle` object stable: replacing it recreates the map. The controls honor reduced motion. MapLibre also supports keyboard arrows and +/- on its canvas, zoom buttons, pan gestures and cooperative scrolling.
 
 `labelMinZoom` progressively reveals local facilities. Selected, last-observed and `primaryFacilityIds` labels receive priority; collision placement hides lower-priority labels when space is insufficient. Marker buttons and the data table retain complete names. Repeated scans at one facility should share one facility ID and one marker. This component is intended for bounded investigation cohorts; use a server-filtered or clustered source for very large fleets.

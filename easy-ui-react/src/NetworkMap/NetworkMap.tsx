@@ -34,6 +34,7 @@ export function NetworkMap(props: NetworkMapProps) {
     areas = [],
     surface,
     selectedFacilityId,
+    showSelectionDetails = true,
     onFacilitySelect,
     selectedSegmentId,
     latestFacilityId,
@@ -734,7 +735,7 @@ export function NetworkMap(props: NetworkMapProps) {
             )}
           </div>
         )}
-        {state === "ready" && active && (
+        {state === "ready" && active && showSelectionDetails && (
           <div className={styles.selection} aria-live="polite">
             <span>
               {active.kind === "destination"
