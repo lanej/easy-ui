@@ -198,6 +198,52 @@ function SortableDataGrid(args: DataGridProps) {
 
 <Canvas of={DataGridStories.WithSort} />
 
+## With Grouping and Subtotals
+
+Pass `grouping` to gather rows by a string or numeric key and append a subtotal after each group. Rows need not be adjacent. Groups appear in the order their keys first occur in `rows`; data rows retain their relative order within each group. Numeric and string keys are distinct (`1` and `"1"` form different groups).
+
+```tsx
+<DataGrid
+  aria-label="Service Split"
+  columns={columns}
+  rows={rows}
+  renderColumnCell={(column) => column.name}
+  renderRowCell={(cell) => String(cell ?? "")}
+  grouping={{
+    getGroupKey: (row) => row.carrier,
+    aggregators: {
+      packages: (groupRows) =>
+        groupRows.reduce((sum, row) => sum + row.packages, 0),
+      spend: (groupRows) => groupRows.reduce((sum, row) => sum + row.spend, 0),
+    },
+    renderSubtotalCell: (cell, columnKey, group) => {
+      if (columnKey === "carrier") return `${group.key} subtotal`;
+      return String(cell ?? "");
+    },
+  }}
+/>
+```
+
+The optional `grouping` prop has type `DataGridGrouping<C, R>`, exported from `@easypost/easy-ui/DataGrid/types`:
+
+| Property             | Type                                                                             | Behavior                                                                                                                                                                                                            |
+| -------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getGroupKey`        | `(row: R) => Key`                                                                | Required. Returns the group key from each original data row.                                                                                                                                                        |
+| `aggregators`        | `Partial<Record<ColumnKey<C>, (rows: readonly R[]) => unknown>>`                 | Required. Each configured column receives all data rows in its group and returns its subtotal value. Reducers can compute sums, counts, averages, or other summaries. An empty object creates label-only subtotals. |
+| `renderSubtotalCell` | `(cell: unknown, columnKey: ColumnKey<C>, group: DataGridGroup<R>) => ReactNode` | Optional. Formats subtotal values independently of `renderRowCell`. `group` contains the original group `key` and read-only `rows`.                                                                                 |
+
+By default, the first column displays `"{group key} subtotal"`; an aggregator for that column overrides the label. Other columns display their aggregated values converted to strings, or remain blank if no aggregator is configured. `null` and `undefined` render blank. Custom subtotal renderers receive these same values, including the default label. Keep monetary values in integer minor units (for example, cents), sum them, and format them as currency in the renderers.
+
+Subtotal rows use bold text and a background tint, retain the normal row and cell roles, and expose `data-ezui-data-grid-subtotal="true"` for structural identification. Synthetic row keys are internal; `renderRowCell`, `rowActions`, and expansion callbacks continue to receive only data rows or their keys. Subtotals have no selection checkbox, expansion button, or row actions, and do not trigger `onRowAction` or `onCellAction`.
+
+Sorting remains controlled by `sortDescriptor` and `onSortChange`: sort the source `rows`, and the grid regroups them and recomputes subtotals. Subtotals stay after their group, outside the sorted data. Selection, including select-all, applies only to selectable data rows and respects `disabledKeys`. The existing `"all"` selection callback value retains its meaning. The existing restriction against combining selection and expansion still applies.
+
+Subtotals use only the supplied `rows`, so filtering or pagination produces subtotals for the visible subset, not the full server dataset. An empty array produces the existing empty state. `maxRows` counts all rendered body rows, including subtotals. Omit `grouping` to keep existing flat-grid behavior.
+
+The Service Split example reproduces the Analytics homepage's carrier and service-level breakdown using representative data. It totals package counts and spend for each carrier.
+
+<Canvas of={DataGridStories.ServiceSplit} />
+
 ## With Custom Size
 
 `DataGrid` supports `sm`, `md`, and `lg` row heights with the `size` prop.

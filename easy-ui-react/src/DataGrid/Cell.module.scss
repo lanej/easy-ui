@@ -87,3 +87,7 @@
 .static {
   text-align: center;
 }
+
+.subtotal .content {
+  font-weight: design-token("font.weight.bold");
+}

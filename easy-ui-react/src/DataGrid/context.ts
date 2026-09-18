@@ -42,6 +42,7 @@ export const useDataGridTable = () => {
 
 type DataGridRowContextType = {
   isExpanded: boolean;
+  isSubtotal: boolean;
   isFocusVisible: boolean;
   removeHover: () => void;
   index?: number;
