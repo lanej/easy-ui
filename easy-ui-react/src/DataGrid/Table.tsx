@@ -1,3 +1,4 @@
+import { Key } from "@react-types/shared";
 import React, { CSSProperties, ReactElement, useMemo, useRef } from "react";
 import { useTable } from "react-aria";
 import { useTableState } from "react-stately";
@@ -29,6 +30,7 @@ type TableProps<C extends Column, R extends RowType> = Omit<
   "children"
 > & {
   children?: [ReactElement, ReactElement];
+  subtotalKeys: ReadonlySet<Key>;
 };
 
 export function Table<C extends Column, R extends RowType>(
@@ -43,6 +45,7 @@ export function Table<C extends Column, R extends RowType>(
     renderEmptyState = () => "No Data",
     renderFooter,
     isLoading = false,
+    subtotalKeys,
   } = props;
 
   const hasFooter = Boolean(renderFooter);
@@ -50,13 +53,35 @@ export function Table<C extends Column, R extends RowType>(
   const outerContainerRef = useRef<HTMLDivElement | null>(null);
   const innerContainerRef = useRef<HTMLDivElement | null>(null);
   const tableRef = useRef<HTMLTableElement | null>(null);
+  const disabledKeys = useMemo(
+    () => new Set([...(props.disabledKeys ?? []), ...subtotalKeys]),
+    [props.disabledKeys, subtotalKeys],
+  );
   const state = useTableState({
     ...(props as Parameters<typeof useTableState>[0]),
+    disabledKeys,
     selectionMode,
     selectionBehavior: "toggle",
     showSelectionCheckboxes: selectionMode !== "none",
   });
-  const { gridProps } = useTable(props, state, tableRef);
+  const { gridProps } = useTable(
+    {
+      ...props,
+      // React Aria disables row actions via disabledKeys, but cell actions
+      // need a separate guard using the cell's parent row in the collection.
+      onCellAction:
+        subtotalKeys.size > 0 && props.onCellAction
+          ? (key) => {
+              const parentKey = state.collection.getItem(key)?.parentKey;
+              if (parentKey == null || !subtotalKeys.has(parentKey)) {
+                props.onCellAction?.(key);
+              }
+            }
+          : props.onCellAction,
+    },
+    state,
+    tableRef,
+  );
 
   const { expandedRow, expandedRowStyle } = useExpandedRow({
     containerRef: innerContainerRef,
@@ -167,6 +192,7 @@ export function Table<C extends Column, R extends RowType>(
                   <Row
                     key={row.key}
                     item={row}
+                    isSubtotal={subtotalKeys.has(row.key)}
                     state={state}
                     isExpanded={
                       expandedRow ? expandedRow.key === row.key : false

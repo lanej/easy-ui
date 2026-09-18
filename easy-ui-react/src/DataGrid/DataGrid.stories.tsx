@@ -1,6 +1,7 @@
 import CheckCircleIcon from "@easypost/easy-ui-icons/CheckCircle";
 import ErrorIcon from "@easypost/easy-ui-icons/Error";
 import { action } from "storybook/actions";
+import { expect, within } from "storybook/test";
 import { Meta, StoryObj } from "@storybook/react-vite";
 import React, { useState } from "react";
 import { Key } from "react-aria";
@@ -419,3 +420,115 @@ function WithFooterTemplate(args: Partial<DataGridProps>) {
     />
   );
 }
+
+// Representative Analytics homepage data. Store spend in cents so aggregation
+// operates on integers; apply currency formatting only when rendering cells.
+const serviceSplitColumns = [
+  { key: "carrier", name: "Carrier" },
+  { key: "service", name: "Service level" },
+  { key: "packages", name: "Package count" },
+  { key: "spend", name: "Spend" },
+];
+const serviceSplitRows = [
+  {
+    key: "usps-ground",
+    carrier: "USPS",
+    service: "Ground Advantage",
+    packages: 1200,
+    spend: 684000,
+  },
+  {
+    key: "usps-priority",
+    carrier: "USPS",
+    service: "Priority Mail",
+    packages: 800,
+    spend: 756000,
+  },
+  {
+    key: "ups-ground",
+    carrier: "UPS",
+    service: "Ground",
+    packages: 640,
+    spend: 684800,
+  },
+  {
+    key: "ups-next-day",
+    carrier: "UPS",
+    service: "Next Day Air",
+    packages: 160,
+    spend: 412800,
+  },
+  {
+    key: "fedex-ground",
+    carrier: "FedEx",
+    service: "Ground",
+    packages: 420,
+    spend: 499800,
+  },
+  {
+    key: "fedex-2day",
+    carrier: "FedEx",
+    service: "2Day",
+    packages: 80,
+    spend: 228000,
+  },
+];
+const serviceSplitCurrency = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+const serviceSplitCount = new Intl.NumberFormat("en-US");
+function renderServiceSplitCell(cell: unknown, columnKey: string | number) {
+  if (columnKey === "spend") {
+    return serviceSplitCurrency.format(Number(cell) / 100);
+  }
+  if (columnKey === "packages") {
+    return serviceSplitCount.format(Number(cell));
+  }
+  return String(cell ?? "");
+}
+
+/** Carrier × service breakdown with automatically computed carrier subtotals. */
+export const ServiceSplit: Story = {
+  render: () => (
+    <DataGrid
+      aria-label="Service Split"
+      columns={serviceSplitColumns}
+      rows={serviceSplitRows}
+      maxRows={9}
+      headerVariant="secondary"
+      renderColumnCell={(column) => column.name}
+      renderRowCell={renderServiceSplitCell}
+      grouping={{
+        getGroupKey: (row) => row.carrier,
+        aggregators: {
+          packages: (rows) => rows.reduce((sum, row) => sum + row.packages, 0),
+          spend: (rows) => rows.reduce((sum, row) => sum + row.spend, 0),
+        },
+        renderSubtotalCell: renderServiceSplitCell,
+      }}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    for (const [carrier, packages, spend] of [
+      ["USPS", "2,000", "$14,400.00"],
+      ["UPS", "800", "$10,976.00"],
+      ["FedEx", "500", "$7,278.00"],
+    ]) {
+      const subtotal = canvas.getByRole("row", {
+        name: new RegExp(`${carrier} subtotal`),
+      });
+      await expect(subtotal).toHaveAttribute(
+        "data-ezui-data-grid-subtotal",
+        "true",
+      );
+      await expect(
+        within(subtotal).getByRole("gridcell", { name: packages }),
+      ).toBeInTheDocument();
+      await expect(
+        within(subtotal).getByRole("gridcell", { name: spend }),
+      ).toBeInTheDocument();
+    }
+  },
+};

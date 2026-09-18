@@ -44,6 +44,7 @@ export function Cell({ cell, state }: CellProps) {
 
   const className = classNames(
     styles.Cell,
+    row.isSubtotal && styles.subtotal,
     isFocusVisible && styles.focused,
     row.isExpanded && styles.expanded,
     row.isFocusVisible && styles.rowFocused,
@@ -74,7 +75,9 @@ export function Cell({ cell, state }: CellProps) {
       className={className}
     >
       <div className={styles.content}>
-        <CellContentComponent cell={cell} state={state} />
+        {!(row.isSubtotal && cell.props.isSelectionCell) && (
+          <CellContentComponent cell={cell} state={state} />
+        )}
         <div data-ezui-data-grid-shadow />
       </div>
     </td>

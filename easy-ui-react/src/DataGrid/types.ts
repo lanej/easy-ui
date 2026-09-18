@@ -56,6 +56,31 @@ export type KeyedSortDescriptor<K extends Key = Key> = Omit<
 
 export type RowAction = MenuRowAction | ActionRowAction;
 
+/** The original data rows contributing to a subtotal. */
+export type DataGridGroup<R extends Row = Row> = {
+  readonly key: Key;
+  readonly rows: readonly R[];
+};
+
+export type DataGridGrouping<C extends Column = Column, R extends Row = Row> = {
+  /** Group by a string or numeric key. Groups appear in first-seen order. */
+  getGroupKey: (row: R) => Key;
+
+  /** Compute a value for each configured column from the group's data rows. */
+  aggregators: Partial<Record<ColumnKey<C>, (rows: readonly R[]) => unknown>>;
+
+  /**
+   * Render subtotal cells separately from data cells. By default, the first
+   * column reads "{group key} subtotal", aggregated values are stringified,
+   * and other columns are blank. An aggregator can override the first cell.
+   */
+  renderSubtotalCell?: (
+    cell: unknown,
+    columnKey: ColumnKey<C>,
+    group: DataGridGroup<R>,
+  ) => ReactNode;
+};
+
 export type DataGridProps<
   C extends Column = Column,
   R extends Row = Row,
@@ -80,6 +105,9 @@ export type DataGridProps<
 
   /** The currently expanded key in the collection (controlled). */
   expandedKey?: RowKey<R>;
+
+  /** Group data rows and append a non-interactive subtotal to each group. */
+  grouping?: DataGridGrouping<C, R>;
 
   /**
    * Variant of the data grid header to use.
