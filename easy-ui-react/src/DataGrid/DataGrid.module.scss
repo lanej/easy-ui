@@ -95,6 +95,7 @@
   );
   /* stylelint-enable scss/operator-no-newline-after */
   overflow: auto;
+  min-width: 0;
   position: relative;
 
   [data-ezui-data-grid-shadow] {

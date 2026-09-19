@@ -89,5 +89,14 @@
 }
 
 .subtotal .content {
-  font-weight: design-token("font.weight.bold");
+  font-weight: design-token("font.weight.semibold");
+}
+
+.subtotal {
+  border-top: design-token("shape.border_width.1") solid
+    component-token("data-grid", "border-color");
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums lining-nums;
 }

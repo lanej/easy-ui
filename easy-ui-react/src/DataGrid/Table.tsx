@@ -38,6 +38,8 @@ export function Table<C extends Column, R extends RowType>(
 ) {
   const {
     headerVariant,
+    columnOptions,
+    maxHeight,
     maxRows = DEFAULT_MAX_ROWS,
     renderExpandedRow = (r) => r,
     selectionMode,
@@ -127,7 +129,12 @@ export function Table<C extends Column, R extends RowType>(
   );
 
   const style = {
-    ...getComponentToken("data-grid", "max-rows", String(maxRows)),
+    ...getComponentToken(
+      "data-grid",
+      "max-rows",
+      typeof maxRows === "number" ? String(maxRows) : undefined,
+    ),
+    maxHeight: maxHeight ?? (maxRows === "all" ? "none" : undefined),
     ...expandedRowStyle,
     ...footerStyle,
   } as CSSProperties;
@@ -135,6 +142,7 @@ export function Table<C extends Column, R extends RowType>(
   const context = useMemo(() => {
     return {
       headerVariant,
+      columnOptions,
       hasSelection,
       hasExpansion,
       hasRowActions,
@@ -146,6 +154,7 @@ export function Table<C extends Column, R extends RowType>(
     };
   }, [
     headerVariant,
+    columnOptions,
     hasSelection,
     hasExpansion,
     hasRowActions,

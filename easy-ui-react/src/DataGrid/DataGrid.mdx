@@ -233,7 +233,7 @@ The optional `grouping` prop has type `DataGridGrouping<C, R>`, exported from `@
 
 By default, the first column displays `"{group key} subtotal"`; an aggregator for that column overrides the label. Other columns display their aggregated values converted to strings, or remain blank if no aggregator is configured. `null` and `undefined` render blank. Custom subtotal renderers receive these same values, including the default label. Keep monetary values in integer minor units (for example, cents), sum them, and format them as currency in the renderers.
 
-Subtotal rows use bold text and a background tint, retain the normal row and cell roles, and expose `data-ezui-data-grid-subtotal="true"` for structural identification. Synthetic row keys are internal; `renderRowCell`, `rowActions`, and expansion callbacks continue to receive only data rows or their keys. Subtotals have no selection checkbox, expansion button, or row actions, and do not trigger `onRowAction` or `onCellAction`.
+Subtotal rows use semibold text, a neutral background tint, and a top separator, retain the normal row and cell roles, and expose `data-ezui-data-grid-subtotal="true"` for structural identification. Synthetic row keys are internal; `renderRowCell`, `rowActions`, and expansion callbacks continue to receive only data rows or their keys. Subtotals have no selection checkbox, expansion button, or row actions, and do not trigger `onRowAction` or `onCellAction`.
 
 Sorting remains controlled by `sortDescriptor` and `onSortChange`: sort the source `rows`, and the grid regroups them and recomputes subtotals. Subtotals stay after their group, outside the sorted data. Selection, including select-all, applies only to selectable data rows and respects `disabledKeys`. The existing `"all"` selection callback value retains its meaning. The existing restriction against combining selection and expansion still applies.
 
@@ -242,6 +242,47 @@ Subtotals use only the supplied `rows`, so filtering or pagination produces subt
 The Service Split example reproduces the Analytics homepage's carrier and service-level breakdown using representative data. It totals package counts and spend for each carrier.
 
 <Canvas of={DataGridStories.ServiceSplit} />
+
+## Height and Column Layout
+
+The grid fills its container's width. Scrollbars appear only when content exceeds the available width or an explicit height limit; they do not need a visibility prop.
+
+| Control         | Type                                                   | Behavior                                                                                                                                                     |
+| --------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `maxRows`       | `number` or `"all"`                                    | Limit height by body-row count, including subtotals, or use `"all"` for natural content height. The existing default of `999` is unchanged.                  |
+| `maxHeight`     | `CSSProperties["maxHeight"]`                           | Optional height limit such as `320` (pixels), `"60vh"`, or `"calc(100vh - 16rem)"`. Takes precedence over `maxRows`. Short tables keep their natural height. |
+| `columnOptions` | `Partial<Record<ColumnKey<C>, DataGridColumnOptions>>` | Per-column layout, applied consistently to the header, data cells, and subtotal cells.                                                                       |
+| `size`          | `"sm"`, `"md"`, or `"lg"`                              | Existing row-density control. Defaults to `"md"`.                                                                                                            |
+
+`DataGridColumnOptions` is exported from `@easypost/easy-ui/DataGrid/types`:
+
+| Column option | Type                              | Behavior                                                                                                                                                    |
+| ------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alignment`   | `"start"`, `"center"`, or `"end"` | Sets horizontal alignment. Explicit alignment overrides the numeric default.                                                                                |
+| `isNumeric`   | `boolean`                         | Uses equal-width digits and defaults to end alignment. Formatting currency, percentages, and locale-specific numbers remains the renderer's responsibility. |
+| `width`       | `CSSProperties["width"]`          | Preferred column width. Accepts pixels as numbers or CSS lengths such as `"20%"`. Automatic table layout may widen a column to fit its content.             |
+| `minWidth`    | `CSSProperties["minWidth"]`       | Keeps columns readable when space is limited. If the column minimums exceed the container width, the table scrolls horizontally.                            |
+
+Keep presentation in `columnOptions`, keyed by the same keys as `columns`, so existing arbitrary column metadata retains its meaning. Selection, expansion, and action columns are added independently; they do not shift which data columns receive these options.
+
+```tsx
+<DataGrid
+  {/** other data grid props */}
+  maxRows="all"
+  columnOptions={{
+    carrier: { width: "20%", minWidth: 184 },
+    service: { width: "40%", minWidth: 200 },
+    packages: { width: "20%", minWidth: 140, isNumeric: true },
+    spend: { width: "20%", minWidth: 144, isNumeric: true },
+  }}
+/>
+```
+
+Use natural height for a short table on a page. Add `maxHeight={280}` when the surrounding dashboard panel intentionally needs a scrollable table. The Service Split story exposes these options in Storybook Controls.
+
+<Canvas of={DataGridStories.ServiceSplitConstrained} />
+
+<Controls of={DataGridStories.ServiceSplit} />
 
 ## With Custom Size
 

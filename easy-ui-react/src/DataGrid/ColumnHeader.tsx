@@ -22,6 +22,12 @@ type ColumnHeaderProps<T = unknown> = {
 
 export function ColumnHeader({ column, state }: ColumnHeaderProps) {
   const table = useDataGridTable();
+  const options = table.columnOptions?.[column.key];
+  const style = options && {
+    width: options.width,
+    minWidth: options.minWidth,
+    textAlign: options.alignment ?? (options.isNumeric ? "end" : undefined),
+  };
   const ref = useRef(null);
   const { columnHeaderProps } = useTableColumnHeader(
     { node: column },
@@ -61,6 +67,7 @@ export function ColumnHeader({ column, state }: ColumnHeaderProps) {
 
   const contentClassName = classNames(
     styles.content,
+    options?.isNumeric && styles.numeric,
     column.props.allowsSorting && styles.allowsSorting,
   );
 
@@ -73,6 +80,7 @@ export function ColumnHeader({ column, state }: ColumnHeaderProps) {
       ref={ref}
       {...mergeProps(columnHeaderProps, focusProps)}
       className={className}
+      style={style}
       data-ezui-data-grid-column-header="true"
     >
       <div className={contentClassName}>
