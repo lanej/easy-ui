@@ -23,6 +23,8 @@ jobs:
         run: node scripts/check-chart-package.mjs
       - name: Linting
         run: npm run lint
+      - name: Git hook tests
+        run: npm run test:git-hooks
       - name: Unit tests
         run: npm run test
       - name: Build storybook

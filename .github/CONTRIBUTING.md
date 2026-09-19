@@ -53,6 +53,25 @@ We'll review your pull request and either merge it, request changes to it, or cl
 1. Make sure your code lints with `npm run lint`
 1. Create a changeset by running `npm run changes:add`. [More info](https://github.com/EasyPost/easy-ui/blob/main/.github/CONTRIBUTING.md#adding-a-changeset).
 
+### Commit checks
+
+Running `npm install` in the repository root installs a pre-commit hook. It runs
+the same full-repository `npm run lint` command as CI before every commit and
+blocks the commit if lint fails, including errors outside the files being staged.
+It does not automatically format, stage, stash, or otherwise modify your work.
+
+The hook checks the current working tree. When staging part of a file, include its
+lint fixes in the commit; CI also checks the committed snapshot. Tests, builds,
+and browser checks remain separate validation steps.
+
+Run `npm run hooks:install` to install or refresh the hook in an existing checkout.
+The installed hook works across branches and linked worktrees. Installation is
+skipped in CI, source archives, and repositories with a custom `core.hooksPath` or
+an existing unmanaged pre-commit hook. If you maintain your own hook, add
+`npm run lint` to it. The installer does not replace custom hooks or change Git
+configuration. `npm run test:git-hooks` checks installation and commit rejection
+in temporary repositories.
+
 ### Changelog
 
 The changelog is created with [Changesets](https://github.com/changesets/changesets).

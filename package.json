@@ -44,8 +44,11 @@
     "dev": "FORCE_COLOR=1 turbo run dev",
     "format": "prettier . --write",
     "lint": "FORCE_COLOR=1 turbo run lint",
+    "hooks:install": "node scripts/install-git-hooks.mjs",
+    "prepare": "npm run hooks:install",
     "start:storybook": "storybook dev -p 9003",
     "test": "FORCE_COLOR=1 turbo run test",
+    "test:git-hooks": "node --test scripts/install-git-hooks.test.mjs",
     "test:watch:react": "npm run test:watch --workspace @easypost/easy-ui"
   },
   "devDependencies": {
