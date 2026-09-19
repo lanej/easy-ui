@@ -234,7 +234,7 @@ The optional `grouping` prop has type `DataGridGrouping<C, R>`, exported from `@
 
 By default, the first column displays `"{group key} subtotal"`; an aggregator for that column overrides the label. Other columns display their aggregated values converted to strings, or remain blank if no aggregator is configured. `null` and `undefined` render blank. Custom subtotal renderers receive these same values, including the default label. Keep monetary values in integer minor units (for example, cents), sum them, and format them as currency in the renderers.
 
-Subtotal rows use semibold text, a neutral background tint, and a top separator, retain the normal row and cell roles, and expose `data-ezui-data-grid-subtotal="true"` for structural identification. Synthetic row keys are internal; `renderRowCell`, `rowActions`, and expansion callbacks continue to receive only data rows or their keys. Subtotals remain reachable with arrow keys so keyboard users can read their values. They have no selection checkbox, expansion button, or row actions, and do not trigger `onRowAction` or `onCellAction`.
+Subtotal rows use semibold text, a neutral background tint, and a top separator, retain the normal row and cell roles, and expose `data-ezui-data-grid-subtotal="true"` for structural identification. Synthetic row keys are internal; `renderRowCell`, `rowActions`, and expansion callbacks continue to receive only data rows or their keys. Subtotals remain reachable with arrow keys so keyboard users can read their values. They have no selection checkbox, detail-expansion button, or row actions, and do not trigger `onRowAction` or `onCellAction`. Optional group disclosure buttons are described below.
 
 Sorting remains controlled by `sortDescriptor` and `onSortChange`: sort the source `rows`, and the grid regroups them and recomputes subtotals. Subtotals stay after their group, outside the sorted data. Selection, including select-all, applies only to selectable data rows and respects `disabledKeys`. The existing `"all"` selection callback value retains its meaning. The existing restriction against combining selection and expansion still applies.
 
@@ -243,6 +243,43 @@ Subtotals use only the supplied `rows`, so filtering or pagination produces subt
 The Service Split example reproduces the Analytics homepage's carrier and service-level breakdown using representative data. It totals package counts and spend for each carrier.
 
 <Canvas of={DataGridStories.ServiceSplit} />
+
+### Collapsible groups
+
+Set `grouping.isCollapsible` to show a chevron button beside each subtotal label. Groups start expanded. Clicking the chevron, or pressing Enter or Space while it is focused, hides the group's detail rows and keeps its subtotal visible. The button announces the group name and expanded state. Subtotals keep their position after their group when expanded.
+
+| Grouping option        | Type                       | Behavior                                               |
+| ---------------------- | -------------------------- | ------------------------------------------------------ |
+| `isCollapsible`        | `boolean`                  | Enables disclosure buttons. Defaults to `false`.       |
+| `defaultCollapsedKeys` | `Iterable<Key>`            | Initially collapsed group keys in uncontrolled mode.   |
+| `collapsedKeys`        | `Iterable<Key>`            | Controlled set of collapsed group keys.                |
+| `onCollapsedChange`    | `(keys: Set<Key>) => void` | Receives the next collapsed group keys after a toggle. |
+
+These are **group keys**, returned by `getGroupKey`, rather than row keys or internal subtotal keys. Numeric and string keys remain distinct. The three state options require `isCollapsible: true`.
+
+```tsx
+const [collapsedKeys, setCollapsedKeys] = useState<Set<Key>>(new Set());
+
+<DataGrid
+  {...tableProps}
+  grouping={{
+    getGroupKey: (row) => row.carrier,
+    aggregators: {
+      packages: (rows) => rows.reduce((total, row) => total + row.packages, 0),
+      spend: (rows) => rows.reduce((total, row) => total + row.spend, 0),
+    },
+    isCollapsible: true,
+    collapsedKeys,
+    onCollapsedChange: setCollapsedKeys,
+  }}
+/>;
+```
+
+Omit `collapsedKeys` to let the grid manage state. Use `defaultCollapsedKeys` to start selected groups closed. A controlled consumer updates `collapsedKeys` in response to `onCollapsedChange`; supplying the prop without a handler makes it read-only.
+
+Collapsing changes visibility only. Aggregators still receive every supplied row in the group, selected rows remain selected, and select-all includes selectable details in collapsed groups. No selection or detail-expansion callback fires merely because a group is collapsed. Open detail content is temporarily hidden and restored when its group reopens. Sorting and new data preserve collapse state by group key. Arrow navigation skips hidden rows; focus stays on the toggle, or moves to the subtotal if a controlled update hides the focused detail row. `maxRows` counts visible body rows, including the retained subtotals.
+
+<Canvas of={DataGridStories.ServiceSplitCollapsible} />
 
 ## Height and Column Layout
 
@@ -469,3 +506,27 @@ Content wider than the frame scrolls horizontally within the same bound. The row
 ### DataGrid.RowsPerPage
 
 <ArgTypes of={DataGrid.RowsPerPage} />
+
+### Long labels in a narrow container
+
+The following example uses a 480-pixel panel that also fits smaller screens. Its long service names use the existing `Text whiteSpace="nowrap"` renderer so content stays within the grid's fixed row heights. Horizontal scrolling exposes the full text and numeric columns, while the carrier column stays visible. This is genuine content overflow; natural height avoids an additional vertical scrollbar.
+
+```tsx
+<div style={{ width: 480, maxWidth: "100%" }}>
+  <DataGrid
+    {...tableProps}
+    maxRows="all"
+    columnOptions={{
+      carrier: { width: 212, minWidth: 212 },
+      service: { minWidth: 320 },
+      packages: { minWidth: 140, isNumeric: true },
+      spend: { minWidth: 144, isNumeric: true },
+    }}
+    renderRowCell={(cell) => <Text whiteSpace="nowrap">{String(cell)}</Text>}
+  />
+</div>
+```
+
+Use concise display labels in the frozen first column so it leaves room for the other columns on small screens. Column widths are preferred widths under automatic table layout; they do not truncate content. This example retains full labels without adding a wrapping or truncation API.
+
+<Canvas of={DataGridStories.LongLabelsNarrow} />
