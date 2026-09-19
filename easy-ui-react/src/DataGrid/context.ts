@@ -18,6 +18,7 @@ export const useDataGrid = () => {
 };
 
 type DataGridTableContextType = {
+  columnOptions: DataGridProps["columnOptions"];
   headerVariant: DataGridProps["headerVariant"];
   hasSelection: boolean;
   hasExpansion: boolean;

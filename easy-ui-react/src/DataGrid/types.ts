@@ -5,7 +5,7 @@ import {
   SelectionMode,
   SortDescriptor,
 } from "@react-types/shared";
-import { ReactNode } from "react";
+import { CSSProperties, ReactNode } from "react";
 import { IconSymbol } from "../types";
 
 /** Denote that an object must contain a key. */
@@ -56,6 +56,21 @@ export type KeyedSortDescriptor<K extends Key = Key> = Omit<
 
 export type RowAction = MenuRowAction | ActionRowAction;
 
+/** Presentation shared by a column's header, data cells, and subtotal cells. */
+export type DataGridColumnOptions = {
+  /** Horizontal alignment. Defaults to end for numeric columns, otherwise start. */
+  alignment?: "start" | "center" | "end";
+
+  /** Preferred width under the browser's automatic table layout; numbers are pixels. */
+  width?: CSSProperties["width"];
+
+  /** Minimum column width. Wider tables remain horizontally scrollable. */
+  minWidth?: CSSProperties["minWidth"];
+
+  /** Use tabular digits and default to end alignment. Does not format values. */
+  isNumeric?: boolean;
+};
+
 /** The original data rows contributing to a subtotal. */
 export type DataGridGroup<R extends Row = Row> = {
   readonly key: Key;
@@ -91,6 +106,9 @@ export type DataGridProps<
   /** List of keys for columns to allow sort. */
   columnKeysAllowingSort?: ColumnKey<C>[];
 
+  /** Layout options keyed by column key, separate from arbitrary column metadata. */
+  columnOptions?: Partial<Record<ColumnKey<C>, DataGridColumnOptions>>;
+
   /** Columns for the table. */
   columns: C[];
 
@@ -116,8 +134,9 @@ export type DataGridProps<
   headerVariant?: "primary" | "secondary" | "emphasized";
 
   /**
-   * Constrains the height of the data grid to a set number of rows, or to the
-   * height its container makes available with `auto`.
+   * Constrains height by body-row count, including subtotals. "all" removes the
+   * row limit; "auto" uses the height its container makes available. The
+   * existing default of 999 is retained for compatibility.
    *
    * @remarks
    * `auto` keeps the data grid within the space its container offers and
@@ -128,7 +147,13 @@ export type DataGridProps<
    * space to work from; with none, the data grid falls back to drawing every
    * row.
    */
-  maxRows?: number | "auto";
+  maxRows?: number | "all" | "auto";
+
+  /**
+   * Explicit height limit, e.g. 400 (pixels) or "60vh". Overrides maxRows when
+   * supplied. Content below this height does not stretch to fill it.
+   */
+  maxHeight?: CSSProperties["maxHeight"];
 
   /** Handler that is called when a user performs an action on the cell. */
   onCellAction?: (key: RowKey<R>) => void;

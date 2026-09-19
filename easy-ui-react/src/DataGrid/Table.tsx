@@ -37,6 +37,8 @@ export function Table<C extends Column, R extends RowType>(
 ) {
   const {
     headerVariant,
+    columnOptions,
+    maxHeight,
     maxRows = DEFAULT_MAX_ROWS,
     renderExpandedRow = (r) => r,
     selectionMode,
@@ -122,19 +124,20 @@ export function Table<C extends Column, R extends RowType>(
   );
 
   const style = {
-    // An auto height data grid takes its bound from its container rather than a
-    // row count, so it leaves this token unset for the styles to fall back on
+    // Auto and unlimited layouts do not set a row-count bound.
     ...getComponentToken(
       "data-grid",
       "max-rows",
-      isAutoHeight ? undefined : String(maxRows),
+      typeof maxRows === "number" ? String(maxRows) : undefined,
     ),
+    maxHeight: maxHeight ?? (maxRows === "all" ? "none" : undefined),
     ...expandedRowStyle,
   } as CSSProperties;
 
   const context = useMemo(() => {
     return {
       headerVariant,
+      columnOptions,
       hasSelection,
       hasExpansion,
       hasRowActions,
@@ -146,6 +149,7 @@ export function Table<C extends Column, R extends RowType>(
     };
   }, [
     headerVariant,
+    columnOptions,
     hasSelection,
     hasExpansion,
     hasRowActions,

@@ -102,6 +102,7 @@
   );
   /* stylelint-enable scss/operator-no-newline-after */
   overflow: auto;
+  min-width: 0;
   position: relative;
   // Contains the grid's internal stacking (cells, frozen columns, expanded
   // rows) so the footer only has to follow it in the document to paint above it

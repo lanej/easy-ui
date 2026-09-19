@@ -88,6 +88,18 @@ describe("DataGrid grouping", () => {
     }
   });
 
+  it("uses the same numeric column formatting for data and subtotal cells", () => {
+    render(grid({ columnOptions: { spend: { isNumeric: true, width: 160 } } }));
+    for (const row of bodyRows()) {
+      const spend = row.lastElementChild;
+      expect(spend).toHaveStyle({ textAlign: "end", width: "160px" });
+      expect(spend?.firstElementChild).toHaveAttribute(
+        "class",
+        expect.stringContaining("numeric"),
+      );
+    }
+  });
+
   it("passes group rows to caller aggregators and keeps subtotal rendering separate", () => {
     const aggregate = vi.fn((groupRows: readonly (typeof rows)[number][]) =>
       Math.max(...groupRows.map((row) => row.packages)),

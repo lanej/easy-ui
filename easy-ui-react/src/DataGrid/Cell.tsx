@@ -28,6 +28,14 @@ type CellProps<T = unknown> = {
 export function Cell({ cell, state }: CellProps) {
   const table = useDataGridTable();
   const row = useDataGridRow();
+  const options = cell.column
+    ? table.columnOptions?.[cell.column.key]
+    : undefined;
+  const style = options && {
+    width: options.width,
+    minWidth: options.minWidth,
+    textAlign: options.alignment ?? (options.isNumeric ? "end" : undefined),
+  };
   const ref = useRef(null);
   const { gridCellProps } = useTableCell({ node: cell }, state, ref);
   const { isFocusVisible, focusProps } = useFocusRing();
@@ -73,8 +81,14 @@ export function Cell({ cell, state }: CellProps) {
       {...mergeProps(gridCellProps, focusProps)}
       ref={ref}
       className={className}
+      style={style}
     >
-      <div className={styles.content}>
+      <div
+        className={classNames(
+          styles.content,
+          options?.isNumeric && styles.numeric,
+        )}
+      >
         {!(row.isSubtotal && cell.props.isSelectionCell) && (
           <CellContentComponent cell={cell} state={state} />
         )}

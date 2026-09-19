@@ -693,13 +693,42 @@ function renderServiceSplitCell(cell: unknown, columnKey: string | number) {
 
 /** Carrier × service breakdown with automatically computed carrier subtotals. */
 export const ServiceSplit: Story = {
-  render: () => (
+  args: {
+    maxRows: "all",
+    headerVariant: "secondary",
+    columnOptions: {
+      carrier: { width: "20%", minWidth: 184 },
+      service: { width: "40%", minWidth: 200 },
+      packages: { width: "20%", minWidth: 140, isNumeric: true },
+      spend: { width: "20%", minWidth: 144, isNumeric: true },
+    },
+  },
+  parameters: {
+    controls: {
+      include: [
+        "size",
+        "headerVariant",
+        "maxRows",
+        "maxHeight",
+        "columnOptions",
+      ],
+    },
+  },
+  argTypes: {
+    maxRows: { control: "select", options: ["all", 4, 6, 9] },
+    maxHeight: { control: "text" },
+    columnOptions: { control: "object" },
+  },
+  render: ({ maxRows, maxHeight, size, headerVariant, columnOptions }) => (
     <DataGrid
+      maxRows={maxRows}
+      maxHeight={maxHeight}
+      size={size}
+      headerVariant={headerVariant}
+      columnOptions={columnOptions}
       aria-label="Service Split"
       columns={serviceSplitColumns}
       rows={serviceSplitRows}
-      maxRows={9}
-      headerVariant="secondary"
       renderColumnCell={(column) => column.name}
       renderRowCell={renderServiceSplitCell}
       grouping={{
@@ -712,8 +741,24 @@ export const ServiceSplit: Story = {
       }}
     />
   ),
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
+    const table = canvas.getByRole("grid");
+    const scrollContainer = table.parentElement!.parentElement!;
+    // A table that fits must not acquire overflow from decorative elements.
+    if (
+      table.getBoundingClientRect().width <=
+      scrollContainer.clientWidth + 1
+    ) {
+      await expect(scrollContainer.scrollWidth).toBeLessThanOrEqual(
+        scrollContainer.clientWidth + 1,
+      );
+    }
+    if (args.maxRows === "all" && args.maxHeight == null) {
+      await expect(scrollContainer.scrollHeight).toBeLessThanOrEqual(
+        scrollContainer.clientHeight + 1,
+      );
+    }
     for (const [carrier, packages, spend] of [
       ["USPS", "2,000", "$14,400.00"],
       ["UPS", "800", "$10,976.00"],
@@ -734,4 +779,10 @@ export const ServiceSplit: Story = {
       ).toBeInTheDocument();
     }
   },
+};
+
+/** The same table in a dashboard panel with a deliberate height limit. */
+export const ServiceSplitConstrained: Story = {
+  ...ServiceSplit,
+  args: { ...ServiceSplit.args, maxHeight: 280 },
 };
