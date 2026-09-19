@@ -170,7 +170,7 @@ describe("DataGrid grouping", () => {
   it("distinguishes numeric and string group keys and avoids consumer key collisions", () => {
     render(
       grid({
-        rows: [{ ...rows[0], key: "__ezui_subtotal_string:1" }, rows[1]],
+        rows: [{ ...rows[0], key: "__ezui_subtotal_string:%221%22" }, rows[1]],
         grouping: {
           ...grouping,
           getGroupKey: (row) => (row.carrier === "USPS" ? "1" : 1),
@@ -186,6 +186,39 @@ describe("DataGrid grouping", () => {
       ["1 subtotal", "", "3", "12.5"],
       ["1 subtotal", "", "2", "20"],
     ]);
+  });
+
+  it("preserves accessible subtotal labels for group keys containing spaces", () => {
+    render(
+      grid({
+        rows: [
+          { ...rows[0], carrier: "DHL Express" },
+          { ...rows[1], carrier: "DHLExpress" },
+        ],
+      }),
+    );
+    expect(screen.getByRole("row", { name: "DHL Express subtotal" })).toBe(
+      subtotalRows()[0],
+    );
+    expect(screen.getByRole("row", { name: "DHLExpress subtotal" })).toBe(
+      subtotalRows()[1],
+    );
+  });
+
+  it("keeps subtotal identity stable when colliding keys and group order change", () => {
+    const sourceRows = [rows[0], { ...rows[1], carrier: "USPS_" }];
+    const { rerender } = render(grid({ rows: sourceRows }));
+    const collidingKey = subtotalRows()[0].getAttribute("data-key")!;
+    const collidingRows = [
+      { ...sourceRows[0], key: collidingKey },
+      sourceRows[1],
+    ];
+    rerender(grid({ rows: collidingRows }));
+    const before = new Map(subtotalRows().map((row) => [cells(row)[0], row]));
+    rerender(grid({ rows: [...collidingRows].reverse() }));
+    for (const row of subtotalRows()) {
+      expect(row).toBe(before.get(cells(row)[0]));
+    }
   });
 
   it("keeps subtotals after their groups when the consumer sorts rows", async () => {
@@ -294,6 +327,48 @@ describe("DataGrid grouping", () => {
     rerender(grid({ ...props, expandedKey: "c" }));
     expect(screen.getByText("Details c")).toBeInTheDocument();
     expect(screen.queryByText("Details b")).not.toBeInTheDocument();
+  });
+
+  it.each(["pointer", "Enter", "Space"])(
+    "does not dispatch standalone row actions from subtotal rows via %s",
+    async (activation) => {
+      const onRowAction = vi.fn();
+      const { user } = render(grid({ onRowAction }));
+      for (const subtotal of subtotalRows()) {
+        await userClick(user, within(subtotal).getByRole("rowheader"));
+        if (activation !== "pointer") {
+          onRowAction.mockClear();
+          await user.keyboard(activation === "Enter" ? "{Enter}" : " ");
+        }
+        expect(onRowAction).not.toHaveBeenCalled();
+      }
+      await userClick(user, within(bodyRows()[0]).getByRole("rowheader"));
+      expect(onRowAction).toHaveBeenCalledWith("a");
+    },
+  );
+
+  it("keeps subtotals keyboard-readable without selecting or activating them", async () => {
+    const onRowAction = vi.fn();
+    const onSelectionChange = vi.fn();
+    const { user } = render(
+      grid({ selectionMode: "multiple", onRowAction, onSelectionChange }),
+    );
+    await userClick(user, within(bodyRows()[1]).getByRole("rowheader"));
+    onRowAction.mockClear();
+    onSelectionChange.mockClear();
+    await user.keyboard("{ArrowDown}");
+    expect(subtotalRows()[0]).toContainElement(
+      document.activeElement as HTMLElement,
+    );
+    await user.keyboard("{Enter} ");
+    expect(onRowAction).not.toHaveBeenCalled();
+    expect(onSelectionChange).not.toHaveBeenCalled();
+    await user.keyboard("{ArrowDown}");
+    expect(bodyRows()[3]).toContainElement(
+      document.activeElement as HTMLElement,
+    );
+    await user.keyboard(" ");
+    expect(within(bodyRows()[3]).getByRole("checkbox")).toBeChecked();
   });
 
   it("never invokes row, cell, or menu actions for subtotals", async () => {

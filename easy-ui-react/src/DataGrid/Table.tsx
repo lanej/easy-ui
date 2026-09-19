@@ -69,8 +69,16 @@ export function Table<C extends Column, R extends RowType>(
   const { gridProps } = useTable(
     {
       ...props,
-      // React Aria disables row actions via disabledKeys, but cell actions
-      // need a separate guard using the cell's parent row in the collection.
+      // disabledKeys only prevents selection. Keep subtotals keyboard-readable
+      // while preventing their synthetic keys from reaching action callbacks.
+      onRowAction:
+        subtotalKeys.size > 0 && props.onRowAction
+          ? (key) => {
+              if (!subtotalKeys.has(key)) {
+                props.onRowAction?.(key);
+              }
+            }
+          : props.onRowAction,
       onCellAction:
         subtotalKeys.size > 0 && props.onCellAction
           ? (key) => {

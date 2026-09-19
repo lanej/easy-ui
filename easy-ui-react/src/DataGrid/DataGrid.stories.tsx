@@ -491,6 +491,7 @@ function renderServiceSplitCell(cell: unknown, columnKey: string | number) {
 /** Carrier × service breakdown with automatically computed carrier subtotals. */
 export const ServiceSplit: Story = {
   args: {
+    size: "md",
     maxRows: "all",
     headerVariant: "secondary",
     columnOptions: {
@@ -513,7 +514,11 @@ export const ServiceSplit: Story = {
   },
   argTypes: {
     maxRows: { control: "select", options: ["all", 4, 6, 9] },
-    maxHeight: { control: "text" },
+    maxHeight: {
+      control: "text",
+      description:
+        'CSS height limit, such as "280px" or "60vh". Overrides maxRows.',
+    },
     columnOptions: { control: "object" },
   },
   render: ({ maxRows, maxHeight, size, headerVariant, columnOptions }) => (
@@ -581,5 +586,5 @@ export const ServiceSplit: Story = {
 /** The same table in a dashboard panel with a deliberate height limit. */
 export const ServiceSplitConstrained: Story = {
   ...ServiceSplit,
-  args: { ...ServiceSplit.args, maxHeight: 280 },
+  args: { ...ServiceSplit.args, maxHeight: "280px" },
 };
