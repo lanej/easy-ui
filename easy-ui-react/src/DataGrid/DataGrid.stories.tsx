@@ -1,6 +1,7 @@
 import CheckCircleIcon from "@easypost/easy-ui-icons/CheckCircle";
 import ErrorIcon from "@easypost/easy-ui-icons/Error";
 import { action } from "storybook/actions";
+import { expect, userEvent, within } from "storybook/test";
 import { Meta, StoryObj } from "@storybook/react-vite";
 import React, { useState } from "react";
 import { Key } from "react-aria";
@@ -419,3 +420,304 @@ function WithFooterTemplate(args: Partial<DataGridProps>) {
     />
   );
 }
+
+// Representative Analytics homepage data. Store spend in cents so aggregation
+// operates on integers; apply currency formatting only when rendering cells.
+const serviceSplitColumns = [
+  { key: "carrier", name: "Carrier" },
+  { key: "service", name: "Service level" },
+  { key: "packages", name: "Package count" },
+  { key: "spend", name: "Spend" },
+];
+const serviceSplitRows = [
+  {
+    key: "usps-ground",
+    carrier: "USPS",
+    service: "Ground Advantage",
+    packages: 1200,
+    spend: 684000,
+  },
+  {
+    key: "usps-priority",
+    carrier: "USPS",
+    service: "Priority Mail",
+    packages: 800,
+    spend: 756000,
+  },
+  {
+    key: "ups-ground",
+    carrier: "UPS",
+    service: "Ground",
+    packages: 640,
+    spend: 684800,
+  },
+  {
+    key: "ups-next-day",
+    carrier: "UPS",
+    service: "Next Day Air",
+    packages: 160,
+    spend: 412800,
+  },
+  {
+    key: "fedex-ground",
+    carrier: "FedEx",
+    service: "Ground",
+    packages: 420,
+    spend: 499800,
+  },
+  {
+    key: "fedex-2day",
+    carrier: "FedEx",
+    service: "2Day",
+    packages: 80,
+    spend: 228000,
+  },
+];
+const serviceSplitCurrency = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+const serviceSplitCount = new Intl.NumberFormat("en-US");
+function renderServiceSplitCell(cell: unknown, columnKey: string | number) {
+  if (columnKey === "spend") {
+    return serviceSplitCurrency.format(Number(cell) / 100);
+  }
+  if (columnKey === "packages") {
+    return serviceSplitCount.format(Number(cell));
+  }
+  return String(cell ?? "");
+}
+
+/** Carrier × service breakdown with automatically computed carrier subtotals. */
+export const ServiceSplit: Story = {
+  args: {
+    size: "md",
+    maxRows: "all",
+    headerVariant: "secondary",
+    columnOptions: {
+      carrier: { width: "20%", minWidth: 184 },
+      service: { width: "40%", minWidth: 200 },
+      packages: { width: "20%", minWidth: 140, isNumeric: true },
+      spend: { width: "20%", minWidth: 144, isNumeric: true },
+    },
+  },
+  parameters: {
+    controls: {
+      include: [
+        "size",
+        "headerVariant",
+        "maxRows",
+        "maxHeight",
+        "columnOptions",
+      ],
+    },
+  },
+  argTypes: {
+    maxRows: { control: "select", options: ["all", 4, 6, 9] },
+    maxHeight: {
+      control: "text",
+      description:
+        'CSS height limit, such as "280px" or "60vh". Overrides maxRows.',
+    },
+    columnOptions: { control: "object" },
+  },
+  render: ({
+    maxRows,
+    maxHeight,
+    size,
+    headerVariant,
+    columnOptions,
+    grouping,
+  }) => (
+    <DataGrid
+      maxRows={maxRows}
+      maxHeight={maxHeight}
+      size={size}
+      headerVariant={headerVariant}
+      columnOptions={columnOptions}
+      aria-label="Service Split"
+      columns={serviceSplitColumns}
+      rows={serviceSplitRows}
+      renderColumnCell={(column) => column.name}
+      renderRowCell={renderServiceSplitCell}
+      grouping={{
+        getGroupKey: (row) => row.carrier,
+        aggregators: {
+          packages: (rows) => rows.reduce((sum, row) => sum + row.packages, 0),
+          spend: (rows) => rows.reduce((sum, row) => sum + row.spend, 0),
+        },
+        renderSubtotalCell: renderServiceSplitCell,
+        ...grouping,
+      }}
+    />
+  ),
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const table = canvas.getByRole("grid");
+    const scrollContainer = table.parentElement!.parentElement!;
+    // A table that fits must not acquire overflow from decorative elements.
+    if (
+      table.getBoundingClientRect().width <=
+      scrollContainer.clientWidth + 1
+    ) {
+      await expect(scrollContainer.scrollWidth).toBeLessThanOrEqual(
+        scrollContainer.clientWidth + 1,
+      );
+    }
+    if (args.maxRows === "all" && args.maxHeight == null) {
+      await expect(scrollContainer.scrollHeight).toBeLessThanOrEqual(
+        scrollContainer.clientHeight + 1,
+      );
+    }
+    for (const [carrier, packages, spend] of [
+      ["USPS", "2,000", "$14,400.00"],
+      ["UPS", "800", "$10,976.00"],
+      ["FedEx", "500", "$7,278.00"],
+    ]) {
+      const subtotal = canvas.getByRole("row", {
+        name: new RegExp(`${carrier} subtotal`),
+      });
+      await expect(subtotal).toHaveAttribute(
+        "data-ezui-data-grid-subtotal",
+        "true",
+      );
+      await expect(
+        within(subtotal).getByRole("gridcell", { name: packages }),
+      ).toBeInTheDocument();
+      await expect(
+        within(subtotal).getByRole("gridcell", { name: spend }),
+      ).toBeInTheDocument();
+    }
+  },
+};
+
+/** The same table in a dashboard panel with a deliberate height limit. */
+export const ServiceSplitConstrained: Story = {
+  ...ServiceSplit,
+  args: { ...ServiceSplit.args, maxHeight: "280px" },
+};
+
+/** Collapse detail rows while keeping each carrier's totals visible. */
+export const ServiceSplitCollapsible: Story = {
+  ...ServiceSplit,
+  args: {
+    ...ServiceSplit.args,
+    columnOptions: {
+      ...ServiceSplit.args?.columnOptions,
+      carrier: { width: "25%", minWidth: 212 },
+      service: { width: "35%", minWidth: 200 },
+    },
+    grouping: {
+      getGroupKey: (row) => String(row.carrier),
+      aggregators: {
+        packages: (rows) =>
+          rows.reduce((sum, row) => sum + Number(row.packages), 0),
+        spend: (rows) => rows.reduce((sum, row) => sum + Number(row.spend), 0),
+      },
+      isCollapsible: true,
+    },
+  },
+  play: async (context) => {
+    await ServiceSplit.play?.(context);
+    const canvas = within(context.canvasElement);
+    const toggle = canvas.getByRole("button", { name: "Collapse USPS group" });
+    await userEvent.click(toggle);
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await expect(toggle).toHaveFocus();
+    await expect(
+      canvas.queryByText("Ground Advantage"),
+    ).not.toBeInTheDocument();
+    await expect(canvas.getByText("$14,400.00")).toBeInTheDocument();
+    await userEvent.keyboard("{Enter}");
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(canvas.getByText("Ground Advantage")).toBeInTheDocument();
+    await userEvent.keyboard(" ");
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(toggle);
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  },
+};
+
+const longServiceRows = serviceSplitRows.map((row, index) => ({
+  ...row,
+  service: [
+    "Ground Advantage — commercial parcel service with tracking and delivery confirmation",
+    "Priority Mail — regional and nationwide delivery for time-sensitive shipments",
+    "Ground — residential delivery with additional handling for oversized packages",
+    "Next Day Air — early delivery with signature confirmation",
+    "Ground — economy delivery to residential and commercial addresses",
+    "2Day — scheduled delivery with a direct signature requirement",
+  ][index],
+}));
+
+/** Long service names in a narrow dashboard panel, without cutting off text. */
+export const LongLabelsNarrow: Story = {
+  ...ServiceSplit,
+  args: {
+    ...ServiceSplit.args,
+    columnOptions: {
+      carrier: { width: 212, minWidth: 212 },
+      service: { minWidth: 320 },
+      packages: { minWidth: 140, isNumeric: true },
+      spend: { minWidth: 144, isNumeric: true },
+    },
+  },
+  render: ({ maxRows, maxHeight, size, headerVariant, columnOptions }) => (
+    <div style={{ width: 480, maxWidth: "100%" }}>
+      <DataGrid
+        aria-label="Service Split with long service names"
+        maxRows={maxRows}
+        maxHeight={maxHeight}
+        size={size}
+        headerVariant={headerVariant}
+        columnOptions={columnOptions}
+        columns={serviceSplitColumns}
+        rows={longServiceRows}
+        renderColumnCell={(column) => (
+          <Text whiteSpace="nowrap">{column.name}</Text>
+        )}
+        renderRowCell={(cell, key) => (
+          <Text whiteSpace="nowrap">{renderServiceSplitCell(cell, key)}</Text>
+        )}
+        grouping={{
+          getGroupKey: (row) => row.carrier,
+          aggregators: {
+            packages: (rows) =>
+              rows.reduce((sum, row) => sum + row.packages, 0),
+            spend: (rows) => rows.reduce((sum, row) => sum + row.spend, 0),
+          },
+          renderSubtotalCell: renderServiceSplitCell,
+          isCollapsible: true,
+        }}
+      />
+    </div>
+  ),
+  play: async (context) => {
+    await ServiceSplit.play?.(context);
+    const canvas = within(context.canvasElement);
+    const table = canvas.getByRole("grid");
+    const container = table.parentElement!.parentElement!;
+    await expect(container.scrollWidth).toBeGreaterThan(container.clientWidth);
+    await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(
+      document.documentElement.clientWidth + 1,
+    );
+    const label = canvas.getByText(longServiceRows[0].service);
+    const labelBounds = label.getBoundingClientRect();
+    const cellBounds = label.closest("td")!.getBoundingClientRect();
+    await expect(labelBounds.width).toBeLessThanOrEqual(cellBounds.width);
+    await expect(labelBounds.height).toBeLessThanOrEqual(cellBounds.height);
+    await userEvent.click(
+      canvas.getByRole("button", { name: "Collapse USPS group" }),
+    );
+    await expect(
+      canvas.queryByText(longServiceRows[0].service),
+    ).not.toBeInTheDocument();
+    await expect(canvas.getByText("$14,400.00")).toBeInTheDocument();
+    await userEvent.click(
+      canvas.getByRole("button", { name: "Expand USPS group" }),
+    );
+    await expect(
+      canvas.getByText(longServiceRows[0].service),
+    ).toBeInTheDocument();
+  },
+};

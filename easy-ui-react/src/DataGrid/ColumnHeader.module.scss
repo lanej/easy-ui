@@ -17,7 +17,7 @@
   // hairline seam between the columns. bleeding the backgrounds into each other
   // covers that pixel from both sides. the overlap can't be seen: every cell in
   // the row paints the same color, and the bleed at the two ends of the row is
-  // clipped by the grid's own scroll container. 2px covers a whole device pixel
+  // kept inside the table on its outermost cells. 2px covers a whole device pixel
   // down to a ratio of 0.5, i.e. a 1x display zoomed out to 50%
   &::before {
     content: "";
@@ -96,4 +96,18 @@
 
 .shadowLeft [data-ezui-data-grid-shadow="side"] {
   @include DataGrid.shadow(left);
+}
+
+// Keep the seam-hiding background overlap inside the table's outer edges.
+// Even 2px of overflow creates a scrollbar and can then force vertical scroll.
+.first::before {
+  left: 0;
+}
+
+.last::before {
+  right: 0;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums lining-nums;
 }

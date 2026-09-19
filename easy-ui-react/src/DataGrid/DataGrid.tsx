@@ -7,6 +7,9 @@ import { DataGridPagination } from "./DataGridPagination";
 import { DataGridRowsPerPage } from "./DataGridRowsPerPage";
 import { ExpandCellContent } from "./ExpandCellContent";
 import { Table } from "./Table";
+import { GroupToggleCellContent } from "./GroupToggleCellContent";
+import { useCollapsedGroups } from "./useCollapsedGroups";
+import { GroupedRow, useGroupedRows } from "./useGroupedRows";
 import { VisuallyHiddenCellContent } from "./VisuallyHiddenCellContent";
 import { ACTIONS_COLUMN_KEY, EXPAND_COLUMN_KEY } from "./constants";
 import { DataGridContext } from "./context";
@@ -56,6 +59,7 @@ export function DataGrid<
     columnKeysAllowingSort = [],
     defaultExpandedKey,
     expandedKey: expandedKeyFromUser,
+    grouping,
     onExpandedChange = () => {},
     renderColumnCell,
     renderExpandedRow,
@@ -105,15 +109,82 @@ export function DataGrid<
   }
 
   const columns = useProcessedColumns(props);
-  const rows = useProcessedRows(props, expandedKey);
+  const { items, subtotalKeys } = useGroupedRows(props);
+  const { allItems, collapsedRowKeys, toggleGroup } = useCollapsedGroups(
+    items,
+    grouping,
+  );
+  const rows = useProcessedRows(props, allItems, expandedKey);
+  const visibleRows = useMemo(
+    () =>
+      collapsedRowKeys.size
+        ? rows.filter((row) => !collapsedRowKeys.has(row.key))
+        : rows,
+    [rows, collapsedRowKeys],
+  );
 
   const context = useMemo(() => {
     return { expandedKey, setExpandedKey };
   }, [expandedKey]);
 
+  const renderRow = (row: (typeof rows)[number]) => (
+    <Row>
+      {(columnKey) => {
+        if (row.type === "subtotal") {
+          const isActionColumn =
+            columnKey === EXPAND_COLUMN_KEY || columnKey === ACTIONS_COLUMN_KEY;
+          const value = row.values.get(columnKey);
+          const content = isActionColumn
+            ? null
+            : grouping?.renderSubtotalCell
+              ? grouping.renderSubtotalCell(value, columnKey, row.group)
+              : String(value ?? "");
+          return (
+            <Cell>
+              {grouping?.isCollapsible && columnKey === rowHeaderColumnKey ? (
+                <GroupToggleCellContent
+                  groupKey={row.group.key}
+                  isCollapsed={Boolean(row.isCollapsed)}
+                  onToggle={() => toggleGroup(row.group.key)}
+                >
+                  {content}
+                </GroupToggleCellContent>
+              ) : (
+                content
+              )}
+            </Cell>
+          );
+        }
+        return (
+          <Cell>
+            {columnKey === EXPAND_COLUMN_KEY ? (
+              <ExpandCellContent
+                isExpanded={row.key === expandedKey}
+                toggleExpanded={() => toggleExpandedRow(row.key)}
+              />
+            ) : columnKey === ACTIONS_COLUMN_KEY && rowActions ? (
+              <ActionsCellContent rowActions={rowActions(row.key)} />
+            ) : (
+              renderRowCell(row.row[columnKey as keyof R], columnKey, row.row)
+            )}
+          </Cell>
+        );
+      }}
+    </Row>
+  );
+
   return (
     <DataGridContext.Provider value={context}>
-      <Table {...props}>
+      <Table
+        {...props}
+        subtotalKeys={subtotalKeys}
+        collapsedRowKeys={collapsedRowKeys}
+        allRowsBody={
+          collapsedRowKeys.size ? (
+            <TableBody items={rows}>{renderRow}</TableBody>
+          ) : undefined
+        }
+      >
         <TableHeader columns={columns}>
           {(column) => (
             <Column
@@ -139,30 +210,7 @@ export function DataGrid<
             </Column>
           )}
         </TableHeader>
-        <TableBody items={rows}>
-          {(row) => (
-            <Row>
-              {(columnKey) => (
-                <Cell>
-                  {columnKey === EXPAND_COLUMN_KEY ? (
-                    <ExpandCellContent
-                      isExpanded={row.key === expandedKey}
-                      toggleExpanded={() => toggleExpandedRow(row.key)}
-                    />
-                  ) : columnKey === ACTIONS_COLUMN_KEY && rowActions ? (
-                    <ActionsCellContent rowActions={rowActions(row.key)} />
-                  ) : (
-                    renderRowCell(
-                      row[columnKey as keyof typeof row],
-                      columnKey,
-                      row,
-                    )
-                  )}
-                </Cell>
-              )}
-            </Row>
-          )}
-        </TableBody>
+        <TableBody items={visibleRows}>{renderRow}</TableBody>
       </Table>
     </DataGridContext.Provider>
   );
@@ -224,20 +272,26 @@ function useProcessedColumns<C extends ColumnType>(
  * This is done before being passed into React Stately's Row interface.
  *
  * @param props data grid props
+ * @param items the grouped collection items
  * @param expandedKey the currently expanded row key
  * @returns processed rows
  */
 function useProcessedRows<C extends ColumnType, R extends RowType>(
-  props: Pick<DataGridProps<C, R>, "renderExpandedRow" | "rows" | "rowActions">,
+  props: Pick<DataGridProps<C, R>, "renderExpandedRow" | "rowActions">,
+  items: GroupedRow<R>[],
   expandedKey: Key | null,
 ) {
-  const { renderExpandedRow, rows, rowActions } = props;
+  const { renderExpandedRow, rowActions } = props;
 
   const hasExpandableRows = Boolean(renderExpandedRow);
   const hasRowActions = Boolean(rowActions);
 
   return useMemo(() => {
-    const mappedRows = rows.map((row) => {
+    const mappedRows = items.map((item) => {
+      if (item.type === "subtotal") {
+        return item;
+      }
+      const { row } = item;
       let r = row;
       if (hasExpandableRows) {
         r = { [EXPAND_COLUMN_KEY]: expandedKey === row.key, ...r };
@@ -245,8 +299,12 @@ function useProcessedRows<C extends ColumnType, R extends RowType>(
       if (hasRowActions) {
         r = { ...r, [ACTIONS_COLUMN_KEY]: true };
       }
-      return r;
+      return {
+        ...item,
+        row: r,
+        [EXPAND_COLUMN_KEY]: hasExpandableRows && expandedKey === row.key,
+      };
     });
     return mappedRows;
-  }, [rows, hasExpandableRows, hasRowActions, expandedKey]);
+  }, [items, hasExpandableRows, hasRowActions, expandedKey]);
 }

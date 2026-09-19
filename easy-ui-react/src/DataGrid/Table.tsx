@@ -1,4 +1,5 @@
-import React, { CSSProperties, ReactElement, useMemo, useRef } from "react";
+import { Key } from "@react-types/shared";
+import React, { CSSProperties, useLayoutEffect, useMemo, useRef } from "react";
 import { useTable } from "react-aria";
 import { useTableState } from "react-stately";
 import { classNames, getComponentToken, variationName } from "../utilities/css";
@@ -24,11 +25,18 @@ import { Spinner } from "../Spinner";
 
 import styles from "./DataGrid.module.scss";
 
+type TableChildren = NonNullable<
+  Parameters<typeof useTableState>[0]["children"]
+>;
+
 type TableProps<C extends Column, R extends RowType> = Omit<
   DataGridProps<C, R>,
   "children"
 > & {
-  children?: [ReactElement, ReactElement];
+  children?: TableChildren;
+  subtotalKeys: ReadonlySet<Key>;
+  collapsedRowKeys: ReadonlyMap<Key, Key>;
+  allRowsBody?: TableChildren[1];
 };
 
 export function Table<C extends Column, R extends RowType>(
@@ -36,6 +44,8 @@ export function Table<C extends Column, R extends RowType>(
 ) {
   const {
     headerVariant,
+    columnOptions,
+    maxHeight,
     maxRows = DEFAULT_MAX_ROWS,
     renderExpandedRow = (r) => r,
     selectionMode,
@@ -43,6 +53,9 @@ export function Table<C extends Column, R extends RowType>(
     renderEmptyState = () => "No Data",
     renderFooter,
     isLoading = false,
+    subtotalKeys,
+    collapsedRowKeys,
+    allRowsBody,
   } = props;
 
   const hasFooter = Boolean(renderFooter);
@@ -50,13 +63,86 @@ export function Table<C extends Column, R extends RowType>(
   const outerContainerRef = useRef<HTMLDivElement | null>(null);
   const innerContainerRef = useRef<HTMLDivElement | null>(null);
   const tableRef = useRef<HTMLTableElement | null>(null);
-  const state = useTableState({
+  const disabledKeys = useMemo(
+    () => new Set([...(props.disabledKeys ?? []), ...subtotalKeys]),
+    [props.disabledKeys, subtotalKeys],
+  );
+  const fullChildren = useMemo<TableChildren | undefined>(
+    () =>
+      allRowsBody && props.children
+        ? [props.children[0], allRowsBody]
+        : props.children,
+    [allRowsBody, props.children],
+  );
+  const stateProps = {
     ...(props as Parameters<typeof useTableState>[0]),
+    disabledKeys,
     selectionMode,
-    selectionBehavior: "toggle",
+    selectionBehavior: "toggle" as const,
     showSelectionCheckboxes: selectionMode !== "none",
+  };
+  const fullState = useTableState({ ...stateProps, children: fullChildren });
+  const visibleState = useTableState({
+    ...stateProps,
+    // Reuse the collection when nothing is collapsed, avoiding duplicate work.
+    collection: allRowsBody ? undefined : fullState.collection,
   });
-  const { gridProps } = useTable(props, state, tableRef);
+  const state = {
+    ...fullState,
+    collection: visibleState.collection,
+    // Stately keeps selection against the complete collection, while navigation
+    // and rendering use only visible rows. Select-all therefore includes hidden
+    // details, and collapsing does not silently discard a selection.
+    selectionManager: fullState.selectionManager.withCollection(
+      visibleState.collection,
+    ),
+  };
+  useLayoutEffect(() => {
+    const focusedKey = state.selectionManager.focusedKey;
+    if (focusedKey == null || state.collection.getItem(focusedKey)) return;
+    const focusedNode = fullState.collection.getItem(focusedKey);
+    const rowKey = focusedNode?.parentKey ?? focusedKey;
+    const subtotalKey = collapsedRowKeys.get(rowKey);
+    if (subtotalKey === undefined) return;
+    const subtotal = state.collection.getItem(subtotalKey);
+    const cell =
+      subtotal &&
+      [...subtotal.childNodes].find(
+        (node) => node.index === focusedNode?.index,
+      );
+    state.selectionManager.setFocusedKey(cell?.key ?? subtotalKey);
+  }, [
+    state.collection,
+    state.selectionManager,
+    fullState.collection,
+    collapsedRowKeys,
+  ]);
+  const { gridProps } = useTable(
+    {
+      ...props,
+      // disabledKeys only prevents selection. Keep subtotals keyboard-readable
+      // while preventing their synthetic keys from reaching action callbacks.
+      onRowAction:
+        subtotalKeys.size > 0 && props.onRowAction
+          ? (key) => {
+              if (!subtotalKeys.has(key)) {
+                props.onRowAction?.(key);
+              }
+            }
+          : props.onRowAction,
+      onCellAction:
+        subtotalKeys.size > 0 && props.onCellAction
+          ? (key) => {
+              const parentKey = state.collection.getItem(key)?.parentKey;
+              if (parentKey == null || !subtotalKeys.has(parentKey)) {
+                props.onCellAction?.(key);
+              }
+            }
+          : props.onCellAction,
+    },
+    state,
+    tableRef,
+  );
 
   const { expandedRow, expandedRowStyle } = useExpandedRow({
     containerRef: innerContainerRef,
@@ -102,7 +188,12 @@ export function Table<C extends Column, R extends RowType>(
   );
 
   const style = {
-    ...getComponentToken("data-grid", "max-rows", String(maxRows)),
+    ...getComponentToken(
+      "data-grid",
+      "max-rows",
+      typeof maxRows === "number" ? String(maxRows) : undefined,
+    ),
+    maxHeight: maxHeight ?? (maxRows === "all" ? "none" : undefined),
     ...expandedRowStyle,
     ...footerStyle,
   } as CSSProperties;
@@ -110,6 +201,7 @@ export function Table<C extends Column, R extends RowType>(
   const context = useMemo(() => {
     return {
       headerVariant,
+      columnOptions,
       hasSelection,
       hasExpansion,
       hasRowActions,
@@ -121,6 +213,7 @@ export function Table<C extends Column, R extends RowType>(
     };
   }, [
     headerVariant,
+    columnOptions,
     hasSelection,
     hasExpansion,
     hasRowActions,
@@ -167,6 +260,7 @@ export function Table<C extends Column, R extends RowType>(
                   <Row
                     key={row.key}
                     item={row}
+                    isSubtotal={subtotalKeys.has(row.key)}
                     state={state}
                     isExpanded={
                       expandedRow ? expandedRow.key === row.key : false
