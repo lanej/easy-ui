@@ -1,5 +1,5 @@
 import { Key } from "@react-types/shared";
-import React, { CSSProperties, ReactElement, useMemo, useRef } from "react";
+import React, { CSSProperties, useLayoutEffect, useMemo, useRef } from "react";
 import { useTable } from "react-aria";
 import { useTableState } from "react-stately";
 import { classNames, getComponentToken, variationName } from "../utilities/css";
@@ -25,12 +25,18 @@ import { Spinner } from "../Spinner";
 
 import styles from "./DataGrid.module.scss";
 
+type TableChildren = NonNullable<
+  Parameters<typeof useTableState>[0]["children"]
+>;
+
 type TableProps<C extends Column, R extends RowType> = Omit<
   DataGridProps<C, R>,
   "children"
 > & {
-  children?: [ReactElement, ReactElement];
+  children?: TableChildren;
   subtotalKeys: ReadonlySet<Key>;
+  collapsedRowKeys: ReadonlyMap<Key, Key>;
+  allRowsBody?: TableChildren[1];
 };
 
 export function Table<C extends Column, R extends RowType>(
@@ -48,6 +54,8 @@ export function Table<C extends Column, R extends RowType>(
     renderFooter,
     isLoading = false,
     subtotalKeys,
+    collapsedRowKeys,
+    allRowsBody,
   } = props;
 
   const hasFooter = Boolean(renderFooter);
@@ -59,13 +67,56 @@ export function Table<C extends Column, R extends RowType>(
     () => new Set([...(props.disabledKeys ?? []), ...subtotalKeys]),
     [props.disabledKeys, subtotalKeys],
   );
-  const state = useTableState({
+  const fullChildren = useMemo<TableChildren | undefined>(
+    () =>
+      allRowsBody && props.children
+        ? [props.children[0], allRowsBody]
+        : props.children,
+    [allRowsBody, props.children],
+  );
+  const stateProps = {
     ...(props as Parameters<typeof useTableState>[0]),
     disabledKeys,
     selectionMode,
-    selectionBehavior: "toggle",
+    selectionBehavior: "toggle" as const,
     showSelectionCheckboxes: selectionMode !== "none",
+  };
+  const fullState = useTableState({ ...stateProps, children: fullChildren });
+  const visibleState = useTableState({
+    ...stateProps,
+    // Reuse the collection when nothing is collapsed, avoiding duplicate work.
+    collection: allRowsBody ? undefined : fullState.collection,
   });
+  const state = {
+    ...fullState,
+    collection: visibleState.collection,
+    // Stately keeps selection against the complete collection, while navigation
+    // and rendering use only visible rows. Select-all therefore includes hidden
+    // details, and collapsing does not silently discard a selection.
+    selectionManager: fullState.selectionManager.withCollection(
+      visibleState.collection,
+    ),
+  };
+  useLayoutEffect(() => {
+    const focusedKey = state.selectionManager.focusedKey;
+    if (focusedKey == null || state.collection.getItem(focusedKey)) return;
+    const focusedNode = fullState.collection.getItem(focusedKey);
+    const rowKey = focusedNode?.parentKey ?? focusedKey;
+    const subtotalKey = collapsedRowKeys.get(rowKey);
+    if (subtotalKey === undefined) return;
+    const subtotal = state.collection.getItem(subtotalKey);
+    const cell =
+      subtotal &&
+      [...subtotal.childNodes].find(
+        (node) => node.index === focusedNode?.index,
+      );
+    state.selectionManager.setFocusedKey(cell?.key ?? subtotalKey);
+  }, [
+    state.collection,
+    state.selectionManager,
+    fullState.collection,
+    collapsedRowKeys,
+  ]);
   const { gridProps } = useTable(
     {
       ...props,

@@ -84,6 +84,18 @@ export type DataGridGrouping<C extends Column = Column, R extends Row = Row> = {
   /** Compute a value for each configured column from the group's data rows. */
   aggregators: Partial<Record<ColumnKey<C>, (rows: readonly R[]) => unknown>>;
 
+  /** Show a disclosure button beside each subtotal label. Defaults to false. */
+  isCollapsible?: boolean;
+
+  /** Currently collapsed group keys (controlled). Requires isCollapsible. */
+  collapsedKeys?: Iterable<Key>;
+
+  /** Initially collapsed group keys (uncontrolled). Groups start open by default. */
+  defaultCollapsedKeys?: Iterable<Key>;
+
+  /** Called with the next set of collapsed group keys when a group is toggled. */
+  onCollapsedChange?: (keys: Set<Key>) => void;
+
   /**
    * Render subtotal cells separately from data cells. By default, the first
    * column reads "{group key} subtotal", aggregated values are stringified,
@@ -124,7 +136,7 @@ export type DataGridProps<
   /** The currently expanded key in the collection (controlled). */
   expandedKey?: RowKey<R>;
 
-  /** Group data rows and append a non-interactive subtotal to each group. */
+  /** Group data rows and append a subtotal, with optional group collapse controls. */
   grouping?: DataGridGrouping<C, R>;
 
   /**

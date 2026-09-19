@@ -8,6 +8,7 @@ type SubtotalRow<R extends Row> = {
   type: "subtotal";
   group: DataGridGroup<R>;
   values: Map<Key, unknown>;
+  isCollapsed?: boolean;
 };
 export type GroupedRow<R extends Row> = DataRow<R> | SubtotalRow<R>;
 
