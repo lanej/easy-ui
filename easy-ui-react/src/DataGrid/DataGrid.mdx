@@ -234,7 +234,7 @@ The optional `grouping` prop has type `DataGridGrouping<C, R>`, exported from `@
 
 By default, the first column displays `"{group key} subtotal"`; an aggregator for that column overrides the label. Other columns display their aggregated values converted to strings, or remain blank if no aggregator is configured. `null` and `undefined` render blank. Custom subtotal renderers receive these same values, including the default label. Keep monetary values in integer minor units (for example, cents), sum them, and format them as currency in the renderers.
 
-Subtotal rows use semibold text, a neutral background tint, and a top separator, retain the normal row and cell roles, and expose `data-ezui-data-grid-subtotal="true"` for structural identification. Synthetic row keys are internal; `renderRowCell`, `rowActions`, and expansion callbacks continue to receive only data rows or their keys. Subtotals have no selection checkbox, expansion button, or row actions, and do not trigger `onRowAction` or `onCellAction`.
+Subtotal rows use semibold text, a neutral background tint, and a top separator, retain the normal row and cell roles, and expose `data-ezui-data-grid-subtotal="true"` for structural identification. Synthetic row keys are internal; `renderRowCell`, `rowActions`, and expansion callbacks continue to receive only data rows or their keys. Subtotals remain reachable with arrow keys so keyboard users can read their values. They have no selection checkbox, expansion button, or row actions, and do not trigger `onRowAction` or `onCellAction`.
 
 Sorting remains controlled by `sortDescriptor` and `onSortChange`: sort the source `rows`, and the grid regroups them and recomputes subtotals. Subtotals stay after their group, outside the sorted data. Selection, including select-all, applies only to selectable data rows and respects `disabledKeys`. The existing `"all"` selection callback value retains its meaning. The existing restriction against combining selection and expansion still applies.
 
@@ -279,7 +279,7 @@ Keep presentation in `columnOptions`, keyed by the same keys as `columns`, so ex
 />
 ```
 
-Use natural height for a short table on a page. Add `maxHeight={280}` when the surrounding dashboard panel intentionally needs a scrollable table. The Service Split story exposes these options in Storybook Controls.
+Use natural height for a short table on a page. Add `maxHeight={280}` when the surrounding dashboard panel intentionally needs a scrollable table. The Service Split story exposes these options in Storybook Controls. Enter CSS units in the text-based `maxHeight` control (for example, `280px`); in application code, both `280` and `"280px"` are supported.
 
 <Canvas of={DataGridStories.ServiceSplitConstrained} />
 

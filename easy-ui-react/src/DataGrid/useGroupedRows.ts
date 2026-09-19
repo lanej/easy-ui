@@ -47,7 +47,14 @@ export function useGroupedRows<C extends Column, R extends Row>({
       for (const row of groupRows) {
         items.push({ key: row.key, type: "data", row });
       }
-      let key = `__ezui_subtotal_${typeof groupKey}:${groupKey}`;
+      // Delimit string keys so collision suffixes cannot match another
+      // group key. Encoding also preserves distinct accessible labels when
+      // React Aria removes whitespace from the keys used in cell IDs.
+      const encodedGroupKey =
+        typeof groupKey === "string"
+          ? encodeURIComponent(JSON.stringify(groupKey))
+          : groupKey;
+      let key = `__ezui_subtotal_${typeof groupKey}:${encodedGroupKey}`;
       while (usedKeys.has(key)) {
         key += "_";
       }
