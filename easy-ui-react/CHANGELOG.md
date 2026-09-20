@@ -1,5 +1,23 @@
 # @easypost/easy-ui
 
+## 1.0.0-alpha.134
+
+### Minor Changes
+
+- 90b740f: Support grouped DataGrid rows with caller-defined subtotal aggregators and optional group collapse controls. Add per-column alignment, width, and numeric layout options, natural-height rows, and an explicit maximum height. Keep selection and row expansion intact when groups collapse, and prevent unnecessary scrollbars at the table edges.
+- 3311c63: Add NetworkMap's optional showSelectionDetails prop for linked views with their
+  own selected context. Preserve the visible card by default and contain marker
+  stacking beneath it.
+- be798c7: Add an optional, lazily loaded MapLibre NetworkMap entry with zoom-aware facility labels, controlled location selection, explicit camera requests, observed/planned connections, facility risk and weather layers, accessible exact data, and parcel/shipper/carrier stories. MapLibre and its stylesheet are opt-in for map consumers.
+- b393535: Add analytical Chart support with an optional ECharts peer, Easy UI styling, responsive SVG/canvas rendering, exact-value tables, zoom and selection, and shipping examples including Sankey, time series, bars, scatter, heatmap, donut, and treemap. Add MetricCard and Sparkline for KPI summaries with explicit comparison baselines and missing-observation gaps. Add dependency-free BarList category comparisons and BulletChart measure/target comparisons. Add CompactTimeSeries and RangePlot, optional sparkline observation markers, and additive analytical examples for direct labels, references, scenarios, distributions, prediction intervals, contribution bridges, and periodic patterns.
+
+### Patch Changes
+
+- b66c939: fix(NetworkMap): lower the map height floor from 280px to 220px for narrow-viewport consumers
+- b66c939: feat(NetworkMap): support optional caller-supplied `MapFacility.color`, falling back to the kind-based marker scheme when absent
+- e9cdb43: feat(Chart): add `variant="bare"` to render Chart's heading, description, plot, and data-table disclosure without its own Card wrapper, for a consumer that already supplies a surrounding Card. Defaults to `"card"`, the existing behavior, so this is additive and non-breaking.
+- 065afc7: fix(NetworkMap): raise legend text and MapLibre's scale-control text to 12px, below a real consumer's calibrated readable-text floor
+
 ## 1.0.0-alpha.133
 
 ### Patch Changes
