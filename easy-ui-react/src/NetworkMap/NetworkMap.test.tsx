@@ -8,6 +8,7 @@ import {
 } from "@testing-library/react";
 import { NetworkMap } from "./NetworkMap";
 import { loadMapEngine } from "./engine";
+import { surfaceData } from "./geometry";
 import type { NetworkMapProps } from "./types";
 vi.mock("./engine", () => ({ loadMapEngine: vi.fn() }));
 const fitBounds = vi.fn(),
@@ -15,18 +16,25 @@ const fitBounds = vi.fn(),
   remove = vi.fn(),
   setData = vi.fn(),
   getClusterExpansionZoom = vi.fn().mockResolvedValue(9);
-const listeners: Record<string, (...args: any[]) => void> = {};
+const listeners: Record<string, (...args: unknown[]) => void> = {};
 const sources = new Set<string>();
 // Full addSource() definitions, keyed by id, so tests can assert cluster/clusterMaxZoom/clusterRadius.
 const sourceDefs = new Map<string, Record<string, unknown>>();
+// Full addLayer() definitions, keyed by id, so tests can assert data-driven paint expressions
+// beyond just line-color (see layerPaint below, which only tracks that one property).
+const layerDefs = new Map<string, Record<string, unknown>>();
 const constructor = vi.fn();
 const layerPaint = new Map<string, unknown>();
-// Records addLayer/addSource/setPaintProperty call order (by id) so tests can assert a
-// consumer-visible callback (e.g. onMapReady) fires only after this component's own layer setup.
+// Records addLayer/addSource/setPaintProperty/setLayoutProperty call order (by id) so tests can
+// assert a consumer-visible callback (e.g. onMapReady) fires only after this component's own
+// layer setup, and that a visibility toggle actually reaches the map.
 let callOrder: string[] = [];
 const setPaintProperty = vi.fn((id: string, _prop: string, value: unknown) => {
   layerPaint.set(id, value);
   callOrder.push(`setPaintProperty:${id}`);
+});
+const setLayoutProperty = vi.fn((id: string, _prop: string, value: unknown) => {
+  callOrder.push(`setLayoutProperty:${id}:${value}`);
 });
 // Test-controlled stand-in for MapLibre's own clustering computation (normally done by the
 // bundled supercluster library against loaded tiles) — set per test to whatever
@@ -54,8 +62,8 @@ class FakeMap {
   }
   on(
     type: string,
-    layerOrListener: string | ((...args: any[]) => void),
-    listener?: (...args: any[]) => void,
+    layerOrListener: string | ((...args: unknown[]) => void),
+    listener?: (...args: unknown[]) => void,
   ) {
     if (typeof layerOrListener === "string")
       listeners[`${type}:${layerOrListener}`] = listener!;
@@ -70,6 +78,7 @@ class FakeMap {
   addLayer(layer: { id: string; paint?: { "line-color"?: unknown } }) {
     if (layer.paint && "line-color" in layer.paint)
       layerPaint.set(layer.id, layer.paint["line-color"]);
+    layerDefs.set(layer.id, layer);
     callOrder.push(`addLayer:${layer.id}`);
   }
   addImage() {}
@@ -86,7 +95,7 @@ class FakeMap {
     return { style: {} as CSSStyleDeclaration };
   }
   setPaintProperty = setPaintProperty;
-  setLayoutProperty() {}
+  setLayoutProperty = setLayoutProperty;
   getZoom() {
     return 9;
   }
@@ -137,6 +146,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   sources.clear();
   sourceDefs.clear();
+  layerDefs.clear();
   sourceFeatures = [];
   layerPaint.clear();
   callOrder = [];
@@ -270,6 +280,32 @@ it("prefers a caller-supplied per-segment color and falls back to the evidence s
     ["get", "color"],
     "#9b5900",
   ]);
+});
+
+it("sets a caller-supplied facility marker color as a CSS custom property and clears it once removed", async () => {
+  const colorProps: NetworkMapProps = {
+    ...props,
+    facilities: [{ ...props.facilities[0], color: "#ff00ff" }],
+  };
+  const view = render(<NetworkMap {...colorProps} />);
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  const marker = screen.getByRole("button", { name: "Select Oakland" });
+  const dot = marker.firstElementChild as HTMLElement;
+  expect(dot.style.getPropertyValue("--map-facility-color")).toBe("#ff00ff");
+  view.rerender(
+    <NetworkMap {...colorProps} facilities={[props.facilities[0]]} />,
+  );
+  expect(dot.style.getPropertyValue("--map-facility-color")).toBe("");
+});
+
+it("clamps a height below the floor to 220px instead of the caller-supplied value", async () => {
+  render(<NetworkMap {...props} height={200} />);
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  const canvas = document.querySelector(
+    "[data-map-state] > div",
+  ) as HTMLElement;
+  expect(canvas.style.height).toBe("220px");
 });
 
 it("calls onMapReady exactly once, with the live map instance, only after the component's own layer setup", async () => {
@@ -459,5 +495,244 @@ describe("clusterFacilities", () => {
 
     expect(getClusterExpansionZoom).toHaveBeenCalledWith(7);
     expect(easeTo).toHaveBeenCalledWith({ center: [-100, 39], zoom: 9 });
+  });
+});
+
+describe("delivery surface", () => {
+  const surfaceProps: NetworkMapProps = {
+    ...props,
+    surface: {
+      asOf: "2026-09-01T00:00:00Z",
+      source: "spatial-prior-v1",
+      cells: [
+        {
+          latMin: 37,
+          latMax: 37.01,
+          lonMin: -122,
+          lonMax: -121.99,
+          medianMinutes: 45,
+          iqrMinutes: 10,
+          n: 12,
+        },
+      ],
+    },
+  };
+
+  it("adds a delivery-time surface geojson source built from surfaceData()", async () => {
+    render(<NetworkMap {...surfaceProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(sourceDefs.get("easy-ui-delivery-surface")).toEqual({
+      type: "geojson",
+      data: surfaceData(surfaceProps.surface!.cells),
+    });
+  });
+
+  it("adds a fill layer with data-driven fill-color/fill-opacity paint expressions", async () => {
+    render(<NetworkMap {...surfaceProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const layer = layerDefs.get("easy-ui-delivery-surface-fill");
+    expect(layer?.type).toBe("fill");
+    expect(layer?.source).toBe("easy-ui-delivery-surface");
+    const paint = layer?.paint as Record<string, unknown>;
+    // Both must be real expressions (arrays), not fixed literals, driven by the correct
+    // per-feature property (surfaceData() puts median delivery time in `medianMinutes` and
+    // normalized observation count in `confidence`).
+    expect(Array.isArray(paint["fill-color"])).toBe(true);
+    expect(Array.isArray(paint["fill-opacity"])).toBe(true);
+    expect(JSON.stringify(paint["fill-color"])).toContain("medianMinutes");
+    expect(JSON.stringify(paint["fill-opacity"])).toContain("confidence");
+  });
+
+  it("keeps the delivery surface layer hidden until toggled, mirroring the weather toggle", async () => {
+    render(<NetworkMap {...surfaceProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(setLayoutProperty).toHaveBeenCalledWith(
+      "easy-ui-delivery-surface-fill",
+      "visibility",
+      "none",
+    );
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    );
+    expect(setLayoutProperty).toHaveBeenCalledWith(
+      "easy-ui-delivery-surface-fill",
+      "visibility",
+      "visible",
+    );
+  });
+
+  it("disables the delivery surface toggle when no surface data is supplied", async () => {
+    render(<NetworkMap {...props} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    ).toBeDisabled();
+  });
+
+  it("refreshes the delivery surface source when surface data changes", async () => {
+    const view = render(<NetworkMap {...surfaceProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    setData.mockClear();
+    const newCells = [{ ...surfaceProps.surface!.cells[0], medianMinutes: 90 }];
+    view.rerender(
+      <NetworkMap
+        {...surfaceProps}
+        surface={{ ...surfaceProps.surface!, cells: newCells }}
+      />,
+    );
+    expect(setData).toHaveBeenCalledWith(surfaceData(newCells));
+  });
+
+  it("starts the surface layer visible immediately when initialDeliverySurfaceVisible is true, with no toggle click", async () => {
+    render(<NetworkMap {...surfaceProps} initialDeliverySurfaceVisible />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(setLayoutProperty).toHaveBeenCalledWith(
+      "easy-ui-delivery-surface-fill",
+      "visibility",
+      "visible",
+    );
+    expect(
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    ).toBeChecked();
+  });
+
+  it("still starts the surface layer hidden when initialDeliverySurfaceVisible is omitted, preserving current behavior", async () => {
+    render(<NetworkMap {...surfaceProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    ).not.toBeChecked();
+  });
+});
+
+describe("networkControls", () => {
+  const surfaceOnlyProps: NetworkMapProps = {
+    ...props,
+    facilities: [],
+    surface: {
+      asOf: "2026-09-01T00:00:00Z",
+      source: "spatial-prior-v1",
+      cells: [
+        {
+          latMin: 37,
+          latMax: 37.01,
+          lonMin: -122,
+          lonMax: -121.99,
+          medianMinutes: 45,
+          iqrMinutes: 10,
+          n: 12,
+        },
+      ],
+    },
+  };
+
+  it("hides the facility/segment toolbar controls when explicitly false, leaving Weather/Delivery time surface untouched", async () => {
+    render(<NetworkMap {...surfaceOnlyProps} networkControls={false} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(
+      screen.queryByRole("button", { name: "Fit all locations" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Entire journey" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Selected leg" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Latest events" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: "Facility risk" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", { name: "Weather" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows every control by default when omitted, preserving current behavior", async () => {
+    render(<NetworkMap {...props} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(
+      screen.getByRole("button", { name: "Fit all locations" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", { name: "Facility risk" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("focus with bounds", () => {
+  const boundsFocusProps: NetworkMapProps = {
+    ...props,
+    facilities: [
+      {
+        id: "one",
+        label: "Oakland",
+        coordinates: [-122, 38],
+        kind: "warehouse",
+      },
+    ],
+    focus: {
+      revision: 1,
+      facilityIds: ["one"],
+      bounds: { minLat: 29.5, maxLat: 30.5, minLon: -95.9, maxLon: -95.0 },
+      maxZoom: 10,
+    },
+  };
+
+  it("fits the camera to the given bounds instead of facilityIds when both are present", async () => {
+    render(<NetworkMap {...boundsFocusProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(fitBounds).toHaveBeenCalledWith(
+      [
+        [-95.9, 29.5],
+        [-95.0, 30.5],
+      ],
+      expect.objectContaining({ maxZoom: 10 }),
+    );
+  });
+
+  it("re-fires the bounds fit when focus.revision changes, even with the same facilityIds", async () => {
+    const view = render(<NetworkMap {...boundsFocusProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    fitBounds.mockClear();
+    view.rerender(
+      <NetworkMap
+        {...boundsFocusProps}
+        focus={{ ...boundsFocusProps.focus!, revision: 2 }}
+      />,
+    );
+    expect(fitBounds).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to fitting facilityIds when focus has no bounds, unchanged from today", async () => {
+    const idsOnlyFocus: NetworkMapProps = {
+      ...boundsFocusProps,
+      focus: { revision: 1, facilityIds: ["one"], maxZoom: 10 },
+    };
+    render(<NetworkMap {...idsOnlyFocus} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(fitBounds).toHaveBeenCalledWith(
+      [
+        [-122, 38],
+        [-122, 38],
+      ],
+      expect.objectContaining({ maxZoom: 10 }),
+    );
   });
 });
