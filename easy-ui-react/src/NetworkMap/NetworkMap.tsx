@@ -12,6 +12,7 @@ import {
   geographicBounds,
   placeLabels,
   segmentData,
+  surfaceData,
   validCoordinate,
 } from "./geometry";
 import type { MapFacility, NetworkMapProps } from "./types";
@@ -31,12 +32,14 @@ export function NetworkMap(props: NetworkMapProps) {
     facilities,
     segments,
     areas = [],
+    surface,
     selectedFacilityId,
     showSelectionDetails = true,
     onFacilitySelect,
     selectedSegmentId,
     latestFacilityId,
     height = 560,
+    networkControls = true,
   } = props;
   const container = useRef<HTMLDivElement>(null);
   const instance = useRef<MapInstance | null>(null);
@@ -47,18 +50,19 @@ export function NetworkMap(props: NetworkMapProps) {
   const [basemapError, setBasemapError] = useState(false);
   const [retry, setRetry] = useState(0);
   const [risk, setRisk] = useState(true),
-    [weather, setWeather] = useState(false);
-  const layers = useRef({ risk, weather });
-  layers.current = { risk, weather };
+    [weather, setWeather] = useState(false),
+    [deliverySurface, setDeliverySurface] = useState(
+      () => props.initialDeliverySurfaceVisible ?? false,
+    );
+  const layers = useRef({ risk, weather, deliverySurface });
+  layers.current = { risk, weather, deliverySurface };
   const [zoom, setZoom] = useState(0);
 
-  const fit = (ids: readonly string[], maxZoom = 12) => {
+  const flyToBounds = (
+    bounds: [[number, number], [number, number]] | null,
+    maxZoom = 12,
+  ) => {
     const current = instance.current;
-    const bounds = geographicBounds(
-      latest.current.facilities
-        .filter((f) => ids.includes(f.id))
-        .map((f) => f.coordinates),
-    );
     if (!current || !bounds) return;
     current.fitBounds(bounds, {
       padding: { top: 70, bottom: 65, left: 65, right: 80 },
@@ -67,6 +71,14 @@ export function NetworkMap(props: NetworkMapProps) {
         ? 0
         : 650,
     });
+  };
+  const fit = (ids: readonly string[], maxZoom = 12) => {
+    const bounds = geographicBounds(
+      latest.current.facilities
+        .filter((f) => ids.includes(f.id))
+        .map((f) => f.coordinates),
+    );
+    flyToBounds(bounds, maxZoom);
   };
 
   useEffect(() => {
@@ -183,6 +195,9 @@ export function NetworkMap(props: NetworkMapProps) {
           (map.getSource("easy-ui-weather") as GeoJSONSource).setData(
             areaData(p.areas ?? []),
           );
+          (map.getSource("easy-ui-delivery-surface") as GeoJSONSource).setData(
+            surfaceData(p.surface?.cells ?? []),
+          );
           map.setPaintProperty("easy-ui-observed", "line-color", [
             "coalesce",
             ["get", "color"],
@@ -201,6 +216,11 @@ export function NetworkMap(props: NetworkMapProps) {
               "visibility",
               layers.current.weather ? "visible" : "none",
             );
+          map.setLayoutProperty(
+            "easy-ui-delivery-surface-fill",
+            "visibility",
+            layers.current.deliverySurface ? "visible" : "none",
+          );
           let visibleFacilities = p.facilities.filter((f) =>
             validCoordinate(f.coordinates),
           );
@@ -327,6 +347,45 @@ export function NetworkMap(props: NetworkMapProps) {
               "line-color": amber,
               "line-width": 2,
               "line-dasharray": [3, 3],
+            },
+          });
+          map.addSource("easy-ui-delivery-surface", {
+            type: "geojson",
+            data: surfaceData(latest.current.surface?.cells ?? []),
+          });
+          map.addLayer({
+            id: "easy-ui-delivery-surface-fill",
+            type: "fill",
+            source: "easy-ui-delivery-surface",
+            paint: {
+              // Diverging ramp over median delivery-time minutes, mirroring this project's own
+              // Python-side static delivery-time-field render (5 stops, fast=blue to slow=red).
+              "fill-color": [
+                "interpolate",
+                ["linear"],
+                ["coalesce", ["get", "medianMinutes"], 0],
+                0,
+                "#2c7bb6",
+                30,
+                "#abd9e9",
+                60,
+                "#ffffbf",
+                90,
+                "#fdae61",
+                120,
+                "#d7191c",
+              ],
+              // Sparse cells (low `confidence`, surfaceData()'s normalized observation count)
+              // fade toward transparent instead of asserting a median they barely support.
+              "fill-opacity": [
+                "interpolate",
+                ["linear"],
+                ["get", "confidence"],
+                0,
+                0.05,
+                1,
+                0.5,
+              ],
             },
           });
           map.addLayer({
@@ -550,16 +609,29 @@ export function NetworkMap(props: NetworkMapProps) {
     facilities,
     segments,
     areas,
+    surface,
     selectedFacilityId,
     selectedSegmentId,
     latestFacilityId,
     props.primaryFacilityIds,
     risk,
     weather,
+    deliverySurface,
   ]);
   useEffect(() => {
-    if (state === "ready" && props.focus)
-      fit(props.focus.facilityIds, props.focus.maxZoom);
+    if (state !== "ready" || !props.focus) return;
+    const { bounds, facilityIds, maxZoom } = props.focus;
+    if (bounds) {
+      flyToBounds(
+        [
+          [bounds.minLon, bounds.minLat],
+          [bounds.maxLon, bounds.maxLat],
+        ],
+        maxZoom ?? 12,
+      );
+    } else {
+      fit(facilityIds, maxZoom);
+    }
     // A camera request is keyed by revision. Data updates do not recenter the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.focus?.revision, state]);
@@ -569,69 +641,79 @@ export function NetworkMap(props: NetworkMapProps) {
 
   const active = facilities.find((f) => f.id === selectedFacilityId);
   const segment = segments.find((s) => s.id === selectedSegmentId);
+  // `title`/`description` are `null` when the caller already frames this map with its own
+  // adjacent heading (see NetworkMapProps.title's doc comment) -- fall back to a generic,
+  // stable accessible name so the region/toolbar stay nameable without a visible heading.
+  const accessibleName = title ?? "Map";
   return (
-    <section className={styles.root} aria-label={title}>
-      <div className={styles.heading}>
-        <div>
-          <h3>{title}</h3>
-          <p>{description}</p>
+    <section className={styles.root} aria-label={accessibleName}>
+      {title !== null && (
+        <div className={styles.heading}>
+          <div>
+            <h3>{title}</h3>
+            <p>{description}</p>
+          </div>
+          <span className={styles.scale}>
+            {zoom < 6 ? "National" : zoom < 10 ? "Regional" : "Local"} view
+          </span>
         </div>
-        <span className={styles.scale}>
-          {zoom < 6 ? "National" : zoom < 10 ? "Regional" : "Local"} view
-        </span>
-      </div>
+      )}
       <div
         className={styles.toolbar}
         role="group"
-        aria-label={`${title} camera and layers`}
+        aria-label={`${accessibleName} camera and layers`}
       >
-        <div className={styles.buttons}>
-          <button
-            type="button"
-            onClick={() =>
-              fit(
-                facilities.map((f) => f.id),
-                11,
-              )
-            }
-            disabled={state !== "ready"}
-          >
-            Entire journey
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (segment) {
-                onFacilitySelect?.(segment.to);
-                fit([segment.from, segment.to], 13);
+        {networkControls && (
+          <div className={styles.buttons}>
+            <button
+              type="button"
+              onClick={() =>
+                fit(
+                  facilities.map((f) => f.id),
+                  11,
+                )
               }
-            }}
-            disabled={!segment || state !== "ready"}
-          >
-            Selected leg
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (latestFacilityId) {
-                onFacilitySelect?.(latestFacilityId);
-                fit([latestFacilityId], 12);
-              }
-            }}
-            disabled={!latestFacilityId || state !== "ready"}
-          >
-            Latest events
-          </button>
-        </div>
+              disabled={state !== "ready"}
+            >
+              {segments.length > 0 ? "Entire journey" : "Fit all locations"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (segment) {
+                  onFacilitySelect?.(segment.to);
+                  fit([segment.from, segment.to], 13);
+                }
+              }}
+              disabled={!segment || state !== "ready"}
+            >
+              Selected leg
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (latestFacilityId) {
+                  onFacilitySelect?.(latestFacilityId);
+                  fit([latestFacilityId], 12);
+                }
+              }}
+              disabled={!latestFacilityId || state !== "ready"}
+            >
+              Latest events
+            </button>
+          </div>
+        )}
         <div className={styles.buttons}>
-          <label>
-            <input
-              type="checkbox"
-              checked={risk}
-              onChange={(e) => setRisk(e.target.checked)}
-            />{" "}
-            Facility risk
-          </label>
+          {networkControls && (
+            <label>
+              <input
+                type="checkbox"
+                checked={risk}
+                onChange={(e) => setRisk(e.target.checked)}
+              />{" "}
+              Facility risk
+            </label>
+          )}
           <label>
             <input
               type="checkbox"
@@ -640,6 +722,15 @@ export function NetworkMap(props: NetworkMapProps) {
               onChange={(e) => setWeather(e.target.checked)}
             />{" "}
             Weather
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={deliverySurface}
+              disabled={!surface?.cells.length}
+              onChange={(e) => setDeliverySurface(e.target.checked)}
+            />{" "}
+            Delivery time surface
           </label>
         </div>
       </div>

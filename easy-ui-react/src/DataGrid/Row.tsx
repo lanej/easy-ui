@@ -21,11 +21,18 @@ type StaticRowProps = {
 type RowProps<T = object> = {
   children: ReactNode;
   isExpanded: boolean;
+  isSubtotal: boolean;
   item: Node<T>;
   state: TableState<T>;
 };
 
-export function Row({ item, children, state, isExpanded }: RowProps) {
+export function Row({
+  item,
+  children,
+  state,
+  isExpanded,
+  isSubtotal,
+}: RowProps) {
   const isSelected = state.selectionManager.isSelected(item.key);
   const isDisabled = state.disabledKeys.has(item.key);
   const isPendingExpanded = item.value
@@ -55,11 +62,18 @@ export function Row({ item, children, state, isExpanded }: RowProps) {
   }, [hoverProps]);
 
   const context = useMemo(() => {
-    return { isExpanded, isFocusVisible, removeHover, index: rowIndex };
-  }, [isExpanded, isFocusVisible, removeHover, rowIndex]);
+    return {
+      isExpanded,
+      isSubtotal,
+      isFocusVisible,
+      removeHover,
+      index: rowIndex,
+    };
+  }, [isExpanded, isSubtotal, isFocusVisible, removeHover, rowIndex]);
 
   const className = classNames(
     styles.Row,
+    isSubtotal && styles.subtotal,
     isExpanded && styles.expanded,
     isHovered && styles.hovered,
     isFocusVisible && styles.focused,
@@ -77,6 +91,7 @@ export function Row({ item, children, state, isExpanded }: RowProps) {
         className={className}
         data-ezui-data-grid-expanded-row={isPendingExpanded}
         data-ezui-data-grid-row="true"
+        data-ezui-data-grid-subtotal={isSubtotal || undefined}
       >
         {children}
       </tr>

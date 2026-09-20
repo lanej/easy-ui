@@ -43,3 +43,11 @@
     design-token("color.primary.100")
   );
 }
+
+.subtotal {
+  @include component-token(
+    "data-grid",
+    "cell-bg",
+    design-token("color.neutral.050")
+  );
+}

@@ -79,6 +79,34 @@ export type MapArea = {
   source: string;
 };
 
+/** One grid cell of a delivery-time field surface, roughly 150m on a side. */
+export type MapSurfaceCell = {
+  /** Southern latitude bound of the cell. */
+  latMin: number;
+  /** Northern latitude bound of the cell. */
+  latMax: number;
+  /** Western longitude bound of the cell. */
+  lonMin: number;
+  /** Eastern longitude bound of the cell. */
+  lonMax: number;
+  /** Median delivery time in minutes for this cell; null when unavailable, never zero. */
+  medianMinutes: number | null;
+  /** Interquartile range of delivery time in minutes for this cell; null when unavailable. */
+  iqrMinutes: number | null;
+  /** Observation count backing this cell. Also the confidence/insufficient-data signal. */
+  n: number;
+};
+
+/** A delivery-time field snapshot: a grid of predicted or observed median minutes with per-cell confidence. */
+export type MapSurface = {
+  /** Grid cells composing this surface. */
+  cells: readonly MapSurfaceCell[];
+  /** ISO timestamp this surface was computed/valid as of. */
+  asOf: string;
+  /** Computation source or model identifier. */
+  source: string;
+};
+
 /** Native MapLibre clustering configuration for dense facility groups. See `NetworkMapProps.clusterFacilities`. */
 export type ClusterFacilitiesOptions = {
   /**
@@ -98,18 +126,35 @@ export type ClusterFacilitiesOptions = {
 export type MapFocus = {
   /** Change this value to repeat a request for the same locations. */
   revision: string | number;
-  /** Facility identifiers whose bounds should be fitted. */
+  /** Facility identifiers whose bounds should be fitted. Pass an empty array when `bounds` should
+   *  drive the fit instead (e.g. a surface-only consumer with no facilities). */
   facilityIds: readonly string[];
+  /**
+   * Explicit geographic bounding box to fit the camera to, in lieu of deriving bounds from
+   * `facilityIds` — e.g. a delivery-time surface's own grid extent, which has no facilities to
+   * fit to. When present, this wins over `facilityIds` (which normally wouldn't be populated
+   * alongside it anyway). Omit to keep today's exact `facilityIds`-based fit.
+   */
+  bounds?: {
+    minLat: number;
+    maxLat: number;
+    minLon: number;
+    maxLon: number;
+  };
   /** Upper zoom bound for a fitted view; defaults to 12. */
   maxZoom?: number;
 };
 
 /** Presentation and controlled selection contract for an optional geographic map. */
 export type NetworkMapProps = {
-  /** Visible heading and accessible region name. */
-  title: string;
-  /** Coverage, observation window and main geographic question. */
-  description: string;
+  /** Visible heading and accessible region name. `null` renders no heading block at all -- use
+   *  when the caller already frames this map with its own adjacent heading; the region and
+   *  toolbar fall back to a generic accessible name ("Map"/"Map camera and layers") so they stay
+   *  nameable without a visible heading. When `null`, `description` must also be `null`. */
+  title: string | null;
+  /** Coverage, observation window and main geographic question. Must be `null` when `title` is
+   *  `null` -- a heading-less map has no description to show either. */
+  description: string | null;
   /** Caller-chosen MapLibre style URL or object, including source attribution. Keep object identity stable. */
   mapStyle: string | StyleSpecification;
   /** URL of the bundled MapLibre module worker matching the installed version. Keep stable across all maps in one application. */
@@ -120,6 +165,8 @@ export type NetworkMapProps = {
   segments: readonly MapSegment[];
   /** Optional time-filtered weather/disruption polygons. */
   areas?: readonly MapArea[];
+  /** Optional delivery-time field surface, rendered as a data-driven fill layer. */
+  surface?: MapSurface;
   /** Controlled location selection. */
   selectedFacilityId?: string;
   /** Show the selected facility card over the map; defaults to true. Set false when a linked panel already provides this context. */
@@ -187,4 +234,25 @@ export type NetworkMapProps = {
    * it separated at the zoom levels that matter, or leave this prop unset for that cohort.
    */
   clusterFacilities?: ClusterFacilitiesOptions;
+  /**
+   * Initializes the "Delivery time surface" toggle to visible at mount, instead of the default
+   * unchecked state — for a consumer whose primary or only content is the `surface` layer, where
+   * requiring a manual click to see any data is itself the defect. Read once at mount, like
+   * `mapStyle`/`workerUrl`/`clusterFacilities`: toggling this prop after mount has no effect on an
+   * already-initialized toggle, since it only seeds the toggle's own independent, user-controlled
+   * state. Omitted or `false` preserves today's exact behavior (starts unchecked). Has no effect
+   * when no `surface` is supplied — the toggle stays disabled either way.
+   */
+  initialDeliverySurfaceVisible?: boolean;
+  /**
+   * Shows or hides the facility/segment-oriented toolbar section: the "Fit all locations"/"Entire
+   * journey" button, "Selected leg" button, "Latest events" button, and the "Facility risk"
+   * checkbox. Intended for a consumer with no `facilities`/`segments` of its own (e.g. a
+   * surface-only delivery-time view), where those controls are permanently-disabled or
+   * always-inert clutter rather than real affordances. Defaults to `true`, preserving today's
+   * exact behavior (every control shown) when omitted. The "Weather" and "Delivery time surface"
+   * checkboxes are never affected by this prop — they stay controlled by their own existing
+   * `areas`/`surface` presence logic.
+   */
+  networkControls?: boolean;
 };
