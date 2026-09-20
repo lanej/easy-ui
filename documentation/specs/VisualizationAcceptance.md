@@ -1,6 +1,6 @@
 # Visualization improvement acceptance
 
-This checklist covers the complete September 20 improvement plan on the existing combined Lane J PR. The implementation is present; final browser, layout, and independent acceptance review are still in progress. The original source anchors and reproduced symptoms remain in the workspace review register. Do not infer final acceptance from this checklist's existence.
+This checklist covers the complete September 20 improvement plan on the existing combined Lane J PR. The [combined PR](https://github.com/lanej/easy-ui/pull/1) records the verified source revision, browser/layout runs, and rendered artifacts. The original source anchors and reproduced symptoms remain in the workspace review register. Assess acceptance against those recorded runs as well as the implementation and regression cases below.
 
 ## Behavior and API findings
 
@@ -24,7 +24,7 @@ This checklist covers the complete September 20 improvement plan on the existing
 | D06     | Pricing uses a reusable scoped disclosure with explicit mount policy; network navigation uses TabPanels. Independent drafts, focus and selection survive relevant transitions.              | Disclosure tests; `examples/DesignGuide.test.tsx`; existing TabPanels suite                        |
 | D07     | Group disclosure labels can differ from opaque identity keys.                                                                                                                               | `DataGrid/DataGrid.rendering.test.tsx`, OpaqueGroupLabels story                                    |
 | D08     | BarList accepts an explicit shared maximum with defined missing/zero/overflow behavior.                                                                                                     | BarList tests, SharedScale story and native browser fixture                                        |
-| D09     | Engine initialization failure exposes an actual in-place Chart retry.                                                                                                                       | Chart composition/lifecycle tests                                                                  |
+| D09     | Engine initialization or rendering failure exposes an in-place Chart retry; failed instances are not reused by parent, font or resize updates.                                              | Chart composition/lifecycle tests and `Chart/Chart.retry-engine.test.tsx`                          |
 | D10     | Native series share gap segmentation/marker primitives without merging their scale contracts. MetricCard composes separately reusable metric/comparison content.                            | Sparkline/time-series/MetricCard tests and native browser fixture                                  |
 
 The earlier R01/R02/I01 fixes remain regression gates: unavailable surface estimates never become zero, consumer paint survives updates, and expanded grid rows suspend safely during loading.

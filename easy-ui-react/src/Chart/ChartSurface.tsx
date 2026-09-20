@@ -131,6 +131,7 @@ function ChartEngine(props: EngineProps) {
   const connection = shared ?? local;
   const instance = connection.instance;
   const update = useRef<(() => void) | null>(null);
+  const resizeEngine = useRef<(() => void) | null>(null);
   const latest = useRef(props);
   latest.current = props;
   const previousOption = useRef<ChartOption | undefined>(undefined);
@@ -158,18 +159,34 @@ function ChartEngine(props: EngineProps) {
     connection.owner.current = owner.current;
     const element = container.current!;
     let disposed = false;
+    let failed = false;
+    let failedOption: ChartOption | undefined;
     let observer: ResizeObserver | undefined;
     const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     const scheme = window.matchMedia?.("(prefers-color-scheme: dark)");
     const fail = (error: unknown) => {
-      if (!disposed) {
+      if (!disposed && !failed) {
+        // An application error callback may itself rerender with fresh option
+        // or typography objects. Keep a failed engine inert until Retry creates
+        // a new instance (or the application supplies corrected options),
+        // rather than repeatedly invoking the same failure.
+        failed = true;
+        failedOption = latest.current.option;
         setState("error");
         connection.publish({ ...connection.snapshotRef.current, ready: false });
         latest.current.onRenderError?.(error);
       }
     };
     const apply = () => {
-      if (!instance.current || disposed) return;
+      if (disposed) return;
+      if (failed) {
+        if (!isEqual(latest.current.option, failedOption)) {
+          failedOption = latest.current.option;
+          setRetry((n) => n + 1);
+        }
+        return;
+      }
+      if (!instance.current) return;
       try {
         const option = themedOption(
           element,
@@ -208,11 +225,15 @@ function ChartEngine(props: EngineProps) {
       }
     };
     const resize = () => {
-      if (!disposed && element.clientWidth > 0 && instance.current) {
-        instance.current.resize();
-        connection.publish(
-          interactionSnapshot(instance.current.getOption() as ChartOption),
-        );
+      if (!disposed && !failed && element.clientWidth > 0 && instance.current) {
+        try {
+          instance.current.resize();
+          connection.publish(
+            interactionSnapshot(instance.current.getOption() as ChartOption),
+          );
+        } catch (error) {
+          fail(error);
+        }
       }
     };
     const fontsChanged = () => {
@@ -220,7 +241,7 @@ function ChartEngine(props: EngineProps) {
       resize();
     };
     const changed = () => {
-      if (disposed || applying.current || !instance.current) return;
+      if (disposed || failed || applying.current || !instance.current) return;
       const next = interactionSnapshot(
         instance.current.getOption() as ChartOption,
       );
@@ -233,6 +254,7 @@ function ChartEngine(props: EngineProps) {
       if (latest.current.zoomState || latest.current.legendState) apply();
     };
     update.current = apply;
+    resizeEngine.current = resize;
     setState("loading");
     connection.publish({ ...connection.snapshotRef.current, ready: false });
     loadChartEngine()
@@ -286,6 +308,7 @@ function ChartEngine(props: EngineProps) {
     return () => {
       disposed = true;
       update.current = null;
+      resizeEngine.current = null;
       observer?.disconnect();
       window.removeEventListener("resize", resize);
       motion?.removeEventListener("change", apply);
@@ -314,8 +337,8 @@ function ChartEngine(props: EngineProps) {
     resolvedColorScheme,
   ]);
   useEffect(() => {
-    instance.current?.resize();
-  }, [props.height, instance]);
+    resizeEngine.current?.();
+  }, [props.height]);
 
   return (
     <div

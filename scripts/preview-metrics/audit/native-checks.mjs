@@ -101,6 +101,33 @@ function assertGeometry(measurements) {
   );
 }
 
+async function exactTableLines(driver) {
+  const cells = await driver.evaluate(() =>
+    [
+      ...document.querySelectorAll(
+        '[data-native-case="precision"] th, [data-native-case="precision"] td',
+      ),
+    ].map((cell) => {
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      return {
+        text: cell.textContent,
+        lines: [...range.getClientRects()].filter(
+          (rect) => rect.width > 0 && rect.height > 0,
+        ).length,
+      };
+    }),
+  );
+  assert.ok(cells.length >= 6, "Exact table cells are exposed");
+  assert.ok(
+    cells.every((cell) => cell.lines === 1),
+    `Exact table observations stay on one line: ${JSON.stringify(cells)}`,
+  );
+  assert.ok(cells.some((cell) => cell.text === "$1234.56"));
+  assert.ok(cells.some((cell) => cell.text === "2026-09-20T09:00:00.000Z"));
+  return cells;
+}
+
 async function mobileBounds(driver) {
   return driver.evaluate(() => {
     const main = document.querySelector(".native-review");
@@ -240,6 +267,7 @@ export async function auditNativeRegressions(
   await driver.screenshot(`${outputDir}/native-markers.png`);
 
   await driver.key('[data-native-case="precision"] summary', "Enter");
+  const defaultTableLines = await exactTableLines(driver);
   const data = await driver.evaluate(() => {
     const precision = document.querySelector('[data-native-case="precision"]');
     const range = document.querySelector('[data-native-case="range-overflow"]');
@@ -377,6 +405,7 @@ export async function auditNativeRegressions(
   await driver.wait(() => document.querySelector('[data-native-size="large"]'));
   const largeGeometry = await geometry(driver);
   assertGeometry(largeGeometry);
+  const largeTableLines = await exactTableLines(driver);
   const textSizes = await driver.evaluate(() => {
     const size = (selector) =>
       parseFloat(getComputedStyle(document.querySelector(selector)).fontSize);
@@ -415,6 +444,7 @@ export async function auditNativeRegressions(
   await driver.wait(() => document.querySelector('[data-native-size="large"]'));
   await driver.evaluate(() => document.fonts.ready.then(() => true));
   await driver.key('[data-native-case="precision"] summary', "Enter");
+  const mobileTableLines = await exactTableLines(driver);
   const mobileGeometry = await geometry(driver);
   assertGeometry(mobileGeometry);
   const mobile = await mobileBounds(driver);
@@ -452,14 +482,35 @@ export async function auditNativeRegressions(
   for (const [name, selector] of [
     ["markers", '[data-native-case="markers"]'],
     ["time", '[data-native-case="time"]'],
+    ["exact", '[data-native-case="precision"]'],
     ["range", '[data-native-case="range-overflow"]'],
     ["bullet", '[data-native-case="bullet-overflow"]'],
     ["bars", '[data-native-case="shared-bars"]'],
     ["metric", '[data-native-case="unframed"]'],
   ]) {
+    if (name === "exact")
+      await driver.evaluate(() => {
+        const region = document.querySelector(
+          '[data-native-case="precision"] [role="region"]',
+        );
+        region.scrollLeft = region.scrollWidth;
+      });
     await driver.evaluate(
       (target) => document.querySelector(target).scrollIntoView(),
       selector,
+    );
+    await driver.wait((target) => {
+      const box = document.querySelector(target).getBoundingClientRect();
+      return box.top < innerHeight && box.bottom > 0;
+    }, selector);
+    // Safari screenshots can precede the paint following a programmatic scroll.
+    await driver.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => resolve(true)),
+          ),
+        ),
     );
     await driver.screenshot(`${outputDir}/native-mobile-${name}.png`);
   }
@@ -476,6 +527,7 @@ export async function auditNativeRegressions(
       "independent native typography roles",
       "320px native long labels and larger text without clipping or overlap",
       "140px time plots and keyboard-accessible local exact data scrolling",
+      "exact table values and timestamps remain on one line at every text size",
     ],
     measurements: {
       defaultGeometry,
@@ -484,6 +536,11 @@ export async function auditNativeRegressions(
       mobile,
       data,
       textSizes,
+      tableLines: {
+        default: defaultTableLines,
+        large: largeTableLines,
+        mobile: mobileTableLines,
+      },
     },
   };
 }

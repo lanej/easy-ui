@@ -77,6 +77,8 @@
     padding: 6px;
     text-align: left;
     border-bottom: 1px solid design-token("color.neutral.200");
+    // Preserve exact observations; the surrounding region owns horizontal scrolling.
+    white-space: nowrap;
   }
 }
 .tableScroll {

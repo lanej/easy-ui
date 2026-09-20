@@ -15,6 +15,8 @@ Supply one to three series with unique IDs and strictly increasing timestamps in
 
 Provide explicit time-zone/period/coverage context. `formatTime` and `formatValue` own exact timestamps and values in the keyboard-operable disclosure; use optional `formatAxisTime` and `formatAxisValue` for short axis labels. When omitted, axes retain the original formatters. A sole inferred timestamp centers both its tick and its observations; an explicit wider time domain retains the true time position. `typography` controls title, description, axis label, legend, disclosure control and detail sizes independently.
 
+Exact table values and timestamps stay on one line. Narrow containers or larger text use the disclosure's local, keyboard-scrollable region; axis labels can still wrap.
+
 Labels and line dashes distinguish series beyond color. Markers can be `none`, `all`, `endpoints` of each segment, or global `extrema` (first observation of tied extrema).
 
 <Canvas of={Stories.PreciseData} />

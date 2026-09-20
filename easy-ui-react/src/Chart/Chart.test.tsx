@@ -204,7 +204,14 @@ it("recovers from invalid options when the application supplies corrected data",
   });
   const { rerender } = render(view());
   await screen.findByRole("alert");
-  rerender(view({ option: { ...fixture.option } }));
+  rerender(
+    view({
+      option: {
+        ...fixture.option,
+        series: [{ type: "line", data: [4, 5, 6] }],
+      },
+    }),
+  );
   await screen.findByRole("img");
 });
 

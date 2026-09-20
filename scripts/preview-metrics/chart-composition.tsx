@@ -25,7 +25,7 @@ const base: ChartOption = {
     { type: "value", min: 0, max: 100, show: false },
   ],
   yAxis: { type: "value", min: 0, max: 10 },
-  legend: { id: "services", data: ["A", "B"] },
+  legend: { id: "services", top: 8, data: ["A", "B"] },
   dataZoom: [
     { id: "first", type: "inside", xAxisIndex: 0, start: 20, end: 80 },
     { id: "second", type: "inside", xAxisIndex: 1, start: 50, end: 100 },

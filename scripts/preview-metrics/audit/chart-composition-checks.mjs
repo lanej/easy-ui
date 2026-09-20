@@ -155,11 +155,22 @@ export async function auditChartComposition(
       "Engine initialization errors reach the application",
     );
     await driver.evaluate(() => window.__chartComposition.allowRetry());
-    await driver.key('[data-chart-case="retry"] button', "Enter");
-    await driver.wait(
-      () =>
-        document.querySelectorAll('[data-chart-state="ready"]').length === 4,
+    await driver.key(
+      '[data-chart-case="retry"] [role="alert"] button',
+      "Enter",
     );
+    try {
+      await driver.wait(
+        () =>
+          document.querySelectorAll('[data-chart-state="ready"]').length === 4,
+      );
+    } catch (error) {
+      await diagnostics(`chart-retry-failed-${renderer}`);
+      await driver.screenshot(
+        `${outputDir}/chart-retry-failed-${renderer}.png`,
+      );
+      throw error;
+    }
     assert.equal(
       await driver.evaluate(() =>
         Boolean(

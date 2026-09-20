@@ -1,6 +1,6 @@
 # Data visualization proposal
 
-Status: combined implementation for review; current browser and layout acceptance is pending. Original source audit: September 12, 2026, at commit `6a3a4c95dde6408cb38b4b2ae30d3904040757e8` (`@easypost/easy-ui` version `1.0.0-alpha.133`). This is a contribution proposal, not an approved roadmap.
+Status: combined implementation for review. Original source audit: September 12, 2026, at commit `6a3a4c95dde6408cb38b4b2ae30d3904040757e8` (`@easypost/easy-ui` version `1.0.0-alpha.133`). This is a contribution proposal, not an approved roadmap.
 
 ## Combined review and component boundaries
 
@@ -20,7 +20,7 @@ Layer presence, visibility, and control placement are separate decisions. Latest
 
 The shared `typography` prop defines CSS-pixel `title`, `description`, `label`, `control`, `legend`, and `detail` roles, defaulting to 18/14/12/14/12/12. Relevant roles reach HTML, SVG, canvas, and map labels; explicit native engine text options take precedence. Font and size changes update engine layout and measured geometry. The declared View Rule thresholds remain a review contract, not an accessibility certification.
 
-The [implementation acceptance checklist](VisualizationAcceptance.md) records the behavior cases, component boundaries, and required evidence. Focused implementation checks are present; final browser, layout, and independent acceptance for the current source remain pending. Historical measurements and captures in this document do not establish acceptance of subsequent changes.
+The [implementation acceptance checklist](VisualizationAcceptance.md) records the behavior cases, component boundaries, and required evidence. The [combined PR](https://github.com/lanej/easy-ui/pull/1) links source revisions, current verification runs, and rendered artifacts. Historical measurements and captures in this document do not establish acceptance of subsequent changes.
 
 ### Map controls and layer state
 
@@ -120,7 +120,7 @@ Native graphical legends and individual marks are not keyboard-focusable. Report
 
 ## Validation and contribution
 
-Require the repository build, lint, tests, and Storybook gates. Additional checks exercise CommonJS/ESM imports and server rendering, engine lifecycle and failures, state suppression, keyboard controls, reduced motion, theme changes, real SVG rendering for each example, and flow conservation. Required browser acceptance covers desktop and mobile layouts, actual pointer selection, keyboard selection and zoom, external companions, larger text, and absence of horizontal overflow or browser errors. Current-source browser and View Rule acceptance remains pending; see [VisualizationAcceptance.md](VisualizationAcceptance.md). Incomplete automated accessibility checks must remain visible in the evidence.
+Require the repository build, lint, tests, and Storybook gates. Additional checks exercise CommonJS/ESM imports and server rendering, engine lifecycle and failures, state suppression, keyboard controls, reduced motion, theme changes, real SVG rendering for each example, and flow conservation. Required browser acceptance covers desktop and mobile layouts, actual pointer selection, keyboard selection and zoom, external companions, larger text, and absence of horizontal overflow or browser errors. See [VisualizationAcceptance.md](VisualizationAcceptance.md) for coverage and the [combined PR](https://github.com/lanej/easy-ui/pull/1) for the source revision and execution results. Incomplete automated accessibility checks must remain visible in the evidence.
 
 The Chart examples workflow publishes the runnable gallery and screenshots. Refresh the PR's embedded examples after component or fixture changes. `scripts/preview-metrics/README.md` documents regeneration; `easy-ui-react/src/Chart/Chart.mdx` documents the consumer API.
 
