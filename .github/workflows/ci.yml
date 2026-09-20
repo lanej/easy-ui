@@ -21,6 +21,8 @@ jobs:
         run: npm run build
       - name: Verify chart package imports and server rendering
         run: node scripts/check-chart-package.mjs
+      - name: Verify compatibility entry generation
+        run: node --test scripts/generateCompatibilityEntries.test.mjs
       - name: Verify isolated tarball imports and Sass assets
         run: node scripts/check-style-package.mjs
       - name: Retain packed-consumer logs on failure

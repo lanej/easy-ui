@@ -22,6 +22,23 @@ const run = (command, args, cwd) =>
 const sassFiles = (await readdir(join(source, "src/styles")))
   .filter((file) => file.endsWith(".scss"))
   .sort();
+const componentNames = (
+  await Promise.all(
+    (await readdir(join(source, "src"), { withFileTypes: true }))
+      .filter((entry) => entry.isDirectory())
+      .map(async ({ name }) => {
+        try {
+          await readFile(join(source, "src", name, "index.ts"));
+          return name;
+        } catch (error) {
+          if (error.code !== "ENOENT") throw error;
+          return null;
+        }
+      }),
+  )
+)
+  .filter(Boolean)
+  .sort();
 await readFile(join(distribution, "style.css")); // Run the package build first.
 
 // Other workspaces keep their existing distribution metadata behavior.
@@ -56,18 +73,68 @@ const sassSource = `
 .sass-button { @include unstyled.button; }
 `;
 
+const typeSource = `
+import { Chart } from "@easypost/easy-ui/Chart";
+import { MetricCard } from "@easypost/easy-ui/MetricCard";
+import { Button } from "@easypost/easy-ui/Button";
+import { DataGrid } from "@easypost/easy-ui/DataGrid";
+import { Select } from "@easypost/easy-ui/Select";
+import { SelectField, type BaseSelectFieldProps, type SelectFieldSize } from "@easypost/easy-ui/Select/SelectField";
+import type { KeyedSortDescriptor, MenuRowAction } from "@easypost/easy-ui/DataGrid/types";
+import type { Heading, IconSymbol } from "@easypost/easy-ui/types";
+import { classNames, type ResponsiveProp } from "@easypost/easy-ui/utilities/css";
+${componentNames
+  .map(
+    (name, index) =>
+      `import * as Component${index} from "@easypost/easy-ui/${name}";\nvoid Component${index};`,
+  )
+  .join("\n")}
+
+const sort: KeyedSortDescriptor<"cost"> = { column: "cost", direction: "ascending" };
+// @ts-expect-error Generic column keys must retain their declared constraint.
+const invalidSort: KeyedSortDescriptor<"cost"> = { column: "missing", direction: "ascending" };
+const menu: MenuRowAction = { type: "menu", renderMenuOverlay: () => null };
+const size: SelectFieldSize = "md";
+const field: BaseSelectFieldProps = { size, validationState: "valid" };
+const heading: Heading = "h2";
+const icon: IconSymbol = () => null;
+const responsive: ResponsiveProp<string> = { sm: "1rem" };
+const className: string = classNames("packed", false);
+
+export const example = <>
+  <Chart title="Packed chart" option={{ series: [{ type: "bar", data: [1] }] }} dataTable={{ columns: ["Count"], rows: [{ id: "one", values: [1] }] }} />
+  <MetricCard label="Packed metric" value="1" />
+  <Button onPress={() => undefined}>Packed button</Button>
+  <DataGrid
+    aria-label="Packed data"
+    columns={[{ key: "cost", label: "Cost" }]}
+    rows={[{ key: "one", cost: 1 }]}
+    renderColumnCell={(column) => column.label}
+    renderRowCell={(value) => String(value)}
+  />
+</>;
+void [Select, SelectField, sort, invalidSort, menu, field, heading, icon, responsive, className];
+${["Chart", "MetricCard", "Button", "DataGrid"]
+  .map(
+    (name) =>
+      `// @ts-expect-error ${name} exposes named exports, without a default export.\nComponent${componentNames.indexOf(name)}.default;`,
+  )
+  .join("\n")}
+`;
+
 // Write this runner inside each installed consumer: cwd alone does not isolate
 // static imports or createRequire from the repository's dependencies.
 const runner = String.raw`
 import assert from "node:assert/strict";
 import { readFileSync, realpathSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
-import { resolve, relative } from "node:path";
+import { dirname, join, resolve, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import * as sass from "sass";
 import { build } from "vite";
+import ts from "typescript";
 
 const require = createRequire(import.meta.url);
 const insideConsumer = (file) => {
@@ -107,6 +174,74 @@ const manifest = require("@easypost/easy-ui/package.json");
 assert.ok(manifest.sideEffects.includes("**/*.scss"));
 assert.ok(manifest.sideEffects.includes("**/*.css"));
 
+const typeExpected = JSON.parse(readFileSync("expected-types.json", "utf8"));
+const packageDirectory = dirname(insideConsumer(require.resolve("@easypost/easy-ui/package.json")));
+const canonicalDirectory = typeExpected.mode === "source" ? join(packageDirectory, "dist") : packageDirectory;
+const publicDeclarations = typeExpected.declarations.map((file) => insideConsumer(join(packageDirectory, file)));
+assert.ok(publicDeclarations.length >= typeExpected.components.length, "Published declaration entry points are missing");
+const typeResults = [];
+for (const [name, moduleResolution, module] of [
+  ["node", ts.ModuleResolutionKind.Node10, ts.ModuleKind.CommonJS],
+  ["bundler", ts.ModuleResolutionKind.Bundler, ts.ModuleKind.ESNext],
+]) {
+  const options = { target: ts.ScriptTarget.ES2020, module, moduleResolution, jsx: ts.JsxEmit.ReactJSX, strict: true, noEmit: true, skipLibCheck: true, esModuleInterop: true, types: ["react", "react-dom"] };
+  const fixture = resolve("consumer-types.tsx");
+  const resolvedEntry = (specifier, containingFile = fixture) => {
+    const result = ts.resolveModuleName(specifier, containingFile, options, ts.sys).resolvedModule;
+    assert.ok(result, name + " failed to resolve " + specifier + " from " + containingFile);
+    return insideConsumer(result.resolvedFileName);
+  };
+  const resolvedRelative = (specifier, containingFile) => {
+    // Sass/CSS side-effect imports remain in a few declarations. They are
+    // assets for the bundler, not TypeScript modules, and must exist in-package.
+    if (/\.(?:s[ac]ss|css)$/.test(specifier)) return insideConsumer(resolve(dirname(containingFile), specifier));
+    return resolvedEntry(specifier, containingFile);
+  };
+  const canonicalEntries = typeExpected.components.map((component) => insideConsumer(join(canonicalDirectory, component, "index.d.ts")));
+  const publicEntries = typeExpected.components.map((component) => resolvedEntry("@easypost/easy-ui/" + component));
+  let relativeTargets = 0;
+  for (const file of publicDeclarations) {
+    const subpath = relative(packageDirectory, file).split("\\").join("/").replace(/\.d\.ts$/, "");
+    resolvedEntry("@easypost/easy-ui/" + subpath);
+    // Check every generated forwarding target without adding shipped story or
+    // test declarations to the application's typechecked imports.
+    for (const imported of ts.preProcessFile(readFileSync(file, "utf8"), true, true).importedFiles) {
+      if (!imported.fileName.startsWith(".")) continue;
+      resolvedRelative(imported.fileName, file);
+      relativeTargets++;
+    }
+  }
+  const program = ts.createProgram([fixture, ...canonicalEntries], options);
+  const diagnostics = ts.getPreEmitDiagnostics(program);
+  assert.equal(diagnostics.length, 0, name + " consumer typecheck failed:\n" + ts.formatDiagnosticsWithColorAndContext(diagnostics, { getCurrentDirectory: () => process.cwd(), getCanonicalFileName: (file) => file, getNewLine: () => "\n" }));
+  const checker = program.getTypeChecker();
+  const exportedNames = (file) => {
+    const declaration = program.getSourceFile(file);
+    assert.ok(declaration, "TypeScript did not load " + file);
+    const symbol = checker.getSymbolAtLocation(declaration);
+    assert.ok(symbol, "Declaration is not an exported module: " + file);
+    return checker.getExportsOfModule(symbol).map((entry) => entry.getName()).sort();
+  };
+  for (let index = 0; index < typeExpected.components.length; index++) {
+    const expectedNames = exportedNames(canonicalEntries[index]);
+    assert.ok(expectedNames.length > 0, "Empty component namespace: " + typeExpected.components[index]);
+    assert.deepEqual(exportedNames(publicEntries[index]), expectedNames, name + " changed the exports of " + typeExpected.components[index]);
+  }
+  // skipLibCheck intentionally ignores third-party declaration diagnostics, so
+  // separately resolve every relative edge of Easy UI's loaded declarations.
+  for (const file of program.getSourceFiles()) {
+    if (!file.isDeclarationFile || relative(packageDirectory, file.fileName).startsWith("..")) continue;
+    insideConsumer(file.fileName);
+    for (const imported of ts.preProcessFile(file.text, true, true).importedFiles) {
+      if (!imported.fileName.startsWith(".")) continue;
+      resolvedRelative(imported.fileName, file.fileName);
+      relativeTargets++;
+    }
+  }
+  assert.ok(relativeTargets > 0, "No declaration forwarding targets were checked");
+  typeResults.push({ resolution: name, components: typeExpected.components.length, declarations: publicDeclarations.length, relativeTargets });
+}
+
 const dependencyImporter = {
   findFileUrl(url) {
     if (url.startsWith(".") || url.includes(":")) return null;
@@ -142,7 +277,7 @@ assert.match(bundledCss, /--ezui-color-blue-800:\s*#061340/i);
 assert.match(bundledCss, /\.os-scrollbar\.ezui-os-theme-overlay/);
 assert.match(bundledCss, /\.bundled-sass-smoke\s*\{[^}]*color:var\(--ezui-color-blue-800\)/);
 assert.ok(readdirSync("node_modules/@easypost/easy-ui").includes("package.json"));
-console.log(JSON.stringify({ sassFiles: expected.length, cssBytes: css.length, productionCssBytes: bundledCss.length, publicImports: "CJS + ESM + SSR passed" }));
+console.log(JSON.stringify({ sassFiles: expected.length, cssBytes: css.length, productionCssBytes: bundledCss.length, publicImports: "CJS + ESM + SSR passed", typescript: ts.version, typeConsumers: typeResults }));
 `;
 
 try {
@@ -175,6 +310,27 @@ try {
     const jsonStart = pack.stdout.lastIndexOf("\n[");
     const packed = JSON.parse(pack.stdout.slice(jsonStart + 1))[0];
     await writeFile(join(folder, "pack.json"), JSON.stringify(packed, null, 2));
+    assert.equal(
+      packed.files.some(({ path }) => path.startsWith("src/")),
+      false,
+      "Tarball unexpectedly includes repository source files",
+    );
+    const compatibility = JSON.parse(
+      await readFile(join(source, ".compatibility-entries.json"), "utf8"),
+    );
+    assert.equal(compatibility.version, 1);
+    for (const entry of compatibility.files) {
+      assert.ok(entry.source.startsWith("dist/"));
+      const expectedPaths =
+        mode === "source"
+          ? [entry.path, entry.source]
+          : [entry.source.slice("dist/".length)];
+      for (const path of expectedPaths)
+        assert.ok(
+          packed.files.some((file) => file.path === path),
+          "Tarball missing compatibility entry: " + mode + "/" + path,
+        );
+    }
     const prefix = mode === "source" ? "dist/" : "";
     for (const file of sassFiles)
       assert.ok(
@@ -200,9 +356,12 @@ try {
           type: "module",
           dependencies: {
             "@easypost/easy-ui": "file:" + join(folder, packed.filename),
-            react: "19.0.0",
-            "react-dom": "19.0.0",
-            "react-is": "19.0.0",
+            react: "18.3.1",
+            "react-dom": "18.3.1",
+            "react-is": "18.3.1",
+            "@types/react": "18.3.3",
+            "@types/react-dom": "18.3.0",
+            typescript: "5.7.3",
             sass: "1.89.2",
             vite: "6.3.5",
           },
@@ -216,6 +375,17 @@ try {
       JSON.stringify(sassFiles),
     );
     await writeFile(join(consumer, "consumer.scss"), sassSource);
+    await writeFile(join(consumer, "consumer-types.tsx"), typeSource);
+    await writeFile(
+      join(consumer, "expected-types.json"),
+      JSON.stringify({
+        mode,
+        components: componentNames,
+        declarations: compatibility.files
+          .filter((entry) => entry.path.endsWith(".d.ts"))
+          .map((entry) => entry.path),
+      }),
+    );
     await writeFile(
       join(consumer, "consumer.js"),
       'import "@easypost/easy-ui/styles/global.scss"; import "./bundled.scss"; export const compiled = true;',

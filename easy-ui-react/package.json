@@ -7,7 +7,15 @@
     "directory": "easy-ui-react"
   },
   "files": [
-    "dist"
+    "dist",
+    "/[A-Z]*/**",
+    "utilities/",
+    "visualization/",
+    "examples/",
+    "styles/",
+    "/types.d.ts",
+    "style.css",
+    "!src/**"
   ],
   "exports": {
     "./package.json": "./package.json",
@@ -33,7 +41,10 @@
       "require": "./dist/*/index.js"
     },
     "./*": {
-      "types": "./dist/*/index.d.ts",
+      "types": [
+        "./dist/*/index.d.ts",
+        "./dist/*.d.ts"
+      ],
       "import": "./dist/*/index.mjs",
       "require": "./dist/*/index.js"
     }
@@ -47,10 +58,10 @@
     "directory": "dist"
   },
   "scripts": {
-    "build": "rm -rf dist && run-p build:js build:types",
+    "build": "rm -rf dist && run-p build:js build:types && node ../scripts/generateCompatibilityEntries.mjs",
     "build:js": "vite build",
     "build:types": "tsc --build",
-    "clean": "rm -rf node_modules dist .turbo",
+    "clean": "node ../scripts/generateCompatibilityEntries.mjs --clean && rm -rf node_modules dist .turbo",
     "dev": "npm run --prefix .. start:storybook",
     "lint": "run-p lint:*",
     "lint:js": "eslint src --ext .ts,.tsx",
