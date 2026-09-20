@@ -1,5 +1,11 @@
 import React from "react";
-import { markerPoints, MarkerMode } from "../visualization/geometry";
+import {
+  continuousSegments,
+  MarkerMode,
+  position,
+} from "../visualization/geometry";
+import { SeriesMarkers } from "../visualization/SeriesMarkers";
+import { usePlotWidth } from "../visualization/usePlotWidth";
 import styles from "./Sparkline.module.scss";
 
 /** Equally spaced observations and the accessible description of their trend. */
@@ -25,29 +31,23 @@ export function Sparkline({
   accessibilityLabel,
   markers = "endpoints",
 }: SparklineProps) {
-  const segments = getSegments(values);
+  const { ref, width } = usePlotWidth<SVGSVGElement>(WIDTH);
+  const segments = getSegments(values, width);
 
   return (
     <svg
+      ref={ref}
       className={styles.root}
-      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      preserveAspectRatio="none"
+      viewBox={`0 0 ${width} ${HEIGHT}`}
       role="img"
       aria-label={
         segments.length ? accessibilityLabel : `${accessibilityLabel}. No data.`
       }
       focusable="false"
     >
-      {segments.map((points, index) =>
-        points.length === 1 ? (
-          <circle
-            key={index}
-            cx={points[0][0]}
-            cy={points[0][1]}
-            r={2}
-            fill="currentColor"
-          />
-        ) : (
+      {segments
+        .filter((points) => points.length > 1)
+        .map((points, index) => (
           <polyline
             key={index}
             points={points.map((point) => point.join(",")).join(" ")}
@@ -58,17 +58,8 @@ export function Sparkline({
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
           />
-        ),
-      )}
-      {markerPoints(segments, markers).map(([x, y], index) => (
-        <circle
-          key={`marker-${index}`}
-          cx={x}
-          cy={y}
-          r={2}
-          fill="currentColor"
-        />
-      ))}
+        ))}
+      <SeriesMarkers segments={segments} markers={markers} radius={2} />
     </svg>
   );
 }
@@ -77,7 +68,7 @@ function isObservation(value: number | null): value is number {
   return value !== null && Number.isFinite(value);
 }
 
-function getSegments(values: SparklineProps["values"]) {
+function getSegments(values: SparklineProps["values"], width: number) {
   let min = Infinity;
   let max = -Infinity;
   for (const value of values) {
@@ -88,30 +79,18 @@ function getSegments(values: SparklineProps["values"]) {
   }
   if (min === Infinity) return [];
 
-  // Normalize first to avoid overflowing the extent for large finite values.
-  const scale = Math.max(Math.abs(min), Math.abs(max)) || 1;
-  const lower = min / scale;
-  const range = max / scale - lower;
-  const segments: [number, number][][] = [];
-  let segment: [number, number][] = [];
-
-  values.forEach((value, index) => {
-    if (!isObservation(value)) {
-      segment = [];
-      return;
-    }
-    if (!segment.length) segments.push(segment);
+  return continuousSegments(values, (value, index) => {
+    if (!isObservation(value)) return null;
     const x =
       values.length === 1
-        ? WIDTH / 2
-        : PADDING + (index / (values.length - 1)) * (WIDTH - PADDING * 2);
+        ? width / 2
+        : PADDING + (index / (values.length - 1)) * (width - PADDING * 2);
     const y =
-      range === 0
+      min === max
         ? HEIGHT / 2
         : HEIGHT -
           PADDING -
-          ((value / scale - lower) / range) * (HEIGHT - PADDING * 2);
-    segment.push([x, y]);
+          position(value, [min, max]) * (HEIGHT - PADDING * 2);
+    return [x, y];
   });
-  return segments;
 }

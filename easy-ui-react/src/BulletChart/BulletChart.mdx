@@ -11,7 +11,13 @@ A compact measure against a target: a filled bar, target marker, and explicit ze
 <Canvas of={Stories.Default} />
 <Canvas of={Stories.CostTarget} />
 
-Supply a finite positive `max` and non-negative `value` and `target` within that bound. Set the same `max` to compare multiple measures in the same unit. Invalid or out-of-range inputs are unavailable, never silently clipped; `null` is missing and zero is observed. A missing measure suppresses the plot while preserving a valid target as text.
+Supply a finite positive `max` and non-negative `value` and `target`. Set the same `max` to compare multiple measures in the same unit. Null shows `emptyLabel`; invalid values show `invalidValueLabel`. Finite values beyond the scale retain their exact value with `outOfDomainLabel` and omit their mark by default. Choose `overflow="clamp"` to draw them explicitly at the boundary while retaining the exact value and outside-scale label. Invalid scales show `invalidScaleLabel` and no marks; zero remains observed data. A missing measure suppresses the plot while preserving the target as text.
+
+For a present invalid or outside-scale measure, the supplied scale and any valid target remain visible. Omitting one mark does not remove the other mark or the shared scale.
+
+<Canvas of={Stories.Overflow} />
+
+`formatValue` controls exact values and accessible descriptions. Use `formatAxisValue` for shorter scale endpoints, without losing precision elsewhere. `typography` configures text sizes by role.
 
 <Canvas of={Stories.NoData} />
 <Canvas of={Stories.Zero} />

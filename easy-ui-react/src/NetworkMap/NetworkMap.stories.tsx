@@ -1,3 +1,10 @@
+import { NetworkMapProvider } from "./NetworkMapContext";
+import { NetworkMapSurface } from "./NetworkMapSurface";
+import {
+  NetworkMapControlPanel,
+  NetworkMapLegend,
+  NetworkMapDataView,
+} from "./NetworkMapCompanions";
 import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
@@ -57,4 +64,30 @@ function ExternalWeatherExample() {
 
 export const ExternalLayerControls: Story = {
   render: () => <ExternalWeatherExample />,
+};
+
+function LayerOnlyExample() {
+  return (
+    <NetworkMapProvider
+      mapStyle={exampleBasemap}
+      workerUrl={workerUrl}
+      areas={weatherAreas}
+      defaultLayerVisibility={{ weather: true }}
+      aria-labelledby="weather-composition-heading"
+      aria-describedby="weather-composition-records"
+      typography={{ description: 16, label: 14 }}
+      height={320}
+    >
+      <h2 id="weather-composition-heading">
+        Weather without logistics framing
+      </h2>
+      <NetworkMapControlPanel />
+      <NetworkMapSurface />
+      <NetworkMapLegend />
+      <NetworkMapDataView id="weather-composition-records" expanded />
+    </NetworkMapProvider>
+  );
+}
+export const LayerOnlyComposition: Story = {
+  render: () => <LayerOnlyExample />,
 };

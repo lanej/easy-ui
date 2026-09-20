@@ -28,3 +28,9 @@ The screenshot artifact adds `native-extensions-{desktop,mobile,review}.png` and
 ## Modular ECharts comparison
 
 `npm run measure:modular` builds the complete gallery with full and modular ECharts in separate output folders. `npm run capture:modular` checks both and compares their rendered PNGs, including desktop/mobile SVG, Canvas, and Sankey emphasis. See [the experiment notes](./modular/README.md) for registrations, measurement boundaries, and the opt-in API needed before production adoption.
+
+## Native acceptance fixture
+
+`native-regressions.html` exercises all six native components with synthetic edge cases. The shared [browser audit](./audit/README.md) measures circular Sparkline markers at 80, 160, and 480 CSS pixels, singleton time labels, and explicit elapsed-time positions. It also checks abbreviated axes against full exact values, distinct missing/invalid/zero/overflow states, shared BarList scales, unframed metric composition, and every supported typography role at larger sizes. The native fixture imports no chart engine.
+
+Each Chrome, Firefox, and Safari audit records the measured geometry and text sizes in `audit.json`, plus `native-markers.png`, `native-data.png`, and `native-typography.png`. These checks are part of both the full and modular builds.

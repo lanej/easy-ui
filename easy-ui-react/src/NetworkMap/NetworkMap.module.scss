@@ -18,6 +18,7 @@
   }
 }
 .heading {
+  overflow-wrap: anywhere;
   display: flex;
   justify-content: space-between;
   align-items: start;
@@ -25,19 +26,19 @@
   padding: 20px 24px 14px;
   h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: var(--ezui-viz-title-size, 18px);
     line-height: 1.4;
   }
   p {
     margin: 6px 0 0;
-    font-size: 12px;
+    font-size: var(--ezui-viz-description-size, 14px);
     color: design-token("color.neutral.700");
   }
 }
 .scale {
   flex-shrink: 0;
   color: design-token("color.neutral.700");
-  font-size: 11px;
+  font-size: var(--ezui-viz-label-size, 12px);
   padding: 4px 8px;
   border: 1px solid design-token("color.neutral.200");
   border-radius: 20px;
@@ -55,7 +56,7 @@
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--ezui-viz-control-size, 14px);
   button {
     padding: 7px 10px;
     border: 1px solid design-token("color.neutral.300");
@@ -74,6 +75,7 @@
   }
 }
 .viewport {
+  min-width: 0;
   position: relative;
   border-top: 1px solid design-token("color.neutral.200");
 }
@@ -90,7 +92,7 @@
   // this component's own canvas so it never leaks onto an unrelated
   // MapLibre instance elsewhere in a consuming app.
   :global(.maplibregl-ctrl-scale) {
-    font-size: 12px;
+    font-size: var(--ezui-viz-label-size, 12px);
   }
 }
 .message {
@@ -103,36 +105,31 @@
   flex-direction: column;
   background: design-token("color.neutral.100");
   color: design-token("color.neutral.800");
-  font-size: 14px;
+  font-size: var(--ezui-viz-description-size, 14px);
   padding: 24px;
   text-align: center;
 }
 .selection {
-  position: absolute;
-  bottom: 36px;
-  left: 20px;
-  max-width: calc(100% - 90px);
+  margin: 12px 20px;
+  min-width: 0;
+  overflow-wrap: anywhere;
   border: 1px solid design-token("color.neutral.200");
   border-left: 3px solid design-token("color.primary.600");
   border-radius: 8px;
-  box-shadow: 0 3px 16px #1027431a;
   background: design-token("color.neutral.000");
   padding: 12px 16px;
-  pointer-events: none;
   span {
     display: block;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
+    font-size: var(--ezui-viz-label-size, 12px);
     color: design-token("color.neutral.700");
   }
   strong {
     display: block;
-    font-size: 14px;
+    font-size: var(--ezui-viz-description-size, 14px);
     margin: 3px 0;
   }
   p {
-    font-size: 11px;
+    font-size: var(--ezui-viz-description-size, 14px);
     margin: 0;
     color: design-token("color.neutral.700");
   }
@@ -192,9 +189,9 @@
     color: #fff;
     background: #895100;
     border-radius: 50%;
-    font-size: 10px;
-    width: 13px;
-    height: 13px;
+    font-size: var(--ezui-viz-label-size, 12px);
+    min-width: 1.25em;
+    min-height: 1.25em;
     display: grid;
     place-items: center;
   }
@@ -214,15 +211,17 @@
 .markerLabel {
   position: absolute;
   display: block;
-  white-space: nowrap;
+  white-space: normal;
+  width: max-content;
+  overflow-wrap: anywhere;
   padding: 4px 8px;
   background: design-token("color.neutral.000");
   border: 1px solid design-token("color.neutral.200");
   box-shadow: 0 2px 5px #10274314;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: var(--ezui-viz-label-size, 12px);
   font-weight: 500;
-  line-height: 18px;
+  line-height: 1.5;
   font-family: inherit;
   pointer-events: none;
 }
@@ -236,10 +235,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 20px;
-  // Raised from 11px: a real consumer's calibrated readable-text floor
-  // (12px, matching Easy UI's own smallest intentional Text token) flagged
-  // this as unreadable.
-  font-size: 12px;
+  font-size: var(--ezui-viz-legend-size, 12px);
   color: design-token("color.neutral.700");
   span {
     display: flex;
@@ -263,7 +259,7 @@
 }
 .weatherNote,
 .warning {
-  font-size: 12px;
+  font-size: var(--ezui-viz-label-size, 12px);
   padding: 10px 20px;
   color: #614000;
   background: #fff5de;
@@ -275,7 +271,7 @@
 .data {
   padding: 12px 20px 16px;
   border-top: 1px solid design-token("color.neutral.200");
-  font-size: 12px;
+  font-size: var(--ezui-viz-label-size, 12px);
   summary {
     color: design-token("color.primary.600");
   }
@@ -289,7 +285,7 @@
     min-width: 680px;
     width: 100%;
     text-align: left;
-    font-size: 12px;
+    font-size: var(--ezui-viz-detail-size, 12px);
   }
   td,
   th {
@@ -323,11 +319,34 @@
     display: none;
   }
   .selection {
-    left: 12px;
-    bottom: 48px;
+    margin: 12px;
   }
   .legend {
     padding: 12px 16px;
+  }
+}
+
+.toolbar,
+.data,
+.viewport {
+  button,
+  input {
+    font: inherit;
+  }
+  button,
+  input,
+  summary {
+    cursor: pointer;
+  }
+  button:focus-visible,
+  input:focus-visible,
+  summary:focus-visible {
+    outline: 3px solid design-token("color.primary.600");
+    outline-offset: 3px;
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 }
 
@@ -340,4 +359,11 @@
 .root button:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.canvas :global(.maplibregl-ctrl-attrib) {
+  font-size: var(--ezui-viz-detail-size, 12px);
+}
+.canvas :global(.maplibregl-ctrl) {
+  max-width: calc(100% - 20px);
 }

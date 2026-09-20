@@ -151,3 +151,51 @@ it("defaults to segment endpoints while supporting unmarked, all and extrema mod
       .sort((a, b) => a - b),
   ).toEqual([4, 156]);
 });
+
+it.each([80, 160, 480])(
+  "keeps marker geometry in CSS pixels at %spx width",
+  (width) => {
+    const measurement = vi
+      .spyOn(Element.prototype, "getBoundingClientRect")
+      .mockReturnValue({
+        width,
+        height: 40,
+        x: 0,
+        y: 0,
+        top: 0,
+        left: 0,
+        right: width,
+        bottom: 40,
+        toJSON: () => ({}),
+      });
+    try {
+      const { container, rerender } = render(
+        <Sparkline values={[1, 2]} accessibilityLabel="Responsive trend" />,
+      );
+      expect(screen.getByRole("img")).toHaveAttribute(
+        "viewBox",
+        `0 0 ${width} 40`,
+      );
+      expect(screen.getByRole("img")).not.toHaveAttribute(
+        "preserveAspectRatio",
+        "none",
+      );
+      const markers = [...container.querySelectorAll("circle")];
+      expect(markers.map((marker) => marker.getAttribute("r"))).toEqual([
+        "2",
+        "2",
+      ]);
+      expect(
+        markers.map((marker) => Number(marker.getAttribute("cx"))),
+      ).toEqual([4, width - 4]);
+      rerender(<Sparkline values={[1]} accessibilityLabel="Singleton" />);
+      expect(container.querySelector("circle")).toHaveAttribute(
+        "cx",
+        String(width / 2),
+      );
+      expect(container.querySelector("circle")).toHaveAttribute("r", "2");
+    } finally {
+      measurement.mockRestore();
+    }
+  },
+);

@@ -17,6 +17,7 @@ try {
   await auditBrowser(
     {
       open: (url) => page.goto(url, { waitUntil: "networkidle" }),
+      resize: (width, height) => page.setViewportSize({ width, height }),
       evaluate: (fn, ...args) =>
         page.evaluate(
           ({ source, values }) => (0, eval)(`(${source})`)(...values),

@@ -1,5 +1,11 @@
 import { Key } from "@react-types/shared";
-import React, { CSSProperties, useLayoutEffect, useMemo, useRef } from "react";
+import React, {
+  CSSProperties,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { useTable } from "react-aria";
 import { useTableState } from "react-stately";
 import { classNames, getComponentToken, variationName } from "../utilities/css";
@@ -20,6 +26,7 @@ import { FooterShell } from "./Footer";
 import { Column, DataGridProps, Row as RowType } from "./types";
 import { useEdgeInterceptors } from "./useEdgeInterceptors";
 import { useExpandedRow } from "./useExpandedRow";
+import { GroupedRow } from "./useGroupedRows";
 import { Spinner } from "../Spinner";
 
 import styles from "./DataGrid.module.scss";
@@ -94,8 +101,62 @@ export function Table<C extends Column, R extends RowType>(
       visibleState.collection,
     ),
   };
+  const previousCollection = useRef(state.collection);
+  const removedExpandedFocus = useRef<Key | null>(null);
+  const onExpandedFocusedUnmount = useCallback((rowKey: Key) => {
+    removedExpandedFocus.current = rowKey;
+  }, []);
   useLayoutEffect(() => {
+    const previous = previousCollection.current;
+    previousCollection.current = state.collection;
+    const removedRowKey = removedExpandedFocus.current;
+    removedExpandedFocus.current = null;
+    if (removedRowKey !== null && !isLoading) {
+      const subtotalKey = collapsedRowKeys.get(removedRowKey);
+      const document = tableRef.current?.ownerDocument;
+      const activeElement = document?.activeElement;
+      if (
+        subtotalKey !== undefined &&
+        document &&
+        (!activeElement || activeElement === document.body)
+      ) {
+        const row = Array.from(tableRef.current?.rows ?? []).find(
+          (element) => element.getAttribute("data-key") === String(subtotalKey),
+        );
+        row
+          ?.querySelector<HTMLElement>("[data-ezui-data-grid-group-toggle]")
+          ?.focus();
+      }
+    }
     const focusedKey = state.selectionManager.focusedKey;
+    // A subtotal's collection key may change to avoid a new consumer row key.
+    // Preserve keyboard position by group and column identity, even when the
+    // old collection key now belongs to the newly inserted data row.
+    const previousNode =
+      focusedKey == null ? undefined : previous.getItem(focusedKey);
+    const previousRow =
+      previousNode?.parentKey == null
+        ? previousNode
+        : previous.getItem(previousNode.parentKey);
+    const previousItem = previousRow?.value as GroupedRow<R> | undefined;
+    if (previousItem?.type === "subtotal" && previous !== state.collection) {
+      const nextRow = [...state.collection.body.childNodes].find(
+        (node) =>
+          (node.value as GroupedRow<R>).renderKey === previousItem.renderKey,
+      );
+      if (nextRow && nextRow.key !== previousRow?.key) {
+        const nextCell =
+          previousNode?.type === "cell"
+            ? [...nextRow.childNodes].find(
+                (node) =>
+                  state.collection.columns[node.index]?.key ===
+                  previous.columns[previousNode.index]?.key,
+              )
+            : undefined;
+        state.selectionManager.setFocusedKey(nextCell?.key ?? nextRow.key);
+        return;
+      }
+    }
     if (focusedKey == null || state.collection.getItem(focusedKey)) return;
     const focusedNode = fullState.collection.getItem(focusedKey);
     const rowKey = focusedNode?.parentKey ?? focusedKey;
@@ -113,6 +174,7 @@ export function Table<C extends Column, R extends RowType>(
     state.selectionManager,
     fullState.collection,
     collapsedRowKeys,
+    isLoading,
   ]);
   const { gridProps } = useTable(
     {
@@ -255,7 +317,7 @@ export function Table<C extends Column, R extends RowType>(
                 ) : (
                   [...collection.body.childNodes].map((row) => (
                     <Row
-                      key={row.key}
+                      key={(row.value as GroupedRow<R>).renderKey}
                       item={row}
                       isSubtotal={subtotalKeys.has(row.key)}
                       state={state}
@@ -264,7 +326,14 @@ export function Table<C extends Column, R extends RowType>(
                       }
                     >
                       {[...row.childNodes].map((cell) => (
-                        <Cell key={cell.key} cell={cell} state={state} />
+                        <Cell
+                          key={JSON.stringify([
+                            typeof columns[cell.index]?.key,
+                            String(columns[cell.index]?.key),
+                          ])}
+                          cell={cell}
+                          state={state}
+                        />
                       ))}
                     </Row>
                   ))
@@ -272,7 +341,10 @@ export function Table<C extends Column, R extends RowType>(
               </RowGroup>
             </table>
             {expandedRow && (
-              <ExpandedRowContent>
+              <ExpandedRowContent
+                rowKey={expandedRow.key}
+                onFocusedUnmount={onExpandedFocusedUnmount}
+              >
                 {renderExpandedRow(expandedRow.key)}
               </ExpandedRowContent>
             )}

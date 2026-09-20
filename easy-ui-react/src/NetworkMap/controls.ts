@@ -24,14 +24,19 @@ export const defaultControlLabels: NetworkMapControlLabels = {
 export function resolveMapControls(
   props: NetworkMapProps,
 ): Required<NetworkMapControls> {
-  const facilities = props.facilities.filter((facility) =>
+  const facilities = (props.facilities ?? []).filter((facility) =>
     validCoordinate(facility.coordinates),
   );
-  const selectedSegment = props.segments.find(
+  const selectedSegment = props.segments?.find(
     (segment) => segment.id === props.selectedSegmentId,
   );
   const applicable = {
-    fitAll: facilities.length > 0,
+    fitAll:
+      facilities.length > 0 ||
+      (props.areas ?? []).some((area) =>
+        validAreaCoordinates(area.coordinates),
+      ) ||
+      (props.surface?.cells ?? []).some(validSurfaceBounds),
     selectedSegment:
       selectedSegment !== undefined &&
       segmentData(facilities, [selectedSegment]).features.length > 0,

@@ -2,15 +2,28 @@ import { Key } from "@react-types/shared";
 import { useMemo } from "react";
 import { Column, DataGridGroup, DataGridProps, Row } from "./types";
 
-type DataRow<R extends Row> = { key: Key; type: "data"; row: R };
+type DataRow<R extends Row> = {
+  key: Key;
+  renderKey: string;
+  type: "data";
+  row: R;
+};
 type SubtotalRow<R extends Row> = {
   key: Key;
+  renderKey: string;
   type: "subtotal";
   group: DataGridGroup<R>;
+  label: string;
   values: Map<Key, unknown>;
   isCollapsed?: boolean;
 };
 export type GroupedRow<R extends Row> = DataRow<R> | SubtotalRow<R>;
+
+// React identity is independent of collision-safe collection keys. Consumers
+// may add a data row whose key is currently allocated to a subtotal.
+function renderKey(kind: "data" | "subtotal", key: Key) {
+  return JSON.stringify([kind, typeof key, String(key)]);
+}
 
 /** Build collection items without exposing synthetic rows to consumer callbacks. */
 export function useGroupedRows<C extends Column, R extends Row>({
@@ -24,7 +37,12 @@ export function useGroupedRows<C extends Column, R extends Row>({
     if (!grouping) {
       return {
         items: rows.map(
-          (row): DataRow<R> => ({ key: row.key, type: "data", row }),
+          (row): DataRow<R> => ({
+            key: row.key,
+            renderKey: renderKey("data", row.key),
+            type: "data",
+            row,
+          }),
         ),
         subtotalKeys,
       };
@@ -46,7 +64,12 @@ export function useGroupedRows<C extends Column, R extends Row>({
     const usedKeys = new Set(rows.map((row) => String(row.key)));
     for (const [groupKey, groupRows] of groups) {
       for (const row of groupRows) {
-        items.push({ key: row.key, type: "data", row });
+        items.push({
+          key: row.key,
+          renderKey: renderKey("data", row.key),
+          type: "data",
+          row,
+        });
       }
       // Delimit string keys so collision suffixes cannot match another
       // group key. Encoding also preserves distinct accessible labels when
@@ -62,6 +85,8 @@ export function useGroupedRows<C extends Column, R extends Row>({
       usedKeys.add(key);
       subtotalKeys.add(key);
 
+      const group = { key: groupKey, rows: groupRows };
+      const label = grouping.getGroupLabel?.(group) ?? String(groupKey);
       const values = new Map<Key, unknown>();
       for (const column of columns) {
         const aggregate = Object.prototype.hasOwnProperty.call(
@@ -75,14 +100,16 @@ export function useGroupedRows<C extends Column, R extends Row>({
           aggregate
             ? aggregate(groupRows)
             : column === columns[0]
-              ? `${groupKey} subtotal`
+              ? `${label} subtotal`
               : undefined,
         );
       }
       items.push({
         key,
+        renderKey: renderKey("subtotal", groupKey),
         type: "subtotal",
-        group: { key: groupKey, rows: groupRows },
+        group,
+        label,
         values,
       });
     }

@@ -13,9 +13,13 @@ export default defineConfig({
         "./node_modules/overlayscrollbars/styles/overlayscrollbars.css",
       ),
       ...Object.fromEntries(
-        ["react", "react-dom", "maplibre-gl", "@easypost/easy-ui-tokens"].map(
-          (name) => [name, local(`./node_modules/${name}`)],
-        ),
+        [
+          "react",
+          "react-dom",
+          "react-aria",
+          "maplibre-gl",
+          "@easypost/easy-ui-tokens",
+        ].map((name) => [name, local(`./node_modules/${name}`)]),
       ),
     },
   },
@@ -29,6 +33,7 @@ export default defineConfig({
         gallery: local("./index.html"),
         lightweight: local("./lightweight.html"),
         regressions: local("./regressions.html"),
+        composition: local("./composition.html"),
       },
     },
   },

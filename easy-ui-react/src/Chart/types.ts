@@ -1,5 +1,28 @@
 import type { EChartsOption, ECElementEvent } from "echarts";
 
+/** A dataZoom component's range. Stable IDs are recommended when components reorder. */
+export type ChartZoomState = {
+  id?: string;
+  index?: number;
+  start?: number;
+  end?: number;
+  startValue?: number | string | Date;
+  endValue?: number | string | Date;
+  rangeMode?: ["value" | "percent", "value" | "percent"];
+};
+
+/** One legend's series visibility, independently of its displayed labels. */
+export type ChartLegendState = {
+  id?: string;
+  index?: number;
+  selected: Record<string, boolean>;
+};
+
+/** Scope a keyboard command to an explicit component or intentional group. */
+export type ChartZoomTarget =
+  | { dataZoomId: string | readonly string[] }
+  | { dataZoomIndex: number | readonly number[] };
+
 /** Native ECharts options, including Cartesian, flow, hierarchy, and graph series. */
 export type ChartOption = EChartsOption;
 /**

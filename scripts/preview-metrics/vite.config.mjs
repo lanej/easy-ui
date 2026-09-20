@@ -137,6 +137,8 @@ export function previewConfig(engine = "full", outDir = "dist") {
               gallery: local("./index.html"),
               states: local("./audit.html"),
               layout: local("./layout.html"),
+              native: local("./native-regressions.html"),
+              chartComposition: local("./chart-composition.html"),
             },
       },
     },

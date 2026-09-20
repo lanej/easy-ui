@@ -3,6 +3,7 @@ name: Chart layout review
 on:
   pull_request:
     paths:
+      - "easy-ui-react/src/visualization/**"
       - ".ui-review/**"
       - ".github/workflows/chart-layout-review.yml"
       - "easy-ui-react/src/examples/**"
@@ -28,11 +29,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-      - name: Check out pinned View Rule engine
+      - name: Check out View Rule 0.7.0 (pinned)
         uses: actions/checkout@v4
         with:
           repository: lanej/viewrule
-          ref: 351aa15c0c1db6baf9ec46fc9d4098555af95b85
+          ref: 6d36031935a824c650e049a14aeb9770e042bb95
           path: .viewrule-engine
       - name: Install View Rule and Chromium
         working-directory: .viewrule-engine
@@ -55,7 +56,7 @@ jobs:
             if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
-          node .viewrule-engine/bin/viewrule.mjs check
+          node .viewrule-engine/bin/viewrule.mjs check --full
       - name: Upload measured findings and full-resolution captures
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,18 +1,18 @@
-# Modular ECharts experiment
+# Modular ECharts preview
 
-This branch starts from #1, after closing the Recharts comparison in #3. It measures ECharts 6.1.0 with an explicit module registry while retaining the original 18 analytical examples and adding eight logistics/tracking recipes, all six lightweight components, SVG, and Canvas.
+This private preview measures ECharts 6.1.0 with an explicit module registry across all 24 analytical recipes, all six lightweight components, SVG, and Canvas. It is part of the combined Lane J visualization PR alongside charts, native visualizations, maps, the data grid, and their documentation.
 
-The published `Chart` API and full-engine loader are unchanged. A Vite plugin replaces only the private preview's loader when building the modular gallery. No Recharts code or dependency is included.
+The public `Chart` and `ChartSurface` keep the optional, lazy full-engine loader and native ECharts option support. A Vite plugin replaces only the private preview's loader when building the modular gallery. No Recharts code or dependency is included.
 
 ## Registrations
 
 `portfolio.mjs` registers eight series: line, bar, scatter, pie, Sankey, treemap, heatmap, and boxplot. Areas, scenarios, histograms, cumulative distributions, prediction bands, and waterfalls compose those series using the existing fixtures.
 
-It also registers Cartesian grids, plain/scroll legends, tooltips, inside/slider zoom, mark lines/areas/points, continuous visual maps, label layout, legacy `containLabel` support, and both renderers. Titles and exact tables remain in the Easy UI wrapper. The preset retains ECharts' native Sankey adjacency emphasis and Canvas support.
+It also registers Cartesian grids, plain/scroll legends, tooltips, inside/slider zoom, mark lines/areas/points, continuous visual maps, label layout, legacy `containLabel` support, and both renderers. Easy UI provides independently placeable headings, zoom controls, and exact tables; the full `Chart` composes these companions. The preset retains ECharts' native Sankey adjacency emphasis and Canvas support.
 
 Other series and components are intentionally absent: for example, radar, gauge, graph, calendar, timeline, toolbox, dataset transforms, piecewise visual maps, ARIA decals, and universal transitions. Register them when the application needs them. Our exact-table accessibility path remains unchanged; this experiment adds no graphical accessibility claims.
 
-All 24 recipes use the eight-series preset. Geographic maps are developed in a separate draft PR; the chart gallery contains no map recipes or basemap data.
+All 24 recipes use the eight-series preset. Geographic maps are included in the same PR with a separate map preview and optional MapLibre dependency; the chart gallery contains no map recipes or basemap data.
 
 `trend.mjs` is a separate engine-only size probe for an SVG time-series screen with labels, annotations, and zoom. It is not used for the gallery or claimed to support the full portfolio.
 
@@ -43,4 +43,4 @@ Bundle totals include the original gallery's React, Easy UI, tokens, fixtures, a
 
 The current public `ChartOption` accepts the full ECharts option surface. Silently replacing its loader with this registry would make some valid configurations stop working. For production, prefer an explicit opt-in modular entry or an application-supplied loader with a narrowed `ComposeOption` type; keep the full entry available. Confirm in a consumer production build that selecting the modular entry does not also pull in the default engine. Avoid importing both runtimes on the same page, since their module registration is shared.
 
-The two known zoom-refresh edge cases in #1 remain wrapper bugs with either import strategy. This experiment isolates modularization and does not claim to fix them. No screenshots, examples, public exports, or native components are removed.
+The Chart implementation preserves supported interaction state across theme and renderer changes, scopes keyboard zoom to its effective target, and supports controlled zoom and legend state. The composition acceptance fixture covers independent headings/controls/data, shared state, typography, engine retry, and mobile layouts for SVG and Canvas. Those behaviors remain independent of the preview's import strategy. See [visualization acceptance](../../../documentation/specs/VisualizationAcceptance.md) for the current validation status; rendered browser and View Rule acceptance remain pending.

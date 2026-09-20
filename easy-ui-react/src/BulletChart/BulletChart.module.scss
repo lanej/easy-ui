@@ -2,7 +2,7 @@
 
 .root {
   color: design-token("color.neutral.900");
-  font-size: 14px;
+  font-size: var(--ezui-viz-label-size, 12px);
 }
 
 .labels {
@@ -15,7 +15,7 @@
 }
 
 .value {
-  font-size: 20px;
+  font-size: var(--ezui-viz-title-size, 18px);
   font-variant-numeric: tabular-nums;
 }
 
@@ -31,6 +31,10 @@
   top: 6px;
   height: 12px;
   background: design-token("color.primary.600");
+  &[data-overflow="true"] {
+    outline: 2px dashed design-token("color.neutral.900");
+    outline-offset: 2px;
+  }
 }
 
 .target {
@@ -48,15 +52,13 @@
   gap: 8px;
   margin-top: 6px;
   font-variant-numeric: tabular-nums;
-}
-
-.scale,
-.caption {
-  font-size: 12px;
+  font-size: var(--ezui-viz-label-size, 12px);
   color: design-token("color.neutral.600");
 }
 
 .caption {
+  font-size: var(--ezui-viz-detail-size, 12px);
+  color: design-token("color.neutral.600");
   margin-top: 8px;
   overflow-wrap: anywhere;
 }

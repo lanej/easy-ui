@@ -1,11 +1,15 @@
 import React from "react";
 import {
   isDomain,
-  markerPoints,
+  continuousSegments,
   MarkerMode,
-  PlotPoint,
   position,
 } from "../visualization/geometry";
+import { SeriesMarkers } from "../visualization/SeriesMarkers";
+import {
+  visualizationTypographyStyle,
+  type VisualizationTypography,
+} from "../visualization/typography";
 import { usePlotWidth } from "../visualization/usePlotWidth";
 import styles from "./CompactTimeSeries.module.scss";
 
@@ -37,8 +41,14 @@ export type CompactTimeSeriesProps = {
   timeDomain?: readonly [number, number];
   /** Include an explicit timezone in the formatter used by the application. */
   formatTime: (timestamp: number) => string;
-  /** Formats value-axis labels, observations, and the reference; defaults to String. */
+  /** Optional abbreviated axis timestamps. Exact data keeps formatTime. */
+  formatAxisTime?: (timestamp: number) => string;
+  /** Formats exact observations/reference and, unless overridden, axis labels; defaults to String. */
   formatValue?: (value: number) => string;
+  /** Optional abbreviated value-axis labels. Exact observations/reference keep formatValue. */
+  formatAxisValue?: (value: number) => string;
+  /** Text sizes in CSS pixels, independently configurable by role. */
+  typography?: VisualizationTypography;
   /** Optional labeled horizontal reference; its value must be within domain. */
   reference?: {
     /** Finite reference value within domain. */
@@ -73,6 +83,9 @@ export function CompactTimeSeries({
   timeDomain,
   formatTime,
   formatValue = String,
+  formatAxisTime = formatTime,
+  formatAxisValue = formatValue,
+  typography,
   reference,
   markers = "none",
   interpolation = "linear",
@@ -127,24 +140,22 @@ export function CompactTimeSeries({
   const y = (value: number) =>
     bottom - position(value, domain) * (bottom - top);
   const plots = valid
-    ? series.map((item) => {
-        const segments: PlotPoint[][] = [];
-        let segment: PlotPoint[] = [];
-        for (const point of item.points) {
-          if (point.value === null || !Number.isFinite(point.value)) {
-            segment = [];
-            continue;
-          }
-          if (!segment.length) segments.push(segment);
-          segment.push([x(point.time), y(point.value)]);
-        }
-        return segments;
-      })
+    ? series.map((item) =>
+        continuousSegments(item.points, (point) =>
+          point.value === null || !Number.isFinite(point.value)
+            ? null
+            : [x(point.time), y(point.value)],
+        ),
+      )
     : [];
   const hasData = plots.some((segments) => segments.length);
   const tickValues = [domain[0], domain[0] / 2 + domain[1] / 2, domain[1]];
   return (
-    <figure className={styles.root} aria-label={label}>
+    <figure
+      className={styles.root}
+      aria-label={label}
+      style={visualizationTypographyStyle(typography)}
+    >
       <figcaption>
         <strong>{label}</strong>
         <p className={styles.description}>{description}</p>
@@ -159,7 +170,7 @@ export function CompactTimeSeries({
           >
             {tickValues.map((value, index) => (
               <span key={index} style={{ top: `${y(value)}px` }}>
-                {formatValue(value)}
+                {formatAxisValue(value)}
               </span>
             ))}
           </div>
@@ -200,15 +211,9 @@ export function CompactTimeSeries({
                       [styles.primary, styles.secondary, styles.tertiary][index]
                     }
                   >
-                    {segments.map((points, segmentIndex) =>
-                      points.length === 1 ? (
-                        <circle
-                          key={segmentIndex}
-                          cx={points[0][0]}
-                          cy={points[0][1]}
-                          r={3}
-                        />
-                      ) : (
+                    {segments
+                      .filter((points) => points.length > 1)
+                      .map((points, segmentIndex) => (
                         <path
                           key={segmentIndex}
                           fill="none"
@@ -231,22 +236,24 @@ export function CompactTimeSeries({
                             )
                             .join(" ")}
                         />
-                      ),
-                    )}
-                    {markerPoints(segments, markers).map(([px, py], i) => (
-                      <circle key={`marker-${i}`} cx={px} cy={py} r={3} />
-                    ))}
+                      ))}
+                    <SeriesMarkers
+                      segments={segments}
+                      markers={markers}
+                      radius={3}
+                    />
                   </g>
                 ))}
               </svg>
               <div
                 className={styles.timeAxis}
                 data-chart-time-axis
+                data-single-tick={xDomain[0] === xDomain[1]}
                 aria-hidden="true"
               >
-                <span>{formatTime(xDomain[0])}</span>
+                <span>{formatAxisTime(xDomain[0])}</span>
                 {xDomain[0] !== xDomain[1] && (
-                  <span>{formatTime(xDomain[1])}</span>
+                  <span>{formatAxisTime(xDomain[1])}</span>
                 )}
               </div>
             </>

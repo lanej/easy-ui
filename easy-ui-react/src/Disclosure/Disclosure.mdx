@@ -1,0 +1,62 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Disclosure } from "./Disclosure";
+import * as DisclosureStories from "./Disclosure.stories";
+
+<Meta of={DisclosureStories} />
+
+# Disclosure
+
+`Disclosure` shows supporting content on demand. Several disclosures can stay open independently, making it suitable for repeated rows with evidence that readers may compare.
+
+<Canvas of={DisclosureStories.Default} />
+
+```tsx
+import { Disclosure } from "@easypost/easy-ui/Disclosure";
+
+<Disclosure>
+  <Disclosure.Trigger variant="link" size="sm">
+    Trends and factors
+  </Disclosure.Trigger>
+  <Disclosure.Content>Supporting evidence</Disclosure.Content>
+</Disclosure>;
+```
+
+## Composition
+
+The root adds no DOM wrapper. Place one `Disclosure.Trigger` and one `Disclosure.Content` inside it, with the layout elements your page needs between them. Each instance creates unique, stable IDs and connects its trigger to its panel. Trigger styles, size, accessible label, and disabled state use the existing `Button` props.
+
+The trigger is always a non-submitting button. It owns its ID, expanded state, controlled panel relationship, and press behavior. Use a separate link or button for navigation and unrelated actions.
+
+Panels have no landmark role by default. Use `role="region"` when a panel deserves its own named region; its label defaults to the trigger's accessible name. An explicit `aria-label` or `aria-labelledby` can provide a different panel name.
+
+<Canvas of={DisclosureStories.IndependentPanels} />
+
+## Expansion state
+
+Disclosures start closed. `defaultExpanded` changes the initial uncontrolled state. For controlled expansion, pass both `isExpanded` and `onExpandedChange`. The callback receives the requested next boolean; the panel waits for the controlled prop to change. A controlled disclosure with no callback remains read-only. Programmatic prop changes do not call the callback.
+
+Enter and Space activate the focused trigger. Closing a panel while focus is inside it returns focus to its trigger. Focus elsewhere stays where it is; removing the whole disclosure does not move focus to a disappearing trigger.
+
+<Canvas of={DisclosureStories.Controlled} />
+
+## Content lifetime
+
+`mountPolicy="preserve"` is the default. Child content is mounted even before the first opening and stays mounted while hidden. Local input values and component state survive closing; effects also remain active. Hidden content is outside normal tab navigation and the accessibility tree.
+
+Use `mountPolicy="unmount"` when closed child content should be removed. Children mount when the panel opens, unmount when it closes, and start with fresh local state when reopened. Keep any state that must survive in the parent. The hidden panel shell remains in the DOM so the trigger's `aria-controls` relationship always resolves.
+
+<Canvas of={DisclosureStories.MountPolicies} />
+
+## Properties
+
+### Disclosure
+
+<ArgTypes of={Disclosure} />
+
+### Disclosure.Trigger
+
+<ArgTypes of={Disclosure.Trigger} />
+
+### Disclosure.Content
+
+<ArgTypes of={Disclosure.Content} />

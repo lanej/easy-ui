@@ -1,6 +1,6 @@
 import React from "react";
 import userEvent from "@testing-library/user-event";
-import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { render, mockMatchMedia } from "../utilities/test";
 import { ThemeProvider } from "../Theme";
 import { Chart, ChartProps } from "./Chart";
@@ -23,7 +23,7 @@ const init = vi.fn(() => ({
 const engine = { init } as unknown as Awaited<
   ReturnType<typeof loadChartEngine>
 >;
-const fixture: ChartProps = {
+const fixture: ChartProps & { title: string; description: string } = {
   title: "Shipments",
   description: "Daily parcel counts in UTC",
   option: {
@@ -58,7 +58,7 @@ it("loads the engine lazily and replaces removed series on data updates", async 
   rerender(view({ option }));
   expect(setOption).toHaveBeenLastCalledWith(
     expect.objectContaining({ series: [] }),
-    { notMerge: true },
+    { notMerge: true, silent: true },
   );
   expect(init).toHaveBeenCalledTimes(1);
 });
@@ -258,12 +258,14 @@ it("supports keyboard zoom controls and respects reduced motion", async () => {
     await user.keyboard("{Enter}");
     expect(dispatchAction).toHaveBeenLastCalledWith({
       type: "dataZoom",
+      dataZoomIndex: 0,
       start: 25,
       end: 75,
     });
     await user.click(screen.getByRole("button", { name: "Reset zoom" }));
     expect(dispatchAction).toHaveBeenLastCalledWith({
       type: "dataZoom",
+      dataZoomIndex: 0,
       start: 0,
       end: 100,
     });
@@ -272,7 +274,7 @@ it("supports keyboard zoom controls and respects reduced motion", async () => {
   }
 });
 
-it("recreates the renderer when the surrounding color scheme changes", async () => {
+it("updates the existing renderer when the surrounding color scheme changes", async () => {
   const { rerender } = render(view());
   await screen.findByRole("img");
   rerender(
@@ -280,6 +282,6 @@ it("recreates the renderer when the surrounding color scheme changes", async () 
       <Chart {...fixture} />
     </ThemeProvider>,
   );
-  await waitFor(() => expect(init).toHaveBeenCalledTimes(2));
-  expect(dispose).toHaveBeenCalledOnce();
+  expect(init).toHaveBeenCalledOnce();
+  expect(dispose).not.toHaveBeenCalled();
 });

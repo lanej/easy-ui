@@ -28,6 +28,32 @@ for (const [chart, theme] of [
   assert.match(html, /Loading chart/);
   assert.match(html, /<table/);
   assert.match(html, /<td>1<\/td>/);
+  const composed = renderToString(
+    React.createElement(
+      theme.ThemeProvider,
+      null,
+      React.createElement(
+        chart.ChartProvider,
+        null,
+        React.createElement(chart.ChartHeading, {
+          title: "External chart heading",
+          titleId: "external-chart-heading",
+        }),
+        React.createElement(chart.ChartZoomControls),
+        React.createElement(chart.ChartSurface, {
+          option: props.option,
+          "aria-labelledby": "external-chart-heading",
+        }),
+        React.createElement(chart.ChartDataView, {
+          dataTable: props.dataTable,
+          "aria-labelledby": "external-chart-heading",
+        }),
+      ),
+    ),
+  );
+  assert.match(composed, /aria-labelledby="external-chart-heading"/);
+  assert.match(composed, /Loading chart/);
+  assert.match(composed, /<td>1<\/td>/);
 }
 for (const [name, nativeProps] of [
   [
@@ -94,6 +120,33 @@ for (const extension of ["js", "mjs"]) {
   assert.match(html, /Loading map/);
   assert.match(html, /<table/);
   assert.match(html, /Oakland warehouse/);
+  const surfaceProps = {
+    mapStyle: { version: 8, sources: {}, layers: [] },
+    workerUrl: "/map-worker.js",
+    "aria-label": "Weather exposure",
+  };
+  const surface = renderToString(
+    React.createElement(entry.NetworkMapSurface, surfaceProps),
+  );
+  assert.match(surface, /Loading map/);
+  assert.match(surface, /Weather exposure/);
+  assert.doesNotMatch(surface, /<table|<h[1-6]|Facility risk/);
+  const composed = renderToString(
+    React.createElement(
+      entry.NetworkMapProvider,
+      { ...surfaceProps, "aria-labelledby": "external-map-heading" },
+      React.createElement("h2", { id: "external-map-heading" }, "Weather"),
+      React.createElement(entry.NetworkMapHeading),
+      React.createElement(entry.NetworkMapControlPanel),
+      React.createElement(entry.NetworkMapSurface),
+      React.createElement(entry.NetworkMapSelectionDetails),
+      React.createElement(entry.NetworkMapLegend),
+      React.createElement(entry.NetworkMapDataView, { expanded: true }),
+    ),
+  );
+  assert.match(composed, /aria-labelledby="external-map-heading"/);
+  assert.match(composed, /Loading map/);
+  assert.doesNotMatch(composed, /Oakland warehouse|Facility risk/);
 }
 assert.equal(
   Object.keys(require.cache).some((path) =>

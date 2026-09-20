@@ -85,28 +85,24 @@ export function DataGrid<
   // future, this could be made dynamic
   const rowHeaderColumnKey = unprocessedColumns[0].key;
 
-  const isRowExpansionControlled = expandedKeyFromUser != null;
-
-  const [expandedKey, setExpandedKey] = useState(() => {
-    if (isRowExpansionControlled) {
-      return expandedKeyFromUser;
-    }
-    return defaultExpandedKey ?? null;
-  });
+  const isRowExpansionControlled = expandedKeyFromUser !== undefined;
+  const [uncontrolledExpandedKey, setExpandedKey] = useState<Key | null>(
+    defaultExpandedKey ?? null,
+  );
+  const expandedKey = isRowExpansionControlled
+    ? expandedKeyFromUser
+    : uncontrolledExpandedKey;
 
   const toggleExpandedRow = useCallback(
     (rowKey: Key) => {
-      onExpandedChange(rowKey);
+      const nextKey = expandedKey === rowKey ? null : rowKey;
+      onExpandedChange(nextKey);
       if (!isRowExpansionControlled) {
-        setExpandedKey((prevKey) => (prevKey === rowKey ? null : rowKey));
+        setExpandedKey(nextKey);
       }
     },
-    [isRowExpansionControlled, onExpandedChange],
+    [expandedKey, isRowExpansionControlled, onExpandedChange],
   );
-
-  if (isRowExpansionControlled && expandedKeyFromUser !== expandedKey) {
-    setExpandedKey(expandedKeyFromUser);
-  }
 
   const columns = useProcessedColumns(props);
   const { items, subtotalKeys } = useGroupedRows(props);
@@ -143,7 +139,7 @@ export function DataGrid<
             <Cell>
               {grouping?.isCollapsible && columnKey === rowHeaderColumnKey ? (
                 <GroupToggleCellContent
-                  groupKey={row.group.key}
+                  groupLabel={row.label}
                   isCollapsed={Boolean(row.isCollapsed)}
                   onToggle={() => toggleGroup(row.group.key)}
                 >
@@ -180,8 +176,12 @@ export function DataGrid<
         subtotalKeys={subtotalKeys}
         collapsedRowKeys={collapsedRowKeys}
         allRowsBody={
+          // Selection needs every row key and column, but only visible rows
+          // need consumer-rendered contents or row action configuration.
           collapsedRowKeys.size ? (
-            <TableBody items={rows}>{renderRow}</TableBody>
+            <TableBody items={rows}>
+              {() => <Row>{() => <Cell>{null}</Cell>}</Row>}
+            </TableBody>
           ) : undefined
         }
       >

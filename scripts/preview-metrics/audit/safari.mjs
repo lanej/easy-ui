@@ -19,6 +19,21 @@ try {
   await auditBrowser(
     {
       open: (url) => driver.get(url),
+      resize: async (width, height) => {
+        await driver.manage().window().setRect({ width, height });
+        const actual = await driver.executeScript(() => ({
+          width: innerWidth,
+          height: innerHeight,
+        }));
+        const outer = await driver.manage().window().getRect();
+        await driver
+          .manage()
+          .window()
+          .setRect({
+            width: outer.width + width - actual.width,
+            height: outer.height + height - actual.height,
+          });
+      },
       evaluate: (fn, ...args) => driver.executeScript(fn, ...args),
       wait: (fn, ...args) =>
         driver.wait(() => driver.executeScript(fn, ...args), 30000),

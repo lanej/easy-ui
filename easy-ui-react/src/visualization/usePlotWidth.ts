@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
 /** Render deterministic SSR markup, then keep SVG text in CSS-pixel coordinates. */
-export function usePlotWidth() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(480);
+export function usePlotWidth<ElementType extends Element = HTMLDivElement>(
+  initialWidth = 480,
+) {
+  const ref = useRef<ElementType>(null);
+  const [width, setWidth] = useState(initialWidth);
   useEffect(() => {
     const element = ref.current;
     if (!element) return;

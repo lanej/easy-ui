@@ -33,6 +33,10 @@ Sparklines default to `markers="endpoints"`, marking the first and last observat
 
 For sparse axes, real timestamps, an explicit shared domain, or a target, use `CompactTimeSeries`.
 
+The SVG measures its available width so optional markers and isolated points stay circular and four CSS pixels across at narrow and wide sizes. Server rendering starts with deterministic geometry; the observer is released on unmount. Sparkline and CompactTimeSeries share gap/marker primitives while retaining their separate spacing and scale contracts.
+
+<Canvas of={SparklineStories.ResponsiveMarkers} />
+
 ## Properties
 
 <ArgTypes of={Sparkline} />

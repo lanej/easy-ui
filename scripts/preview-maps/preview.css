@@ -88,3 +88,35 @@ select:focus-visible {
     padding: 8px;
   }
 }
+
+.composition-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  min-width: 0;
+}
+.composition-page > * {
+  min-width: 0;
+}
+.composition-page h1 {
+  font-size: 28px;
+}
+.composition-page h2 {
+  font-size: 20px;
+}
+.composition-page p {
+  overflow-wrap: anywhere;
+}
+.composition-controls {
+  border: 1px solid #ccd2de;
+  padding-top: 16px;
+}
+.composition-page .regression-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.composition-page .regression-actions button {
+  font: inherit;
+  padding: 8px 12px;
+}

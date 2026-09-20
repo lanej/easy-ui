@@ -81,6 +81,9 @@ export type DataGridGrouping<C extends Column = Column, R extends Row = Row> = {
   /** Group by a string or numeric key. Groups appear in first-seen order. */
   getGroupKey: (row: R) => Key;
 
+  /** Human-readable group name for default subtotals and disclosure labels. Defaults to String(group.key). */
+  getGroupLabel?: (group: DataGridGroup<R>) => string;
+
   /** Compute a value for each configured column from the group's data rows. */
   aggregators: Partial<Record<ColumnKey<C>, (rows: readonly R[]) => unknown>>;
 
@@ -98,7 +101,7 @@ export type DataGridGrouping<C extends Column = Column, R extends Row = Row> = {
 
   /**
    * Render subtotal cells separately from data cells. By default, the first
-   * column reads "{group key} subtotal", aggregated values are stringified,
+   * column reads "{group label} subtotal", aggregated values are stringified,
    * and other columns are blank. An aggregator can override the first cell.
    */
   renderSubtotalCell?: (
@@ -133,8 +136,8 @@ export type DataGridProps<
   /** A list of row keys to disable from selection. */
   disabledKeys?: Iterable<RowKey<R>>;
 
-  /** The currently expanded key in the collection (controlled). */
-  expandedKey?: RowKey<R>;
+  /** The currently expanded key (controlled). Pass null to close all details. */
+  expandedKey?: RowKey<R> | null;
 
   /** Group data rows and append a subtotal, with optional group collapse controls. */
   grouping?: DataGridGrouping<C, R>;
@@ -170,8 +173,8 @@ export type DataGridProps<
   /** Handler that is called when a user performs an action on the cell. */
   onCellAction?: (key: RowKey<R>) => void;
 
-  /** Handler that is called when the expansion changes. */
-  onExpandedChange?: (key: RowKey<R>) => void;
+  /** Called with the next expanded key, or null when the open row is closed. */
+  onExpandedChange?: (key: RowKey<R> | null) => void;
 
   /** Handler that is called when a user performs an action on the row. */
   onRowAction?: (key: RowKey<R>) => void;

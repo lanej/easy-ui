@@ -1,4 +1,5 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
+import React from "react";
 import { Sparkline } from "./Sparkline";
 
 const meta: Meta<typeof Sparkline> = {
@@ -45,4 +46,19 @@ export const ExtremaMarkers: Story = {
 
 export const Unmarked: Story = {
   args: { ...Default.args, markers: "none" },
+};
+export const ResponsiveMarkers: Story = {
+  render: () => (
+    <div style={{ display: "grid", gap: 20 }}>
+      {[80, 160, 480].map((width) => (
+        <div key={width} style={{ width, maxWidth: "100%" }}>
+          <Sparkline
+            values={[1, 3, null, 2, 4]}
+            markers="all"
+            accessibilityLabel={`Responsive trend, maximum width ${width} pixels`}
+          />
+        </div>
+      ))}
+    </div>
+  ),
 };

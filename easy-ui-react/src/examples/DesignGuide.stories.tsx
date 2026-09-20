@@ -1,5 +1,6 @@
 import React from "react";
 import { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { NetworkGuideExample } from "./NetworkGuide.examples";
 import { PricingExample, EncodingExamples } from "./DesignGuide.examples";
 const meta = {
@@ -13,6 +14,28 @@ export const SparseComparison: Story = { args: { initialMode: "sparse" } };
 export const Overloaded: Story = { args: { initialMode: "overloaded" } };
 export const ClippedIdentities: Story = { args: { initialMode: "clipped" } };
 export const MultipleExpanded: Story = { args: { initialOpen: ["A", "B"] } };
+export const MultipleAuditDrafts: Story = {
+  args: { initialOpen: ["A", "B"], initialTask: "audit" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const note = canvas.getByRole("textbox", {
+      name: "Review rationale for proposal A",
+    });
+    await userEvent.clear(note);
+    await userEvent.type(note, "Review the demand assumptions.");
+    const toggle = canvas.getByRole("button", {
+      name: "Trends and factors for A",
+    });
+    await userEvent.click(toggle);
+    await expect(note).not.toBeVisible();
+    await expect(
+      canvas.getByRole("textbox", { name: "Review rationale for proposal B" }),
+    ).toBeVisible();
+    await userEvent.click(toggle);
+    await expect(note).toBeVisible();
+    await expect(note).toHaveValue("Review the demand assumptions.");
+  },
+};
 export const TableAndDetail: Story = {
   args: { initialMode: "table", initialOpen: ["A"] },
 };

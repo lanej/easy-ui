@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ThemeProvider } from "../Theme";
 import { Button } from "../Button";
+import { TabPanels } from "../TabPanels";
 import { Chart } from "../Chart";
 import { NetworkMap } from "../NetworkMap";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -39,7 +40,6 @@ export function NetworkGuideExample({
     () => segments.filter((s) => s.from === selected),
     [selected],
   );
-  const show = (panel: string) => mode === "coordinated" || tab === panel;
   useEffect(() => {
     if (!syncURL) return;
     const url = new URL(location.href);
@@ -49,6 +49,100 @@ export function NetworkGuideExample({
   function select(id: string) {
     if (hubs.some((h) => h.id === id)) setSelected(id);
   }
+  const panels = [
+    {
+      id: "map",
+      label: "Network",
+      content: (
+        <div data-panel="map" className="map-panel">
+          <h2 className="section-label">01 · Where can pressure propagate?</h2>
+
+          <NetworkMap
+            onRenderError={(error) =>
+              console.error("Network guide map:", error)
+            }
+            title="Great Lakes transfer network"
+            description={`${hub.name} outgoing cohort shown · 08:00–14:00 UTC · straight connections are observed endpoints, not roads`}
+            mapStyle={basemap}
+            workerUrl={workerUrl}
+            facilities={facilities}
+            segments={outgoing}
+            areas={weather}
+            selectedFacilityId={selected}
+            onFacilitySelect={select}
+            primaryFacilityIds={hubs.map((h) => h.id)}
+            height={360}
+            showSelectionDetails={false}
+          />
+        </div>
+      ),
+    },
+    {
+      id: "volume",
+      label: "Trajectory",
+      content: (
+        <div data-panel="volume">
+          <h2 className="section-label">02 · Is pressure building?</h2>
+
+          <Chart
+            title={`${hub.name} · throughput and capacity`}
+            description="Hourly parcels · Sep 13, 00:00–14:00 UTC · zero-based 0–2,100 scale stays fixed when selecting hubs"
+            {...volume}
+            height={330}
+          />
+        </div>
+      ),
+    },
+    {
+      id: "pressure",
+      label: "Compare hubs",
+      content: (
+        <div data-panel="pressure">
+          <h2 className="section-label">
+            03 · Compare the same hours across hubs
+          </h2>
+
+          <div
+            className="matrix-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label="Scrollable network pressure chart"
+          >
+            <Chart
+              title="Network pressure by hour"
+              description="Observed throughput / supplied hourly capacity · 100% is this scenario’s capacity reference · gray dash means unavailable"
+              {...pressure}
+              height={345}
+              onSelect={(s) => {
+                if (Array.isArray(s.value))
+                  select(hubs[Number(s.value[1])]?.id);
+              }}
+              onRowSelect={(id) => select(id.split(":")[0])}
+              selectRowLabel="Investigate hub"
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "flows",
+      label: "Downstream flow",
+      content: (
+        <div data-panel="flows">
+          <h2 className="section-label">
+            04 · Follow the exposed downstream cohort
+          </h2>
+
+          <Chart
+            title={`${hub.name} · destination and service mix`}
+            description={`${hub.flow.reduce((a, b) => a + b, 0).toLocaleString("en-US")} transferred parcels · 08:00–14:00 UTC · widths encode counts, not delay probability`}
+            {...flow}
+            height={345}
+          />
+        </div>
+      ),
+    },
+  ];
   return (
     <ThemeProvider colorScheme="light">
       <div className={styles.root}>
@@ -173,148 +267,38 @@ export function NetworkGuideExample({
               </strong>
             </div>
           </section>
-          {mode === "fragmented" && (
-            <div
-              className="tabs"
-              role="tablist"
+          {mode === "fragmented" ? (
+            <TabPanels
               aria-label="Separated evidence"
+              selectedKey={tab}
+              onSelectionChange={(key) => setTab(String(key))}
             >
-              {[
-                ["map", "Network"],
-                ["volume", "Trajectory"],
-                ["pressure", "Compare hubs"],
-                ["flows", "Downstream flow"],
-              ].map(([id, label], i, all) => (
-                <button
-                  key={id}
-                  id={`tab-${id}`}
-                  role="tab"
-                  aria-selected={tab === id}
-                  aria-controls={`panel-${id}`}
-                  tabIndex={tab === id ? 0 : -1}
-                  onClick={() => setTab(id)}
-                  onKeyDown={(e) => {
-                    const next =
-                      e.key === "ArrowRight"
-                        ? (i + 1) % all.length
-                        : e.key === "ArrowLeft"
-                          ? (i + all.length - 1) % all.length
-                          : e.key === "Home"
-                            ? 0
-                            : e.key === "End"
-                              ? all.length - 1
-                              : -1;
-                    if (next >= 0) {
-                      e.preventDefault();
-                      setTab(all[next][0]);
-                      document.getElementById(`tab-${all[next][0]}`)?.focus();
-                    }
-                  }}
-                >
-                  {label}
-                </button>
+              <div className="tabs">
+                <TabPanels.Tabs>
+                  {panels.map((panel) => (
+                    <TabPanels.Item key={panel.id}>
+                      {panel.label}
+                    </TabPanels.Item>
+                  ))}
+                </TabPanels.Tabs>
+              </div>
+              <div className="workspace">
+                <TabPanels.Panels>
+                  {panels.map((panel) => (
+                    <TabPanels.Item key={panel.id}>
+                      {panel.content}
+                    </TabPanels.Item>
+                  ))}
+                </TabPanels.Panels>
+              </div>
+            </TabPanels>
+          ) : (
+            <div className="workspace">
+              {panels.map((panel) => (
+                <React.Fragment key={panel.id}>{panel.content}</React.Fragment>
               ))}
             </div>
           )}
-          <div className="workspace">
-            <div
-              id="panel-map"
-              className="map-panel"
-              hidden={!show("map")}
-              role={mode === "fragmented" ? "tabpanel" : undefined}
-              aria-labelledby={mode === "fragmented" ? "tab-map" : undefined}
-            >
-              <h2 className="section-label">
-                01 · Where can pressure propagate?
-              </h2>
-              {show("map") && (
-                <NetworkMap
-                  onRenderError={(error) =>
-                    console.error("Network guide map:", error)
-                  }
-                  title="Great Lakes transfer network"
-                  description={`${hub.name} outgoing cohort shown · 08:00–14:00 UTC · straight connections are observed endpoints, not roads`}
-                  mapStyle={basemap}
-                  workerUrl={workerUrl}
-                  facilities={facilities}
-                  segments={outgoing}
-                  areas={weather}
-                  selectedFacilityId={selected}
-                  onFacilitySelect={select}
-                  primaryFacilityIds={hubs.map((h) => h.id)}
-                  height={360}
-                  showSelectionDetails={false}
-                />
-              )}
-            </div>
-            <div
-              id="panel-volume"
-              hidden={!show("volume")}
-              role={mode === "fragmented" ? "tabpanel" : undefined}
-              aria-labelledby={mode === "fragmented" ? "tab-volume" : undefined}
-            >
-              <h2 className="section-label">02 · Is pressure building?</h2>
-              {show("volume") && (
-                <Chart
-                  title={`${hub.name} · throughput and capacity`}
-                  description="Hourly parcels · Sep 13, 00:00–14:00 UTC · zero-based 0–2,100 scale stays fixed when selecting hubs"
-                  {...volume}
-                  height={330}
-                />
-              )}
-            </div>
-            <div
-              id="panel-pressure"
-              hidden={!show("pressure")}
-              role={mode === "fragmented" ? "tabpanel" : undefined}
-              aria-labelledby={
-                mode === "fragmented" ? "tab-pressure" : undefined
-              }
-            >
-              <h2 className="section-label">
-                03 · Compare the same hours across hubs
-              </h2>
-              {show("pressure") && (
-                <div
-                  className="matrix-scroll"
-                  tabIndex={0}
-                  role="region"
-                  aria-label="Scrollable network pressure chart"
-                >
-                  <Chart
-                    title="Network pressure by hour"
-                    description="Observed throughput / supplied hourly capacity · 100% is this scenario’s capacity reference · gray dash means unavailable"
-                    {...pressure}
-                    height={345}
-                    onSelect={(s) => {
-                      if (Array.isArray(s.value))
-                        select(hubs[Number(s.value[1])]?.id);
-                    }}
-                    onRowSelect={(id) => select(id.split(":")[0])}
-                    selectRowLabel="Investigate hub"
-                  />
-                </div>
-              )}
-            </div>
-            <div
-              id="panel-flows"
-              hidden={!show("flows")}
-              role={mode === "fragmented" ? "tabpanel" : undefined}
-              aria-labelledby={mode === "fragmented" ? "tab-flows" : undefined}
-            >
-              <h2 className="section-label">
-                04 · Follow the exposed downstream cohort
-              </h2>
-              {show("flows") && (
-                <Chart
-                  title={`${hub.name} · destination and service mix`}
-                  description={`${hub.flow.reduce((a, b) => a + b, 0).toLocaleString("en-US")} transferred parcels · 08:00–14:00 UTC · widths encode counts, not delay probability`}
-                  {...flow}
-                  height={345}
-                />
-              )}
-            </div>
-          </div>
           <p role="status" className="status">
             {status}
           </p>

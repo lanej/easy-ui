@@ -114,7 +114,7 @@ Selection can be controlled with the `selectedKeys` and `onSelectionChange` prop
 
 `DataGrid` supports row expansion through the `renderExpandedRow` prop. Supplying a function to this render prop, with the content to render for each row, will show expansion buttons on each row for the user to expand.
 
-Expansion can be controlled with the `expandedKey` and `onExpandedChange` props. Use `defaultExpandedKey` to control only the initial row to expand.
+Expansion can be controlled with the `expandedKey` and `onExpandedChange` props. Pass `null` to keep every detail closed; omitting `expandedKey` selects uncontrolled behavior. `onExpandedChange` receives the next state: the row key when opening or switching rows, and `null` when closing the open row. A controlled grid waits for the prop to change. Use `defaultExpandedKey` to control only the initial row to expand.
 
 While `isLoading` is true, the grid hides expanded details and suspends their layout measurements without changing the expanded key or calling `onExpandedChange`. When loading finishes, details return if that row is present. A controlled key updated during loading is honored when the data rows return.
 
@@ -126,13 +126,15 @@ While `isLoading` is true, the grid hides expanded details and suspends their la
   )}
   defaultExpandedKey={/** initial key of expanded row (uncontrolled) */}
   expandedKey={/** key of expanded row (controlled) */}
-  onExpandedChange={(key: Key) => {
-    /** Run code when row expansion changes */
+  onExpandedChange={(key: Key | null) => {
+    /** Store the next expanded key, including null when closing */
   }}
 />
 ```
 
 <Canvas of={DataGridStories.WithRowExpansion} />
+
+<Canvas of={DataGridStories.ControlledExpansion} />
 
 ## With Kebab Menu
 
@@ -231,12 +233,15 @@ The optional `grouping` prop has type `DataGridGrouping<C, R>`, exported from `@
 | Property             | Type                                                                             | Behavior                                                                                                                                                                                                            |
 | -------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `getGroupKey`        | `(row: R) => Key`                                                                | Required. Returns the group key from each original data row.                                                                                                                                                        |
+| `getGroupLabel`      | `(group: DataGridGroup<R>) => string`                                            | Optional. Human-readable name for the default subtotal and group disclosure's accessible name. Defaults to `String(group.key)`; does not change identity or collapse keys.                                          |
 | `aggregators`        | `Partial<Record<ColumnKey<C>, (rows: readonly R[]) => unknown>>`                 | Required. Each configured column receives all data rows in its group and returns its subtotal value. Reducers can compute sums, counts, averages, or other summaries. An empty object creates label-only subtotals. |
 | `renderSubtotalCell` | `(cell: unknown, columnKey: ColumnKey<C>, group: DataGridGroup<R>) => ReactNode` | Optional. Formats subtotal values independently of `renderRowCell`. `group` contains the original group `key` and read-only `rows`.                                                                                 |
 
-By default, the first column displays `"{group key} subtotal"`; an aggregator for that column overrides the label. Other columns display their aggregated values converted to strings, or remain blank if no aggregator is configured. `null` and `undefined` render blank. Custom subtotal renderers receive these same values, including the default label. Keep monetary values in integer minor units (for example, cents), sum them, and format them as currency in the renderers.
+By default, the first column displays `"{group label} subtotal"`; an aggregator for that column overrides the label. Other columns display their aggregated values converted to strings, or remain blank if no aggregator is configured. `null` and `undefined` render blank. Custom subtotal renderers receive these same values, including the default label. `getGroupLabel` remains the disclosure name even when a custom renderer replaces the visible subtotal. Use it for opaque database IDs or translated group names. Keep monetary values in integer minor units (for example, cents), sum them, and format them as currency in the renderers.
 
 Subtotal rows use semibold text, a neutral background tint, and a top separator, retain the normal row and cell roles, and expose `data-ezui-data-grid-subtotal="true"` for structural identification. Synthetic row keys are internal; `renderRowCell`, `rowActions`, and expansion callbacks continue to receive only data rows or their keys. Subtotals remain reachable with arrow keys so keyboard users can read their values. They have no selection checkbox, detail-expansion button, or row actions, and do not trigger `onRowAction` or `onCellAction`. Optional group disclosure buttons are described below.
+
+Subtotal content retains its React identity by group key and column key when groups reorder or consumer row keys collide with internal subtotal keys. Stateful controls in a subtotal keep their values and focus while that group and column remain present.
 
 Sorting remains controlled by `sortDescriptor` and `onSortChange`: sort the source `rows`, and the grid regroups them and recomputes subtotals. Subtotals stay after their group, outside the sorted data. Selection, including select-all, applies only to selectable data rows and respects `disabledKeys`. The existing `"all"` selection callback value retains its meaning. The existing restriction against combining selection and expansion still applies.
 
@@ -279,7 +284,9 @@ const [collapsedKeys, setCollapsedKeys] = useState<Set<Key>>(new Set());
 
 Omit `collapsedKeys` to let the grid manage state. Use `defaultCollapsedKeys` to start selected groups closed. A controlled consumer updates `collapsedKeys` in response to `onCollapsedChange`; supplying the prop without a handler makes it read-only.
 
-Collapsing changes visibility only. Aggregators still receive every supplied row in the group, selected rows remain selected, and select-all includes selectable details in collapsed groups. No selection or detail-expansion callback fires merely because a group is collapsed. Open detail content is temporarily hidden and restored when its group reopens. Sorting and new data preserve collapse state by group key. Arrow navigation skips hidden rows; focus stays on the toggle, or moves to the subtotal if a controlled update hides the focused detail row. `maxRows` counts visible body rows, including the retained subtotals.
+Collapsing changes visibility only. Aggregators still receive every supplied row in the group, selected rows remain selected, and select-all includes selectable details in collapsed groups. Hidden rows do not call `renderRowCell` or `rowActions`; the complete collection remains available for selection. No selection or detail-expansion callback fires merely because a group is collapsed. Open detail content is temporarily hidden and restored when its group reopens. Sorting and new data preserve collapse state by group key. Arrow navigation skips hidden rows; focus stays on the toggle, or moves to the subtotal if a controlled update hides the focused detail row. If focus was inside expanded detail content, it returns to that group's disclosure button. Focus elsewhere stays where it is. `maxRows` counts visible body rows, including the retained subtotals.
+
+<Canvas of={DataGridStories.OpaqueGroupLabels} />
 
 <Canvas of={DataGridStories.ServiceSplitCollapsible} />
 

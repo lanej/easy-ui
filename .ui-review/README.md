@@ -22,8 +22,14 @@ empty-space score. Short range labels get bounded columns and reflow above
 full-width tracks in narrow cards. Large screens show more charts within a
 finite 2240 px content region, preserving comparison identities and type sizes.
 
-The pinned Viewrule candidate adds `within-bounds` (lanej/viewrule#10) because
-`no-clip` cannot detect SVG text beyond the SVG viewport. All ECharts SVG text
+Both chart and map CI now pin View Rule 0.7.0 at
+`6d36031935a824c650e049a14aeb9770e042bb95`, replacing the historical pre-0.4
+candidate. The tagged prerelease engine includes `within-bounds` (lanej/viewrule#10),
+state checkpoints, component relationships and scoped evidence tracking.
+Reviews explicitly use `check --full` after this upgrade; prior reports remain
+historical evidence and no thresholds or approvals are weakened. Configuration
+schema v1 is retained and CI uses Node 22.x (the engine requires 22.18+).
+`no-clip` alone cannot detect SVG text beyond the SVG viewport. All ECharts SVG text
 must fit its SVG; native HTML value/date labels must fit their declared axes
 and remain non-overlapping. Canvas, masks, intermediate clipping ancestors,
 occlusion, and semantic chart correctness still require separate review.
@@ -36,3 +42,9 @@ The existing Chrome/Firefox/Safari workflow checks a 280 px card and keyboard
 horizontal scrolling in the intentional exact-table region. Viewrule measures
 this route at desktop and 320 px, plus the complete gallery at desktop/mobile/4K.
 The complete reports and native-scale detail captures are CI artifacts.
+
+## Map composition contract
+
+The map workflow uses `maps/config.json` and `maps/rules.json` for separate View Rule runs on the composed map at 1440px and 390px, with default and increased text roles. It uses the same 12px annotation/14px prose floors, real WebGL rendering with software Chromium, and measured visible-label bounds. The three-browser map harness additionally checks label collisions, external selection placement, source geometry, route selection, callback changes, and exact layer data. Rendered artifacts must be inspected; canvas/occlusion behavior is not established by DOM font checks alone.
+
+The chart contract also reviews `chart-composition.html` and `native-regressions.html` at desktop and 320px, including increased typography in constrained 320px compositions. Three-browser checks record actual viewport and component widths; Safari may enforce a wider native window while the fixture remains constrained.

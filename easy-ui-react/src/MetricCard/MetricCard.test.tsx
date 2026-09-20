@@ -1,7 +1,11 @@
 import React from "react";
 import { screen } from "@testing-library/react";
 import { render } from "../utilities/test";
-import { MetricCard } from "./MetricCard";
+import {
+  MetricCard,
+  MetricContent,
+  MetricComparisonContent,
+} from "./MetricCard";
 
 const trend = {
   values: [6, 5.8, 5.2],
@@ -99,4 +103,45 @@ describe("<MetricCard />", () => {
     );
     expect(screen.getByRole("status")).toHaveTextContent("Cargando");
   });
+});
+
+it("reuses unframed metric content in a caller-owned region without another card or region", () => {
+  const { container, rerender } = render(
+    <section aria-label="Caller card">
+      <MetricContent
+        label="Cost"
+        value="$5.20"
+        trend={trend}
+        comparison={{ label: "Lower", baseline: "vs May" }}
+        typography={{ title: 22 }}
+      />
+    </section>,
+  );
+  expect(screen.getAllByRole("region")).toHaveLength(1);
+  expect(screen.getByText("$5.20")).toBeInTheDocument();
+  expect(screen.getByText("Lower")).toBeInTheDocument();
+  expect(
+    container.querySelector("section > [style]")?.getAttribute("style"),
+  ).toContain("--ezui-viz-title-size: 22px");
+  rerender(
+    <MetricContent
+      label="Cost"
+      value="$5.20"
+      trend={trend}
+      comparison={{ label: "Lower", baseline: "vs May" }}
+      isLoading
+    />,
+  );
+  expect(screen.getByRole("status")).toHaveTextContent("Loading…");
+  expect(screen.queryByText("$5.20")).toBeNull();
+  expect(screen.queryByText("Lower")).toBeNull();
+  expect(screen.queryByRole("img")).toBeNull();
+});
+
+it("renders comparison content independently with its explicit baseline and neutral default", () => {
+  render(<MetricComparisonContent label="10% higher" baseline="vs May" />);
+  expect(screen.getByText("10% higher")).toBeInTheDocument();
+  expect(screen.getByText("vs May")).toBeInTheDocument();
+  expect(screen.getByTestId("root").className).toContain("variantGray");
+  expect(screen.queryByRole("region")).toBeNull();
 });

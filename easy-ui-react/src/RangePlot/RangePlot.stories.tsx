@@ -56,3 +56,14 @@ export const SignedAndMissing: Story = {
     ],
   },
 };
+export const OutsideDomain: Story = {
+  args: {
+    ...Default.args,
+    overflow: "clamp",
+    points: [
+      { id: "current", label: "Current", value: 6.4 },
+      { id: "higher", label: "Higher offer", value: 9 },
+      { id: "missing", label: "Unavailable", value: null },
+    ],
+  },
+};

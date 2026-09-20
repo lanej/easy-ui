@@ -3,7 +3,12 @@ import React from "react";
 import { HorizontalGrid } from "../HorizontalGrid";
 import { Text } from "../Text";
 import { VerticalStack } from "../VerticalStack";
-import { MetricCard } from "./MetricCard";
+import {
+  MetricCard,
+  MetricContent,
+  MetricComparisonContent,
+} from "./MetricCard";
+import { Card } from "../Card";
 
 const meta: Meta<typeof MetricCard> = {
   title: "Components/MetricCard",
@@ -112,4 +117,28 @@ export const MissingObservations: Story = {
         "Average rated cost declined; the third time bucket is unavailable",
     },
   },
+};
+export const CallerOwnedFrame: Story = {
+  render: () => (
+    <Card
+      as="section"
+      aria-label="Caller-owned cost analysis"
+      padding="3"
+      background="secondary"
+    >
+      <VerticalStack gap="3">
+        <MetricContent
+          label="Average rated cost"
+          value="$5.20"
+          supportingText="USD · June"
+          trend={Default.args!.trend}
+        />
+        <MetricComparisonContent
+          label="4.2% lower"
+          baseline="vs previous 30 days"
+          sentiment="positive"
+        />
+      </VerticalStack>
+    </Card>
+  ),
 };

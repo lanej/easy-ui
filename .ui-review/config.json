@@ -19,6 +19,30 @@
       "path": "/layout.html",
       "ready": "[data-chart-state=\"ready\"] svg",
       "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "chart-composition",
+      "path": "/chart-composition.html",
+      "ready": "[data-chart-case=\"pair-b\"] [data-chart-state=\"ready\"] svg",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "chart-composition-large",
+      "path": "/chart-composition.html?large=1&stress=1",
+      "ready": "[data-chart-case=\"pair-b\"] [data-chart-state=\"ready\"] svg",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "native-composition",
+      "path": "/native-regressions.html",
+      "ready": "[data-native-ready]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "native-composition-large",
+      "path": "/native-regressions.html?large=1&stress=1",
+      "ready": "[data-native-ready]",
+      "viewports": ["desktop", "mobile"]
     }
   ],
   "viewports": [

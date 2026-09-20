@@ -1,2 +1,12 @@
-export { MetricCard } from "./MetricCard";
-export type { MetricCardProps, MetricComparison } from "./MetricCard";
+export {
+  MetricCard,
+  MetricContent,
+  MetricComparisonContent,
+} from "./MetricCard";
+export type { VisualizationTypography } from "../visualization/typography";
+export type {
+  MetricCardProps,
+  MetricComparison,
+  MetricContentProps,
+  MetricComparisonContentProps,
+} from "./MetricCard";

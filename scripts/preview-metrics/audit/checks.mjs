@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { auditNativeRegressions } from "./native-checks.mjs";
+import { auditChartComposition } from "./chart-composition-checks.mjs";
 
 const axeSource = await readFile(
   new URL("../node_modules/axe-core/axe.min.js", import.meta.url),
@@ -203,6 +205,20 @@ export async function auditBrowser(driver, browser, site, outputDir) {
       "280 px long-content cards",
       "keyboard horizontal table scrolling",
     );
+
+    const native = await auditNativeRegressions(driver, site, outputDir, {
+      scan,
+      diagnostics,
+    });
+    report.checks.push(...native.checks);
+    report.native = native.measurements;
+
+    const composition = await auditChartComposition(driver, site, outputDir, {
+      scan,
+      diagnostics,
+    });
+    report.checks.push(...composition.checks);
+    report.composition = composition.measurements;
 
     assert.deepEqual(
       report.scans.flatMap((scan) => scan.violations),

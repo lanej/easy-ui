@@ -1,5 +1,4 @@
 import ArrowForwardIos from "@easypost/easy-ui-icons/ArrowForwardIos";
-import { Key } from "@react-types/shared";
 import React, { ReactNode } from "react";
 import { Icon } from "../Icon";
 import { UnstyledButton } from "../UnstyledButton";
@@ -8,12 +7,12 @@ import styles from "./GroupToggleCellContent.module.scss";
 
 export function GroupToggleCellContent({
   children,
-  groupKey,
+  groupLabel,
   isCollapsed,
   onToggle,
 }: {
   children: ReactNode;
-  groupKey: Key;
+  groupLabel: string;
   isCollapsed: boolean;
   onToggle: () => void;
 }) {
@@ -22,7 +21,8 @@ export function GroupToggleCellContent({
       <UnstyledButton
         type="button"
         className={classNames(styles.button, !isCollapsed && styles.expanded)}
-        aria-label={`${isCollapsed ? "Expand" : "Collapse"} ${groupKey} group`}
+        aria-label={`${isCollapsed ? "Expand" : "Collapse"} ${groupLabel} group`}
+        data-ezui-data-grid-group-toggle="true"
         aria-expanded={!isCollapsed}
         onPress={onToggle}
       >

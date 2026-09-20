@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { Meta, StoryObj } from "@storybook/react-vite";
 import { Chart } from "./Chart";
+import { ChartSurface } from "./ChartSurface";
+import { ChartProvider } from "./ChartProvider";
+import { ChartHeading } from "./ChartHeading";
+import { ChartZoomControls } from "./ChartZoomControls";
+import { ChartDataView } from "./ChartDataView";
+import type { ChartZoomState, ChartLegendState } from "./types";
 import {
   timeSeriesExample,
   areaExample,
@@ -62,6 +68,66 @@ export const PartialData: Story = {
 };
 export const Canvas: Story = {
   args: { ...scatterExample, renderer: "canvas" },
+};
+
+export const ExternalComposition: Story = {
+  render: () => (
+    <ChartProvider>
+      <ChartHeading
+        title="Application-owned shipping report"
+        titleId="shipping-report"
+        description="The application places its controls and exact data beside the plot."
+      />
+      <ChartZoomControls />
+      <ChartSurface
+        option={timeSeriesExample.option}
+        aria-labelledby="shipping-report"
+        aria-describedby="shipping-data"
+        typography={{ label: 14, legend: 14 }}
+      />
+      <ChartDataView
+        id="shipping-data"
+        title="Exact daily counts"
+        dataTable={timeSeriesExample.dataTable}
+      />
+    </ChartProvider>
+  ),
+};
+
+function CoordinatedChartsExample() {
+  const [zoomState, setZoom] = useState<ChartZoomState[]>([
+    { index: 0, start: 0, end: 100 },
+  ]);
+  const [legendState, setLegend] = useState<ChartLegendState[]>([
+    { index: 0, selected: {} },
+  ]);
+  return (
+    <div className={styles.gallery}>
+      {["Shared window A", "Shared window B"].map((title) => (
+        <Chart
+          key={title}
+          {...timeSeriesExample}
+          title={title}
+          zoomState={zoomState}
+          legendState={legendState}
+          onZoomChange={setZoom}
+          onLegendChange={setLegend}
+        />
+      ))}
+    </div>
+  );
+}
+
+export const CoordinatedCharts: Story = {
+  render: () => <CoordinatedChartsExample />,
+};
+
+export const DescriptionWithoutTitle: Story = {
+  args: {
+    ...timeSeriesExample,
+    title: undefined,
+    "aria-label": "Daily shipment counts",
+  },
 };
 
 export function AnalyticalExamples({

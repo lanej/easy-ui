@@ -12,6 +12,15 @@ using keyboard input. The existing capture job separately checks mobile
 layout, pointer interactions, lightweight engine isolation,
 and full versus modular image comparisons for all 24 charts.
 
+The native acceptance fixture additionally measures actual 4-by-4 CSS-pixel
+Sparkline markers at 80/160/480-pixel plot widths, aligns singleton time labels
+with both series, and retains positions within explicit time domains. It checks
+full exact values beside abbreviated axes, distinct missing/invalid/zero/overflow
+states, shared BarList scales with explicit clamping, and unframed metric
+composition. Increasing every typography role reruns geometry and accessibility
+checks. Measurements and computed text sizes are retained in `audit.json`, with
+`native-markers.png`, `native-data.png`, and `native-typography.png` screenshots.
+
 `axe-core` runs all applicable WCAG 2.0/2.1/2.2 A/AA and best-practice rules.
 No rules or violations are suppressed. Every scan records both `violations`
 and `incomplete` results in `audit.json`; a reported violation fails the job.

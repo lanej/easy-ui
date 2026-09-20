@@ -13,7 +13,11 @@ A native SVG time series with sparse axes, optional observation markers and a la
 
 Supply one to three series with unique IDs and strictly increasing timestamps in milliseconds. Elapsed spacing is preserved. `null` and non-finite values create gaps; isolated observations remain visible. Zero is an observation. `domain` defines the vertical scale; `timeDomain` can define a shared horizontal scale. Values and references must fit the displayed domains. Invalid domains, ordering, or out-of-range observations suppress the plot with `invalidDataLabel`; exact supplied values remain in the data disclosure.
 
-Provide explicit time-zone/period/coverage context and short axis formatters. Exact observations remain available without hover in the keyboard-operable data disclosure. Labels and line dashes distinguish series beyond color. Markers can be `none`, `all`, `endpoints` of each segment, or global `extrema` (first observation of tied extrema).
+Provide explicit time-zone/period/coverage context. `formatTime` and `formatValue` own exact timestamps and values in the keyboard-operable disclosure; use optional `formatAxisTime` and `formatAxisValue` for short axis labels. When omitted, axes retain the original formatters. A sole inferred timestamp centers both its tick and its observations; an explicit wider time domain retains the true time position. `typography` controls title, description, axis label, legend, disclosure control and detail sizes independently.
+
+Labels and line dashes distinguish series beyond color. Markers can be `none`, `all`, `endpoints` of each segment, or global `extrema` (first observation of tied extrema).
+
+<Canvas of={Stories.PreciseData} />
 
 <Canvas of={Stories.StepChanges} />
 

@@ -1,4 +1,6 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
+import React from "react";
+import { HorizontalGrid } from "../HorizontalGrid";
 import { BarList } from "./BarList";
 
 const meta: Meta<typeof BarList> = {
@@ -31,4 +33,39 @@ export const ZeroAndMissing: Story = {
 };
 export const NoData: Story = {
   args: { label: "Parcel volume by service", data: [] },
+};
+
+export const SharedScale: Story = {
+  render: () => (
+    <HorizontalGrid columns={{ xs: 1, sm: 2 }} gap="3">
+      <BarList
+        label="West"
+        max={100}
+        data={[
+          { id: "a", label: "Ground", value: 100 },
+          { id: "b", label: "Air", value: 50 },
+        ]}
+      />
+      <BarList
+        label="East"
+        max={100}
+        data={[
+          { id: "a", label: "Ground", value: 10 },
+          { id: "b", label: "Air", value: 5 },
+        ]}
+      />
+    </HorizontalGrid>
+  ),
+};
+export const Overflow: Story = {
+  args: {
+    label: "Explicit scale",
+    max: 100,
+    overflow: "clamp",
+    data: [
+      { id: "a", label: "Above scale", value: 120 },
+      { id: "b", label: "Within scale", value: 60 },
+      { id: "c", label: "Unavailable", value: null },
+    ],
+  },
 };

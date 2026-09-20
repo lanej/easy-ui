@@ -70,6 +70,43 @@ function Journey({ mapStyle }) {
 
 `mapStyle` is required. Choose a provider, retain its attribution, and configure its authentication, usage terms and availability in the application. The examples use the keyless OpenFreeMap Positron vector style with OpenMapTiles/OpenStreetMap attribution; this is an example provider choice, not a production service entitlement. Vector tiles, style assets and font files are additional viewport-dependent network requests. The component does not request customer records or compute routes or predictions.
 
+## Independent composition and naming
+
+`title` and `description` are independently optional; existing `null` values remain supported. Omitted content produces no empty heading wrapper. Supply `aria-label` for a useful name without a visible heading, or `aria-labelledby` to associate a caller-owned heading. `aria-describedby` can reference surrounding context and an externally placed data view. Without either naming prop, the surface uses its title or “Map”.
+
+`NetworkMap` composes the following exported parts. `NetworkMapProvider` shares one surface's records, layer visibility, camera commands and selection; it adds no layout wrapper. Place its companions anywhere within that provider:
+
+```tsx
+<NetworkMapProvider
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  surface={surface}
+  aria-labelledby="delivery-heading"
+  aria-describedby="delivery-records"
+  defaultLayerVisibility={{ deliverySurface: true }}
+>
+  <h2 id="delivery-heading">Delivery time</h2>
+  <aside>
+    <NetworkMapControlPanel />
+  </aside>
+  <NetworkMapSurface />
+  <NetworkMapLegend />
+  <NetworkMapDataView id="delivery-records" expanded />
+</NetworkMapProvider>
+```
+
+`NetworkMapHeading` and `NetworkMapSelectionDetails` are optional companions too. The control panel omits inapplicable actions; the legend includes only supplied visible layers. A surface-only or weather-only map requires no facility or segment arrays, logistics legend, or location disclosure. `NetworkMapDataView` renders the supplied layer records even when the engine fails; keep it, or associate your own equivalent data and keyboard interactions when composing a minimal surface.
+
+`NetworkMapSurface` also accepts the map props directly when used without a provider. It renders the viewport, attribution, loading/retry messages and configured native navigation/scale, with no surrounding heading, toolbar, legend, selected record, or data disclosure. Use one surface per provider.
+
+## Typography and layout
+
+`typography` accepts positive CSS-pixel sizes for `title`, `description`, `label`, `control`, `legend`, and `detail`. Defaults are 18, 14, 12, 14, 12, and 12 respectively. `label` reaches facility and MapLibre cluster labels and the distance scale; `detail` reaches exact tables and attribution. Font changes remeasure DOM labels and update engine text without replacing the map. Label placement uses measured height and width, reserves native-control space, and refreshes after font loading or resizing. Explicit consumer engine styling retains the documented paint ownership.
+
+The default selected record sits below the viewport and wraps long descriptions, including at a short map height or larger text sizes. With `NetworkMapProvider`, put the selection companion in a side panel or another application-owned region. Ordinary data, typography, visibility and callback updates preserve the map instance and user camera. Updating only interaction state avoids re-uploading unchanged GeoJSON sources; supply new immutable arrays/objects when changing records.
+
+<Canvas of={NetworkMapStories.LayerOnlyComposition} />
+
 ## Three investigations
 
 <Canvas of={NetworkMapStories.ParcelJourney} />
@@ -88,9 +125,9 @@ Regional throughput, expected volume, operating capacity, dwell, backlog and con
 
 Facilities have stable IDs; segments reference their endpoints. `selectedFacilityId` and `onFacilitySelect` control selection across markers and table rows. Provide the callback to enable selection. `selectedSegmentId` emphasizes a connection and makes Selected leg available when its geometry can be fitted. `latestFacilityId` identifies the last observed facility, never an interpolated position.
 
-When a linked panel already shows the selected facility's identity and decision fields, set `showSelectionDetails={false}` to avoid covering geography with a duplicate card. Marker selection, equivalent table selection, and callbacks remain active. The card is visible by default.
+When a linked panel already shows the selected facility's identity and decision fields, set `showSelectionDetails={false}` to omit the duplicate details. The default details use normal document flow below the map, keeping geography and attribution unobscured. Marker selection, equivalent table selection, and callbacks remain active. The card is visible by default.
 
-`initialView` applies once. Without it, the initial camera fits the supplied facilities. To request a later camera change, supply `focus={{ revision, facilityIds, maxZoom }}` and change `revision`. A caller with no facilities to fit — e.g. a delivery-time-surface-only view — can instead supply `focus={{ revision, facilityIds: [], bounds, maxZoom }}`; `bounds` (`{ minLat, maxLat, minLon, maxLon }`) wins over `facilityIds` whenever both are present. Data, selection and layer updates preserve manual pan/zoom. Keep the `mapStyle` object stable: replacing it recreates the map. The controls honor reduced motion. MapLibre also supports keyboard arrows and +/- on its canvas, zoom buttons, pan gestures and cooperative scrolling.
+`initialView` applies once. Without it, the initial camera fits the supplied facilities, or supplied layer extents when there are no facilities. Dateline connections use split geometry and wrapped world copies to retain the short crossing. To request a later camera change, supply `focus={{ revision, facilityIds, maxZoom }}` and change `revision`. A caller with no facilities to fit — e.g. a delivery-time-surface-only view — can instead supply `focus={{ revision, facilityIds: [], bounds, maxZoom }}`; `bounds` (`{ minLat, maxLat, minLon, maxLon }`) wins over `facilityIds` whenever both are present. Data, selection and layer updates preserve manual pan/zoom. Keep the `mapStyle` object stable: replacing it recreates the map. The controls honor reduced motion. MapLibre also supports keyboard arrows and +/- on its canvas, zoom buttons, pan gestures and cooperative scrolling.
 
 `labelMinZoom` progressively reveals local facilities. Selected, last-observed and `primaryFacilityIds` labels receive priority; collision placement hides lower-priority labels when space is insufficient. Marker buttons and the data table retain complete names. Repeated scans at one facility should share one facility ID and one marker. This component is intended for bounded investigation cohorts; use a server-filtered or clustered source for very large fleets.
 
@@ -98,7 +135,7 @@ When a linked panel already shows the selected facility's identity and decision 
 
 `onMapReady` receives the initialized map after the component's first source and paint updates. It runs once per map instance, including a replacement instance after changing `mapStyle` or `workerUrl`. Retain the instance to manage application-owned layers or later updates.
 
-Paint overrides set through this callback or the retained instance survive data, selection, and layer-visibility changes. When you override `easy-ui-observed`'s `line-color`, your expression owns that property's selection behavior. To return to automatic color styling, unset it with `map.setPaintProperty("easy-ui-observed", "line-color", null)`; the next component update restores the current automatic color expression. Source data and visibility continue updating while a paint override is active.
+Paint overrides set through this callback or the retained instance survive data, selection, and layer-visibility changes. When you override `easy-ui-observed`'s `line-color`, your expression owns that property's selection behavior. To return to automatic color styling, unset it with `map.setPaintProperty("easy-ui-observed", "line-color", null)`; the next component update restores the current automatic color expression. Source data and visibility continue updating while a paint override is active. An independent halo identifies the selected segment across every evidence type without replacing supplied colors or evidence dashes.
 
 ## Controls and layer visibility
 
@@ -179,6 +216,6 @@ For a consumer whose primary content is this surface, set `defaultLayerVisibilit
 
 ## Accessibility, failure and packaging
 
-Marker buttons have full accessible names and controlled pressed state. Table rows offer equivalent selection, including records whose labels are hidden. The exact-data disclosure includes risk event, horizon, cohort, baseline and output timestamp; segment descriptions provide transfer evidence. Loading and failure states preserve this data. Initialization failures offer Retry; tile failures surface a reload notice and `onRenderError`. A basemap is an additional spatial view, not the only way to inspect or select records.
+Marker buttons have full accessible names and controlled pressed state. Table rows offer equivalent selection, including records whose labels are hidden. The exact-data disclosure includes risk event, horizon, cohort, baseline and output timestamp; segment descriptions provide transfer evidence. Weather records retain coordinates, observation/forecast status, source and validity times. Surface records retain exact bounds, median, IQR, count, source and timestamp, including missing values and true zero. These records remain available regardless of layer visibility. Loading and failure states preserve this data. Initialization failures offer Retry; tile failures surface a reload notice and `onRenderError`. A basemap is an additional spatial view, not the only way to inspect or select records.
 
 The `NetworkMap` entry keeps MapLibre as an optional peer and loads it dynamically on mount. Importing and server-rendering the entry does not initialize WebGL; its HTML data view and loading state render on the server. Native charts and ECharts do not import this entry. Import the MapLibre CSS only in the application's map route. The published Easy UI stylesheet includes the small component wrapper styles, consistent with other components. See `scripts/preview-maps` for production bundle measurements, an independent native SVG control, browser interaction checks and actual Chrome, Firefox and Safari captures.

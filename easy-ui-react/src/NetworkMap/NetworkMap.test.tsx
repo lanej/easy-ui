@@ -8,6 +8,12 @@ import {
   within,
 } from "@testing-library/react";
 import { NetworkMap } from "./NetworkMap";
+import { NetworkMapProvider } from "./NetworkMapContext";
+import { NetworkMapSurface } from "./NetworkMapSurface";
+import {
+  NetworkMapControlPanel,
+  NetworkMapDataView,
+} from "./NetworkMapCompanions";
 import { loadMapEngine } from "./engine";
 import { surfaceData } from "./geometry";
 import type { NetworkMapProps } from "./types";
@@ -42,6 +48,10 @@ const setPaintProperty = vi.fn((id: string, prop: string, value: unknown) => {
 });
 const setLayoutProperty = vi.fn((id: string, _prop: string, value: unknown) => {
   callOrder.push(`setLayoutProperty:${id}:${value}`);
+});
+const setFilter = vi.fn((id: string, value: unknown) => {
+  const layer = layerDefs.get(id);
+  if (layer) layer.filter = value;
 });
 // Test-controlled stand-in for MapLibre's own clustering computation (normally done by the
 // bundled supercluster library against loaded tiles) — set per test to whatever
@@ -111,6 +121,7 @@ class FakeMap {
     return structuredClone(paintProperties.get(id)?.get(prop));
   }
   setLayoutProperty = setLayoutProperty;
+  setFilter = setFilter;
   getZoom() {
     return 9;
   }
@@ -146,7 +157,7 @@ const engine = {
   NavigationControl: class {},
   ScaleControl: class {},
 } as unknown as Awaited<ReturnType<typeof loadMapEngine>>;
-const props: NetworkMapProps = {
+const props = {
   title: "Network",
   description: "Observed handoffs",
   mapStyle: { version: 8, sources: {}, layers: [] },
@@ -156,7 +167,7 @@ const props: NetworkMapProps = {
   ],
   segments: [],
   onFacilitySelect: vi.fn(),
-};
+} satisfies NetworkMapProps;
 beforeEach(() => {
   vi.clearAllMocks();
   sources.clear();
@@ -365,7 +376,7 @@ it("calls onMapReady exactly once, with the live map instance, only after the co
 });
 
 describe("consumer paint ownership", () => {
-  const routeProps: NetworkMapProps = {
+  const routeProps = {
     ...props,
     facilities: [
       ...props.facilities,
@@ -380,7 +391,7 @@ describe("consumer paint ownership", () => {
         evidence: "transfer",
       },
     ],
-  };
+  } satisfies NetworkMapProps;
   const observedColor = () =>
     paintProperties.get("easy-ui-observed")?.get("line-color");
 
@@ -1330,4 +1341,402 @@ describe("focus with bounds", () => {
       expect.objectContaining({ maxZoom: 10 }),
     );
   });
+});
+
+describe("independent map composition", () => {
+  it("supports description-only, title-only, and externally named surfaces without empty heading wrappers", async () => {
+    const view = render(
+      <>
+        <h2 id="outside">Warehouse context</h2>
+        <NetworkMap
+          {...props}
+          title={undefined}
+          description="Coverage only"
+          aria-labelledby="outside"
+        />
+      </>,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(
+      screen.getByRole("region", { name: "Warehouse context" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Coverage only")).toBeInTheDocument();
+    expect(document.querySelector("h3")).toBeNull();
+    expect(document.body.textContent).not.toMatch(
+      /null location|undefined location/,
+    );
+    view.rerender(
+      <NetworkMap {...props} title="Title only" description={undefined} />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Title only" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Coverage only")).not.toBeInTheDocument();
+    view.rerender(
+      <NetworkMap
+        {...props}
+        title={null}
+        description={null}
+        aria-label="Custom network"
+      />,
+    );
+    expect(
+      screen.getByRole("region", { name: "Custom network" }),
+    ).toBeInTheDocument();
+    expect(document.querySelector("h3")).toBeNull();
+    expect(constructor).toHaveBeenCalledTimes(1);
+  });
+
+  it("mounts a standalone geographic surface without dummy logistics data or companions", async () => {
+    render(
+      <NetworkMapSurface
+        mapStyle={props.mapStyle}
+        workerUrl={props.workerUrl}
+        aria-label="Weather base"
+        controls={false}
+      />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(
+      screen.getByRole("region", { name: "Weather base" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Locations and exact data"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Observed transfer")).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(fitBounds).not.toHaveBeenCalled();
+  });
+
+  it("places controls and exact surface records outside the viewport and retains them when WebGL fails", async () => {
+    vi.mocked(loadMapEngine).mockRejectedValueOnce(new Error("No WebGL"));
+    const surface = {
+      source: "Model A",
+      asOf: "2026-09-20T00:00Z",
+      cells: [
+        {
+          lonMin: 1,
+          lonMax: 2,
+          latMin: 3,
+          latMax: 4,
+          medianMinutes: null,
+          iqrMinutes: null,
+          n: 0,
+        },
+        {
+          lonMin: 2,
+          lonMax: 3,
+          latMin: 3,
+          latMax: 4,
+          medianMinutes: 0,
+          iqrMinutes: 1.5,
+          n: 10,
+        },
+      ],
+    };
+    render(
+      <NetworkMapProvider
+        mapStyle={props.mapStyle}
+        workerUrl={props.workerUrl}
+        aria-label="Delivery field"
+        aria-describedby="exact-field"
+        surface={surface}
+      >
+        <aside data-testid="external-controls">
+          <NetworkMapControlPanel />
+        </aside>
+        <NetworkMapSurface />
+        <aside>
+          <NetworkMapDataView id="exact-field" expanded />
+        </aside>
+      </NetworkMapProvider>,
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Unable to display the map",
+    );
+    expect(
+      screen.getByRole("region", { name: "Delivery field" }),
+    ).toHaveAttribute("aria-describedby", "exact-field");
+    expect(screen.getByText(/Source: Model A/)).toHaveTextContent(
+      "2026-09-20T00:00Z",
+    );
+    const rows = screen.getAllByRole("row");
+    expect(within(rows[1]).getAllByText("Unavailable")).toHaveLength(2);
+    expect(within(rows[1]).getByText("0")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("0")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("1.5")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Locations and exact data"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps weather provenance and coordinates available while its layer is hidden", async () => {
+    render(
+      <NetworkMap
+        {...props}
+        facilities={undefined}
+        segments={undefined}
+        areas={[
+          {
+            id: "a",
+            label: "Snow",
+            evidence: "forecast",
+            validFrom: "start",
+            validUntil: "end",
+            source: "Forecast source",
+            coordinates: [
+              [1, 2],
+              [2, 2],
+              [2, 3],
+            ],
+          },
+        ]}
+      />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    fireEvent.click(screen.getByText("View exact map data"));
+    expect(
+      screen.getByRole("region", { name: "Network area data" }),
+    ).toHaveTextContent("Forecast source");
+    expect(screen.getByText("1, 2; 2, 2; 2, 3")).toBeInTheDocument();
+    expect(screen.queryByText("Observed transfer")).not.toBeInTheDocument();
+  });
+
+  it("updates callback-only marker capabilities and uses the latest handler without source uploads", async () => {
+    const first = vi.fn(),
+      second = vi.fn();
+    const view = render(<NetworkMap {...props} onFacilitySelect={undefined} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const marker = screen.getByRole("button", { name: "Select Oakland" });
+    expect(marker).toBeDisabled();
+    setData.mockClear();
+    view.rerender(<NetworkMap {...props} onFacilitySelect={first} />);
+    expect(marker).toBeEnabled();
+    fireEvent.click(marker);
+    expect(first).toHaveBeenCalledWith("one");
+    view.rerender(<NetworkMap {...props} onFacilitySelect={second} />);
+    fireEvent.click(marker);
+    expect(second).toHaveBeenCalledWith("one");
+    expect(first).toHaveBeenCalledTimes(1);
+    view.rerender(<NetworkMap {...props} onFacilitySelect={undefined} />);
+    expect(marker).toBeDisabled();
+    expect(setData).not.toHaveBeenCalled();
+    expect(constructor).toHaveBeenCalledTimes(1);
+    expect(fitBounds).toHaveBeenCalledTimes(1);
+  });
+
+  it("updates selection and visibility without uploading unchanged sources even for large cohorts", async () => {
+    const facilities = Array.from({ length: 500 }, (_, index) => ({
+      ...props.facilities[0],
+      id: String(index),
+    }));
+    const view = render(
+      <NetworkMapSurface {...props} facilities={facilities} />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    setData.mockClear();
+    for (let index = 0; index < 5; index++)
+      view.rerender(
+        <NetworkMapSurface
+          {...props}
+          facilities={facilities}
+          selectedFacilityId={String(index)}
+          layerVisibility={{ risk: index % 2 === 0 }}
+        />,
+      );
+    expect(setData).not.toHaveBeenCalled();
+    view.rerender(
+      <NetworkMapSurface {...props} facilities={facilities.slice(1)} />,
+    );
+    expect(setData).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["transfer", "measured", "planned", "inferred"] as const)(
+    "gives %s routes an independent selection halo without overriding colors",
+    async (evidence) => {
+      const facilities = [
+        ...props.facilities,
+        {
+          ...props.facilities[0],
+          id: "two",
+          coordinates: [-120, 39] as [number, number],
+        },
+      ];
+      const segments = [
+        {
+          id: "route",
+          from: "one",
+          to: "two",
+          label: "Route",
+          evidence,
+          color: "#bb3377",
+          coordinates: [
+            [-122, 38],
+            [-120, 39],
+          ] as [number, number][],
+        },
+      ];
+      const view = render(
+        <NetworkMap
+          {...props}
+          facilities={facilities}
+          segments={segments}
+          selectedSegmentId="route"
+          onMapReady={(map) =>
+            map.setPaintProperty("easy-ui-observed", "line-color", "#ff0099")
+          }
+        />,
+      );
+      await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+      act(() => listeners.load());
+      expect(layerDefs.get("easy-ui-selection")?.filter).toEqual([
+        "==",
+        ["get", "id"],
+        "route",
+      ]);
+      expect(callOrder.indexOf("addLayer:easy-ui-selection")).toBeLessThan(
+        callOrder.indexOf("addLayer:easy-ui-casing"),
+      );
+      expect(paintProperties.get("easy-ui-observed")?.get("line-color")).toBe(
+        "#ff0099",
+      );
+      expect(
+        paintProperties.get("easy-ui-unobserved")?.get("line-dasharray"),
+      ).toEqual([2, 2]);
+      view.rerender(
+        <NetworkMap {...props} facilities={facilities} segments={segments} />,
+      );
+      expect(layerDefs.get("easy-ui-selection")?.filter).toEqual([
+        "==",
+        ["get", "id"],
+        "",
+      ]);
+    },
+  );
+});
+
+it("resets external control readiness when the surface is conditionally removed", async () => {
+  function Composition({ mounted }: { mounted: boolean }) {
+    return (
+      <NetworkMapProvider {...props}>
+        <NetworkMapControlPanel />
+        {mounted && <NetworkMapSurface />}
+      </NetworkMapProvider>
+    );
+  }
+  const view = render(<Composition mounted />);
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  expect(
+    screen.getByRole("button", { name: "Fit all locations" }),
+  ).toBeEnabled();
+  view.rerender(<Composition mounted={false} />);
+  expect(
+    screen.getByRole("button", { name: "Fit all locations" }),
+  ).toBeDisabled();
+  expect(remove).toHaveBeenCalledTimes(1);
+});
+
+it("does not mutate nonexistent cluster layers when a mount-only clustering prop changes", async () => {
+  const view = render(<NetworkMap {...props} />);
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  setLayoutProperty.mockClear();
+  view.rerender(
+    <NetworkMap {...props} clusterFacilities={{}} selectedFacilityId="one" />,
+  );
+  expect(
+    setLayoutProperty.mock.calls.some(
+      ([id]) => id === "easy-ui-facility-cluster-count",
+    ),
+  ).toBe(false);
+  expect(constructor).toHaveBeenCalledTimes(1);
+});
+
+it("fits drawable layer bounds when supplied facility records have no valid coordinates", async () => {
+  render(
+    <NetworkMap
+      {...props}
+      facilities={[{ ...props.facilities[0], coordinates: [NaN, 0] }]}
+      areas={[
+        {
+          id: "a",
+          label: "Area",
+          evidence: "observed",
+          source: "Source",
+          validFrom: "from",
+          validUntil: "to",
+          coordinates: [
+            [1, 2],
+            [2, 2],
+            [2, 3],
+          ],
+        },
+      ]}
+    />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  expect(fitBounds).toHaveBeenCalledWith(
+    [
+      [1, 2],
+      [2, 3],
+    ],
+    expect.anything(),
+  );
+});
+
+it("retains exact low probabilities and encoded connection values when the engine fails", async () => {
+  vi.mocked(loadMapEngine).mockRejectedValueOnce(new Error("No engine"));
+  render(
+    <NetworkMap
+      {...props}
+      facilities={[
+        {
+          ...props.facilities[0],
+          risk: {
+            probability: 0.004,
+            baseline: 0,
+            status: "current",
+            asOf: "2026-09-20",
+            event: "Exception",
+            horizonHours: 24,
+            cohort: "Synthetic",
+          },
+        },
+      ]}
+      segments={[
+        {
+          id: "one",
+          from: "origin-id",
+          to: "destination-id",
+          label: "Measured transfer",
+          evidence: "measured",
+          volume: 123,
+          coordinates: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
+      ]}
+    />,
+  );
+  await screen.findByRole("alert");
+  fireEvent.click(screen.getByText("Locations and exact data"));
+  expect(
+    screen.getByRole("cell", { name: "0.4% (0.004) · current" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: "0% (0)" })).toBeInTheDocument();
+  const transfers = screen.getByRole("region", {
+    name: "Network connection data",
+  });
+  expect(transfers).toHaveTextContent("123");
+  expect(transfers).toHaveTextContent("origin-id");
+  expect(transfers).toHaveTextContent("destination-id");
+  expect(transfers).toHaveTextContent("1, 2; 3, 4");
 });

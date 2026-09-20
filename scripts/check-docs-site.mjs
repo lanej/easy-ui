@@ -31,9 +31,14 @@ const pages = [
   "comparisons/pricing.html",
   "comparisons/network.html",
   "comparisons/encodings.html",
+  "comparisons/chart-composition.html",
+  "comparisons/native-regressions.html",
   "comparisons/modular/portfolio/index.html",
+  "comparisons/modular/portfolio/chart-composition.html",
+  "comparisons/modular/portfolio/native-regressions.html",
   "maps/index.html",
   "maps/lightweight.html",
+  "maps/composition.html",
 ];
 for (const page of pages) {
   const html = await readFile(resolve(site, page), "utf8");

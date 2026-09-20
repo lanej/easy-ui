@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useId } from "react-aria";
+import { Disclosure } from "../Disclosure";
 import { ThemeProvider } from "../Theme";
 import { Card } from "../Card";
 import { Button } from "../Button";
@@ -94,6 +96,10 @@ export function PricingExample({
   initialOpen?: string[];
   syncURL?: boolean;
 }) {
+  const instanceId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const detailId = `${instanceId}-detail`;
+  const detailTitleId = `${instanceId}-detail-title`;
   const [mode, setMode] = useState<Mode>(initialMode);
   const [task, setTask] = useState<Task>(initialTask);
   const [open, setOpen] = useState(new Set(initialOpen));
@@ -119,14 +125,14 @@ export function PricingExample({
   }, [mode, task, open, active, inDetail, syncURL]);
   useEffect(() => {
     if (focusTarget) {
-      document.querySelector<HTMLElement>(focusTarget)?.focus();
+      rootRef.current?.querySelector<HTMLElement>(focusTarget)?.focus();
       setFocusTarget(null);
     }
   }, [focusTarget]);
   function inspect(id: string) {
     setSelected(id);
     setOpen(new Set([id]));
-    setFocusTarget("#detail-title");
+    setFocusTarget(".detail-title");
   }
   function changeMode(next: Mode) {
     if (next === "table" || next === "detail") setSelected(active);
@@ -162,7 +168,47 @@ export function PricingExample({
     const sparse = mode === "sparse" && !detail;
     const expanded =
       detail || mode === "overloaded" || mode === "trends" || open.has(p.id);
-    return (
+    const isDisclosure =
+      !detail && !sparse && mode !== "overloaded" && mode !== "trends";
+    const diagnostics = (
+      <>
+        <Trend proposal={p} />
+        <details
+          key={`${mode}-${task}`}
+          className="diagnostic-notes"
+          open={mode !== "trends"}
+        >
+          <summary>Diagnostic factors</summary>
+          <p>{p.diagnostic}</p>
+          <Method />
+          <p>Example record v1 · daily refresh · analyst review pending</p>
+        </details>
+        {task === "audit" && (
+          <div className="audit-work">
+            <label htmlFor={`${instanceId}-audit-note-${p.id}`}>
+              Review rationale for proposal {p.id}
+            </label>
+            <p>
+              Inspect the scenario bounds and diagnostic factors, then record
+              assumptions and unresolved questions.
+            </p>
+            <textarea
+              id={`${instanceId}-audit-note-${p.id}`}
+              className="audit-note"
+              rows={5}
+              value={notes[p.id] || ""}
+              onChange={(e) => setNotes({ ...notes, [p.id]: e.target.value })}
+            />
+            <p>
+              Notes stay only in page memory. Changing presentation preserves
+              them; reset/reload clears them. The URL shares the item and task,
+              never the note.
+            </p>
+          </div>
+        )}
+      </>
+    );
+    const article = (
       <article
         key={p.id}
         className={`proposal${sparse ? " sparse-row" : ""}`}
@@ -192,24 +238,24 @@ export function PricingExample({
           <div className="row-controls">
             {!detail && mode !== "overloaded" && mode !== "trends" && (
               <span className="expand">
-                <Button
-                  size="sm"
-                  variant="link"
-                  aria-label={`${sparse ? "Open proposal" : "Trends and factors for"} ${p.id}`}
-                  aria-expanded={sparse ? undefined : expanded}
-                  aria-controls={sparse ? undefined : `factors-${p.id}`}
-                  onPress={() => {
-                    if (sparse) inspect(p.id);
-                    else {
-                      const next = new Set(open);
-                      if (next.has(p.id)) next.delete(p.id);
-                      else next.add(p.id);
-                      setOpen(next);
-                    }
-                  }}
-                >
-                  {sparse ? "Open proposal" : "Trends & factors"}
-                </Button>
+                {sparse ? (
+                  <Button
+                    size="sm"
+                    variant="link"
+                    aria-label={`Open proposal ${p.id}`}
+                    onPress={() => inspect(p.id)}
+                  >
+                    Open proposal
+                  </Button>
+                ) : (
+                  <Disclosure.Trigger
+                    size="sm"
+                    variant="link"
+                    aria-label={`Trends and factors for ${p.id}`}
+                  >
+                    Trends & factors
+                  </Disclosure.Trigger>
+                )}
               </span>
             )}
             {!sparse && (
@@ -234,29 +280,40 @@ export function PricingExample({
             )}
           </div>
         </div>
-        <div
-          id={`factors-${p.id}`}
-          className="diagnostics"
-          hidden={!expanded || sparse}
-        >
-          <Trend proposal={p} />
-          <details
-            key={`${mode}-${task}`}
-            className="diagnostic-notes"
-            open={mode !== "trends"}
-          >
-            <summary>Diagnostic factors</summary>
-            <p>{p.diagnostic}</p>
-            <Method />
-            <p>Example record v1 · daily refresh · analyst review pending</p>
-          </details>
-        </div>
+        {isDisclosure ? (
+          <Disclosure.Content className="diagnostics">
+            {diagnostics}
+          </Disclosure.Content>
+        ) : (
+          <div className="diagnostics" hidden={!expanded || sparse}>
+            {diagnostics}
+          </div>
+        )}
       </article>
+    );
+    return isDisclosure ? (
+      <Disclosure
+        key={p.id}
+        isExpanded={expanded}
+        mountPolicy="preserve"
+        onExpandedChange={(isExpanded) => {
+          setOpen((current) => {
+            const next = new Set(current);
+            if (isExpanded) next.add(p.id);
+            else next.delete(p.id);
+            return next;
+          });
+        }}
+      >
+        {article}
+      </Disclosure>
+    ) : (
+      article
     );
   }
   return (
     <ThemeProvider colorScheme="light">
-      <div className={styles.root}>
+      <div ref={rootRef} className={styles.root}>
         <Header>
           <p id="task-description">
             {tasks[task]} Synthetic exercise; no price is activated.
@@ -281,8 +338,8 @@ export function PricingExample({
                 nearby trends (E-SPARKLINES)
               </a>
               . None tested this interface. Multiple disclosures use a
-              composition of Card, Button, and CompactTimeSeries; this does not
-              change DataGrid&apos;s single-expansion API.
+              composition of Card, Disclosure, and CompactTimeSeries; this does
+              not change DataGrid&apos;s single-expansion API.
             </p>
           </details>
         </Header>
@@ -399,7 +456,7 @@ export function PricingExample({
                               variant="outlined"
                               aria-label={`Inspect proposal ${p.id}`}
                               aria-pressed={active === p.id}
-                              aria-controls="detail"
+                              aria-controls={detailId}
                               onPress={() => inspect(p.id)}
                             >
                               Inspect
@@ -412,7 +469,11 @@ export function PricingExample({
                 </div>
               )}
               {inDetail && (
-                <section id="detail" aria-labelledby="detail-title">
+                <section
+                  id={detailId}
+                  className="detail"
+                  aria-labelledby={detailTitleId}
+                >
                   {mode !== "table" && (
                     <span id="back">
                       <Button
@@ -430,34 +491,10 @@ export function PricingExample({
                       </Button>
                     </span>
                   )}
-                  <h2 id="detail-title" tabIndex={-1}>
+                  <h2 id={detailTitleId} className="detail-title" tabIndex={-1}>
                     Proposal {active} · investigation
                   </h2>
                   {row(proposals.find((p) => p.id === active)!, true)}
-                  {task === "audit" && (
-                    <div id="audit-work">
-                      <label htmlFor="audit-note">
-                        Review rationale for this proposal
-                      </label>
-                      <p>
-                        Inspect the scenario bounds and diagnostic factors, then
-                        record assumptions and unresolved questions.
-                      </p>
-                      <textarea
-                        id="audit-note"
-                        rows={5}
-                        value={notes[active] || ""}
-                        onChange={(e) =>
-                          setNotes({ ...notes, [active]: e.target.value })
-                        }
-                      />
-                      <p>
-                        Notes stay only in page memory. Changing presentation
-                        preserves them; reset/reload clears them. The URL shares
-                        the item and task, never the note.
-                      </p>
-                    </div>
-                  )}
                 </section>
               )}
               <p id="action-status" role="status">

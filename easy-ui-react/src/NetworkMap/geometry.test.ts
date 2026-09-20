@@ -5,9 +5,11 @@ import {
   placeLabels,
   segmentData,
   surfaceData,
+  splitAntimeridian,
 } from "./geometry";
 import type { MapArea, MapFacility, MapSegment, MapSurfaceCell } from "./types";
 import { networkSegments, facilityMetrics } from "./NetworkMap.fixtures";
+import { GeoJSONVT } from "@maplibre/geojson-vt";
 
 it("fits dateline and ordinary journeys using the shortest longitude interval", () => {
   expect(
@@ -45,7 +47,7 @@ it("prioritizes selection, avoids overlapping labels and drops offscreen locatio
     400,
     240,
   );
-  expect(result.get("selected")).toEqual({ left: 16, top: -13 });
+  expect(result.get("selected")).toEqual({ left: 16, top: -13.5 });
   expect(result.get("other")).not.toEqual(result.get("selected"));
   expect(result.has("offscreen")).toBe(false);
 });
@@ -270,4 +272,157 @@ it("network examples conserve flow at the hubs and reconcile to carrier throughp
   }
   for (const s of networkSegments.filter((s) => s.from === "dtw"))
     expect(facilityMetrics[s.to].volume).toBe((s.volume ?? 0) * 10);
+});
+
+it("splits both dateline directions while preserving intermediate points and identity", () => {
+  expect(
+    splitAntimeridian([
+      [179, 10],
+      [-179, 20],
+    ]),
+  ).toEqual([
+    [
+      [179, 10],
+      [180, 15],
+    ],
+    [
+      [-180, 15],
+      [-179, 20],
+    ],
+  ]);
+  expect(
+    splitAntimeridian([
+      [-179, 20],
+      [179, 10],
+    ]),
+  ).toEqual([
+    [
+      [-179, 20],
+      [-180, 15],
+    ],
+    [
+      [180, 15],
+      [179, 10],
+    ],
+  ]);
+  expect(
+    splitAntimeridian([
+      [178, 8],
+      [179, 10],
+      [-179, 20],
+      [-178, 22],
+    ]),
+  ).toEqual([
+    [
+      [178, 8],
+      [179, 10],
+      [180, 15],
+    ],
+    [
+      [-180, 15],
+      [-179, 20],
+      [-178, 22],
+    ],
+  ]);
+  expect(
+    splitAntimeridian([
+      [180, 10],
+      [-179, 20],
+    ]),
+  ).toEqual([
+    [
+      [-180, 10],
+      [-179, 20],
+    ],
+  ]);
+  const facilities: MapFacility[] = [
+    { id: "a", label: "A", kind: "hub", coordinates: [179, 10] },
+    { id: "b", label: "B", kind: "hub", coordinates: [-179, 20] },
+  ];
+  const feature = segmentData(facilities, [
+    {
+      id: "dateline",
+      label: "Crossing",
+      from: "a",
+      to: "b",
+      evidence: "transfer",
+    },
+  ]).features[0];
+  expect(feature.id).toBe("dateline");
+  expect(feature.geometry.type).toBe("MultiLineString");
+});
+
+it("positions measured labels around control exclusions without assuming a fixed height", () => {
+  const labels = [
+    { id: "long", x: 100, y: 120, width: 170, height: 64, priority: 10 },
+    { id: "other", x: 100, y: 120, width: 170, height: 64, priority: 1 },
+  ];
+  const positions = placeLabels(labels, 400, 300, [
+    { x: 300, y: 0, w: 100, h: 90 },
+  ]);
+  expect(positions.get("long")).toEqual({ left: 16, top: -32 });
+  expect(positions.get("other")).not.toEqual(positions.get("long"));
+  expect(placeLabels([{ ...labels[0], height: 400 }], 400, 300).size).toBe(0);
+});
+
+it("tiles dateline geometry at the world edges without introducing Greenwich crossings", () => {
+  const facilities: MapFacility[] = [
+    { id: "a", label: "A", kind: "hub", coordinates: [179, 10] },
+    { id: "b", label: "B", kind: "hub", coordinates: [-179, 20] },
+  ];
+  const data = segmentData(facilities, [
+    {
+      id: "dateline",
+      label: "Crossing",
+      from: "a",
+      to: "b",
+      evidence: "transfer",
+    },
+  ]);
+  const tiles = new GeoJSONVT(data);
+  expect(tiles.getTile(2, 0, 1)?.features.length).toBeGreaterThan(0);
+  expect(tiles.getTile(2, 3, 1)?.features.length).toBeGreaterThan(0);
+  expect(tiles.getTile(2, 1, 1)?.features.length ?? 0).toBe(0);
+  expect(tiles.getTile(2, 2, 1)?.features.length ?? 0).toBe(0);
+});
+
+it("keeps equivalent positive/negative 180-degree vertices finite and on one meridian", () => {
+  expect(
+    splitAntimeridian([
+      [180, 10],
+      [-180, 20],
+    ]),
+  ).toEqual([
+    [
+      [180, 10],
+      [180, 20],
+    ],
+  ]);
+  expect(
+    splitAntimeridian([
+      [-180, 10],
+      [180, 20],
+    ]),
+  ).toEqual([
+    [
+      [-180, 10],
+      [-180, 20],
+    ],
+  ]);
+  const parts = splitAntimeridian([
+    [180, 10],
+    [-180, 20],
+    [-179, 21],
+  ]);
+  expect(parts).toEqual([
+    [
+      [180, 10],
+      [180, 20],
+    ],
+    [
+      [-180, 20],
+      [-179, 21],
+    ],
+  ]);
+  expect(parts.flat(2).every(Number.isFinite)).toBe(true);
 });

@@ -66,7 +66,8 @@
     "tolerance": 1,
     "severity": "error",
     "reason": "Chart labels must stay inside their SVG viewport.",
-    "designRules": ["DR-006", "DR-007"]
+    "designRules": ["DR-006", "DR-007"],
+    "pages": ["main", "stress", "chart-composition", "chart-composition-large"]
   },
   {
     "id": "native-axis-bounds",
@@ -76,7 +77,13 @@
     "tolerance": 1,
     "severity": "error",
     "reason": "Large formatted values and complete dates must fit the native axis.",
-    "designRules": ["DR-006", "DR-007"]
+    "designRules": ["DR-006", "DR-007"],
+    "pages": [
+      "main",
+      "stress",
+      "native-composition",
+      "native-composition-large"
+    ]
   },
   {
     "id": "native-axis-overlap",
@@ -84,7 +91,13 @@
     "selector": "[data-chart-value-axis] > span, [data-chart-time-axis] > span",
     "severity": "error",
     "reason": "Wrapped native axis labels must remain distinct.",
-    "designRules": ["DR-006", "DR-007"]
+    "designRules": ["DR-006", "DR-007"],
+    "pages": [
+      "main",
+      "stress",
+      "native-composition",
+      "native-composition-large"
+    ]
   },
   {
     "id": "example-heading-height",
@@ -112,7 +125,8 @@
     "selector": "[data-chart-state=\"ready\"] svg text",
     "severity": "warning",
     "reason": "Review intersecting SVG text boxes; rotated labels and deliberate label layers require visual interpretation.",
-    "designRules": ["DR-006", "DR-007"]
+    "designRules": ["DR-006", "DR-007"],
+    "pages": ["main", "stress", "chart-composition", "chart-composition-large"]
   },
   {
     "id": "service-mix-heading-height",

@@ -108,3 +108,21 @@ export const SharedScales: Story = {
   ),
 };
 export const NoData: Story = { args: { ...Default.args, series: [] } };
+export const PreciseData: Story = {
+  args: {
+    label: "Hourly shipping cost",
+    description: "USD · Sep 20, 2026 · UTC",
+    domain: [0, 2000],
+    formatTime: (time) => new Date(time).toISOString(),
+    formatAxisTime: () => "Sep 20",
+    formatValue: (value) => `$${value.toFixed(2)}`,
+    formatAxisValue: (value) => `${value / 1000}k`,
+    series: [
+      {
+        id: "cost",
+        label: "Cost",
+        points: [{ time: Date.UTC(2026, 8, 20, 9), value: 1234.56 }],
+      },
+    ],
+  },
+};

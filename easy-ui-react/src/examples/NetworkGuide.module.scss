@@ -120,22 +120,7 @@
       max-width: 110ch;
     }
     .tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
       margin: 16px 0 0;
-    }
-    .tabs button {
-      font: inherit;
-      padding: 8px 12px;
-      border: 1px solid design-token("color.neutral.300");
-      background: design-token("color.neutral.000");
-      color: inherit;
-      cursor: pointer;
-    }
-    .tabs [aria-selected="true"] {
-      background: design-token("color.primary.700");
-      color: design-token("color.neutral.000");
     }
     [data-mode="fragmented"] .workspace {
       display: block;

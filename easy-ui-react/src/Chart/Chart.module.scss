@@ -14,7 +14,16 @@
 }
 
 .description {
-  margin-top: design-token("space.1");
+  margin: design-token("space.1") 0 0;
+  color: design-token("color.neutral.600");
+  font-size: var(--ezui-viz-description-size, 14px);
+  line-height: 1.5;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--ezui-viz-title-size, 18px);
+  line-height: 1.4;
 }
 
 .plot {
@@ -42,7 +51,7 @@
   cursor: pointer;
   color: design-token("color.primary.600");
   font: inherit;
-  font-size: 12px;
+  font-size: var(--ezui-viz-control-size, 14px);
 }
 
 .control {
@@ -65,7 +74,7 @@
   width: 100%;
   border-collapse: collapse;
   color: design-token("color.neutral.800");
-  font-size: 12px;
+  font-size: var(--ezui-viz-detail-size, 12px);
   font-variant-numeric: tabular-nums;
 
   th,

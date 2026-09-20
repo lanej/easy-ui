@@ -4,13 +4,16 @@
   margin: 0;
   min-width: 0;
   color: design-token("color.neutral.900");
-  font-size: 14px;
+  font-size: var(--ezui-viz-detail-size, 12px);
   overflow-wrap: anywhere;
+  figcaption > strong {
+    font-size: var(--ezui-viz-title-size, 18px);
+  }
 }
 .description {
   margin: 6px 0 10px;
   color: design-token("color.neutral.600");
-  font-size: 12px;
+  font-size: var(--ezui-viz-description-size, 14px);
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -44,7 +47,7 @@
   list-style: none;
   padding: 0;
   margin: 8px 0;
-  font-size: 12px;
+  font-size: var(--ezui-viz-legend-size, 12px);
 }
 .swatch {
   display: inline-block;
@@ -59,8 +62,9 @@
   place-items: center;
 }
 .details {
-  font-size: 12px;
+  font-size: var(--ezui-viz-detail-size, 12px);
   summary {
+    font-size: var(--ezui-viz-control-size, 14px);
     cursor: pointer;
     color: design-token("color.primary.600");
   }
@@ -105,7 +109,7 @@
 .valueAxis {
   display: grid;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--ezui-viz-label-size, 12px);
   line-height: 1.2;
   color: design-token("color.neutral.600");
   font-variant-numeric: tabular-nums;
@@ -128,12 +132,20 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: 12px;
+  font-size: var(--ezui-viz-label-size, 12px);
+  padding-inline: 6px;
   line-height: 1.4;
   color: design-token("color.neutral.600");
   > span {
     min-width: 0;
     max-width: 50%;
+  }
+  &[data-single-tick="true"] {
+    justify-content: center;
+    > span {
+      max-width: 100%;
+      text-align: center;
+    }
   }
   > span:last-child:not(:first-child) {
     text-align: right;

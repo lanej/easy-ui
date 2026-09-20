@@ -12,11 +12,16 @@ A compact category comparison for cards, sidebars, and reports. Native HTML/CSS;
 
 All bars share a zero baseline and scale to the largest available value in this list. Supply finite, non-negative magnitudes and stable IDs. Order is preserved: sort in the application when showing a ranking. The exact formatted value and category are always visible and readable as a semantic list. No hover, animation, or keyboard interaction is needed to recover the data.
 
-Zero is an observed value. Null, negative, and non-finite values display `emptyLabel` and do not affect the scale. Empty input displays the same localized message.
+Zero is an observed value. Null displays `emptyLabel`; negative and non-finite magnitudes display `invalidValueLabel` and do not affect automatic scaling. Empty input displays `emptyLabel`.
+
+Pass the same positive finite `max` to compare separate lists on one scale. Values above that maximum keep their exact value with `outOfDomainLabel` ("Outside scale") and omit their mark by default. `overflow="clamp"` explicitly draws a marked boundary bar; the exact value and outside-scale label remain visible. An invalid supplied maximum shows `invalidScaleLabel` and suppresses marks without discarding exact values. The component never silently expands an explicit scale.
+
+<Canvas of={Stories.SharedScale} />
+<Canvas of={Stories.Overflow} />
 
 <Canvas of={Stories.ZeroAndMissing} />
 <Canvas of={Stories.NoData} />
 
-Use `Chart` for signed values, shared axes across panels, grouped/stacked bars, filtering, or drill-down. Applications own units, sorting, aggregation, and surrounding loading/error states.
+Use `typography` to adjust numeric text sizes by role; list labels use `label` and exact values use `detail`. Use `Chart` for signed values, grouped/stacked bars, filtering, or drill-down. Applications own units, sorting, aggregation, and surrounding loading/error states.
 
 <ArgTypes of={BarList} />

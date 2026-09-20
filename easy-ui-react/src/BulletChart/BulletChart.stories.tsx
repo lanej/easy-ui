@@ -49,3 +49,14 @@ export const ForecastCapacity: Story = {
     value: 11400,
   },
 };
+export const Overflow: Story = {
+  args: {
+    label: "Forecast volume",
+    value: 14500,
+    target: 12000,
+    max: 13000,
+    overflow: "clamp",
+    formatValue: (value) => value.toLocaleString("en-US"),
+    formatAxisValue: (value) => `${value / 1000}k`,
+  },
+};

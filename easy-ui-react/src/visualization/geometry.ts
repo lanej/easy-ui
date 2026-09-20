@@ -7,6 +7,25 @@ export type MarkerMode = "none" | "all" | "endpoints" | "extrema";
 /** A point in plot coordinates, ordered as horizontal and vertical position. */
 export type PlotPoint = [number, number];
 
+/** Split projected observations at missing/invalid points without collapsing their positions. */
+export function continuousSegments<T>(
+  observations: readonly T[],
+  project: (observation: T, index: number) => PlotPoint | null,
+) {
+  const segments: PlotPoint[][] = [];
+  let segment: PlotPoint[] = [];
+  observations.forEach((observation, index) => {
+    const point = project(observation, index);
+    if (!point || !point.every(Number.isFinite)) {
+      segment = [];
+      return;
+    }
+    if (!segment.length) segments.push(segment);
+    segment.push(point);
+  });
+  return segments;
+}
+
 /** Whether both scale bounds are finite and the upper bound exceeds the lower. */
 export function isDomain(domain: readonly [number, number]) {
   return domain.every(Number.isFinite) && domain[1] > domain[0];

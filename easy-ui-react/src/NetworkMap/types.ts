@@ -1,4 +1,5 @@
 import type { Map as MapInstance, StyleSpecification } from "maplibre-gl";
+import type { VisualizationTypography } from "../visualization/typography";
 
 /** Geographic position in longitude, latitude order (WGS84 degrees). */
 export type MapCoordinate = readonly [number, number];
@@ -188,29 +189,33 @@ export type NetworkMapLayerVisibility = {
 
 /** Presentation and controlled selection contract for an optional geographic map. */
 export type NetworkMapProps = {
-  /** Visible heading and accessible region name. `null` renders no heading block at all -- use
-   *  when the caller already frames this map with its own adjacent heading; the region and
-   *  toolbar fall back to a generic accessible name ("Map"/"Map camera and layers") so they stay
-   *  nameable without a visible heading. When `null`, `description` must also be `null`. */
-  title: string | null;
-  /** Coverage, observation window and main geographic question. Must be `null` when `title` is
-   *  `null` -- a heading-less map has no description to show either. */
-  description: string | null;
+  /** Optional visible heading. Independent of the description; null remains supported. */
+  title?: string | null;
+  /** Optional visible coverage, observation window or geographic context. */
+  description?: string | null;
+  /** Accessible name when the visible heading is omitted. Defaults to title, then "Map". */
+  "aria-label"?: string;
+  /** ID of a caller-owned heading; takes precedence over aria-label. */
+  "aria-labelledby"?: string;
+  /** IDs of caller-owned descriptions or an external equivalent data view. */
+  "aria-describedby"?: string;
+  /** Text sizes in CSS pixels, shared by DOM and engine labels. Changes remeasure placement. */
+  typography?: VisualizationTypography;
   /** Caller-chosen MapLibre style URL or object, including source attribution. Keep object identity stable. */
   mapStyle: string | StyleSpecification;
   /** URL of the bundled MapLibre module worker matching the installed version. Keep stable across all maps in one application. */
   workerUrl: string;
   /** Locations in the current authorized cohort. */
-  facilities: readonly MapFacility[];
+  facilities?: readonly MapFacility[];
   /** Ordered connections in that cohort. */
-  segments: readonly MapSegment[];
+  segments?: readonly MapSegment[];
   /** Optional time-filtered weather/disruption polygons. */
   areas?: readonly MapArea[];
   /** Optional delivery-time field surface, rendered as a data-driven fill layer. */
   surface?: MapSurface;
   /** Controlled location selection. */
   selectedFacilityId?: string;
-  /** Show the selected facility card over the map; defaults to true. Set false when a linked panel already provides this context. */
+  /** Show the selected facility details below the map; defaults to true. Set false when a linked panel already provides this context. */
   showSelectionDetails?: boolean;
   /** Receives marker, equivalent table, Selected leg destination or Latest events selection. */
   onFacilitySelect?: (id: string) => void;

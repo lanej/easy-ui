@@ -30,6 +30,43 @@ export function validSurfaceBounds(cell: MapSurfaceCell) {
   );
 }
 
+/** Split short dateline crossings at the world edge instead of drawing through Greenwich.
+ * Preserve supplied intermediate points and interpolate only the boundary intersection.
+ */
+export function splitAntimeridian(
+  points: readonly MapCoordinate[],
+): number[][][] {
+  if (!points.length) return [];
+  const parts: number[][][] = [];
+  let part: number[][] = [[...points[0]]];
+  for (let index = 1; index < points.length; index++) {
+    const previous = part[part.length - 1];
+    const next = points[index];
+    const delta = next[0] - previous[0];
+    // +180 and -180 name the same meridian; there is no boundary distance to interpolate.
+    if (Math.abs(delta) === 360) {
+      if (previous[1] !== next[1]) part.push([previous[0], next[1]]);
+      continue;
+    }
+    if (Math.abs(delta) > 180) {
+      const wrapped = next[0] + (delta > 0 ? -360 : 360);
+      const edge = wrapped > previous[0] ? 180 : -180;
+      const fraction = (edge - previous[0]) / (wrapped - previous[0]);
+      const latitude = previous[1] + fraction * (next[1] - previous[1]);
+      if (fraction > 0) part.push([edge, latitude]);
+      if (part.length > 1) parts.push(part);
+      part = [[-edge, latitude]];
+    }
+    if (
+      part[part.length - 1][0] !== next[0] ||
+      part[part.length - 1][1] !== next[1]
+    )
+      part.push([...next]);
+  }
+  if (part.length > 1) parts.push(part);
+  return parts;
+}
+
 export function segmentData(
   facilities: readonly MapFacility[],
   segments: readonly MapSegment[],
@@ -50,6 +87,7 @@ export function segmentData(
         return [];
       const points = s.coordinates ?? [from.coordinates, to.coordinates];
       if (points.length < 2 || !points.every(validCoordinate)) return [];
+      const parts = splitAntimeridian(points);
       return [
         {
           type: "Feature" as const,
@@ -68,10 +106,16 @@ export function segmentData(
                     5,
             ...(s.color === undefined ? {} : { color: s.color }),
           },
-          geometry: {
-            type: "LineString" as const,
-            coordinates: points.map((p) => [...p]),
-          },
+          geometry:
+            parts.length > 1
+              ? {
+                  type: "MultiLineString" as const,
+                  coordinates: parts,
+                }
+              : {
+                  type: "LineString" as const,
+                  coordinates: parts[0] ?? points.map((p) => [...p]),
+                },
         },
       ];
     }),
@@ -211,27 +255,34 @@ export type LabelCandidate = {
   x: number;
   y: number;
   width: number;
+  height?: number;
   priority: number;
 };
 export function placeLabels(
   candidates: LabelCandidate[],
   width: number,
   height: number,
+  reserved: { x: number; y: number; w: number; h: number }[] = [],
 ) {
-  const occupied: { x: number; y: number; w: number; h: number }[] = [];
+  const occupied = [...reserved];
   const positions = new Map<string, { left: number; top: number }>();
   for (const c of [...candidates].sort(
     (a, b) => b.priority - a.priority || a.id.localeCompare(b.id),
   )) {
     if (c.x < 0 || c.y < 0 || c.x > width || c.y > height) continue;
+    const labelHeight = c.height ?? 27;
+    const centeredLeft =
+      Math.max(5, Math.min(width - c.width - 5, c.x - c.width / 2)) - c.x;
     for (const [dx, dy] of [
-      [16, -13],
+      [16, -labelHeight / 2],
       [16, 15],
-      [-c.width - 16, -13],
+      [-c.width - 16, -labelHeight / 2],
       [-c.width - 16, 15],
-      [-c.width / 2, -44],
+      [-c.width / 2, -labelHeight - 17],
+      [centeredLeft, -labelHeight - 12],
+      [centeredLeft, 18],
     ]) {
-      const box = { x: c.x + dx, y: c.y + dy, w: c.width, h: 27 };
+      const box = { x: c.x + dx, y: c.y + dy, w: c.width, h: labelHeight };
       if (
         box.x < 5 ||
         box.y < 5 ||

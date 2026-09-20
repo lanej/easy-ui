@@ -60,3 +60,82 @@ it("preserves elapsed spacing, gaps, exact zeros and shared scales without an en
   expect(screen.queryByRole("img")).toBeNull();
   expect(screen.getByText("No data")).toBeInTheDocument();
 });
+
+it("aligns singleton timestamps with centered observations, including multiple series", () => {
+  const props = {
+    label: "One time",
+    description: "One shared timestamp",
+    domain: [0, 10] as const,
+    formatTime: String,
+  };
+  const { container, rerender } = render(
+    <CompactTimeSeries
+      {...props}
+      series={[
+        { id: "a", label: "A", points: [{ time: 25, value: 2 }] },
+        { id: "b", label: "B", points: [{ time: 25, value: 8 }] },
+      ]}
+    />,
+  );
+  expect(container.querySelector("[data-chart-time-axis]")).toHaveAttribute(
+    "data-single-tick",
+    "true",
+  );
+  expect(
+    container.querySelector("[data-chart-time-axis]")?.children,
+  ).toHaveLength(1);
+  expect(
+    [...container.querySelectorAll("circle")].map((point) =>
+      point.getAttribute("cx"),
+    ),
+  ).toEqual(["240", "240"]);
+  rerender(
+    <CompactTimeSeries
+      {...props}
+      timeDomain={[0, 100]}
+      series={[{ id: "a", label: "A", points: [{ time: 25, value: 2 }] }]}
+    />,
+  );
+  expect(container.querySelector("[data-chart-time-axis]")).toHaveAttribute(
+    "data-single-tick",
+    "false",
+  );
+  expect(
+    container.querySelector("[data-chart-time-axis]")?.children,
+  ).toHaveLength(2);
+  expect(container.querySelector("circle")).toHaveAttribute("cx", "123");
+});
+
+it("abbreviates axes independently while retaining timestamps, units and precision in exact data", () => {
+  const time = Date.UTC(2026, 8, 20, 9);
+  const { container } = render(
+    <CompactTimeSeries
+      label="Precise data"
+      description="USD, UTC"
+      domain={[0, 2000]}
+      series={[{ id: "a", label: "A", points: [{ time, value: 1234.56 }] }]}
+      formatTime={(value) => new Date(value).toISOString()}
+      formatValue={(value) => `$${value.toFixed(2)}`}
+      formatAxisTime={() => "Sep 20"}
+      formatAxisValue={(value) => `${value / 1000}k`}
+      reference={{ value: 1500.55, label: "Budget" }}
+      typography={{ label: 16, detail: 15 }}
+    />,
+  );
+  expect(container.querySelector("[data-chart-time-axis]")).toHaveTextContent(
+    "Sep 20",
+  );
+  expect(container.querySelector("[data-chart-value-axis]")).toHaveTextContent(
+    "1k",
+  );
+  expect(container.querySelector("tbody")).toHaveTextContent(
+    "2026-09-20T09:00:00.000Z",
+  );
+  expect(container.querySelector("tbody")).toHaveTextContent("$1234.56");
+  expect(screen.getByText("Budget: $1500.55")).toBeInTheDocument();
+  expect(
+    container
+      .querySelector("figure")
+      ?.style.getPropertyValue("--ezui-viz-label-size"),
+  ).toBe("16px");
+});

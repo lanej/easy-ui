@@ -195,6 +195,55 @@ export const WithRowExpansion: Story = {
   },
 };
 
+function ControlledExpansionExample() {
+  const [expandedKey, setExpandedKey] = useState<number | null>(null);
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      <button type="button" onClick={() => setExpandedKey(null)}>
+        Close details
+      </button>
+      <DataGrid
+        aria-label="Controlled expansion"
+        columns={columns}
+        rows={rows}
+        expandedKey={expandedKey}
+        onExpandedChange={setExpandedKey}
+        renderColumnCell={(column) => column.name}
+        renderRowCell={(value) => String(value)}
+        renderExpandedRow={(key) => (
+          <PlaceholderBox width="100%" height="140px">
+            Details for row {key}
+          </PlaceholderBox>
+        )}
+      />
+    </div>
+  );
+}
+
+/** Store the next key directly, including null when a user closes the row. */
+export const ControlledExpansion: Story = {
+  render: () => <ControlledExpansionExample />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const toggle = canvas.getAllByRole("button", { name: "Expand" })[0];
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(toggle);
+    await expect(canvas.getByText("Details for row 1")).toBeInTheDocument();
+    await userEvent.click(toggle);
+    await expect(
+      canvas.queryByText("Details for row 1"),
+    ).not.toBeInTheDocument();
+    await userEvent.click(toggle);
+    await userEvent.click(
+      canvas.getByRole("button", { name: "Close details" }),
+    );
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await expect(
+      canvas.queryByText("Details for row 1"),
+    ).not.toBeInTheDocument();
+  },
+};
+
 export const WithKebabMenu: Story = {
   render: Template.bind({}),
   args: {
@@ -838,6 +887,55 @@ export const ServiceSplitCollapsible: Story = {
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
     await userEvent.click(toggle);
     await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  },
+};
+
+const serviceGroupIds: Record<string, number> = {
+  USPS: 101,
+  UPS: 202,
+  FedEx: 303,
+};
+const opaqueServiceRows = serviceSplitRows.map((row) => ({
+  ...row,
+  carrierId: serviceGroupIds[row.carrier],
+}));
+
+/** Keep stable database identifiers separate from labels people recognize. */
+export const OpaqueGroupLabels: Story = {
+  render: () => (
+    <DataGrid
+      aria-label="Services grouped by carrier ID"
+      columns={serviceSplitColumns}
+      rows={opaqueServiceRows}
+      renderColumnCell={(column) => column.name}
+      renderRowCell={renderServiceSplitCell}
+      grouping={{
+        getGroupKey: (row) => row.carrierId,
+        getGroupLabel: (group) => `${group.rows[0].carrier} services`,
+        aggregators: {
+          packages: (rows) => rows.reduce((sum, row) => sum + row.packages, 0),
+          spend: (rows) => rows.reduce((sum, row) => sum + row.spend, 0),
+        },
+        renderSubtotalCell: renderServiceSplitCell,
+        isCollapsible: true,
+        defaultCollapsedKeys: [101],
+      }}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const toggle = canvas.getByRole("button", {
+      name: "Expand USPS services group",
+    });
+    await expect(
+      canvas.getByText("USPS services subtotal"),
+    ).toBeInTheDocument();
+    await expect(
+      canvas.queryByText("Ground Advantage"),
+    ).not.toBeInTheDocument();
+    await userEvent.click(toggle);
+    await expect(toggle).toHaveAccessibleName("Collapse USPS services group");
+    await expect(canvas.getByText("Ground Advantage")).toBeInTheDocument();
   },
 };
 
