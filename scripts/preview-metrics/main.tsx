@@ -44,6 +44,11 @@ createRoot(document.getElementById("root")!).render(
           Explore constrained cards and overflow stress cases
         </a>
       </p>
+      <p className="note">
+        <a href="./network.html">Network investigation</a> ·{" "}
+        <a href="./pricing.html">View Rule design patterns</a> ·{" "}
+        <a href="./encodings.html">Encoding comparisons</a>
+      </p>
       <LightweightExamples />
       <NativeExtensions />
       <section aria-label="Metric state examples">

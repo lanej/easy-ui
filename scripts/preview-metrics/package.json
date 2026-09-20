@@ -13,10 +13,13 @@
   },
   "dependencies": {
     "@easypost/easy-ui-tokens": "1.0.0-alpha.17",
+    "@react-aria/utils": "3.34.1",
     "echarts": "6.1.0",
     "lodash": "4.17.21",
+    "maplibre-gl": "6.9.0",
     "overlayscrollbars": "2.3.0",
     "react": "19.0.0",
+    "react-aria": "3.51.0",
     "react-dom": "19.0.0",
     "sass": "1.89.2",
     "vite": "6.3.5"
