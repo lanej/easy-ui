@@ -85,6 +85,13 @@
   --map-warning: #9b5900;
   width: 100%;
   background: design-token("color.neutral.100");
+  // MapLibre's own bundled control CSS sets this to 10px -- below this
+  // component's stated readable-text floor (see .legend below). Scoped to
+  // this component's own canvas so it never leaks onto an unrelated
+  // MapLibre instance elsewhere in a consuming app.
+  :global(.maplibregl-ctrl-scale) {
+    font-size: 12px;
+  }
 }
 .message {
   position: absolute;
@@ -131,8 +138,12 @@
   }
 }
 .marker {
-  width: 22px;
-  height: 22px;
+  // 24px matches the minimum interactive-control touch-target size Viewrule (and WCAG 2.5.8's
+  // AA target-size guidance) checks against -- this button is disabled/non-interactive on some
+  // consumer screens (no onFacilitySelect wired), but it renders as a real <button> unconditionally,
+  // so its box must clear that floor regardless of whether a given screen currently uses it.
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   overflow: visible;
@@ -153,7 +164,7 @@
   height: 16px;
   border: 3px solid design-token("color.neutral.000");
   border-radius: 50%;
-  background: design-token("color.primary.600");
+  background: var(--map-facility-color, #{design-token("color.primary.600")});
   box-shadow: 0 1px 5px #10274355;
   font-size: 17px;
   line-height: 1;
@@ -167,7 +178,7 @@
 .marker[data-kind="destination"] .pin {
   width: 20px;
   height: 20px;
-  background: design-token("color.neutral.000");
+  background: var(--map-facility-color, #{design-token("color.neutral.000")});
   border: 2px solid design-token("color.primary.600");
   color: design-token("color.primary.600");
 }
@@ -225,7 +236,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 20px;
-  font-size: 11px;
+  // Raised from 11px: a real consumer's calibrated readable-text floor
+  // (12px, matching Easy UI's own smallest intentional Text token) flagged
+  // this as unreadable.
+  font-size: 12px;
   color: design-token("color.neutral.700");
   span {
     display: flex;
