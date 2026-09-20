@@ -21,7 +21,7 @@ module.exports = {
       files: ["**/*.js", "**/*.mjs", "**/*.jsx"],
       extends: ["eslint:recommended"],
       parserOptions: {
-        ecmaVersion: "2021",
+        ecmaVersion: 2021,
         sourceType: "module",
       },
     },
