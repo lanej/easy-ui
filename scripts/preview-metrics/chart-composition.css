@@ -65,7 +65,7 @@ body {
     padding: 12px;
   }
   .chart-review-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 .chart-composition-review[data-chart-review-stress="true"] {
@@ -78,5 +78,5 @@ body {
   padding: 12px;
 }
 .chart-composition-review[data-chart-review-stress="true"] .chart-review-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }

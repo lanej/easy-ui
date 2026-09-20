@@ -286,6 +286,21 @@ export async function auditChartComposition(
           plot.getBoundingClientRect().top + window.scrollY - 50,
         );
       });
+      await driver.wait(() => {
+        const box = document
+          .querySelector('[data-chart-state="ready"]')
+          .getBoundingClientRect();
+        return box.top >= 0 && box.top < innerHeight && box.bottom > 0;
+      });
+      // Safari can capture the previous paint immediately after scrolling.
+      await driver.evaluate(
+        () =>
+          new Promise((resolve) =>
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => resolve(true)),
+            ),
+          ),
+      );
       await driver.screenshot(
         `${outputDir}/chart-composition-mobile-large-${renderer}-plot.png`,
       );
