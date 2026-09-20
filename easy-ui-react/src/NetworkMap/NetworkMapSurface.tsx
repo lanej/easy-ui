@@ -331,8 +331,10 @@ function NetworkMapSurfaceView() {
             const at = placements.get(facility.id);
             label.style.visibility = at ? "visible" : "hidden";
             if (at) {
-              label.style.left = `${at.left}px`;
-              label.style.top = `${at.top}px`;
+              // Projection/placement use the marker center; CSS offsets start at
+              // the center-anchored button's top-left corner.
+              label.style.left = `calc(50% + ${at.left}px)`;
+              label.style.top = `calc(50% + ${at.top}px)`;
             }
           });
         };

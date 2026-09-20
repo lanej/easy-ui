@@ -106,6 +106,11 @@ export function previewConfig(engine = "full", outDir = "dist") {
           [
             "react-aria",
             "@react-aria/utils",
+            "react-stately",
+            "@react-stately/list",
+            "react-is",
+            "overlayscrollbars-react",
+            "overlayscrollbars",
             "react",
             "react-dom",
             "lodash",
