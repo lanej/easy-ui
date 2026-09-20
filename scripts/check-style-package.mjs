@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -153,21 +153,27 @@ try {
     const folder = join(scratch, mode);
     const consumer = join(folder, "consumer");
     await mkdir(consumer, { recursive: true });
-    const packed = JSON.parse(
-      run(
-        npm,
-        [
-          "pack",
-          "--ignore-scripts",
-          "--json",
-          "--pack-destination",
-          folder,
-          "--cache",
-          cache,
-        ],
-        packageRoot,
-      ),
-    )[0];
+    const pack = spawnSync(
+      npm,
+      [
+        "pack",
+        "--ignore-scripts",
+        "--json",
+        "--pack-destination",
+        folder,
+        "--cache",
+        cache,
+      ],
+      { cwd: packageRoot, encoding: "utf8", maxBuffer: 20 * 1024 * 1024 },
+    );
+    await writeFile(join(folder, "pack.stdout.log"), pack.stdout ?? "");
+    await writeFile(join(folder, "pack.stderr.log"), pack.stderr ?? "");
+    if (pack.error) throw pack.error;
+    assert.equal(pack.status, 0, "npm pack failed; inspect logs in " + folder);
+    // npm 10 may run prepare despite --ignore-scripts, writing lifecycle output
+    // before its final JSON array. Keep those logs and parse the trailing result.
+    const jsonStart = pack.stdout.lastIndexOf("\n[");
+    const packed = JSON.parse(pack.stdout.slice(jsonStart + 1))[0];
     await writeFile(join(folder, "pack.json"), JSON.stringify(packed, null, 2));
     const prefix = mode === "source" ? "dist/" : "";
     for (const file of sassFiles)

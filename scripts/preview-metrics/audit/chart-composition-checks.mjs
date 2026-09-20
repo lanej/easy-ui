@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { writeFile } from "node:fs/promises";
 
 /** Shared Chrome, Firefox and Safari assertions for the public Chart composition. */
 export async function auditChartComposition(
@@ -218,11 +219,36 @@ export async function auditChartComposition(
             getComputedStyle(document.querySelector(selector)).fontSize,
           );
         const tableRegion = document.getElementById("external-chart-data");
+        const initialScrollX = window.scrollX;
+        window.scrollTo(100000, window.scrollY);
+        const horizontalScrollRange = window.scrollX;
+        window.scrollTo(initialScrollX, window.scrollY);
         return {
           viewportWidth: window.innerWidth,
+          outerWidth: window.outerWidth,
+          visualViewportWidth: window.visualViewport?.width,
           documentWidth: document.documentElement.scrollWidth,
           documentClientWidth: document.documentElement.clientWidth,
+          bodyWidth: document.body.scrollWidth,
+          bodyClientWidth: document.body.clientWidth,
+          horizontalScrollRange,
           container: { left: rect.left, right: rect.right, width: rect.width },
+          viewportOverflow: Array.from(document.body.querySelectorAll("*"))
+            .filter((element) => {
+              const box = element.getBoundingClientRect();
+              return (
+                box.width > 0 &&
+                (box.left < -1 ||
+                  box.right > document.documentElement.clientWidth + 1)
+              );
+            })
+            .slice(0, 30)
+            .map((element) => ({
+              tag: element.tagName,
+              id: element.id,
+              className: element.getAttribute("class"),
+              ...bounds(element),
+            })),
           plots: Array.from(
             report.querySelectorAll('[data-chart-state="ready"] > div'),
             bounds,
@@ -246,6 +272,24 @@ export async function auditChartComposition(
           },
         };
       });
+      await writeFile(
+        `${outputDir}/chart-composition-mobile-large-${renderer}.json`,
+        JSON.stringify(mobile, null, 2),
+      );
+      await driver.screenshot(
+        `${outputDir}/chart-composition-mobile-large-${renderer}.png`,
+      );
+      await driver.evaluate(() => {
+        const plot = document.querySelector('[data-chart-state="ready"]');
+        window.scrollTo(
+          0,
+          plot.getBoundingClientRect().top + window.scrollY - 50,
+        );
+      });
+      await driver.screenshot(
+        `${outputDir}/chart-composition-mobile-large-${renderer}-plot.png`,
+      );
+      await driver.evaluate(() => window.scrollTo(0, 0));
       assert.ok(mobile.container.width > 250 && mobile.container.width <= 320);
       assert.ok(
         mobile.documentWidth <= mobile.documentClientWidth + 1,
