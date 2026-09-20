@@ -1,10 +1,10 @@
 # Modular ECharts assessment
 
-The portfolio now includes [24 analytical recipes and native capacity examples](../logistics/README.md). Maps are now developed separately; see that follow-up for source-specific measurements and validation. The 18-recipe measurements and captures below retain their original source provenance.
+The portfolio now includes [24 analytical recipes and native capacity examples](../logistics/README.md). Charts and [network maps](../network-maps/README.md) share one source branch and [Lane J draft PR #1](https://github.com/lanej/easy-ui/pull/1), alongside the View Rule guide examples and grouped DataGrid. The 18-recipe measurements and captures below retain their original source provenance.
 
 Retain ECharts and offer modular loading as an explicit optimization. This experiment removes unused modules while keeping the existing 18 analytical recipes, SVG and Canvas, Sankey adjacency emphasis, labels, targets, thresholds, and exact-value tables. All six native components remain available. The checklist follow-up also improves KPI and heatmap text contrast, distinguishes table regions, and completes public TSDoc.
 
-The original Recharts comparison is [closed in #3](https://github.com/lanej/easy-ui/pull/3): its smaller bundle did not justify the specialized chart maintenance and feature gaps. This experiment is [PR #4](https://github.com/lanej/easy-ui/pull/4), based directly on [#1](https://github.com/lanej/easy-ui/pull/1).
+The original Recharts comparison is [closed in #3](https://github.com/lanej/easy-ui/pull/3): its smaller bundle did not justify the specialized chart maintenance and feature gaps. The modular ECharts work from [#4](https://github.com/lanej/easy-ui/pull/4) is retained in the combined PR.
 
 ## Measured transfer
 

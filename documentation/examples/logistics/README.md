@@ -2,7 +2,7 @@
 
 Six additive analytical recipes bring the chart portfolio to 24. Native capacity bullets also demonstrate observed volume and forecast overload without an analytical engine. All parcel, facility, rate and forecast records are synthetic.
 
-Mapping is now [draft PR #5](https://github.com/lanej/easy-ui/pull/5). The earlier lane and transit prototypes have been replaced there by optional MapLibre parcel, shipper and carrier investigations. [Network mapping scope](https://github.com/lanej/easy-ui/blob/feat/network-intelligence-maps/documentation/specs/NetworkMaps.md).
+Charts, modular ECharts, maps, View Rule guide examples, and grouped DataGrid are reviewed together in [Lane J draft PR #1](https://github.com/lanej/easy-ui/pull/1). The earlier lane and transit prototypes have been replaced by optional MapLibre parcel, shipper and carrier investigations. [Network mapping scope](../../specs/NetworkMaps.md).
 
 | Recipe                       | Decision or task                                   | Evidence shown                                                                                                 |
 | ---------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |

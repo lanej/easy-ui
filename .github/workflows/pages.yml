@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - main
-      - experiment/modular-echarts
-      - feat/network-intelligence-maps
+      - feat/metric-card-sparkline
   pull_request:
     paths:
       - ".github/workflows/pages.yml"
@@ -33,16 +32,11 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        site: ${{ fromJSON(github.event_name == 'pull_request' && '["preview"]' || '["charts","network-maps"]') }}
     steps:
       - uses: actions/checkout@v4
         with:
-          # Build both review branches for every deployment: Pages replaces the
-          # whole site, so publishing one PR must preserve the other PR's preview.
-          ref: ${{ matrix.site == 'preview' && github.sha || matrix.site == 'network-maps' && (github.ref_name == 'feat/network-intelligence-maps' && github.sha || 'feat/network-intelligence-maps') || (github.ref_name == 'feat/network-intelligence-maps' && 'experiment/modular-echarts' || github.sha) }}
+          # Charts, maps, and guide examples share one source revision.
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: "20.x"
@@ -63,7 +57,7 @@ jobs:
       - name: Upload documentation build
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.site == 'preview' && 'easy-ui-documentation-site' || format('docs-{0}', matrix.site) }}
+          name: easy-ui-documentation-site
           path: docs-site
           include-hidden-files: true
           if-no-files-found: error
@@ -78,12 +72,12 @@ jobs:
       - name: Download chart documentation
         uses: actions/download-artifact@v4
         with:
-          name: docs-charts
+          name: easy-ui-documentation-site
           path: published-site
       - name: Download map documentation
         uses: actions/download-artifact@v4
         with:
-          name: docs-network-maps
+          name: easy-ui-documentation-site
           path: published-site/network-maps
       - name: Verify both previews are included
         id: revisions

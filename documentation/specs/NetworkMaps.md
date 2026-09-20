@@ -1,6 +1,6 @@
 # Network intelligence maps
 
-Status: implemented in draft map PR #5, September 13, 2026. `NetworkMap` now uses optional MapLibre GL JS with OpenFreeMap/OSM example tiles. Three stories cover parcel, shipper and carrier investigations. The ECharts map prototypes have been removed; analytical charts and parcel event timelines remain in [chart PR #4](https://github.com/lanej/easy-ui/pull/4). This document distinguishes the initial implementation from later adoption requirements.
+Status: implemented for review in [Lane J draft PR #1](https://github.com/lanej/easy-ui/pull/1), together with charts, modular ECharts, View Rule guide examples, and grouped DataGrid. `NetworkMap` uses optional MapLibre GL JS with OpenFreeMap/OSM example tiles. Three stories cover parcel, shipper and carrier investigations. The ECharts map prototypes have been removed; analytical charts and parcel event timelines remain in the combined contribution. This document distinguishes the initial implementation from later adoption requirements.
 
 ## Problem and boundary
 

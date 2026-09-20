@@ -1,6 +1,6 @@
 # Network intelligence maps
 
-[Draft PR #5](https://github.com/lanej/easy-ui/pull/5) is the top of the draft stack [#1](https://github.com/lanej/easy-ui/pull/1) → [#4](https://github.com/lanej/easy-ui/pull/4) → [#5](https://github.com/lanej/easy-ui/pull/5) and implements the optional MapLibre `NetworkMap` entry. [Chart PR #4](https://github.com/lanej/easy-ui/pull/4) retains 24 analytical recipes and six native components; maps have their own runtime, stories and review harness.
+[Lane J draft PR #1](https://github.com/lanej/easy-ui/pull/1) combines the optional MapLibre `NetworkMap` entry, charts and sparklines, modular ECharts, View Rule guide examples, and grouped DataGrid. All use `feat/metric-card-sparkline` as their source branch. Maps retain their own runtime, stories, and review harness; the chart portfolio retains 24 analytical recipes and six native components.
 
 [Live map gallery](https://lanej.io/easy-ui/network-maps/maps/) · [Storybook](https://lanej.io/easy-ui/network-maps/storybook/?path=/story/components-networkmap--parcel-journey) · [NetworkMap API](https://lanej.io/easy-ui/network-maps/api/types/NetworkMap.NetworkMapProps.html)
 
@@ -58,8 +58,8 @@ Captured from `ad0ceb1b3e37b42a055664b308630afd145125f2` (GitHub's tested PR mer
 <details>
 <summary>All three investigations at 390px</summary>
 
-| Parcel | Shipper | Carrier |
-| --- | --- | --- |
+| Parcel                              | Shipper                               | Carrier                               |
+| ----------------------------------- | ------------------------------------- | ------------------------------------- |
 | ![Parcel mobile](parcel-mobile.png) | ![Shipper mobile](shipper-mobile.png) | ![Carrier mobile](carrier-mobile.png) |
 
 </details>
@@ -68,14 +68,14 @@ Captured from `ad0ceb1b3e37b42a055664b308630afd145125f2` (GitHub's tested PR mer
 
 [Validation summary](validation.json) · [Chrome report](chrome-report.json) · [Firefox report](firefox-report.json) · [Safari report](safari-report.json) · [Production assets](bundle-report.json). The workflow artifacts include all 30 browser captures and full axe results. Chrome and Firefox check 390px layouts; Safari uses its actual minimum window width. Package CI verifies build, lint, unit tests, Storybook and CommonJS/ESM server rendering.
 
-| Production consumer payload | Gzip bytes |
-| --- | ---: |
-| MapLibre main engine | 288,891 |
-| Separately emitted module worker | 147,882 |
-| Engine plus worker | 436,773 |
-| Complete map gallery JavaScript, including React, theme, examples and worker | 510,948 |
-| Complete map gallery CSS | 19,016 |
-| Native SVG control JavaScript, including React and theme | 63,328 |
+| Production consumer payload                                                  | Gzip bytes |
+| ---------------------------------------------------------------------------- | ---------: |
+| MapLibre main engine                                                         |    288,891 |
+| Separately emitted module worker                                             |    147,882 |
+| Engine plus worker                                                           |    436,773 |
+| Complete map gallery JavaScript, including React, theme, examples and worker |    510,948 |
+| Complete map gallery CSS                                                     |     19,016 |
+| Native SVG control JavaScript, including React and theme                     |     63,328 |
 
 These are per-asset gzip build sizes, not measured total session transfer. Fonts, basemap styles, sprites, glyphs and viewport-dependent tiles load separately. The engine and worker bundles duplicate some shared code in this Vite integration. The native SVG control loads no MapLibre engine, worker, map CSS or basemap requests. Easy UI's published global stylesheet still includes the small component wrapper styles.
 

@@ -2,6 +2,23 @@
 
 Status: expanded implementation for review. Source audit: September 12, 2026, at commit `6a3a4c95dde6408cb38b4b2ae30d3904040757e8` (`@easypost/easy-ui` version `1.0.0-alpha.133`). This is a contribution proposal, not an approved roadmap.
 
+## Combined review and component boundaries
+
+As of September 20, 2026, [Lane J draft PR #1](https://github.com/lanej/easy-ui/pull/1) contains charts, sparklines and native plots, the modular ECharts assessment, NetworkMap, View Rule guide examples, and grouped/collapsible DataGrid. The working branch is `feat/metric-card-sparkline` in `lanej/easy-ui`. Continue improvements in this existing PR. The Recharts comparison is retired; the modular ECharts work is retained. The measurements and captures elsewhere in this document retain their recorded source provenance.
+
+The next componentization work should separate three responsibilities: engine rendering and interaction; optional presentation and controls; and domain compositions such as parcel journeys or weather exposure. Share presentation conventions and typography roles across engines while preserving separate ECharts and MapLibre adapters and lightweight native plots. Extract public pieces when they enable independent composition or state ownership.
+
+The following are acceptance requirements for follow-up implementation, not claims that the current API already supports them:
+
+- Visible titles and descriptions are independently optional. An accessible name or external heading identifies the surface and any associated data view consistently, including when there is no visible heading.
+- Layer presence, visibility, and control placement are separate decisions. Latest events, risk, weather, delivery-time surfaces, and future housing-density layers must not impose controls or placeholder data on unrelated maps.
+- A minimal map viewport does not require facilities, segments, a logistics legend, or a facility table. Camera controls, layer controls, legends, selection details, and equivalent data views should compose around it independently.
+- Controlled values and change callbacks let application toolbars own selection and layer visibility. Default values initialize uncontrolled behavior. Ordinary data updates preserve manual camera movement and engine state.
+- A plot can sit inside an application-owned card with an external heading and equivalent data view. Preserve keyboard interactions, useful loading/error feedback, and provider attribution.
+- Typography controls reach HTML, SVG, and engine-rendered labels. Measure label geometry at the chosen sizes and container width. Keep the declared View Rule role thresholds explicit; lowering a threshold is not a component fix.
+
+Keep compatibility with existing composed examples while introducing these boundaries. Validate omitted headings, description-only headings, a minimal map, optional domain layers, external controls, larger text, and narrow containers. Include focused behavior/type checks, real browser layout evidence, and imports/server rendering that preserve the optional engine boundaries. The current `Chart` bare variant removes the card; it does not yet expose a plot-only API. The current map still couples some controls and presentation, so consolidation alone does not complete these acceptance requirements.
+
 ## Problem and evidence
 
 Easy UI provides the structure for analytical applications but no reusable visualization layer. The audited React source tree and package dependencies contain no line, area, bar, scatter, sparkline, or heatmap implementation. `BarChart` and `PieChart` in the icons package are icons. Existing `Card`, `SectionCard`, `DataGrid`, `DateRangePicker`, and selection controls supply much of the surrounding interface.
