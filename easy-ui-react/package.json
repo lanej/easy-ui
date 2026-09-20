@@ -6,16 +6,41 @@
     "url": "git+https://github.com/EasyPost/easy-ui.git",
     "directory": "easy-ui-react"
   },
+  "files": [
+    "dist"
+  ],
   "exports": {
+    "./package.json": "./package.json",
+    "./types": {
+      "types": "./dist/types.d.ts"
+    },
+    "./style.css": "./dist/style.css",
+    "./styles/*": "./dist/styles/*",
+    "./utilities/*.js": "./dist/utilities/*.js",
+    "./utilities/*.mjs": "./dist/utilities/*.mjs",
+    "./utilities/*.d.ts": "./dist/utilities/*.d.ts",
+    "./utilities/*": {
+      "types": "./dist/utilities/*.d.ts",
+      "import": "./dist/utilities/*.mjs",
+      "require": "./dist/utilities/*.js"
+    },
+    "./*.js": "./dist/*.js",
+    "./*.mjs": "./dist/*.mjs",
+    "./*.d.ts": "./dist/*.d.ts",
+    "./*/index": {
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs",
+      "require": "./dist/*/index.js"
+    },
     "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*.mjs",
-      "require": "./dist/*.js",
-      "default": "./dist/*"
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs",
+      "require": "./dist/*/index.js"
     }
   },
   "sideEffects": [
-    "**/*.css"
+    "**/*.css",
+    "**/*.scss"
   ],
   "publishConfig": {
     "access": "public",

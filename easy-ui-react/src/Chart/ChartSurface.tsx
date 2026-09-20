@@ -315,9 +315,32 @@ function ChartEngine(props: EngineProps) {
       scheme?.removeEventListener("change", apply);
       document.fonts?.removeEventListener("loadingdone", fontsChanged);
       if (instance.current) {
-        retainedOption.current = instance.current.getOption() as ChartOption;
-        instance.current.dispose();
+        const retiring = instance.current;
         instance.current = null;
+        // Failed setOption may leave component views only partly initialized.
+        // Do not snapshot that model or let a secondary teardown error escape
+        // React cleanup and prevent Retry from mounting a fresh engine.
+        retainedOption.current = undefined;
+        if (failed) previousOption.current = undefined;
+        else {
+          try {
+            retainedOption.current = retiring.getOption() as ChartOption;
+          } catch {
+            previousOption.current = undefined;
+          }
+        }
+        try {
+          retiring.dispose();
+        } catch {
+          // ECharts can throw while disposing an inside-zoom view that never
+          // rendered. Release its public renderer to stop animation/listeners.
+          try {
+            retiring.getZr?.()?.dispose();
+          } catch {
+            // A partially disposed renderer may already have released itself.
+          }
+          element.replaceChildren();
+        }
       }
       connection.publish({ ...connection.snapshotRef.current, ready: false });
       connection.owner.current = null;

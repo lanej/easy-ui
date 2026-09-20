@@ -101,6 +101,8 @@ The rendered plot is an image with the supplied description; its underlying SVG/
 - The frame reads resolved Easy UI CSS values and follows ThemeProvider changes. Animation is off by default and disabled under reduced-motion preferences. SVG is the default; choose canvas for dense plots.
 - The container resizes with its parent and disposes the engine and listeners on unmount. Changing options replaces previous series. Applications retain ownership of persisted zoom/filter state.
 
+If ECharts 6.1.0 throws while initializing an inside-zoom view, its own disposal can also throw. Chart contains that secondary error, releases the public renderer, and retries with a fresh engine. ECharts may retain the disposed instance in its internal registry on this exceptional path; Chart does not modify the engine's private registry.
+
 ## Compose the surface and companions
 
 `Chart` remains the convenient complete composition. Its `title` and `description` are independently optional; an omitted value creates no empty heading or reserved gap. Set `aria-label` or `aria-labelledby` when the application supplies the visible heading, and `aria-describedby` to associate external explanatory content. Standard ARIA naming precedence applies.

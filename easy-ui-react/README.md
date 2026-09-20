@@ -46,6 +46,23 @@ function App() {
 
 See our [Storybook](https://main--63f50c7c86f6514d2e0ef4be.chromatic.com/) for detailed component documentation.
 
+### Sass entry points
+
+Sass consumers can use the source styles shipped with the package. The `styles/common` entry forwards token, typography, responsive, media-query, and accessibility helpers; `styles/token-helpers` and `styles/unstyled` are also independently available. Extensionless Sass names and explicit partial filenames such as `styles/_common.scss` resolve to the same shipped files.
+
+```scss
+@use "@easypost/easy-ui/styles/common" as ui;
+
+.shipment-summary {
+  color: ui.design-token("color.neutral.900");
+  @include ui.breakpoint-md-up {
+    display: grid;
+  }
+}
+```
+
+For Sass-owned base styles, import `@easypost/easy-ui/styles/global.scss` through your application's Sass-aware bundler. This includes token CSS, Poppins fallback metrics, and scrollbar styles; the documented `style.css` import supplies the compiled component stylesheet. All eleven files under `styles/` ship together so relative Sass dependencies resolve. Dart Sass's `pkg:` importer also supports these entries; their existing bare dependency imports require the package-aware resolution supplied by bundlers such as Vite.
+
 ### Fonts
 
 Easy UI uses `Poppins` font. You can host it yourself or use Google Fonts. For hosting it yourself, `Poppins` is included in `.storybook/public/fonts/poppins`.
@@ -111,6 +128,8 @@ When server rendering an app that uses Easy UI and React <18, your app must be w
 ## Development
 
 We use Storybook to create a simple, hot-reloading playground for development on these components.
+
+After building, `node scripts/check-style-package.mjs` from the repository root packs both the workspace package and its release `dist` directory, installs each tarball in a separate temporary consumer, and checks public CommonJS/ESM imports, server rendering, all Sass dependencies, and emitted production CSS. Normal workspace tarballs include `dist`; release-directory metadata rebases the same public exports to that directory.
 
 ### Commands
 

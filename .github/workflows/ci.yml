@@ -21,6 +21,8 @@ jobs:
         run: npm run build
       - name: Verify chart package imports and server rendering
         run: node scripts/check-chart-package.mjs
+      - name: Verify isolated tarball imports and Sass assets
+        run: node scripts/check-style-package.mjs
       - name: Linting
         run: npm run lint
       - name: Unit tests
