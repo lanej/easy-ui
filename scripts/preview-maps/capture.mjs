@@ -56,6 +56,8 @@ try {
           }),
         ),
       click: (selector) => page.locator(selector).click(),
+      clickNamed: (role, name) =>
+        page.getByRole(role, { name, exact: true }).click(),
       key: (selector, key) => page.locator(selector).press(key),
       select: (selector, value) => page.locator(selector).selectOption(value),
       screenshot: (path) => page.screenshot({ path, fullPage: true }),

@@ -149,6 +149,43 @@ export type MapFocus = {
   maxZoom?: number;
 };
 
+/** Built-in controls. An omitted or true flag shows a control only when it is applicable. */
+export type NetworkMapControls = {
+  /** Fit all valid facility locations. */
+  fitAll?: boolean;
+  /** Fit a selected drawable segment with valid endpoints. */
+  selectedSegment?: boolean;
+  /** Focus a valid facility referenced by latestFacilityId. */
+  latestEvent?: boolean;
+  /** Toggle risk treatments when a valid facility has a finite probability between zero and one. */
+  risk?: boolean;
+  /** Toggle weather when at least one area has valid polygon coordinates. */
+  weather?: boolean;
+  /** Toggle the delivery surface when at least one valid cell has an available estimate. */
+  deliverySurface?: boolean;
+  /** MapLibre zoom controls; defaults to true, independent of facility data. */
+  navigation?: boolean;
+  /** MapLibre distance scale; defaults to true, independent of facility data. */
+  scale?: boolean;
+};
+
+/** Text for the built-in toolbar controls. */
+export type NetworkMapControlLabels = {
+  fitAll: string;
+  selectedSegment: string;
+  latestEvent: string;
+  risk: string;
+  weather: string;
+  deliverySurface: string;
+};
+
+/** Layer visibility is independent of whether the corresponding control is shown. */
+export type NetworkMapLayerVisibility = {
+  risk: boolean;
+  weather: boolean;
+  deliverySurface: boolean;
+};
+
 /** Presentation and controlled selection contract for an optional geographic map. */
 export type NetworkMapProps = {
   /** Visible heading and accessible region name. `null` renders no heading block at all -- use
@@ -189,6 +226,24 @@ export type NetworkMapProps = {
   initialView?: { center: MapCoordinate; zoom: number };
   /** Map height in CSS pixels; defaults to 560, minimum 220. */
   height?: number;
+  /**
+   * Configure individual built-in controls, or false to hide all of them. Omitted/true toolbar
+   * flags show only applicable controls; false hides them. Empty toolbars are omitted. This does
+   * not hide layer data or provider attribution. Navigation and scale changes apply without
+   * recreating the map. Explicit flags take precedence over the legacy networkControls group.
+   */
+  controls?: false | NetworkMapControls;
+  /** Override toolbar labels; fitAll defaults to "Fit all locations" for every map. */
+  controlLabels?: Partial<NetworkMapControlLabels>;
+  /**
+   * Control any subset of layer visibility. Supplied fields follow these values; omitted fields
+   * remain user-controlled. Hidden controls do not change visibility or prevent external updates.
+   */
+  layerVisibility?: Partial<NetworkMapLayerVisibility>;
+  /** Initial values for uncontrolled layers. Defaults: risk on, weather and delivery surface off. */
+  defaultLayerVisibility?: Partial<NetworkMapLayerVisibility>;
+  /** Receives the full requested visibility after a toolbar toggle, including controlled fields. */
+  onLayerVisibilityChange?: (visibility: NetworkMapLayerVisibility) => void;
   /** Receives initialization, tile or rendering errors. The data table remains available. */
   onRenderError?: (error: unknown) => void;
   /**
@@ -239,24 +294,16 @@ export type NetworkMapProps = {
    */
   clusterFacilities?: ClusterFacilitiesOptions;
   /**
-   * Initializes the "Delivery time surface" toggle to visible at mount, instead of the default
-   * unchecked state — for a consumer whose primary or only content is the `surface` layer, where
-   * requiring a manual click to see any data is itself the defect. Read once at mount, like
-   * `mapStyle`/`workerUrl`/`clusterFacilities`: toggling this prop after mount has no effect on an
-   * already-initialized toggle, since it only seeds the toggle's own independent, user-controlled
-   * state. Omitted or `false` preserves today's exact behavior (starts unchecked). Has no effect
-   * when no `surface` is supplied — the toggle stays disabled either way.
+   * Legacy initial delivery-surface visibility, read once at mount. Used only when
+   * defaultLayerVisibility.deliverySurface is omitted; layerVisibility takes precedence.
+   * @deprecated Use defaultLayerVisibility.deliverySurface instead.
    */
   initialDeliverySurfaceVisible?: boolean;
   /**
-   * Shows or hides the facility/segment-oriented toolbar section: the "Fit all locations"/"Entire
-   * journey" button, "Selected leg" button, "Latest events" button, and the "Facility risk"
-   * checkbox. Intended for a consumer with no `facilities`/`segments` of its own (e.g. a
-   * surface-only delivery-time view), where those controls are permanently-disabled or
-   * always-inert clutter rather than real affordances. Defaults to `true`, preserving today's
-   * exact behavior (every control shown) when omitted. The "Weather" and "Delivery time surface"
-   * checkboxes are never affected by this prop — they stay controlled by their own existing
-   * `areas`/`surface` presence logic.
+   * Legacy fallback for fitAll, selectedSegment, latestEvent, and risk controls. False hides that
+   * group unless an individual controls flag overrides it. Other controls are unaffected.
+   * Applicability still determines whether each control can appear.
+   * @deprecated Use controls to configure individual controls instead.
    */
   networkControls?: boolean;
 };

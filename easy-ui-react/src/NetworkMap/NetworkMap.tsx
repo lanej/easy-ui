@@ -5,6 +5,7 @@ import type {
   MapLayerMouseEvent,
   Marker,
 } from "maplibre-gl";
+import { resolveMapControls } from "./controls";
 import { loadMapEngine } from "./engine";
 import {
   areaData,
@@ -16,6 +17,8 @@ import {
   validCoordinate,
 } from "./geometry";
 import type { MapFacility, NetworkMapProps } from "./types";
+import { NetworkMapToolbar } from "./NetworkMapToolbar";
+import { useLayerVisibility } from "./useLayerVisibility";
 import styles from "./NetworkMap.module.scss";
 
 const percentage = (p: number | null) =>
@@ -39,23 +42,21 @@ export function NetworkMap(props: NetworkMapProps) {
     selectedSegmentId,
     latestFacilityId,
     height = 560,
-    networkControls = true,
   } = props;
   const container = useRef<HTMLDivElement>(null);
   const instance = useRef<MapInstance | null>(null);
   const refresh = useRef<(() => void) | null>(null);
+  const refreshControls = useRef<(() => void) | null>(null);
   const latest = useRef(props);
   latest.current = props;
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [basemapError, setBasemapError] = useState(false);
   const [retry, setRetry] = useState(0);
-  const [risk, setRisk] = useState(true),
-    [weather, setWeather] = useState(false),
-    [deliverySurface, setDeliverySurface] = useState(
-      () => props.initialDeliverySurfaceVisible ?? false,
-    );
-  const layers = useRef({ risk, weather, deliverySurface });
-  layers.current = { risk, weather, deliverySurface };
+  const { visibility, changeVisibility } = useLayerVisibility(props);
+  const { risk, weather, deliverySurface } = visibility;
+  const layers = useRef(visibility);
+  layers.current = visibility;
+  const controls = resolveMapControls(props);
   const [zoom, setZoom] = useState(0);
 
   const flyToBounds = (
@@ -131,14 +132,35 @@ export function NetworkMap(props: NetworkMapProps) {
           cooperativeGestures: true,
         });
         instance.current = map;
-        map.addControl(
-          new engine.NavigationControl({ showCompass: false }),
-          "top-right",
-        );
-        map.addControl(
-          new engine.ScaleControl({ maxWidth: 100, unit: "imperial" }),
-          "bottom-left",
-        );
+        let navigation:
+          | InstanceType<typeof engine.NavigationControl>
+          | undefined;
+        let scale: InstanceType<typeof engine.ScaleControl> | undefined;
+        const updateControls = () => {
+          const configured = latest.current.controls;
+          const showNavigation =
+            configured !== false && configured?.navigation !== false;
+          const showScale = configured !== false && configured?.scale !== false;
+          if (showNavigation && !navigation) {
+            navigation = new engine.NavigationControl({ showCompass: false });
+            map.addControl(navigation, "top-right");
+          } else if (!showNavigation && navigation) {
+            map.removeControl(navigation);
+            navigation = undefined;
+          }
+          if (showScale && !scale) {
+            scale = new engine.ScaleControl({
+              maxWidth: 100,
+              unit: "imperial",
+            });
+            map.addControl(scale, "bottom-left");
+          } else if (!showScale && scale) {
+            map.removeControl(scale);
+            scale = undefined;
+          }
+        };
+        refreshControls.current = updateControls;
+        updateControls();
         map.on("error", (event) => {
           if (!disposed) {
             setBasemapError(true);
@@ -601,12 +623,17 @@ export function NetworkMap(props: NetworkMapProps) {
       disposed = true;
       window.clearTimeout(deadline);
       refresh.current = null;
+      refreshControls.current = null;
       observer?.disconnect();
       markers.forEach((m) => m.marker.remove());
       instance.current?.remove();
       instance.current = null;
     };
   }, [props.mapStyle, props.workerUrl, retry]);
+
+  useEffect(() => {
+    refreshControls.current?.();
+  }, [controls.navigation, controls.scale]);
 
   useEffect(() => {
     refresh.current?.();
@@ -663,82 +690,32 @@ export function NetworkMap(props: NetworkMapProps) {
           </span>
         </div>
       )}
-      <div
-        className={styles.toolbar}
-        role="group"
-        aria-label={`${accessibleName} camera and layers`}
-      >
-        {networkControls && (
-          <div className={styles.buttons}>
-            <button
-              type="button"
-              onClick={() =>
-                fit(
-                  facilities.map((f) => f.id),
-                  11,
-                )
-              }
-              disabled={state !== "ready"}
-            >
-              {segments.length > 0 ? "Entire journey" : "Fit all locations"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (segment) {
-                  onFacilitySelect?.(segment.to);
-                  fit([segment.from, segment.to], 13);
-                }
-              }}
-              disabled={!segment || state !== "ready"}
-            >
-              Selected leg
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (latestFacilityId) {
-                  onFacilitySelect?.(latestFacilityId);
-                  fit([latestFacilityId], 12);
-                }
-              }}
-              disabled={!latestFacilityId || state !== "ready"}
-            >
-              Latest events
-            </button>
-          </div>
-        )}
-        <div className={styles.buttons}>
-          {networkControls && (
-            <label>
-              <input
-                type="checkbox"
-                checked={risk}
-                onChange={(e) => setRisk(e.target.checked)}
-              />{" "}
-              Facility risk
-            </label>
-          )}
-          <label>
-            <input
-              type="checkbox"
-              checked={weather}
-              disabled={!areas.length}
-              onChange={(e) => setWeather(e.target.checked)}
-            />{" "}
-            Weather
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={deliverySurface}
-              disabled={!surface?.cells.length}
-              onChange={(e) => setDeliverySurface(e.target.checked)}
-            />{" "}
-            Delivery time surface
-          </label>
-        </div>
-      </div>
+      <NetworkMapToolbar
+        accessibleName={accessibleName}
+        controls={controls}
+        labels={props.controlLabels}
+        ready={state === "ready"}
+        visibility={visibility}
+        onVisibilityChange={changeVisibility}
+        onFitAll={() =>
+          fit(
+            facilities.map((facility) => facility.id),
+            11,
+          )
+        }
+        onSelectedSegment={() => {
+          if (segment) {
+            onFacilitySelect?.(segment.to);
+            fit([segment.from, segment.to], 13);
+          }
+        }}
+        onLatestEvent={() => {
+          if (latestFacilityId) {
+            onFacilitySelect?.(latestFacilityId);
+            fit([latestFacilityId], 12);
+          }
+        }}
+      />
       <div
         className={styles.viewport}
         data-map-state={state}

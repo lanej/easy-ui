@@ -32,6 +32,31 @@ try {
         ),
       click: async (selector) =>
         (await driver.findElement(By.css(selector))).click(),
+      clickNamed: async (role, name) => {
+        const element = await driver.executeScript(
+          (role, name) => {
+            if (role === "button") {
+              return Array.from(document.querySelectorAll("button")).find(
+                (button) =>
+                  (
+                    button.getAttribute("aria-label") ?? button.textContent
+                  ).trim() === name,
+              );
+            }
+            return Array.from(
+              document.querySelectorAll('input[type="checkbox"]'),
+            ).find((input) =>
+              Array.from(input.labels ?? []).some(
+                (label) => label.textContent.trim() === name,
+              ),
+            );
+          },
+          role,
+          name,
+        );
+        if (!element) throw new Error(`Missing ${role}: ${name}`);
+        await element.click();
+      },
       key: async (selector, key) => {
         const el = await driver.findElement(By.css(selector));
         await driver.executeScript("arguments[0].focus()", el);

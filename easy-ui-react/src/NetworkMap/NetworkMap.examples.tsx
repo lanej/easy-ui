@@ -473,6 +473,9 @@ export function NetworkMapExample({
             }}
             selectedSegmentId={audience === "parcel" ? leg : undefined}
             latestFacilityId={audience === "parcel" ? "dbn" : undefined}
+            controlLabels={
+              audience === "parcel" ? { fitAll: "Entire journey" } : undefined
+            }
             primaryFacilityIds={primary}
             focus={focus}
             initialView={initialView}

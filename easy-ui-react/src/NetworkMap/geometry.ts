@@ -16,6 +16,19 @@ export function validCoordinate(p: MapCoordinate) {
   );
 }
 
+export function validAreaCoordinates(coordinates: readonly MapCoordinate[]) {
+  return coordinates.length >= 3 && coordinates.every(validCoordinate);
+}
+
+export function validSurfaceBounds(cell: MapSurfaceCell) {
+  return (
+    cell.latMin < cell.latMax &&
+    cell.lonMin < cell.lonMax &&
+    validCoordinate([cell.lonMin, cell.latMin]) &&
+    validCoordinate([cell.lonMax, cell.latMax])
+  );
+}
+
 export function segmentData(
   facilities: readonly MapFacility[],
   segments: readonly MapSegment[],
@@ -97,8 +110,7 @@ export function areaData(
   return {
     type: "FeatureCollection",
     features: areas.flatMap((a) => {
-      if (a.coordinates.length < 3 || !a.coordinates.every(validCoordinate))
-        return [];
+      if (!validAreaCoordinates(a.coordinates)) return [];
       const ring = a.coordinates.map((p) => [...p]);
       if (
         ring[0][0] !== ring[ring.length - 1][0] ||
@@ -131,15 +143,7 @@ export function surfaceData(
   return {
     type: "FeatureCollection",
     features: cells.flatMap((c) => {
-      if (
-        !Number.isFinite(c.latMin) ||
-        !Number.isFinite(c.latMax) ||
-        !Number.isFinite(c.lonMin) ||
-        !Number.isFinite(c.lonMax) ||
-        c.latMin >= c.latMax ||
-        c.lonMin >= c.lonMax
-      )
-        return [];
+      if (!validSurfaceBounds(c)) return [];
       const ring: MapCoordinate[] = [
         [c.lonMin, c.latMin],
         [c.lonMax, c.latMin],
@@ -147,7 +151,6 @@ export function surfaceData(
         [c.lonMin, c.latMax],
         [c.lonMin, c.latMin],
       ];
-      if (!ring.every(validCoordinate)) return [];
       return [
         {
           type: "Feature" as const,

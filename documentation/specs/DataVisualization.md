@@ -8,7 +8,7 @@ As of September 20, 2026, [Lane J draft PR #1](https://github.com/lanej/easy-ui/
 
 The next componentization work should separate three responsibilities: engine rendering and interaction; optional presentation and controls; and domain compositions such as parcel journeys or weather exposure. Share presentation conventions and typography roles across engines while preserving separate ECharts and MapLibre adapters and lightweight native plots. Extract public pieces when they enable independent composition or state ownership.
 
-The following are acceptance requirements for follow-up implementation, not claims that the current API already supports them:
+The following are the complete composition acceptance requirements; the control and layer-state slice below implements part of this contract:
 
 - Visible titles and descriptions are independently optional. An accessible name or external heading identifies the surface and any associated data view consistently, including when there is no visible heading.
 - Layer presence, visibility, and control placement are separate decisions. Latest events, risk, weather, delivery-time surfaces, and future housing-density layers must not impose controls or placeholder data on unrelated maps.
@@ -17,7 +17,32 @@ The following are acceptance requirements for follow-up implementation, not clai
 - A plot can sit inside an application-owned card with an external heading and equivalent data view. Preserve keyboard interactions, useful loading/error feedback, and provider attribution.
 - Typography controls reach HTML, SVG, and engine-rendered labels. Measure label geometry at the chosen sizes and container width. Keep the declared View Rule role thresholds explicit; lowering a threshold is not a component fix.
 
-Keep compatibility with existing composed examples while introducing these boundaries. Validate omitted headings, description-only headings, a minimal map, optional domain layers, external controls, larger text, and narrow containers. Include focused behavior/type checks, real browser layout evidence, and imports/server rendering that preserve the optional engine boundaries. The current `Chart` bare variant removes the card; it does not yet expose a plot-only API. The current map still couples some controls and presentation, so consolidation alone does not complete these acceptance requirements.
+Keep compatibility with existing composed examples while introducing these boundaries. Validate omitted headings, description-only headings, a minimal map, optional domain layers, external controls, larger text, and narrow containers. Include focused behavior/type checks, real browser layout evidence, and imports/server rendering that preserve the optional engine boundaries. The current `Chart` bare variant removes the card; it does not yet expose a plot-only API. The map still owns its heading, legend, selection detail, and data disclosure, so the control changes below do not complete these acceptance requirements.
+
+### Map controls and layer state
+
+`NetworkMap.controls` configures individual camera actions, layer switches, navigation, and scale, or accepts `false` to omit them all. Camera and layer controls appear only when their required data or selection is usable; an explicit `true` does not create an inapplicable control. Applicable controls remain disabled while the engine loads. An empty toolbar has no wrapper or reserved space. Provider attribution is retained.
+
+`layerVisibility`, `defaultLayerVisibility`, and `onLayerVisibilityChange` separate application-owned state from the toolbar. Each layer can be controlled independently; hiding its switch does not hide its data. Existing visibility defaults remain risk on, weather and delivery surface off. `controlLabels` supplies application wording: the generic fit action is “Fit all locations,” while parcel examples explicitly request “Entire journey.” The legacy grouped and initial-visibility props remain compatibility fallbacks.
+
+Review the carrier example at a narrow width: it should have fit, risk, and weather controls, with no selected-leg, latest-event, or delivery-surface placeholders. The shipper example adds its available delivery-surface switch. Focused state/applicability tests and the three-browser map harness cover these behaviors; browser checks also exercise keyboard selection, attribution, camera preservation, and narrow layouts. See the [NetworkMap API](../../easy-ui-react/src/NetworkMap/NetworkMap.mdx) for precedence and usage.
+
+### Remaining correctness priorities
+
+The September 20 component review reproduced the following behaviors. These remain open and are distinct from the toolbar implementation. Existing passing tests did not cover these scenarios.
+
+| Priority      | Area                              | Review finding and acceptance case                                                                                                                                                                                                                           |
+| ------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P1            | Delivery-time surface             | Missing estimates receive the same blue fill as a valid zero-minute estimate. Preserve unavailable values through the paint expression and provide an equivalent surface data view.                                                                          |
+| P1            | Map customization                 | Paint set in `onMapReady` is reset by internal refreshes, including the immediate readiness refresh when `areas` is omitted. Define durable override precedence and test it across selection/data changes.                                                   |
+| P1, inherited | DataGrid expansion                | Loading with an expanded row dereferences an absent DOM row. Suspend detail measurement while loading and safely restore expansion afterward. This predates grouped rows.                                                                                    |
+| P2            | Chart interaction                 | A theme change resets user zoom/legend state. Keyboard zoom also overwrites independent zoom regions, and controls are absent for zoom configured in `baseOption`. Preserve state across recreation and explicitly scope commands to supported zoom regions. |
+| P2            | Geographic and selection geometry | Antimeridian segments cross the long way despite wrapped camera bounds. Planned/inferred or explicitly colored segments do not receive consistent selected treatment. Test geographic geometry and selection styling independently.                          |
+| P2            | Native plots                      | Stretching a Sparkline stretches circular endpoint markers into ellipses. Keep marker dimensions in screen pixels at narrow and wide widths.                                                                                                                 |
+| P2            | DataGrid focus                    | Collapsing a group while focus is inside its expanded detail drops focus to the document body. Return focus to that group's disclosure only when its removed subtree owns focus.                                                                             |
+| P2, inherited | Controlled DataGrid expansion     | `null` switches to uncontrolled behavior instead of closing an expanded row. Support an explicit closed controlled value and emit the next value when toggling.                                                                                              |
+
+Further API work should include exact-value formatting separate from axis abbreviations, explicit native-plot overflow states, a shared BarList scale, a human-readable group-label callback, reusable disclosure composition, and the optional heading/surface boundaries above. Profile map data refreshes and collapsed-grid cell rendering before choosing broader performance APIs. These are review proposals, not implemented capabilities.
 
 ## Problem and evidence
 

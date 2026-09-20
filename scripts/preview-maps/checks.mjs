@@ -2,6 +2,19 @@ import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 const zoom = () =>
   Number(document.querySelector("[data-map-zoom]")?.dataset.mapZoom);
+const checkboxChecked = (name) =>
+  Array.from(document.querySelectorAll('input[type="checkbox"]')).find(
+    (input) =>
+      Array.from(input.labels ?? []).some(
+        (label) => label.textContent.trim() === name,
+      ),
+  )?.checked;
+const controlNames = () => {
+  const toolbar = document.querySelector('[aria-label$="camera and layers"]');
+  return Array.from(toolbar?.querySelectorAll("button, label") ?? []).map(
+    (control) => control.textContent.trim(),
+  );
+};
 const ready = () =>
   document.querySelector('[data-map-state="ready"]') &&
   document.querySelector('[data-map-idle="true"]');
@@ -86,16 +99,14 @@ export async function auditMaps(browser, identity, base, output) {
       "parcel starts at regional zoom",
       (await browser.evaluate(zoom)) > 8 && (await browser.evaluate(zoom)) < 10,
     );
-    await browser.click('[aria-label$="camera and layers"] button:first-child');
+    await browser.clickNamed("button", "Entire journey");
     await settle();
     check(
       "Entire journey fits national hops",
       (await browser.evaluate(zoom)) < 5,
     );
     await capture("parcel-national-desktop");
-    await browser.click(
-      '[aria-label$="camera and layers"] button:nth-child(3)',
-    );
+    await browser.clickNamed("button", "Latest events");
     await settle();
     check(
       "Latest events zooms to distribution streets",
@@ -113,9 +124,7 @@ export async function auditMaps(browser, identity, base, output) {
             ?.getAttribute("title") === "Oakland warehouse",
       ),
     );
-    await browser.click(
-      '[aria-label$="camera and layers"] button:nth-child(2)',
-    );
+    await browser.clickNamed("button", "Selected leg");
     await settle();
     check(
       "Selected leg fits regional handoff",
@@ -124,16 +133,12 @@ export async function auditMaps(browser, identity, base, output) {
     await browser.click(".maplibregl-ctrl-zoom-in");
     await settle();
     const before = await browser.evaluate(zoom);
-    await browser.click(
-      '[aria-label$="camera and layers"] label:first-child input',
-    );
+    await browser.clickNamed("checkbox", "Facility risk");
     check(
       "risk toggle preserves manual camera",
       Math.abs((await browser.evaluate(zoom)) - before) < 0.01,
     );
-    await browser.click(
-      '[aria-label$="camera and layers"] label:first-child input',
-    );
+    await browser.clickNamed("checkbox", "Facility risk");
     await browser.click("summary:not([aria-label])");
     await scan("parcel-data");
     await clean("parcel");
@@ -150,6 +155,16 @@ export async function auditMaps(browser, identity, base, output) {
             .querySelector('.maplibregl-marker[data-selected="true"]')
             ?.getAttribute("title") === "Detroit regional sort",
       ),
+    );
+    check(
+      "shipper hides journey-specific actions but retains available layers",
+      JSON.stringify(await browser.evaluate(controlNames)) ===
+        JSON.stringify([
+          "Fit all locations",
+          "Facility risk",
+          "Weather",
+          "Delivery time surface",
+        ]),
     );
     await capture("shipper-network-desktop");
     await scan("shipper");
@@ -194,53 +209,40 @@ export async function auditMaps(browser, identity, base, output) {
     );
     check(
       "delivery time surface starts hidden",
-      !(await browser.evaluate(
-        () =>
-          document.querySelector(
-            '[aria-label$="camera and layers"] label:last-child input',
-          ).checked,
-      )),
+      !(await browser.evaluate(checkboxChecked, "Delivery time surface")),
     );
     const surfaceZoom = await browser.evaluate(zoom);
-    await browser.click(
-      '[aria-label$="camera and layers"] label:last-child input',
-    );
+    await browser.clickNamed("checkbox", "Delivery time surface");
     check(
       "delivery time surface toggle preserves camera",
       Math.abs((await browser.evaluate(zoom)) - surfaceZoom) < 0.01,
     );
     check(
       "delivery time surface layer becomes visible when toggled",
-      await browser.evaluate(
-        () =>
-          document.querySelector(
-            '[aria-label$="camera and layers"] label:last-child input',
-          ).checked,
-      ),
+      await browser.evaluate(checkboxChecked, "Delivery time surface"),
     );
     await capture("shipper-delivery-surface-desktop");
     await scan("shipper-delivery-surface");
     await clean("shipper");
     await browser.open(`${base}/?audience=carrier`);
     await settle();
+    check(
+      "carrier hides unavailable journey and delivery-surface controls",
+      JSON.stringify(await browser.evaluate(controlNames)) ===
+        JSON.stringify(["Fit all locations", "Facility risk", "Weather"]),
+    );
     await capture("carrier-risk-desktop");
     await scan("carrier");
-    await browser.click(
-      '[aria-label$="camera and layers"] label:first-child input',
-    );
+    await browser.clickNamed("checkbox", "Facility risk");
     check(
       "risk layer can be disabled",
       await browser.evaluate(
         () => !document.querySelector('[data-risk="elevated"]'),
       ),
     );
-    await browser.click(
-      '[aria-label$="camera and layers"] label:first-child input',
-    );
+    await browser.clickNamed("checkbox", "Facility risk");
     const weatherZoom = await browser.evaluate(zoom);
-    await browser.click(
-      '[aria-label$="camera and layers"] label:nth-child(2) input',
-    );
+    await browser.clickNamed("checkbox", "Weather");
     check(
       "weather layer preserves camera",
       Math.abs((await browser.evaluate(zoom)) - weatherZoom) < 0.01,
@@ -286,6 +288,22 @@ export async function auditMaps(browser, identity, base, output) {
           () => document.documentElement.scrollWidth <= innerWidth + 1,
         ),
       );
+      check(
+        `${audience}: applicable mobile controls are actionable`,
+        await browser.evaluate(
+          () =>
+            !document.querySelector(
+              '[aria-label$="camera and layers"] :disabled',
+            ),
+        ),
+      );
+      if (audience === "carrier") {
+        check(
+          "carrier mobile toolbar contains only applicable controls",
+          JSON.stringify(await browser.evaluate(controlNames)) ===
+            JSON.stringify(["Fit all locations", "Facility risk", "Weather"]),
+        );
+      }
       await capture(`${audience}-mobile`);
       await scan(`${audience}-mobile`);
     }

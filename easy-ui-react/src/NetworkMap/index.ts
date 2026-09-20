@@ -1,6 +1,9 @@
 export { NetworkMap } from "./NetworkMap";
 export type {
   NetworkMapProps,
+  NetworkMapControls,
+  NetworkMapControlLabels,
+  NetworkMapLayerVisibility,
   MapCoordinate,
   MapFacility,
   MapSegment,

@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { NetworkMap } from "./NetworkMap";
 import { loadMapEngine } from "./engine";
@@ -14,6 +15,8 @@ vi.mock("./engine", () => ({ loadMapEngine: vi.fn() }));
 const fitBounds = vi.fn(),
   easeTo = vi.fn(),
   remove = vi.fn(),
+  addControl = vi.fn(),
+  removeControl = vi.fn(),
   setData = vi.fn(),
   getClusterExpansionZoom = vi.fn().mockResolvedValue(9);
 const listeners: Record<string, (...args: unknown[]) => void> = {};
@@ -55,10 +58,10 @@ function matchesFilter(
   return true;
 }
 class FakeMap {
-  constructor() {
+  constructor(options: unknown) {
     // Passing `this` lets tests recover the exact instance the component received, e.g. to
     // assert onMapReady was called with that same live map object.
-    constructor(this);
+    constructor(this, options);
   }
   on(
     type: string,
@@ -69,7 +72,8 @@ class FakeMap {
       listeners[`${type}:${layerOrListener}`] = listener!;
     else listeners[type] = layerOrListener;
   }
-  addControl() {}
+  addControl = addControl;
+  removeControl = removeControl;
   addSource(id: string, definition: Record<string, unknown>) {
     sources.add(id);
     sourceDefs.set(id, definition);
@@ -564,13 +568,13 @@ describe("delivery surface", () => {
     );
   });
 
-  it("disables the delivery surface toggle when no surface data is supplied", async () => {
+  it("omits the delivery surface toggle when no surface data is supplied", async () => {
     render(<NetworkMap {...props} />);
     await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
     act(() => listeners.load());
     expect(
-      screen.getByRole("checkbox", { name: "Delivery time surface" }),
-    ).toBeDisabled();
+      screen.queryByRole("checkbox", { name: "Delivery time surface" }),
+    ).not.toBeInTheDocument();
   });
 
   it("refreshes the delivery surface source when surface data changes", async () => {
@@ -612,10 +616,50 @@ describe("delivery surface", () => {
   });
 });
 
-describe("networkControls", () => {
-  const surfaceOnlyProps: NetworkMapProps = {
+describe("applicable controls and layer visibility", () => {
+  const applicableProps: NetworkMapProps = {
     ...props,
-    facilities: [],
+    facilities: [
+      {
+        ...props.facilities[0],
+        risk: {
+          probability: 0.2,
+          baseline: 0.1,
+          event: "Exception",
+          horizonHours: 24,
+          cohort: "Observed shipments",
+          asOf: "2026-09-01T00:00:00Z",
+          status: "current",
+        },
+      },
+      { id: "two", label: "Reno", kind: "hub", coordinates: [-119, 39] },
+    ],
+    segments: [
+      {
+        id: "leg",
+        from: "one",
+        to: "two",
+        label: "Handoff",
+        evidence: "transfer",
+      },
+    ],
+    selectedSegmentId: "leg",
+    latestFacilityId: "one",
+    areas: [
+      {
+        id: "rain",
+        label: "Rain",
+        coordinates: [
+          [-122, 37],
+          [-121, 37],
+          [-122, 38],
+        ],
+        evidence: "forecast",
+        validFrom: "2026-09-01T00:00:00Z",
+        validUntil: "2026-09-02T00:00:00Z",
+        source: "Fixture",
+      },
+    ],
     surface: {
       asOf: "2026-09-01T00:00:00Z",
       source: "spatial-prior-v1",
@@ -632,23 +676,118 @@ describe("networkControls", () => {
       ],
     },
   };
-
-  it("hides the facility/segment toolbar controls when explicitly false, leaving Weather/Delivery time surface untouched", async () => {
-    render(<NetworkMap {...surfaceOnlyProps} networkControls={false} />);
+  const toolbarName = "Network camera and layers";
+  const labels = ["Fit all locations", "Selected leg", "Latest events"];
+  const layerLabels = ["Facility risk", "Weather", "Delivery time surface"];
+  const finishLoading = async () => {
     await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
     act(() => listeners.load());
+  };
+
+  it("omits an empty toolbar and shows only fit for a map with plain locations", async () => {
+    const view = render(<NetworkMap {...props} facilities={[]} />);
     expect(
-      screen.queryByRole("button", { name: "Fit all locations" }),
+      screen.queryByRole("group", { name: toolbarName }),
     ).not.toBeInTheDocument();
+    await finishLoading();
+    view.rerender(<NetworkMap {...props} />);
+    const toolbar = within(screen.getByRole("group", { name: toolbarName }));
+    expect(toolbar.getAllByRole("button")).toHaveLength(1);
     expect(
-      screen.queryByRole("button", { name: "Entire journey" }),
-    ).not.toBeInTheDocument();
+      toolbar.getByRole("button", { name: "Fit all locations" }),
+    ).toBeEnabled();
+    expect(toolbar.queryAllByRole("checkbox")).toHaveLength(0);
+    expect(constructor).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables only applicable controls while loading, then removes controls whose data disappears", async () => {
+    const view = render(<NetworkMap {...applicableProps} />);
+    for (const name of labels)
+      expect(screen.getByRole("button", { name })).toBeDisabled();
+    for (const name of layerLabels)
+      expect(screen.getByRole("checkbox", { name })).toBeDisabled();
+    await finishLoading();
+    for (const name of labels)
+      expect(screen.getByRole("button", { name })).toBeEnabled();
+    for (const name of layerLabels)
+      expect(screen.getByRole("checkbox", { name })).toBeEnabled();
     expect(
-      screen.queryByRole("button", { name: "Selected leg" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("checkbox", { name: "Facility risk" }),
+    ).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Weather" })).not.toBeChecked();
     expect(
-      screen.queryByRole("button", { name: "Latest events" }),
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    ).not.toBeChecked();
+    view.rerender(<NetworkMap {...props} />);
+    for (const name of labels.slice(1))
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    for (const name of layerLabels)
+      expect(screen.queryByRole("checkbox", { name })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Fit all locations" }),
+    ).toBeEnabled();
+    expect(constructor).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows each control to be hidden independently while keeping its layer visible", async () => {
+    render(
+      <NetworkMap
+        {...applicableProps}
+        controls={{
+          fitAll: false,
+          selectedSegment: false,
+          latestEvent: false,
+          risk: false,
+          weather: false,
+        }}
+        defaultLayerVisibility={{
+          risk: true,
+          weather: true,
+          deliverySurface: true,
+        }}
+      />,
+    );
+    await finishLoading();
+    const toolbar = within(screen.getByRole("group", { name: toolbarName }));
+    expect(toolbar.queryAllByRole("button")).toHaveLength(0);
+    expect(toolbar.getAllByRole("checkbox")).toHaveLength(1);
+    expect(
+      toolbar.getByRole("checkbox", { name: "Delivery time surface" }),
+    ).toBeChecked();
+    expect(setLayoutProperty).toHaveBeenCalledWith(
+      "easy-ui-weather-fill",
+      "visibility",
+      "visible",
+    );
+    expect(
+      screen.getByRole("button", { name: "Select Oakland" }),
+    ).toHaveAttribute("data-risk", "elevated");
+  });
+
+  it("hides all built-in controls without hiding data or provider attribution", async () => {
+    render(<NetworkMap {...applicableProps} controls={false} />);
+    await finishLoading();
+    expect(
+      screen.queryByRole("group", { name: toolbarName }),
     ).not.toBeInTheDocument();
+    expect(addControl).not.toHaveBeenCalled();
+    expect(constructor.mock.calls[0][1]).toMatchObject({
+      attributionControl: {},
+    });
+    expect(sources.has("easy-ui-transfers")).toBe(true);
+    expect(sources.has("easy-ui-delivery-surface")).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "Select Oakland" }),
+    ).toBeInTheDocument();
+  });
+
+  it("uses legacy networkControls only as a fallback for its original group", async () => {
+    const view = render(
+      <NetworkMap {...applicableProps} networkControls={false} />,
+    );
+    await finishLoading();
+    for (const name of labels)
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
     expect(
       screen.queryByRole("checkbox", { name: "Facility risk" }),
     ).not.toBeInTheDocument();
@@ -658,18 +797,265 @@ describe("networkControls", () => {
     expect(
       screen.getByRole("checkbox", { name: "Delivery time surface" }),
     ).toBeInTheDocument();
-  });
-
-  it("shows every control by default when omitted, preserving current behavior", async () => {
-    render(<NetworkMap {...props} />);
-    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
-    act(() => listeners.load());
+    view.rerender(
+      <NetworkMap
+        {...applicableProps}
+        networkControls={false}
+        controls={{ fitAll: true, risk: true, weather: false }}
+      />,
+    );
     expect(
       screen.getByRole("button", { name: "Fit all locations" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("checkbox", { name: "Facility risk" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Selected leg" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: "Weather" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("updates navigation and scale without recreating the map or removing attribution", async () => {
+    const view = render(
+      <NetworkMap {...props} controls={{ navigation: false }} />,
+    );
+    await finishLoading();
+    expect(addControl).toHaveBeenCalledTimes(1);
+    const scale = addControl.mock.calls[0][0];
+    expect(scale).toBeInstanceOf(engine.ScaleControl);
+    view.rerender(
+      <NetworkMap {...props} controls={{ navigation: true, scale: false }} />,
+    );
+    expect(removeControl).toHaveBeenCalledWith(scale);
+    expect(addControl).toHaveBeenLastCalledWith(
+      expect.any(engine.NavigationControl),
+      "top-right",
+    );
+    view.rerender(<NetworkMap {...props} controls={false} />);
+    expect(removeControl).toHaveBeenLastCalledWith(
+      expect.any(engine.NavigationControl),
+    );
+    expect(removeControl).toHaveBeenCalledTimes(2);
+    expect(constructor).toHaveBeenCalledTimes(1);
+    expect(constructor.mock.calls[0][1]).toMatchObject({
+      attributionControl: {},
+    });
+  });
+
+  it("accepts domain-specific labels without changing the camera actions", async () => {
+    render(
+      <NetworkMap
+        {...applicableProps}
+        controlLabels={{
+          fitAll: "Entire journey",
+          selectedSegment: "Focus transfer",
+          latestEvent: "Last scan",
+          risk: "Exception risk",
+          weather: "Disruptions",
+          deliverySurface: "Transit estimates",
+        }}
+      />,
+    );
+    await finishLoading();
+    expect(
+      screen.queryByRole("button", { name: "Fit all locations" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Entire journey" }));
+    expect(fitBounds).toHaveBeenLastCalledWith(
+      [
+        [-122, 38],
+        [-119, 39],
+      ],
+      expect.objectContaining({ maxZoom: 11 }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Focus transfer" }));
+    expect(props.onFacilitySelect).toHaveBeenLastCalledWith("two");
+    expect(fitBounds).toHaveBeenLastCalledWith(
+      [
+        [-122, 38],
+        [-119, 39],
+      ],
+      expect.objectContaining({ maxZoom: 13 }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Last scan" }));
+    expect(props.onFacilitySelect).toHaveBeenLastCalledWith("one");
+    for (const name of ["Exception risk", "Disruptions", "Transit estimates"])
+      expect(screen.getByRole("checkbox", { name })).toBeInTheDocument();
+  });
+
+  it("keeps default accessible labels when optional overrides are explicitly undefined", async () => {
+    render(
+      <NetworkMap
+        {...applicableProps}
+        controlLabels={{
+          fitAll: undefined,
+          selectedSegment: undefined,
+          latestEvent: undefined,
+          risk: undefined,
+          weather: undefined,
+          deliverySurface: undefined,
+        }}
+      />,
+    );
+    await finishLoading();
+    for (const name of labels)
+      expect(screen.getByRole("button", { name })).toBeEnabled();
+    for (const name of layerLabels)
+      expect(screen.getByRole("checkbox", { name })).toBeEnabled();
+  });
+
+  it("keeps uncontrolled visibility after defaults change and reports the full requested state", async () => {
+    const onLayerVisibilityChange = vi.fn();
+    const view = render(
+      <NetworkMap
+        {...applicableProps}
+        initialDeliverySurfaceVisible
+        defaultLayerVisibility={{
+          risk: false,
+          weather: true,
+          deliverySurface: false,
+        }}
+        onLayerVisibilityChange={onLayerVisibilityChange}
+      />,
+    );
+    await finishLoading();
+    expect(
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    ).not.toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Facility risk" }));
+    expect(onLayerVisibilityChange).toHaveBeenLastCalledWith({
+      risk: true,
+      weather: true,
+      deliverySurface: false,
+    });
+    view.rerender(
+      <NetworkMap
+        {...applicableProps}
+        defaultLayerVisibility={{
+          risk: false,
+          weather: false,
+          deliverySurface: true,
+        }}
+        onLayerVisibilityChange={onLayerVisibilityChange}
+      />,
+    );
+    expect(
+      screen.getByRole("checkbox", { name: "Facility risk" }),
+    ).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Weather" })).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    ).not.toBeChecked();
+    expect(onLayerVisibilityChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("controls supplied visibility fields while other layers remain independently user-controlled", async () => {
+    const onLayerVisibilityChange = vi.fn();
+    const view = render(
+      <NetworkMap
+        {...applicableProps}
+        layerVisibility={{ weather: false }}
+        onLayerVisibilityChange={onLayerVisibilityChange}
+      />,
+    );
+    await finishLoading();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Weather" }));
+    expect(onLayerVisibilityChange).toHaveBeenLastCalledWith({
+      risk: true,
+      weather: true,
+      deliverySurface: false,
+    });
+    expect(screen.getByRole("checkbox", { name: "Weather" })).not.toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Facility risk" }));
+    expect(
+      screen.getByRole("checkbox", { name: "Facility risk" }),
+    ).not.toBeChecked();
+    expect(onLayerVisibilityChange).toHaveBeenLastCalledWith({
+      risk: false,
+      weather: false,
+      deliverySurface: false,
+    });
+    view.rerender(
+      <NetworkMap
+        {...applicableProps}
+        layerVisibility={{ weather: true }}
+        onLayerVisibilityChange={onLayerVisibilityChange}
+      />,
+    );
+    expect(screen.getByRole("checkbox", { name: "Weather" })).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Facility risk" }),
+    ).not.toBeChecked();
+    expect(setLayoutProperty).toHaveBeenCalledWith(
+      "easy-ui-weather-fill",
+      "visibility",
+      "visible",
+    );
+    expect(onLayerVisibilityChange).toHaveBeenCalledTimes(2);
+  });
+
+  it("applies external layer updates even when every built-in control is hidden", async () => {
+    const view = render(
+      <NetworkMap
+        {...applicableProps}
+        controls={false}
+        layerVisibility={{
+          risk: false,
+          weather: false,
+          deliverySurface: false,
+        }}
+      />,
+    );
+    await finishLoading();
+    setLayoutProperty.mockClear();
+    view.rerender(
+      <NetworkMap
+        {...applicableProps}
+        controls={false}
+        layerVisibility={{ risk: true, weather: true, deliverySurface: true }}
+      />,
+    );
+    expect(
+      screen.queryByRole("group", { name: toolbarName }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Select Oakland" }),
+    ).toHaveAttribute("data-risk", "elevated");
+    expect(setLayoutProperty).toHaveBeenCalledWith(
+      "easy-ui-weather-fill",
+      "visibility",
+      "visible",
+    );
+    expect(setLayoutProperty).toHaveBeenCalledWith(
+      "easy-ui-delivery-surface-fill",
+      "visibility",
+      "visible",
+    );
+    expect(constructor).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves layer preferences when data and its controls disappear and return", async () => {
+    const view = render(<NetworkMap {...applicableProps} />);
+    await finishLoading();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Weather" }));
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    );
+    view.rerender(<NetworkMap {...props} />);
+    expect(
+      screen.queryByRole("checkbox", { name: "Weather" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: "Delivery time surface" }),
+    ).not.toBeInTheDocument();
+    view.rerender(<NetworkMap {...applicableProps} />);
+    expect(screen.getByRole("checkbox", { name: "Weather" })).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    ).toBeChecked();
   });
 });
 
