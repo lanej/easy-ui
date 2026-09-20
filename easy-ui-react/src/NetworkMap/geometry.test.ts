@@ -154,7 +154,7 @@ it("builds one clustering-ready GeoJSON point per valid facility, carrying only 
     geometry: { type: "Point", coordinates: [-122, 38] },
   });
 });
-it("converts a grid cell into a closed Polygon feature with median minutes and normalized confidence", () => {
+it("converts a grid cell into a closed Polygon feature with its estimate and relative sample count", () => {
   const cells: MapSurfaceCell[] = [
     {
       latMin: 29.8,
@@ -181,7 +181,64 @@ it("converts a grid cell into a closed Polygon feature with median minutes and n
     ],
   });
   expect(data.features[0].properties?.medianMinutes).toBe(42);
-  expect(data.features[0].properties?.confidence).toBe(1);
+  expect(data.features[0].properties).toMatchObject({
+    n: 8,
+    hasSupportedEstimate: true,
+    relativeSampleCount: 1,
+  });
+});
+
+it("retains null estimates without allowing unsupported or invalid cells to dilute valid sample counts", () => {
+  const cell: MapSurfaceCell = {
+    latMin: 29.8,
+    latMax: 29.801,
+    lonMin: -95.6,
+    lonMax: -95.599,
+    medianMinutes: 42,
+    iqrMinutes: 15,
+    n: 8,
+  };
+  const missing = { ...cell, medianMinutes: null, n: 10000 };
+  const cells = [
+    { ...cell, n: 4 },
+    cell,
+    missing,
+    { ...cell, n: 0 },
+    { ...cell, latMax: cell.latMin, n: 100000 },
+  ];
+  const data = surfaceData(cells);
+  expect(data.features).toHaveLength(4);
+  expect(
+    data.features.map((feature) => feature.properties?.relativeSampleCount),
+  ).toEqual([0.5, 1, 0, 0]);
+  expect(
+    data.features.map((feature) => feature.properties?.hasSupportedEstimate),
+  ).toEqual([true, true, false, false]);
+  expect(data.features[2].properties).toMatchObject({
+    medianMinutes: null,
+    n: 10000,
+  });
+  expect(missing.medianMinutes).toBeNull();
+  expect(missing.n).toBe(10000);
+});
+
+it("returns zero relative sample counts when every valid cell is unsupported", () => {
+  const cell: MapSurfaceCell = {
+    latMin: 29.8,
+    latMax: 29.801,
+    lonMin: -95.6,
+    lonMax: -95.599,
+    medianMinutes: null,
+    iqrMinutes: null,
+    n: 0,
+  };
+  const data = surfaceData([cell, { ...cell, medianMinutes: 12 }]);
+  expect(data.features).toHaveLength(2);
+  for (const feature of data.features) {
+    expect(feature.properties?.relativeSampleCount).toBe(0);
+    expect(feature.properties?.hasSupportedEstimate).toBe(false);
+  }
+  expect(surfaceData([]).features).toEqual([]);
 });
 it("drops surface cells with invalid or missing bounds", () => {
   const valid: MapSurfaceCell = {

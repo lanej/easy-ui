@@ -116,6 +116,8 @@ Selection can be controlled with the `selectedKeys` and `onSelectionChange` prop
 
 Expansion can be controlled with the `expandedKey` and `onExpandedChange` props. Use `defaultExpandedKey` to control only the initial row to expand.
 
+While `isLoading` is true, the grid hides expanded details and suspends their layout measurements without changing the expanded key or calling `onExpandedChange`. When loading finishes, details return if that row is present. A controlled key updated during loading is honored when the data rows return.
+
 ```tsx
 <DataGrid
   {/** other data grid props */}

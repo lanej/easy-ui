@@ -1,4 +1,5 @@
 import type { FeatureCollection, Geometry } from "geojson";
+import { hasSupportedSurfaceEstimate } from "./surfaceRendering";
 import type {
   MapArea,
   MapCoordinate,
@@ -130,20 +131,25 @@ export function areaData(
 
 /**
  * One GeoJSON Polygon feature per valid grid cell of a delivery-time field, using each cell's
- * lat/lon min/max as the rectangle's four corners. `confidence` is `n` normalized against the
- * largest `n` in the supplied cells, mirroring `segmentData`'s relative-to-max `volume` handling.
+ * lat/lon min/max as the rectangle's four corners. Missing or unsupported estimates retain their
+ * supplied values but are marked non-renderable. `relativeSampleCount` normalizes positive counts
+ * against the largest count among drawable cells; this is not statistical confidence.
  */
 export function surfaceData(
   cells: readonly MapSurfaceCell[],
 ): FeatureCollection<Geometry> {
-  const maxN = Math.max(
-    1,
-    ...cells.map((c) => Math.max(0, Number.isFinite(c.n) ? c.n : 0)),
+  const maxN = cells.reduce(
+    (maximum, cell) =>
+      validSurfaceBounds(cell) && hasSupportedSurfaceEstimate(cell)
+        ? Math.max(maximum, cell.n)
+        : maximum,
+    0,
   );
   return {
     type: "FeatureCollection",
     features: cells.flatMap((c) => {
       if (!validSurfaceBounds(c)) return [];
+      const hasSupportedEstimate = hasSupportedSurfaceEstimate(c);
       const ring: MapCoordinate[] = [
         [c.lonMin, c.latMin],
         [c.lonMax, c.latMin],
@@ -156,7 +162,9 @@ export function surfaceData(
           type: "Feature" as const,
           properties: {
             medianMinutes: c.medianMinutes,
-            confidence: Math.max(0, Number.isFinite(c.n) ? c.n : 0) / maxN,
+            n: c.n,
+            hasSupportedEstimate,
+            relativeSampleCount: hasSupportedEstimate ? c.n / maxN : 0,
           },
           geometry: {
             type: "Polygon" as const,

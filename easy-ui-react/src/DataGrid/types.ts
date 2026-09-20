@@ -231,6 +231,7 @@ export type DataGridProps<
 
   /**
    * Whether the table is currently loading.
+   * Expanded details are temporarily hidden; the expanded key is preserved.
    * @default false
    */
   isLoading?: boolean;

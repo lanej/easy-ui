@@ -8,6 +8,10 @@ import type {
 import { resolveMapControls } from "./controls";
 import { loadMapEngine } from "./engine";
 import {
+  deliverySurfaceFilter,
+  deliverySurfacePaint,
+} from "./surfaceRendering";
+import {
   areaData,
   facilityPointData,
   geographicBounds,
@@ -204,6 +208,10 @@ export function NetworkMap(props: NetworkMapProps) {
             }
           });
         };
+        // Remember the value read back from MapLibre, which may clone/normalize an expression.
+        // A different authored value belongs to the consumer (including onMapReady overrides),
+        // so selection/data refreshes must leave it alone. Clearing it restores automatic color.
+        let lastObservedColor: string | undefined;
         const update = () => {
           if (disposed || !map.getSource("easy-ui-transfers")) return;
           element.dataset.mapIdle = "false";
@@ -220,18 +228,31 @@ export function NetworkMap(props: NetworkMapProps) {
           (map.getSource("easy-ui-delivery-surface") as GeoJSONSource).setData(
             surfaceData(p.surface?.cells ?? []),
           );
-          map.setPaintProperty("easy-ui-observed", "line-color", [
-            "coalesce",
-            ["get", "color"],
-            p.selectedSegmentId
-              ? [
-                  "case",
-                  ["==", ["get", "id"], p.selectedSegmentId],
-                  blue,
-                  muted,
-                ]
-              : blue,
-          ]);
+          const observedColor = map.getPaintProperty(
+            "easy-ui-observed",
+            "line-color",
+          );
+          if (
+            lastObservedColor === undefined ||
+            observedColor == null ||
+            JSON.stringify(observedColor) === lastObservedColor
+          ) {
+            map.setPaintProperty("easy-ui-observed", "line-color", [
+              "coalesce",
+              ["get", "color"],
+              p.selectedSegmentId
+                ? [
+                    "case",
+                    ["==", ["get", "id"], p.selectedSegmentId],
+                    blue,
+                    muted,
+                  ]
+                : blue,
+            ]);
+            lastObservedColor = JSON.stringify(
+              map.getPaintProperty("easy-ui-observed", "line-color"),
+            );
+          }
           for (const id of ["easy-ui-weather-fill", "easy-ui-weather-edge"])
             map.setLayoutProperty(
               id,
@@ -384,36 +405,8 @@ export function NetworkMap(props: NetworkMapProps) {
             id: "easy-ui-delivery-surface-fill",
             type: "fill",
             source: "easy-ui-delivery-surface",
-            paint: {
-              // Diverging ramp over median delivery-time minutes, mirroring this project's own
-              // Python-side static delivery-time-field render (5 stops, fast=blue to slow=red).
-              "fill-color": [
-                "interpolate",
-                ["linear"],
-                ["coalesce", ["get", "medianMinutes"], 0],
-                0,
-                "#2c7bb6",
-                30,
-                "#abd9e9",
-                60,
-                "#ffffbf",
-                90,
-                "#fdae61",
-                120,
-                "#d7191c",
-              ],
-              // Sparse cells (low `confidence`, surfaceData()'s normalized observation count)
-              // fade toward transparent instead of asserting a median they barely support.
-              "fill-opacity": [
-                "interpolate",
-                ["linear"],
-                ["get", "confidence"],
-                0,
-                0.05,
-                1,
-                0.5,
-              ],
-            },
+            filter: deliverySurfaceFilter,
+            paint: deliverySurfacePaint,
           });
           map.addLayer({
             id: "easy-ui-casing",
@@ -788,6 +781,17 @@ export function NetworkMap(props: NetworkMapProps) {
         )}
         <span>Endpoint links are not traveled road routes.</span>
       </div>
+      {deliverySurface && surface && (
+        <div
+          className={styles.legend}
+          role="group"
+          aria-label="Delivery time surface legend"
+        >
+          <span>Median minutes: blue 0 · yellow 60 · red 120+.</span>
+          <span>Cells without an estimate or observations are unfilled.</span>
+          <span>Opacity compares observation counts within this map.</span>
+        </div>
+      )}
       {weather && (
         <div className={styles.weatherNote}>
           {areas.map((a) => (

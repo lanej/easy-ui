@@ -144,6 +144,7 @@ export function Table<C extends Column, R extends RowType>(
   const { expandedRow, expandedRowStyle } = useExpandedRow({
     containerRef: innerContainerRef,
     state,
+    isEnabled: !isLoading,
   });
   const [
     renderInterceptors,

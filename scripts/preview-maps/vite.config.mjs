@@ -28,6 +28,7 @@ export default defineConfig({
       input: {
         gallery: local("./index.html"),
         lightweight: local("./lightweight.html"),
+        regressions: local("./regressions.html"),
       },
     },
   },

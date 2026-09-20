@@ -63,6 +63,15 @@ select:focus-visible {
 .control {
   padding: 48px;
 }
+.regression-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 24px;
+}
+.regression-actions button {
+  padding: 8px 12px;
+}
 @media (max-width: 800px) {
   nav {
     flex-wrap: wrap;

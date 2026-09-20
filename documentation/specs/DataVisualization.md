@@ -29,13 +29,16 @@ Review the carrier example at a narrow width: it should have fit, risk, and weat
 
 ### Remaining correctness priorities
 
-The September 20 component review reproduced the following behaviors. These remain open and are distinct from the toolbar implementation. Existing passing tests did not cover these scenarios.
+The three high-priority findings from the September 20 review are implemented:
+
+- **R01 — Missing surface estimates:** unavailable/invalid medians and cells without positive observation counts are excluded from the fill layer; true zero remains blue. Source records retain null values. Relative opacity is based only on drawable cells, and the legend explains unfilled cells. An equivalent surface data view remains separate work (D01).
+- **R02 — Map paint ownership:** paint set through `onMapReady` or the retained map survives selection, data, and layer-state updates. A consumer override owns its property's styling; clearing observed line color restores automatic coloring on the next component update.
+- **I01 — Loading with expanded grid rows:** expanded details and measurements pause during loading without changing expansion state, then return when their row is available. Missing measurement elements are handled safely.
+
+Regression coverage includes real MapLibre expression evaluation, component lifecycle and loading transitions, and a synthetic browser fixture for paint persistence and rendered surface values. The remaining behaviors below stay open; inherited defects are labeled.
 
 | Priority      | Area                              | Review finding and acceptance case                                                                                                                                                                                                                           |
 | ------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| P1            | Delivery-time surface             | Missing estimates receive the same blue fill as a valid zero-minute estimate. Preserve unavailable values through the paint expression and provide an equivalent surface data view.                                                                          |
-| P1            | Map customization                 | Paint set in `onMapReady` is reset by internal refreshes, including the immediate readiness refresh when `areas` is omitted. Define durable override precedence and test it across selection/data changes.                                                   |
-| P1, inherited | DataGrid expansion                | Loading with an expanded row dereferences an absent DOM row. Suspend detail measurement while loading and safely restore expansion afterward. This predates grouped rows.                                                                                    |
 | P2            | Chart interaction                 | A theme change resets user zoom/legend state. Keyboard zoom also overwrites independent zoom regions, and controls are absent for zoom configured in `baseOption`. Preserve state across recreation and explicitly scope commands to supported zoom regions. |
 | P2            | Geographic and selection geometry | Antimeridian segments cross the long way despite wrapped camera bounds. Planned/inferred or explicitly colored segments do not receive consistent selected treatment. Test geographic geometry and selection styling independently.                          |
 | P2            | Native plots                      | Stretching a Sparkline stretches circular endpoint markers into ellipses. Keep marker dimensions in screen pixels at narrow and wide widths.                                                                                                                 |

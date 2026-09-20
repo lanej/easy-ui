@@ -4,6 +4,7 @@ import {
   validCoordinate,
   validSurfaceBounds,
 } from "./geometry";
+import { hasSupportedSurfaceEstimate } from "./surfaceRendering";
 import type {
   NetworkMapControlLabels,
   NetworkMapControls,
@@ -50,11 +51,7 @@ export function resolveMapControls(
       validAreaCoordinates(area.coordinates),
     ),
     deliverySurface: (props.surface?.cells ?? []).some(
-      (cell) =>
-        validSurfaceBounds(cell) &&
-        cell.medianMinutes !== null &&
-        Number.isFinite(cell.medianMinutes) &&
-        cell.medianMinutes >= 0,
+      (cell) => validSurfaceBounds(cell) && hasSupportedSurfaceEstimate(cell),
     ),
     navigation: true,
     scale: true,

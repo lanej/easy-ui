@@ -93,15 +93,15 @@ export type MapSurfaceCell = {
   lonMin: number;
   /** Eastern longitude bound of the cell. */
   lonMax: number;
-  /** Median delivery time in minutes for this cell; null when unavailable, never zero. */
+  /** Median delivery time in minutes; null when unavailable. A real zero is a valid estimate. */
   medianMinutes: number | null;
   /** Interquartile range of delivery time in minutes for this cell; null when unavailable. */
   iqrMinutes: number | null;
-  /** Observation count backing this cell. Also the confidence/insufficient-data signal. */
+  /** Observation count backing this cell. Only finite positive counts support a rendered estimate. */
   n: number;
 };
 
-/** A delivery-time field snapshot: a grid of predicted or observed median minutes with per-cell confidence. */
+/** A delivery-time snapshot with per-cell estimates, spread, and observation counts. */
 export type MapSurface = {
   /** Grid cells composing this surface. */
   cells: readonly MapSurfaceCell[];
@@ -161,7 +161,7 @@ export type NetworkMapControls = {
   risk?: boolean;
   /** Toggle weather when at least one area has valid polygon coordinates. */
   weather?: boolean;
-  /** Toggle the delivery surface when at least one valid cell has an available estimate. */
+  /** Toggle the delivery surface when a valid cell has a finite nonnegative estimate and positive observation count. */
   deliverySurface?: boolean;
   /** MapLibre zoom controls; defaults to true, independent of facility data. */
   navigation?: boolean;
@@ -249,11 +249,16 @@ export type NetworkMapProps = {
   /**
    * Escape hatch for custom styling and overlays this component's own typed props cannot express
    * (e.g. a custom `line-width` expression, a continuous facility-severity radius, or a highlight
-   * mechanism that survives a fully-populated `MapSegment.color`). Fires exactly once per mount,
+   * mechanism that survives a fully-populated `MapSegment.color`). Fires once per initialized map instance,
    * after this component's own initial sources/layers have been added on `"load"` AND its own
    * first data/paint-property pass has already run — so a consumer's own `addSource`/`addLayer`/
    * `setPaintProperty`/`Marker` calls are guaranteed to layer on top of, never race, this
    * component's own baseline styling.
+   *
+   * Consumer paint overrides survive data, selection, and layer-visibility updates. Overriding
+   * `easy-ui-observed`'s `line-color` takes ownership of that property's selection styling;
+   * automatic color updates resume on the next component update after the consumer unsets the
+   * property with `map.setPaintProperty("easy-ui-observed", "line-color", null)`.
    *
    * This component's own layer ids, useful for a consumer calling `map.setPaintProperty(...)`
    * against them directly: `"easy-ui-observed"` (transfer/measured evidence line layer) and

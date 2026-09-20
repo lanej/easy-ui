@@ -88,9 +88,140 @@ export async function auditMaps(browser, identity, base, output) {
       ),
     });
   }
+  async function settleRegression() {
+    await settle();
+    // Finish an actual engine frame after React effects and GeoJSON worker updates.
+    await browser.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const map = window.__mapRegression.map;
+          map.once("idle", () => resolve(true));
+          map.triggerRepaint();
+        }),
+    );
+  }
+  async function assertCustomRoute(name) {
+    await settleRegression();
+    check(
+      name,
+      (await browser.evaluate(() =>
+        window.__mapRegression.map.getPaintProperty(
+          "easy-ui-observed",
+          "line-color",
+        ),
+      )) === "#ff0099",
+    );
+  }
   try {
     console.log(`Starting ${identity.name} audit`);
     await browser.resize(1440, 1100);
+    await browser.open(`${base}/regressions.html`);
+    await assertCustomRoute("custom route paint survives map readiness");
+    const cells = await browser.evaluate(() => {
+      const { map, cells } = window.__mapRegression;
+      return cells.map(({ name, center }) => ({
+        name,
+        features: map
+          .queryRenderedFeatures(map.project(center), {
+            layers: ["easy-ui-delivery-surface-fill"],
+          })
+          .map(({ properties }) => properties),
+      }));
+    });
+    for (const cell of cells.slice(0, -1)) {
+      check(
+        `unsupported surface cell is not rendered: ${cell.name}`,
+        cell.features.length === 0,
+      );
+    }
+    const zero = cells.at(-1);
+    check(
+      "supported zero-minute surface cell is rendered",
+      zero.features.length > 0 &&
+        zero.features.every((feature) => feature.medianMinutes === 0),
+    );
+    const zeroPixel = await browser.evaluate(
+      () => window.__mapRegression.zeroPixel,
+    );
+    check(
+      "supported zero minutes retains the blue ramp endpoint",
+      zeroPixel?.length === 4 &&
+        [150, 189, 219, 255].every(
+          (channel, index) => Math.abs(zeroPixel[index] - channel) <= 3,
+        ),
+    );
+    await browser.clickNamed("button", "Select first connection");
+    await assertCustomRoute(
+      "custom route paint survives selected connection updates",
+    );
+    const beforeWidth = await browser.evaluate(
+      () =>
+        window.__mapRegression.map
+          .querySourceFeatures("easy-ui-transfers")
+          .find((feature) => feature.properties.id === "ab")?.properties.width,
+    );
+    await browser.clickNamed("button", "Update connection data");
+    await assertCustomRoute(
+      "custom route paint survives connection data updates",
+    );
+    check(
+      "connection data still updates underneath custom paint",
+      (await browser.evaluate(
+        () =>
+          window.__mapRegression.map
+            .querySourceFeatures("easy-ui-transfers")
+            .find((feature) => feature.properties.id === "ab")?.properties
+            .width,
+      )) > beforeWidth,
+    );
+    await browser.clickNamed("button", "Toggle surface visibility");
+    await assertCustomRoute(
+      "custom route paint survives layer visibility updates",
+    );
+    check(
+      "surface visibility still responds underneath custom paint",
+      (await browser.evaluate(() =>
+        window.__mapRegression.map.getLayoutProperty(
+          "easy-ui-delivery-surface-fill",
+          "visibility",
+        ),
+      )) === "none",
+    );
+    await browser.clickNamed("button", "Toggle surface visibility");
+    await assertCustomRoute(
+      "custom route paint survives restoring layer visibility",
+    );
+    await browser.clickNamed("button", "Restore automatic route styling");
+    await settleRegression();
+    check(
+      "clearing a custom route override restores automatic selected styling",
+      await browser.evaluate(() => {
+        const paint = window.__mapRegression.map.getPaintProperty(
+          "easy-ui-observed",
+          "line-color",
+        );
+        return (
+          Array.isArray(paint) &&
+          paint[2]?.[0] === "case" &&
+          paint[2]?.[1]?.[2] === "bc"
+        );
+      }),
+    );
+    await browser.clickNamed("button", "Select first connection");
+    await settleRegression();
+    check(
+      "automatic route styling continues to follow selection after override removal",
+      await browser.evaluate(() => {
+        const paint = window.__mapRegression.map.getPaintProperty(
+          "easy-ui-observed",
+          "line-color",
+        );
+        return Array.isArray(paint) && paint[2]?.[1]?.[2] === "ab";
+      }),
+    );
+    await capture("rendering-regressions");
+    await scan("rendering-regressions");
+    await clean("rendering-regressions");
     await browser.open(`${base}/?audience=parcel`);
     await settle();
     await capture("parcel-regional-desktop");

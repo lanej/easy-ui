@@ -28,12 +28,16 @@ const sourceDefs = new Map<string, Record<string, unknown>>();
 const layerDefs = new Map<string, Record<string, unknown>>();
 const constructor = vi.fn();
 const layerPaint = new Map<string, unknown>();
+const paintProperties = new Map<string, Map<string, unknown>>();
 // Records addLayer/addSource/setPaintProperty/setLayoutProperty call order (by id) so tests can
 // assert a consumer-visible callback (e.g. onMapReady) fires only after this component's own
 // layer setup, and that a visibility toggle actually reaches the map.
 let callOrder: string[] = [];
-const setPaintProperty = vi.fn((id: string, _prop: string, value: unknown) => {
-  layerPaint.set(id, value);
+const setPaintProperty = vi.fn((id: string, prop: string, value: unknown) => {
+  const properties = paintProperties.get(id)!;
+  if (value == null) properties.delete(prop);
+  else properties.set(prop, structuredClone(value));
+  if (prop === "line-color") layerPaint.set(id, value);
   callOrder.push(`setPaintProperty:${id}`);
 });
 const setLayoutProperty = vi.fn((id: string, _prop: string, value: unknown) => {
@@ -79,7 +83,11 @@ class FakeMap {
     sourceDefs.set(id, definition);
     callOrder.push(`addSource:${id}`);
   }
-  addLayer(layer: { id: string; paint?: { "line-color"?: unknown } }) {
+  addLayer(layer: { id: string; paint?: Record<string, unknown> }) {
+    paintProperties.set(
+      layer.id,
+      new Map(Object.entries(structuredClone(layer.paint ?? {}))),
+    );
     if (layer.paint && "line-color" in layer.paint)
       layerPaint.set(layer.id, layer.paint["line-color"]);
     layerDefs.set(layer.id, layer);
@@ -99,6 +107,9 @@ class FakeMap {
     return { style: {} as CSSStyleDeclaration };
   }
   setPaintProperty = setPaintProperty;
+  getPaintProperty(id: string, prop: string) {
+    return structuredClone(paintProperties.get(id)?.get(prop));
+  }
   setLayoutProperty = setLayoutProperty;
   getZoom() {
     return 9;
@@ -153,6 +164,7 @@ beforeEach(() => {
   layerDefs.clear();
   sourceFeatures = [];
   layerPaint.clear();
+  paintProperties.clear();
   callOrder = [];
   for (const key of Object.keys(listeners)) delete listeners[key];
   getClusterExpansionZoom.mockResolvedValue(9);
@@ -352,6 +364,157 @@ it("calls onMapReady exactly once, with the live map instance, only after the co
   expect(callOrder.filter((c) => c === "onMapReady")).toHaveLength(1);
 });
 
+describe("consumer paint ownership", () => {
+  const routeProps: NetworkMapProps = {
+    ...props,
+    facilities: [
+      ...props.facilities,
+      { id: "two", label: "Reno", coordinates: [-119, 39], kind: "hub" },
+    ],
+    segments: [
+      {
+        id: "leg",
+        from: "one",
+        to: "two",
+        label: "Oakland to Reno",
+        evidence: "transfer",
+      },
+    ],
+  };
+  const observedColor = () =>
+    paintProperties.get("easy-ui-observed")?.get("line-color");
+
+  it.each([undefined, []])(
+    "preserves onMapReady overrides through readiness, data, selection, and layer updates (areas=%s)",
+    async (areas) => {
+      const onMapReady = vi.fn((map) => {
+        map.setPaintProperty("easy-ui-observed", "line-color", "#ff0099");
+        map.setPaintProperty("easy-ui-observed", "line-width", 7);
+      });
+      const view = render(
+        <NetworkMap {...routeProps} areas={areas} onMapReady={onMapReady} />,
+      );
+      await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+      act(() => listeners.load());
+      expect(observedColor()).toBe("#ff0099");
+
+      view.rerender(
+        <NetworkMap
+          {...routeProps}
+          areas={areas}
+          onMapReady={onMapReady}
+          facilities={[
+            { ...routeProps.facilities[0], detail: "New scan" },
+            routeProps.facilities[1],
+          ]}
+          segments={[{ ...routeProps.segments[0], volume: 25 }]}
+          selectedFacilityId="two"
+          selectedSegmentId="leg"
+          layerVisibility={{ weather: true }}
+        />,
+      );
+      expect(observedColor()).toBe("#ff0099");
+      expect(paintProperties.get("easy-ui-observed")?.get("line-width")).toBe(
+        7,
+      );
+      expect(
+        screen.getByRole("button", { name: "Select Oakland: New scan" }),
+      ).toBeInTheDocument();
+      expect(setLayoutProperty).toHaveBeenCalledWith(
+        "easy-ui-weather-fill",
+        "visibility",
+        "visible",
+      );
+      expect(onMapReady).toHaveBeenCalledTimes(1);
+      expect(constructor).toHaveBeenCalledTimes(1);
+      expect(fitBounds).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("preserves expression overrides applied to the retained map after readiness", async () => {
+    const view = render(<NetworkMap {...routeProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const map = constructor.mock.calls[0][0] as FakeMap;
+    const customColor = [
+      "case",
+      ["==", ["get", "id"], "leg"],
+      "#ff0099",
+      "#008855",
+    ];
+    map.setPaintProperty("easy-ui-observed", "line-color", customColor);
+    view.rerender(<NetworkMap {...routeProps} selectedSegmentId="leg" />);
+    expect(map.getPaintProperty("easy-ui-observed", "line-color")).toEqual(
+      customColor,
+    );
+  });
+
+  it("continues automatic selection styling when the consumer has not overridden color", async () => {
+    const view = render(<NetworkMap {...routeProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const baseline = structuredClone(observedColor());
+    view.rerender(<NetworkMap {...routeProps} selectedSegmentId="leg" />);
+    expect(observedColor()).toEqual([
+      "coalesce",
+      ["get", "color"],
+      [
+        "case",
+        ["==", ["get", "id"], "leg"],
+        "var(--ezui-color-primary-600)",
+        "var(--ezui-color-neutral-600)",
+      ],
+    ]);
+    view.rerender(<NetworkMap {...routeProps} />);
+    expect(observedColor()).toEqual(baseline);
+  });
+
+  it("restores automatic color after a consumer clears its override", async () => {
+    const onMapReady = vi.fn((map) => {
+      map.setPaintProperty("easy-ui-observed", "line-color", "#ff0099");
+      map.setPaintProperty("easy-ui-observed", "line-width", 7);
+    });
+    const view = render(<NetworkMap {...routeProps} onMapReady={onMapReady} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const map = constructor.mock.calls[0][0] as FakeMap;
+    map.setPaintProperty("easy-ui-observed", "line-color", null);
+    view.rerender(
+      <NetworkMap
+        {...routeProps}
+        onMapReady={onMapReady}
+        selectedSegmentId="leg"
+      />,
+    );
+    expect(observedColor()).toEqual([
+      "coalesce",
+      ["get", "color"],
+      expect.arrayContaining([["==", ["get", "id"], "leg"]]),
+    ]);
+    expect(map.getPaintProperty("easy-ui-observed", "line-width")).toBe(7);
+  });
+
+  it("reapplies customization to a newly initialized map instance", async () => {
+    const onMapReady = vi.fn((map) =>
+      map.setPaintProperty("easy-ui-observed", "line-color", "#ff0099"),
+    );
+    const view = render(<NetworkMap {...routeProps} onMapReady={onMapReady} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    view.rerender(
+      <NetworkMap
+        {...routeProps}
+        onMapReady={onMapReady}
+        workerUrl="/replacement-worker.js"
+      />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(2));
+    act(() => listeners.load());
+    expect(onMapReady).toHaveBeenCalledTimes(2);
+    expect(observedColor()).toBe("#ff0099");
+  });
+});
+
 describe("clusterFacilities", () => {
   const clusterProps: NetworkMapProps = {
     ...props,
@@ -539,18 +702,28 @@ describe("delivery surface", () => {
     const layer = layerDefs.get("easy-ui-delivery-surface-fill");
     expect(layer?.type).toBe("fill");
     expect(layer?.source).toBe("easy-ui-delivery-surface");
+    expect(layer?.filter).toEqual([
+      "==",
+      ["get", "hasSupportedEstimate"],
+      true,
+    ]);
     const paint = layer?.paint as Record<string, unknown>;
     // Both must be real expressions (arrays), not fixed literals, driven by the correct
     // per-feature property (surfaceData() puts median delivery time in `medianMinutes` and
-    // normalized observation count in `confidence`).
+    // normalized observation count in `relativeSampleCount`).
     expect(Array.isArray(paint["fill-color"])).toBe(true);
     expect(Array.isArray(paint["fill-opacity"])).toBe(true);
     expect(JSON.stringify(paint["fill-color"])).toContain("medianMinutes");
-    expect(JSON.stringify(paint["fill-opacity"])).toContain("confidence");
+    expect(JSON.stringify(paint["fill-opacity"])).toContain(
+      "relativeSampleCount",
+    );
   });
 
-  it("keeps the delivery surface layer hidden until toggled, mirroring the weather toggle", async () => {
+  it("keeps the delivery surface layer and its missing-data explanation hidden until toggled", async () => {
     render(<NetworkMap {...surfaceProps} />);
+    expect(
+      screen.queryByRole("group", { name: "Delivery time surface legend" }),
+    ).not.toBeInTheDocument();
     await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
     act(() => listeners.load());
     expect(setLayoutProperty).toHaveBeenCalledWith(
@@ -565,6 +738,42 @@ describe("delivery surface", () => {
       "easy-ui-delivery-surface-fill",
       "visibility",
       "visible",
+    );
+  });
+
+  it("retains missing source values while excluding them from rendering, without conflating a real zero", async () => {
+    const valid = surfaceProps.surface!.cells[0];
+    render(
+      <NetworkMap
+        {...surfaceProps}
+        layerVisibility={{ deliverySurface: true }}
+        surface={{
+          ...surfaceProps.surface!,
+          cells: [
+            { ...valid, medianMinutes: null },
+            { ...valid, medianMinutes: 0 },
+          ],
+        }}
+      />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const data = sourceDefs.get("easy-ui-delivery-surface")!.data as ReturnType<
+      typeof surfaceData
+    >;
+    expect(
+      data.features.map((feature) => ({
+        median: feature.properties!.medianMinutes,
+        supported: feature.properties!.hasSupportedEstimate,
+      })),
+    ).toEqual([
+      { median: null, supported: false },
+      { median: 0, supported: true },
+    ]);
+    expect(
+      screen.getByRole("group", { name: "Delivery time surface legend" }),
+    ).toHaveTextContent(
+      "Cells without an estimate or observations are unfilled.",
     );
   });
 

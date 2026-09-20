@@ -17,36 +17,43 @@ import { EXPAND_COLUMN_KEY } from "./constants";
 export function useExpandedRow({
   containerRef,
   state,
+  isEnabled,
 }: {
   containerRef: MutableRefObject<HTMLDivElement | null>;
   state: TableState<unknown>;
+  isEnabled: boolean;
 }) {
   const [expandedRowRect, setExpandedRowRect] = useState<DOMRect | null>(null);
 
-  const expandedRow = [...state.collection.body.childNodes].find((r) => {
-    return r.value
-      ? r.value[EXPAND_COLUMN_KEY as keyof typeof r.value] === true
-      : false;
-  });
+  // Loading replaces the data rows without changing their expansion state.
+  const expandedRow = isEnabled
+    ? [...state.collection.body.childNodes].find((r) => {
+        return r.value
+          ? r.value[EXPAND_COLUMN_KEY as keyof typeof r.value] === true
+          : false;
+      })
+    : undefined;
 
   useLayoutEffect(() => {
-    if (containerRef.current && expandedRow) {
-      setExpandedRowRect(getExpandedRowContentRect(containerRef.current));
-    }
+    setExpandedRowRect(
+      containerRef.current && expandedRow
+        ? getExpandedRowContentRect(containerRef.current)
+        : null,
+    );
   }, [containerRef, expandedRow]);
 
   useResizeObserver({
     ref: containerRef,
     onResize() {
-      if (containerRef.current && expandedRow) {
-        const rect = getExpandedRowContentRect(containerRef.current);
-        if (
-          !expandedRowRect ||
-          rect.height !== expandedRowRect.height ||
-          rect.y !== expandedRowRect.y
-        ) {
-          setExpandedRowRect(rect);
-        }
+      const rect =
+        containerRef.current && expandedRow
+          ? getExpandedRowContentRect(containerRef.current)
+          : null;
+      if (
+        rect?.height !== expandedRowRect?.height ||
+        rect?.y !== expandedRowRect?.y
+      ) {
+        setExpandedRowRect(rect);
       }
     },
   });
@@ -82,21 +89,28 @@ export function useExpandedRow({
  * content box. This is used to position the expanded row content absolutely
  * within the container.
  *
- * @param $container Containerlement
- * @param isPending whether or not to compute the pending expanded row or the active one
- * @returns a DOMRect of the expanded row content
+ * @param $container Container element
+ * @returns a DOMRect, or null when the elements to measure are absent
  */
-function getExpandedRowContentRect($container: HTMLElement) {
+function getExpandedRowContentRect($container: HTMLElement): DOMRect | null {
   const $rows = getDataGridRowEls($container);
   const $firstColumnHeader = getFirstColumnHeaderEl($container);
   const $expandedRowContent = getExpandedRowContentEl($container);
   const $expandedRow = getExpandedRowEl($container);
+  if (!$firstColumnHeader || !$expandedRowContent || !$expandedRow) {
+    return null;
+  }
   const expandedIndex = $rows.findIndex((r) => r === $expandedRow);
-  const $expandedRowCells = [...$expandedRow.childNodes] as HTMLElement[];
+  const $expandedRowCells = [...$expandedRow.children] as HTMLElement[];
+  if ($expandedRowCells.length === 0) return null;
   const heightOfPreviousRows = $rows
-    .map((r) => r.childNodes[0] as HTMLElement)
-    .filter((_, i) => i < expandedIndex)
-    .reduce((acc, c) => acc + c.offsetHeight, 0);
+    .slice(0, expandedIndex)
+    .reduce(
+      (acc, row) =>
+        acc +
+        ((row.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0),
+      0,
+    );
   const y = heightOfPreviousRows + $firstColumnHeader.offsetHeight;
   const width =
     $expandedRowCells.reduce((acc, c) => acc + c.offsetWidth, 0) - 1;
@@ -105,25 +119,27 @@ function getExpandedRowContentRect($container: HTMLElement) {
 }
 
 function getFirstColumnHeaderEl($container: HTMLElement) {
-  return $container.querySelector(
+  return $container.querySelector<HTMLElement>(
     `[data-ezui-data-grid-column-header="true"]`,
-  ) as HTMLElement;
+  );
 }
 
 function getDataGridRowEls($container: HTMLElement) {
   return [
-    ...$container.querySelectorAll(`[data-ezui-data-grid-row="true"]`),
-  ] as HTMLElement[];
+    ...$container.querySelectorAll<HTMLElement>(
+      `[data-ezui-data-grid-row="true"]`,
+    ),
+  ];
 }
 
 function getExpandedRowContentEl($container: HTMLElement) {
-  return $container.querySelector(
+  return $container.querySelector<HTMLElement>(
     `[data-ezui-data-grid-expanded-row-content="active"]`,
-  ) as HTMLElement;
+  );
 }
 
 function getExpandedRowEl($container: HTMLElement) {
-  return $container.querySelector(
+  return $container.querySelector<HTMLElement>(
     `[data-ezui-data-grid-expanded-row='true']`,
-  ) as HTMLElement;
+  );
 }

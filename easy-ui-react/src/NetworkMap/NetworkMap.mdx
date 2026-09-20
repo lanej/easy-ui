@@ -94,20 +94,26 @@ When a linked panel already shows the selected facility's identity and decision 
 
 `labelMinZoom` progressively reveals local facilities. Selected, last-observed and `primaryFacilityIds` labels receive priority; collision placement hides lower-priority labels when space is insufficient. Marker buttons and the data table retain complete names. Repeated scans at one facility should share one facility ID and one marker. This component is intended for bounded investigation cohorts; use a server-filtered or clustered source for very large fleets.
 
+## Styling through the map instance
+
+`onMapReady` receives the initialized map after the component's first source and paint updates. It runs once per map instance, including a replacement instance after changing `mapStyle` or `workerUrl`. Retain the instance to manage application-owned layers or later updates.
+
+Paint overrides set through this callback or the retained instance survive data, selection, and layer-visibility changes. When you override `easy-ui-observed`'s `line-color`, your expression owns that property's selection behavior. To return to automatic color styling, unset it with `map.setPaintProperty("easy-ui-observed", "line-color", null)`; the next component update restores the current automatic color expression. Source data and visibility continue updating while a paint override is active.
+
 ## Controls and layer visibility
 
 `controls` configures the built-in toolbar, navigation buttons and scale. Each flag defaults to `true`; toolbar controls appear only when their data or selection applies. An explicit `true` retains that applicability check. Set an individual flag to `false` to hide it, or use `controls={false}` to hide all built-in controls. Provider attribution remains visible. Hiding controls does not remove map data or change layer visibility.
 
-| Flag              | Appears when enabled and…                                                           |
-| ----------------- | ----------------------------------------------------------------------------------- |
-| `fitAll`          | Facilities have locations that can be fitted.                                       |
-| `selectedSegment` | The selected segment is drawable and has valid facility endpoints.                  |
-| `latestEvent`     | `latestFacilityId` identifies a facility with a valid location.                     |
-| `risk`            | A facility with a valid location has a finite risk probability from 0 through 1.    |
-| `weather`         | `areas` include renderable polygons.                                                |
-| `deliverySurface` | `surface` includes a valid cell with an available estimate.                         |
-| `navigation`      | The map is initialized; supplies zoom controls independently of facility data.      |
-| `scale`           | The map is initialized; supplies the distance scale independently of facility data. |
+| Flag              | Appears when enabled and…                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| `fitAll`          | Facilities have locations that can be fitted.                                              |
+| `selectedSegment` | The selected segment is drawable and has valid facility endpoints.                         |
+| `latestEvent`     | `latestFacilityId` identifies a facility with a valid location.                            |
+| `risk`            | A facility with a valid location has a finite risk probability from 0 through 1.           |
+| `weather`         | `areas` include renderable polygons.                                                       |
+| `deliverySurface` | `surface` includes a valid cell with an available estimate and positive observation count. |
+| `navigation`      | The map is initialized; supplies zoom controls independently of facility data.             |
+| `scale`           | The map is initialized; supplies the distance scale independently of facility data.        |
 
 Use `controlLabels` to replace any toolbar label: `fitAll`, `selectedSegment`, `latestEvent`, `risk`, `weather`, or `deliverySurface`. The default fit label is "Fit all locations"; the parcel journey examples explicitly use `controlLabels={{ fitAll: "Entire journey" }}`.
 
@@ -163,7 +169,11 @@ For migration, `networkControls={false}` still suppresses the default `fitAll`, 
 
 <Canvas of={NetworkMapStories.ShipperFlow} />
 
-`surface` renders an optional data-driven fill layer over a grid of delivery-time cells (`MapSurfaceCell`), toggled with "Delivery time surface" in the map's own layer controls. The toggle appears when a valid cell has an available estimate and the control is enabled. Fill color follows a diverging ramp over each cell's `medianMinutes`: blue near zero, yellow around 60 minutes, red at 120 minutes and above. Fill opacity follows each cell's own `n`, its observation count, normalized against the largest `n` in the supplied grid — a well-sampled cell asserts its median plainly, while a thinly sampled cell fades toward transparent rather than asserting a median it barely supports. `medianMinutes` and `iqrMinutes` are `null`, never zero, when a cell has no estimate.
+`surface` renders an optional fill layer over delivery-time grid cells (`MapSurfaceCell`). The switch appears when at least one valid cell has a finite nonnegative estimate and a finite positive observation count. Color follows median minutes: blue at zero, yellow around 60, and red at 120 or above. A genuine zero-minute estimate remains blue.
+
+Cells with missing or invalid estimates, or without observations, are unfilled and excluded from the quantitative color ramp. Their supplied values remain in the source records; a missing estimate is never replaced with zero. The visible layer includes a legend explaining this distinction.
+
+Opacity compares each drawable cell's observation count with the largest count among drawable cells. Unsupported cells do not affect that denominator. This represents relative sample volume, not statistical confidence or a measure of prediction accuracy. `iqrMinutes` records spread when supplied; the component does not derive uncertainty from `n`.
 
 For a consumer whose primary content is this surface, set `defaultLayerVisibility={{ deliverySurface: true }}` to show it initially, or control it with `layerVisibility`. The default is hidden. It can remain visible even when `controls.deliverySurface` is `false` or all controls are hidden.
 
