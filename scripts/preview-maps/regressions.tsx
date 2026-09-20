@@ -158,6 +158,7 @@ function App() {
           Restore automatic route styling
         </button>
       </div>
+      <h2>Delivery estimates and route styling</h2>
       <NetworkMap
         title="Rendering test map"
         description="Only the final delivery cell has a supported zero-minute estimate. Its fill should be blue."
