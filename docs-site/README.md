@@ -3,7 +3,8 @@
 The site publishes Storybook, the TypeDoc API reference, and independent full
 and modular ECharts galleries, and the NetworkMap gallery from the same source revision.
 
-Use Node 20 and npm 10, matching the documentation workflow:
+Use the Node version in `.nvmrc` and the npm version in `package.json`, matching
+the repository's upstream toolchain:
 
 ```sh
 npm ci

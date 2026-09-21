@@ -99,12 +99,10 @@ it("uses relative positive sample count for opacity without treating no samples 
     { ...cell, n: 4 },
     { ...cell, n: 0 },
     { ...cell, medianMinutes: null, n: 10000 },
-  ]).features.map(
-    (feature): Feature => ({
-      type: "Polygon",
-      properties: feature.properties!,
-    }),
-  );
+  ]).features.map((feature): Feature => ({
+    type: "Polygon",
+    properties: feature.properties!,
+  }));
   expect(features.map((feature) => filter.filter(zoom, feature))).toEqual([
     true,
     true,

@@ -39,7 +39,7 @@ jobs:
           ref: ${{ github.sha }}
       - uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version-file: ".nvmrc"
           cache: npm
       - name: Install repository dependencies
         run: npm ci
@@ -124,7 +124,7 @@ jobs:
           ref: ${{ needs.assemble.outputs.map_revision }}
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version-file: ".nvmrc"
           cache: npm
           cache-dependency-path: scripts/preview-maps/package-lock.json
       - name: Install map browser checks

@@ -222,8 +222,7 @@ function NetworkMapSurfaceView() {
         });
         instance.current = map;
         let navigation:
-          | InstanceType<typeof engine.NavigationControl>
-          | undefined;
+          InstanceType<typeof engine.NavigationControl> | undefined;
         let scale: InstanceType<typeof engine.ScaleControl> | undefined;
         const updateControls = () => {
           const configured = latest.current.controls;
@@ -431,8 +430,7 @@ function NetworkMapSurfaceView() {
             validCoordinate(f.coordinates),
           );
           const clusterSource = map.getSource("easy-ui-facility-clusters") as
-            | GeoJSONSource
-            | undefined;
+            GeoJSONSource | undefined;
           if (clusterSource) {
             if (p.facilities !== lastClusterFacilities) {
               lastClusterFacilities = p.facilities;
@@ -719,11 +717,9 @@ function NetworkMapSurfaceView() {
               (event: MapLayerMouseEvent) => {
                 const feature = event.features?.[0];
                 const clusterId = feature?.properties?.cluster_id as
-                  | number
-                  | undefined;
+                  number | undefined;
                 const source = map.getSource("easy-ui-facility-clusters") as
-                  | GeoJSONSource
-                  | undefined;
+                  GeoJSONSource | undefined;
                 if (!feature || clusterId === undefined || !source) return;
                 source.getClusterExpansionZoom(clusterId).then((zoom) => {
                   if (disposed) return;

@@ -36,14 +36,12 @@ export function useGroupedRows<C extends Column, R extends Row>({
     const subtotalKeys = new Set<Key>();
     if (!grouping) {
       return {
-        items: rows.map(
-          (row): DataRow<R> => ({
-            key: row.key,
-            renderKey: renderKey("data", row.key),
-            type: "data",
-            row,
-          }),
-        ),
+        items: rows.map((row): DataRow<R> => ({
+          key: row.key,
+          renderKey: renderKey("data", row.key),
+          type: "data",
+          row,
+        })),
         subtotalKeys,
       };
     }

@@ -494,7 +494,10 @@ export function PricingExample({
                   <h2 id={detailTitleId} className="detail-title" tabIndex={-1}>
                     Proposal {active} · investigation
                   </h2>
-                  {row(proposals.find((p) => p.id === active)!, true)}
+                  {row(
+                    proposals.find((p) => p.id === active)!,
+                    true,
+                  )}
                 </section>
               )}
               <p id="action-status" role="status">

@@ -265,23 +265,19 @@ export function controlledInteractions(
 export function interactionSnapshot(current: ChartOption) {
   return {
     ready: true,
-    zoom: items(current.dataZoom).map(
-      (zoom, index): ChartZoomState => ({
-        ...(zoom.id === undefined ? {} : { id: String(zoom.id) }),
-        index,
-        start: zoom.start ?? 0,
-        end: zoom.end ?? 100,
-        startValue: zoom.startValue,
-        endValue: zoom.endValue,
-        rangeMode: zoom.rangeMode,
-      }),
-    ),
-    legend: items(current.legend).map(
-      (legend, index): ChartLegendState => ({
-        ...(legend.id === undefined ? {} : { id: String(legend.id) }),
-        index,
-        selected: { ...legend.selected },
-      }),
-    ),
+    zoom: items(current.dataZoom).map((zoom, index): ChartZoomState => ({
+      ...(zoom.id === undefined ? {} : { id: String(zoom.id) }),
+      index,
+      start: zoom.start ?? 0,
+      end: zoom.end ?? 100,
+      startValue: zoom.startValue,
+      endValue: zoom.endValue,
+      rangeMode: zoom.rangeMode,
+    })),
+    legend: items(current.legend).map((legend, index): ChartLegendState => ({
+      ...(legend.id === undefined ? {} : { id: String(legend.id) }),
+      index,
+      selected: { ...legend.selected },
+    })),
   };
 }

@@ -212,7 +212,8 @@ describe("DataGrid expansion state and focus", () => {
     }
 
     function expectGeometry(height: string, position: string, opacity: string) {
-      const style = container().parentElement!.style;
+      // Expansion tokens live on the frame, outside the row scroll container.
+      const style = container().parentElement!.parentElement!.style;
       expect(
         style.getPropertyValue("--ezui-c-data-grid-expanded-row-height"),
       ).toBe(height);

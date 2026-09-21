@@ -765,7 +765,7 @@ export const ServiceSplit: Story = {
     },
   },
   argTypes: {
-    maxRows: { control: "select", options: ["all", 4, 6, 9] },
+    maxRows: { control: "select", options: ["all", "auto", 4, 6, 9] },
     maxHeight: {
       control: "text",
       description:
@@ -847,6 +847,23 @@ export const ServiceSplit: Story = {
 export const ServiceSplitConstrained: Story = {
   ...ServiceSplit,
   args: { ...ServiceSplit.args, maxHeight: "280px" },
+  play: async (context) => {
+    await ServiceSplit.play?.(context);
+    const canvas = within(context.canvasElement);
+    const table = canvas.getByRole("grid");
+    const scrollContainer = table.parentElement!.parentElement!;
+    const frame = scrollContainer.parentElement!;
+    if (table.getBoundingClientRect().height > frame.clientHeight) {
+      await expect(scrollContainer.scrollHeight).toBeGreaterThan(
+        scrollContainer.clientHeight,
+      );
+    }
+    scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    const lastSubtotal = canvas.getByRole("row", { name: /FedEx subtotal/ });
+    await expect(
+      lastSubtotal.getBoundingClientRect().bottom,
+    ).toBeLessThanOrEqual(frame.getBoundingClientRect().bottom + 1);
+  },
 };
 
 /** Collapse detail rows while keeping each carrier's totals visible. */

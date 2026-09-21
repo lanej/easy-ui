@@ -1,10 +1,7 @@
 /** Out-of-domain values retain their exact labels. Omit their mark, or clamp it explicitly. */
 export type OverflowPolicy = "omit" | "clamp";
 export type ObservationState =
-  | "valid"
-  | "missing"
-  | "invalid"
-  | "out-of-domain";
+  "valid" | "missing" | "invalid" | "out-of-domain";
 
 export function observationState(
   value: number | null,

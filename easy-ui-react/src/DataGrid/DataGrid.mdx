@@ -294,12 +294,12 @@ Collapsing changes visibility only. Aggregators still receive every supplied row
 
 The grid fills its container's width. Scrollbars appear only when content exceeds the available width or an explicit height limit; they do not need a visibility prop.
 
-| Control         | Type                                                   | Behavior                                                                                                                                                     |
-| --------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `maxRows`       | `number` or `"all"`                                    | Limit height by body-row count, including subtotals, or use `"all"` for natural content height. The existing default of `999` is unchanged.                  |
-| `maxHeight`     | `CSSProperties["maxHeight"]`                           | Optional height limit such as `320` (pixels), `"60vh"`, or `"calc(100vh - 16rem)"`. Takes precedence over `maxRows`. Short tables keep their natural height. |
-| `columnOptions` | `Partial<Record<ColumnKey<C>, DataGridColumnOptions>>` | Per-column layout, applied consistently to the header, data cells, and subtotal cells.                                                                       |
-| `size`          | `"sm"`, `"md"`, or `"lg"`                              | Existing row-density control. Defaults to `"md"`.                                                                                                            |
+| Control         | Type                                                   | Behavior                                                                                                                                                                                    |
+| --------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxRows`       | `number`, `"all"`, or `"auto"`                         | Limit height by body-row count, including subtotals, use `"all"` for natural content height, or `"auto"` to fit the available container height. The existing default of `999` is unchanged. |
+| `maxHeight`     | `CSSProperties["maxHeight"]`                           | Optional height limit such as `320` (pixels), `"60vh"`, or `"calc(100vh - 16rem)"`. Takes precedence over `maxRows`. Short tables keep their natural height.                                |
+| `columnOptions` | `Partial<Record<ColumnKey<C>, DataGridColumnOptions>>` | Per-column layout, applied consistently to the header, data cells, and subtotal cells.                                                                                                      |
+| `size`          | `"sm"`, `"md"`, or `"lg"`                              | Existing row-density control. Defaults to `"md"`.                                                                                                                                           |
 
 `DataGridColumnOptions` is exported from `@easypost/easy-ui/DataGrid/types`:
 

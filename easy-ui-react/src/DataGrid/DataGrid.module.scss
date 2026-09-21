@@ -76,6 +76,7 @@
   @include component-token("data-grid", "action-cell-width", 44px);
   @include component-token("data-grid", "expanded-row-opacity", 0);
 
+  min-width: 0;
   border: component-token("data-grid", "border-width") solid
     component-token("data-grid", "border-color");
   border-radius: design-token("shape.border_radius.lg");
@@ -102,7 +103,6 @@
   );
   /* stylelint-enable scss/operator-no-newline-after */
   overflow: auto;
-  min-width: 0;
   position: relative;
   // Contains the grid's internal stacking (cells, frozen columns, expanded
   // rows) so the footer only has to follow it in the document to paint above it

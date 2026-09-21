@@ -231,7 +231,7 @@ export function Table<C extends Column, R extends RowType>(
   const dataGridClassName = classNames(
     styles.DataGrid,
     styles[variationName("size", size)],
-    isAutoHeight && styles.maxRowsAuto,
+    (isAutoHeight || maxHeight != null) && styles.maxRowsAuto,
   );
 
   const tableClassName = classNames(
