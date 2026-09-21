@@ -2,4 +2,8 @@
 "@easypost/easy-ui": minor
 ---
 
-Add an optional, lazily loaded MapLibre NetworkMap entry with zoom-aware facility labels, controlled location selection, explicit camera requests, observed/planned connections, facility risk and weather layers, accessible exact data, and parcel/shipper/carrier stories. MapLibre and its stylesheet are opt-in for map consumers.
+Add NetworkMap with an optional, lazy MapLibre peer, zoom-aware facilities, observed/planned connections, risk, weather, delivery surfaces, and accessible exact data. MapLibre CSS and the matching worker are supplied by map consumers.
+
+Compose the map surface independently from optional headings, controls, legends, selection details, and equivalent data. Hide inapplicable controls; support caller labels, layer visibility, facility colors, and explicit camera requests. Retain initial fitting and camera commands across Strict Mode replay and reloads. Typography and measured labels adapt to the available space, with a 220px height floor and readable legend/scale defaults.
+
+Preserve source values, missing observations, provenance and uncertainty for weather and surface data. Keep dateline routes short, consumer paint overrides intact, and selection visible across evidence types. Update marker callbacks without rebuilding the map, and avoid unchanged source uploads during interaction updates.

@@ -2,4 +2,4 @@
 "@easypost/easy-ui": patch
 ---
 
-Restore package-root component, deep declaration, utility, and style entry points for consumers using legacy TypeScript module resolution. Generate compatibility forwards without inventing default exports, preserve modern exports and dist artifacts, and verify installed tarballs with both legacy and modern TypeScript resolution. Cache and clean generated entries alongside the package build.
+Include built components, declarations, CSS, and Sass in normal and release-directory npm tarballs. Preserve modern dist-based exports and generate package-root component, deep declaration, utility, and style entries for legacy TypeScript module resolution. Forward default exports only when they exist, copy authored declarations, and preserve CSS/Sass side effects. Cache and safely clean generated entries alongside the package build.
