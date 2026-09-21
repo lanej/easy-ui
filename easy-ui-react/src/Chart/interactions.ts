@@ -39,13 +39,62 @@ const graphCameraSettings = [
   "scaleLimit",
 ] as const;
 
+type Viewport = { width: number; height: number };
+type CameraSeries = { id?: string | number; type?: string } & Partial<
+  Record<(typeof graphCameraSettings)[number], unknown>
+>;
+
+function activeMedia(option: ChartOption, viewport?: Viewport) {
+  if (!viewport) return [];
+  const matches = (query: object) =>
+    Object.entries(query).every(([key, value]) => {
+      const match = /^(min|max)(Width|Height|AspectRatio)$/.exec(key);
+      if (!match) return true;
+      const actual =
+        match[2] === "Width"
+          ? viewport.width
+          : match[2] === "Height"
+            ? viewport.height
+            : viewport.width / viewport.height;
+      return match[1] === "min" ? actual >= value : actual <= value;
+    });
+  const hasMatch = option.media?.some(
+    (media) => media.query && matches(media.query),
+  );
+  return (option.media ?? []).filter((media) =>
+    media.query ? matches(media.query) : !hasMatch,
+  );
+}
+
+/** Resolve authored series settings before deciding whether a camera may survive. */
+function effectiveSeries(option: ChartOption, viewport?: Viewport) {
+  const series: CameraSeries[] = [
+    ...items((option.baseOption ?? option).series),
+  ];
+  for (const media of activeMedia(option, viewport)) {
+    const overrideOption = media.option as ChartOption | undefined;
+    items(overrideOption?.series).forEach((override, index) => {
+      const target =
+        override.id === undefined
+          ? index
+          : series.findIndex((item) => String(item.id) === String(override.id));
+      if (target === -1) series.push(override);
+      else series[target] = { ...series[target], ...override };
+    });
+  }
+  return series;
+}
+
 /** Keep local interaction state only while its application settings are unchanged. */
 export function preserveInteractions(
   next: ChartOption,
   previous: ChartOption,
   current: ChartOption,
-  viewport?: { width: number; height: number },
-  inherited?: { next: ChartOption; previous: ChartOption },
+  viewport?: Viewport,
+  graphOptions = {
+    next: effectiveSeries(next, viewport),
+    previous: effectiveSeries(previous, viewport),
+  },
 ): ChartOption {
   const result = { ...next };
   if (next.baseOption) {
@@ -54,30 +103,16 @@ export function preserveInteractions(
       (previous.baseOption ?? {}) as ChartOption,
       current,
       viewport,
+      graphOptions,
     );
   }
   // ECharts applies active media overrides after baseOption. Preserve their unchanged
   // interaction settings too; inactive breakpoints must keep their authored defaults.
   if (next.media && viewport) {
-    const matches = (query: object) =>
-      Object.entries(query).every(([key, value]) => {
-        const match = /^(min|max)(Width|Height|AspectRatio)$/.exec(key);
-        if (!match) return true;
-        const actual =
-          match[2] === "Width"
-            ? viewport.width
-            : match[2] === "Height"
-              ? viewport.height
-              : viewport.width / viewport.height;
-        return match[1] === "min" ? actual >= value : actual <= value;
-      });
-    const hasMatch = next.media.some(
-      (media) => media.query && matches(media.query),
-    );
+    const active = activeMedia(next, viewport);
     result.media = next.media.map((media, index) => {
       const before = previous.media?.[index];
-      const active = media.query ? matches(media.query) : !hasMatch;
-      return active &&
+      return active.includes(media) &&
         media.option &&
         before?.option &&
         isEqual(media.query, before.query)
@@ -88,10 +123,7 @@ export function preserveInteractions(
               before.option as ChartOption,
               current,
               undefined,
-              {
-                next: (next.baseOption ?? next) as ChartOption,
-                previous: (previous.baseOption ?? previous) as ChartOption,
-              },
+              graphOptions,
             ),
           }
         : media;
@@ -140,19 +172,17 @@ export function preserveInteractions(
       const before = matching(previous.series, series, index);
       const active = matching(current.series, series, index);
       if (!before) return series;
-      // Media overrides may omit the graph type and inherit camera settings
-      // from baseOption. Compare authored settings, never engine defaults.
-      const configured = {
-        ...matching(inherited?.next.series, series, index),
-        ...series,
-      };
-      const previouslyConfigured = {
-        ...matching(inherited?.previous.series, series, index),
-        ...before,
-      };
+      // Compare effective authored settings across baseOption and active media.
+      // A removed media override must not survive through a restored base camera.
+      const configured = matching(graphOptions.next, series, index);
+      const previouslyConfigured = matching(
+        graphOptions.previous,
+        series,
+        index,
+      );
       if (
-        configured.type !== "graph" ||
-        previouslyConfigured.type !== "graph" ||
+        configured?.type !== "graph" ||
+        previouslyConfigured?.type !== "graph" ||
         active?.type !== "graph" ||
         (configured.coordinateSystem ?? "view") !== "view" ||
         !graphCameraSettings.every((key) =>

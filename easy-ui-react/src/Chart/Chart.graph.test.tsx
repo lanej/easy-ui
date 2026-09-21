@@ -191,3 +191,36 @@ it("does not carry a graph camera into a different layout or coordinate system",
     ]);
   }
 });
+
+it.each([false, true])(
+  "honors removed media camera settings (remove breakpoint=%s)",
+  async (removeBreakpoint) => {
+    const initial: ChartOption = {
+      baseOption: option,
+      media: [
+        {
+          query: { minWidth: 500 },
+          option: { series: [{ id: "network", zoom: 1.5 }] },
+        },
+      ],
+    };
+    const { rerender } = render(view(initial));
+    await screen.findByRole("img");
+    roam();
+    expect(camera().zoom).toBeCloseTo(3);
+    rerender(
+      view({
+        ...initial,
+        media: removeBreakpoint
+          ? []
+          : [
+              {
+                query: { minWidth: 500 },
+                option: { series: [{ id: "network" }] },
+              },
+            ],
+      }),
+    );
+    expect(camera()).toEqual({ center: null, zoom: 1 });
+  },
+);
