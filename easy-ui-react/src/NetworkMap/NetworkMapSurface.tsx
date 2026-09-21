@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type {
   GeoJSONSource,
   Map as MapInstance,
@@ -92,74 +92,80 @@ function NetworkMapSurfaceView() {
   const layers = useRef(visibility);
   layers.current = visibility;
 
-  const flyToBounds = (
-    bounds: [[number, number], [number, number]] | null,
-    maxZoom = 12,
-  ) => {
-    const current = instance.current;
-    if (!current || !bounds) return;
-    current.fitBounds(bounds, {
-      padding: { top: 70, bottom: 65, left: 65, right: 80 },
-      maxZoom,
-      duration: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-        ? 0
-        : 650,
-    });
-  };
-  const fit = (ids: readonly string[], maxZoom = 12) => {
-    const bounds = geographicBounds(
-      latest.current.facilities
-        .filter((f) => ids.includes(f.id))
-        .map((f) => f.coordinates),
-    );
-    flyToBounds(bounds, maxZoom);
-  };
-
-  commands.current = {
-    fitAll: () => {
-      const p = latest.current;
-      const validFacilities = p.facilities.filter((f) =>
-        validCoordinate(f.coordinates),
+  const flyToBounds = useCallback(
+    (bounds: [[number, number], [number, number]] | null, maxZoom = 12) => {
+      const current = instance.current;
+      if (!current || !bounds) return;
+      current.fitBounds(bounds, {
+        padding: { top: 70, bottom: 65, left: 65, right: 80 },
+        maxZoom,
+        duration: window.matchMedia?.("(prefers-reduced-motion: reduce)")
+          .matches
+          ? 0
+          : 650,
+      });
+    },
+    [],
+  );
+  const fit = useCallback(
+    (ids: readonly string[], maxZoom = 12) => {
+      const bounds = geographicBounds(
+        latest.current.facilities
+          .filter((f) => ids.includes(f.id))
+          .map((f) => f.coordinates),
       );
-      const points = validFacilities.length
-        ? validFacilities.map((f) => f.coordinates)
-        : [
-            ...p.areas
-              .filter((area) => validAreaCoordinates(area.coordinates))
-              .flatMap((area) => area.coordinates),
-            ...(p.surface?.cells.filter(validSurfaceBounds).flatMap(
-              (cell) =>
-                [
-                  [cell.lonMin, cell.latMin],
-                  [cell.lonMax, cell.latMax],
-                ] as [number, number][],
-            ) ?? []),
-          ];
-      flyToBounds(geographicBounds(points), 11);
+      flyToBounds(bounds, maxZoom);
     },
-    selectedSegment: () => {
-      const p = latest.current;
-      const segment = p.segments.find(
-        (item) => item.id === p.selectedSegmentId,
-      );
-      if (segment) {
-        p.onFacilitySelect?.(segment.to);
-        fit([segment.from, segment.to], 13);
-      }
-    },
-    latestEvent: () => {
-      const id = latest.current.latestFacilityId;
-      if (id) {
-        latest.current.onFacilitySelect?.(id);
-        fit([id], 12);
-      }
-    },
-  };
+    [flyToBounds],
+  );
 
   useEffect(() => {
     if (surfaceOwner.current && surfaceOwner.current !== owner.current)
       throw new Error("Use one NetworkMapSurface per NetworkMapProvider");
     surfaceOwner.current = owner.current;
+    // Strict Mode replays setup after cleanup without rendering again. Install
+    // commands with the engine lifecycle so its initial fit and toolbar work
+    // after every setup, while reading current data from the stable ref.
+    commands.current = {
+      fitAll: () => {
+        const p = latest.current;
+        const validFacilities = p.facilities.filter((f) =>
+          validCoordinate(f.coordinates),
+        );
+        const points = validFacilities.length
+          ? validFacilities.map((f) => f.coordinates)
+          : [
+              ...p.areas
+                .filter((area) => validAreaCoordinates(area.coordinates))
+                .flatMap((area) => area.coordinates),
+              ...(p.surface?.cells.filter(validSurfaceBounds).flatMap(
+                (cell) =>
+                  [
+                    [cell.lonMin, cell.latMin],
+                    [cell.lonMax, cell.latMax],
+                  ] as [number, number][],
+              ) ?? []),
+            ];
+        flyToBounds(geographicBounds(points), 11);
+      },
+      selectedSegment: () => {
+        const p = latest.current;
+        const segment = p.segments.find(
+          (item) => item.id === p.selectedSegmentId,
+        );
+        if (segment) {
+          p.onFacilitySelect?.(segment.to);
+          fit([segment.from, segment.to], 13);
+        }
+      },
+      latestEvent: () => {
+        const id = latest.current.latestFacilityId;
+        if (id) {
+          latest.current.onFacilitySelect?.(id);
+          fit([id], 12);
+        }
+      },
+    };
     let disposed = false,
       observer: ResizeObserver | undefined;
     let markers: {
@@ -818,6 +824,8 @@ function NetworkMapSurfaceView() {
     setState,
     setZoom,
     surfaceOwner,
+    fit,
+    flyToBounds,
   ]);
 
   useEffect(() => {

@@ -29,6 +29,8 @@ This checklist covers the complete September 20 improvement plan on the existing
 
 The earlier R01/R02/I01 fixes remain regression gates: unavailable surface estimates never become zero, consumer paint survives updates, and expanded grid rows suspend safely during loading.
 
+The final PR review adds two regression gates. `NetworkMap/NetworkMap.test.tsx` verifies that React Strict Mode effect replay and map reloads retain initial fitting and toolbar camera commands, use current facility data, and honor an explicit initial view. `Chart/Chart.graph.test.tsx` uses actual ECharts graph instances to verify that pan/zoom survive data, theme, renderer, and series-order changes, including `baseOption` and active media overrides. Explicit camera settings take precedence, and removed series/data stay removed.
+
 ## Component boundaries
 
 | Acceptance case                                            | Public surface / evidence                                                                                                                             |

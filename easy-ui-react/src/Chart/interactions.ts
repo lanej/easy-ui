@@ -30,12 +30,22 @@ const zoomSettings = [
   "orient",
 ] as const;
 
+const graphCameraSettings = [
+  "center",
+  "zoom",
+  "coordinateSystem",
+  "layout",
+  "roam",
+  "scaleLimit",
+] as const;
+
 /** Keep local interaction state only while its application settings are unchanged. */
 export function preserveInteractions(
   next: ChartOption,
   previous: ChartOption,
   current: ChartOption,
   viewport?: { width: number; height: number },
+  inherited?: { next: ChartOption; previous: ChartOption },
 ): ChartOption {
   const result = { ...next };
   if (next.baseOption) {
@@ -77,6 +87,11 @@ export function preserveInteractions(
               media.option as ChartOption,
               before.option as ChartOption,
               current,
+              undefined,
+              {
+                next: (next.baseOption ?? next) as ChartOption,
+                previous: (previous.baseOption ?? previous) as ChartOption,
+              },
             ),
           }
         : media;
@@ -118,6 +133,36 @@ export function preserveInteractions(
         legend.selectedMode === before.selectedMode
         ? { ...legend, selected: { ...active.selected } }
         : legend;
+    });
+  }
+  if (next.series) {
+    result.series = items(next.series).map((series, index) => {
+      const before = matching(previous.series, series, index);
+      const active = matching(current.series, series, index);
+      if (!before) return series;
+      // Media overrides may omit the graph type and inherit camera settings
+      // from baseOption. Compare authored settings, never engine defaults.
+      const configured = {
+        ...matching(inherited?.next.series, series, index),
+        ...series,
+      };
+      const previouslyConfigured = {
+        ...matching(inherited?.previous.series, series, index),
+        ...before,
+      };
+      if (
+        configured.type !== "graph" ||
+        previouslyConfigured.type !== "graph" ||
+        active?.type !== "graph" ||
+        (configured.coordinateSystem ?? "view") !== "view" ||
+        !graphCameraSettings.every((key) =>
+          isEqual(configured[key], previouslyConfigured[key]),
+        )
+      )
+        return series;
+      // Graph roam writes center/zoom to its own series rather than dataZoom.
+      // Keep the camera without bringing back removed nodes or stale styling.
+      return { ...series, center: active.center, zoom: active.zoom };
     });
   }
   return result;

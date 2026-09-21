@@ -189,6 +189,57 @@ beforeEach(() => {
   );
 });
 afterEach(() => vi.unstubAllGlobals());
+it("restores camera commands during Strict Mode replay and map reloads", async () => {
+  const view = (
+    facilities: NetworkMapProps["facilities"] = props.facilities,
+  ) => (
+    <React.StrictMode>
+      <NetworkMap {...props} facilities={facilities} />
+    </React.StrictMode>
+  );
+  const { rerender } = render(view());
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  expect(fitBounds).toHaveBeenCalledTimes(1);
+  expect(fitBounds).toHaveBeenLastCalledWith(
+    [
+      [-122, 38],
+      [-122, 38],
+    ],
+    expect.objectContaining({ maxZoom: 11 }),
+  );
+  rerender(view([{ ...props.facilities[0], coordinates: [2.35, 48.86] }]));
+  fireEvent.click(screen.getByRole("button", { name: "Fit all locations" }));
+  expect(fitBounds).toHaveBeenCalledTimes(2);
+  const updatedBounds = fitBounds.mock.lastCall![0];
+  expect(updatedBounds[0][0]).toBeCloseTo(2.35);
+  expect(updatedBounds[0][1]).toBe(48.86);
+
+  act(() => listeners.error({ error: new Error("Transient basemap failure") }));
+  fireEvent.click(screen.getByRole("button", { name: "Reload map" }));
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(2));
+  act(() => listeners.load());
+  expect(fitBounds).toHaveBeenCalledTimes(3);
+  expect(fitBounds.mock.lastCall![0]).toEqual(updatedBounds);
+  fireEvent.click(screen.getByRole("button", { name: "Fit all locations" }));
+  expect(fitBounds).toHaveBeenCalledTimes(4);
+});
+
+it("retains an explicit initial view in Strict Mode while keeping fit controls usable", async () => {
+  const initialView = { center: [2.35, 48.86] as const, zoom: 8 };
+  render(
+    <React.StrictMode>
+      <NetworkMap {...props} initialView={initialView} />
+    </React.StrictMode>,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  expect(constructor.mock.calls[0][1]).toMatchObject(initialView);
+  expect(fitBounds).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Fit all locations" }));
+  expect(fitBounds).toHaveBeenCalledOnce();
+});
+
 it("preserves camera and focused markers when observations or selection update, and cleans up", async () => {
   const view = render(<NetworkMap {...props} />);
   await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
