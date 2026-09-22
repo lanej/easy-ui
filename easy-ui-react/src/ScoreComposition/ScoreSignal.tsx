@@ -4,7 +4,7 @@ import { defaultLabels } from "./presentation";
 import type { ScorePresentationProps, ScoreSignalData } from "./types";
 import styles from "./ScoreComposition.module.scss";
 
-/** A compact, independently usable observation row. */
+/** A compact, independently usable observation box with protected text padding. */
 export type ScoreSignalProps = Omit<ScoreSignalData, "id"> &
   Omit<ScorePresentationProps, "formatScore">;
 

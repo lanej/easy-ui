@@ -76,8 +76,10 @@
   }
 }
 .signal {
-  padding-block: design-token("space.2");
-  border-bottom: 1px solid design-token("color.neutral.200");
+  padding: design-token("space.1.5") design-token("space.2");
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: design-token("shape.border_radius.md");
+  background: design-token("color.neutral.000");
 }
 .signalRow {
   display: flex;

@@ -49,6 +49,67 @@ export async function auditScoreComposition(
     const geometry = await driver.evaluate(() => {
       const root = document.querySelector("[data-score-example]");
       const svg = root.querySelector("svg");
+      const bounds = svg.getBoundingClientRect();
+      const sx = bounds.width / svg.viewBox.baseVal.width;
+      const sy = bounds.height / svg.viewBox.baseVal.height;
+      const textRects = [];
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const text = walker.currentNode;
+        if (
+          !text.textContent.trim() ||
+          !text.parentElement.closest("[data-score-node]")
+        )
+          continue;
+        let hidden = false;
+        for (
+          let parent = text.parentElement;
+          parent && parent !== root;
+          parent = parent.parentElement
+        ) {
+          const style = getComputedStyle(parent);
+          if (
+            style.display === "none" ||
+            style.visibility === "hidden" ||
+            style.clipPath !== "none"
+          )
+            hidden = true;
+        }
+        if (hidden) continue;
+        const range = document.createRange();
+        range.selectNodeContents(text);
+        for (const rect of range.getClientRects()) {
+          if (rect.width && rect.height)
+            textRects.push({
+              left: rect.left,
+              right: rect.right,
+              top: rect.top,
+              bottom: rect.bottom,
+              text: text.textContent,
+            });
+        }
+      }
+      const collisions = [];
+      for (const path of svg.querySelectorAll("path")) {
+        for (let i = 0; i <= 100; i++) {
+          const point = path.getPointAtLength(
+            (path.getTotalLength() * i) / 100,
+          );
+          const x = bounds.left + point.x * sx;
+          const y = bounds.top + point.y * sy;
+          const text = textRects.find(
+            (rect) =>
+              x >= rect.left - 4 &&
+              x <= rect.right + 4 &&
+              y >= rect.top - 4 &&
+              y <= rect.bottom + 4,
+          );
+          if (text) {
+            collisions.push(text.text);
+            break;
+          }
+        }
+      }
       return {
         width: root.getBoundingClientRect().width,
         paths: [...svg.querySelectorAll("path")].map((path) =>
@@ -57,11 +118,36 @@ export async function auditScoreComposition(
         decorative: svg.getAttribute("aria-hidden"),
         pointerEvents: getComputedStyle(svg).pointerEvents,
         overflow: root.scrollWidth - root.clientWidth,
+        collisions,
+        signals: [
+          ...root.querySelectorAll('[data-score-node="signal"] > div'),
+        ].map((node) => {
+          const style = getComputedStyle(node);
+          return {
+            border: parseFloat(style.borderLeftWidth),
+            paddingStart: parseFloat(style.paddingInlineStart),
+            paddingEnd: parseFloat(style.paddingInlineEnd),
+          };
+        }),
       };
     });
     assert.equal(geometry.decorative, "true");
     assert.equal(geometry.pointerEvents, "none");
     assert.ok(geometry.overflow <= 1);
+    assert.deepEqual(
+      geometry.collisions,
+      [],
+      "Connectors must remain clear of visible node text",
+    );
+    assert.ok(
+      geometry.signals.every(
+        (signal) =>
+          signal.border >= 1 &&
+          signal.paddingStart >= 12 &&
+          signal.paddingEnd >= 12,
+      ),
+      "Signal boxes must reserve space between text and edge attachments",
+    );
     measurements.push({ name, ...geometry });
   };
   await endpoints("desktop");
@@ -102,6 +188,9 @@ export async function auditScoreComposition(
   await driver.click("#rtl-layout");
   await endpoints("rtl");
   await driver.click("#rtl-layout");
+  await driver.click("#large-text");
+  await endpoints("large-text");
+  await driver.click("#large-text");
   const lightBackground = await driver.evaluate(
     () => getComputedStyle(document.body).backgroundColor,
   );

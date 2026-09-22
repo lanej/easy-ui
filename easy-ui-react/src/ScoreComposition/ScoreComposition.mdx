@@ -50,6 +50,8 @@ The result is always supplied independently, including an optional maximum. It m
 
 Signals, contributions, and result are ordinary DOM content in reading order. CSS Grid places them in three columns when the component's content area is at least 48rem wide. Below that it stacks the columns, preserving exact values, source labels, and explanations. This responds to the container, including side panels on wide screens.
 
+Signals use compact, subtly bordered boxes. Internal padding separates their labels and values from connector endpoints. SVG curves attach to the outside of each node and stay within the connecting gutters; node backgrounds keep edges behind the content.
+
 SVG curves are decorative, hidden from assistive technology and pointer input. Their attachment points follow DOM resizing, font reflow, and disclosure expansion. The component has no graph engine, editor, dragging, panning, or zoom. With JavaScript disabled or before hydration, the complete explanation remains present except for optional closed disclosure content. No measurement is needed for server rendering.
 
 Contribution meters expose their label, exact score, and maximum. Source labels accompany the stacked layout; in three columns those same labels remain available to assistive technology while the curves show the relationships visually. Independently placed contribution cards always show their source labels. “Explanation” buttons use the shared Disclosure component and support keyboard and touch input. Expanded content can contain application links and controls. Connections alone never carry information.
