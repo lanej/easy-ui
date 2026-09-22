@@ -39,6 +39,7 @@ const pages = [
   "maps/index.html",
   "maps/lightweight.html",
   "maps/composition.html",
+  "maps/regressions.html",
 ];
 for (const page of pages) {
   const html = await readFile(resolve(site, page), "utf8");
@@ -90,6 +91,16 @@ for (const entry of Object.values(mapManifest)) {
   ]) {
     await checkLink("maps/index.html", asset);
   }
+}
+const mapReport = JSON.parse(
+  await readFile(resolve(site, "maps/bundle-report.json"), "utf8"),
+);
+assert.equal(mapReport.sourceCommit, process.env.GITHUB_SHA ?? "local");
+for (const asset of [
+  mapReport.customInspectorChartEngine.entry,
+  ...mapReport.workerAssets.map((asset) => asset.file),
+]) {
+  await checkLink("maps/regressions.html", asset);
 }
 const fonts = await readFile(resolve(site, "storybook/poppins.css"), "utf8");
 for (const [, href] of fonts.matchAll(/url\("([^"]+)"\)/g)) {

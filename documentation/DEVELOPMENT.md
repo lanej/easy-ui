@@ -33,3 +33,11 @@ Run focused tests while developing, then the relevant package tests, lint, and b
 Package adoption must use an actual `npm pack` artifact. `scripts/check-style-package.mjs` verifies both packed layouts, legacy Node and modern bundler TypeScript resolution, component/declaration subpaths, CSS, and Sass. Preserve generated root compatibility entries and `dist/styles` assets. Record real consumer checks separately from isolated-package checks, with source SHA and remaining gaps.
 
 The [acceptance matrix](specs/VisualizationAcceptance.md) is the shared review contract. Earlier successful checks establish their recorded snapshot; new application feedback remains part of ongoing development.
+
+### Browser CI
+
+Charts, maps, screenshots, and layout reviews reuse recent successful browser evidence when their built preview and test inputs are identical. Each suite hashes actual production assets, its harness and dependency lockfile, workflow, applicable layout rules, and Node/runner image. Changes to a shared component, Sass, tokens, or fonts that affect a preview invalidate its evidence automatically. A component absent from that preview does not trigger its browser checks. This avoids the cumulative-PR path-filter problem without relying on only the latest commit's diff.
+
+Evidence must come from a successful run of the same workflow and PR/ref, and expires after seven days. Failed, cancelled, missing, or inaccessible evidence causes fresh checks. Manual workflow dispatch and reruns always execute the checks. A reused job summary links to the original run; it does not present that run's screenshots as new captures. Preview builds, bundle assertions, and ordinary package checks continue to run. Browser installation, interaction/accessibility audits, screenshot comparisons, and View Rule execution can then be skipped independently for unchanged suites.
+
+Every documentation deployment checks its new source revision and published inspector/worker assets over HTTP. Its expensive hosted map audit is reused only when the deployed map build and test inputs match. Keep these deployment checks even when reusing browser results. Run `node --test scripts/browser-proof.test.mjs` when changing the shared evidence helper or workflow conditions.

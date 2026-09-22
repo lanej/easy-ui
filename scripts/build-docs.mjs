@@ -60,6 +60,7 @@ await cp(
 run(["run", "--prefix", "scripts/preview-maps", "build"], {
   EASY_UI_PREVIEW_BASE: "./",
 });
+run(["run", "--prefix", "scripts/preview-maps", "measure"]);
 await rm(resolve(site, "maps"), { recursive: true, force: true });
 await cp(resolve(root, "scripts/preview-maps/dist"), resolve(site, "maps"), {
   recursive: true,
