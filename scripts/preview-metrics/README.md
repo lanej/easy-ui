@@ -2,6 +2,8 @@
 
 This isolated harness renders actual components and Storybook fixtures with synthetic shipping data and the published Easy UI token version declared by the library.
 
+Keep fixture runtime dependencies in this package and its Vite aliases, including the icon package and React Aria Components used by DataGrid/Select. Verify a clean install outside the monorepo when introducing a new component; a local build can otherwise silently resolve dependencies from the surrounding checkout.
+
 `mobile-data-grid.html` reproduces a nine-column benchmark report with a focused metric view, exact sample counts, signed changes, and an explicit full comparison. Test 320/390 px and Larger text; `?expanded=1` exercises wrapped rich rows with expanded details. The fixture reuses the DataGrid Mobile Benchmarks story composition.
 
 The original first gallery shows MetricCard KPIs, Sparkline report rows, BarList category comparisons, and BulletChart targets. The analytical gallery retains Sankey, time series, stacked area, grouped and stacked bars, scatter/bubble, heatmap, donut, and treemap. Open `?portfolio=lightweight` to load only the lightweight portfolio; `?renderer=canvas` exercises the analytical canvas renderer.

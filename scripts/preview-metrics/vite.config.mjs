@@ -105,6 +105,7 @@ export function previewConfig(engine = "full", outDir = "dist") {
         ...Object.fromEntries(
           [
             "react-aria",
+            "react-aria-components",
             "@react-aria/utils",
             "react-stately",
             "@react-stately/list",
@@ -115,6 +116,7 @@ export function previewConfig(engine = "full", outDir = "dist") {
             "react-dom",
             "lodash",
             "@easypost/easy-ui-tokens",
+            "@easypost/easy-ui-icons",
             "echarts",
             "maplibre-gl",
           ].map((name) => [name, local(`./node_modules/${name}`)]),
