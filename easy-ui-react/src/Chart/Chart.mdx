@@ -91,6 +91,58 @@ When the effective engine option has data zoom, including `baseOption.dataZoom`,
 
 The rendered plot is an image with the supplied description; its underlying SVG/canvas is hidden from screen readers. Exact values and drill-down are available through the semantic HTML table. Native graphical legend controls and individual marks are pointer interactions, not individually keyboard-focusable controls. Provide application controls through `actions` when a report requires keyboard legend/filter control. The ECharts ARIA switch alone does not establish accessibility compliance.
 
+## Rich content inside “View data table”
+
+The chart's built-in data disclosure can contain formatted amounts, comparison
+badges, links, or native plots. Configure that existing view through `dataTable`;
+an additional table component is not required. The disclosure remains folded by
+default, and the plot and table should derive from the same application records.
+
+<Canvas of={ChartStories.RichDataTable} />
+
+```tsx
+<Chart
+  {...chartProps}
+  dataTable={{
+    columns: ["Region", "Zone", "Shipments", "Cost / package"],
+    rows: records.map((record) => ({
+      id: record.id,
+      values: [record.region, record.zone, record.shipments, record.cost],
+    })),
+    columnOptions: {
+      2: { isNumeric: true },
+      3: { isNumeric: true, minWidth: 240 },
+    },
+    maxHeight: 360,
+    renderCell: (value, columnIndex, row) => {
+      if (columnIndex === 3 && typeof value === "number") {
+        return <strong>${value.toFixed(2)}</strong>;
+      }
+      return null;
+    },
+  }}
+/>
+```
+
+`renderCell(value, columnIndex, row)` receives the original exact value, a
+zero-based column index, and the original `ChartDataRow`, including its stable
+ID. Return a React node to render badges, links, a `Sparkline`, a `RangePlot`, or
+application content. Returning `null` or `undefined` retains the normal value or
+`missingValueLabel`; zero remains a value. Custom renderers should retain exact
+values and accessible names, and handle units and comparison baselines explicitly.
+Formatting does not change `onRowSelect` IDs.
+
+Column options apply to the heading and cells: `alignment` (`start`, `center`,
+`end`), `isNumeric` (default end alignment), `width`, `minWidth`, and `whiteSpace`
+(`normal` or `nowrap`). Rich cells wrap unless overridden; plain tables retain
+their existing layout. Table overflow stays inside the disclosure. `maxHeight`
+defaults to 360px; use `"none"` for natural height.
+
+Custom content mounts on first opening and remains mounted when folded again,
+preserving local state. Plain exact values remain available before it mounts.
+Standalone `ChartDataView` uses the same options and renders rich content
+immediately when no `disclosureLabel` is supplied.
+
 ## States, scales, and themes
 
 - Use `variant` to choose the surrounding frame. `"card"` (the default) renders Easy UI's own bordered `Card` with padding. Use `"bare"` when a consumer already supplies its own surrounding Card and wants Chart's heading, description, plot, and data-table disclosure to render directly inside it, without nesting a second bordered Card. `aria-label`/`aria-busy` semantics on the chart region are identical in both variants.

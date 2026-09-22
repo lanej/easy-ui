@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { auditNativeRegressions } from "./native-checks.mjs";
 import { auditChartComposition } from "./chart-composition-checks.mjs";
+import { auditChartDataView } from "./chart-data-view-checks.mjs";
 
 const axeSource = await readFile(
   new URL("../node_modules/axe-core/axe.min.js", import.meta.url),
@@ -212,6 +213,13 @@ export async function auditBrowser(driver, browser, site, outputDir) {
     });
     report.checks.push(...native.checks);
     report.native = native.measurements;
+
+    const chartData = await auditChartDataView(driver, site, outputDir, {
+      scan,
+      diagnostics,
+    });
+    report.checks.push(...chartData.checks);
+    report.chartData = chartData.measurements;
 
     const composition = await auditChartComposition(driver, site, outputDir, {
       scan,

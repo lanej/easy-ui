@@ -32,6 +32,7 @@ import {
   periodicHeatmapExample,
 } from "./Chart.extensions";
 import styles from "./examples.module.scss";
+import { RichChartDataExample } from "./RichDataTable.examples";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -40,6 +41,8 @@ const meta: Meta<typeof Chart> = {
 };
 export default meta;
 type Story = StoryObj<typeof Chart>;
+
+export const RichDataTable: Story = { render: () => <RichChartDataExample /> };
 
 export const TimeSeries: Story = { args: timeSeriesExample };
 export const Area: Story = { args: areaExample };

@@ -102,7 +102,7 @@ const responsive: ResponsiveProp<string> = { sm: "1rem" };
 const className: string = classNames("packed", false);
 
 export const example = <>
-  <Chart title="Packed chart" option={{ series: [{ type: "bar", data: [1] }] }} dataTable={{ columns: ["Count"], rows: [{ id: "one", values: [1] }] }} />
+  <Chart title="Packed chart" option={{ series: [{ type: "bar", data: [1] }] }} dataTable={{ columns: ["Count"], rows: [{ id: "one", values: [1] }], columnOptions: {0: {isNumeric: true, minWidth: 160}}, maxHeight: "none", renderCell: (value, index, row) => typeof value === "number" ? <strong title={row.id + index}>{value.toFixed(2)}</strong> : null }} />
   <MetricCard label="Packed metric" value="1" />
   <Button onPress={() => undefined}>Packed button</Button>
   <DataGrid
@@ -164,6 +164,12 @@ for (const load of [require, (specifier) => import(specifier)]) {
   })));
   assert.match(html, /Packed chart/);
   assert.match(html, /<td>1<\/td>/);
+  const { ChartDataView } = await load("@easypost/easy-ui/Chart");
+  const richData = renderToString(React.createElement(ChartDataView, {
+    dataTable: { columns: ["Count"], rows: [{ id: "one", values: [1] }],
+      renderCell: (value) => React.createElement("strong", null, value.toFixed(2)) }
+  }));
+  assert.match(richData, /<strong>1.00<\/strong>/);
 }
 const expected = JSON.parse(readFileSync("expected-styles.json", "utf8"));
 for (const subpath of ["style.css", ...expected.map((name) => "styles/" + name)]) {

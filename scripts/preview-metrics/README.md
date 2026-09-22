@@ -31,6 +31,8 @@ The screenshot artifact adds `native-extensions-{desktop,mobile,review}.png` and
 
 ## Native acceptance fixture
 
+`chart-data-view.html` exercises rich content inside the chart's existing folded data disclosure. Expand “View data table” for currency formatting, shipment counts, and comparison badges from the same observations as the plot. Custom cells mount on first opening and remain mounted across collapse. Column widths, numeric alignment, large text, and keyboard scrolling are included in the shared browser audit.
+
 `native-regressions.html` exercises all six native components with synthetic edge cases. The shared [browser audit](./audit/README.md) measures circular Sparkline markers at 80, 160, and 480 CSS pixels, singleton time labels, and explicit elapsed-time positions. It also checks abbreviated axes against full exact values, distinct missing/invalid/zero/overflow states, shared BarList scales, unframed metric composition, and every supported typography role at larger sizes. The native fixture imports no chart engine.
 
 Each Chrome, Firefox, and Safari audit records the measured geometry and text sizes in `audit.json`, plus `native-markers.png`, `native-data.png`, and `native-typography.png`. These checks are part of both the full and modular builds.

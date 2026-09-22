@@ -14,6 +14,7 @@ Local worktree names are historical. Consult the workspace inventory before edit
 - **Small visual components:** reuse native components such as `RangePlot`, `BarList`, and `Sparkline` when they express the data. Keep ECharts and MapLibre optional and lazy. A map detail chart should not force a second rendering engine into every map.
 - **Application meaning:** callers own aggregation, units, forecasts, domains, and provenance. A median and IQR width do not establish quartile endpoints or a histogram. Draw distributions only from supplied distribution data; retain useful summaries when it is unavailable.
 - **Configuration:** extend the existing coherent API before introducing overlapping switches. Map `controls` governs control presence; `layerVisibility` governs rendered layers. Hiding a control does not erase equivalent data. Use independently placed companions for application-specific layouts.
+- **Chart data disclosures:** enrich the chart's existing folded data view through `dataTable.renderCell` and column options. Keep plot and table derived from the same records; preserve exact values and comparison baselines. Custom content mounts on first opening and remains mounted across collapse.
 - **State and accessibility:** respect controlled values, preserve camera/selection through ordinary data updates, and support keyboard and touch paths alongside pointer interactions. Exact values and missing-data states must survive engine failures and hidden layers.
 
 ## Bring application feedback back to the component

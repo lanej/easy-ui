@@ -1,4 +1,4 @@
-import React, { AriaAttributes } from "react";
+import React, { AriaAttributes, CSSProperties, useState } from "react";
 import {
   VisualizationTypography,
   visualizationTypographyStyle,
@@ -33,11 +33,28 @@ export function ChartDataView({
   typography,
   ...aria
 }: ChartDataViewProps) {
+  const [hasOpened, setHasOpened] = useState(false);
+  const renderCell =
+    !disclosureLabel || hasOpened ? dataTable.renderCell : undefined;
+  const columnStyle = (index: number, isBodyCell = false): CSSProperties => {
+    const options = dataTable.columnOptions?.[index];
+    return {
+      width: options?.width,
+      minWidth: options?.minWidth,
+      textAlign: options?.alignment ?? (options?.isNumeric ? "end" : undefined),
+      whiteSpace:
+        options?.whiteSpace ??
+        (isBodyCell && dataTable.renderCell ? "normal" : undefined),
+    };
+  };
   const content = (
     <div
       id={id}
       className={styles.tableScroll}
-      style={visualizationTypographyStyle(typography)}
+      style={{
+        ...visualizationTypographyStyle(typography),
+        maxHeight: dataTable.maxHeight,
+      }}
       tabIndex={0}
       role="region"
       {...aria}
@@ -53,7 +70,7 @@ export function ChartDataView({
         <thead>
           <tr>
             {dataTable.columns.map((label, index) => (
-              <th key={index} scope="col">
+              <th key={index} scope="col" style={columnStyle(index)}>
                 {label}
               </th>
             ))}
@@ -64,8 +81,9 @@ export function ChartDataView({
           {dataTable.rows.map((row) => (
             <tr key={row.id}>
               {row.values.map((value, index) => (
-                <td key={index}>
-                  {value === null ? missingValueLabel : value}
+                <td key={index} style={columnStyle(index, true)}>
+                  {renderCell?.(value, index, row) ??
+                    (value === null ? missingValueLabel : value)}
                 </td>
               ))}
               {onRowSelect && (
@@ -87,7 +105,12 @@ export function ChartDataView({
     </div>
   );
   return disclosureLabel ? (
-    <details style={visualizationTypographyStyle(typography)}>
+    <details
+      style={visualizationTypographyStyle(typography)}
+      onToggle={(event) => {
+        if (event.currentTarget.open) setHasOpened(true);
+      }}
+    >
       <summary className={styles.summary}>{disclosureLabel}</summary>
       {content}
     </details>

@@ -4,6 +4,8 @@ This checklist covers the complete September 20 improvement plan on the existing
 
 ## Behavior and API findings
 
+Chart's built-in data disclosure supports rich cell renderers, column alignment and widths, and a configurable scroll height. It remains folded by default. Custom content mounts on first opening, retains local state across collapse, and receives original values/row IDs; null/undefined render results preserve plain/missing-value fallbacks. `ChartDataView.test.tsx` covers this lifecycle and keyboard row selection; `preview-metrics/audit/chart-data-view-checks.mjs` covers the actual chart disclosure, comparison badges, large text, and keyboard table scrolling across browser workflows.
+
 | Finding | Implemented behavior                                                                                                                                                                        | Direct regression evidence                                                                         |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | R03     | Chart theme changes preserve user zoom/legend choices, including active media options; explicit controlled values take precedence.                                                          | `Chart/Chart.test.tsx`, `Chart/Chart.interactions.test.tsx`, actual ECharts option evaluation      |
