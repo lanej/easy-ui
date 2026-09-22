@@ -55,11 +55,17 @@ try {
       key: async (selector, key) => {
         const element = await driver.findElement(By.css(selector));
         await driver.executeScript("arguments[0].focus()", element);
-        await element.sendKeys(
-          { Enter: Key.ENTER, Space: Key.SPACE, ArrowRight: Key.ARROW_RIGHT }[
-            key
-          ] ?? key,
-        );
+        // Match Playwright's keyboard transport: send native input to the
+        // focused element. Safari's Element.sendKeys rejects table rows as
+        // non-interactable even when their tabindex allows keyboard focus.
+        await driver
+          .actions()
+          .sendKeys(
+            { Enter: Key.ENTER, Space: Key.SPACE, ArrowRight: Key.ARROW_RIGHT }[
+              key
+            ] ?? key,
+          )
+          .perform();
       },
       click: async (selector) =>
         (await driver.findElement(By.css(selector))).click(),
