@@ -91,7 +91,7 @@ export function RichChartDataExample({
         columnOptions: {
           0: { width: 120, minWidth: 120, whiteSpace: "normal" },
           1: { isNumeric: true, minWidth: 160, allowsSorting: true },
-          2: { isNumeric: true, minWidth: 180, allowsSorting: true },
+          2: { isNumeric: true, minWidth: 160, allowsSorting: true },
           3: { isNumeric: true, minWidth: 130, allowsSorting: true },
         },
         renderCell: (value, index, row) => {

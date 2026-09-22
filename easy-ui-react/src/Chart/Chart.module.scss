@@ -127,12 +127,15 @@
   align-items: center;
   gap: design-token("space.1");
   min-height: 28px;
+  max-width: 100%;
   border: 0;
   padding: 0;
   color: inherit;
   background: transparent;
   font: inherit;
   text-align: inherit;
+  white-space: inherit;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 

@@ -251,6 +251,23 @@ export async function auditChartDataView(
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   );
+  await driver.key("thead th:nth-child(3) button", "Enter");
+  await driver.wait(() => {
+    const scroll = document.querySelector("details [role=region]");
+    const heading = document.querySelector("thead th");
+    const button = document
+      .querySelector("thead th:nth-child(3) button")
+      .getBoundingClientRect();
+    const bounds = scroll.getBoundingClientRect();
+    const start =
+      getComputedStyle(heading).insetInlineStart !== "auto"
+        ? heading.getBoundingClientRect().right
+        : bounds.left + scroll.clientLeft;
+    return (
+      button.left >= start - 1 &&
+      button.right <= bounds.left + scroll.clientLeft + scroll.clientWidth + 1
+    );
+  });
   return {
     checks: [
       "folded-by-default chart data with deferred rich content",

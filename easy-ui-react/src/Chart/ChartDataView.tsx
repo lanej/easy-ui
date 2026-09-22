@@ -38,13 +38,14 @@ export function ChartDataView({
 }: ChartDataViewProps) {
   const [hasOpened, setHasOpened] = useState(false);
   const { rows, descriptor, toggleSort } = useChartDataSort(dataTable);
-  const { scrollRef, headerRef, offsets, pinnedWidth, headerHeight } =
-    useChartDataLayout(
-      dataTable.columns.length,
-      dataTable.pinnedColumnCount,
-      dataTable.stickyHeader,
-      Boolean(disclosureLabel),
-    );
+  const {
+    scrollRef,
+    headerRef,
+    offsets,
+    pinnedWidth,
+    headerHeight,
+    revealFocus,
+  } = useChartDataLayout(dataTable, Boolean(disclosureLabel));
   const renderCell =
     !disclosureLabel || hasOpened ? dataTable.renderCell : undefined;
   const columnStyle = (index: number, isBodyCell = false): CSSProperties => {
@@ -55,7 +56,10 @@ export function ChartDataView({
       textAlign: options?.alignment ?? (options?.isNumeric ? "end" : undefined),
       whiteSpace:
         options?.whiteSpace ??
-        (isBodyCell && dataTable.renderCell ? "normal" : undefined),
+        ((isBodyCell && dataTable.renderCell) ||
+        (!isBodyCell && options?.allowsSorting)
+          ? "normal"
+          : undefined),
       insetInlineStart: offsets[index],
     };
   };
@@ -77,34 +81,7 @@ export function ChartDataView({
       }}
       tabIndex={0}
       role="region"
-      onFocusCapture={(event) => {
-        const target = event.target;
-        const scroll = event.currentTarget;
-        if (
-          target === scroll ||
-          target.closest(`.${styles.tableScroll}`) !== scroll
-        )
-          return;
-        // Native focus scrolling does not account for overlaid sticky cells.
-        // Apply measured scroll padding after the browser's own focus movement.
-        requestAnimationFrame(() => {
-          if (!scroll.contains(target) || target !== document.activeElement)
-            return;
-          const { scrollLeft, scrollTop } = scroll;
-          target.scrollIntoView?.({
-            block: "nearest",
-            inline: "nearest",
-            behavior: "instant",
-          });
-          if (target.closest(`.${styles.pinnedColumn}`))
-            scroll.scrollLeft = scrollLeft;
-          if (
-            dataTable.stickyHeader !== false &&
-            headerRef.current?.contains(target)
-          )
-            scroll.scrollTop = scrollTop;
-        });
-      }}
+      onFocusCapture={(event) => revealFocus(event.target)}
       {...aria}
       aria-label={
         aria["aria-labelledby"]

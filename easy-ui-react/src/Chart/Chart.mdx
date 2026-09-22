@@ -147,7 +147,7 @@ Formatting does not change `onRowSelect` IDs.
 
 Column options apply to the heading and cells: `alignment` (`start`, `center`,
 `end`), `isNumeric` (default end alignment), `width`, `minWidth`, and `whiteSpace`
-(`normal` or `nowrap`). Rich cells wrap unless overridden; plain tables retain
+(`normal` or `nowrap`). Rich cells and sortable headings wrap unless overridden; plain tables retain
 their existing layout. Table overflow stays inside the disclosure. `maxHeight`
 defaults to 360px; use `"none"` for natural height.
 
@@ -156,7 +156,8 @@ Column headings stay visible while the table scrolls vertically; set
 during horizontal scrolling (default zero). Pinning uses measured widths and
 logical inline positioning, including right-to-left layouts. As the viewport
 narrows or text grows, fewer leading columns pin so that at least half the
-scroll region remains available for other data. Combining a row's region and
+scroll region remains available for other data, with room for complete sort
+controls and their focus rings. Combining a row's region and
 zone in one identifying cell preserves complete context on a phone.
 
 Set `allowsSorting: true` on individual columns to show header buttons. Activate
