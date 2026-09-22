@@ -102,6 +102,34 @@ export type MapSurfaceCell = {
   n: number;
 };
 
+/** One color stop in a delivery-surface value-to-color ramp, evaluated as a MapLibre linear
+ *  `interpolate` expression. Stops need not be supplied in sorted order. */
+export type MapSurfaceColorStop = {
+  /** Cell-field value at which this color applies exactly. */
+  value: number;
+  /** Any valid MapLibre paint-property color (e.g. a hex string). */
+  color: string;
+};
+
+/** A value-to-color ramp for one delivery-surface metric. At least two stops are required for a
+ *  MapLibre `interpolate` expression to be valid. */
+export type MapSurfaceColorScale = readonly MapSurfaceColorStop[];
+
+/** One independently selectable delivery-surface metric. Only one metric's fill layer renders at
+ *  a time, chosen via the built-in toolbar switcher (see `NetworkMapToolbar`) — this keeps color
+ *  (e.g. delivery time) and count/spread from being blended into a single, illegible channel. */
+export type MapSurfaceMetric = {
+  /** Stable identifier; also the switcher's radio value. */
+  key: string;
+  /** Human-readable label for the switcher control and legend. */
+  label: string;
+  /** Which `MapSurfaceCell` field this metric's fill-color ramp reads. */
+  field: "medianMinutes" | "iqrMinutes" | "n";
+  /** Color scale for this metric; defaults to the standard 0-120-minute ramp when omitted. Supply
+   *  this whenever `field`'s values fall outside that range (e.g. `n` or minutes-since-midnight). */
+  colorScale?: MapSurfaceColorScale;
+};
+
 /** A delivery-time snapshot with per-cell estimates, spread, and observation counts. */
 export type MapSurface = {
   /** Grid cells composing this surface. */
@@ -110,6 +138,13 @@ export type MapSurface = {
   asOf: string;
   /** Computation source or model identifier. */
   source: string;
+  /**
+   * Optional named metrics, switched one at a time instead of always blending `medianMinutes`
+   * color with `n`-derived opacity. Omit to keep today's exact single-layer legacy behavior
+   * (color from `medianMinutes`, opacity from relative `n`, using `deliverySurfaceColorScale` or
+   * the built-in default ramp).
+   */
+  metrics?: readonly MapSurfaceMetric[];
 };
 
 /** Native MapLibre clustering configuration for dense facility groups. See `NetworkMapProps.clusterFacilities`. */
@@ -213,6 +248,21 @@ export type NetworkMapProps = {
   areas?: readonly MapArea[];
   /** Optional delivery-time field surface, rendered as a data-driven fill layer. */
   surface?: MapSurface;
+  /**
+   * Color scale for the legacy single-layer surface's `fill-color` ramp (ignored when
+   * `surface.metrics` is supplied — give each metric its own `colorScale` there instead).
+   * Defaults to this component's original 5-stop 0/30/60/90/120-minute ramp, preserved exactly
+   * for callers that pass neither this nor `surface.metrics` (e.g. `logistics-services`'
+   * `TheftPatternsScreen.tsx`, which already transforms its own values to fit that default rather
+   * than being handed a configurable scale). Supply this when `medianMinutes` isn't a 0-120-minute
+   * elapsed time — e.g. minutes-since-midnight.
+   */
+  deliverySurfaceColorScale?: MapSurfaceColorScale;
+  /**
+   * Receives the delivery-surface cell under the pointer on `mouseenter`/`mousemove` over the
+   * fill layer, and `null` on `mouseleave`. Additive: does not affect facility click-to-select.
+   */
+  onCellHover?: (cell: MapSurfaceCell | null) => void;
   /** Controlled location selection. */
   selectedFacilityId?: string;
   /** Show the selected facility details below the map; defaults to true. Set false when a linked panel already provides this context. */

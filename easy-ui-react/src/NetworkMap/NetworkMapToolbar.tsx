@@ -2,6 +2,7 @@ import React, { CSSProperties } from "react";
 import { useId } from "react-aria";
 import { defaultControlLabels } from "./controls";
 import type {
+  MapSurfaceMetric,
   NetworkMapControlLabels,
   NetworkMapControls,
   NetworkMapLayerVisibility,
@@ -23,6 +24,10 @@ type NetworkMapToolbarProps = {
   onFitAll: () => void;
   onSelectedSegment: () => void;
   onLatestEvent: () => void;
+  /** Delivery-surface metrics; the switcher renders only when at least one is supplied. */
+  metrics?: readonly MapSurfaceMetric[];
+  activeMetricKey?: string;
+  onMetricChange?: (key: string) => void;
 };
 
 /** Only renders relevant controls; engine-owned navigation and scale are managed separately. */
@@ -38,8 +43,12 @@ export function NetworkMapToolbar({
   onFitAll,
   onSelectedSegment,
   onLatestEvent,
+  metrics = [],
+  activeMetricKey,
+  onMetricChange,
 }: NetworkMapToolbarProps) {
   const suffixId = useId();
+  const metricSuffixId = useId();
   const externalLabel = labelledBy?.trim();
   const cameraActions = [
     { key: "fitAll", onClick: onFitAll },
@@ -50,7 +59,11 @@ export function NetworkMapToolbar({
   const visibleLayers = (
     ["risk", "weather", "deliverySurface"] as const
   ).filter((key) => controls[key]);
-  if (!visibleActions.length && !visibleLayers.length) return null;
+  // Applicability of the surface itself (controls.deliverySurface) also gates its metric
+  // switcher — a metric list with no supported cells to render is not worth switching between.
+  const visibleMetrics = controls.deliverySurface ? metrics : [];
+  if (!visibleActions.length && !visibleLayers.length && !visibleMetrics.length)
+    return null;
 
   return (
     <div
@@ -89,6 +102,35 @@ export function NetworkMapToolbar({
                 }
               />{" "}
               {labels?.[key] ?? defaultControlLabels[key]}
+            </label>
+          ))}
+        </div>
+      )}
+      {visibleMetrics.length > 0 && (
+        <div
+          className={styles.buttons}
+          role="radiogroup"
+          aria-label={`${accessibleName} delivery surface metric`}
+          aria-labelledby={
+            externalLabel ? `${externalLabel} ${metricSuffixId}` : undefined
+          }
+        >
+          {externalLabel && (
+            <span id={metricSuffixId} hidden>
+              delivery surface metric
+            </span>
+          )}
+          {visibleMetrics.map((metric) => (
+            <label key={metric.key}>
+              <input
+                type="radio"
+                name={`${suffixId}-surface-metric`}
+                value={metric.key}
+                checked={activeMetricKey === metric.key}
+                disabled={!ready}
+                onChange={() => onMetricChange?.(metric.key)}
+              />{" "}
+              {metric.label}
             </label>
           ))}
         </div>

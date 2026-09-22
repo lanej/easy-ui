@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { resolveMapControls } from "./controls";
 import { useLayerVisibility } from "./useLayerVisibility";
+import { useSurfaceMetric } from "./useSurfaceMetric";
 import type {
   MapArea,
   MapFacility,
@@ -32,6 +33,9 @@ function useMapState(input: NetworkMapProps) {
     areas: input.areas ?? emptyAreas,
   };
   const { visibility, changeVisibility } = useLayerVisibility(props);
+  const { activeMetric, setActiveMetric } = useSurfaceMetric(
+    props.surface?.metrics,
+  );
   const [state, setState] = useState<MapState>("loading");
   const [zoom, setZoom] = useState(0);
   const surfaceOwner = useRef<symbol | null>(null);
@@ -44,6 +48,8 @@ function useMapState(input: NetworkMapProps) {
     props,
     visibility,
     changeVisibility,
+    activeMetric,
+    setActiveMetric,
     state,
     setState,
     zoom,

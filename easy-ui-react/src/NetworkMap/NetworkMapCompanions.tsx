@@ -2,6 +2,7 @@ import React from "react";
 import { useId } from "react-aria";
 import { useNetworkMap } from "./NetworkMapContext";
 import { NetworkMapToolbar } from "./NetworkMapToolbar";
+import { defaultDeliverySurfaceColorScale } from "./surfaceRendering";
 import { visualizationTypographyStyle } from "../visualization/typography";
 import styles from "./NetworkMap.module.scss";
 
@@ -49,6 +50,8 @@ export function NetworkMapControlPanel() {
     state,
     visibility,
     changeVisibility,
+    activeMetric,
+    setActiveMetric,
     commands,
   } = useNetworkMap();
   return (
@@ -63,6 +66,9 @@ export function NetworkMapControlPanel() {
       onFitAll={() => commands.current.fitAll()}
       onSelectedSegment={() => commands.current.selectedSegment()}
       onLatestEvent={() => commands.current.latestEvent()}
+      metrics={options.surface?.metrics}
+      activeMetricKey={activeMetric?.key}
+      onMetricChange={setActiveMetric}
       style={visualizationTypographyStyle(options.typography)}
     />
   );
@@ -105,7 +111,12 @@ export function NetworkMapSelectionDetails() {
 
 /** Only supplied, visible domain layers contribute legend content. */
 export function NetworkMapLegend() {
-  const { props: options, visibility } = useNetworkMap();
+  const { props: options, visibility, activeMetric } = useNetworkMap();
+  const resolvedColorScale =
+    activeMetric?.colorScale ??
+    options.deliverySurfaceColorScale ??
+    defaultDeliverySurfaceColorScale;
+  const scaleLabel = activeMetric?.label ?? "Median minutes";
   const observed = options.segments.some(
     (segment) =>
       segment.evidence === "measured" || segment.evidence === "transfer",
@@ -153,9 +164,24 @@ export function NetworkMapLegend() {
           aria-label="Delivery time surface legend"
           style={visualizationTypographyStyle(options.typography)}
         >
-          <span>Median minutes: blue 0 · yellow 60 · red 120+.</span>
+          <span>
+            {scaleLabel}:
+            {[...resolvedColorScale]
+              .sort((a, b) => a.value - b.value)
+              .map((stop) => (
+                <span key={stop.value} className={styles.scaleStop}>
+                  <i
+                    className={styles.swatch}
+                    style={{ background: stop.color }}
+                  />
+                  {stop.value}
+                </span>
+              ))}
+          </span>
           <span>Cells without an estimate or observations are unfilled.</span>
-          <span>Opacity compares observation counts within this map.</span>
+          {!options.surface.metrics?.length && (
+            <span>Opacity compares observation counts within this map.</span>
+          )}
         </div>
       )}
       {visibility.weather && options.areas.length > 0 && (
