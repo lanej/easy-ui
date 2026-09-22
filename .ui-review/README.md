@@ -52,13 +52,13 @@ The chart contract also reviews `chart-composition.html` and `native-regressions
 ## Score composition contract
 
 `score-composition.html` is included at desktop, 320px, and 4K in its default,
-expanded/larger-text, and dark states. Scoped gates require all six score nodes,
+expanded/larger-text, and dark states. Scoped gates require all seven score nodes,
 non-overlapping boxes within the layout, 14px primary text (including signal labels
 and expanded explanations; 12px annotations retain the shared floor), and 44px
 explanation controls. Clipping checks inspect the selected node boxes, primary
 text containers, values, status labels, and result content. Intentionally hidden
 source summaries are excluded; screenshots complement these scoped measurements.
-The 4K layout preserves this finite comparison within a bounded reading width;
+The example retains an untriggered, explicitly clear weight-mismatch signal alongside flagged and elevated observations. The 4K layout preserves this finite comparison within a bounded reading width;
 it does not stretch the cards or invent additional evidence (DR-007).
 
 Bars encode fraction of each explicitly supplied cap, not absolute points across

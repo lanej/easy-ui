@@ -143,11 +143,12 @@
     "type": "required-elements",
     "selector": "[data-score-example] [data-score-layout]",
     "severity": "error",
-    "reason": "Keep all three signals, two contributions, and the result available in the finite comparison, including below the fold on mobile.",
+    "reason": "Keep all four signals, two contributions, and the result available in the finite comparison, including below the fold on mobile.",
     "designRules": ["DR-006", "DR-007"],
     "pages": ["score-composition"],
     "required": [
       "[data-score-node=\"signal\"][data-score-id=\"dimensions\"]",
+      "[data-score-node=\"signal\"][data-score-id=\"weight\"]",
       "[data-score-node=\"signal\"][data-score-id=\"ratio\"]",
       "[data-score-node=\"signal\"][data-score-id=\"burst\"]",
       "[data-score-node=\"contribution\"][data-score-id=\"underdeclaration\"]",
