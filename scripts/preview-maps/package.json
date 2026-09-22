@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@easypost/easy-ui-tokens": "1.0.0-alpha.17",
+    "echarts": "6.1.0",
+    "lodash": "4.17.21",
     "maplibre-gl": "6.9.0",
     "overlayscrollbars": "2.3.0",
     "react": "19.0.0",

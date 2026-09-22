@@ -66,7 +66,10 @@ export function NetworkMapCellPopover({
     return () => observer.disconnect();
   }, [x, y]);
   useEffect(() => {
-    if (pinned) closeButton.current?.focus({ preventScroll: true });
+    // Entering an embedded control pins the card without stealing its focus.
+    // A map click still moves focus into the inspector for keyboard dismissal.
+    if (pinned && !element.current?.contains(document.activeElement))
+      closeButton.current?.focus({ preventScroll: true });
   }, [pinned]);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {

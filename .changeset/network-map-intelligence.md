@@ -9,3 +9,5 @@ Compose the map surface independently from optional headings, controls, legends,
 Preserve source values, missing observations, provenance and uncertainty for weather and surface data. Keep dateline routes short, consumer paint overrides intact, and selection visible across evidence types. Update marker callbacks without rebuilding the map, and avoid unchanged source uploads during interaction updates.
 
 Inspect delivery cells on hover or click/tap, with a contained, dismissible detail card and equivalent keyboard-accessible details. Supplied quartiles and bounds render an engine-free range plot; missing distributions retain honest summaries. Reuse `NetworkMapCellDetails`, supply a custom chart, or hide the card while retaining original-record callbacks. Configure delivery color scales and switch named metrics without rebuilding the map.
+
+Compose arbitrary charts inside `NetworkMapCellDetails` while retaining its summary and provenance. Embedded controls keep focus when pinning the inspector. Histogram, density and history recipes demonstrate application-owned data and optional chart engines without adding chart-specific map props.

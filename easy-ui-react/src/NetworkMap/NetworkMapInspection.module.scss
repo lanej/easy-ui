@@ -1,0 +1,29 @@
+@use "../styles/common" as *;
+
+.viewControl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: var(--ezui-viz-control-size, 14px);
+
+  select {
+    min-width: 0;
+    max-width: 100%;
+    padding: 6px 8px;
+    font: inherit;
+    color: inherit;
+    background: design-token("color.neutral.000");
+    border: 1px solid design-token("color.neutral.300");
+    border-radius: 4px;
+  }
+}
+
+.method {
+  margin-block: 12px;
+
+  p {
+    margin-top: 8px;
+  }
+}

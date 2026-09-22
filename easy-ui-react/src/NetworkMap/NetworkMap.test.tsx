@@ -1199,6 +1199,24 @@ describe("delivery surface inspection", () => {
     expect(card()).not.toBeInTheDocument();
   });
 
+  it("pins an embedded control without stealing its keyboard focus", async () => {
+    await ready({
+      renderCellDetails: () => (
+        <select aria-label="Chart view" defaultValue="histogram">
+          <option value="histogram">Histogram</option>
+          <option value="density">Density</option>
+        </select>
+      ),
+    });
+    enter();
+    const control = screen.getByRole("combobox", { name: "Chart view" });
+    act(() => control.focus());
+    expect(card()).toHaveTextContent("Selected cell");
+    expect(control).toHaveFocus();
+    fireEvent.keyDown(control, { key: "Escape" });
+    expect(card()).not.toBeInTheDocument();
+  });
+
   it("clears an inspected cell when switching to a metric that has no value for it", async () => {
     await ready({
       surface: {

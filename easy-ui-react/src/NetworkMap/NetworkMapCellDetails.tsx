@@ -9,6 +9,8 @@ import styles from "./NetworkMap.module.scss";
 
 export type NetworkMapCellDetailsProps = MapSurfaceCellDetailsContext & {
   typography?: VisualizationTypography;
+  /** Replace the default range plot while retaining the summary and provenance. null hides the plot. */
+  children?: React.ReactNode;
 };
 
 const minutes = (value: number) => `${value} min`;
@@ -25,6 +27,7 @@ export function NetworkMapCellDetails({
   surface,
   metric,
   typography,
+  children,
 }: NetworkMapCellDetailsProps) {
   const distribution = cell.distribution;
   const bounds = distribution && [
@@ -72,7 +75,9 @@ export function NetworkMapCellDetails({
           <dd>{summary(cell.n)}</dd>
         </div>
       </dl>
-      {distribution && valid ? (
+      {children !== undefined ? (
+        children
+      ) : distribution && valid ? (
         <RangePlot
           label="Delivery time spread"
           description="The interval contains the middle 50% of observations."

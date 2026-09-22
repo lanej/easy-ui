@@ -13,6 +13,11 @@ import type {
   MapSurface,
 } from "../../easy-ui-react/src/NetworkMap";
 import { ThemeProvider } from "../../easy-ui-react/src/Theme";
+import {
+  CellChartExample,
+  inspectionObservations,
+  inspectionSurface,
+} from "../../easy-ui-react/src/NetworkMap/NetworkMapInspection.examples";
 
 // This local style needs no tiles, credentials, glyph service, or external data.
 const mapStyle: StyleSpecification = {
@@ -43,36 +48,13 @@ const estimates = [
 const inspectionMode = new URLSearchParams(window.location.search).has(
   "inspection",
 );
+const chartsMode =
+  inspectionMode && new URLSearchParams(window.location.search).has("charts");
 const surface: MapSurface = {
   asOf: "2026-09-20T12:00:00Z",
   source: "Synthetic browser regression records",
   cells: inspectionMode
-    ? [
-        {
-          latMin: 0.2,
-          latMax: 0.8,
-          lonMin: -1,
-          lonMax: -0.1,
-          medianMinutes: 45,
-          iqrMinutes: 30,
-          n: 80,
-          distribution: {
-            minMinutes: 5,
-            q1Minutes: 20,
-            q3Minutes: 50,
-            maxMinutes: 120,
-          },
-        },
-        {
-          latMin: 0.2,
-          latMax: 0.8,
-          lonMin: 0.1,
-          lonMax: 1,
-          medianMinutes: 20,
-          iqrMinutes: 12,
-          n: 40,
-        },
-      ]
+    ? inspectionSurface.cells
     : estimates.map((estimate, index) => ({
         latMin: 0.2,
         latMax: 0.8,
@@ -142,6 +124,13 @@ function App() {
   const [revision, update] = useState(0);
   const [visible, show] = useState(true);
   const [large, setLarge] = useState(false);
+  const typography = large
+    ? { title: 22, description: 18, label: 16, detail: 16, control: 18 }
+    : undefined;
+  const observations = useMemo(
+    () => [...inspectionObservations, ...Array<number>(revision).fill(45)],
+    [revision],
+  );
   const displayedSurface = useMemo(
     () =>
       inspectionMode
@@ -177,7 +166,7 @@ function App() {
     [revision],
   );
   return (
-    <main className="control">
+    <main className={chartsMode ? "control inspection-preview" : "control"}>
       <h1>
         {inspectionMode
           ? "Inspect delivery-time distributions"
@@ -188,6 +177,17 @@ function App() {
           ? "Hover a cell, or click or tap to keep its detail open. The left cell has a supplied distribution; the right cell has summary values only. All records are synthetic."
           : "Synthetic records check custom route styling and unsupported delivery-time estimates."}
       </p>
+      {inspectionMode && (
+        <p>
+          <a href={chartsMode ? "?inspection=1" : "?inspection=1&charts=1"}>
+            {chartsMode
+              ? "Review the default range summary"
+              : "Explore histogram, density, and history inside the inspector"}
+          </a>
+          {chartsMode &&
+            " · Pin a cell, then change Chart view. The same charts are available in Inspect cell below the map."}
+        </p>
+      )}
       <div className="regression-actions" aria-label="Regression actions">
         <button type="button" onClick={() => select("ab")}>
           Select first connection
@@ -239,9 +239,18 @@ function App() {
         controls={false}
         showSelectionDetails={false}
         height={inspectionMode ? 560 : 420}
-        typography={
-          large
-            ? { title: 22, description: 18, label: 16, detail: 16, control: 18 }
+        typography={typography}
+        renderCellDetails={
+          chartsMode
+            ? (context) => (
+                <CellChartExample
+                  {...context}
+                  observations={
+                    context.cell.lonMin === -1 ? observations : undefined
+                  }
+                  typography={typography}
+                />
+              )
             : undefined
         }
         onMapReady={ready}

@@ -11,6 +11,11 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { NetworkMap } from "./NetworkMap";
 import { NetworkMapExample } from "./NetworkMap.examples";
 import {
+  CellChartExample,
+  inspectionObservations,
+  inspectionSurface,
+} from "./NetworkMapInspection.examples";
+import {
   exampleBasemap,
   networkFacilities,
   networkSegments,
@@ -90,4 +95,38 @@ function LayerOnlyExample() {
 }
 export const LayerOnlyComposition: Story = {
   render: () => <LayerOnlyExample />,
+};
+
+export const RichCellInspection: Story = {
+  render: () => (
+    <NetworkMap
+      title="Charts inside map inspection"
+      description="Hover the left cell and change Chart view to explore a histogram, density estimate, or daily history. The right cell has summary data only. All observations are synthetic."
+      mapStyle={{
+        version: 8,
+        sources: {},
+        layers: [
+          {
+            id: "background",
+            type: "background",
+            paint: { "background-color": "#f5f7fb" },
+          },
+        ],
+      }}
+      workerUrl={workerUrl}
+      surface={inspectionSurface}
+      initialView={{ center: [0, 0.5], zoom: 7 }}
+      defaultLayerVisibility={{ deliverySurface: true }}
+      controls={false}
+      height={600}
+      renderCellDetails={(context) => (
+        <CellChartExample
+          {...context}
+          observations={
+            context.cell.lonMin === -1 ? inspectionObservations : undefined
+          }
+        />
+      )}
+    />
+  ),
 };

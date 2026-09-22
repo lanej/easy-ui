@@ -62,7 +62,21 @@ assert(
   "Native SVG entry must exclude maps",
 );
 const engine = Object.keys(manifest).find((k) => /maplibre-gl/.test(k));
+const charts = Object.keys(manifest).find((k) => /echarts/.test(k));
 assert(engine, "MapLibre must be an independent lazy chunk");
+assert(charts, "Custom inspector charts must have an independent lazy engine");
+assert(
+  !closure("regressions.html").has(charts),
+  "Inspector charts load only when mounted",
+);
+assert(
+  !closure("index.html", true).has(charts),
+  "Ordinary map consumers exclude the chart engine",
+);
+assert(
+  !lightweight.has(charts),
+  "Native SVG consumers exclude the chart engine",
+);
 assert(
   !closure("index.html").has(engine),
   "MapLibre must not be in the synchronous gallery closure",
@@ -74,6 +88,10 @@ const report = {
   galleryInitial: await size(closure("index.html")),
   lightweight: await size(lightweight),
   mapEngine: await size(closure(engine)),
+  customInspectorChartEngine: {
+    entry: manifest[charts].file,
+    ...(await size(closure(charts))),
+  },
   workerAssets: (await size(closure("index.html", true))).assets.filter((a) =>
     /worker/.test(a.file),
   ),

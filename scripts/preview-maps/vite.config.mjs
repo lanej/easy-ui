@@ -18,6 +18,8 @@ export default defineConfig({
           "react-dom",
           "react-aria",
           "maplibre-gl",
+          "echarts",
+          "lodash",
           "@easypost/easy-ui-tokens",
         ].map((name) => [name, local(`./node_modules/${name}`)]),
       ),

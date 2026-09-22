@@ -51,6 +51,38 @@ it("does not fabricate a distribution from median and IQR alone", () => {
   expect(screen.getByText(/Distribution not supplied/)).toBeInTheDocument();
 });
 
+it("composes arbitrary content with the summary and provenance, with explicit plot omission", () => {
+  const props = { cell: { ...cell, distribution: undefined }, surface };
+  const { rerender } = render(
+    <NetworkMapCellDetails {...props}>
+      <section aria-label="Application histogram">
+        Supplied sample histogram
+      </section>
+    </NetworkMapCellDetails>,
+  );
+  expect(
+    screen.getByRole("region", { name: "Application histogram" }),
+  ).toBeInTheDocument();
+  expect(screen.getByText("38 min")).toBeInTheDocument();
+  expect(screen.getByText(/Observed delivery sample/)).toHaveTextContent(
+    surface.asOf,
+  );
+  expect(
+    screen.queryByText(/Distribution not supplied/),
+  ).not.toBeInTheDocument();
+  rerender(
+    <NetworkMapCellDetails cell={cell} surface={surface}>
+      {null}
+    </NetworkMapCellDetails>,
+  );
+  expect(screen.queryByRole("figure")).not.toBeInTheDocument();
+  expect(screen.queryByRole("region")).not.toBeInTheDocument();
+  rerender(<NetworkMapCellDetails cell={cell} surface={surface} />);
+  expect(
+    screen.getByRole("figure", { name: "Delivery time spread" }),
+  ).toBeInTheDocument();
+});
+
 it.each<[string, Partial<MapSurfaceDistribution>, Partial<MapSurfaceCell>]>([
   ["reversed quartiles", { q1Minutes: 51 }, {}],
   ["negative minimum", { minMinutes: -1 }, {}],

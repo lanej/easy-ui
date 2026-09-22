@@ -135,4 +135,183 @@ export async function checkSurfaceInspection({
     ),
   );
   await clean("cell-inspection");
+
+  await browser.resize(1440, 1100);
+  await browser.open(`${base}/regressions.html?inspection=1&charts=1`);
+  await settle();
+  const chartEngineUrl = await browser.evaluate(async () => {
+    const url = new URL("bundle-report.json", location.href);
+    const report = await (await fetch(url)).json();
+    return new URL(report.customInspectorChartEngine.entry, url).href;
+  });
+  check(
+    "custom charts stay unmounted until inspection",
+    await browser.evaluate(
+      (engineUrl) =>
+        !document.querySelector("[data-chart-state]") &&
+        !performance
+          .getEntriesByType("resource")
+          .some((entry) => entry.name === engineUrl),
+      chartEngineUrl,
+    ),
+  );
+  target = await point();
+  await browser.move(target.x, target.y);
+  await browser.wait(() =>
+    document.querySelector(
+      '[aria-label="Delivery cell details"] [data-chart-state="ready"] svg',
+    ),
+  );
+  check(
+    "the optional chart engine loads with its first mounted chart",
+    await browser.evaluate(
+      (engineUrl) =>
+        performance
+          .getEntriesByType("resource")
+          .some((entry) => entry.name === engineUrl),
+      chartEngineUrl,
+    ),
+  );
+  await browser.evaluate(() =>
+    document
+      .querySelector('[aria-label="Delivery cell details"] select')
+      .focus(),
+  );
+  check(
+    "focusing a chart control pins the inspector and retains focus",
+    await browser.evaluate(
+      () =>
+        document.activeElement.matches(
+          '[aria-label="Delivery cell details"] select',
+        ) &&
+        document
+          .querySelector('[aria-label="Delivery cell details"]')
+          .textContent.includes("Selected cell"),
+    ),
+  );
+  await browser.key(`${selector} section details > summary`, "Enter");
+  check(
+    "histogram preserves zero bins, boundary observations and exact counts",
+    await browser.evaluate(() => {
+      const rows = [
+        ...document.querySelectorAll(
+          '[aria-label="Delivery cell details"] tbody tr',
+        ),
+      ];
+      return (
+        rows.length === 6 &&
+        rows.reduce((sum, row) => sum + Number(row.cells[1].textContent), 0) ===
+          80 &&
+        rows[2].cells[1].textContent === "43" &&
+        rows[3].cells[1].textContent === "0" &&
+        rows[5].cells[0].textContent.includes("inclusive") &&
+        rows[5].cells[1].textContent === "6"
+      );
+    }),
+  );
+  await capture("cell-histogram-desktop");
+  await scan("cell-histogram-desktop");
+  await browser.select(`${selector} select`, "density");
+  await browser.wait(() =>
+    document.querySelector(
+      '[aria-label="Delivery cell details"] [data-chart-state="ready"] svg',
+    ),
+  );
+  check(
+    "density is labeled as an estimate from supplied observations",
+    await browser.evaluate(() => {
+      const text = document.querySelector(
+        '[aria-label="Delivery cell details"]',
+      ).textContent;
+      return (
+        text.includes("Density estimate") &&
+        text.includes("bandwidth: 12 minutes") &&
+        text.includes("density, not counts")
+      );
+    }),
+  );
+  await capture("cell-density-desktop");
+  await scan("cell-density-desktop");
+  await browser.select(`${selector} select`, "history");
+  await browser.wait(() =>
+    document.querySelector('[aria-label="Delivery cell details"] figure'),
+  );
+  check(
+    "the same inspector hosts an independent native time series",
+    await browser.evaluate(
+      () =>
+        document
+          .querySelector('[aria-label="Delivery cell details"] figure')
+          .textContent.includes("Daily median delivery time") &&
+        !document.querySelector(
+          '[aria-label="Delivery cell details"] [data-chart-state]',
+        ),
+    ),
+  );
+  await capture("cell-history-desktop");
+  await browser.clickNamed("button", "Toggle large text");
+  await browser.resize(390, 850);
+  await settle();
+  target = await point();
+  await browser.move(target.x, target.y);
+  await browser.wait(isOpen);
+  await browser.clickNamed("button", "Keep open");
+  await browser.select(`${selector} select`, "density");
+  await browser.wait(() =>
+    document.querySelector(
+      '[aria-label="Delivery cell details"] [data-chart-state="ready"] svg',
+    ),
+  );
+  await browser.wait(contained);
+  check(
+    "embedded charts and controls adapt to large text in narrow inspectors",
+    await browser.evaluate(() => {
+      const card = document.querySelector(
+        '[aria-label="Delivery cell details"]',
+      );
+      return (
+        card.scrollWidth <= card.clientWidth + 1 &&
+        parseFloat(getComputedStyle(card.querySelector("select")).fontSize) >=
+          18
+      );
+    }),
+  );
+  await browser.evaluate(() =>
+    document
+      .querySelector('[aria-label="Delivery cell details"] [data-chart-state]')
+      .scrollIntoView({ block: "center" }),
+  );
+  await capture("cell-density-mobile");
+  await scan("cell-density-mobile");
+  await browser.clickNamed("button", "Close cell details");
+  target = await point(1);
+  await browser.move(target.x, target.y);
+  await browser.wait(isOpen);
+  check(
+    "cells without samples retain their summary without fabricated charts",
+    await browser.evaluate(() => {
+      const card = document.querySelector(
+        '[aria-label="Delivery cell details"]',
+      );
+      return (
+        card.textContent.includes("Distribution not supplied") &&
+        !card.querySelector("[data-chart-state]")
+      );
+    }),
+  );
+  await browser.clickNamed("button", "Toggle surface visibility");
+  await browser.key("[data-map-state] ~ details > summary", "Enter");
+  await browser.key(
+    '[aria-label$="delivery surface data"] tbody tr:first-child td details > summary',
+    "Enter",
+  );
+  await browser.wait(() =>
+    document.querySelector('td details[open] [data-chart-state="ready"] svg'),
+  );
+  check(
+    "custom chart details remain keyboard-accessible when the map layer is hidden",
+    true,
+  );
+  await scan("cell-charts-exact-data");
+  await clean("cell-charts");
 }

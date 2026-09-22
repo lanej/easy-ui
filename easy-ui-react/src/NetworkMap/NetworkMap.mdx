@@ -237,18 +237,28 @@ These values must come from the application. A median and IQR width alone do not
 
 `NetworkMapCellDetails` exports the default engine-free content for use in an application panel. For a histogram, trend, fetched detail, or domain-specific units, replace the content using `renderCellDetails`. It receives the original cell, surface metadata, and active metric; returning `null` omits a map card for that cell. Both map inspection and the exact-data detail use this renderer.
 
+The renderer accepts any React content, including `Chart`, a native plot, another chart library, controls, loading/error states, or a combination. Supply `children` to `NetworkMapCellDetails` to replace only its plot while retaining median, IQR, observation count, active metric and provenance. Omit children to keep the default range plot; pass `null` to omit the plot entirely. Focusing an embedded control pins the inspector without moving focus away from that control.
+
 ```tsx
 <NetworkMap
   mapStyle={mapStyle}
   workerUrl={workerUrl}
   surface={surface}
-  renderCellDetails={({ cell, surface, metric }) => (
-    <DeliveryHistogram cell={cell} asOf={surface.asOf} metric={metric} />
+  renderCellDetails={(context) => (
+    <NetworkMapCellDetails {...context}>
+      <DeliveryHistogram observations={lookupObservations(context.cell)} />
+    </NetworkMapCellDetails>
   )}
   onCellHover={(cellOrNull) => highlightCell(cellOrNull)}
   onCellSelect={(cell) => selectCell(cell)}
 />
 ```
+
+<Canvas of={NetworkMapStories.RichCellInspection} />
+
+The RichCellInspection recipe switches between a histogram, an estimated density curve and an independent daily-median history. Histogram bins and density estimates come from supplied synthetic observations, not from the cell's median or IQR. Equal-width bins state their interval boundaries and preserve empty bins; the curve declares its kernel bandwidth and density units. The application owns binning, estimation, history and sample lookup. Consumers with precomputed bins or density points can pass those straight to their chosen chart. The map has no chart-type registry or statistical inference layer.
+
+Keep a hover chart compact, include units and exact data, and let users pin it before sustained interaction. The same renderer runs in the map's keyboard-accessible details; custom charts should remain usable there. Optional chart engines load only when the corresponding content mounts. `showCellDetails={false}` with the existing callbacks supports a larger external inspector when a dashboard does not fit the map card.
 
 Set `showCellDetails={false}` to use an external inspector. Hover/select callbacks and equivalent data remain available; facility selection is independent. `onCellHover(null)` clears transient hover on pointer exit, camera movement, hiding/removing the cell, or map cleanup. Neither callback receives a reconstructed vector-tile copy of the application record.
 

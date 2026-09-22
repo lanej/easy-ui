@@ -75,6 +75,7 @@ const sassSource = `
 
 const typeSource = `
 import { Chart } from "@easypost/easy-ui/Chart";
+import { NetworkMapCellDetails } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard } from "@easypost/easy-ui/MetricCard";
 import { Button } from "@easypost/easy-ui/Button";
 import { DataGrid } from "@easypost/easy-ui/DataGrid";
@@ -102,6 +103,9 @@ const responsive: ResponsiveProp<string> = { sm: "1rem" };
 const className: string = classNames("packed", false);
 
 export const example = <>
+  <NetworkMapCellDetails cell={{latMin: 0, latMax: 1, lonMin: 0, lonMax: 1, medianMinutes: 20, iqrMinutes: 4, n: 80}} surface={{cells: [], source: "Packed sample", asOf: "2026-09-22T00:00:00Z"}}>
+    <strong>Application chart</strong>
+  </NetworkMapCellDetails>
   <Chart title="Packed chart" option={{ series: [{ type: "bar", data: [1] }] }} dataTable={{ columns: ["Count"], rows: [{ id: "one", values: [1] }], columnOptions: {0: {isNumeric: true, minWidth: 160, allowsSorting: true, getSortValue: (value) => value}}, maxHeight: "none", pinnedColumnCount: 1, stickyHeader: true, sortDescriptor: null, onSortChange: (next) => { const column: number | undefined = next?.column; void column; }, renderCell: (value, index, row) => typeof value === "number" ? <strong title={row.id + index}>{value.toFixed(2)}</strong> : null }} />
   <MetricCard label="Packed metric" value="1" />
   <Button onPress={() => undefined}>Packed button</Button>
@@ -173,6 +177,14 @@ for (const load of [require, (specifier) => import(specifier)]) {
   assert.match(richData, /<strong>1.00<\/strong>/);
   assert.ok(richData.indexOf("<strong>1.00") < richData.indexOf("<strong>10.00"));
   assert.match(richData, /aria-sort="ascending"/);
+  const { NetworkMapCellDetails } = await load("@easypost/easy-ui/NetworkMap");
+  const inspector = renderToString(React.createElement(NetworkMapCellDetails, {
+    cell: {latMin: 0, latMax: 1, lonMin: 0, lonMax: 1, medianMinutes: 20, iqrMinutes: 4, n: 80},
+    surface: {cells: [], source: "Packed sample", asOf: "2026-09-22T00:00:00Z"}
+  }, React.createElement("strong", null, "Application chart")));
+  assert.match(inspector, /Application chart/);
+  assert.match(inspector, /Packed sample/);
+  assert.doesNotMatch(inspector, /Distribution not supplied/);
 }
 const expected = JSON.parse(readFileSync("expected-styles.json", "utf8"));
 for (const subpath of ["style.css", ...expected.map((name) => "styles/" + name)]) {
