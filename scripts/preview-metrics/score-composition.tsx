@@ -45,7 +45,7 @@ const reviewTheme = createTheme((preferences) => ({
         "color.negative.100": "var(--ezui-color-red-800)",
         "color.negative.800": "var(--ezui-color-red-100)",
         "color.warning.300": "var(--ezui-color-yellow-800)",
-        "color.warning.800": "var(--ezui-color-yellow-300)",
+        "color.warning.600": "var(--ezui-color-yellow-500)",
       }
     : {}),
 }));
@@ -140,7 +140,12 @@ function Preview() {
             }
             result={
               refreshed
-                ? { score: 0, maxScore: 3, disposition: "Review complete" }
+                ? {
+                    score: 0,
+                    maxScore: 3,
+                    disposition: "Review complete",
+                    sentiment: "positive",
+                  }
                 : scoreCompositionExample.result
             }
             typography={

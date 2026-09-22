@@ -12,7 +12,9 @@ export async function auditScoreComposition(
   await driver.open(`${site}/score-composition.html`);
   await driver.wait(
     () =>
-      document.querySelectorAll("[data-score-example] svg path").length === 5,
+      document.querySelectorAll(
+        "[data-score-example] [data-score-layout] > svg path",
+      ).length === 5,
   );
   await driver.evaluate(() => document.fonts.ready.then(() => true));
 
@@ -88,11 +90,34 @@ export async function auditScoreComposition(
   );
   measurements.push({ name: "contribution-fullness", contributions: fills });
 
+  const resultOutcome = () =>
+    driver.evaluate(() => {
+      const node = document.querySelector('[data-score-node="result"] > div');
+      const strong = [...node.querySelectorAll("strong")];
+      const icon = node.querySelector("svg");
+      return {
+        sentiment: node.dataset.sentiment,
+        decision: strong[0].textContent,
+        score: strong[1].textContent,
+        iconHidden: icon.getAttribute("aria-hidden"),
+        decisionColor: getComputedStyle(strong[0]).color,
+        accentColor: getComputedStyle(node).borderTopColor,
+        background: getComputedStyle(node).backgroundColor,
+      };
+    });
+  const initialOutcome = await resultOutcome();
+  assert.equal(initialOutcome.sentiment, "negative");
+  assert.equal(initialOutcome.decision, "Disable");
+  assert.equal(initialOutcome.score, "2.00");
+  assert.equal(initialOutcome.iconHidden, "true");
+  assert.equal(initialOutcome.decisionColor, initialOutcome.accentColor);
+  measurements.push({ name: "negative-outcome", ...initialOutcome });
+
   const endpoints = async (name) => {
     // Wait for ResizeObserver to apply the latest DOM geometry, not a fixed delay.
     await driver.wait(() => {
       const root = document.querySelector("[data-score-example]");
-      const svg = root.querySelector("svg");
+      const svg = root.querySelector("[data-score-layout] > svg");
       if (!svg) return false;
       const paths = [...svg.querySelectorAll("path")];
       const nodes = [...root.querySelectorAll("[data-score-node]")];
@@ -120,7 +145,7 @@ export async function auditScoreComposition(
     });
     const geometry = await driver.evaluate(() => {
       const root = document.querySelector("[data-score-example]");
-      const svg = root.querySelector("svg");
+      const svg = root.querySelector("[data-score-layout] > svg");
       const bounds = svg.getBoundingClientRect();
       const sx = bounds.width / svg.viewBox.baseVal.width;
       const sy = bounds.height / svg.viewBox.baseVal.height;
@@ -297,6 +322,13 @@ export async function auditScoreComposition(
     name: "refreshed-signal-statuses",
     signals: refreshedStatuses,
   });
+  const positiveOutcome = await resultOutcome();
+  assert.equal(positiveOutcome.sentiment, "positive");
+  assert.equal(positiveOutcome.decision, "Review complete");
+  assert.equal(positiveOutcome.score, "0.00");
+  assert.equal(positiveOutcome.iconHidden, "true");
+  assert.notEqual(positiveOutcome.accentColor, initialOutcome.accentColor);
+  measurements.push({ name: "positive-outcome", ...positiveOutcome });
   await scan("score-positive");
   await driver.screenshot(`${outputDir}/score-positive.png`);
   await driver.click("#refresh-data");
@@ -321,9 +353,14 @@ export async function auditScoreComposition(
   await driver.click("#narrow-container");
   await driver.wait(
     () =>
-      !document.querySelector("[data-score-example] svg") ||
-      getComputedStyle(document.querySelector("[data-score-example] svg"))
-        .display === "none",
+      !document.querySelector(
+        "[data-score-example] [data-score-layout] > svg",
+      ) ||
+      getComputedStyle(
+        document.querySelector(
+          "[data-score-example] [data-score-layout] > svg",
+        ),
+      ).display === "none",
   );
   measurements.push({
     name: "narrow-container",
@@ -344,9 +381,14 @@ export async function auditScoreComposition(
     if (width === 320) await driver.click("#large-text");
     await driver.wait(
       () =>
-        !document.querySelector("[data-score-example] svg") ||
-        getComputedStyle(document.querySelector("[data-score-example] svg"))
-          .display === "none",
+        !document.querySelector(
+          "[data-score-example] [data-score-layout] > svg",
+        ) ||
+        getComputedStyle(
+          document.querySelector(
+            "[data-score-example] [data-score-layout] > svg",
+          ),
+        ).display === "none",
     );
     const data = await driver.evaluate(() => {
       const root = document.querySelector("[data-score-example]");
@@ -396,6 +438,7 @@ export async function auditScoreComposition(
   await diagnostics("score-composition");
   return {
     checks: [
+      "result leads with an explicit decision, decorative status icon, and matching sentiment accent",
       "contributions show full and partial ratios with matching colors and exact meter widths",
       "explicit signal colors retain exact values and visible status labels",
       "score connectors follow DOM geometry and disclosure",
