@@ -1,0 +1,81 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ScoreComposition } from "./ScoreComposition";
+import * as Stories from "./ScoreComposition.stories";
+
+<Meta of={Stories} />
+
+# ScoreComposition
+
+Explain why observed signals contribute to a supplied score and outcome. Use this native visualization when the question is “what produced this score?” Applications own weights, caps, aggregation, decisions, units, and provenance. Easy UI renders those facts without recalculating them.
+
+<Canvas of={Stories.Default} />
+
+## Supply the explanation
+
+Import the composition and its primitives from `@easypost/easy-ui/ScoreComposition`. The package uses its existing CSS entry, `@easypost/easy-ui/style.css`.
+
+```tsx
+<ScoreComposition
+  title="Application readiness"
+  signals={[
+    {
+      id: "coverage",
+      label: "Test coverage",
+      value: 0.92,
+      displayValue: "92%",
+    },
+  ]}
+  contributions={[
+    {
+      id: "quality",
+      label: "Quality",
+      score: 4,
+      maxScore: 5,
+      signals: ["coverage"],
+      explanation:
+        "The application evaluates coverage against its scoring rules.",
+    },
+  ]}
+  result={{ score: 4, disposition: "Ready for review" }}
+/>
+```
+
+Signal and contribution IDs must be unique within their respective arrays and stable across updates. IDs may overlap between the two arrays. Array order is preserved. A signal may support several contributions; repeated references within one contribution are displayed once. An unknown source is visibly labelled “Unavailable signal” with its ID, and has no connector. Contributions with no sources say so.
+
+The result is always supplied independently, including an optional maximum. It may include adjustments or rules beyond the displayed contributions. Never assume the result equals the sum of the cards. Outcome wording and sentiment are separate; neither is inferred from a numeric value. Put domain-specific values such as currency exposure in `supportingText`.
+
+<Canvas of={Stories.SharedSignals} />
+
+## Layout and access
+
+Signals, contributions, and result are ordinary DOM content in reading order. CSS Grid places them in three columns when the component's content area is at least 48rem wide. Below that it stacks the columns, preserving exact values, source labels, and explanations. This responds to the container, including side panels on wide screens.
+
+SVG curves are decorative, hidden from assistive technology and pointer input. Their attachment points follow DOM resizing, font reflow, and disclosure expansion. The component has no graph engine, editor, dragging, panning, or zoom. With JavaScript disabled or before hydration, the complete explanation remains present except for optional closed disclosure content. No measurement is needed for server rendering.
+
+Contribution meters expose their label, exact score, and maximum. Source labels accompany the stacked layout; in three columns those same labels remain available to assistive technology while the curves show the relationships visually. Independently placed contribution cards always show their source labels. “Explanation” buttons use the shared Disclosure component and support keyboard and touch input. Expanded content can contain application links and controls. Connections alone never carry information.
+
+<Canvas of={Stories.Narrow} />
+<Canvas of={Stories.LargerText} />
+
+## Values and scales
+
+`null` means unavailable. Zero and false remain real observations. Non-finite values are labelled invalid and never passed to `formatScore`. `displayValue` formats valid, available signal observations, including booleans. Interface text is localizable through `labels`; use `result.label` for “Total score”.
+
+A meter requires a positive finite maximum and a finite score within `[0, maxScore]`. Outside values, including negative adjustments, retain their exact signed text and “Outside scale” label without a filled meter. Invalid caps retain their supplied value and “Invalid scale” label. Values are never silently clamped, normalized, or changed to zero. Use a signed chart for richer negative-contribution comparisons.
+
+<Canvas of={Stories.ZeroAndMissing} />
+<Canvas of={Stories.OutsideScale} />
+<Canvas of={Stories.NoData} />
+
+## Compose in an application
+
+Visible `title`, `description`, `metadata`, and `footer` are optional. Use `variant="bare"` inside your own card, and standard `aria-label`, `aria-labelledby`, and `aria-describedby` to associate surrounding content. Without a supplied name or title, the region is named “Score composition”. `typography` follows the shared visualization text roles and propagates to the primitives.
+
+`ScoreSignal`, `ScoreContribution`, and `ScoreResult` can be used independently with the same formatting and value contracts. `ScoreContribution.sourceLabels` contains readable source names for this usage. `ScoreConnector` draws one decorative path from `from={{x, y}}` to `to={{x, y}}` inside a caller-owned SVG; custom layouts own their measurements and equivalent textual relationships. These are presentation primitives for explainable scores, not arbitrary graph nodes.
+
+<Canvas of={Stories.ExternalHeading} />
+<Canvas of={Stories.IndependentPrimitives} />
+
+## Properties
+
+<ArgTypes of={ScoreComposition} />

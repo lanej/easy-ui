@@ -5,6 +5,7 @@ import { auditChartComposition } from "./chart-composition-checks.mjs";
 import { auditChartDataView } from "./chart-data-view-checks.mjs";
 import { auditMobileCharts } from "./mobile-chart-checks.mjs";
 import { auditMobileDataGrid } from "./mobile-data-grid-checks.mjs";
+import { auditScoreComposition } from "./score-composition-checks.mjs";
 
 const axeSource = await readFile(
   new URL("../node_modules/axe-core/axe.min.js", import.meta.url),
@@ -236,6 +237,13 @@ export async function auditBrowser(driver, browser, site, outputDir) {
     });
     report.checks.push(...mobile.checks);
     report.mobile = mobile.measurements;
+
+    const score = await auditScoreComposition(driver, site, outputDir, {
+      scan,
+      diagnostics,
+    });
+    report.checks.push(...score.checks);
+    report.score = score.measurements;
 
     const mobileGrid = await auditMobileDataGrid(driver, site, outputDir, {
       scan,
