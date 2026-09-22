@@ -124,7 +124,7 @@ function Preview() {
                     .reverse()
                     .map((signal) => ({
                       ...signal,
-                      value: signal.id === "dimensions" ? false : 0,
+                      value: typeof signal.value === "boolean" ? false : 0,
                       sentiment: "positive" as const,
                       statusLabel: "Clear",
                     }))

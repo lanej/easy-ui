@@ -28,13 +28,24 @@ it("exposes the exact explanation in DOM order and preserves the supplied result
     within(screen.getByRole("list", { name: "Signals" })).getAllByRole(
       "listitem",
     ),
-  ).toHaveLength(3);
+  ).toHaveLength(4);
+  const clearSignal = within(screen.getByRole("list", { name: "Signals" }))
+    .getByText("Declared weight mismatch")
+    .closest("li")!;
+  expect(within(clearSignal).getByText("No")).toBeVisible();
+  expect(within(clearSignal).getByText("Clear")).toBeVisible();
+  expect(
+    within(clearSignal).getByText("No").closest("[data-sentiment]"),
+  ).toHaveAttribute("data-sentiment", "positive");
   const contributions = screen.getByRole("list", { name: "Contributions" });
   expect(
     within(contributions).getByText("Missing package dimensions"),
   ).toBeVisible();
   expect(
     within(contributions).getByText("NDA / international label ratio"),
+  ).toBeVisible();
+  expect(
+    within(contributions).getByText("Declared weight mismatch"),
   ).toBeVisible();
   expect(
     screen.getByRole("meter", { name: "Underdeclaration" }),
@@ -49,6 +60,7 @@ it("exposes the exact explanation in DOM order and preserves the supplied result
       node.getAttribute("data-score-node"),
     ),
   ).toEqual([
+    "signal",
     "signal",
     "signal",
     "signal",
@@ -403,12 +415,14 @@ it("opens explanations by keyboard and preserves their state through data refres
     name: "Explanation: Underdeclaration",
   });
   expect(button).toHaveAttribute("aria-expanded", "false");
-  expect(screen.queryByText(/In this sample model/)).not.toBeInTheDocument();
+  expect(
+    screen.queryByText(/Missing dimensions contribute/),
+  ).not.toBeInTheDocument();
   await user.tab();
   expect(button).toHaveFocus();
   await user.keyboard("{Enter}");
   expect(button).toHaveAttribute("aria-expanded", "true");
-  expect(screen.getByText(/In this sample model/)).toBeVisible();
+  expect(screen.getByText(/Missing dimensions contribute/)).toBeVisible();
   rerender(
     <ScoreComposition
       {...example}
@@ -423,7 +437,9 @@ it("opens explanations by keyboard and preserves their state through data refres
   ).toHaveAttribute("aria-valuenow", "0");
   button.focus();
   await user.keyboard(" ");
-  expect(screen.queryByText(/In this sample model/)).not.toBeInTheDocument();
+  expect(
+    screen.queryByText(/Missing dimensions contribute/),
+  ).not.toBeInTheDocument();
 });
 
 it("names multiple compositions independently and supports external headings", () => {

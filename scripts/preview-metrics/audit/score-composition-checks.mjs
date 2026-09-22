@@ -34,7 +34,7 @@ export async function auditScoreComposition(
     () =>
       document.querySelectorAll(
         "[data-score-example] [data-score-layout] > svg path",
-      ).length === 5,
+      ).length === 6,
   );
   await driver.evaluate(() => document.fonts.ready.then(() => true));
 
@@ -55,14 +55,19 @@ export async function auditScoreComposition(
   const initialStatuses = await signalStatuses();
   assert.deepEqual(
     initialStatuses.map(({ sentiment }) => sentiment),
-    ["negative", "warning", "warning"],
+    ["negative", "positive", "warning", "warning"],
   );
   assert.deepEqual(
     initialStatuses.map(({ status }) => status),
-    ["Flagged", "Elevated", "Elevated"],
+    ["Flagged", "Clear", "Elevated", "Elevated"],
+  );
+  assert.deepEqual(
+    initialStatuses.map(({ value }) => value),
+    ["Yes", "No", "0.26", "3"],
   );
   assert.notEqual(initialStatuses[0].color, initialStatuses[1].color);
   assert.notEqual(initialStatuses[0].background, initialStatuses[1].background);
+  assert.notEqual(initialStatuses[1].background, initialStatuses[2].background);
   measurements.push({ name: "signal-statuses", signals: initialStatuses });
 
   const contributionFills = () =>
@@ -168,7 +173,7 @@ export async function auditScoreComposition(
           );
         });
       return (
-        paths.length === 5 &&
+        paths.length === 6 &&
         paths.every(
           (path) =>
             attached(path.getPointAtLength(0), true) &&
@@ -346,15 +351,15 @@ export async function auditScoreComposition(
   const refreshedStatuses = await signalStatuses();
   assert.deepEqual(
     refreshedStatuses.map(({ sentiment }) => sentiment),
-    ["positive", "positive", "positive"],
+    ["positive", "positive", "positive", "positive"],
   );
   assert.deepEqual(
     refreshedStatuses.map(({ value }) => value),
-    ["0", "0", "No"],
+    ["0", "0", "No", "No"],
   );
   assert.deepEqual(
     refreshedStatuses.map(({ status }) => status),
-    ["Clear", "Clear", "Clear"],
+    ["Clear", "Clear", "Clear", "Clear"],
   );
   assert.notEqual(
     refreshedStatuses[0].background,
@@ -477,6 +482,7 @@ export async function auditScoreComposition(
       "Explanations retain touch targets",
     );
     assert.match(data.sources, /Missing package dimensions/);
+    assert.match(data.sources, /Declared weight mismatch/);
     await driver.key(explanation, "Enter");
     await scan(`score-${width}`);
     await driver.screenshot(`${outputDir}/score-${width}.png`);

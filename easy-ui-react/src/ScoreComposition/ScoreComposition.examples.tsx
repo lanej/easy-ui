@@ -16,6 +16,13 @@ export const scoreCompositionExample: ScoreCompositionProps = {
       statusLabel: "Flagged",
     },
     {
+      id: "weight",
+      label: "Declared weight mismatch",
+      value: false,
+      sentiment: "positive",
+      statusLabel: "Clear",
+    },
+    {
       id: "ratio",
       label: "NDA / international label ratio",
       value: 0.26,
@@ -37,9 +44,9 @@ export const scoreCompositionExample: ScoreCompositionProps = {
       score: 1,
       maxScore: 1,
       sentiment: "negative",
-      signals: ["dimensions"],
+      signals: ["dimensions", "weight"],
       explanation:
-        "In this sample model, missing dimensions contribute one point. The application supplies this value and its cap.",
+        "Missing dimensions contribute one point in this sample model. The weight-mismatch signal is clear and adds no points. The application supplies the combined score and cap.",
     },
     {
       id: "international",
