@@ -66,6 +66,9 @@ export async function auditMobileCharts(
         };
       });
       return {
+        viewportWidth: innerWidth,
+        containerWidth: document.querySelector("main").getBoundingClientRect()
+          .width,
         overflow: document.documentElement.scrollWidth - innerWidth,
         legendGap: list.getBoundingClientRect().top - rect.bottom,
         targets: [...list.querySelectorAll("button")].map((button) => {
@@ -89,6 +92,11 @@ export async function auditMobileCharts(
       };
     });
     assert.ok(bounds.overflow <= 1, "The mobile chart must not widen the page");
+    assert.equal(
+      bounds.containerWidth,
+      width,
+      "Every browser must exercise the requested containing width",
+    );
     assert.ok(
       bounds.legendGap >= 0,
       "Legend rows must sit outside the plot, including axis labels",

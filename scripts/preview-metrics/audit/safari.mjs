@@ -20,19 +20,29 @@ try {
     {
       open: (url) => driver.get(url),
       resize: async (width, height) => {
-        await driver.manage().window().setRect({ width, height });
-        const actual = await driver.executeScript(() => ({
-          width: innerWidth,
-          height: innerHeight,
-        }));
-        const outer = await driver.manage().window().getRect();
+        // Read the browser chrome from one settled frame, before changing the
+        // window. Mixing a new native outer rect with stale JS innerWidth can
+        // produce a negative second resize request after a large contraction.
+        const insets = await driver.executeAsyncScript((done) => {
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() =>
+              done({
+                width: Math.max(0, outerWidth - innerWidth),
+                height: Math.max(0, outerHeight - innerHeight),
+              }),
+            ),
+          );
+        });
         await driver
           .manage()
           .window()
           .setRect({
-            width: outer.width + width - actual.width,
-            height: outer.height + height - actual.height,
+            width: width + insets.width,
+            height: height + insets.height,
           });
+        await driver.executeAsyncScript((done) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => done(true)));
+        });
       },
       evaluate: (fn, ...args) => driver.executeScript(fn, ...args),
       wait: (fn, ...args) =>
