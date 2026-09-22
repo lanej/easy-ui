@@ -36,6 +36,7 @@ export const scoreCompositionExample: ScoreCompositionProps = {
       label: "Underdeclaration",
       score: 1,
       maxScore: 1,
+      sentiment: "negative",
       signals: ["dimensions"],
       explanation:
         "In this sample model, missing dimensions contribute one point. The application supplies this value and its cap.",
@@ -45,6 +46,7 @@ export const scoreCompositionExample: ScoreCompositionProps = {
       label: "NDA / International",
       score: 1,
       maxScore: 2,
+      sentiment: "warning",
       signals: ["ratio", "burst"],
       explanation:
         "The application evaluates the ratio and burst together. Their combined contribution is one point out of a possible two.",

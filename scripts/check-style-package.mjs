@@ -116,7 +116,7 @@ export const example = <>
   <DrawerTable.RowsPerPage rowsPerPage={3} options={[3, 6]} onChange={() => undefined} />
   <ScoreComposition signals={[{id: "a", label: "Observed", value: true}]} contributions={[{id: "b", label: "Contribution", score: 1, maxScore: 2, signals: ["a"]}]} result={{score: 1, disposition: "Review"}} />
   <ScoreSignal label="Observed" value={false} sentiment="positive" statusLabel="Clear" labels={{positiveSignal: "Favorable"}} />
-  <ScoreContribution label="Contribution" score={0} maxScore={1} sourceLabels={["Observed"]} />
+  <ScoreContribution label="Contribution" score={0} maxScore={1} sentiment="warning" labels={{fullContribution: "Full"}} sourceLabels={["Observed"]} />
   <ScoreResult score={null} />
   <svg><ScoreConnector from={{x: 0, y: 0}} to={{x: 20, y: 10}} /></svg>
   <ChartLegend items={[{name: "Ground", color: "#007f86", selected: true, symbol: "bar"}]} onItemToggle={(name: string) => { void name; }} />

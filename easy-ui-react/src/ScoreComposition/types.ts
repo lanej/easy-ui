@@ -26,6 +26,8 @@ export type ScoreContributionData = {
   score: number | null;
   /** A positive finite cap enables the zero-based meter. */
   maxScore: number;
+  /** Application-owned meaning for an in-range contribution; neutral by default. */
+  sentiment?: "neutral" | "positive" | "warning" | "negative";
   /** Signal IDs; several contributions may reference the same signal. */
   signals: readonly string[];
   /** Optional explanation, disclosed on demand. */
@@ -67,6 +69,9 @@ export type ScoreCompositionLabels = {
   positiveSignal?: string;
   warningSignal?: string;
   negativeSignal?: string;
+  fullContribution?: string;
+  partialContribution?: string;
+  noContribution?: string;
 };
 
 /** Formatting and typography shared by the composition and its primitives. */

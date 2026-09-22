@@ -43,6 +43,51 @@ export async function auditScoreComposition(
   assert.notEqual(initialStatuses[0].background, initialStatuses[1].background);
   measurements.push({ name: "signal-statuses", signals: initialStatuses });
 
+  const contributionFills = () =>
+    driver.evaluate(() =>
+      [
+        ...document.querySelectorAll(
+          '[data-score-node="contribution"] > [data-fill-state]',
+        ),
+      ].map((node) => {
+        const meter = node.querySelector('[role="meter"]');
+        const fill = meter.firstElementChild;
+        return {
+          state: node.dataset.fillState,
+          sentiment: node.dataset.sentiment,
+          label: node
+            .querySelector("[data-score-fill-label]")
+            .textContent.replace(/\s+/g, " ")
+            .trim(),
+          width:
+            fill.getBoundingClientRect().width /
+            meter.getBoundingClientRect().width,
+          color: getComputedStyle(fill).backgroundColor,
+        };
+      }),
+    );
+  const fills = await contributionFills();
+  assert.deepEqual(
+    fills.map(({ state }) => state),
+    ["full", "partial"],
+  );
+  assert.deepEqual(
+    fills.map(({ sentiment }) => sentiment),
+    ["negative", "warning"],
+  );
+  assert.deepEqual(
+    fills.map(({ label }) => label),
+    ["Full · 100%", "Partial · 50%"],
+  );
+  assert.ok(Math.abs(fills[0].width - 1) < 0.01);
+  assert.ok(Math.abs(fills[1].width - 0.5) < 0.01);
+  assert.notEqual(
+    fills[0].color,
+    fills[1].color,
+    "Full and partial contributions have distinct colors",
+  );
+  measurements.push({ name: "contribution-fullness", contributions: fills });
+
   const endpoints = async (name) => {
     // Wait for ResizeObserver to apply the latest DOM geometry, not a fixed delay.
     await driver.wait(() => {
@@ -210,6 +255,27 @@ export async function auditScoreComposition(
     ["0", "0"],
   );
   await endpoints("refreshed");
+  const emptyFills = await contributionFills();
+  assert.deepEqual(
+    emptyFills.map(({ state }) => state),
+    ["none", "none"],
+  );
+  assert.deepEqual(
+    emptyFills.map(({ sentiment }) => sentiment),
+    ["neutral", "neutral"],
+  );
+  assert.deepEqual(
+    emptyFills.map(({ label }) => label),
+    ["None · 0%", "None · 0%"],
+  );
+  assert.deepEqual(
+    emptyFills.map(({ width }) => width),
+    [0, 0],
+  );
+  measurements.push({
+    name: "refreshed-contribution-fullness",
+    contributions: emptyFills,
+  });
   const refreshedStatuses = await signalStatuses();
   assert.deepEqual(
     refreshedStatuses.map(({ sentiment }) => sentiment),
@@ -330,6 +396,7 @@ export async function auditScoreComposition(
   await diagnostics("score-composition");
   return {
     checks: [
+      "contributions show full and partial ratios with matching colors and exact meter widths",
       "explicit signal colors retain exact values and visible status labels",
       "score connectors follow DOM geometry and disclosure",
       "score keyboard disclosure and refreshed records",

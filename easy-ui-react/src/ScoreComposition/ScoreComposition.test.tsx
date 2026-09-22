@@ -216,6 +216,120 @@ it("retains signed and outside values without fabricating a valid meter", () => 
   );
 });
 
+it("expresses contribution fullness relative to its cap without changing the exact value", () => {
+  const props = { label: "Contribution", score: 1, maxScore: 1 };
+  const { rerender } = render(<ScoreContribution {...props} />);
+  expect(screen.getByText("Full · 100%")).toBeVisible();
+  expect(
+    screen.getByText("Contribution").closest("[data-fill-state]"),
+  ).toHaveAttribute("data-fill-state", "full");
+  expect(screen.getByRole("meter").firstElementChild).toHaveStyle({
+    width: "100%",
+  });
+
+  rerender(<ScoreContribution {...props} maxScore={2} />);
+  expect(screen.getByText("Partial · 50%")).toBeVisible();
+  expect(screen.getByText("+1.00")).toBeVisible();
+  expect(screen.getByRole("meter")).toHaveAttribute("aria-valuenow", "1");
+  expect(screen.getByRole("meter").firstElementChild).toHaveStyle({
+    width: "50%",
+  });
+
+  rerender(<ScoreContribution {...props} score={0} />);
+  expect(screen.getByText("None · 0%")).toBeVisible();
+  expect(screen.getByRole("meter")).toHaveAttribute("aria-valuenow", "0");
+  expect(
+    screen.getByText("Contribution").closest("[data-fill-state]"),
+  ).toHaveAttribute("data-fill-state", "none");
+});
+
+it("keeps near-boundary contributions distinct from empty and full", () => {
+  const props = {
+    label: "Precise contribution",
+    maxScore: 1,
+    formatScore: (value: number) => String(value),
+  };
+  const { rerender } = render(<ScoreContribution {...props} score={0.9995} />);
+  expect(screen.getByText("Partial · <100%")).toBeVisible();
+  expect(screen.getByText("+0.9995")).toBeVisible();
+  expect(screen.getByRole("meter")).toHaveAttribute("aria-valuenow", "0.9995");
+  expect(screen.getByRole("meter").firstElementChild).toHaveStyle({
+    width: "99.95%",
+  });
+
+  rerender(<ScoreContribution {...props} score={0.004} />);
+  expect(screen.getByText("Partial · <1%")).toBeVisible();
+  expect(screen.getByText("+0.004")).toBeVisible();
+  expect(screen.getByRole("meter")).toHaveAttribute("aria-valuenow", "0.004");
+
+  rerender(<ScoreContribution {...props} score={1} />);
+  expect(screen.getByText("Full · 100%")).toBeVisible();
+});
+
+it("keeps contribution sentiment explicit and fullness labels localizable", () => {
+  const props = {
+    label: "Contribution",
+    score: 1,
+    maxScore: 1,
+    labels: {
+      fullContribution: "Complet",
+      partialContribution: "Partiel",
+      noContribution: "Aucun",
+    },
+  };
+  const { rerender } = render(<ScoreContribution {...props} />);
+  const card = () =>
+    screen.getByText("Contribution").closest("[data-fill-state]");
+  expect(card()).toHaveAttribute("data-sentiment", "neutral");
+  expect(screen.getByText("Complet · 100%")).toBeVisible();
+
+  rerender(<ScoreContribution {...props} sentiment="positive" />);
+  expect(card()).toHaveAttribute("data-sentiment", "positive");
+  expect(screen.getByText("Complet · 100%")).toBeVisible();
+  rerender(<ScoreContribution {...props} sentiment="negative" />);
+  expect(card()).toHaveAttribute("data-sentiment", "negative");
+  expect(screen.getByText("Complet · 100%")).toBeVisible();
+
+  rerender(<ScoreContribution {...props} maxScore={2} sentiment="warning" />);
+  expect(card()).toHaveAttribute("data-sentiment", "warning");
+  expect(screen.getByText("Partiel · 50%")).toBeVisible();
+  rerender(<ScoreContribution {...props} score={0} />);
+  expect(card()).toHaveAttribute("data-sentiment", "neutral");
+  expect(screen.getByText("Aucun · 0%")).toBeVisible();
+});
+
+it("clears stale contribution fullness and tint when a valid meter becomes unavailable", () => {
+  const props = {
+    label: "Contribution",
+    score: 1,
+    maxScore: 2,
+    sentiment: "negative" as const,
+  };
+  const { container, rerender } = render(<ScoreContribution {...props} />);
+  expect(screen.getByText("Partial · 50%")).toBeVisible();
+  for (const update of [
+    { score: null },
+    { score: NaN },
+    { score: Infinity },
+    { score: -1 },
+    { score: 3 },
+    { maxScore: 0 },
+  ]) {
+    rerender(<ScoreContribution {...props} {...update} />);
+    expect(screen.queryByRole("meter")).not.toBeInTheDocument();
+    expect(container.querySelector("[data-score-fill-label]")).toBeNull();
+    expect(container.querySelector("[data-fill-state]")).toBeNull();
+    expect(
+      screen.getByText("Contribution").closest("[data-sentiment]"),
+    ).toHaveAttribute("data-sentiment", "neutral");
+  }
+  rerender(<ScoreContribution {...props} />);
+  expect(screen.getByText("Partial · 50%")).toBeVisible();
+  expect(
+    screen.getByText("Contribution").closest("[data-fill-state]"),
+  ).toHaveAttribute("data-sentiment", "negative");
+});
+
 it("opens explanations by keyboard and preserves their state through data refresh and reordering", async () => {
   const { user, rerender } = render(<ScoreComposition {...example} />);
   const button = screen.getByRole("button", {

@@ -43,6 +43,32 @@ export const SignalSentiments: Story = {
   ),
 };
 
+export const ContributionFullness: Story = {
+  render: () => (
+    <HorizontalGrid columns={{ xs: 1, md: 2 }} gap="3">
+      <ScoreContribution
+        label="Full risk contribution"
+        score={1}
+        maxScore={1}
+        sentiment="negative"
+      />
+      <ScoreContribution
+        label="Half contribution"
+        score={1}
+        maxScore={2}
+        sentiment="warning"
+      />
+      <ScoreContribution label="No contribution" score={0} maxScore={2} />
+      <ScoreContribution
+        label="Full credit"
+        score={2}
+        maxScore={2}
+        sentiment="positive"
+      />
+    </HorizontalGrid>
+  ),
+};
+
 export const Narrow: Story = {
   args: scoreCompositionExample,
   decorators: [
