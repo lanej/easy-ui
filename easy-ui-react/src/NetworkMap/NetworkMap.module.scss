@@ -257,6 +257,29 @@
   border: 2px solid #895100;
   border-radius: 50%;
 }
+.scaleStop {
+  gap: 4px !important;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid design-token("color.neutral.300");
+}
+.surfaceTooltip {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 10px));
+  background: design-token("color.neutral.900");
+  color: design-token("color.neutral.000");
+  font-size: var(--ezui-viz-label-size, 12px);
+  line-height: 1.5;
+  padding: 6px 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px #10274333;
+  white-space: nowrap;
+}
 .weatherNote,
 .warning {
   font-size: var(--ezui-viz-label-size, 12px);

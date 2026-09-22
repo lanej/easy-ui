@@ -8,7 +8,8 @@ import type {
 import { loadMapEngine } from "./engine";
 import {
   deliverySurfaceFilter,
-  deliverySurfacePaint,
+  buildDeliverySurfacePaint,
+  buildMetricPaint,
 } from "./surfaceRendering";
 import {
   areaData,
@@ -21,7 +22,7 @@ import {
   validAreaCoordinates,
   validSurfaceBounds,
 } from "./geometry";
-import type { MapFacility, NetworkMapProps } from "./types";
+import type { MapFacility, MapSurfaceCell, NetworkMapProps } from "./types";
 import {
   NetworkMapProvider,
   useNetworkMap,
@@ -58,6 +59,7 @@ function NetworkMapSurfaceView() {
     props: options,
     controls,
     visibility,
+    activeMetric,
     state,
     setState,
     zoom,
@@ -87,10 +89,17 @@ function NetworkMapSurfaceView() {
 
   const [basemapError, setBasemapError] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [hoveredCell, setHoveredCell] = useState<{
+    cell: MapSurfaceCell;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const { risk, weather, deliverySurface } = visibility;
   const layers = useRef(visibility);
   layers.current = visibility;
+  const activeMetricRef = useRef(activeMetric);
+  activeMetricRef.current = activeMetric;
 
   const flyToBounds = useCallback(
     (bounds: [[number, number], [number, number]] | null, maxZoom = 12) => {
@@ -184,6 +193,46 @@ function NetworkMapSurfaceView() {
     let lastSegments: typeof segments | undefined;
     let lastAreas: typeof areas | undefined;
     let lastSurface: typeof surface;
+    // Tracks which metric/scale the delivery-surface fill layer's paint currently reflects, so
+    // update() only calls setPaintProperty when the resolved paint would actually change.
+    let lastSurfacePaintKey: string | undefined;
+    const resolveSurfacePaint = (p: typeof latest.current) => {
+      const metrics = p.surface?.metrics;
+      const metric =
+        metrics && metrics.length > 0
+          ? (activeMetricRef.current ?? metrics[0])
+          : undefined;
+      return {
+        key: JSON.stringify([
+          metric?.key,
+          metric?.field,
+          metric?.colorScale,
+          p.deliverySurfaceColorScale,
+        ]),
+        paint: metric
+          ? buildMetricPaint(metric)
+          : buildDeliverySurfacePaint(p.deliverySurfaceColorScale),
+      };
+    };
+    const handleSurfaceHover = (event: {
+      point: { x: number; y: number };
+      features?: readonly { properties?: Record<string, unknown> | null }[];
+    }) => {
+      if (disposed) return;
+      const properties = event.features?.[0]?.properties;
+      if (!properties) return;
+      const cell: MapSurfaceCell = {
+        latMin: properties.latMin as number,
+        latMax: properties.latMax as number,
+        lonMin: properties.lonMin as number,
+        lonMax: properties.lonMax as number,
+        medianMinutes: properties.medianMinutes as number | null,
+        iqrMinutes: properties.iqrMinutes as number | null,
+        n: properties.n as number,
+      };
+      setHoveredCell({ cell, x: event.point.x, y: event.point.y });
+      latest.current.onCellHover?.(cell);
+    };
     let positionLabels: (() => void) | undefined;
     const observedControls = new Set<Element>();
     const element = container.current!;
@@ -379,6 +428,20 @@ function NetworkMapSurfaceView() {
             ).setData(surfaceData(p.surface?.cells ?? []));
             lastSurface = p.surface;
           }
+          const resolvedPaint = resolveSurfacePaint(p);
+          if (resolvedPaint.key !== lastSurfacePaintKey) {
+            map.setPaintProperty(
+              "easy-ui-delivery-surface-fill",
+              "fill-color",
+              resolvedPaint.paint["fill-color"],
+            );
+            map.setPaintProperty(
+              "easy-ui-delivery-surface-fill",
+              "fill-opacity",
+              resolvedPaint.paint["fill-opacity"],
+            );
+            lastSurfacePaintKey = resolvedPaint.key;
+          }
           map.setFilter("easy-ui-selection", [
             "==",
             ["get", "id"],
@@ -564,12 +627,35 @@ function NetworkMapSurfaceView() {
             type: "geojson",
             data: surfaceData(latest.current.surface?.cells ?? []),
           });
+          const initialPaint = resolveSurfacePaint(latest.current);
           map.addLayer({
             id: "easy-ui-delivery-surface-fill",
             type: "fill",
             source: "easy-ui-delivery-surface",
             filter: deliverySurfaceFilter,
-            paint: deliverySurfacePaint,
+            paint: initialPaint.paint,
+          });
+          lastSurfacePaintKey = initialPaint.key;
+          map.on(
+            "mouseenter",
+            "easy-ui-delivery-surface-fill",
+            (event: MapLayerMouseEvent) => {
+              map.getCanvas().style.cursor = "pointer";
+              handleSurfaceHover(event);
+            },
+          );
+          map.on(
+            "mousemove",
+            "easy-ui-delivery-surface-fill",
+            (event: MapLayerMouseEvent) => {
+              handleSurfaceHover(event);
+            },
+          );
+          map.on("mouseleave", "easy-ui-delivery-surface-fill", () => {
+            map.getCanvas().style.cursor = "";
+            if (disposed) return;
+            setHoveredCell(null);
+            latest.current.onCellHover?.(null);
           });
           // The halo is behind evidence strokes/casing, keeping caller colors and dashes intact.
           map.addLayer({
@@ -811,6 +897,7 @@ function NetworkMapSurfaceView() {
       markers.forEach((m) => m.marker.remove());
       instance.current?.remove();
       instance.current = null;
+      setHoveredCell(null);
     };
   }, [
     options.mapStyle,
@@ -844,6 +931,8 @@ function NetworkMapSurfaceView() {
     risk,
     weather,
     deliverySurface,
+    activeMetric,
+    options.deliverySurfaceColorScale,
   ]);
   useEffect(() => {
     if (state !== "ready" || !options.focus) return;
@@ -882,6 +971,19 @@ function NetworkMapSurfaceView() {
         className={styles.canvas}
         style={{ height: Math.max(220, height) }}
       />
+      {hoveredCell && (
+        <div
+          className={styles.surfaceTooltip}
+          style={{ left: hoveredCell.x, top: hoveredCell.y }}
+          role="status"
+        >
+          {hoveredCell.cell.medianMinutes === null
+            ? "No estimate"
+            : `${Math.round(hoveredCell.cell.medianMinutes)} min median`}
+          {" · "}
+          {hoveredCell.cell.n} obs.
+        </div>
+      )}
       {state !== "ready" && (
         <div
           className={styles.message}

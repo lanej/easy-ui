@@ -206,9 +206,16 @@ export function surfaceData(
           type: "Feature" as const,
           properties: {
             medianMinutes: c.medianMinutes,
+            iqrMinutes: c.iqrMinutes,
             n: c.n,
             hasSupportedEstimate,
             relativeSampleCount: hasSupportedEstimate ? c.n / maxN : 0,
+            // Carried through so a hover/click handler can reconstruct the full MapSurfaceCell
+            // from the feature alone, without re-searching the original cells array.
+            latMin: c.latMin,
+            latMax: c.latMax,
+            lonMin: c.lonMin,
+            lonMax: c.lonMax,
           },
           geometry: {
             type: "Polygon" as const,

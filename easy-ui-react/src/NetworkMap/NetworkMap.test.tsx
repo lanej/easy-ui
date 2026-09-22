@@ -887,6 +887,173 @@ describe("delivery surface", () => {
   });
 });
 
+describe("delivery surface metric switcher", () => {
+  const metricsProps: NetworkMapProps = {
+    ...props,
+    surface: {
+      asOf: "2026-09-01T00:00:00Z",
+      source: "spatial-prior-v1",
+      cells: [
+        {
+          latMin: 37,
+          latMax: 37.01,
+          lonMin: -122,
+          lonMax: -121.99,
+          medianMinutes: 45,
+          iqrMinutes: 10,
+          n: 12,
+        },
+      ],
+      metrics: [
+        {
+          key: "median",
+          label: "Median delivery time",
+          field: "medianMinutes",
+        },
+        {
+          key: "count",
+          label: "Observation count",
+          field: "n",
+          colorScale: [
+            { value: 0, color: "#000000" },
+            { value: 50, color: "#ffffff" },
+          ],
+        },
+      ],
+    },
+  };
+
+  it("renders a radio per metric, defaulting to the first one, without disturbing the legacy checkbox toggle", async () => {
+    render(<NetworkMap {...metricsProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(
+      screen.getByRole("radio", { name: "Median delivery time" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("radio", { name: "Observation count" }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Delivery time surface" }),
+    ).toBeInTheDocument();
+  });
+
+  it("switches the fill layer's paint to the selected metric's own field and colorScale", async () => {
+    render(<NetworkMap {...metricsProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    fireEvent.click(screen.getByRole("radio", { name: "Observation count" }));
+    const fillColor = JSON.stringify(
+      paintProperties.get("easy-ui-delivery-surface-fill")?.get("fill-color"),
+    );
+    expect(fillColor).toContain('"n"');
+    expect(fillColor).not.toContain("medianMinutes");
+    expect(fillColor).toContain("#000000");
+    // A single selected metric renders alone -- opacity must no longer blend in a second
+    // variable's relative sample count.
+    expect(
+      JSON.stringify(
+        paintProperties
+          .get("easy-ui-delivery-surface-fill")
+          ?.get("fill-opacity"),
+      ),
+    ).not.toContain("relativeSampleCount");
+  });
+
+  it("omits the metric switcher and keeps the legacy opacity legend note when no metrics are supplied", async () => {
+    const legacyProps: NetworkMapProps = {
+      ...props,
+      initialDeliverySurfaceVisible: true,
+      surface: { ...metricsProps.surface!, metrics: undefined },
+    };
+    render(<NetworkMap {...legacyProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(
+      screen.queryByRole("radiogroup", { name: /delivery surface metric/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Delivery time surface legend" }),
+    ).toHaveTextContent("Opacity compares observation counts within this map.");
+    // Backward compatibility: unmodified legacy paint, driven by medianMinutes/relativeSampleCount.
+    const layer = layerDefs.get("easy-ui-delivery-surface-fill");
+    expect(JSON.stringify(layer?.paint)).toContain("medianMinutes");
+    expect(JSON.stringify(layer?.paint)).toContain("relativeSampleCount");
+  });
+});
+
+describe("delivery surface hover", () => {
+  const hoverProps: NetworkMapProps = {
+    ...props,
+    initialDeliverySurfaceVisible: true,
+    surface: {
+      asOf: "2026-09-01T00:00:00Z",
+      source: "spatial-prior-v1",
+      cells: [
+        {
+          latMin: 37,
+          latMax: 37.01,
+          lonMin: -122,
+          lonMax: -121.99,
+          medianMinutes: 45,
+          iqrMinutes: 10,
+          n: 12,
+        },
+      ],
+    },
+  };
+
+  it("shows a tooltip and calls onCellHover on mouseenter/mousemove, additive to facility click-to-select", async () => {
+    const onCellHover = vi.fn();
+    render(<NetworkMap {...hoverProps} onCellHover={onCellHover} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const feature = surfaceData(hoverProps.surface!.cells).features[0];
+    act(() => {
+      listeners["mouseenter:easy-ui-delivery-surface-fill"]({
+        point: { x: 12, y: 34 },
+        features: [{ properties: feature.properties }],
+      });
+    });
+    expect(screen.getByRole("status")).toHaveTextContent("45 min median");
+    expect(screen.getByRole("status")).toHaveTextContent("12 obs.");
+    expect(onCellHover).toHaveBeenCalledWith(
+      expect.objectContaining({ medianMinutes: 45, n: 12 }),
+    );
+    // Facility click-to-select remains available -- hover wiring is additive, not a replacement.
+    expect(
+      screen.getByRole("button", { name: "Select Oakland" }),
+    ).toBeInTheDocument();
+  });
+
+  it("clears the tooltip and calls onCellHover(null) on mouseleave", async () => {
+    const onCellHover = vi.fn();
+    render(<NetworkMap {...hoverProps} onCellHover={onCellHover} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const feature = surfaceData(hoverProps.surface!.cells).features[0];
+    act(() => {
+      listeners["mouseenter:easy-ui-delivery-surface-fill"]({
+        point: { x: 12, y: 34 },
+        features: [{ properties: feature.properties }],
+      });
+    });
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    act(() => {
+      listeners["mouseleave:easy-ui-delivery-surface-fill"]();
+    });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(onCellHover).toHaveBeenLastCalledWith(null);
+  });
+
+  it("renders no hover tooltip before any hover, preserving current behavior for callers that don't pass onCellHover", async () => {
+    render(<NetworkMap {...hoverProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+});
+
 describe("applicable controls and layer visibility", () => {
   const applicableProps: NetworkMapProps = {
     ...props,
