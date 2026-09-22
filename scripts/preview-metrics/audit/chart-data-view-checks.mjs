@@ -225,14 +225,22 @@ export async function auditChartDataView(
   await driver.wait(() => {
     const scroll = document.querySelector("details [role=region]");
     const identity = document.querySelector("tbody td").getBoundingClientRect();
-    return (
-      Math.abs(
-        identity.right -
-          (scroll.getBoundingClientRect().left +
-            scroll.clientLeft +
-            scroll.clientWidth),
-      ) < 1
-    );
+    // The RTL scrollbar is on the left. Safari's native scrollbar is not
+    // consistently included in clientLeft, so measure the right padding edge.
+    const right =
+      scroll.getBoundingClientRect().right -
+      parseFloat(getComputedStyle(scroll).borderRightWidth);
+    return Math.abs(identity.right - right) < 1;
+  });
+  const rtl = await driver.evaluate(() => {
+    const scroll = document.querySelector("details [role=region]");
+    return {
+      identityRight: document.querySelector("tbody td").getBoundingClientRect()
+        .right,
+      scrollRight: scroll.getBoundingClientRect().right,
+      clientLeft: scroll.clientLeft,
+      clientWidth: scroll.clientWidth,
+    };
   });
   await driver.evaluate(() => {
     document.documentElement.dir = "ltr";
@@ -280,6 +288,6 @@ export async function auditChartDataView(
       "focused sort controls remain visible beside pinned columns",
       "logical RTL pinning and space reserved for data in narrow layouts",
     ],
-    measurements: { folded, expanded, mobile, pinned, focused },
+    measurements: { folded, expanded, mobile, pinned, focused, rtl },
   };
 }
