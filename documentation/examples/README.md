@@ -3,6 +3,7 @@
 The component stories and their MDX documentation are the maintained examples. Interactive previews and browser evidence are generated from those sources.
 
 - [Storybook](https://lanej.io/easy-ui/storybook/) covers individual components, grouped DataGrid reports, and application compositions.
+- [Map cell inspection](https://lanej.io/easy-ui/maps/regressions.html?inspection=1) demonstrates hover/click detail charts, mobile layouts, and keyboard access to supplied distributions.
 - [Chart gallery](https://lanej.io/easy-ui/comparisons/) and [map gallery](https://lanej.io/easy-ui/maps/) show responsive reports with synthetic data.
 - [Chart preview instructions](../../scripts/preview-metrics/README.md), [map preview instructions](../../scripts/preview-maps/README.md), and [modular ECharts assessment](../../scripts/preview-metrics/modular/README.md) describe how to reproduce the examples and measurements.
 - [PR #1](https://github.com/lanej/easy-ui/pull/1) links the verified source and CI runs. Their artifacts contain current screenshots, browser reports, layout findings, and bundle measurements.

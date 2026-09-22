@@ -40,19 +40,49 @@ const estimates = [
   { name: "no observations", medianMinutes: 30, n: 0 },
   { name: "zero minutes", medianMinutes: 0, n: 10 },
 ] as const;
+const inspectionMode = new URLSearchParams(window.location.search).has(
+  "inspection",
+);
 const surface: MapSurface = {
   asOf: "2026-09-20T12:00:00Z",
   source: "Synthetic browser regression records",
-  cells: estimates.map((estimate, index) => ({
-    latMin: 0.2,
-    latMax: 0.8,
-    lonMin: -4 + index * 1.2,
-    lonMax: -3.2 + index * 1.2,
-    // Deliberately exercise malformed runtime input from an untyped data feed.
-    medianMinutes: estimate.medianMinutes as number | null,
-    iqrMinutes: null,
-    n: estimate.n,
-  })),
+  cells: inspectionMode
+    ? [
+        {
+          latMin: 0.2,
+          latMax: 0.8,
+          lonMin: -1,
+          lonMax: -0.1,
+          medianMinutes: 45,
+          iqrMinutes: 30,
+          n: 80,
+          distribution: {
+            minMinutes: 5,
+            q1Minutes: 20,
+            q3Minutes: 50,
+            maxMinutes: 120,
+          },
+        },
+        {
+          latMin: 0.2,
+          latMax: 0.8,
+          lonMin: 0.1,
+          lonMax: 1,
+          medianMinutes: 20,
+          iqrMinutes: 12,
+          n: 40,
+        },
+      ]
+    : estimates.map((estimate, index) => ({
+        latMin: 0.2,
+        latMax: 0.8,
+        lonMin: -4 + index * 1.2,
+        lonMax: -3.2 + index * 1.2,
+        // Deliberately exercise malformed runtime input from an untyped data feed.
+        medianMinutes: estimate.medianMinutes as number | null,
+        iqrMinutes: null,
+        n: estimate.n,
+      })),
 };
 type RegressionState = {
   map: MapInstance;
@@ -68,10 +98,18 @@ declare global {
 function ready(map: MapInstance) {
   const state: RegressionState = {
     map,
-    cells: estimates.map((estimate, index) => ({
-      name: estimate.name,
-      center: [-3.6 + index * 1.2, 0.5],
-    })),
+    cells: inspectionMode
+      ? surface.cells.map((cell, index) => ({
+          name: index === 0 ? "supplied distribution" : "summary only",
+          center: [
+            (cell.lonMin + cell.lonMax) / 2,
+            (cell.latMin + cell.latMax) / 2,
+          ] as [number, number],
+        }))
+      : estimates.map((estimate, index) => ({
+          name: estimate.name,
+          center: [-3.6 + index * 1.2, 0.5],
+        })),
     renders: 0,
   };
   window.__mapRegression = state;
@@ -103,6 +141,20 @@ function App() {
   const [selectedSegmentId, select] = useState<string>();
   const [revision, update] = useState(0);
   const [visible, show] = useState(true);
+  const [large, setLarge] = useState(false);
+  const displayedSurface = useMemo(
+    () =>
+      inspectionMode
+        ? {
+            ...surface,
+            cells: surface.cells.map((cell) => ({
+              ...cell,
+              n: cell.n + revision,
+            })),
+          }
+        : surface,
+    [revision],
+  );
   const segments = useMemo(
     () => [
       {
@@ -126,10 +178,15 @@ function App() {
   );
   return (
     <main className="control">
-      <h1>Map rendering regressions</h1>
+      <h1>
+        {inspectionMode
+          ? "Inspect delivery-time distributions"
+          : "Map rendering regressions"}
+      </h1>
       <p>
-        Synthetic records check custom route styling and unsupported
-        delivery-time estimates.
+        {inspectionMode
+          ? "Hover a cell, or click or tap to keep its detail open. The left cell has a supplied distribution; the right cell has summary values only. All records are synthetic."
+          : "Synthetic records check custom route styling and unsupported delivery-time estimates."}
       </p>
       <div className="regression-actions" aria-label="Regression actions">
         <button type="button" onClick={() => select("ab")}>
@@ -139,8 +196,13 @@ function App() {
           Select second connection
         </button>
         <button type="button" onClick={() => update((value) => value + 1)}>
-          Update connection data
+          {inspectionMode ? "Refresh cell records" : "Update connection data"}
         </button>
+        {inspectionMode && (
+          <button type="button" onClick={() => setLarge(!large)}>
+            Toggle large text
+          </button>
+        )}
         <button type="button" onClick={() => show((value) => !value)}>
           Toggle surface visibility
         </button>
@@ -161,18 +223,27 @@ function App() {
       <h2>Delivery estimates and route styling</h2>
       <NetworkMap
         title="Rendering test map"
-        description="Only the final delivery cell has a supported zero-minute estimate. Its fill should be blue."
+        description={
+          inspectionMode
+            ? "Inspect the median, spread, observation count, and source."
+            : "Only the final delivery cell has a supported zero-minute estimate. Its fill should be blue."
+        }
         mapStyle={mapStyle}
         workerUrl={workerUrl}
         facilities={facilities}
         segments={segments}
-        surface={surface}
+        surface={displayedSurface}
         selectedSegmentId={selectedSegmentId}
         initialView={{ center: [0, 0], zoom: 6 }}
         layerVisibility={{ deliverySurface: visible }}
         controls={false}
         showSelectionDetails={false}
-        height={420}
+        height={inspectionMode ? 560 : 420}
+        typography={
+          large
+            ? { title: 22, description: 18, label: 16, detail: 16, control: 18 }
+            : undefined
+        }
         onMapReady={ready}
       />
     </main>

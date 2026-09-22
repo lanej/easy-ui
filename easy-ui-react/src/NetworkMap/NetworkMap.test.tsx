@@ -982,75 +982,280 @@ describe("delivery surface metric switcher", () => {
   });
 });
 
-describe("delivery surface hover", () => {
-  const hoverProps: NetworkMapProps = {
-    ...props,
-    initialDeliverySurfaceVisible: true,
-    surface: {
-      asOf: "2026-09-01T00:00:00Z",
-      source: "spatial-prior-v1",
-      cells: [
-        {
-          latMin: 37,
-          latMax: 37.01,
-          lonMin: -122,
-          lonMax: -121.99,
-          medianMinutes: 45,
-          iqrMinutes: 10,
-          n: 12,
-        },
-      ],
+describe("delivery surface inspection", () => {
+  const cell = {
+    latMin: 37,
+    latMax: 37.01,
+    lonMin: -122,
+    lonMax: -121.99,
+    medianMinutes: 45,
+    iqrMinutes: 10,
+    n: 12,
+    distribution: {
+      minMinutes: 12,
+      q1Minutes: 40,
+      q3Minutes: 50,
+      maxMinutes: 110,
     },
   };
-
-  it("shows a tooltip and calls onCellHover on mouseenter/mousemove, additive to facility click-to-select", async () => {
-    const onCellHover = vi.fn();
-    render(<NetworkMap {...hoverProps} onCellHover={onCellHover} />);
+  const surface = {
+    asOf: "2026-09-01T00:00:00Z",
+    source: "spatial-prior-v1",
+    cells: [cell],
+  };
+  const inspectionProps: NetworkMapProps = {
+    ...props,
+    defaultLayerVisibility: { deliverySurface: true },
+    surface,
+  };
+  const event = {
+    point: { x: 12, y: 34 },
+    features: surfaceData(surface.cells).features,
+  };
+  const enter = () =>
+    act(() => listeners["mouseenter:easy-ui-delivery-surface-fill"](event));
+  const click = () =>
+    act(() => listeners["click:easy-ui-delivery-surface-fill"](event));
+  const card = () =>
+    screen.queryByRole("region", { name: "Delivery cell details" });
+  async function ready(extra: Partial<NetworkMapProps> = {}) {
+    const result = render(<NetworkMap {...inspectionProps} {...extra} />);
     await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
     act(() => listeners.load());
-    const feature = surfaceData(hoverProps.surface!.cells).features[0];
-    act(() => {
-      listeners["mouseenter:easy-ui-delivery-surface-fill"]({
-        point: { x: 12, y: 34 },
-        features: [{ properties: feature.properties }],
-      });
-    });
-    expect(screen.getByRole("status")).toHaveTextContent("45 min median");
-    expect(screen.getByRole("status")).toHaveTextContent("12 obs.");
-    expect(onCellHover).toHaveBeenCalledWith(
-      expect.objectContaining({ medianMinutes: 45, n: 12 }),
-    );
-    // Facility click-to-select remains available -- hover wiring is additive, not a replacement.
+    return result;
+  }
+
+  it("inspects the original record and supplied distribution without changing facility selection", async () => {
+    const onCellHover = vi.fn();
+    await ready({ onCellHover });
+    expect(card()).not.toBeInTheDocument();
+    enter();
+    expect(card()).toHaveTextContent("45 min");
+    expect(card()).toHaveTextContent("IQR width10 min");
+    expect(card()).toHaveTextContent("Observations12");
     expect(
-      screen.getByRole("button", { name: "Select Oakland" }),
+      within(card()!).getByRole("figure", { name: "Delivery time spread" }),
+    ).toHaveTextContent("40 min–50 min");
+    expect(onCellHover.mock.lastCall![0]).toBe(cell);
+    fireEvent.click(screen.getByRole("button", { name: "Select Oakland" }));
+    expect(props.onFacilitySelect).toHaveBeenCalledWith("one");
+  });
+
+  it("keeps hover content reachable and clears it after leaving the map and card", async () => {
+    const onCellHover = vi.fn();
+    await ready({ onCellHover });
+    enter();
+    vi.useFakeTimers();
+    try {
+      act(() => listeners["mouseleave:easy-ui-delivery-surface-fill"]());
+      fireEvent.mouseEnter(card()!);
+      act(() => vi.advanceTimersByTime(200));
+      expect(card()).toBeInTheDocument();
+      fireEvent.mouseLeave(card()!);
+      act(() => vi.advanceTimersByTime(200));
+      expect(card()).not.toBeInTheDocument();
+      expect(onCellHover).toHaveBeenLastCalledWith(null);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("pins a clicked cell through pointer exit and camera movement, then dismisses with Escape", async () => {
+    const onCellSelect = vi.fn();
+    await ready({ onCellSelect });
+    click();
+    expect(onCellSelect.mock.lastCall![0]).toBe(cell);
+    expect(card()).toHaveTextContent("Selected cell");
+    expect(
+      screen.getByRole("button", { name: "Close cell details" }),
+    ).toHaveFocus();
+    act(() => {
+      listeners["mouseleave:easy-ui-delivery-surface-fill"]();
+      listeners.move();
+    });
+    expect(card()).toHaveTextContent("45 min");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(card()).not.toBeInTheDocument();
+  });
+
+  it("does not reopen a dismissed hover until the pointer leaves that cell", async () => {
+    await ready();
+    enter();
+    fireEvent.keyDown(document, { key: "Escape" });
+    act(() => listeners["mousemove:easy-ui-delivery-surface-fill"](event));
+    expect(card()).not.toBeInTheDocument();
+    act(() => listeners["mouseleave:easy-ui-delivery-surface-fill"]());
+    enter();
+    expect(card()).toBeInTheDocument();
+  });
+
+  it("closes on outside pointer input and ignores clicks on overlapping facility controls", async () => {
+    const onCellSelect = vi.fn();
+    await ready({ onCellSelect });
+    click();
+    fireEvent.pointerDown(document.body);
+    expect(card()).not.toBeInTheDocument();
+    act(() =>
+      listeners["click:easy-ui-delivery-surface-fill"]({
+        ...event,
+        originalEvent: {
+          target: screen.getByRole("button", { name: "Select Oakland" }),
+        },
+      }),
+    );
+    expect(onCellSelect).toHaveBeenCalledTimes(1);
+    expect(card()).not.toBeInTheDocument();
+  });
+
+  it("refreshes a pinned record by geographic identity and clears removed cells without rebuilding the engine", async () => {
+    const { rerender } = await ready();
+    click();
+    const updated = { ...cell, medianMinutes: 48, n: 20 };
+    rerender(
+      <NetworkMap
+        {...inspectionProps}
+        surface={{
+          ...surface,
+          cells: [{ ...cell, lonMin: 1, lonMax: 2 }, updated],
+        }}
+      />,
+    );
+    expect(card()).toHaveTextContent("48 min");
+    expect(card()).toHaveTextContent("Observations20");
+    expect(constructor).toHaveBeenCalledTimes(1);
+    rerender(
+      <NetworkMap {...inspectionProps} surface={{ ...surface, cells: [] }} />,
+    );
+    expect(card()).not.toBeInTheDocument();
+    enter(); // A stale vector-tile event must not resurrect removed data.
+    expect(card()).not.toBeInTheDocument();
+  });
+
+  it("clears inspection when the layer is hidden and on map reload", async () => {
+    const { rerender } = await ready();
+    click();
+    rerender(
+      <NetworkMap
+        {...inspectionProps}
+        layerVisibility={{ deliverySurface: false }}
+      />,
+    );
+    expect(card()).not.toBeInTheDocument();
+    rerender(
+      <NetworkMap
+        {...inspectionProps}
+        layerVisibility={{ deliverySurface: true }}
+      />,
+    );
+    expect(card()).not.toBeInTheDocument();
+    click();
+    act(() =>
+      listeners.error({ error: new Error("Transient basemap failure") }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Reload map" }));
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(2));
+    expect(card()).not.toBeInTheDocument();
+  });
+
+  it("can hide the map card while preserving callbacks and exact distribution access", async () => {
+    const onCellHover = vi.fn(),
+      onCellSelect = vi.fn();
+    await ready({ showCellDetails: false, onCellHover, onCellSelect });
+    enter();
+    click();
+    expect(card()).not.toBeInTheDocument();
+    expect(onCellHover.mock.lastCall![0]).toBe(cell);
+    expect(onCellSelect.mock.lastCall![0]).toBe(cell);
+    fireEvent.click(screen.getByText("Locations and exact data"));
+    const details = screen.getByText("Inspect cell 1")
+      .parentElement as HTMLDetailsElement;
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    expect(
+      await screen.findByRole("figure", { name: "Delivery time spread" }),
     ).toBeInTheDocument();
   });
 
-  it("clears the tooltip and calls onCellHover(null) on mouseleave", async () => {
-    const onCellHover = vi.fn();
-    render(<NetworkMap {...hoverProps} onCellHover={onCellHover} />);
-    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
-    act(() => listeners.load());
-    const feature = surfaceData(hoverProps.surface!.cells).features[0];
-    act(() => {
-      listeners["mouseenter:easy-ui-delivery-surface-fill"]({
-        point: { x: 12, y: 34 },
-        features: [{ properties: feature.properties }],
-      });
+  it("lazily renders a custom chart with original records and active metric, and supports opting out per cell", async () => {
+    const renderCellDetails = vi.fn(({ cell }) => (
+      <p>Custom distribution: {cell.n}</p>
+    ));
+    const metric = { key: "count", label: "Volume", field: "n" as const };
+    const { rerender } = await ready({
+      renderCellDetails,
+      surface: { ...surface, metrics: [metric] },
     });
-    expect(screen.getByRole("status")).toBeInTheDocument();
-    act(() => {
-      listeners["mouseleave:easy-ui-delivery-surface-fill"]();
+    expect(renderCellDetails).not.toHaveBeenCalled();
+    enter();
+    expect(card()).toHaveTextContent("Custom distribution: 12");
+    expect(renderCellDetails.mock.lastCall![0]).toEqual({
+      cell,
+      surface: { ...surface, metrics: [metric] },
+      metric,
     });
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(onCellHover).toHaveBeenLastCalledWith(null);
+    rerender(
+      <NetworkMap {...inspectionProps} renderCellDetails={() => null} />,
+    );
+    expect(card()).not.toBeInTheDocument();
   });
 
-  it("renders no hover tooltip before any hover, preserving current behavior for callers that don't pass onCellHover", async () => {
-    render(<NetworkMap {...hoverProps} />);
-    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
-    act(() => listeners.load());
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  it("clears an inspected cell when switching to a metric that has no value for it", async () => {
+    await ready({
+      surface: {
+        ...surface,
+        cells: [{ ...cell, iqrMinutes: null }],
+        metrics: [
+          { key: "median", label: "Median", field: "medianMinutes" },
+          { key: "spread", label: "Spread", field: "iqrMinutes" },
+        ],
+      },
+    });
+    click();
+    expect(card()).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Spread" }));
+    expect(card()).not.toBeInTheDocument();
+    expect(
+      JSON.stringify(layerDefs.get("easy-ui-delivery-surface-fill")?.filter),
+    ).toContain("hasSupportedSpread");
+    enter();
+    expect(card()).not.toBeInTheDocument();
+  });
+
+  it("keeps the metric legend consistent with its paint when a legacy scale is also supplied", async () => {
+    await ready({
+      deliverySurfaceColorScale: [
+        { value: 600, color: "#000000" },
+        { value: 1200, color: "#ffffff" },
+      ],
+      surface: {
+        ...surface,
+        metrics: [{ key: "count", label: "Volume", field: "n" }],
+      },
+    });
+    const legend = within(
+      screen.getByRole("group", { name: "Delivery time surface legend" }),
+    );
+    expect(legend.getByText("120")).toBeInTheDocument();
+    expect(legend.queryByText("1200")).not.toBeInTheDocument();
+  });
+
+  it("keeps distribution inspection available when the engine fails and the layer is hidden", async () => {
+    vi.mocked(loadMapEngine).mockRejectedValue(new Error("No WebGL"));
+    render(
+      <NetworkMap
+        {...inspectionProps}
+        layerVisibility={{ deliverySurface: false }}
+      />,
+    );
+    await screen.findByText(/Unable to display the map/);
+    fireEvent.click(screen.getByText("Locations and exact data"));
+    const details = screen.getByText("Inspect cell 1")
+      .parentElement as HTMLDetailsElement;
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    expect(
+      await screen.findByRole("figure", { name: "Delivery time spread" }),
+    ).toHaveTextContent("110 min");
   });
 });
 

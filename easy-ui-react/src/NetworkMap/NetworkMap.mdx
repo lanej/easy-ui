@@ -214,6 +214,48 @@ Opacity compares each drawable cell's observation count with the largest count a
 
 For a consumer whose primary content is this surface, set `defaultLayerVisibility={{ deliverySurface: true }}` to show it initially, or control it with `layerVisibility`. The default is hidden. It can remain visible even when `controls.deliverySurface` is `false` or all controls are hidden.
 
+### Inspect a cell's distribution
+
+Hover a rendered cell for a detail card near the pointer; click or tap to keep it open. The card stays within the viewport, scrolls when needed, and reserves space for attribution. Move into the card to read it, use Close or Escape to dismiss it, or click elsewhere to close a pinned card. Pinned cards follow their cell as the camera moves and read the latest snapshot by geographic bounds; removed cells, hidden layers, and map reloads clear the card.
+
+The default content includes median, IQR width, observation count, source and timestamp. Supply observed quartiles and endpoints to add a native `RangePlot` showing the middle 50%, minimum, median and maximum:
+
+```tsx
+const cell: MapSurfaceCell = {
+  latMin: 42.28,
+  latMax: 42.34,
+  lonMin: -83.26,
+  lonMax: -83.16,
+  medianMinutes: 26,
+  iqrMinutes: 9,
+  n: 240,
+  distribution: { minMinutes: 8, q1Minutes: 23, q3Minutes: 32, maxMinutes: 78 },
+};
+```
+
+These values must come from the application. A median and IQR width alone do not determine quartile endpoints or a histogram. When a distribution is absent or invalid, the card retains the summary without inventing a chart. Supplied distributions are also available through **Inspect cell** in the exact-data table, including when the layer is hidden or WebGL fails. Charts in that table mount only when their detail is expanded.
+
+`NetworkMapCellDetails` exports the default engine-free content for use in an application panel. For a histogram, trend, fetched detail, or domain-specific units, replace the content using `renderCellDetails`. It receives the original cell, surface metadata, and active metric; returning `null` omits a map card for that cell. Both map inspection and the exact-data detail use this renderer.
+
+```tsx
+<NetworkMap
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  surface={surface}
+  renderCellDetails={({ cell, surface, metric }) => (
+    <DeliveryHistogram cell={cell} asOf={surface.asOf} metric={metric} />
+  )}
+  onCellHover={(cellOrNull) => highlightCell(cellOrNull)}
+  onCellSelect={(cell) => selectCell(cell)}
+/>
+```
+
+Set `showCellDetails={false}` to use an external inspector. Hover/select callbacks and equivalent data remain available; facility selection is independent. `onCellHover(null)` clears transient hover on pointer exit, camera movement, hiding/removing the cell, or map cleanup. Neither callback receives a reconstructed vector-tile copy of the application record.
+
+### Configure the surface scale
+
+`deliverySurfaceColorScale` accepts `{ value, color }` stops for the default median layer. `surface.metrics` can supply named alternatives (`{ key, label, field, colorScale }`), where `field` is `medianMinutes`, `iqrMinutes`, or `n`. The toolbar switches one metric at a time, with its own scale. Supply an appropriate scale for counts or other ranges; omit both options to retain the original 0–120-minute ramp and relative-count opacity. This changes presentation, not the supplied records or statistical meaning.
+
 ## Accessibility, failure and packaging
 
 Marker buttons have full accessible names and controlled pressed state. Table rows offer equivalent selection, including records whose labels are hidden. The exact-data disclosure includes risk event, horizon, cohort, baseline and output timestamp; segment descriptions provide transfer evidence. Weather records retain coordinates, observation/forecast status, source and validity times. Surface records retain exact bounds, median, IQR, count, source and timestamp, including missing values and true zero. These records remain available regardless of layer visibility. Loading and failure states preserve this data. Initialization failures offer Retry; tile failures surface a reload notice and `onRenderError`. A basemap is an additional spatial view, not the only way to inspect or select records.

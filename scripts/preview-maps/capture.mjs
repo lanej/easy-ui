@@ -56,6 +56,8 @@ try {
           }),
         ),
       click: (selector) => page.locator(selector).click(),
+      move: (x, y) => page.mouse.move(x, y),
+      clickPoint: (x, y) => page.mouse.click(x, y),
       clickNamed: (role, name) =>
         page.getByRole(role, { name, exact: true }).click(),
       key: (selector, key) => page.locator(selector).press(key),

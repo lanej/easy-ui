@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Map as MapInstance, StyleSpecification } from "maplibre-gl";
 import type { VisualizationTypography } from "../visualization/typography";
 
@@ -100,6 +101,23 @@ export type MapSurfaceCell = {
   iqrMinutes: number | null;
   /** Observation count backing this cell. Only finite positive counts support a rendered estimate. */
   n: number;
+  /** Optional observed distribution in minutes. Quartiles and bounds are supplied, never inferred from IQR. */
+  distribution?: MapSurfaceDistribution;
+};
+
+/** Supplied distribution bounds and quartiles; the cell's median completes the five-number summary. */
+export type MapSurfaceDistribution = {
+  minMinutes: number;
+  q1Minutes: number;
+  q3Minutes: number;
+  maxMinutes: number;
+};
+
+/** Original application records available to a custom cell detail chart. */
+export type MapSurfaceCellDetailsContext = {
+  cell: MapSurfaceCell;
+  surface: MapSurface;
+  metric?: MapSurfaceMetric;
 };
 
 /** One color stop in a delivery-surface value-to-color ramp, evaluated as a MapLibre linear
@@ -263,6 +281,12 @@ export type NetworkMapProps = {
    * fill layer, and `null` on `mouseleave`. Additive: does not affect facility click-to-select.
    */
   onCellHover?: (cell: MapSurfaceCell | null) => void;
+  /** Receives the original cell when clicked or tapped; independent of facility selection. */
+  onCellSelect?: (cell: MapSurfaceCell) => void;
+  /** Show the built-in hover/click card; defaults to true. Callbacks and exact data remain available when false. */
+  showCellDetails?: boolean;
+  /** Replace the cell card's content and its equivalent data-table detail with an application chart. Return null to omit content for a cell. */
+  renderCellDetails?: (context: MapSurfaceCellDetailsContext) => ReactNode;
   /** Controlled location selection. */
   selectedFacilityId?: string;
   /** Show the selected facility details below the map; defaults to true. Set false when a linked panel already provides this context. */

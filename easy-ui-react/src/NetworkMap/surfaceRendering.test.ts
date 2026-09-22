@@ -12,6 +12,7 @@ import {
   defaultDeliverySurfaceColorScale,
   buildDeliverySurfacePaint,
   buildMetricPaint,
+  buildDeliverySurfaceFilter,
 } from "./surfaceRendering";
 import type { MapSurfaceCell } from "./types";
 
@@ -175,6 +176,43 @@ describe("buildDeliverySurfacePaint", () => {
 });
 
 describe("buildMetricPaint", () => {
+  it.each([null, NaN, Infinity, -1])(
+    "excludes unsupported IQR %s from paint and hit testing",
+    (iqrMinutes) => {
+      const paint = buildMetricPaint({ field: "iqrMinutes" });
+      const spreadColor = compileExpression(paint["fill-color"]);
+      const spreadOpacity = compileExpression(
+        paint["fill-opacity"],
+        "fill-opacity",
+      );
+      const spreadFilter = featureFilter(
+        buildDeliverySurfaceFilter("iqrMinutes"),
+        "layers[0].filter",
+      );
+      const feature = mapFeature({ ...cell, iqrMinutes });
+      for (const candidate of [
+        feature,
+        JSON.parse(JSON.stringify(feature)) as Feature,
+      ]) {
+        expect(spreadFilter.filter(zoom, candidate)).toBe(false);
+        expect(
+          spreadColor.evaluateWithoutErrorHandling(zoom, candidate).toString(),
+        ).toBe("rgba(0,0,0,0)");
+        expect(
+          spreadOpacity.evaluateWithoutErrorHandling(zoom, candidate),
+        ).toBe(0);
+      }
+    },
+  );
+
+  it("keeps a true zero-width spread visible", () => {
+    const feature = mapFeature({ ...cell, iqrMinutes: 0 });
+    const spreadFilter = featureFilter(
+      buildDeliverySurfaceFilter("iqrMinutes"),
+      "layers[0].filter",
+    );
+    expect(spreadFilter.filter(zoom, feature)).toBe(true);
+  });
   it("reads the metric's own field, not medianMinutes, and defaults to the standard scale", () => {
     const paint = buildMetricPaint({ field: "n" });
     const metricColor = compileExpression(paint["fill-color"]);

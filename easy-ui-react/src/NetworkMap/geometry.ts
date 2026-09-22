@@ -1,5 +1,8 @@
 import type { FeatureCollection, Geometry } from "geojson";
-import { hasSupportedSurfaceEstimate } from "./surfaceRendering";
+import {
+  hasSupportedSurfaceEstimate,
+  hasSupportedSurfaceMetric,
+} from "./surfaceRendering";
 import type {
   MapArea,
   MapCoordinate,
@@ -28,6 +31,11 @@ export function validSurfaceBounds(cell: MapSurfaceCell) {
     validCoordinate([cell.lonMin, cell.latMin]) &&
     validCoordinate([cell.lonMax, cell.latMax])
   );
+}
+
+/** Stable geographic identity across immutable snapshot updates and cell reordering. */
+export function surfaceCellKey(cell: MapSurfaceCell) {
+  return `${cell.lonMin}:${cell.latMin}:${cell.lonMax}:${cell.latMax}`;
 }
 
 /** Split short dateline crossings at the world edge instead of drawing through Greenwich.
@@ -205,13 +213,15 @@ export function surfaceData(
         {
           type: "Feature" as const,
           properties: {
+            cellKey: surfaceCellKey(c),
             medianMinutes: c.medianMinutes,
             iqrMinutes: c.iqrMinutes,
             n: c.n,
             hasSupportedEstimate,
+            hasSupportedSpread: hasSupportedSurfaceMetric(c, "iqrMinutes"),
             relativeSampleCount: hasSupportedEstimate ? c.n / maxN : 0,
-            // Carried through so a hover/click handler can reconstruct the full MapSurfaceCell
-            // from the feature alone, without re-searching the original cells array.
+            // Scalar geometry remains inspectable; cellKey retrieves the original application
+            // record, including distribution data that should not be copied into vector tiles.
             latMin: c.latMin,
             latMax: c.latMax,
             lonMin: c.lonMin,

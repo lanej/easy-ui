@@ -32,6 +32,17 @@ try {
         ),
       click: async (selector) =>
         (await driver.findElement(By.css(selector))).click(),
+      move: (x, y) =>
+        driver
+          .actions({ async: true })
+          .move({ x: Math.round(x), y: Math.round(y), origin: "viewport" })
+          .perform(),
+      clickPoint: (x, y) =>
+        driver
+          .actions({ async: true })
+          .move({ x: Math.round(x), y: Math.round(y), origin: "viewport" })
+          .click()
+          .perform(),
       clickNamed: async (role, name) => {
         const element = await driver.executeScript(
           (role, name) => {
@@ -60,7 +71,9 @@ try {
       key: async (selector, key) => {
         const el = await driver.findElement(By.css(selector));
         await driver.executeScript("arguments[0].focus()", el);
-        await el.sendKeys(key === "Enter" ? Key.ENTER : key);
+        await el.sendKeys(
+          key === "Enter" ? Key.ENTER : key === "Escape" ? Key.ESCAPE : key,
+        );
       },
       select: (selector, value) =>
         driver.executeScript(

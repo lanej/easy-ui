@@ -1,7 +1,6 @@
 import type {
   ExpressionSpecification,
   FillLayerSpecification,
-  FilterSpecification,
 } from "maplibre-gl";
 import type {
   MapSurfaceCell,
@@ -22,11 +21,36 @@ export function hasSupportedSurfaceEstimate(
   );
 }
 
-export const deliverySurfaceFilter: FilterSpecification = [
+export const deliverySurfaceFilter: ExpressionSpecification = [
   "==",
   ["get", "hasSupportedEstimate"],
   true,
 ];
+
+export function hasSupportedSurfaceMetric(
+  cell: MapSurfaceCell,
+  field: MapSurfaceMetric["field"] = "medianMinutes",
+) {
+  const value = cell[field];
+  return (
+    hasSupportedSurfaceEstimate(cell) &&
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0
+  );
+}
+
+export function buildDeliverySurfaceFilter(
+  field: MapSurfaceMetric["field"] = "medianMinutes",
+): ExpressionSpecification {
+  return field === "iqrMinutes"
+    ? [
+        "all",
+        deliverySurfaceFilter,
+        ["==", ["get", "hasSupportedSpread"], true],
+      ]
+    : deliverySurfaceFilter;
+}
 
 /**
  * The exact ramp this component has always used. Do not change these values: a real consumer
@@ -45,13 +69,13 @@ export const defaultDeliverySurfaceColorScale: MapSurfaceColorScale = [
 
 /** Missing estimates stay outside the quantitative ramp, regardless of which field/scale is used. */
 function colorRampExpression(
-  field: string,
+  field: MapSurfaceMetric["field"],
   scale: MapSurfaceColorScale,
 ): ExpressionSpecification {
   const stops = [...scale].sort((a, b) => a.value - b.value);
   return [
     "case",
-    ["==", ["get", "hasSupportedEstimate"], true],
+    buildDeliverySurfaceFilter(field),
     [
       "interpolate",
       ["linear"],
@@ -108,7 +132,7 @@ export function buildMetricPaint(
     ),
     "fill-opacity": [
       "case",
-      ["==", ["get", "hasSupportedEstimate"], true],
+      buildDeliverySurfaceFilter(metric.field),
       0.5,
       0,
     ] as ExpressionSpecification,

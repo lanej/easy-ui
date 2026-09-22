@@ -1,6 +1,8 @@
 export { NetworkMap } from "./NetworkMap";
 export { NetworkMapProvider } from "./NetworkMapContext";
 export { NetworkMapSurface } from "./NetworkMapSurface";
+export { NetworkMapCellDetails } from "./NetworkMapCellDetails";
+export type { NetworkMapCellDetailsProps } from "./NetworkMapCellDetails";
 export {
   NetworkMapHeading,
   NetworkMapControlPanel,
@@ -23,4 +25,9 @@ export type {
   MapFocus,
   MapSurfaceCell,
   MapSurface,
+  MapSurfaceDistribution,
+  MapSurfaceCellDetailsContext,
+  MapSurfaceColorStop,
+  MapSurfaceColorScale,
+  MapSurfaceMetric,
 } from "./types";

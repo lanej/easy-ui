@@ -7,7 +7,7 @@ import type {
 } from "maplibre-gl";
 import { loadMapEngine } from "./engine";
 import {
-  deliverySurfaceFilter,
+  buildDeliverySurfaceFilter,
   buildDeliverySurfacePaint,
   buildMetricPaint,
 } from "./surfaceRendering";
@@ -22,7 +22,10 @@ import {
   validAreaCoordinates,
   validSurfaceBounds,
 } from "./geometry";
-import type { MapFacility, MapSurfaceCell, NetworkMapProps } from "./types";
+import type { MapFacility, NetworkMapProps } from "./types";
+import { NetworkMapCellDetails } from "./NetworkMapCellDetails";
+import { NetworkMapCellPopover } from "./NetworkMapCellPopover";
+import { useSurfaceInspection } from "./useSurfaceInspection";
 import {
   NetworkMapProvider,
   useNetworkMap,
@@ -89,13 +92,14 @@ function NetworkMapSurfaceView() {
 
   const [basemapError, setBasemapError] = useState(false);
   const [retry, setRetry] = useState(0);
-  const [hoveredCell, setHoveredCell] = useState<{
-    cell: MapSurfaceCell;
-    x: number;
-    y: number;
-  } | null>(null);
-
   const { risk, weather, deliverySurface } = visibility;
+  const {
+    inspection,
+    cell,
+    events: inspectionEvents,
+    pin,
+    cancelLeave,
+  } = useSurfaceInspection(options, deliverySurface, activeMetric?.field);
   const layers = useRef(visibility);
   layers.current = visibility;
   const activeMetricRef = useRef(activeMetric);
@@ -212,26 +216,8 @@ function NetworkMapSurfaceView() {
         paint: metric
           ? buildMetricPaint(metric)
           : buildDeliverySurfacePaint(p.deliverySurfaceColorScale),
+        filter: buildDeliverySurfaceFilter(metric?.field),
       };
-    };
-    const handleSurfaceHover = (event: {
-      point: { x: number; y: number };
-      features?: readonly { properties?: Record<string, unknown> | null }[];
-    }) => {
-      if (disposed) return;
-      const properties = event.features?.[0]?.properties;
-      if (!properties) return;
-      const cell: MapSurfaceCell = {
-        latMin: properties.latMin as number,
-        latMax: properties.latMax as number,
-        lonMin: properties.lonMin as number,
-        lonMax: properties.lonMax as number,
-        medianMinutes: properties.medianMinutes as number | null,
-        iqrMinutes: properties.iqrMinutes as number | null,
-        n: properties.n as number,
-      };
-      setHoveredCell({ cell, x: event.point.x, y: event.point.y });
-      latest.current.onCellHover?.(cell);
     };
     let positionLabels: (() => void) | undefined;
     const observedControls = new Set<Element>();
@@ -430,6 +416,10 @@ function NetworkMapSurfaceView() {
           }
           const resolvedPaint = resolveSurfacePaint(p);
           if (resolvedPaint.key !== lastSurfacePaintKey) {
+            map.setFilter(
+              "easy-ui-delivery-surface-fill",
+              resolvedPaint.filter,
+            );
             map.setPaintProperty(
               "easy-ui-delivery-surface-fill",
               "fill-color",
@@ -632,7 +622,7 @@ function NetworkMapSurfaceView() {
             id: "easy-ui-delivery-surface-fill",
             type: "fill",
             source: "easy-ui-delivery-surface",
-            filter: deliverySurfaceFilter,
+            filter: initialPaint.filter,
             paint: initialPaint.paint,
           });
           lastSurfacePaintKey = initialPaint.key;
@@ -641,22 +631,28 @@ function NetworkMapSurfaceView() {
             "easy-ui-delivery-surface-fill",
             (event: MapLayerMouseEvent) => {
               map.getCanvas().style.cursor = "pointer";
-              handleSurfaceHover(event);
+              if (!disposed) inspectionEvents.hover(event);
             },
           );
           map.on(
             "mousemove",
             "easy-ui-delivery-surface-fill",
             (event: MapLayerMouseEvent) => {
-              handleSurfaceHover(event);
+              if (!disposed) inspectionEvents.hover(event);
             },
           );
           map.on("mouseleave", "easy-ui-delivery-surface-fill", () => {
             map.getCanvas().style.cursor = "";
             if (disposed) return;
-            setHoveredCell(null);
-            latest.current.onCellHover?.(null);
+            inspectionEvents.leave();
           });
+          map.on(
+            "click",
+            "easy-ui-delivery-surface-fill",
+            (event: MapLayerMouseEvent) => {
+              if (!disposed) inspectionEvents.select(event);
+            },
+          );
           // The halo is behind evidence strokes/casing, keeping caller colors and dashes intact.
           map.addLayer({
             id: "easy-ui-selection",
@@ -840,7 +836,10 @@ function NetworkMapSurfaceView() {
           if (!initial) commands.current.fitAll();
           setZoom(map.getZoom());
         });
-        map.on("move", position);
+        map.on("move", () => {
+          position();
+          if (!disposed) inspectionEvents.move(map);
+        });
         map.on("moveend", () => {
           if (!disposed) setZoom(map.getZoom());
         });
@@ -897,7 +896,7 @@ function NetworkMapSurfaceView() {
       markers.forEach((m) => m.marker.remove());
       instance.current?.remove();
       instance.current = null;
-      setHoveredCell(null);
+      inspectionEvents.close();
     };
   }, [
     options.mapStyle,
@@ -909,6 +908,7 @@ function NetworkMapSurfaceView() {
     surfaceOwner,
     fit,
     flyToBounds,
+    inspectionEvents,
   ]);
 
   useEffect(() => {
@@ -971,19 +971,33 @@ function NetworkMapSurfaceView() {
         className={styles.canvas}
         style={{ height: Math.max(220, height) }}
       />
-      {hoveredCell && (
-        <div
-          className={styles.surfaceTooltip}
-          style={{ left: hoveredCell.x, top: hoveredCell.y }}
-          role="status"
-        >
-          {hoveredCell.cell.medianMinutes === null
-            ? "No estimate"
-            : `${Math.round(hoveredCell.cell.medianMinutes)} min median`}
-          {" · "}
-          {hoveredCell.cell.n} obs.
-        </div>
-      )}
+      {inspection &&
+        cell &&
+        surface &&
+        (() => {
+          const context = { cell, surface, metric: activeMetric };
+          const content = options.renderCellDetails ? (
+            options.renderCellDetails(context)
+          ) : (
+            <NetworkMapCellDetails
+              {...context}
+              typography={options.typography}
+            />
+          );
+          return content == null ? null : (
+            <NetworkMapCellPopover
+              x={inspection.x}
+              y={inspection.y}
+              pinned={inspection.pinned}
+              onClose={inspectionEvents.close}
+              onPin={pin}
+              onEnter={cancelLeave}
+              onLeave={inspectionEvents.leave}
+            >
+              {content}
+            </NetworkMapCellPopover>
+          );
+        })()}
       {state !== "ready" && (
         <div
           className={styles.message}

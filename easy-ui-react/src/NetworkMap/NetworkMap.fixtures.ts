@@ -264,6 +264,13 @@ const deliveryTimeSurfaceCells: MapSurfaceCell[] = [
     medianMinutes: 26,
     iqrMinutes: 9,
     n: 240,
+    // Explicit synthetic distribution; the renderer must not infer these endpoints from IQR.
+    distribution: {
+      minMinutes: 8,
+      q1Minutes: 23,
+      q3Minutes: 32,
+      maxMinutes: 78,
+    },
   },
   {
     // Detroit regional sort, just north.
@@ -274,6 +281,12 @@ const deliveryTimeSurfaceCells: MapSurfaceCell[] = [
     medianMinutes: 32,
     iqrMinutes: 11,
     n: 210,
+    distribution: {
+      minMinutes: 10,
+      q1Minutes: 29,
+      q3Minutes: 40,
+      maxMinutes: 95,
+    },
   },
   {
     // Livonia, west of the sort hub.
@@ -284,6 +297,12 @@ const deliveryTimeSurfaceCells: MapSurfaceCell[] = [
     medianMinutes: 45,
     iqrMinutes: 14,
     n: 150,
+    distribution: {
+      minMinutes: 16,
+      q1Minutes: 40,
+      q3Minutes: 54,
+      maxMinutes: 120,
+    },
   },
   {
     // Warren, north of the sort hub.

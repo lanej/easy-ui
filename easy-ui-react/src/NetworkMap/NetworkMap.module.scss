@@ -242,6 +242,10 @@
     align-items: center;
     gap: 7px;
   }
+  > span {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
 }
 .solid {
   width: 22px;
@@ -257,28 +261,88 @@
   border: 2px solid #895100;
   border-radius: 50%;
 }
-.scaleStop {
-  gap: 4px !important;
+.legend .scaleStop {
+  gap: 4px;
 }
 .swatch {
+  flex-shrink: 0;
   width: 12px;
   height: 12px;
   border-radius: 3px;
   border: 1px solid design-token("color.neutral.300");
 }
-.surfaceTooltip {
+.cellPopover {
   position: absolute;
   z-index: 2;
-  pointer-events: none;
-  transform: translate(-50%, calc(-100% - 10px));
-  background: design-token("color.neutral.900");
-  color: design-token("color.neutral.000");
-  font-size: var(--ezui-viz-label-size, 12px);
+  box-sizing: border-box;
+  width: 400px;
+  max-width: calc(100% - 16px);
+  max-height: calc(100% - 56px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: design-token("color.neutral.000");
+  color: design-token("color.neutral.900");
+  font-size: var(--ezui-viz-description-size, 14px);
   line-height: 1.5;
-  padding: 6px 10px;
-  border-radius: 6px;
+  border: 1px solid design-token("color.neutral.300");
+  border-radius: 8px;
   box-shadow: 0 2px 8px #10274333;
-  white-space: nowrap;
+}
+.cellPopoverHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  background: design-token("color.neutral.000");
+  border-bottom: 1px solid design-token("color.neutral.200");
+  strong {
+    flex: 1;
+  }
+  button {
+    min-height: 32px;
+    border: 1px solid design-token("color.neutral.300");
+    border-radius: 4px;
+    background: design-token("color.neutral.000");
+    color: inherit;
+    padding: 4px 8px;
+  }
+}
+.cellDetails {
+  padding: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--ezui-viz-description-size, 14px);
+  line-height: 1.5;
+  p {
+    margin: 0 0 12px;
+  }
+}
+.cellSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin: 0 0 16px;
+  dt {
+    color: design-token("color.neutral.600");
+  }
+  dd {
+    margin: 0;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+.cellProvenance {
+  margin-top: 16px !important;
+  color: design-token("color.neutral.600");
+  font-size: var(--ezui-viz-detail-size, 12px);
+}
+.cellDataDetails[open] {
+  width: 400px;
+  max-width: 75vw;
 }
 .weatherNote,
 .warning {

@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
+import type { MapSurfaceCellDetailsContext } from "./types";
 import { useId } from "react-aria";
 import { useNetworkMap } from "./NetworkMapContext";
 import { NetworkMapToolbar } from "./NetworkMapToolbar";
+import { NetworkMapCellDetails } from "./NetworkMapCellDetails";
 import { defaultDeliverySurfaceColorScale } from "./surfaceRendering";
 import { visualizationTypographyStyle } from "../visualization/typography";
 import styles from "./NetworkMap.module.scss";
@@ -112,10 +114,9 @@ export function NetworkMapSelectionDetails() {
 /** Only supplied, visible domain layers contribute legend content. */
 export function NetworkMapLegend() {
   const { props: options, visibility, activeMetric } = useNetworkMap();
-  const resolvedColorScale =
-    activeMetric?.colorScale ??
-    options.deliverySurfaceColorScale ??
-    defaultDeliverySurfaceColorScale;
+  const resolvedColorScale = activeMetric
+    ? (activeMetric.colorScale ?? defaultDeliverySurfaceColorScale)
+    : (options.deliverySurfaceColorScale ?? defaultDeliverySurfaceColorScale);
   const scaleLabel = activeMetric?.label ?? "Median minutes";
   const observed = options.segments.some(
     (segment) =>
@@ -214,12 +215,16 @@ export function NetworkMapDataView({
   id,
   expanded = false,
 }: NetworkMapDataViewProps) {
-  const { props: options, accessibleName } = useNetworkMap();
+  const { props: options, accessibleName, activeMetric } = useNetworkMap();
   const suffixId = useId();
   const externalLabel = options["aria-labelledby"]?.trim();
   const labelledBy = (kind: string) =>
     externalLabel ? `${externalLabel} ${suffixId}-${kind}` : undefined;
   const { facilities, segments, areas, surface, onFacilitySelect } = options;
+  const hasCellDetails = Boolean(
+    options.renderCellDetails ||
+    surface?.cells.some((cell) => cell.distribution),
+  );
   if (!facilities.length && !segments.length && !areas.length && !surface)
     return null;
   const content = (
@@ -401,6 +406,7 @@ export function NetworkMapDataView({
                 <th scope="col">Median minutes</th>
                 <th scope="col">IQR minutes</th>
                 <th scope="col">Observations</th>
+                {hasCellDetails && <th scope="col">Distribution</th>}
               </tr>
             </thead>
             <tbody>
@@ -414,6 +420,20 @@ export function NetworkMapDataView({
                   <td>{exact(cell.medianMinutes)}</td>
                   <td>{exact(cell.iqrMinutes)}</td>
                   <td>{exact(cell.n)}</td>
+                  {hasCellDetails && (
+                    <td>
+                      {options.renderCellDetails || cell.distribution ? (
+                        <CellDataDetails
+                          cell={cell}
+                          surface={surface}
+                          metric={activeMetric}
+                          index={index}
+                        />
+                      ) : (
+                        "Not supplied"
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -440,6 +460,29 @@ export function NetworkMapDataView({
         {facilities.length ? "Locations and exact data" : "View exact map data"}
       </summary>
       {content}
+    </details>
+  );
+}
+
+/** Mount a potentially expensive application chart only while its row is expanded. */
+function CellDataDetails({
+  index,
+  ...context
+}: MapSurfaceCellDetailsContext & { index: number }) {
+  const { props: options } = useNetworkMap();
+  const [open, setOpen] = useState(false);
+  return (
+    <details
+      className={styles.cellDataDetails}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary>Inspect cell {index + 1}</summary>
+      {open &&
+        (options.renderCellDetails ? (
+          options.renderCellDetails(context)
+        ) : (
+          <NetworkMapCellDetails {...context} typography={options.typography} />
+        ))}
     </details>
   );
 }
