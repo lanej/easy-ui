@@ -1,22 +1,16 @@
 name: Chart examples
 
 on:
-  pull_request:
-    paths:
-      - "easy-ui-react/src/Chart/**"
-      - "easy-ui-react/src/Theme/**"
-      - "easy-ui-react/src/MetricCard/**"
-      - "easy-ui-react/src/Sparkline/**"
-      - "easy-ui-react/src/CompactTimeSeries/**"
-      - "easy-ui-react/src/RangePlot/**"
-      - "easy-ui-react/src/visualization/**"
-      - "easy-ui-react/src/BarList/**"
-      - "easy-ui-react/src/BulletChart/**"
-      - "scripts/preview-metrics/**"
-      - ".github/workflows/metric-examples.yml"
+  pull_request: ~
+  workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
+
+concurrency:
+  group: metric-examples-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   screenshots:
@@ -33,18 +27,32 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run build
       - run: npm run measure
-      - run: npx playwright install --with-deps chromium
-      - run: npm run capture
       - run: npm run measure:modular
-      - run: npm run capture:modular
+      - id: proof
+        uses: ./.github/actions/browser-proof
+        with:
+          suite: charts-screenshots
+          built: scripts/preview-metrics/dist
+      - if: steps.proof.outputs.reuse != 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.proof.outputs.reuse != 'true'
+        run: npm run capture
+      - if: steps.proof.outputs.reuse != 'true'
+        run: npm run capture:modular
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.proof.outputs.reuse != 'true'
         with:
           name: chart-examples
           path: |
             scripts/preview-metrics/dist/
             scripts/preview-metrics/screenshots/
           if-no-files-found: error
+      - uses: ./.github/actions/browser-proof
+        if: success() && steps.proof.outputs.reuse != 'true'
+        with:
+          mode: record
+          suite: charts-screenshots
+          digest: ${{ steps.proof.outputs.digest }}
 
   browser-audit:
     name: UX audit (${{ matrix.browser }})
@@ -76,24 +84,37 @@ jobs:
         env:
           EASY_UI_CHART_ENGINE: portfolio
           EASY_UI_PREVIEW_OUT_DIR: dist/audit/portfolio
-      - if: matrix.browser != 'safari'
+      - id: proof
+        uses: ./.github/actions/browser-proof
+        with:
+          suite: charts-${{ matrix.browser }}
+          built: scripts/preview-metrics/dist/audit
+      - if: steps.proof.outputs.reuse != 'true' && matrix.browser != 'safari'
         run: npx playwright install --with-deps ${{ matrix.browser }}
-      - if: matrix.browser == 'safari'
+      - if: steps.proof.outputs.reuse != 'true' && matrix.browser == 'safari'
         run: sudo safaridriver --enable
       - name: Audit full engine
+        if: steps.proof.outputs.reuse != 'true'
         run: npm run ${{ matrix.browser == 'safari' && 'audit:safari' || 'audit:browsers' }}
         env:
           EASY_UI_AUDIT_BROWSER: ${{ matrix.browser }}
           EASY_UI_PREVIEW_OUT_DIR: dist/audit/full
       - name: Audit modular engine
+        if: steps.proof.outputs.reuse != 'true'
         run: npm run ${{ matrix.browser == 'safari' && 'audit:safari' || 'audit:browsers' }}
         env:
           EASY_UI_AUDIT_BROWSER: ${{ matrix.browser }}
           EASY_UI_CHART_ENGINE: portfolio
           EASY_UI_PREVIEW_OUT_DIR: dist/audit/portfolio
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.proof.outputs.reuse != 'true'
         with:
           name: chart-audit-${{ matrix.browser }}
           path: scripts/preview-metrics/screenshots/audit/
           if-no-files-found: warn
+      - uses: ./.github/actions/browser-proof
+        if: success() && steps.proof.outputs.reuse != 'true'
+        with:
+          mode: record
+          suite: charts-${{ matrix.browser }}
+          digest: ${{ steps.proof.outputs.digest }}

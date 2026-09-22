@@ -1,0 +1,41 @@
+name: Browser verification evidence
+description: Reuse identical successful browser inputs, or record a completed check.
+inputs:
+  mode:
+    default: check
+    description: check or record (record only after successful checks)
+  suite:
+    required: true
+    description: Browser or layout suite identity
+  built:
+    description: Built preview directory for input hashing
+  digest:
+    description: Previously calculated digest, required when recording
+outputs:
+  reuse:
+    value: ${{ steps.proof.outputs.reuse }}
+    description: Whether a recent successful run covers these exact inputs
+  digest:
+    value: ${{ steps.proof.outputs.digest }}
+    description: Hash of preview assets, harness, workflow and runtime
+runs:
+  using: composite
+  steps:
+    - id: proof
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      run: node scripts/browser-proof.mjs
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PROOF_MODE: ${{ inputs.mode }}
+        PROOF_SUITE: ${{ inputs.suite }}
+        PROOF_BUILT: ${{ inputs.built }}
+        PROOF_DIGEST: ${{ inputs.digest }}
+    - if: inputs.mode == 'record'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.proof.outputs.name }}
+        path: ${{ steps.proof.outputs.path }}
+        include-hidden-files: true
+        retention-days: 7
+        if-no-files-found: error

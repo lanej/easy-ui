@@ -18,10 +18,13 @@ on:
       - "scripts/preview-metrics/**"
       - "scripts/preview-maps/**"
       - "typedoc.json"
+      - "scripts/browser-proof.mjs"
+      - ".github/actions/browser-proof/**"
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -31,6 +34,9 @@ concurrency:
 
 jobs:
   build:
+    outputs:
+      map_reuse: ${{ steps.map-proof.outputs.reuse }}
+      map_digest: ${{ steps.map-proof.outputs.digest }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +58,12 @@ jobs:
         run: npm run build:docs
       - name: Verify documentation outputs
         run: node scripts/check-docs-site.mjs
+      - id: map-proof
+        if: github.event_name != 'pull_request'
+        uses: ./.github/actions/browser-proof
+        with:
+          suite: hosted-maps
+          built: docs-site/maps
       - name: Record source revision
         run: git rev-parse HEAD > docs-site/revision.txt
       - name: Upload documentation build
@@ -112,10 +124,40 @@ jobs:
       - name: Deploy documentation site
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify this deployment's revision and inspector assets
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          EXPECTED_SHA: ${{ needs.assemble.outputs.map_revision }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { setTimeout } from 'node:timers/promises';
+          const read = async (path) => {
+            const response = await fetch(new URL(path, process.env.PAGE_URL), { signal: AbortSignal.timeout(15000) });
+            assert(response.ok, `${path}: ${response.status}`);
+            return response;
+          };
+          for (let attempt = 0; ; attempt++) {
+            try {
+              for (const prefix of ['', 'network-maps/']) {
+                assert.equal((await (await read(`${prefix}revision.txt`)).text()).trim(), process.env.EXPECTED_SHA);
+                const report = await (await read(`${prefix}maps/bundle-report.json`)).json();
+                assert.equal(report.sourceCommit, process.env.EXPECTED_SHA);
+                await read(`${prefix}maps/regressions.html`);
+                for (const file of [report.customInspectorChartEngine.entry, ...report.workerAssets.map(asset => asset.file)])
+                  await read(`${prefix}maps/${file}`);
+              }
+              break;
+            } catch (error) {
+              if (attempt === 5) throw error;
+              await setTimeout(3000);
+            }
+          }
+          NODE
 
   verify-hosted-maps:
-    if: github.event_name != 'pull_request'
-    needs: [assemble, deploy]
+    if: github.event_name != 'pull_request' && needs.build.outputs.map_reuse != 'true'
+    needs: [build, assemble, deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -146,3 +188,9 @@ jobs:
           name: network-maps-hosted-chrome
           path: scripts/preview-maps/screenshots/
           if-no-files-found: warn
+      - uses: ./.github/actions/browser-proof
+        if: success()
+        with:
+          mode: record
+          suite: hosted-maps
+          digest: ${{ needs.build.outputs.map_digest }}

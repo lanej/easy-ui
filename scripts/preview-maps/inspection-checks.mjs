@@ -12,6 +12,19 @@ export async function checkSurfaceInspection({
   const isOpen = () =>
     Boolean(document.querySelector('[aria-label="Delivery cell details"]'));
   async function point(index = 0) {
+    // The DOM idle marker can still describe the frame before a resize. Wait
+    // for the actual canvas and engine before projecting a pointer coordinate.
+    await browser.wait(() => {
+      const map = window.__mapRegression.map;
+      const canvas = map.getCanvas();
+      const viewport = map.getContainer();
+      const ratio = map.getPixelRatio();
+      return (
+        Math.abs(canvas.width - viewport.clientWidth * ratio) <= 1 &&
+        Math.abs(canvas.height - viewport.clientHeight * ratio) <= 1 &&
+        map.loaded()
+      );
+    });
     return browser.evaluate((index) => {
       const { map, cells } = window.__mapRegression;
       const canvas = map.getCanvas();

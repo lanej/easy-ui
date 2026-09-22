@@ -1,16 +1,15 @@
 name: Network map examples
 on:
-  pull_request:
-    paths:
-      - ".ui-review/maps/**"
-      - "easy-ui-react/src/visualization/**"
-      - "easy-ui-react/src/NetworkMap/**"
-      - "easy-ui-react/package.json"
-      - "easy-ui-react/vite.config.mts"
-      - "scripts/preview-maps/**"
-      - ".github/workflows/network-map-examples.yml"
+  pull_request: ~
+  workflow_dispatch:
+
 permissions:
   contents: read
+  actions: read
+concurrency:
+  group: network-map-examples-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   browser:
     name: Maps (${{ matrix.browser }})
@@ -37,30 +36,41 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run build
       - run: npm run measure
-      - if: matrix.browser != 'safari'
+      - id: proof
+        uses: ./.github/actions/browser-proof
+        with:
+          suite: maps-${{ matrix.browser }}
+          built: scripts/preview-maps/dist
+      - if: steps.proof.outputs.reuse != 'true' && matrix.browser != 'safari'
         run: npx playwright install --with-deps ${{ matrix.browser }}
-      - if: matrix.browser == 'chrome'
+      - if: steps.proof.outputs.reuse != 'true' && matrix.browser == 'chrome'
         run: npm run capture
         env:
           MAP_BROWSER: chrome
-      - if: matrix.browser == 'firefox'
+      - if: steps.proof.outputs.reuse != 'true' && matrix.browser == 'firefox'
         run: xvfb-run -a npm run capture
         env:
           MAP_BROWSER: firefox
           LIBGL_ALWAYS_SOFTWARE: "1"
           MOZ_WEBRENDER: "1"
-      - if: matrix.browser == 'safari'
+      - if: steps.proof.outputs.reuse != 'true' && matrix.browser == 'safari'
         run: sudo safaridriver --enable
-      - if: matrix.browser == 'safari'
+      - if: steps.proof.outputs.reuse != 'true' && matrix.browser == 'safari'
         run: npm run audit:safari
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.proof.outputs.reuse != 'true'
         with:
           name: network-maps-${{ matrix.browser }}
           path: |
             scripts/preview-maps/screenshots/
             scripts/preview-maps/dist/
           if-no-files-found: warn
+      - uses: ./.github/actions/browser-proof
+        if: success() && steps.proof.outputs.reuse != 'true'
+        with:
+          mode: record
+          suite: maps-${{ matrix.browser }}
+          digest: ${{ steps.proof.outputs.digest }}
   layout:
     name: Map layout review
     runs-on: ubuntu-latest
@@ -70,23 +80,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
+      - name: Build map examples
+        working-directory: scripts/preview-maps
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - id: proof
+        uses: ./.github/actions/browser-proof
+        with:
+          suite: maps-layout
+          built: scripts/preview-maps/dist
       - name: Check out View Rule 0.7.0 (pinned)
+        if: steps.proof.outputs.reuse != 'true'
         uses: actions/checkout@v4
         with:
           repository: lanej/viewrule
           ref: 6d36031935a824c650e049a14aeb9770e042bb95
           path: .viewrule-engine
       - name: Install View Rule and Chromium
+        if: steps.proof.outputs.reuse != 'true'
         working-directory: .viewrule-engine
         run: |
           npm ci --omit=dev --no-audit --no-fund
           node bin/viewrule.mjs install-browser --with-deps
-      - name: Build map examples
-        working-directory: scripts/preview-maps
-        run: |
-          npm ci --no-audit --no-fund
-          npm run build
       - name: Review map composition and larger text
+        if: steps.proof.outputs.reuse != 'true'
         run: |
           cp .ui-review/maps/config.json .ui-review/config.json
           cp .ui-review/maps/rules.json .ui-review/rules.json
@@ -100,10 +118,16 @@ jobs:
           done
           VIEWRULE_BROWSER_PATH=/tmp/map-review-browser node .viewrule-engine/bin/viewrule.mjs check --full
       - name: Upload map layout findings and captures
-        if: always()
+        if: always() && steps.proof.outputs.reuse != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: map-layout-review
           path: .ui-review/runs/
           include-hidden-files: true
           if-no-files-found: warn
+      - uses: ./.github/actions/browser-proof
+        if: success() && steps.proof.outputs.reuse != 'true'
+        with:
+          mode: record
+          suite: maps-layout
+          digest: ${{ steps.proof.outputs.digest }}

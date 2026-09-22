@@ -23,6 +23,8 @@ jobs:
         run: node scripts/check-chart-package.mjs
       - name: Verify compatibility entry generation
         run: node --test scripts/generateCompatibilityEntries.test.mjs
+      - name: Verify browser CI evidence selection
+        run: node --test scripts/browser-proof.test.mjs
       - name: Verify isolated tarball imports and Sass assets
         run: node scripts/check-style-package.mjs
       - name: Retain packed-consumer logs on failure
