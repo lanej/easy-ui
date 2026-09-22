@@ -61,9 +61,12 @@ try {
         await driver
           .actions()
           .sendKeys(
-            { Enter: Key.ENTER, Space: Key.SPACE, ArrowRight: Key.ARROW_RIGHT }[
-              key
-            ] ?? key,
+            {
+              Enter: Key.ENTER,
+              Space: Key.SPACE,
+              Tab: Key.TAB,
+              ArrowRight: Key.ARROW_RIGHT,
+            }[key] ?? key,
           )
           .perform();
       },
