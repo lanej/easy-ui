@@ -145,6 +145,7 @@ export function previewConfig(engine = "full", outDir = "dist") {
               native: local("./native-regressions.html"),
               chartComposition: local("./chart-composition.html"),
               chartDataView: local("./chart-data-view.html"),
+              mobileCharts: local("./mobile-charts.html"),
             },
       },
     },

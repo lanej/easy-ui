@@ -33,6 +33,7 @@ import {
 } from "./Chart.extensions";
 import styles from "./examples.module.scss";
 import { RichChartDataExample } from "./RichDataTable.examples";
+import { MobileChartsExample } from "./MobileCharts.examples";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -43,6 +44,14 @@ export default meta;
 type Story = StoryObj<typeof Chart>;
 
 export const RichDataTable: Story = { render: () => <RichChartDataExample /> };
+
+export const MobileLayout: Story = {
+  render: () => (
+    <div style={{ maxWidth: 360 }}>
+      <MobileChartsExample />
+    </div>
+  ),
+};
 
 export const TimeSeries: Story = { args: timeSeriesExample };
 export const Area: Story = { args: areaExample };

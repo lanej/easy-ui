@@ -89,7 +89,36 @@ Custom `color` palettes replace the default palette. Tooltips use ECharts rich t
 
 When the effective engine option has data zoom, including `baseOption.dataZoom`, the frame supplies keyboard-operable zoom in/out/reset buttons. By default they target the first effective zoom component; independent zoom windows remain unchanged and ECharts retains intentional linked-axis behavior. Set `zoomTarget={{ dataZoomId: "time" }}` or `dataZoomIndex` to target another component; arrays select an intentional group. Missing targets omit the controls. Reset covers the full percentage range for the targeted components. The data table always represents the full supplied dataset, including observations outside a zoomed viewport. `dataTable` is required by the convenience `Chart`; build it from the same records as the series. Supply already formatted values and units, and use `null` for unavailable values.
 
-The rendered plot is an image with the supplied description; its underlying SVG/canvas is hidden from screen readers. Exact values and drill-down are available through the semantic HTML table. Native graphical legend controls and individual marks are pointer interactions, not individually keyboard-focusable controls. Provide application controls through `actions` when a report requires keyboard legend/filter control. The ECharts ARIA switch alone does not establish accessibility compliance.
+The rendered plot is an image with the supplied description; its underlying SVG/canvas is hidden from screen readers. Exact values and drill-down are available through the semantic HTML table. The automatic HTML legend supports keyboard selection. Native engine legends and individual marks remain pointer interactions; provide application controls through `actions` or `ChartLegend` for those layouts. The ECharts ARIA switch alone does not establish accessibility compliance.
+
+## Mobile layout
+
+`Chart` and `ChartSurface` default to `layout="auto"`. Ordinary named bar, line,
+and scatter series with one Cartesian axis pair and an unpositioned plain legend
+get a wrapping HTML legend below the plot. It uses the engine's series colors,
+44px touch targets, and pressed states. Selection uses the same engine events and
+`legendState` / `onLegendChange` contract as native legends; `selectedMode: false`
+produces a static key, and `selectedMode: "single"` retains single selection.
+`legendLabel` localizes its accessible name.
+
+This layout gives axis labels and names their own space and suggests four value
+axis intervals. It never reduces the requested typography. `height` remains the
+plot height; the legend adds natural document height as it wraps. Keep category
+labels concise through the application's `axisLabel.formatter`, while retaining
+full labels in the exact-data table.
+
+Authored grids, native legend positioning/styling/formatters, multi-axis or
+multi-panel options, zoom controls, visual maps, and non-Cartesian series keep
+their native layout. Per-datum or gradient colors also retain the native legend.
+Use `layout="native"` to retain the engine's layout explicitly. `ChartLegend` is
+also independently exported: supply `items` (name, color, selected, symbol) and
+an optional `onItemToggle` callback for application-owned compositions.
+
+When the report already owns a card, use `variant="bare"` to avoid a second
+border and layer of padding. This transit example also combines the heading and
+calendar-day subtitle instead of repeating them across nested cards.
+
+<Canvas of={ChartStories.MobileLayout} />
 
 ## Rich content inside “View data table”
 

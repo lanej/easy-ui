@@ -69,6 +69,21 @@ const current = (engine = engines[0]) =>
 const ranges = (engine = engines[0]) =>
   current(engine).dataZoom.map(({ start, end }) => [start, end]);
 
+const unpositioned: ChartOption = {
+  legend: { id: "services" },
+  xAxis: { type: "category", data: ["Monday", "Tuesday"] },
+  yAxis: { type: "value" },
+  series: [
+    {
+      name: "Ground",
+      type: "bar",
+      data: [10, 20],
+      itemStyle: { color: "#007f86" },
+    },
+    { name: "Express Saver", type: "bar", data: [4, 8] },
+  ],
+};
+
 beforeEach(() => {
   engines = [];
   setPlatformAPI({ measureText: (text) => ({ width: text.length * 7 }) });
@@ -87,6 +102,108 @@ beforeEach(() => {
         },
       }) as Awaited<ReturnType<typeof loadChartEngine>>,
   );
+});
+
+it("lays out an accessible legend with engine colors and retains selection across updates", async () => {
+  const view = (scheme: "light" | "dark", input = unpositioned) => (
+    <ThemeProvider colorScheme={scheme}>
+      <ChartSurface option={input} />
+    </ThemeProvider>
+  );
+  const { rerender } = render(view("light"));
+  const ground = await screen.findByRole("button", { name: "Ground" });
+  expect(ground).toHaveAttribute("aria-pressed", "true");
+  expect(ground.querySelector("[aria-hidden]")).toHaveStyle({
+    backgroundColor: "#007f86",
+  });
+  expect(engines[0].getOption().legend).toEqual([
+    expect.objectContaining({ show: false }),
+  ]);
+  fireEvent.click(ground);
+  expect(ground).toHaveAttribute("aria-pressed", "false");
+  expect(current().legend[0].selected.Ground).toBe(false);
+  rerender(view("dark", { ...unpositioned }));
+  expect(screen.getByRole("button", { name: "Ground" })).toBe(ground);
+  expect(ground).toHaveAttribute("aria-pressed", "false");
+  expect(engines).toHaveLength(1);
+  rerender(
+    view("dark", {
+      ...unpositioned,
+      legend: {
+        id: "services",
+        selected: { Ground: true },
+        selectedMode: false,
+      },
+    }),
+  );
+  expect(screen.queryByRole("button", { name: "Ground" })).toBeNull();
+  expect(screen.getByRole("list", { name: "Chart series" })).toHaveTextContent(
+    "Ground",
+  );
+  expect(current().legend[0].selected.Ground).toBe(true);
+});
+
+it("keeps HTML legend toggles controlled, including single selection", async () => {
+  const requested = vi.fn();
+  const input: ChartOption = {
+    ...unpositioned,
+    legend: { id: "services", selectedMode: "single" },
+  };
+  const view = (selected: Record<string, boolean>) => (
+    <ThemeProvider>
+      <ChartSurface
+        option={input}
+        legendState={[{ id: "services", selected }]}
+        onLegendChange={requested}
+      />
+    </ThemeProvider>
+  );
+  const { rerender } = render(view({ Ground: true, "Express Saver": false }));
+  const express = await screen.findByRole("button", { name: "Express Saver" });
+  fireEvent.click(express);
+  expect(requested).toHaveBeenCalledWith([
+    expect.objectContaining({
+      selected: { Ground: false, "Express Saver": true },
+    }),
+  ]);
+  expect(express).toHaveAttribute("aria-pressed", "false");
+  rerender(view(requested.mock.calls[0][0][0].selected));
+  expect(express).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Ground" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+});
+
+it("preserves authored native layout and supports an explicit native opt-out", async () => {
+  const view = (input: ChartOption, layout?: "auto" | "native") => (
+    <ThemeProvider>
+      <ChartSurface option={input} layout={layout} />
+    </ThemeProvider>
+  );
+  const { rerender } = render(view(unpositioned, "native"));
+  await screen.findByRole("img");
+  expect(screen.queryByRole("list", { name: "Chart series" })).toBeNull();
+  expect(engines[0].getOption().legend).toEqual([
+    expect.objectContaining({ show: true }),
+  ]);
+  for (const authored of [
+    { ...unpositioned, grid: { top: 50, bottom: 80 } },
+    { ...unpositioned, legend: { top: 8 } },
+    {
+      baseOption: unpositioned,
+      media: [
+        { query: { maxWidth: 400 }, option: { legend: { show: false } } },
+      ],
+    },
+  ]) {
+    rerender(view(authored));
+    expect(screen.queryByRole("list", { name: "Chart series" })).toBeNull();
+  }
+  rerender(view(unpositioned));
+  expect(
+    await screen.findByRole("button", { name: "Ground" }),
+  ).toBeInTheDocument();
 });
 
 it("preserves real engine zoom and legend state through theme changes, while honoring changed caller settings", async () => {

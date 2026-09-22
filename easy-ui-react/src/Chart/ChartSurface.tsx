@@ -13,6 +13,8 @@ import {
 } from "./interactions";
 import { useChartConnection, useChartContext } from "./ChartProvider";
 import { themedOption } from "./theme";
+import { automaticChartLayout } from "./autoLayout";
+import { ChartLegend, ChartLegendItem } from "./ChartLegend";
 import type {
   ChartLegendState,
   ChartOption,
@@ -31,6 +33,10 @@ export type ChartSurfaceProps = Pick<
   renderer?: "svg" | "canvas";
   status?: "ready" | "loading" | "empty" | "error";
   typography?: VisualizationTypography;
+  /** Auto lays out ordinary unpositioned Cartesian charts with a wrapping HTML
+   * legend. Authored grid/legend layouts remain native. Use native to opt out. */
+  layout?: "auto" | "native";
+  legendLabel?: string;
   onSelect?: (selection: ChartSelection) => void;
   onRenderError?: (error: unknown) => void;
   /** Retry application data errors. Engine failures have their own in-place retry. */
@@ -49,7 +55,8 @@ export type ChartSurfaceProps = Pick<
   retryLabel?: string;
 };
 
-/** Rendering and interaction surface without a card, heading, toolbar, or data disclosure.
+/** Rendering and interaction surface without a card, heading, or data disclosure.
+ * Automatic layouts include a wrapping series legend outside the plot.
  * Associate an external equivalent data view with aria-describedby where appropriate.
  */
 export function ChartSurface({
@@ -142,6 +149,8 @@ function ChartEngine(props: EngineProps) {
   const { resolvedColorScheme } = useColorScheme();
   const [state, setState] = useState("loading");
   const [retry, setRetry] = useState(0);
+  const [legend, setLegend] = useState<ChartLegendItem[]>([]);
+  const [interactiveLegend, setInteractiveLegend] = useState(false);
 
   useEffect(() => {
     if (
@@ -164,6 +173,27 @@ function ChartEngine(props: EngineProps) {
     let observer: ResizeObserver | undefined;
     const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     const scheme = window.matchMedia?.("(prefers-color-scheme: dark)");
+    let layout: ReturnType<typeof automaticChartLayout> = null;
+    const publishLegend = () => {
+      const chart = instance.current;
+      if (!layout || !chart) {
+        setLegend([]);
+        return;
+      }
+      const selected = interactionSnapshot(chart.getOption() as ChartOption)
+        .legend[0]?.selected;
+      setInteractiveLegend(layout.interactive);
+      setLegend(
+        layout.entries.map(({ seriesIndex, ...item }) => {
+          const color = chart.getVisual({ seriesIndex }, "color");
+          return {
+            ...item,
+            color: typeof color === "string" ? color : "currentColor",
+            selected: selected?.[item.name] !== false,
+          };
+        }),
+      );
+    };
     const fail = (error: unknown) => {
       if (!disposed && !failed) {
         // An application error callback may itself rerender with fresh option
@@ -188,9 +218,13 @@ function ChartEngine(props: EngineProps) {
       }
       if (!instance.current) return;
       try {
+        layout =
+          latest.current.layout === "native"
+            ? null
+            : automaticChartLayout(latest.current.option);
         const option = themedOption(
           element,
-          latest.current.option,
+          layout?.option ?? latest.current.option,
           !!motion?.matches,
           latest.current.typography,
         );
@@ -217,6 +251,7 @@ function ChartEngine(props: EngineProps) {
         connection.publish(
           interactionSnapshot(instance.current.getOption() as ChartOption),
         );
+        publishLegend();
         setState("ready");
       } catch (error) {
         fail(error);
@@ -252,6 +287,7 @@ function ChartEngine(props: EngineProps) {
       if (!isEqual(next.legend, before.legend))
         latest.current.onLegendChange?.(next.legend);
       if (latest.current.zoomState || latest.current.legendState) apply();
+      else publishLegend();
     };
     update.current = apply;
     resizeEngine.current = resize;
@@ -356,6 +392,7 @@ function ChartEngine(props: EngineProps) {
     props.zoomState,
     props.legendState,
     props.typography,
+    props.layout,
     theme,
     resolvedColorScheme,
   ]);
@@ -404,6 +441,22 @@ function ChartEngine(props: EngineProps) {
           aria-hidden="true"
         />
       </div>
+      {state === "ready" && (
+        <ChartLegend
+          items={legend}
+          typography={props.typography}
+          aria-label={props.legendLabel}
+          onItemToggle={
+            interactiveLegend
+              ? (name) =>
+                  instance.current?.dispatchAction({
+                    type: "legendToggleSelect",
+                    name,
+                  })
+              : undefined
+          }
+        />
+      )}
     </div>
   );
 }

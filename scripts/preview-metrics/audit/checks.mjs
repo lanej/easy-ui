@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { auditNativeRegressions } from "./native-checks.mjs";
 import { auditChartComposition } from "./chart-composition-checks.mjs";
 import { auditChartDataView } from "./chart-data-view-checks.mjs";
+import { auditMobileCharts } from "./mobile-chart-checks.mjs";
 
 const axeSource = await readFile(
   new URL("../node_modules/axe-core/axe.min.js", import.meta.url),
@@ -227,6 +228,13 @@ export async function auditBrowser(driver, browser, site, outputDir) {
     });
     report.checks.push(...composition.checks);
     report.composition = composition.measurements;
+
+    const mobile = await auditMobileCharts(driver, site, outputDir, {
+      scan,
+      diagnostics,
+    });
+    report.checks.push(...mobile.checks);
+    report.mobile = mobile.measurements;
 
     assert.deepEqual(
       report.scans.flatMap((scan) => scan.violations),

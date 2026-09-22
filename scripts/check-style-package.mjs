@@ -74,7 +74,7 @@ const sassSource = `
 `;
 
 const typeSource = `
-import { Chart } from "@easypost/easy-ui/Chart";
+import { Chart, ChartLegend } from "@easypost/easy-ui/Chart";
 import { NetworkMapCellDetails } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard } from "@easypost/easy-ui/MetricCard";
 import { Button } from "@easypost/easy-ui/Button";
@@ -103,6 +103,7 @@ const responsive: ResponsiveProp<string> = { sm: "1rem" };
 const className: string = classNames("packed", false);
 
 export const example = <>
+  <ChartLegend items={[{name: "Ground", color: "#007f86", selected: true, symbol: "bar"}]} onItemToggle={(name: string) => { void name; }} />
   <NetworkMapCellDetails cell={{latMin: 0, latMax: 1, lonMin: 0, lonMax: 1, medianMinutes: 20, iqrMinutes: 4, n: 80}} surface={{cells: [], source: "Packed sample", asOf: "2026-09-22T00:00:00Z"}}>
     <strong>Application chart</strong>
   </NetworkMapCellDetails>
@@ -161,7 +162,13 @@ for (const subpath of ["Chart/index.js", "Chart/index.mjs", "utilities/css.js", 
 }
 for (const load of [require, (specifier) => import(specifier)]) {
   const { ThemeProvider } = await load("@easypost/easy-ui/Theme");
-  const { Chart } = await load("@easypost/easy-ui/Chart");
+  const { Chart, ChartLegend } = await load("@easypost/easy-ui/Chart");
+  const key = renderToString(React.createElement(ChartLegend, {
+    items: [{ name: "Ground", color: "#007f86", selected: true }],
+    onItemToggle: () => {},
+  }));
+  assert.match(key, /aria-pressed="true"/);
+  assert.match(key, /Ground/);
   const html = renderToString(React.createElement(ThemeProvider, null, React.createElement(Chart, {
     title: "Packed chart", option: { series: [{ type: "bar", data: [1] }] },
     dataTable: { columns: ["Count"], rows: [{ id: "one", values: [1] }] }

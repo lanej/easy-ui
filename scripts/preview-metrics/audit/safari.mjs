@@ -46,7 +46,9 @@ try {
         const element = await driver.findElement(By.css(selector));
         await driver.executeScript("arguments[0].focus()", element);
         await element.sendKeys(
-          { Enter: Key.ENTER, ArrowRight: Key.ARROW_RIGHT }[key] ?? key,
+          { Enter: Key.ENTER, Space: Key.SPACE, ArrowRight: Key.ARROW_RIGHT }[
+            key
+          ] ?? key,
         );
       },
       click: async (selector) =>
