@@ -240,6 +240,9 @@ export async function auditBrowser(driver, browser, site, outputDir) {
     );
   } catch (error) {
     report.failure = String(error.stack ?? error);
+    // Preserve the failing viewport as well as the last successful scenario.
+    // Screenshot errors must not replace the original assertion or timeout.
+    await driver.screenshot(`${outputDir}/failure.png`).catch(() => {});
     throw error;
   } finally {
     await writeFile(

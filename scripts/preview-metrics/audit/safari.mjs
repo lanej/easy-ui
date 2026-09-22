@@ -36,7 +36,11 @@ try {
       },
       evaluate: (fn, ...args) => driver.executeScript(fn, ...args),
       wait: (fn, ...args) =>
-        driver.wait(() => driver.executeScript(fn, ...args), 30000),
+        driver.wait(
+          () => driver.executeScript(fn, ...args),
+          30000,
+          `Browser condition did not become true: ${fn}`,
+        ),
       script: (source) => driver.executeScript(source),
       key: async (selector, key) => {
         const element = await driver.findElement(By.css(selector));
