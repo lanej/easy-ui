@@ -40,6 +40,11 @@ const reviewTheme = createTheme((preferences) => ({
         "color.primary.700": "var(--ezui-color-blue-050)",
         "color.negative.600": "var(--ezui-color-red-200)",
         "color.positive.600": "var(--ezui-color-green-800)",
+        "color.positive.100": "var(--ezui-color-green-800)",
+        "color.positive.800": "var(--ezui-color-green-100)",
+        "color.negative.100": "var(--ezui-color-red-800)",
+        "color.negative.800": "var(--ezui-color-red-100)",
+        "color.warning.300": "var(--ezui-color-yellow-800)",
       }
     : {}),
 }));
@@ -115,7 +120,12 @@ function Preview() {
               refreshed
                 ? [...scoreCompositionExample.signals]
                     .reverse()
-                    .map((signal) => ({ ...signal, value: 0 }))
+                    .map((signal) => ({
+                      ...signal,
+                      value: signal.id === "dimensions" ? false : 0,
+                      sentiment: "positive" as const,
+                      statusLabel: "Clear",
+                    }))
                 : [...scoreCompositionExample.signals]
             }
             contributions={
@@ -154,7 +164,9 @@ function Preview() {
           <div className="score-primitive-grid">
             <ScoreSignal
               label="International documentation has been reviewed and confirmed for this shipment"
-              value={false}
+              value={true}
+              sentiment="positive"
+              statusLabel="Confirmed"
               description="Long labels retain their full meaning."
             />
             <ScoreContribution

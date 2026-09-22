@@ -78,6 +78,118 @@ it("distinguishes zero, false, missing, and invalid observations with localized 
   expect(screen.queryByText("Do not show")).not.toBeInTheDocument();
 });
 
+it("uses caller-supplied signal meaning without inferring it from the observation", () => {
+  const { rerender } = render(
+    <>
+      <ScoreSignal
+        label="Favorable interpretation"
+        value={0.26}
+        sentiment="positive"
+        statusLabel="Within target"
+      />
+      <ScoreSignal
+        label="Unfavorable interpretation"
+        value={0.26}
+        sentiment="negative"
+        statusLabel="Outside target"
+      />
+    </>,
+  );
+  for (const [label, sentiment] of [
+    ["Within target", "positive"],
+    ["Outside target", "negative"],
+  ]) {
+    const value = screen.getByText(label).closest("[data-sentiment]")!;
+    expect(value).toHaveAttribute("data-sentiment", sentiment);
+    expect(within(value as HTMLElement).getByText("0.26")).toBeVisible();
+    expect(within(value as HTMLElement).getByText(label)).toBeVisible();
+  }
+
+  for (const observation of [true, false, 0, -1, 1]) {
+    rerender(<ScoreSignal label="Uninterpreted" value={observation} />);
+    const text =
+      typeof observation === "boolean"
+        ? observation
+          ? "Yes"
+          : "No"
+        : String(observation);
+    expect(screen.getByText(text).closest("[data-sentiment]")).toHaveAttribute(
+      "data-sentiment",
+      "neutral",
+    );
+    expect(screen.queryByText(/^(Positive|Caution|Negative)$/)).toBeNull();
+  }
+});
+
+it("keeps signal meaning visible and localizable through status updates", () => {
+  const props = {
+    label: "Observation",
+    value: false,
+    labels: {
+      no: "Non",
+      positiveSignal: "Favorable",
+      warningSignal: "Attention",
+      negativeSignal: "Défavorable",
+    },
+  };
+  const { rerender } = render(<ScoreSignal {...props} sentiment="positive" />);
+  expect(screen.getByText("Favorable")).toBeVisible();
+  expect(screen.getByText("Non")).toBeVisible();
+
+  rerender(<ScoreSignal {...props} sentiment="warning" statusLabel="   " />);
+  expect(screen.getByText("Attention")).toBeVisible();
+  expect(screen.queryByText("Favorable")).not.toBeInTheDocument();
+  expect(screen.getByText("Non").closest("[data-sentiment]")).toHaveAttribute(
+    "data-sentiment",
+    "warning",
+  );
+
+  rerender(<ScoreSignal {...props} sentiment="negative" statusLabel="" />);
+  expect(screen.getByText("Défavorable")).toBeVisible();
+  rerender(
+    <ScoreSignal
+      {...props}
+      sentiment="positive"
+      statusLabel="Review complete"
+    />,
+  );
+  expect(screen.getByText("Review complete")).toBeVisible();
+  expect(screen.queryByText("Favorable")).not.toBeInTheDocument();
+
+  rerender(<ScoreSignal {...props} statusLabel="Recorded" />);
+  expect(screen.getByText("Recorded")).toBeVisible();
+  expect(screen.getByText("Non").closest("[data-sentiment]")).toHaveAttribute(
+    "data-sentiment",
+    "neutral",
+  );
+});
+
+it("removes stale signal interpretation when an observation becomes unavailable or invalid", () => {
+  const props = {
+    label: "Observation",
+    sentiment: "positive" as const,
+    statusLabel: "Within target",
+    displayValue: "Available",
+  };
+  const { rerender } = render(<ScoreSignal {...props} value={1} />);
+  expect(screen.getByText("Within target")).toBeVisible();
+  for (const value of [null, NaN, Infinity, -Infinity]) {
+    rerender(<ScoreSignal {...props} value={value} />);
+    const text = value === null ? "No data" : "Invalid value";
+    expect(screen.getByText(text)).toBeVisible();
+    expect(screen.getByText(text).closest("[data-sentiment]")).toHaveAttribute(
+      "data-sentiment",
+      "neutral",
+    );
+    expect(screen.queryByText("Within target")).not.toBeInTheDocument();
+    expect(screen.queryByText("Available")).not.toBeInTheDocument();
+    expect(screen.queryByText("Positive")).not.toBeInTheDocument();
+  }
+  rerender(<ScoreSignal {...props} value={0} />);
+  expect(screen.getByText("Available")).toBeVisible();
+  expect(screen.getByText("Within target")).toBeVisible();
+});
+
 it("retains signed and outside values without fabricating a valid meter", () => {
   const format = vi.fn((value: number) => value.toFixed(1));
   const props = { label: "Contribution", maxScore: 2, formatScore: format };

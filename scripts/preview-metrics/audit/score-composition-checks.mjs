@@ -16,6 +16,33 @@ export async function auditScoreComposition(
   );
   await driver.evaluate(() => document.fonts.ready.then(() => true));
 
+  const signalStatuses = () =>
+    driver.evaluate(() =>
+      [
+        ...document.querySelectorAll(
+          '[data-score-node="signal"] [data-sentiment]',
+        ),
+      ].map((node) => ({
+        sentiment: node.dataset.sentiment,
+        value: node.querySelector("strong").textContent,
+        status: node.querySelector("[data-score-status-label]")?.textContent,
+        color: getComputedStyle(node).color,
+        background: getComputedStyle(node).backgroundColor,
+      })),
+    );
+  const initialStatuses = await signalStatuses();
+  assert.deepEqual(
+    initialStatuses.map(({ sentiment }) => sentiment),
+    ["negative", "warning", "warning"],
+  );
+  assert.deepEqual(
+    initialStatuses.map(({ status }) => status),
+    ["Flagged", "Elevated", "Elevated"],
+  );
+  assert.notEqual(initialStatuses[0].color, initialStatuses[1].color);
+  assert.notEqual(initialStatuses[0].background, initialStatuses[1].background);
+  measurements.push({ name: "signal-statuses", signals: initialStatuses });
+
   const endpoints = async (name) => {
     // Wait for ResizeObserver to apply the latest DOM geometry, not a fixed delay.
     await driver.wait(() => {
@@ -183,6 +210,29 @@ export async function auditScoreComposition(
     ["0", "0"],
   );
   await endpoints("refreshed");
+  const refreshedStatuses = await signalStatuses();
+  assert.deepEqual(
+    refreshedStatuses.map(({ sentiment }) => sentiment),
+    ["positive", "positive", "positive"],
+  );
+  assert.deepEqual(
+    refreshedStatuses.map(({ value }) => value),
+    ["0", "0", "No"],
+  );
+  assert.deepEqual(
+    refreshedStatuses.map(({ status }) => status),
+    ["Clear", "Clear", "Clear"],
+  );
+  assert.notEqual(
+    refreshedStatuses[0].background,
+    initialStatuses[0].background,
+  );
+  measurements.push({
+    name: "refreshed-signal-statuses",
+    signals: refreshedStatuses,
+  });
+  await scan("score-positive");
+  await driver.screenshot(`${outputDir}/score-positive.png`);
   await driver.click("#refresh-data");
   await driver.key(explanation, "Enter");
   await driver.click("#rtl-layout");
@@ -280,6 +330,7 @@ export async function auditScoreComposition(
   await diagnostics("score-composition");
   return {
     checks: [
+      "explicit signal colors retain exact values and visible status labels",
       "score connectors follow DOM geometry and disclosure",
       "score keyboard disclosure and refreshed records",
       "score RTL geometry",

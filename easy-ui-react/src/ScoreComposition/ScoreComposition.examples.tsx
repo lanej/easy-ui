@@ -8,9 +8,27 @@ export const scoreCompositionExample: ScoreCompositionProps = {
   description: "How observed signals contribute to this decision.",
   metadata: "Scoring model v1.12.0 · September 22, 2026, 12:35 UTC",
   signals: [
-    { id: "dimensions", label: "Missing package dimensions", value: true },
-    { id: "ratio", label: "NDA / international label ratio", value: 0.26 },
-    { id: "burst", label: "NDA / international label burst", value: 3 },
+    {
+      id: "dimensions",
+      label: "Missing package dimensions",
+      value: true,
+      sentiment: "negative",
+      statusLabel: "Flagged",
+    },
+    {
+      id: "ratio",
+      label: "NDA / international label ratio",
+      value: 0.26,
+      sentiment: "warning",
+      statusLabel: "Elevated",
+    },
+    {
+      id: "burst",
+      label: "NDA / international label burst",
+      value: 3,
+      sentiment: "warning",
+      statusLabel: "Elevated",
+    },
   ],
   contributions: [
     {

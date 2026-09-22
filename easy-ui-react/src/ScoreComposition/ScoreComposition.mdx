@@ -23,6 +23,8 @@ Import the composition and its primitives from `@easypost/easy-ui/ScoreCompositi
       label: "Test coverage",
       value: 0.92,
       displayValue: "92%",
+      sentiment: "positive",
+      statusLabel: "Within target",
     },
   ]}
   contributions={[
@@ -45,6 +47,25 @@ Signal and contribution IDs must be unique within their respective arrays and st
 The result is always supplied independently, including an optional maximum. It may include adjustments or rules beyond the displayed contributions. Never assume the result equals the sum of the cards. Outcome wording and sentiment are separate; neither is inferred from a numeric value. Put domain-specific values such as currency exposure in `supportingText`.
 
 <Canvas of={Stories.SharedSignals} />
+
+## Give signal values meaning
+
+Set a signal's `sentiment` to `positive`, `warning`, or `negative` to tint its value and status. The default is `neutral`. Applications choose these meanings explicitly: a true flag, a high number, or a negative value does not determine whether an observation is favorable.
+
+Use `statusLabel` for a short, visible explanation such as “Within target”, “Elevated”, or “Missing dimensions”. It appears beside the exact value, so the interpretation remains understandable without color. A neutral signal can also have a status label. When a nonneutral signal has no nonblank status label, it displays “Positive”, “Caution”, or “Negative”; localize these through `labels.positiveSignal`, `labels.warningSignal`, and `labels.negativeSignal`.
+
+```tsx
+<ScoreSignal
+  label="Missing package dimensions"
+  value={true}
+  sentiment="negative"
+  statusLabel="Needs attention"
+/>
+```
+
+Missing and invalid observations suppress supplied sentiment and status labels and display their existing neutral “No data” or “Invalid value” text. Update the observation, sentiment, and status together when application rules change.
+
+<Canvas of={Stories.SignalSentiments} />
 
 ## Layout and access
 
