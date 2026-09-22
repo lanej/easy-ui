@@ -71,7 +71,7 @@ Missing and invalid observations suppress supplied sentiment and status labels a
 
 A contribution's fill is relative to its own maximum: `1 / 1` shows “Full · 100%”, while `1 / 2` shows “Partial · 50%”. Zero shows “None · 0%”. The meter and exact fraction remain visible alongside this status, so color is never the only way to distinguish these states. Localize the state words through `labels.fullContribution`, `labels.partialContribution`, and `labels.noContribution`.
 
-Contribution `sentiment` is independent of fullness and defaults to `neutral`. Set it explicitly to `positive`, `warning`, or `negative` to tint the score, status, and meter. For the risk example, the application marks the full underdeclaration contribution `negative` and the partial international contribution `warning`. A fully earned quality score could instead be `positive`. Easy UI does not infer business meaning from a score, its maximum, or its source signals; update sentiment alongside changed contribution values.
+Contribution `sentiment` is independent of fullness and defaults to `neutral`. Set it explicitly to `positive`, `warning`, or `negative` to color the status and meter, with readable score text. For the risk example, the application marks the full underdeclaration contribution `negative` and the partial international contribution `warning`, which uses a golden fill. A fully earned quality score could instead be `positive`. Easy UI does not infer business meaning from a score, its maximum, or its source signals; update sentiment alongside changed contribution values.
 
 ```tsx
 <ScoreContribution
@@ -83,9 +83,17 @@ Contribution `sentiment` is independent of fullness and defaults to `neutral`. S
 />
 ```
 
-Fullness uses exact supplied values: only a score equal to its cap is full. Percentages use whole numbers, with “<1%” and “<100%” at the boundaries so a small positive or almost-full contribution never looks empty or full after rounding. Exact scores and meter widths are unchanged. Missing, invalid, and outside-scale contributions suppress fullness and sentiment while retaining their existing value and scale messages.
+Fullness uses exact supplied values: only a score equal to its cap is full. Percentages use whole numbers, with `<1%` and `<100%` at the boundaries so a small positive or almost-full contribution never looks empty or full after rounding. Exact scores and meter widths are unchanged. Missing, invalid, and outside-scale contributions suppress fullness and sentiment while retaining their existing value and scale messages.
 
 <Canvas of={Stories.ContributionFullness} />
+
+## Lead with the decision
+
+When supplied, `result.disposition` leads the result card before the exact score. The card uses the application's explicit `result.sentiment`: `negative` emphasizes an adverse decision, `positive` a favorable decision, and the default `neutral` avoids implying either. A decorative icon reinforces the visual treatment; the disposition text carries the decision for everyone, including assistive technology.
+
+The score never determines the decision or its sentiment. The same score may be “Disable”, “Approved”, or “Pending review” under different application rules. A supplied decision also remains visible when its score is unavailable. Omit `disposition` when the application has no outcome to report; the result still displays its score or missing-data label without inventing a decision.
+
+<Canvas of={Stories.ResultDecisions} />
 
 ## Layout and access
 

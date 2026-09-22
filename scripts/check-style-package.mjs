@@ -179,7 +179,9 @@ for (const load of [require, (specifier) => import(specifier)]) {
   assert.match(score, /Observed input/);
   assert.match(score, /9.00/);
   assert.match(score, /Application decision/);
-  assert.doesNotMatch(score, /<svg/);
+  // The outcome icon renders on the server; measured connectors do not.
+  assert.equal((score.match(/<svg/g) || []).length, 1);
+  assert.match(score, /<svg[^>]*aria-hidden="true"/);
   const { ThemeProvider } = await load("@easypost/easy-ui/Theme");
   const { Chart, ChartLegend } = await load("@easypost/easy-ui/Chart");
   const key = renderToString(React.createElement(ChartLegend, {

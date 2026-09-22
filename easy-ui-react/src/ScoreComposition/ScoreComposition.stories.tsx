@@ -69,6 +69,33 @@ export const ContributionFullness: Story = {
   ),
 };
 
+export const ResultDecisions: Story = {
+  render: () => (
+    <HorizontalGrid columns={{ xs: 1, md: 3 }} gap="3">
+      <ScoreResult
+        score={2}
+        maxScore={3}
+        disposition="Disable"
+        sentiment="negative"
+        supportingText="The application determined that action is required."
+      />
+      <ScoreResult
+        score={2}
+        maxScore={3}
+        disposition="Approved"
+        sentiment="positive"
+        supportingText="The same score can have a different application meaning."
+      />
+      <ScoreResult
+        score={2}
+        maxScore={3}
+        disposition="Pending review"
+        supportingText="Neutral is the default; the component infers no decision."
+      />
+    </HorizontalGrid>
+  ),
+};
+
 export const Narrow: Story = {
   args: scoreCompositionExample,
   decorators: [

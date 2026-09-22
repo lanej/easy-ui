@@ -135,8 +135,7 @@
     --ezui-score-text: #{design-token("color.positive.800")};
   }
   &[data-sentiment="warning"] {
-    --ezui-score-fill: #{design-token("color.warning.800")};
-    --ezui-score-text: #{design-token("color.warning.800")};
+    --ezui-score-fill: #{design-token("color.warning.600")};
   }
   &[data-sentiment="negative"] {
     --ezui-score-fill: #{design-token("color.negative.600")};
@@ -215,17 +214,35 @@
   justify-content: center;
 }
 .result {
+  --ezui-outcome-color: #{design-token("color.neutral.600")};
+  --ezui-outcome-tint: #{design-token("color.neutral.100")};
+  &[data-sentiment="negative"] {
+    --ezui-outcome-color: #{design-token("color.negative.600")};
+    --ezui-outcome-tint: #{design-token("color.negative.100")};
+  }
+  &[data-sentiment="positive"] {
+    --ezui-outcome-color: #{design-token("color.positive.800")};
+    --ezui-outcome-tint: #{design-token("color.positive.100")};
+  }
   padding: design-token("space.3");
-  border: 1px solid design-token("color.primary.300");
+  border: 1px solid design-token("color.neutral.200");
+  border-block-start: 4px solid var(--ezui-outcome-color);
   border-radius: design-token("shape.border_radius.md");
-  background: design-token("color.primary.100");
+  background: design-token("color.neutral.000");
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: design-token("space.1");
 }
 .resultLabel {
+  color: design-token("color.neutral.600");
   font-size: var(--ezui-viz-description-size, 14px);
+}
+.resultScore {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: design-token("space.1");
 }
 .resultValue {
   font-size: max(40px, calc(var(--ezui-viz-title-size, 18px) * 2));
@@ -243,15 +260,24 @@
   font-variant-numeric: tabular-nums;
 }
 .disposition {
-  margin-block: design-token("space.1");
+  display: flex;
+  align-items: center;
+  gap: design-token("space.1.5");
+  margin-bottom: design-token("space.2");
   max-width: 100%;
+  color: var(--ezui-outcome-color);
+}
+.dispositionIcon {
+  display: flex;
+  flex: none;
+  padding: design-token("space.1");
+  border-radius: 50%;
+  background: var(--ezui-outcome-tint);
 }
 .dispositionLabel {
-  font-size: var(--ezui-viz-detail-size, 12px);
-  white-space: normal;
-  &[data-sentiment="positive"] {
-    color: design-token("color.neutral.900");
-  }
+  min-width: 0;
+  font-size: max(22px, var(--ezui-viz-title-size, 18px));
+  line-height: 1.3;
 }
 .supportingText,
 .empty {

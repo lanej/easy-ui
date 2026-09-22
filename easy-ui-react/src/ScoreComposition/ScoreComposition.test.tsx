@@ -330,6 +330,73 @@ it("clears stale contribution fullness and tint when a valid meter becomes unava
   ).toHaveAttribute("data-sentiment", "negative");
 });
 
+it("leads with the supplied result decision and keeps its sentiment independent of the score", () => {
+  const { container, rerender } = render(
+    <ScoreResult
+      score={2}
+      maxScore={3}
+      disposition="Disable"
+      sentiment="negative"
+    />,
+  );
+  const result = () => container.querySelector("[data-sentiment]");
+  expect(result()).toHaveAttribute("data-sentiment", "negative");
+  expect(screen.getByText("Disable")).toBeVisible();
+  expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  expect(
+    screen
+      .getByText("Disable")
+      .compareDocumentPosition(screen.getByText("2.00")) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+
+  rerender(
+    <ScoreResult
+      score={2}
+      maxScore={3}
+      disposition="Approved"
+      sentiment="positive"
+    />,
+  );
+  expect(result()).toHaveAttribute("data-sentiment", "positive");
+  expect(screen.getByText("Approved")).toBeVisible();
+  expect(screen.queryByText("Disable")).not.toBeInTheDocument();
+  expect(screen.getByText("2.00")).toBeVisible();
+
+  rerender(<ScoreResult score={2} maxScore={3} disposition="Pending review" />);
+  expect(result()).toHaveAttribute("data-sentiment", "neutral");
+  expect(screen.getByText("Pending review")).toBeVisible();
+  expect(screen.getByText("2.00")).toBeVisible();
+});
+
+it("preserves an application-owned outcome when the score is unavailable", () => {
+  const { container, rerender } = render(
+    <ScoreResult
+      score={null}
+      disposition="Review required"
+      sentiment="negative"
+      supportingText="The decision includes external evidence."
+    />,
+  );
+  expect(screen.getByText("Review required")).toBeVisible();
+  expect(screen.getByText("No data")).toBeVisible();
+  expect(
+    screen.getByText("The decision includes external evidence."),
+  ).toBeVisible();
+  expect(container.querySelector("[data-sentiment]")).toHaveAttribute(
+    "data-sentiment",
+    "negative",
+  );
+
+  rerender(<ScoreResult score={null} />);
+  expect(screen.getByText("No data")).toBeVisible();
+  expect(screen.queryByText("Review required")).not.toBeInTheDocument();
+  expect(container.querySelector("[data-sentiment]")).toHaveAttribute(
+    "data-sentiment",
+    "neutral",
+  );
+});
+
 it("opens explanations by keyboard and preserves their state through data refresh and reordering", async () => {
   const { user, rerender } = render(<ScoreComposition {...example} />);
   const button = screen.getByRole("button", {
@@ -387,7 +454,9 @@ it("server-renders all exact values and relationships without SVG measurements",
   expect(html).toContain("NDA / international label ratio");
   expect(html).toContain("Based on");
   expect(html).toContain("2.00");
-  expect(html).not.toContain("<svg");
+  const markup = document.createElement("div");
+  markup.innerHTML = html;
+  expect(markup.querySelector("[data-score-layout] > svg")).toBeNull();
   const result = renderToString(<ScoreResult score={null} />);
   expect(result).toContain("No data");
   expect(result).not.toContain("0.00");
@@ -462,13 +531,15 @@ it("tracks resized and replaced nodes, deduplicates edges, supports RTL, and cle
       </StrictMode>,
     );
     expect(screen.getByText("Unavailable signal: missing")).toBeVisible();
-    expect(container.querySelectorAll("path")).toHaveLength(4);
-    const first = () => container.querySelector("path");
+    expect(
+      container.querySelectorAll("[data-score-layout] > svg path"),
+    ).toHaveLength(4);
+    const first = () =>
+      container.querySelector("[data-score-layout] > svg path");
     expect(first()).toHaveAttribute("d", "M 200 50 C 250 50, 250 50, 300 50");
-    expect(container.querySelector("svg")).toHaveAttribute(
-      "aria-hidden",
-      "true",
-    );
+    expect(
+      container.querySelector("[data-score-layout] > svg"),
+    ).toHaveAttribute("aria-hidden", "true");
     offset = 40;
     act(() => resized([], {} as ResizeObserver));
     expect(first()).toHaveAttribute("d", "M 200 50 C 250 50, 250 90, 300 90");
@@ -480,13 +551,15 @@ it("tracks resized and replaced nodes, deduplicates edges, supports RTL, and cle
         <ScoreComposition {...props} contributions={[props.contributions[1]]} />
       </StrictMode>,
     );
-    expect(container.querySelectorAll("path")).toHaveLength(2);
+    expect(
+      container.querySelectorAll("[data-score-layout] > svg path"),
+    ).toHaveLength(2);
     rerender(
       <StrictMode>
         <ScoreComposition {...props} signals={[]} contributions={[]} />
       </StrictMode>,
     );
-    expect(container.querySelector("svg")).toBeNull();
+    expect(container.querySelector("[data-score-layout] > svg")).toBeNull();
     unmount();
     expect(disconnect).toHaveBeenCalled();
   } finally {
