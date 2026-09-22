@@ -109,23 +109,41 @@ describe("<DataGrid />", () => {
     expect(getColumn("Name")).not.toHaveAttribute("style");
   });
 
-  it("allows explicit numeric alignment and updates column options without replacing rows", () => {
+  it("allows explicit numeric alignment and wrapping without replacing rows", () => {
     const { rerender } = render(
       createDataGrid({
         columnOptions: { email: { isNumeric: true, alignment: "center" } },
       }),
     );
     expect(getColumn("Email")).toHaveStyle({ textAlign: "center" });
+    expect(getAllByRole(getRow(1), "gridcell")[0]).toHaveStyle({
+      whiteSpace: "nowrap",
+    });
+    expect(getColumn("Email").style.whiteSpace).toBe("");
     rerender(
       createDataGrid({
-        columnOptions: { email: { alignment: "start", width: 250 } },
+        columnOptions: { email: { isNumeric: true, whiteSpace: "normal" } },
+      }),
+    );
+    expect(getAllByRole(getRow(1), "gridcell")[0]).toHaveStyle({
+      whiteSpace: "normal",
+    });
+    rerender(
+      createDataGrid({
+        columnOptions: {
+          email: { alignment: "start", width: 250, whiteSpace: "normal" },
+        },
       }),
     );
     for (const cell of [
       getColumn("Email"),
       getAllByRole(getRow(1), "gridcell")[0],
     ]) {
-      expect(cell).toHaveStyle({ width: "250px", textAlign: "start" });
+      expect(cell).toHaveStyle({
+        width: "250px",
+        textAlign: "start",
+        whiteSpace: "normal",
+      });
       expect(cell.firstElementChild).not.toHaveAttribute(
         "class",
         expect.stringContaining("numeric"),

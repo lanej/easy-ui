@@ -35,6 +35,8 @@ export function Cell({ cell, state }: CellProps) {
     width: options.width,
     minWidth: options.minWidth,
     textAlign: options.alignment ?? (options.isNumeric ? "end" : undefined),
+    whiteSpace:
+      options.whiteSpace ?? (options.isNumeric ? "nowrap" : undefined),
   };
   const ref = useRef(null);
   const { gridCellProps } = useTableCell({ node: cell }, state, ref);

@@ -16,6 +16,21 @@
   @include component-token("data-grid", "body-row-height", 48px);
   @include component-token(
     "data-grid",
+    "expanded-row-body-height",
+    component-token("data-grid", "body-row-height")
+  );
+  @include component-token(
+    "data-grid",
+    "cell-padding",
+    design-token("space.2")
+  );
+  @include component-token(
+    "data-grid",
+    "edge-padding",
+    design-token("space.5")
+  );
+  @include component-token(
+    "data-grid",
     "footer-bg",
     design-token("color.neutral.000")
   );
@@ -142,6 +157,17 @@
 .sizeSm {
   @include component-token("data-grid", "header-row-height", 32px);
   @include component-token("data-grid", "body-row-height", 32px);
+  @include component-token(
+    "data-grid",
+    "cell-padding",
+    design-token("space.1")
+  );
+  @include component-token(
+    "data-grid",
+    "edge-padding",
+    design-token("space.1.5")
+  );
+  @include component-token("data-grid", "sticky-left-offset", 0px);
 }
 
 .sizeLg {

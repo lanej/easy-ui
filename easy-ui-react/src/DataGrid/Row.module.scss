@@ -14,7 +14,7 @@
 .expanded {
   /* stylelint-disable scss/operator-no-newline-after */
   height: calc(
-    component-token("data-grid", "body-row-height") +
+    component-token("data-grid", "expanded-row-body-height") +
       component-token("data-grid", "expanded-row-height")
   );
   /* stylelint-enable scss/operator-no-newline-after */

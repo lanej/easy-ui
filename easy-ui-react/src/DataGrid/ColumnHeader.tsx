@@ -27,6 +27,7 @@ export function ColumnHeader({ column, state }: ColumnHeaderProps) {
     width: options.width,
     minWidth: options.minWidth,
     textAlign: options.alignment ?? (options.isNumeric ? "end" : undefined),
+    whiteSpace: options.whiteSpace,
   };
   const ref = useRef(null);
   const { columnHeaderProps } = useTableColumnHeader(

@@ -292,7 +292,7 @@ Collapsing changes visibility only. Aggregators still receive every supplied row
 
 ## Height and Column Layout
 
-The grid fills its container's width. Scrollbars appear only when content exceeds the available width or an explicit height limit; they do not need a visibility prop.
+The grid fills its container's width. Overflow scrolls within the frame; the existing grid styling hides native scrollbars and uses sticky-edge shadows. For a wide report, provide a visible scrolling hint or a focused column selection so additional metrics are discoverable.
 
 | Control         | Type                                                   | Behavior                                                                                                                                                                                    |
 | --------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -306,9 +306,10 @@ The grid fills its container's width. Scrollbars appear only when content exceed
 | Column option | Type                              | Behavior                                                                                                                                                    |
 | ------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `alignment`   | `"start"`, `"center"`, or `"end"` | Sets horizontal alignment. Explicit alignment overrides the numeric default.                                                                                |
-| `isNumeric`   | `boolean`                         | Uses equal-width digits and defaults to end alignment. Formatting currency, percentages, and locale-specific numbers remains the renderer's responsibility. |
+| `isNumeric`   | `boolean`                         | Uses equal-width digits and defaults to end alignment and unwrapped body values. Headings can still wrap. Formatting currency, percentages, and locale-specific numbers remains the renderer's responsibility. |
 | `width`       | `CSSProperties["width"]`          | Preferred column width. Accepts pixels as numbers or CSS lengths such as `"20%"`. Automatic table layout may widen a column to fit its content.             |
 | `minWidth`    | `CSSProperties["minWidth"]`       | Keeps columns readable when space is limited. If the column minimums exceed the container width, the table scrolls horizontally.                            |
+| `whiteSpace` | `"normal"` or `"nowrap"` | Controls wrapping in headings, data, and subtotals. `"nowrap"` keeps short identifiers or a value with its unit together; `"normal"` overrides numeric body defaults for longer rich content. Explicit line breaks and block children still work. |
 
 Keep presentation in `columnOptions`, keyed by the same keys as `columns`, so existing arbitrary column metadata retains its meaning. Selection, expansion, and action columns are added independently; they do not shift which data columns receive these options.
 
@@ -333,11 +334,21 @@ Use natural height for a short table on a page. Add `maxHeight={280}` when the s
 
 ## With Custom Size
 
-`DataGrid` supports `sm`, `md`, and `lg` row heights with the `size` prop.
+`DataGrid` supports `sm`, `md`, and `lg` minimum row heights with the `size` prop. Rich or wrapped content can grow beyond that minimum, including in expanded rows. `sm` also reduces horizontal cell and edge padding while retaining the same readable text size. The existing medium and large horizontal spacing is unchanged.
 
 <Canvas of={DataGridStories.WithCustomSize} />
 
 <Controls of={DataGridStories.WithCustomSize} />
+
+## Mobile benchmark reports
+
+For a report with many comparison columns, keep the row identifier and one selected metric visible on a phone. Compose the existing `Select` with the grid's `columns`; let the application decide which metrics to offer and whether to start with all columns. Keep the selected metric when switching between focused and full views.
+
+The example places the metric's supplied sample count under each zone, displays its exact value and signed change on separate lines, and explains the comparison baseline once above the table. Neutral changes use quiet text. The full view retains all nine columns, with a frozen zone and a scrolling hint. Narrow layouts do not require smaller fonts or truncation.
+
+<Canvas of={DataGridStories.MobileBenchmarks} />
+
+Use `size="sm"`, `columnOptions.zone.whiteSpace="nowrap"`, and `isNumeric: true` on numeric columns. Supply `minWidth` for the full comparison. For SLA subsets, use the population corresponding to the selected metric; do not reuse an unrelated shipment count. This composition leaves units, aggregation, benchmark meaning, and responsive column policy with the application.
 
 ## With Custom Rendering
 

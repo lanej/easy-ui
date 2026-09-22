@@ -114,6 +114,7 @@ export const example = <>
     aria-label="Packed data"
     columns={[{ key: "cost", label: "Cost" }]}
     rows={[{ key: "one", cost: 1 }]}
+    columnOptions={{ cost: { isNumeric: true, whiteSpace: "normal", minWidth: 100 } }}
     renderColumnCell={(column) => column.label}
     renderRowCell={(value) => String(value)}
   />

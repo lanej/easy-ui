@@ -67,7 +67,10 @@ export type DataGridColumnOptions = {
   /** Minimum column width. Wider tables remain horizontally scrollable. */
   minWidth?: CSSProperties["minWidth"];
 
-  /** Use tabular digits and default to end alignment. Does not format values. */
+  /** Wrap text or keep labels and rich values together. Applies to headings and cells. */
+  whiteSpace?: "normal" | "nowrap";
+
+  /** Use tabular digits, end alignment, and unwrapped body values by default. Does not format values. */
   isNumeric?: boolean;
 };
 

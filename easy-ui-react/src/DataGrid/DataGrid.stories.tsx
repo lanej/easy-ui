@@ -16,8 +16,17 @@ import {
 } from "../utilities/storybook";
 import { DataGrid } from "./DataGrid";
 import { DataGridProps } from "./types";
+import { MobileDataGridExample } from "./MobileDataGrid.examples";
 
 type Story = StoryObj<typeof DataGrid>;
+
+export const MobileBenchmarks: Story = {
+  render: () => (
+    <div style={{ maxWidth: 390 }}>
+      <MobileDataGridExample />
+    </div>
+  ),
+};
 
 const columns = [
   { key: "name", name: "Name" },

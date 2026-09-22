@@ -313,6 +313,31 @@ describe("DataGrid expansion state and focus", () => {
       expect(onExpandedChange).not.toHaveBeenCalled();
     });
 
+    it("positions details after the tallest cell when rich row content grows", () => {
+      const { rerender } = render(grid({ expandedKey: "a" }));
+      const cell = screen.getByRole("rowheader", { name: "Alpha" });
+      const height = vi.spyOn(
+        cell.firstElementChild as HTMLElement,
+        "offsetHeight",
+        "get",
+      );
+      height.mockReturnValue(96);
+      fireEvent(window, new Event("resize"));
+      const style = container().parentElement!.parentElement!.style;
+      expect(
+        style.getPropertyValue("--ezui-c-data-grid-expanded-row-body-height"),
+      ).toBe("96px");
+      height.mockReturnValue(64);
+      fireEvent(window, new Event("resize"));
+      expect(
+        style.getPropertyValue("--ezui-c-data-grid-expanded-row-body-height"),
+      ).toBe("64px");
+      rerender(grid({ expandedKey: "a", isLoading: true }));
+      expect(
+        style.getPropertyValue("--ezui-c-data-grid-expanded-row-body-height"),
+      ).toBe("");
+    });
+
     it.each([
       ["header", "thead"],
       ["expanded row", '[data-ezui-data-grid-expanded-row="true"]'],

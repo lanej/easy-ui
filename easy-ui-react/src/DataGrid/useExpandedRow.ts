@@ -10,6 +10,8 @@ import { TableState } from "react-stately";
 import { getComponentToken } from "../utilities/css";
 import { EXPAND_COLUMN_KEY } from "./constants";
 
+type ExpandedRowRect = DOMRect & { bodyHeight: number };
+
 /**
  * Retrieves the expanded row from Aria's table state and computes the position
  * and height of the expanded row box to manage its positioning in the grid.
@@ -23,7 +25,8 @@ export function useExpandedRow({
   state: TableState<unknown>;
   isEnabled: boolean;
 }) {
-  const [expandedRowRect, setExpandedRowRect] = useState<DOMRect | null>(null);
+  const [expandedRowRect, setExpandedRowRect] =
+    useState<ExpandedRowRect | null>(null);
 
   // Loading replaces the data rows without changing their expansion state.
   const expandedRow = isEnabled
@@ -51,7 +54,8 @@ export function useExpandedRow({
           : null;
       if (
         rect?.height !== expandedRowRect?.height ||
-        rect?.y !== expandedRowRect?.y
+        rect?.y !== expandedRowRect?.y ||
+        rect?.bodyHeight !== expandedRowRect?.bodyHeight
       ) {
         setExpandedRowRect(rect);
       }
@@ -60,6 +64,13 @@ export function useExpandedRow({
 
   const expandedRowStyle = useMemo(() => {
     return {
+      ...(expandedRowRect?.bodyHeight
+        ? getComponentToken(
+            "data-grid",
+            "expanded-row-body-height",
+            `${expandedRowRect.bodyHeight}px`,
+          )
+        : {}),
       ...getComponentToken(
         "data-grid",
         "expanded-row-height",
@@ -92,7 +103,9 @@ export function useExpandedRow({
  * @param $container Container element
  * @returns a DOMRect, or null when the elements to measure are absent
  */
-function getExpandedRowContentRect($container: HTMLElement): DOMRect | null {
+function getExpandedRowContentRect(
+  $container: HTMLElement,
+): ExpandedRowRect | null {
   const $rows = getDataGridRowEls($container);
   const $firstColumnHeader = getFirstColumnHeaderEl($container);
   const $expandedRowContent = getExpandedRowContentEl($container);
@@ -115,7 +128,16 @@ function getExpandedRowContentRect($container: HTMLElement): DOMRect | null {
   const width =
     $expandedRowCells.reduce((acc, c) => acc + c.offsetWidth, 0) - 1;
   const height = $expandedRowContent.offsetHeight;
-  return new DOMRect(0, y, width, height);
+  // An expanded <tr> includes its detail area, so measure the actual cell
+  // contents to keep details below wrapped/rich values and enlarged text.
+  const bodyHeight = Math.max(
+    ...$expandedRowCells.map(
+      (cell) =>
+        ((cell.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0) +
+        (parseFloat(getComputedStyle(cell).borderBottomWidth) || 0),
+    ),
+  );
+  return Object.assign(new DOMRect(0, y, width, height), { bodyHeight });
 }
 
 function getFirstColumnHeaderEl($container: HTMLElement) {

@@ -41,15 +41,24 @@ export async function auditMobileCharts(
       });
     }, width);
     if (large && width === 320) await driver.click("#large-text");
-    await driver.wait(() => {
+    const tiers =
+      large && width === 320
+        ? ["1", "9+"]
+        : ["1", "2", "3", "4", "5–6", "7–8", "9+"];
+    // SVG dimensions can update before the resized axis labels are painted.
+    // Wait for the same labels asserted below before sampling their geometry.
+    await driver.wait((tiers) => {
       const plot = document.querySelector('[data-chart-state="ready"] > div');
+      const labels = [...plot.querySelectorAll("svg text")].map(
+        (node) => node.textContent,
+      );
       return (
         Math.abs(
           plot.clientWidth -
             plot.querySelector("svg").getBoundingClientRect().width,
-        ) < 1
+        ) < 1 && tiers.every((tier) => labels.includes(tier))
       );
-    });
+    }, tiers);
     const bounds = await driver.evaluate(() => {
       const plot = document.querySelector('[data-chart-state="ready"] svg');
       const rect = plot.getBoundingClientRect();
@@ -119,10 +128,6 @@ export async function auditMobileCharts(
       "Typography must not shrink to fit",
     );
     assert.ok(bounds.folded, "Exact data remains folded by default");
-    const tiers =
-      large && width === 320
-        ? ["1", "9+"]
-        : ["1", "2", "3", "4", "5–6", "7–8", "9+"];
     for (const tier of tiers)
       assert.ok(
         bounds.texts.some((text) => text.text === tier),

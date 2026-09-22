@@ -4,6 +4,7 @@ import { auditNativeRegressions } from "./native-checks.mjs";
 import { auditChartComposition } from "./chart-composition-checks.mjs";
 import { auditChartDataView } from "./chart-data-view-checks.mjs";
 import { auditMobileCharts } from "./mobile-chart-checks.mjs";
+import { auditMobileDataGrid } from "./mobile-data-grid-checks.mjs";
 
 const axeSource = await readFile(
   new URL("../node_modules/axe-core/axe.min.js", import.meta.url),
@@ -235,6 +236,13 @@ export async function auditBrowser(driver, browser, site, outputDir) {
     });
     report.checks.push(...mobile.checks);
     report.mobile = mobile.measurements;
+
+    const mobileGrid = await auditMobileDataGrid(driver, site, outputDir, {
+      scan,
+      diagnostics,
+    });
+    report.checks.push(...mobileGrid.checks);
+    report.mobileGrid = mobileGrid.measurements;
 
     assert.deepEqual(
       report.scans.flatMap((scan) => scan.violations),

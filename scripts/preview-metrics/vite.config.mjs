@@ -146,6 +146,7 @@ export function previewConfig(engine = "full", outDir = "dist") {
               chartComposition: local("./chart-composition.html"),
               chartDataView: local("./chart-data-view.html"),
               mobileCharts: local("./mobile-charts.html"),
+              mobileDataGrid: local("./mobile-data-grid.html"),
             },
       },
     },

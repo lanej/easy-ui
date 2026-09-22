@@ -12,6 +12,13 @@ using keyboard input. The existing capture job separately checks mobile
 layout, pointer interactions, lightweight engine isolation,
 and full versus modular image comparisons for all 24 charts.
 
+The mobile benchmark grid audit checks 320/390 px and 20 px value text without
+clipping, keyboard metric selection with the correct sample population, all
+nine columns, preserved metric choice, and sticky zone labels during keyboard
+scrolling. A separate wrapped-row case grows text while details are open and
+checks that neither the values nor the next row are covered. These assertions
+run unchanged in all three browsers alongside the chart checks.
+
 The native acceptance fixture additionally measures actual 4-by-4 CSS-pixel
 Sparkline markers at 80/160/480-pixel plot widths, aligns singleton time labels
 with both series, and retains positions within explicit time domains. It checks

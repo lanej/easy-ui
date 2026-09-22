@@ -1,0 +1,77 @@
+@use "../styles/common" as *;
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: design-token("space.2");
+  min-width: 0;
+}
+
+.heading {
+  @include font-style("subtitle1");
+  font-size: 20px;
+  line-height: 1.4;
+  margin: 0;
+  color: design-token("color.neutral.800");
+}
+
+.caption {
+  @include font-style("body2");
+  line-height: 1.5;
+  margin: 0;
+  color: design-token("color.neutral.700");
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: design-token("space.1");
+
+  > :last-child,
+  > :last-child label {
+    min-height: 44px;
+    align-items: center;
+  }
+}
+
+.identity,
+.comparison {
+  display: inline-flex;
+  flex-direction: column;
+  gap: design-token("space.0.25");
+}
+
+.comparison {
+  align-items: flex-end;
+}
+
+.sample,
+.change {
+  font-size: 12px;
+  line-height: 1.5;
+  color: design-token("color.neutral.700");
+}
+
+.change[data-sentiment="positive"] {
+  color: design-token("color.positive.800");
+}
+
+.change[data-sentiment="negative"] {
+  color: design-token("color.negative.800");
+}
+
+// Review text enlargement independently of column width. Let the cells grow;
+// never scale the entire table down to make all metrics fit.
+.example[data-large-text] {
+  [role="columnheader"] > div,
+  [role="gridcell"] > div,
+  [role="rowheader"] > div {
+    font-size: 20px;
+    line-height: 1.5;
+  }
+
+  .sample,
+  .change {
+    font-size: 16px;
+  }
+}
