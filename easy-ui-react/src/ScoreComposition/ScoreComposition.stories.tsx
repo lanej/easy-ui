@@ -17,6 +17,32 @@ type Story = StoryObj<typeof ScoreComposition>;
 
 export const Default: Story = { args: scoreCompositionExample };
 
+export const SignalSentiments: Story = {
+  render: () => (
+    <HorizontalGrid columns={{ xs: 1, md: 2 }} gap="3">
+      <ScoreSignal
+        label="Documentation verified"
+        value={true}
+        sentiment="positive"
+        statusLabel="Confirmed"
+      />
+      <ScoreSignal
+        label="Label ratio"
+        value={0.26}
+        sentiment="warning"
+        statusLabel="Elevated"
+      />
+      <ScoreSignal
+        label="Missing dimensions"
+        value={true}
+        sentiment="negative"
+        statusLabel="Flagged"
+      />
+      <ScoreSignal label="Package count" value={12} />
+    </HorizontalGrid>
+  ),
+};
+
 export const Narrow: Story = {
   args: scoreCompositionExample,
   decorators: [

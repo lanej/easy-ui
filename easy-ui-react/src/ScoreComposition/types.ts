@@ -9,6 +9,10 @@ export type ScoreSignalData = {
   value: string | number | boolean | null;
   /** Application formatting for an available, valid observation. */
   displayValue?: string;
+  /** Application-owned meaning; never inferred from the observation. Defaults to neutral. */
+  sentiment?: "neutral" | "positive" | "warning" | "negative";
+  /** Visible meaning alongside the value. Colored states have localizable defaults. */
+  statusLabel?: string;
   /** Optional context displayed below the signal. */
   description?: ReactNode;
 };
@@ -60,6 +64,9 @@ export type ScoreCompositionLabels = {
   explanation?: string;
   yes?: string;
   no?: string;
+  positiveSignal?: string;
+  warningSignal?: string;
+  negativeSignal?: string;
 };
 
 /** Formatting and typography shared by the composition and its primitives. */

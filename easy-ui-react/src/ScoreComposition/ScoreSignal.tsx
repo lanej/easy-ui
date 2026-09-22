@@ -1,5 +1,6 @@
 import React from "react";
 import { visualizationTypographyStyle } from "../visualization/typography";
+import { classNames } from "../utilities/css";
 import { defaultLabels } from "./presentation";
 import type { ScorePresentationProps, ScoreSignalData } from "./types";
 import styles from "./ScoreComposition.module.scss";
@@ -12,11 +13,25 @@ export function ScoreSignal({
   label,
   value,
   displayValue,
+  sentiment = "neutral",
+  statusLabel,
   description,
   labels: overrides,
   typography,
 }: ScoreSignalProps) {
   const labels = { ...defaultLabels, ...overrides };
+  const available =
+    value !== null && (typeof value !== "number" || Number.isFinite(value));
+  const effectiveSentiment = available ? sentiment : "neutral";
+  const status = available
+    ? statusLabel?.trim() ||
+      {
+        neutral: undefined,
+        positive: labels.positiveSignal,
+        warning: labels.warningSignal,
+        negative: labels.negativeSignal,
+      }[effectiveSentiment]
+    : undefined;
   const text =
     value === null
       ? labels.missingValue
@@ -35,7 +50,26 @@ export function ScoreSignal({
     >
       <div className={styles.signalRow}>
         <span className={styles.signalLabel}>{label}</span>
-        <strong className={styles.signalValue}>{text}</strong>
+        <span
+          className={classNames(
+            styles.signalValue,
+            !!status && styles.signalStatus,
+          )}
+          data-sentiment={effectiveSentiment}
+        >
+          <strong>{text}</strong>
+          {status && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span
+                className={styles.signalStatusLabel}
+                data-score-status-label=""
+              >
+                {status}
+              </span>
+            </>
+          )}
+        </span>
       </div>
       {description != null && (
         <div className={styles.supportingText}>{description}</div>

@@ -9,7 +9,7 @@ The application supplies stable IDs, observed values, weighted/capped scores, so
 ## Public components
 
 - `ScoreComposition`: optional heading/context/frame, CSS Grid layout, named lists, and measured SVG connections.
-- `ScoreSignal`: compact bordered observation box with internal text clearance, including true zero, false, missing and invalid states.
+- `ScoreSignal`: compact bordered observation box with internal text clearance, optional explicit sentiment/status, and true zero, false, missing and invalid states.
 - `ScoreContribution`: exact signed score and supplied cap, valid-range meter, readable source names, and optional shared Disclosure.
 - `ScoreResult`: emphasized supplied score, optional cap/outcome, and application context.
 - `ScoreConnector`: one decorative Bézier path for a containing SVG.
@@ -22,6 +22,8 @@ Three columns at content widths of at least 48rem; stacked reading order in narr
 
 Meters require positive finite caps and scores within the zero-based range. Missing and invalid scores are labelled; negative and above-cap scores retain exact text with an outside-scale note and no filled meter. Result totals are never recomputed. Unknown sources remain visibly identifiable without fabricated edges. Repeated references are deduplicated.
 
-Verify keyboard disclosure, stable state through record reordering, optional/external headings, shared signals, empty and missing data, SSR, observer cleanup, container resizing, narrow widths, large text, theme changes, forced colors, browser console and accessibility scans. Browser checks must confirm signal borders and padding and sample every SVG curve against visible text rectangles to catch connector/text collisions. Verify the actual packed entry in both package layouts and both supported TypeScript resolution modes.
+Signal sentiment is application-supplied (`neutral`, `positive`, `warning`, or `negative`) and defaults to neutral. Boolean and numeric values never imply sentiment. Nonneutral values use a tinted value/status pill with a visible `statusLabel`, or a localizable “Positive”, “Caution”, or “Negative” fallback. Neutral values can also carry a status label. The exact observation and textual interpretation remain readable without color. Blank status labels use the fallback; missing and invalid observations suppress stale sentiment/status and retain neutral missing/invalid text. Applications update the value and its interpretation together.
+
+Verify keyboard disclosure, stable state through record reordering, optional/external headings, shared signals, empty and missing data, explicit signal sentiment and localization, SSR, observer cleanup, container resizing, narrow widths, large text, theme changes, forced colors, browser console and accessibility scans. Signal tests must cover neutral numeric/boolean defaults, identical values with different supplied meanings, status updates, and unavailable/invalid values clearing stale interpretations. Browser checks must confirm signal borders and padding and sample every SVG curve against visible text rectangles to catch connector/text collisions. Verify the actual packed entry in both package layouts and both supported TypeScript resolution modes.
 
 See [the API and stories](../../easy-ui-react/src/ScoreComposition/ScoreComposition.mdx) and [browser review instructions](../../scripts/preview-metrics/README.md).
