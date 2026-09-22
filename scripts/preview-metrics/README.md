@@ -42,3 +42,7 @@ The screenshot artifact adds `native-extensions-{desktop,mobile,review}.png` and
 `native-regressions.html` exercises all six native components with synthetic edge cases. The shared [browser audit](./audit/README.md) measures circular Sparkline markers at 80, 160, and 480 CSS pixels, singleton time labels, and explicit elapsed-time positions. It also checks abbreviated axes against full exact values, distinct missing/invalid/zero/overflow states, shared BarList scales, unframed metric composition, and every supported typography role at larger sizes. The native fixture imports no chart engine.
 
 Each Chrome, Firefox, and Safari audit records the measured geometry and text sizes in `audit.json`, plus `native-markers.png`, `native-data.png`, and `native-typography.png`. These checks are part of both the full and modular builds.
+
+## Score composition review
+
+`score-composition.html` uses the same synthetic example as `Components/ScoreComposition` in Storybook. It includes container-width, larger-text, dark-theme, RTL, and data-refresh controls plus independent primitives. The shared browser audit verifies decorative connector endpoints against the actual DOM, keyboard disclosures, retained state on refreshed records, narrow layouts, long text, touch targets, and accessibility. It runs through the existing Chrome, Firefox, and native Safari workflow transports.

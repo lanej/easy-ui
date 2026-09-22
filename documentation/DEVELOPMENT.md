@@ -8,6 +8,8 @@ These additions make compact metrics, charts, maps, and grouped reports reusable
 
 Local worktree names are historical. Consult the workspace inventory before editing an adoption checkout. Port useful application feedback to the cumulative branch once, then validate a package built from that source. Keep application pins stable until their own compatibility checks pass.
 
+ScoreComposition is an explicitly separate feature review on `feat/score-composition`, based on `feat/metric-card-sparkline`. Keep its changes in that child review and merge the parent first. Its [specification](specs/ScoreComposition.md) and [component documentation](../easy-ui-react/src/ScoreComposition/ScoreComposition.mdx) describe the native score-explanation API.
+
 ## Component boundaries
 
 - **Rendering surfaces:** `ChartSurface` and `NetworkMapSurface` own engine rendering and lifecycle. Optional providers connect independently placed headings, controls, legends, selection details, and exact data. Do not require logistics placeholders or a title to render a map.

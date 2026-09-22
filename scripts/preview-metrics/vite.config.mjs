@@ -149,6 +149,7 @@ export function previewConfig(engine = "full", outDir = "dist") {
               chartDataView: local("./chart-data-view.html"),
               mobileCharts: local("./mobile-charts.html"),
               mobileDataGrid: local("./mobile-data-grid.html"),
+              scoreComposition: local("./score-composition.html"),
             },
       },
     },
