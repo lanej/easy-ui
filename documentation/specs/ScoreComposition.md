@@ -9,7 +9,7 @@ The application supplies stable IDs, observed values, weighted/capped scores, so
 ## Public components
 
 - `ScoreComposition`: optional heading/context/frame, CSS Grid layout, named lists, and measured SVG connections.
-- `ScoreSignal`: compact observation row, including true zero, false, missing and invalid states.
+- `ScoreSignal`: compact bordered observation box with internal text clearance, including true zero, false, missing and invalid states.
 - `ScoreContribution`: exact signed score and supplied cap, valid-range meter, readable source names, and optional shared Disclosure.
 - `ScoreResult`: emphasized supplied score, optional cap/outcome, and application context.
 - `ScoreConnector`: one decorative Bézier path for a containing SVG.
@@ -22,6 +22,6 @@ Three columns at content widths of at least 48rem; stacked reading order in narr
 
 Meters require positive finite caps and scores within the zero-based range. Missing and invalid scores are labelled; negative and above-cap scores retain exact text with an outside-scale note and no filled meter. Result totals are never recomputed. Unknown sources remain visibly identifiable without fabricated edges. Repeated references are deduplicated.
 
-Verify keyboard disclosure, stable state through record reordering, optional/external headings, shared signals, empty and missing data, SSR, observer cleanup, container resizing, narrow widths, large text, theme changes, forced colors, browser console and accessibility scans. Verify the actual packed entry in both package layouts and both supported TypeScript resolution modes.
+Verify keyboard disclosure, stable state through record reordering, optional/external headings, shared signals, empty and missing data, SSR, observer cleanup, container resizing, narrow widths, large text, theme changes, forced colors, browser console and accessibility scans. Browser checks must confirm signal borders and padding and sample every SVG curve against visible text rectangles to catch connector/text collisions. Verify the actual packed entry in both package layouts and both supported TypeScript resolution modes.
 
 See [the API and stories](../../easy-ui-react/src/ScoreComposition/ScoreComposition.mdx) and [browser review instructions](../../scripts/preview-metrics/README.md).
