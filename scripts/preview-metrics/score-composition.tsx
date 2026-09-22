@@ -45,6 +45,7 @@ const reviewTheme = createTheme((preferences) => ({
         "color.negative.100": "var(--ezui-color-red-800)",
         "color.negative.800": "var(--ezui-color-red-100)",
         "color.warning.300": "var(--ezui-color-yellow-800)",
+        "color.warning.800": "var(--ezui-color-yellow-300)",
       }
     : {}),
 }));
@@ -133,6 +134,7 @@ function Preview() {
                 ? scoreCompositionExample.contributions.map((contribution) => ({
                     ...contribution,
                     score: 0,
+                    sentiment: "neutral" as const,
                   }))
                 : [...scoreCompositionExample.contributions]
             }

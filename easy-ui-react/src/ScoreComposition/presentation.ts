@@ -19,6 +19,9 @@ export const defaultLabels: Required<ScoreCompositionLabels> = {
   positiveSignal: "Positive",
   warningSignal: "Caution",
   negativeSignal: "Negative",
+  fullContribution: "Full",
+  partialContribution: "Partial",
+  noContribution: "None",
 };
 
 export const defaultFormatScore = (value: number) => value.toFixed(2);

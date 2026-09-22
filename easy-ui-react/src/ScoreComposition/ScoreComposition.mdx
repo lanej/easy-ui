@@ -67,6 +67,26 @@ Missing and invalid observations suppress supplied sentiment and status labels a
 
 <Canvas of={Stories.SignalSentiments} />
 
+## Read contribution fullness
+
+A contribution's fill is relative to its own maximum: `1 / 1` shows “Full · 100%”, while `1 / 2` shows “Partial · 50%”. Zero shows “None · 0%”. The meter and exact fraction remain visible alongside this status, so color is never the only way to distinguish these states. Localize the state words through `labels.fullContribution`, `labels.partialContribution`, and `labels.noContribution`.
+
+Contribution `sentiment` is independent of fullness and defaults to `neutral`. Set it explicitly to `positive`, `warning`, or `negative` to tint the score, status, and meter. For the risk example, the application marks the full underdeclaration contribution `negative` and the partial international contribution `warning`. A fully earned quality score could instead be `positive`. Easy UI does not infer business meaning from a score, its maximum, or its source signals; update sentiment alongside changed contribution values.
+
+```tsx
+<ScoreContribution
+  label="Underdeclaration"
+  score={1}
+  maxScore={1}
+  sentiment="negative"
+  sourceLabels={["Missing package dimensions"]}
+/>
+```
+
+Fullness uses exact supplied values: only a score equal to its cap is full. Percentages use whole numbers, with “<1%” and “<100%” at the boundaries so a small positive or almost-full contribution never looks empty or full after rounding. Exact scores and meter widths are unchanged. Missing, invalid, and outside-scale contributions suppress fullness and sentiment while retaining their existing value and scale messages.
+
+<Canvas of={Stories.ContributionFullness} />
+
 ## Layout and access
 
 Signals, contributions, and result are ordinary DOM content in reading order. CSS Grid places them in three columns when the component's content area is at least 48rem wide. Below that it stacks the columns, preserving exact values, source labels, and explanations. This responds to the container, including side panels on wide screens.
