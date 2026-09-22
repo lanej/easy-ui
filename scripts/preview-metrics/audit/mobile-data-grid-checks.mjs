@@ -17,6 +17,12 @@ export async function auditMobileDataGrid(
         margin: "0",
       });
     }, width);
+    // Safari's non-overlay vertical scrollbar consumes layout width. Keep the
+    // containing block at the requested width, even when larger text adds it.
+    const available = await driver.evaluate(
+      () => document.documentElement.clientWidth,
+    );
+    if (available < width) await driver.resize(width + width - available, 1100);
   };
   const measure = () => {
     const table = document.querySelector('[role="grid"]');
@@ -58,7 +64,11 @@ export async function auditMobileDataGrid(
     return {
       containerWidth: document.querySelector("main").getBoundingClientRect()
         .width,
-      pageOverflow: document.documentElement.scrollWidth - innerWidth,
+      viewportWidth: innerWidth,
+      clientWidth: document.documentElement.clientWidth,
+      pageOverflow:
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
       tableOverflow: scroll.scrollWidth - scroll.clientWidth,
       columns: table.querySelectorAll('[role="columnheader"]').length,
       rows: table.querySelectorAll("tbody tr").length,
@@ -78,8 +88,8 @@ export async function auditMobileDataGrid(
     [320, true],
     [768, true],
   ]) {
-    await constrain(width);
     if (large && width === 320) await driver.click("#large-text");
+    await constrain(width);
     const bounds = await driver.evaluate(measure);
     assert.equal(bounds.containerWidth, width);
     assert.ok(bounds.pageOverflow <= 1);
@@ -166,8 +176,8 @@ export async function auditMobileDataGrid(
   );
   measurements.push({ mode: "all", ...all, scrolled });
   await driver.screenshot(`${outputDir}/mobile-grid-scrolled.png`);
-  await constrain(320);
   await driver.click("#large-text");
+  await constrain(320);
   const allLarge = await driver.evaluate(measure);
   assert.equal(allLarge.columns, 9);
   assert.ok(allLarge.pageOverflow <= 1);
