@@ -37,6 +37,13 @@ const metrics = [
     higherIsBetter: false,
   },
   {
+    key: "exceptions",
+    name: "Exception rate",
+    unit: "%",
+    deltaUnit: "pts",
+    higherIsBetter: false,
+  },
+  {
     key: "package",
     name: "Cost / package",
     unit: "$",
@@ -96,6 +103,7 @@ const rows: BenchmarkRow[] = [
       count: nonGuaranteedCount,
     },
     transit: { value: 1.2 + index * 0.4, change: -0.2, count },
+    exceptions: { value: 2.1 + index * 0.7, change: -0.4, count },
     package: { value: 6.5 + index * 0.6, change: -0.25, count },
     mile: { value: 0.02 + index * 0.001, change: -0.002, count },
     pound: { value: 1.2 + index * 0.1, change: 0.05, count },
@@ -105,7 +113,9 @@ const rows: BenchmarkRow[] = [
 function formatValue(metric: Metric, value: number) {
   if (metric.unit === "$")
     return `$${value.toFixed(metric.key === "mile" ? 3 : 2)}`;
-  return `${value.toFixed(metric.key === "transit" ? 1 : 0)}${metric.unit}`;
+  const precision =
+    metric.key === "transit" || metric.key === "exceptions" ? 1 : 0;
+  return `${value.toFixed(precision)}${metric.unit}`;
 }
 function formatChange(metric: Metric, change: number) {
   const sign = change > 0 ? "+" : change < 0 ? "−" : "";
@@ -139,14 +149,14 @@ function Comparison({
   );
 }
 
-/** Application composition: one metric for quick comparison, or all columns. */
+/** Application composition: ten columns, with an optional focused metric. */
 export function MobileDataGridExample({
   largeText = false,
 }: {
   largeText?: boolean;
 }) {
   const [metricKey, setMetricKey] = useState<MetricKey>("sla");
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
   const descriptionId = useId();
   const metric = metrics.find(({ key }) => key === metricKey)!;
   const columns = [
@@ -156,14 +166,16 @@ export function MobileDataGridExample({
       : [metric]),
   ];
   const columnOptions: Record<string, DataGridColumnOptions> = {
-    zone: { whiteSpace: "nowrap", width: showAll ? 88 : "45%" },
-    shipments: { isNumeric: true, minWidth: 104, whiteSpace: "nowrap" },
+    zone: { whiteSpace: "nowrap", ...(showAll ? { width: 80 } : {}) },
+    shipments: { isNumeric: true, width: 96, minWidth: 96 },
     ...Object.fromEntries(
       metrics.map(({ key }) => [
         key,
         {
           isNumeric: true,
-          ...(showAll ? { minWidth: 136, whiteSpace: "nowrap" } : {}),
+          // Headers can wrap while numeric body values retain their default
+          // no-wrap behavior. Minimum widths keep each metric readable.
+          ...(showAll ? { width: 112, minWidth: 96 } : {}),
         },
       ]),
     ),
@@ -176,7 +188,7 @@ export function MobileDataGridExample({
           <p className={styles.caption} id={descriptionId}>
             Changes vs peer benchmark.{" "}
             {showAll
-              ? "Higher SLA and lower cost or transit time are better."
+              ? "Higher SLA and lower exception rate, cost or transit time are better."
               : `${metric.higherIsBetter ? "Higher" : "Lower"} is better.`}
             {!showAll &&
               " Shipment counts reflect the selected metric’s sample."}
@@ -194,13 +206,17 @@ export function MobileDataGridExample({
                 ))}
               </Select>
             )}
-            <Checkbox isSelected={showAll} onChange={setShowAll}>
-              Show all metrics
+            <Checkbox
+              isSelected={!showAll}
+              onChange={(focused) => setShowAll(!focused)}
+            >
+              Focus on one metric
             </Checkbox>
           </div>
           {showAll && (
             <p className={styles.caption}>
-              Scroll horizontally for more metrics →
+              {columns.length} columns. Swipe or scroll horizontally; Zone stays
+              visible.
             </p>
           )}
           <DataGrid

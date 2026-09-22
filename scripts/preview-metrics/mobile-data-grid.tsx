@@ -12,11 +12,11 @@ function Preview() {
   const [large, setLarge] = useState(false);
   return (
     <ThemeProvider>
-      <main className="mobile-chart-review">
+      <main className="mobile-chart-review" style={{ maxWidth: 1440 }}>
         <h1>Tables in small spaces</h1>
         <p>
-          Synthetic benchmark data. Choose a metric to compare across zones, or
-          open the full comparison.
+          Compare ten columns across eight zones. Scroll within the table on
+          smaller screens, with zone labels always visible. Synthetic data.
         </p>
         <div className="mobile-chart-options">
           <label>

@@ -82,58 +82,42 @@ export async function auditMobileDataGrid(
   await driver.open(`${site}/mobile-data-grid.html`);
   await driver.wait(() => document.querySelector('[role="grid"]'));
   await driver.evaluate(() => document.fonts.ready.then(() => true));
+  const setLargeText = async (large) => {
+    const checked = await driver.evaluate(
+      () => document.querySelector("#large-text").checked,
+    );
+    if (checked !== large) await driver.click("#large-text");
+  };
   for (const [width, large] of [
     [390, false],
     [320, false],
     [320, true],
-    [768, true],
+    [1440, false],
   ]) {
-    if (large && width === 320) await driver.click("#large-text");
+    await setLargeText(large);
     await constrain(width);
     const bounds = await driver.evaluate(measure);
     assert.equal(bounds.containerWidth, width);
     assert.ok(bounds.pageOverflow <= 1);
-    assert.ok(
-      bounds.tableOverflow <= 1,
-      "Focused metrics must fit without horizontal scrolling",
-    );
-    assert.equal(bounds.columns, 2);
+    assert.equal(bounds.columns, 10, "All ten columns are shown by default");
     assert.equal(bounds.rows, 8);
+    if (width < 1440) assert.ok(bounds.tableOverflow > 0);
+    else assert.ok(bounds.tableOverflow <= 1, "The full table fits on desktop");
     assert.deepEqual(
       bounds.clipped,
       [],
-      "Cell contents must not overlap adjacent rows or columns",
+      "Headers and values must not overlap adjacent rows or columns",
     );
-    assert.ok(
-      bounds.labels.every((label) => label.lines === 1),
-      "Zone labels must stay on one line",
-    );
+    assert.ok(bounds.labels.every((label) => label.lines === 1));
     assert.ok(bounds.valueSize >= (large ? 20 : 14));
-    measurements.push({ width, large, ...bounds });
+    measurements.push({ mode: "all", width, large, ...bounds });
     await scan(`mobile-grid-${width}-${large ? "large" : "default"}`);
     await driver.screenshot(
       `${outputDir}/mobile-grid-${width}-${large ? "large" : "default"}.png`,
     );
   }
   await constrain(390);
-  await driver.click("#large-text");
-  // Exercise the actual React Aria selector with keyboard input, including the
-  // smaller population for guaranteed SLA; do not mutate the React state.
-  await driver.key('[aria-haspopup="listbox"]', "Enter");
-  await driver.key('[role="option"][data-key="guaranteed"]', "Enter");
-  assert.equal(
-    await driver.evaluate(() => document.querySelector("tbody tr").textContent),
-    "Zone 160 shipments98%+1.5 pts",
-  );
-  await driver.key('[data-mobile-grid] input[type="checkbox"]', "Space");
-  const all = await driver.evaluate(measure);
-  assert.equal(all.columns, 9);
-  assert.equal(all.rows, 8);
-  assert.ok(all.tableOverflow > 0);
-  assert.ok(all.pageOverflow <= 1);
-  assert.deepEqual(all.clipped, []);
-  await scan("mobile-grid-all");
-  for (let index = 1; index < 9; index++) {
+  for (let index = 1; index < 10; index++) {
     await driver.key(
       `tbody tr:first-child td:nth-child(${index})`,
       "ArrowRight",
@@ -160,12 +144,11 @@ export async function auditMobileDataGrid(
       right: frame.right,
       focusLeft: last.left,
       focusRight: last.right,
+      finalValue: document.activeElement.textContent,
     };
   });
-  assert.ok(
-    scrolled.scrollLeft > 0,
-    "Keyboard navigation must reach the final metric",
-  );
+  assert.ok(scrolled.scrollLeft > 0);
+  assert.equal(scrolled.finalValue, "$1.20+$0.05");
   assert.ok(
     Math.abs(scrolled.zoneLeft - scrolled.left) <= 1,
     "The zone remains visible while scrolling",
@@ -173,17 +156,41 @@ export async function auditMobileDataGrid(
   assert.ok(
     scrolled.focusLeft >= scrolled.zoneRight - 1 &&
       scrolled.focusRight <= scrolled.right + 1,
+    "Keyboard navigation exposes the complete final metric beside the zone",
   );
-  measurements.push({ mode: "all", ...all, scrolled });
+  measurements.push({ mode: "scrolled", ...scrolled });
   await driver.screenshot(`${outputDir}/mobile-grid-scrolled.png`);
-  await driver.click("#large-text");
-  await constrain(320);
-  const allLarge = await driver.evaluate(measure);
-  assert.equal(allLarge.columns, 9);
-  assert.ok(allLarge.pageOverflow <= 1);
-  assert.deepEqual(allLarge.clipped, []);
-  measurements.push({ mode: "all-large", ...allLarge });
-  await scan("mobile-grid-all-large");
+
+  // A single metric is an opt-in view; switching cannot discard the rest of
+  // the report or replace a subset's actual sample with the overall count.
+  await driver.key('[data-mobile-grid] input[type="checkbox"]', "Space");
+  await driver.key('[aria-haspopup="listbox"]', "Enter");
+  await driver.key('[role="option"][data-key="guaranteed"]', "Enter");
+  assert.equal(
+    await driver.evaluate(() => document.querySelector("tbody tr").textContent),
+    "Zone 160 shipments98%+1.5 pts",
+  );
+  for (const [width, large] of [
+    [390, false],
+    [320, true],
+  ]) {
+    await setLargeText(large);
+    await constrain(width);
+    const bounds = await driver.evaluate(measure);
+    assert.equal(bounds.containerWidth, width);
+    assert.ok(bounds.pageOverflow <= 1);
+    assert.ok(bounds.tableOverflow <= 1, "The focused metric fits the frame");
+    assert.equal(bounds.columns, 2);
+    assert.equal(bounds.rows, 8);
+    assert.deepEqual(bounds.clipped, []);
+    assert.ok(bounds.labels.every((label) => label.lines === 1));
+    assert.ok(bounds.valueSize >= (large ? 20 : 14));
+    measurements.push({ mode: "focused", width, large, ...bounds });
+    await scan(`mobile-grid-focused-${width}`);
+    await driver.screenshot(`${outputDir}/mobile-grid-focused-${width}.png`);
+  }
+  await driver.key('[data-mobile-grid] input[type="checkbox"]', "Space");
+  assert.equal((await driver.evaluate(measure)).columns, 10);
   await driver.key('[data-mobile-grid] input[type="checkbox"]', "Space");
   assert.equal(
     await driver.evaluate(() => document.querySelector("tbody tr").textContent),
@@ -256,7 +263,7 @@ export async function auditMobileDataGrid(
       "focused benchmark metric fits 320/390 px",
       "20 px values without clipping",
       "single-line zone labels and meaningful sample counts",
-      "keyboard metric selection and full nine-column comparison",
+      "default ten-column comparison and optional keyboard metric selection",
       "sticky zone identity and keyboard horizontal navigation",
       "wrapped rich rows expand without overlapping details",
     ],

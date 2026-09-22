@@ -342,9 +342,9 @@ Use natural height for a short table on a page. Add `maxHeight={280}` when the s
 
 ## Mobile benchmark reports
 
-For a report with many comparison columns, keep the row identifier and one selected metric visible on a phone. Compose the existing `Select` with the grid's `columns`; let the application decide which metrics to offer and whether to start with all columns. Keep the selected metric when switching between focused and full views.
+Keep the full comparison available at readable column widths. The ten-column example starts with every column visible: headings wrap, numeric values stay together, and the zone remains frozen while the table scrolls within its card. All ten columns fit on a wide desktop. On a phone, horizontal scrolling preserves cross-column comparison without shrinking the text.
 
-The example places the metric's supplied sample count under each zone, displays its exact value and signed change on separate lines, and explains the comparison baseline once above the table. Neutral changes use quiet text. The full view retains all nine columns, with a frozen zone and a scrolling hint. Narrow layouts do not require smaller fonts or truncation.
+The optional “Focus on one metric” view places that metric's supplied sample count under each zone and retains the selected metric when returning from the full table. Both views display exact values and signed changes on separate lines, explain the benchmark once, and use quiet text for neutral changes. Applications choose which columns to offer through the existing `columns` API; the shared grid does not hide columns at a breakpoint.
 
 <Canvas of={DataGridStories.MobileBenchmarks} />
 

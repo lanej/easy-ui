@@ -52,6 +52,10 @@
   color: design-token("color.neutral.700");
 }
 
+.sample {
+  white-space: normal;
+}
+
 .change[data-sentiment="positive"] {
   color: design-token("color.positive.800");
 }
