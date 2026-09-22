@@ -104,18 +104,31 @@ default, and the plot and table should derive from the same application records.
 <Chart
   {...chartProps}
   dataTable={{
-    columns: ["Region", "Zone", "Shipments", "Cost / package"],
+    columns: [
+      "Region / zone",
+      "Cost / package",
+      "Change vs August",
+      "Shipments",
+    ],
     rows: records.map((record) => ({
       id: record.id,
-      values: [record.region, record.zone, record.shipments, record.cost],
+      values: [
+        `${record.region} / ${record.zone}`,
+        record.cost,
+        record.change,
+        record.shipments,
+      ],
     })),
+    pinnedColumnCount: 1,
     columnOptions: {
-      2: { isNumeric: true },
-      3: { isNumeric: true, minWidth: 240 },
+      0: { width: 120, minWidth: 120, whiteSpace: "normal" },
+      1: { isNumeric: true, allowsSorting: true },
+      2: { isNumeric: true, allowsSorting: true },
+      3: { isNumeric: true, allowsSorting: true },
     },
     maxHeight: 360,
     renderCell: (value, columnIndex, row) => {
-      if (columnIndex === 3 && typeof value === "number") {
+      if (columnIndex === 1 && typeof value === "number") {
         return <strong>${value.toFixed(2)}</strong>;
       }
       return null;
@@ -137,6 +150,36 @@ Column options apply to the heading and cells: `alignment` (`start`, `center`,
 (`normal` or `nowrap`). Rich cells wrap unless overridden; plain tables retain
 their existing layout. Table overflow stays inside the disclosure. `maxHeight`
 defaults to 360px; use `"none"` for natural height.
+
+Column headings stay visible while the table scrolls vertically; set
+`stickyHeader: false` to opt out. `pinnedColumnCount` retains leading columns
+during horizontal scrolling (default zero). Pinning uses measured widths and
+logical inline positioning, including right-to-left layouts. As the viewport
+narrows or text grows, fewer leading columns pin so that at least half the
+scroll region remains available for other data. Combining a row's region and
+zone in one identifying cell preserves complete context on a phone.
+
+Set `allowsSorting: true` on individual columns to show header buttons. Activate
+a heading with pointer, Enter, or Space to cycle ascending, descending, then
+application order. Sorting applies only to the supplied table rows and never
+mutates them, changes plot order, or calls `onRowSelect`. Numbers sort numerically;
+strings use the current React Aria locale with natural numeric collation. Equal
+values retain their original order; null and nonfinite numbers remain last in
+either direction. Rich rendering does not affect sorting. If values are already
+formatted, supply `getSortValue(value, row)` on the column to return an original
+number or string; currency, dates and units are not parsed automatically.
+
+Use `defaultSortDescriptor: { column: 1, direction: "ascending" }` for an initial
+sort, or control it with `sortDescriptor` and `onSortChange`. The descriptor uses
+the column/direction shape familiar from DataGrid, with a zero-based column index.
+Controlled clicks emit a request; display changes only when the prop updates.
+Explicit `null` restores application order. Removing a column's sorting capability
+also restores application order. Sorting preserves row IDs, mounted cell state,
+and the current sort through ordinary record refreshes.
+
+The example keeps cost and change in separate numeric columns and puts the
+comparison baseline in the heading. Applications supply the changes and their
+meaning; the table does not infer whether a positive or negative change is good.
 
 Custom content mounts on first opening and remains mounted when folded again,
 preserving local state. Plain exact values remain available before it mounts.

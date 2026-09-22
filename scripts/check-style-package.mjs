@@ -102,7 +102,7 @@ const responsive: ResponsiveProp<string> = { sm: "1rem" };
 const className: string = classNames("packed", false);
 
 export const example = <>
-  <Chart title="Packed chart" option={{ series: [{ type: "bar", data: [1] }] }} dataTable={{ columns: ["Count"], rows: [{ id: "one", values: [1] }], columnOptions: {0: {isNumeric: true, minWidth: 160}}, maxHeight: "none", renderCell: (value, index, row) => typeof value === "number" ? <strong title={row.id + index}>{value.toFixed(2)}</strong> : null }} />
+  <Chart title="Packed chart" option={{ series: [{ type: "bar", data: [1] }] }} dataTable={{ columns: ["Count"], rows: [{ id: "one", values: [1] }], columnOptions: {0: {isNumeric: true, minWidth: 160, allowsSorting: true, getSortValue: (value) => value}}, maxHeight: "none", pinnedColumnCount: 1, stickyHeader: true, sortDescriptor: null, onSortChange: (next) => { const column: number | undefined = next?.column; void column; }, renderCell: (value, index, row) => typeof value === "number" ? <strong title={row.id + index}>{value.toFixed(2)}</strong> : null }} />
   <MetricCard label="Packed metric" value="1" />
   <Button onPress={() => undefined}>Packed button</Button>
   <DataGrid
@@ -166,10 +166,13 @@ for (const load of [require, (specifier) => import(specifier)]) {
   assert.match(html, /<td>1<\/td>/);
   const { ChartDataView } = await load("@easypost/easy-ui/Chart");
   const richData = renderToString(React.createElement(ChartDataView, {
-    dataTable: { columns: ["Count"], rows: [{ id: "one", values: [1] }],
+    dataTable: { columns: ["Count"], rows: [{ id: "ten", values: [10] }, { id: "one", values: [1] }],
+      columnOptions: { 0: { allowsSorting: true } }, defaultSortDescriptor: { column: 0, direction: "ascending" },
       renderCell: (value) => React.createElement("strong", null, value.toFixed(2)) }
   }));
   assert.match(richData, /<strong>1.00<\/strong>/);
+  assert.ok(richData.indexOf("<strong>1.00") < richData.indexOf("<strong>10.00"));
+  assert.match(richData, /aria-sort="ascending"/);
 }
 const expected = JSON.parse(readFileSync("expected-styles.json", "utf8"));
 for (const subpath of ["style.css", ...expected.map((name) => "styles/" + name)]) {

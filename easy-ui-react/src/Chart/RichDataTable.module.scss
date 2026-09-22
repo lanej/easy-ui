@@ -1,9 +1,18 @@
 @use "../styles/common" as *;
 
-.cost {
+.identity {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: design-token("space.1");
+  flex-direction: column;
+}
+
+.zone {
+  color: design-token("color.neutral.600");
+}
+
+.change {
+  font-size: var(--ezui-viz-detail-size, 14px);
+
+  &[data-sentiment="positive"] {
+    color: design-token("color.neutral.900");
+  }
 }

@@ -66,13 +66,16 @@
 }
 
 .tableScroll {
+  position: relative;
+  isolation: isolate;
   overflow: auto;
   max-height: 360px;
 }
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   color: design-token("color.neutral.800");
   font-size: var(--ezui-viz-detail-size, 12px);
   font-variant-numeric: tabular-nums;
@@ -89,11 +92,58 @@
     text-align: left;
     padding-block: 8px;
   }
+
+  > thead > tr > th {
+    background: design-token("color.neutral.050");
+  }
+
+  .pinnedColumn {
+    position: sticky;
+    z-index: 1;
+  }
+
+  td.pinnedColumn {
+    background: design-token("color.neutral.000");
+  }
+
+  .pinnedEdge {
+    border-inline-end: 1px solid design-token("color.neutral.300");
+  }
+}
+
+.stickyHeader > thead > tr > th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+
+  &.pinnedColumn {
+    z-index: 3;
+  }
+}
+
+.sortButton {
+  display: inline-flex;
+  justify-content: inherit;
+  align-items: center;
+  gap: design-token("space.1");
+  min-height: 28px;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.sortIndicator {
+  flex: none;
 }
 
 .control:focus-visible,
 .summary:focus-visible,
-.tableScroll:focus-visible {
+.tableScroll:focus-visible,
+.sortButton:focus-visible {
   outline: 2px solid design-token("color.primary.600");
   outline-offset: 2px;
 }

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "../utilities/test";
 import { ChartDataView } from "./ChartDataView";
@@ -9,6 +9,42 @@ const rows = [
   { id: "zero", values: ["Monday", 0] },
   { id: "missing", values: ["Tuesday", null] },
 ];
+
+it("remeasures the replacement table when switching between standalone and disclosed layouts", () => {
+  const observed = new Set<Element>();
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      elements: Element[] = [];
+      observe(element: Element) {
+        this.elements.push(element);
+        observed.add(element);
+      }
+      disconnect() {
+        this.elements.forEach((element) => observed.delete(element));
+      }
+    },
+  );
+  try {
+    const dataTable = { columns: ["Day", "Cost"], rows, pinnedColumnCount: 1 };
+    const { container, rerender, unmount } = render(
+      <ChartDataView dataTable={dataTable} />,
+    );
+    const original = container.querySelector('[role="region"]')!;
+    expect(observed.has(original)).toBe(true);
+    rerender(
+      <ChartDataView disclosureLabel="View data table" dataTable={dataTable} />,
+    );
+    expect(observed.has(original)).toBe(false);
+    expect(observed.has(container.querySelector('[role="region"]')!)).toBe(
+      true,
+    );
+    unmount();
+    expect(observed.size).toBe(0);
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
 
 it("renders rich cells from original records and preserves exact-value fallbacks and row actions", async () => {
   const select = vi.fn();
@@ -52,6 +88,173 @@ it("renders rich cells from original records and preserves exact-value fallbacks
   screen.getByRole("button", { name: "Select row: Monday" }).focus();
   await user.keyboard("{Enter}");
   expect(select).toHaveBeenCalledWith("zero");
+});
+
+it("sorts raw numbers stably, keeps missing values last, and restores application order without changing records", async () => {
+  const user = userEvent.setup();
+  const select = vi.fn();
+  const onSortChange = vi.fn();
+  const data = [
+    { id: "ten", values: ["A", 10] },
+    { id: "missing", values: ["B", null] },
+    { id: "two", values: ["C", 2] },
+    { id: "zero", values: ["D", 0] },
+    { id: "two-again", values: ["E", 2] },
+  ];
+  const names = () =>
+    screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("cell")[0].textContent);
+  render(
+    <ChartDataView
+      onRowSelect={select}
+      dataTable={{
+        columns: ["Name", "Cost"],
+        rows: data,
+        columnOptions: { 1: { isNumeric: true, allowsSorting: true } },
+        renderCell: (value, index) =>
+          index === 1 && typeof value === "number" ? (
+            <strong>${value.toFixed(2)}</strong>
+          ) : null,
+        onSortChange,
+      }}
+    />,
+  );
+  expect(
+    screen.queryByRole("button", { name: "Name" }),
+  ).not.toBeInTheDocument();
+  const sort = screen.getByRole("button", { name: "Cost" });
+  sort.focus();
+  await user.keyboard("{Enter}");
+  expect(names()).toEqual(["D", "C", "E", "A", "B"]);
+  expect(screen.getByRole("columnheader", { name: "Cost" })).toHaveAttribute(
+    "aria-sort",
+    "ascending",
+  );
+  expect(onSortChange).toHaveBeenLastCalledWith({
+    column: 1,
+    direction: "ascending",
+  });
+  await user.click(screen.getByRole("button", { name: "Select row: D" }));
+  expect(select).toHaveBeenCalledWith("zero");
+  await user.click(sort);
+  expect(names()).toEqual(["A", "C", "E", "D", "B"]);
+  expect(screen.getByRole("columnheader", { name: "Cost" })).toHaveAttribute(
+    "aria-sort",
+    "descending",
+  );
+  await user.click(sort);
+  expect(names()).toEqual(["A", "B", "C", "D", "E"]);
+  expect(
+    screen.getByRole("columnheader", { name: "Cost" }),
+  ).not.toHaveAttribute("aria-sort");
+  expect(onSortChange).toHaveBeenLastCalledWith(null);
+  expect(data.map((row) => row.id)).toEqual([
+    "ten",
+    "missing",
+    "two",
+    "zero",
+    "two-again",
+  ]);
+});
+
+it("honors controlled sort, explicit null, refreshed values, and disabled sorting", async () => {
+  const user = userEvent.setup();
+  const onSortChange = vi.fn();
+  const dataTable: ChartDataTable = {
+    columns: ["Cost"],
+    rows: [
+      { id: "ten", values: [10] },
+      { id: "two", values: [2] },
+    ],
+    columnOptions: { 0: { allowsSorting: true } },
+    defaultSortDescriptor: { column: 0, direction: "ascending" },
+    sortDescriptor: null,
+    onSortChange,
+  };
+  const { rerender } = render(<ChartDataView dataTable={dataTable} />);
+  const values = () =>
+    screen.getAllByRole("cell").map((cell) => cell.textContent);
+  await user.click(screen.getByRole("button", { name: "Cost" }));
+  expect(onSortChange).toHaveBeenCalledWith({
+    column: 0,
+    direction: "ascending",
+  });
+  expect(values()).toEqual(["10", "2"]);
+  const sorted: ChartDataTable = {
+    ...dataTable,
+    sortDescriptor: { column: 0, direction: "ascending" },
+  };
+  rerender(<ChartDataView dataTable={sorted} />);
+  expect(values()).toEqual(["2", "10"]);
+  rerender(
+    <ChartDataView
+      dataTable={{
+        ...sorted,
+        rows: [{ id: "ten", values: [1] }, dataTable.rows[1]],
+      }}
+    />,
+  );
+  expect(values()).toEqual(["1", "2"]);
+  expect(onSortChange).toHaveBeenCalledTimes(1);
+  rerender(
+    <ChartDataView dataTable={{ ...sorted, columnOptions: undefined }} />,
+  );
+  expect(values()).toEqual(["10", "2"]);
+  expect(
+    screen.queryByRole("button", { name: "Cost" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("columnheader")).not.toHaveAttribute("aria-sort");
+  rerender(<ChartDataView dataTable={dataTable} />);
+  expect(values()).toEqual(["10", "2"]);
+});
+
+it("uses supplied sort values for preformatted cells and retains cell state across sorting", async () => {
+  const user = userEvent.setup();
+  const records = [
+    { id: "missing", values: ["A", "Not reported"] },
+    { id: "ten", values: ["B", "$10.00"] },
+    { id: "two", values: ["C", "$2.00"] },
+  ];
+  const amounts: Record<string, number | null> = {
+    missing: null,
+    ten: 10,
+    two: 2,
+  };
+  const getSortValue = vi.fn((_, row) => amounts[row.id]);
+  render(
+    <ChartDataView
+      dataTable={{
+        columns: ["Note", "Cost"],
+        rows: records,
+        defaultSortDescriptor: { column: 1, direction: "descending" },
+        columnOptions: { 1: { allowsSorting: true, getSortValue } },
+        renderCell: (_, index, row) =>
+          index === 0 ? (
+            <input aria-label={`Note for ${row.id}`} defaultValue="" />
+          ) : null,
+      }}
+    />,
+  );
+  const values = () =>
+    screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("cell")[1].textContent);
+  expect(values()).toEqual(["$10.00", "$2.00", "Not reported"]);
+  expect(getSortValue).toHaveBeenCalledWith("$2.00", records[2]);
+  await user.type(
+    screen.getByRole("textbox", { name: "Note for two" }),
+    "Check charge",
+  );
+  await user.click(screen.getByRole("button", { name: "Cost" }));
+  expect(values()).toEqual(["Not reported", "$10.00", "$2.00"]);
+  await user.click(screen.getByRole("button", { name: "Cost" }));
+  expect(values()).toEqual(["$2.00", "$10.00", "Not reported"]);
+  expect(screen.getByRole("textbox", { name: "Note for two" })).toHaveValue(
+    "Check charge",
+  );
 });
 
 it("keeps the native disclosure folded and defers rich content until opening, then retains its state", async () => {

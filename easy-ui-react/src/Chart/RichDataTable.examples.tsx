@@ -1,6 +1,6 @@
 import React from "react";
 import { Chart } from "./Chart";
-import { MetricComparisonContent } from "../MetricCard";
+import { Badge } from "../Badge";
 import styles from "./RichDataTable.module.scss";
 
 const money = (value: number) =>
@@ -72,32 +72,50 @@ export function RichChartDataExample({
         })),
       }}
       dataTable={{
-        columns: ["Region", "Zone", "Shipments", "Cost / package"],
+        columns: [
+          "Region / zone",
+          "Cost / package",
+          "Change vs August",
+          "Shipments",
+        ],
         rows: observations.map((row) => ({
           id: row.id,
-          values: [row.region, row.zone, row.shipments, row.cost],
+          values: [
+            `${row.region} / ${row.zone}`,
+            row.cost,
+            row.change,
+            row.shipments,
+          ],
         })),
+        pinnedColumnCount: 1,
         columnOptions: {
-          0: { minWidth: 120 },
-          1: { minWidth: 80 },
-          2: { isNumeric: true, minWidth: 100 },
-          3: { isNumeric: true, minWidth: 260 },
+          0: { width: 120, minWidth: 120, whiteSpace: "normal" },
+          1: { isNumeric: true, minWidth: 160, allowsSorting: true },
+          2: { isNumeric: true, minWidth: 180, allowsSorting: true },
+          3: { isNumeric: true, minWidth: 130, allowsSorting: true },
         },
         renderCell: (value, index, row) => {
-          if (index === 2 && typeof value === "number")
-            return value.toLocaleString("en-US");
-          if (index !== 3 || typeof value !== "number") return null;
-          const observation = byId.get(row.id)!;
+          if (index === 0) {
+            const observation = byId.get(row.id)!;
+            return (
+              <div className={styles.identity}>
+                <span>{observation.region}</span>
+                <span className={styles.zone}>{observation.zone}</span>
+              </div>
+            );
+          }
+          if (typeof value !== "number") return null;
+          if (index === 3) return value.toLocaleString("en-US");
+          if (index === 1) return <strong>{money(value)}</strong>;
           return (
-            <div className={styles.cost}>
-              <strong>{money(value)}</strong>
-              <MetricComparisonContent
-                label={`${observation.change < 0 ? "−" : "+"}${money(Math.abs(observation.change))}`}
-                baseline="vs August"
-                sentiment={observation.change < 0 ? "positive" : "negative"}
-                typography={{ detail }}
-              />
-            </div>
+            <Badge variant={value < 0 ? "success" : "danger"}>
+              <span
+                className={styles.change}
+                data-sentiment={value < 0 ? "positive" : "negative"}
+              >
+                {`${value < 0 ? "−" : "+"}${money(Math.abs(value))}`}
+              </span>
+            </Badge>
           );
         },
       }}

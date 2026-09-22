@@ -51,6 +51,12 @@ export type ChartDataRow = {
   values: (string | number | null)[];
 };
 
+/** Sort a supplied data column by its zero-based index, independently of formatting. */
+export type ChartDataSortDescriptor = {
+  column: number;
+  direction: "ascending" | "descending";
+};
+
 /** Accessible data equivalent; callers keep these records consistent with option. */
 export type ChartDataTable = {
   /** Visible column headings, including units where appropriate. */
@@ -71,6 +77,19 @@ export type ChartDataTable = {
   ) => ReactNode;
   /** Scrollable table height limit. Defaults to 360px; use "none" for natural height. */
   maxHeight?: CSSProperties["maxHeight"];
+  /** Keep column headings visible during vertical scrolling. Defaults to true. */
+  stickyHeader?: boolean;
+  /**
+   * Leading columns to retain during horizontal scrolling. Defaults to zero.
+   * Fewer columns pin when needed to leave at least half the viewport for data.
+   */
+  pinnedColumnCount?: number;
+  /** Controlled sort of the supplied rows. null preserves application order. */
+  sortDescriptor?: ChartDataSortDescriptor | null;
+  /** Initial uncontrolled sort. By default, rows retain application order. */
+  defaultSortDescriptor?: ChartDataSortDescriptor;
+  /** Sort requests cycle ascending, descending, then null (application order). */
+  onSortChange?: (descriptor: ChartDataSortDescriptor | null) => void;
 };
 
 /** Presentation for a data column and its heading; values remain application-owned. */
@@ -85,4 +104,15 @@ export type ChartDataColumnOptions = {
   minWidth?: CSSProperties["minWidth"];
   /** Rich cells wrap by default; plain cells retain their existing nowrap behavior. */
   whiteSpace?: "normal" | "nowrap";
+  /** Opt into a keyboard-operable sort button in this column's heading. */
+  allowsSorting?: boolean;
+  /**
+   * Supply a sort value when the stored value is already formatted. Defaults to
+   * the original value; numbers sort numerically, strings use locale collation.
+   * null and nonfinite numbers remain last in both directions.
+   */
+  getSortValue?: (
+    value: ChartDataRow["values"][number],
+    row: ChartDataRow,
+  ) => string | number | null;
 };

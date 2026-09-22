@@ -164,23 +164,35 @@ it("does not initialize after unmount when the import is still pending", async (
   expect(init).not.toHaveBeenCalled();
 });
 
-it("disposes the renderer and resize observer on unmount", async () => {
-  const disconnect = vi.fn();
-  const observe = vi.fn();
+it("disposes the renderer and every resize observer on unmount", async () => {
+  const observers: {
+    observe: ReturnType<typeof vi.fn>;
+    disconnect: ReturnType<typeof vi.fn>;
+  }[] = [];
   vi.stubGlobal(
     "ResizeObserver",
     class {
-      observe = observe;
-      disconnect = disconnect;
+      observe = vi.fn();
+      disconnect = vi.fn();
+      constructor() {
+        observers.push(this);
+      }
     },
   );
   try {
     const { unmount } = render(view());
-    await screen.findByRole("img");
-    expect(observe).toHaveBeenCalledOnce();
+    const plot = await screen.findByRole("img");
+    expect(
+      observers.some((observer) =>
+        observer.observe.mock.calls.some(([element]) => plot.contains(element)),
+      ),
+    ).toBe(true);
     unmount();
     expect(dispose).toHaveBeenCalledOnce();
-    expect(disconnect).toHaveBeenCalledOnce();
+    for (const observer of observers) {
+      expect(observer.observe).toHaveBeenCalled();
+      expect(observer.disconnect).toHaveBeenCalledOnce();
+    }
   } finally {
     vi.unstubAllGlobals();
   }

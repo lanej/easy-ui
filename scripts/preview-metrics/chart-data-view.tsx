@@ -20,8 +20,10 @@ function Preview() {
       >
         <h1 style={{ fontSize: 24 }}>Rich chart data disclosure</h1>
         <p style={{ fontSize: 14 }}>
-          Expand “View data table” below the chart. The richer table is part of
-          that existing disclosure.
+          Expand “View data table” below the chart. Sort a numeric heading to
+          compare values; activate it again for descending order, then once more
+          to restore the original order. Region and zone stay together as you
+          scroll.
         </p>
         <label
           style={{ display: "flex", gap: 8, fontSize: 14, marginBlock: 16 }}
