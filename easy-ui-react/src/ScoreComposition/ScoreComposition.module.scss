@@ -188,6 +188,9 @@
   border-radius: inherit;
   background: var(--ezui-score-fill);
 }
+.contribution[data-sentiment="warning"] .meterFill {
+  box-shadow: inset 0 0 0 1px #{design-token("color.warning.700")};
+}
 .sources {
   margin-top: design-token("space.1");
   color: design-token("color.neutral.600");

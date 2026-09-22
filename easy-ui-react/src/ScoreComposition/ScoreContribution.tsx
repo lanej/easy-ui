@@ -63,7 +63,12 @@ export function ScoreContribution({
       data-sentiment={effectiveSentiment}
       style={typography && visualizationTypographyStyle(typography)}
     >
-      <strong className={styles.contributionLabel}>{label}</strong>
+      <strong
+        className={styles.contributionLabel}
+        data-viewrule="score-primary"
+      >
+        {label}
+      </strong>
       <div className={styles.scoreLine}>
         <strong>{valueText}</strong>
         <span>/ {maxText}</span>
@@ -127,7 +132,9 @@ export function ScoreContribution({
             </Disclosure.Trigger>
           </div>
           <Disclosure.Content>
-            <div className={styles.explanation}>{explanation}</div>
+            <div className={styles.explanation} data-viewrule="score-primary">
+              {explanation}
+            </div>
           </Disclosure.Content>
         </Disclosure>
       )}

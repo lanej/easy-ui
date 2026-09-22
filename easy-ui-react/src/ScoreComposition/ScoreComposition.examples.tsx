@@ -57,7 +57,7 @@ export const scoreCompositionExample: ScoreCompositionProps = {
     maxScore: 3,
     disposition: "Disable",
     sentiment: "negative",
-    supportingText: "$0.00 exposure",
+    supportingText: "USD 0.00 exposure",
   },
   footer: "Synthetic example. This score reflects only the mechanisms shown.",
 };

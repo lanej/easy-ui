@@ -137,5 +137,72 @@
     "severity": "error",
     "reason": "This short heading fits one line at the minimum viewport; growth indicates accidental card stretching.",
     "designRules": ["DR-008"]
+  },
+  {
+    "id": "score-nodes-visible",
+    "type": "required-elements",
+    "selector": "[data-score-example] [data-score-layout]",
+    "severity": "error",
+    "reason": "Keep all three signals, two contributions, and the result available in the finite comparison, including below the fold on mobile.",
+    "designRules": ["DR-006", "DR-007"],
+    "pages": ["score-composition"],
+    "required": [
+      "[data-score-node=\"signal\"][data-score-id=\"dimensions\"]",
+      "[data-score-node=\"signal\"][data-score-id=\"ratio\"]",
+      "[data-score-node=\"signal\"][data-score-id=\"burst\"]",
+      "[data-score-node=\"contribution\"][data-score-id=\"underdeclaration\"]",
+      "[data-score-node=\"contribution\"][data-score-id=\"international\"]",
+      "[data-score-node=\"result\"][data-score-id=\"result\"]"
+    ]
+  },
+  {
+    "id": "score-nodes-within-layout",
+    "type": "within-bounds",
+    "selector": "[data-score-example] [data-score-node]",
+    "severity": "error",
+    "reason": "Node boxes must fit the composition without horizontal loss at 320px or with larger text.",
+    "designRules": ["DR-006", "DR-015"],
+    "pages": ["score-composition"],
+    "container": "[data-score-layout]",
+    "tolerance": 1
+  },
+  {
+    "id": "score-nodes-distinct",
+    "type": "no-overlap",
+    "selector": "[data-score-example] [data-score-node]",
+    "severity": "error",
+    "reason": "Signal boxes, contribution cards, and the result must remain distinct when text expands.",
+    "designRules": ["DR-006", "DR-015"],
+    "pages": ["score-composition"]
+  },
+  {
+    "id": "score-node-content-clipping",
+    "type": "no-clip",
+    "selector": "[data-score-example] [data-score-node], [data-score-example] [data-score-node] > div, [data-score-example] [data-viewrule=\"score-primary\"], [data-score-example] [data-score-node] strong, [data-score-example] [data-score-node] [data-sentiment], [data-score-example] [data-score-status-label], [data-score-example] [data-score-fill-label], [data-score-example] [data-score-node=\"result\"] > div > span, [data-score-example] [data-score-node=\"result\"] > div > div",
+    "severity": "error",
+    "reason": "Exact values, decisions, and expanded explanations must not be clipped.",
+    "designRules": ["DR-006", "DR-015"],
+    "pages": ["score-composition"]
+  },
+  {
+    "id": "score-readable-primary-text",
+    "type": "min-font-size",
+    "selector": ".score-intro, [data-viewrule=\"score-primary\"], [data-score-node] strong, [data-score-node=\"result\"]",
+    "severity": "error",
+    "reason": "Primary observations, contributions, outcome text, and result context retain the 14px prose floor.",
+    "designRules": ["DR-007"],
+    "pages": ["score-composition"],
+    "min": 14
+  },
+  {
+    "id": "score-disclosure-targets",
+    "type": "min-size",
+    "selector": "[data-score-example] button",
+    "severity": "error",
+    "reason": "Explanations retain 44px touch targets at every text size.",
+    "designRules": ["DR-007", "DR-014"],
+    "pages": ["score-composition"],
+    "minWidth": 44,
+    "minHeight": 44
   }
 ]

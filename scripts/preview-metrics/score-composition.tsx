@@ -46,6 +46,7 @@ const reviewTheme = createTheme((preferences) => ({
         "color.negative.800": "var(--ezui-color-red-100)",
         "color.warning.300": "var(--ezui-color-yellow-800)",
         "color.warning.600": "var(--ezui-color-yellow-500)",
+        "color.warning.700": "var(--ezui-color-yellow-300)",
       }
     : {}),
 }));

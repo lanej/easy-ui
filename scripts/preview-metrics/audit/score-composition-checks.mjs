@@ -1,5 +1,25 @@
 import assert from "node:assert/strict";
 
+// The warning meter keeps its gold interior; measure its contrasting inset edge.
+function markContrast(mark, track) {
+  const luminance = (color) => {
+    const rgb = color
+      .match(/[\d.]+/g)
+      .slice(0, 3)
+      .map(Number);
+    const linear = rgb.map((value) => {
+      const channel = value / 255;
+      return channel <= 0.04045
+        ? channel / 12.92
+        : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+  };
+  const a = luminance(mark);
+  const b = luminance(track);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
 /** Shared browser assertions, including the native Safari transport in CI. */
 export async function auditScoreComposition(
   driver,
@@ -65,10 +85,23 @@ export async function auditScoreComposition(
             fill.getBoundingClientRect().width /
             meter.getBoundingClientRect().width,
           color: getComputedStyle(fill).backgroundColor,
+          edge: getComputedStyle(fill).boxShadow.match(/rgba?\([^)]+\)/)?.[0],
+          track: getComputedStyle(meter).backgroundColor,
         };
       }),
     );
+  const checkMeterContrast = (fills) => {
+    for (const fill of fills) {
+      if (!fill.width) continue;
+      fill.contrast = markContrast(fill.edge ?? fill.color, fill.track);
+      assert.ok(
+        fill.contrast >= 3,
+        "Meter boundary must contrast with its track at 3:1",
+      );
+    }
+  };
   const fills = await contributionFills();
+  checkMeterContrast(fills);
   assert.deepEqual(
     fills.map(({ state }) => state),
     ["full", "partial"],
@@ -252,6 +285,15 @@ export async function auditScoreComposition(
   await driver.screenshot(`${outputDir}/score-desktop.png`);
   const explanation =
     '[data-score-example] button[aria-label="Explanation: Underdeclaration"]';
+  await driver.key("#refresh-data", "Tab");
+  assert.equal(
+    await driver.evaluate(
+      (selector) => document.activeElement === document.querySelector(selector),
+      explanation,
+    ),
+    true,
+    "Tab reaches the first explanation from the preceding preview control",
+  );
   await driver.key(explanation, "Enter");
   assert.equal(
     await driver.evaluate(
@@ -347,6 +389,12 @@ export async function auditScoreComposition(
     (light) => getComputedStyle(document.body).backgroundColor !== light,
     lightBackground,
   );
+  const darkFills = await contributionFills();
+  checkMeterContrast(darkFills);
+  measurements.push({
+    name: "dark-contribution-contrast",
+    contributions: darkFills,
+  });
   await scan("score-dark");
   await driver.screenshot(`${outputDir}/score-dark.png`);
   await driver.click("#dark-theme");
@@ -439,7 +487,7 @@ export async function auditScoreComposition(
   return {
     checks: [
       "result leads with an explicit decision, decorative status icon, and matching sentiment accent",
-      "contributions show full and partial ratios with matching colors and exact meter widths",
+      "contributions show full and partial ratios with matching colors, contrasting boundaries, and exact meter widths",
       "explicit signal colors retain exact values and visible status labels",
       "score connectors follow DOM geometry and disclosure",
       "score keyboard disclosure and refreshed records",

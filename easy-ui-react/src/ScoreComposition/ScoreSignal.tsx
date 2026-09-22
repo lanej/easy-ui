@@ -49,7 +49,9 @@ export function ScoreSignal({
       style={typography && visualizationTypographyStyle(typography)}
     >
       <div className={styles.signalRow}>
-        <span className={styles.signalLabel}>{label}</span>
+        <span className={styles.signalLabel} data-viewrule="score-primary">
+          {label}
+        </span>
         <span
           className={classNames(
             styles.signalValue,

@@ -43,6 +43,26 @@
       "path": "/native-regressions.html?large=1&stress=1",
       "ready": "[data-native-ready]",
       "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "score-composition",
+      "path": "/score-composition.html",
+      "ready": "[data-score-node=\"result\"] [data-sentiment=\"negative\"]",
+      "viewports": ["desktop", "mobile", "4k"],
+      "checkpoints": [
+        {
+          "name": "default",
+          "setup": ".ui-review/checkpoints/score-default.mjs"
+        },
+        {
+          "name": "expanded-large",
+          "setup": ".ui-review/checkpoints/score-expanded-large.mjs"
+        },
+        {
+          "name": "dark",
+          "setup": ".ui-review/checkpoints/score-dark.mjs"
+        }
+      ]
     }
   ],
   "viewports": [
