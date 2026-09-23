@@ -16,7 +16,7 @@ export type ScoreSignalData = {
   /** Explicit rule state. false gives outgoing connectors a subdued dashed line.
    * Never inferred from the value or sentiment; omitted means unspecified. */
   triggered?: boolean;
-  /** Optional supporting detail, disclosed by the signal title. */
+  /** Optional rich supporting detail, including charts, disclosed by the signal title. */
   description?: ReactNode;
 };
 
@@ -33,7 +33,7 @@ export type ScoreContributionData = {
   sentiment?: "neutral" | "positive" | "warning" | "negative";
   /** Signal IDs; several contributions may reference the same signal. */
   signals: readonly string[];
-  /** Optional explanation, disclosed on demand. */
+  /** Rich explanation (text, charts, or controls), mounted on demand by the title. */
   explanation?: ReactNode;
 };
 

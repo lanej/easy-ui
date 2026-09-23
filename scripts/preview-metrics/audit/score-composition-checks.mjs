@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { auditScoreCharts } from "./score-chart-checks.mjs";
 
 // The warning meter keeps its gold interior; measure its contrasting inset edge.
 function markContrast(mark, track) {
@@ -750,6 +751,12 @@ export async function auditScoreComposition(
     measurements.push({ name: `mobile-${width}`, ...data });
   }
   await diagnostics("score-composition");
+  const charts = await auditScoreCharts(driver, site, outputDir, {
+    scan,
+    diagnostics,
+    endpoints,
+  });
+  measurements.push(...charts.measurements);
   return {
     checks: [
       "result leads with an explicit decision, decorative status icon, and matching sentiment accent",
@@ -762,6 +769,7 @@ export async function auditScoreComposition(
       "score RTL geometry",
       "score container responsiveness and large text",
       "score dark-theme and mobile accessibility",
+      ...charts.checks,
     ],
     measurements,
   };

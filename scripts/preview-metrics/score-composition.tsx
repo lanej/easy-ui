@@ -12,6 +12,7 @@ import {
   ScoreSignal,
   ScoreResult,
 } from "../../easy-ui-react/src/ScoreComposition";
+import { ScoreChartDetails } from "../../easy-ui-react/src/ScoreComposition/ScoreComposition.charts";
 import { scoreCompositionExample } from "../../easy-ui-react/src/ScoreComposition/ScoreComposition.examples";
 import "../../easy-ui-react/src/styles/global.scss";
 import "../../.storybook/public/poppins.css";
@@ -57,6 +58,40 @@ function Preview() {
   const [narrow, setNarrow] = useState(false);
   const [rtl, setRtl] = useState(false);
   const [refreshed, setRefreshed] = useState(false);
+  const [richDetails, setRichDetails] = useState(
+    () => new URLSearchParams(location.search).get("rich") === "1",
+  );
+  const typography = large
+    ? { title: 24, description: 20, label: 18, detail: 18, control: 20 }
+    : undefined;
+  const signals = scoreCompositionExample.signals.map((signal) => ({
+    ...signal,
+    description:
+      richDetails && signal.id === "ratio" ? (
+        <ScoreChartDetails
+          kind="history"
+          refreshed={refreshed}
+          typography={typography}
+        />
+      ) : (
+        signal.description
+      ),
+  }));
+  const contributions = scoreCompositionExample.contributions.map(
+    (contribution) => ({
+      ...contribution,
+      explanation:
+        richDetails && contribution.id === "international" ? (
+          <ScoreChartDetails
+            kind="response"
+            refreshed={refreshed}
+            typography={typography}
+          />
+        ) : (
+          contribution.explanation
+        ),
+    }),
+  );
   return (
     <ThemeProvider colorScheme={dark ? "dark" : "light"} theme={reviewTheme}>
       <main className="score-review">
@@ -103,6 +138,15 @@ function Preview() {
           </label>
           <label>
             <input
+              id="rich-details"
+              type="checkbox"
+              checked={richDetails}
+              onChange={(event) => setRichDetails(event.target.checked)}
+            />
+            Chart details
+          </label>
+          <label>
+            <input
               id="refresh-data"
               type="checkbox"
               checked={refreshed}
@@ -120,25 +164,23 @@ function Preview() {
             {...scoreCompositionExample}
             signals={
               refreshed
-                ? [...scoreCompositionExample.signals]
-                    .reverse()
-                    .map((signal) => ({
-                      ...signal,
-                      value: typeof signal.value === "boolean" ? false : 0,
-                      sentiment: "positive" as const,
-                      statusLabel: "Clear",
-                      triggered: false,
-                    }))
-                : [...scoreCompositionExample.signals]
+                ? [...signals].reverse().map((signal) => ({
+                    ...signal,
+                    value: typeof signal.value === "boolean" ? false : 0,
+                    sentiment: "positive" as const,
+                    statusLabel: "Clear",
+                    triggered: false,
+                  }))
+                : [...signals]
             }
             contributions={
               refreshed
-                ? scoreCompositionExample.contributions.map((contribution) => ({
+                ? contributions.map((contribution) => ({
                     ...contribution,
                     score: 0,
                     sentiment: "neutral" as const,
                   }))
-                : [...scoreCompositionExample.contributions]
+                : [...contributions]
             }
             result={
               refreshed
@@ -150,17 +192,7 @@ function Preview() {
                   }
                 : scoreCompositionExample.result
             }
-            typography={
-              large
-                ? {
-                    title: 24,
-                    description: 20,
-                    label: 18,
-                    detail: 18,
-                    control: 20,
-                  }
-                : undefined
-            }
+            typography={typography}
           />
         </div>
         <section

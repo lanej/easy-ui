@@ -448,3 +448,14 @@
     }
   }
 }
+
+// Rich details must constrain charts and their locally scrollable exact-data views.
+.signalDescription,
+.explanation,
+.supportingText {
+  min-width: 0;
+  max-width: 100%;
+}
+.result > .supportingText {
+  width: 100%;
+}

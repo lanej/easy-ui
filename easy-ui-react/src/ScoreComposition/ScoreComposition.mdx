@@ -85,6 +85,35 @@ Descriptions can contain application-owned text, links, or controls. Each signal
 />
 ```
 
+## Put a chart inside the expanded card
+
+The compact card retains its exact observation or score and progress meter. Its title reveals richer content supplied through `signal.description` or `contribution.explanation`. These existing slots accept React content, including `Chart`, its independent `ChartSurface` / `ChartDataView` companions, or native plots such as `RangePlot` and `CompactTimeSeries`.
+
+<Canvas of={Stories.ChartDetails} />
+
+In this example, open **NDA / international label ratio** for its recent trend, or **NDA / International** for the ratio-to-contribution curve. The current observation appears as a point with dashed guides and a visible exact-value callout. Labeled shaded regions put it in context against application-supplied levels. The curve, callout, and exact-data table share the same supplied evaluations. Closing the title returns to the compact meter; the card never replaces exact values with a graph alone.
+
+```tsx
+<ScoreContribution
+  label="NDA / International"
+  score={1}
+  maxScore={2}
+  explanation={
+    <Chart
+      variant="bare"
+      aria-label="Ratio response"
+      height={200}
+      option={responseOption}
+      dataTable={responseData}
+    />
+  }
+/>
+```
+
+Use the existing `ChartOption` series `markPoint` for an observed coordinate, `markLine` for reference guides, and `markArea` for bounded regions. See the **ChartDetails** story's `ScoreComposition.charts.tsx` recipe for numeric axes, a highlighted point on supplied evaluations, vertical threshold bands, and horizontal bands on a recent trend. Keep labels and units adjacent to the chart and provide `dataTable` or a `ChartDataView` so exact values remain available by keyboard and if rendering fails. Pass the same `typography` to embedded charts when changing text sizes; use `variant="bare"` to avoid nested card frames.
+
+Bands describe application rules, not statistical confidence. The application supplies evaluations, thresholds, units, and interpretations. Lines join supplied points without fitting a new curve. Applications can compose other graph and chart types using the same slots; ScoreComposition has no chart-specific grammar or engine dependency. The optional Chart engine loads when a chart is mounted. Closing a node unmounts its details; collapsing an entire column keeps open chart content mounted and restores it on return. Use controlled chart state when it must survive a node's close/reopen cycle.
+
 ## Read contribution fullness
 
 A contribution's fill is relative to its own maximum: `1 / 1` shows “Full · 100%”, while `1 / 2` shows “Partial · 50%”. Zero shows “None · 0%”. The meter and exact fraction remain visible alongside this status, so color is never the only way to distinguish these states. Localize the state words through `labels.fullContribution`, `labels.partialContribution`, and `labels.noContribution`.
