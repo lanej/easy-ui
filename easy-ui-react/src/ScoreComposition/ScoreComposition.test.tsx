@@ -1,5 +1,5 @@
 import React, { StrictMode } from "react";
-import { act, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { render } from "../utilities/test";
 import {
@@ -414,6 +414,8 @@ it("opens explanations by keyboard and preserves their state through data refres
   const button = screen.getByRole("button", {
     name: "Explanation: Underdeclaration",
   });
+  expect(button).toHaveTextContent("Underdeclaration");
+  expect(button).not.toHaveTextContent("Explanation");
   expect(button).toHaveAttribute("aria-expanded", "false");
   expect(
     screen.queryByText(/Missing dimensions contribute/),
@@ -478,7 +480,7 @@ it("server-renders all exact values and relationships without SVG measurements",
   expect(result).not.toContain("0.00");
 });
 
-it("tracks resized and replaced nodes, deduplicates edges, supports RTL, and cleans up observers", () => {
+it("traces explicit relationships through focus, hover, refresh, resizing, and RTL", () => {
   let resized: ResizeObserverCallback = () => {};
   const disconnect = vi.fn();
   vi.stubGlobal(
@@ -522,11 +524,19 @@ it("tracks resized and replaced nodes, deduplicates edges, supports RTL, and cle
     });
   try {
     const props = {
-      signals: [{ id: "same:[id]", label: "Shared input", value: 1 }],
+      signals: [
+        {
+          id: "same:[id]",
+          label: "Shared input",
+          value: false,
+          sentiment: "positive" as const,
+        },
+      ],
       contributions: [
         {
           id: "same:[id]",
           label: "A",
+          explanation: "Details for A",
           score: 1,
           maxScore: 2,
           signals: ["same:[id]", "same:[id]", "missing"],
@@ -534,6 +544,7 @@ it("tracks resized and replaced nodes, deduplicates edges, supports RTL, and cle
         {
           id: "other",
           label: "B",
+          explanation: "Details for B",
           score: 1,
           maxScore: 2,
           signals: ["same:[id]"],
@@ -550,6 +561,43 @@ it("tracks resized and replaced nodes, deduplicates edges, supports RTL, and cle
     expect(
       container.querySelectorAll("[data-score-layout] > svg path"),
     ).toHaveLength(4);
+    const paths = () => [
+      ...container.querySelectorAll("[data-score-layout] > svg path"),
+    ];
+    const traced = () =>
+      paths().map((path) => path.getAttribute("data-highlighted"));
+    expect(
+      paths().filter((path) => path.getAttribute("data-inactive") === "true"),
+    ).toHaveLength(0);
+    const titleA = screen.getByRole("button", { name: "Explanation: A" });
+    const titleB = screen.getByRole("button", { name: "Explanation: B" });
+    fireEvent.mouseEnter(titleA.closest("li")!);
+    expect(traced()).toEqual(["true", "true", "false", "false"]);
+    act(() => titleB.focus());
+    expect(traced()).toEqual(["false", "false", "true", "true"]);
+    fireEvent.mouseLeave(titleA.closest("li")!);
+    expect(traced()).toEqual(["false", "false", "true", "true"]);
+    act(() => titleB.blur());
+    expect(traced()).toEqual(["false", "false", "false", "false"]);
+    rerender(
+      <StrictMode>
+        <ScoreComposition
+          {...props}
+          signals={props.signals.map((signal) => ({
+            ...signal,
+            triggered: false,
+          }))}
+        />
+      </StrictMode>,
+    );
+    expect(paths().map((path) => path.getAttribute("data-inactive"))).toEqual([
+      "true",
+      "false",
+      "true",
+      "false",
+    ]);
+    fireEvent.mouseEnter(titleB.closest("li")!);
+    expect(traced()).toEqual(["false", "false", "true", "true"]);
     const first = () =>
       container.querySelector("[data-score-layout] > svg path");
     expect(first()).toHaveAttribute("d", "M 200 50 C 250 50, 250 50, 300 50");
@@ -576,6 +624,15 @@ it("tracks resized and replaced nodes, deduplicates edges, supports RTL, and cle
       </StrictMode>,
     );
     expect(container.querySelector("[data-score-layout] > svg")).toBeNull();
+    rerender(
+      <StrictMode>
+        <ScoreComposition {...props} />
+      </StrictMode>,
+    );
+    expect(traced()).toEqual(["false", "false", "false", "false"]);
+    expect(
+      paths().every((path) => path.getAttribute("data-inactive") === "false"),
+    ).toBe(true);
     unmount();
     expect(disconnect).toHaveBeenCalled();
   } finally {

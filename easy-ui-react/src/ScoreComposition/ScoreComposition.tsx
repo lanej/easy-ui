@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useId } from "react-aria";
 import { visualizationTypographyStyle } from "../visualization/typography";
 import { ScoreSignal } from "./ScoreSignal";
@@ -31,6 +31,18 @@ export function ScoreComposition({
   const id = useId();
   const layoutRef = useRef<HTMLDivElement>(null);
   const labels = { ...defaultLabels, ...overrides };
+  const [hoveredContribution, setHoveredContribution] = useState<string | null>(
+    null,
+  );
+  const [focusedContribution, setFocusedContribution] = useState<string | null>(
+    null,
+  );
+  // Removed records must not retain a trace if their IDs are later reused.
+  useEffect(() => {
+    const ids = new Set(contributions.map(({ id }) => id));
+    setHoveredContribution((id) => (id !== null && ids.has(id) ? id : null));
+    setFocusedContribution((id) => (id !== null && ids.has(id) ? id : null));
+  }, [contributions]);
   const signalById = useMemo(
     () => new Map(signals.map((signal) => [signal.id, signal])),
     [signals],
@@ -43,8 +55,14 @@ export function ScoreComposition({
           .map((signal): ScoreConnection => ({
             from: ["signal", signal],
             to: ["contribution", contribution.id],
+            contributionId: contribution.id,
+            isInactive: signalById.get(signal)?.triggered === false,
           })),
-        { from: ["contribution", contribution.id], to: ["result", "result"] },
+        {
+          from: ["contribution", contribution.id],
+          to: ["result", "result"],
+          contributionId: contribution.id,
+        },
       ]),
     [contributions, signalById],
   );
@@ -121,6 +139,14 @@ export function ScoreComposition({
               {contributions.map(({ signals: sources, ...contribution }) => (
                 <li
                   key={contribution.id}
+                  onMouseEnter={() => setHoveredContribution(contribution.id)}
+                  onMouseLeave={() => setHoveredContribution(null)}
+                  onFocusCapture={() => setFocusedContribution(contribution.id)}
+                  onBlurCapture={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget)) {
+                      setFocusedContribution(null);
+                    }
+                  }}
                   data-score-node="contribution"
                   data-score-id={contribution.id}
                   data-score-sources-complete={
@@ -157,7 +183,11 @@ export function ScoreComposition({
             </div>
           </div>
         </div>
-        <ScoreConnectorLayer layoutRef={layoutRef} connections={connections} />
+        <ScoreConnectorLayer
+          layoutRef={layoutRef}
+          connections={connections}
+          highlightedContribution={focusedContribution ?? hoveredContribution}
+        />
       </div>
       {footer != null && <footer className={styles.footer}>{footer}</footer>}
     </section>

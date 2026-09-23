@@ -6,16 +6,27 @@ export type ScoreConnectorPoint = { x: number; y: number };
 export type ScoreConnectorProps = {
   from: ScoreConnectorPoint;
   to: ScoreConnectorPoint;
+  /** Subdued dashed relationship for an explicitly untriggered source. */
+  isInactive?: boolean;
+  /** Emphasize a relationship being inspected, without changing its meaning. */
+  isHighlighted?: boolean;
 };
 
 /** Decorative Bézier path for an SVG layer. Exact relationships belong in the DOM. */
-export function ScoreConnector({ from, to }: ScoreConnectorProps) {
+export function ScoreConnector({
+  from,
+  to,
+  isInactive = false,
+  isHighlighted = false,
+}: ScoreConnectorProps) {
   if (![from.x, from.y, to.x, to.y].every(Number.isFinite)) return null;
   const middle = (from.x + to.x) / 2;
   return (
     <path
       className={styles.connector}
       aria-hidden="true"
+      data-inactive={isInactive}
+      data-highlighted={isHighlighted}
       d={`M ${from.x} ${from.y} C ${middle} ${from.y}, ${middle} ${to.y}, ${to.x} ${to.y}`}
       vectorEffect="non-scaling-stroke"
     />
@@ -25,17 +36,24 @@ export function ScoreConnector({ from, to }: ScoreConnectorProps) {
 export type ScoreConnection = {
   from: readonly ["signal" | "contribution", string];
   to: readonly ["contribution" | "result", string];
+  contributionId: string;
+  isInactive?: boolean;
 };
-type MeasuredConnection = ScoreConnectorProps & { key: string };
+type MeasuredConnection = ScoreConnectorProps & {
+  key: string;
+  contributionId: string;
+};
 type Geometry = { width: number; height: number; paths: MeasuredConnection[] };
 
 /** Measure ordinary DOM nodes after mount; SSR and small containers need no diagram. */
 export function ScoreConnectorLayer({
   layoutRef,
   connections,
+  highlightedContribution,
 }: {
   layoutRef: RefObject<HTMLDivElement | null>;
   connections: readonly ScoreConnection[];
+  highlightedContribution: string | null;
 }) {
   const [geometry, setGeometry] = useState<Geometry | null>(null);
   useEffect(() => {
@@ -66,7 +84,9 @@ export function ScoreConnectorLayer({
         // Stacked layouts have no connecting gutter. Keep all relationships in text.
         if (!rightward && !leftward) continue;
         paths.push({
-          key: JSON.stringify(connection),
+          key: JSON.stringify([connection.from, connection.to]),
+          contributionId: connection.contributionId,
+          isInactive: connection.isInactive,
           from: {
             x: (rightward ? from.right : from.left) - bounds.left,
             y: from.top + from.height / 2 - bounds.top,
@@ -127,8 +147,12 @@ export function ScoreConnectorLayer({
       focusable="false"
       viewBox={`0 0 ${geometry.width} ${geometry.height}`}
     >
-      {geometry.paths.map(({ key, ...points }) => (
-        <ScoreConnector key={key} {...points} />
+      {geometry.paths.map(({ key, contributionId, ...points }) => (
+        <ScoreConnector
+          key={key}
+          {...points}
+          isHighlighted={contributionId === highlightedContribution}
+        />
       ))}
     </svg>
   );

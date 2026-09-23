@@ -70,6 +70,11 @@ try {
           )
           .perform();
       },
+      hover: async (selector) =>
+        driver
+          .actions()
+          .move({ origin: await driver.findElement(By.css(selector)) })
+          .perform(),
       click: async (selector) =>
         (await driver.findElement(By.css(selector))).click(),
       screenshot: async (path) =>

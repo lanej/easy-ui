@@ -33,6 +33,7 @@ try {
         await page.locator(selector).first().focus();
         await page.keyboard.press(key);
       },
+      hover: (selector) => page.locator(selector).first().hover(),
       click: (selector) => page.locator(selector).first().click(),
       screenshot: (path) => page.screenshot({ path, fullPage: false }),
     },
