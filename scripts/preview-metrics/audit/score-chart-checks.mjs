@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { auditScoreChartThemes } from "./score-chart-theme-checks.mjs";
 
 // Exercise the copyable Chart recipe through the same Chrome, Firefox, and
 // native Safari transport as the score primitives. No private engine API.
@@ -318,9 +319,15 @@ export async function auditScoreCharts(
     await driver.key(table, "Enter");
   }
   await diagnostics("score-chart-details");
+  // Native Safari's driver has no OS media emulation. Its explicit light/dark
+  // coverage above still runs; only capable drivers claim the OS regression.
+  const themes = driver.colorScheme
+    ? await auditScoreChartThemes(driver, site, diagnostics)
+    : { measurements: [], checks: [] };
   return {
-    measurements,
+    measurements: [...measurements, ...themes.measurements],
     checks: [
+      ...themes.checks,
       "rich signal and contribution details mount on demand, retain compact meters, and preserve chart/table state across column collapse",
       "rendered observation markers sit on supplied curves at exact coordinates with correctly bounded threshold bands",
       "rich charts update with observations and retain readable labels, exact-data keyboard access, touch targets, and contained layouts across dark, RTL, mobile, and large text",

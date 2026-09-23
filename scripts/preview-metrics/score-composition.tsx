@@ -61,6 +61,13 @@ function Preview() {
   const [richDetails, setRichDetails] = useState(
     () => new URLSearchParams(location.search).get("rich") === "1",
   );
+  const scheme = new URLSearchParams(location.search).get("scheme");
+  const colorScheme =
+    scheme === "system" || scheme === "inverted"
+      ? scheme
+      : dark
+        ? "dark"
+        : "light";
   const typography = large
     ? { title: 24, description: 20, label: 18, detail: 18, control: 20 }
     : undefined;
@@ -93,7 +100,7 @@ function Preview() {
     }),
   );
   return (
-    <ThemeProvider colorScheme={dark ? "dark" : "light"} theme={reviewTheme}>
+    <ThemeProvider colorScheme={colorScheme} theme={reviewTheme}>
       <main className="score-review">
         <h1>Explainable scores</h1>
         <p className="score-intro">

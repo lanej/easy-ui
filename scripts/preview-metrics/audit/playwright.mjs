@@ -17,6 +17,7 @@ try {
   await auditBrowser(
     {
       open: (url) => page.goto(url, { waitUntil: "networkidle" }),
+      colorScheme: (colorScheme) => page.emulateMedia({ colorScheme }),
       resize: (width, height) => page.setViewportSize({ width, height }),
       evaluate: (fn, ...args) =>
         page.evaluate(
