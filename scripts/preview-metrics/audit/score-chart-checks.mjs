@@ -12,6 +12,13 @@ export async function auditScoreCharts(
   const measurements = [];
   await driver.resize(1440, 1100);
   await driver.open(`${site}/score-composition.html?rich=1`);
+  // Safari can finish navigation before React commits the score cards.
+  await driver.wait(
+    () =>
+      document.querySelector(
+        '[data-score-id="international"] [role="meter"]',
+      ) !== null,
+  );
   const signal = '[data-score-id="ratio"] button';
   const contribution = '[data-score-id="international"] button';
   const column = '[data-score-column="contributions"] > div > button';
