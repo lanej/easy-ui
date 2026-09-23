@@ -168,18 +168,28 @@ export function ScoreChartDetails({
   const theme = useTheme();
   const { resolvedColorScheme } = useColorScheme();
   useEffect(() => {
-    if (!ref.current) return;
-    const css = getComputedStyle(ref.current);
-    const color = (name: string, fallback: string) =>
-      css.getPropertyValue(`--ezui-color-${name}`).trim() || fallback;
-    setColors({
-      line: color("primary-600", defaultColors.line),
-      surface: color("neutral-000", defaultColors.surface),
-      guide: color("neutral-600", defaultColors.guide),
-      positive: color("positive-100", defaultColors.positive),
-      warning: color("warning-300", defaultColors.warning),
-      negative: color("negative-100", defaultColors.negative),
-    });
+    const updateColors = () => {
+      if (!ref.current) return;
+      const css = getComputedStyle(ref.current);
+      const color = (name: string, fallback: string) =>
+        css.getPropertyValue(`--ezui-color-${name}`).trim() || fallback;
+      setColors({
+        line: color("primary-600", defaultColors.line),
+        surface: color("neutral-000", defaultColors.surface),
+        guide: color("neutral-600", defaultColors.guide),
+        positive: color("positive-100", defaultColors.positive),
+        warning: color("warning-300", defaultColors.warning),
+        negative: color("negative-100", defaultColors.negative),
+      });
+    };
+    updateColors();
+    // System/inverted themes change their CSS tokens without changing context.
+    const media =
+      resolvedColorScheme === "system" || resolvedColorScheme === "inverted"
+        ? window.matchMedia?.("(prefers-color-scheme: dark)")
+        : undefined;
+    media?.addEventListener("change", updateColors);
+    return () => media?.removeEventListener("change", updateColors);
   }, [theme, resolvedColorScheme]);
   const option = scoreCurveOption(kind, refreshed, colors);
   const points = (option.series as { data: number[][] }[])[0].data;
