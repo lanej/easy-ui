@@ -10,6 +10,8 @@ export const scoreCompositionExample: ScoreCompositionProps = {
   signals: [
     {
       id: "dimensions",
+      description:
+        "Indicates whether one or more package dimensions are missing. The application evaluates this observation as part of underdeclaration.",
       label: "Missing package dimensions",
       value: true,
       triggered: true,
@@ -18,6 +20,8 @@ export const scoreCompositionExample: ScoreCompositionProps = {
     },
     {
       id: "weight",
+      description:
+        "Compares declared and observed weight. This signal is clear in the sample and adds no points.",
       label: "Declared weight mismatch",
       value: false,
       triggered: false,
@@ -26,6 +30,8 @@ export const scoreCompositionExample: ScoreCompositionProps = {
     },
     {
       id: "ratio",
+      description:
+        "Share of observed labels classified as NDA or international. The application evaluates this ratio together with the label burst.",
       label: "NDA / international label ratio",
       value: 0.26,
       triggered: true,
@@ -34,6 +40,8 @@ export const scoreCompositionExample: ScoreCompositionProps = {
     },
     {
       id: "burst",
+      description:
+        "Number of labels in the observed burst. The application evaluates this count together with the NDA / international ratio.",
       label: "NDA / international label burst",
       value: 3,
       triggered: true,

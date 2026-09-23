@@ -105,7 +105,7 @@ const className: string = classNames("packed", false);
 
 export const example = <>
   <ScoreComposition signals={[{id: "a", label: "Observed", value: true}]} contributions={[{id: "b", label: "Contribution", score: 1, maxScore: 2, signals: ["a"]}]} result={{score: 1, disposition: "Review"}} />
-  <ScoreSignal label="Observed" triggered={false} value={false} sentiment="positive" statusLabel="Clear" labels={{positiveSignal: "Favorable"}} />
+  <ScoreSignal label="Observed" description={<span>Application-owned signal details.</span>} triggered={false} value={false} sentiment="positive" statusLabel="Clear" labels={{positiveSignal: "Favorable"}} />
   <ScoreContribution label="Contribution" score={0} maxScore={1} sentiment="warning" labels={{fullContribution: "Full"}} sourceLabels={["Observed"]} />
   <ScoreResult score={null} />
   <svg><ScoreConnector isInactive isHighlighted from={{x: 0, y: 0}} to={{x: 20, y: 10}} /></svg>

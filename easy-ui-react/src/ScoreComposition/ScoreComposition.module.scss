@@ -80,8 +80,13 @@
   border: 1px solid design-token("color.neutral.200");
   border-radius: design-token("shape.border_radius.md");
   background: design-token("color.neutral.000");
+  &[data-expandable="true"] {
+    padding-block: design-token("space.0.5");
+  }
 }
 .signalRow {
+  flex: 1;
+  min-width: 0;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -90,6 +95,8 @@
 }
 .signalLabel {
   flex: 1 1 10em;
+  min-width: 0;
+  font-weight: 400;
   font-size: var(--ezui-viz-description-size, 14px);
 }
 .signalValue {
@@ -157,7 +164,7 @@
   flex: none;
   color: design-token("color.neutral.600");
 }
-.contributionTitle > button {
+.disclosureTitle > button {
   min-height: 44px;
   max-width: 100%;
   padding: design-token("space.0.5");
@@ -171,6 +178,9 @@
   &[aria-expanded="true"] .chevron {
     transform: rotate(180deg);
   }
+}
+.signalTitle > button {
+  padding-inline: 0;
 }
 .titleContent {
   display: flex;
@@ -310,8 +320,10 @@
   font-size: var(--ezui-viz-description-size, 14px);
   color: design-token("color.neutral.600");
 }
-.signal .supportingText {
-  margin-top: design-token("space.1");
+.signalDescription {
+  padding-block: design-token("space.1");
+  color: design-token("color.neutral.600");
+  font-size: var(--ezui-viz-description-size, 14px);
 }
 .footer {
   margin-top: design-token("space.3");
