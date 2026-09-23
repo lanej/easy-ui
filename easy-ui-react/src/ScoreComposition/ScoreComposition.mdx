@@ -69,6 +69,22 @@ Missing and invalid observations suppress supplied sentiment and status labels a
 
 <Canvas of={Stories.SignalSentiments} />
 
+## Unfold signal details
+
+Supply `signal.description` to add supporting details beneath the signal's title when expanded. The title row uses the same chevron and shared Disclosure as contribution explanations. Its exact value and status stay visible when closed and are included in the control's accessible description. Signals without a description remain plain rows.
+
+Descriptions can contain application-owned text, links, or controls. Each signal opens independently, retaining its state across record refreshes and reordering while its ID stays stable. The SVG connectors follow the resized boxes. This works for standalone `ScoreSignal` too.
+
+```tsx
+<ScoreSignal
+  label="Declared weight mismatch"
+  value={false}
+  sentiment="positive"
+  statusLabel="Clear"
+  description="The declared and observed weights agree in this sample."
+/>
+```
+
 ## Read contribution fullness
 
 A contribution's fill is relative to its own maximum: `1 / 1` shows “Full · 100%”, while `1 / 2` shows “Partial · 50%”. Zero shows “None · 0%”. The meter and exact fraction remain visible alongside this status, so color is never the only way to distinguish these states. Localize the state words through `labels.fullContribution`, `labels.partialContribution`, and `labels.noContribution`.
@@ -105,7 +121,7 @@ Signals use compact, subtly bordered boxes. Internal padding separates their lab
 
 SVG curves are decorative, hidden from assistive technology and pointer input. Their attachment points follow DOM resizing, font reflow, and disclosure expansion. The component has no graph engine, editor, dragging, panning, or zoom. With JavaScript disabled or before hydration, the complete explanation remains present except for optional closed disclosure content. No measurement is needed for server rendering.
 
-Contribution meters expose their label, exact score, and maximum. Source labels accompany the stacked layout; in three columns those same labels remain available to assistive technology while the curves show the relationships visually. Independently placed contribution cards always show their source labels. Contribution titles with an explanation are Disclosure buttons with an expand/collapse chevron, supporting keyboard and touch input. The explanation opens below the meter, without a separate link row. `labels.explanation` supplies the accessible-name prefix; the contribution title stays visible. Titles without an explanation remain plain text. Expanded content can contain application links and controls. Hovering a contribution card or focusing a control within it emphasizes its incoming and outgoing connections in a stronger neutral stroke. Keyboard focus takes precedence over pointer hover. Inactive connections retain their dashed pattern while emphasized. Connections alone never carry information.
+Contribution meters expose their label, exact score, and maximum. Source labels accompany the stacked layout; in three columns those same labels remain available to assistive technology while the curves show the relationships visually. Independently placed contribution cards always show their source labels. Signal titles with a description and contribution titles with an explanation are Disclosure buttons with an expand/collapse chevron, supporting keyboard and touch input. Signal details open below their observation row; contribution explanations open below the meter, without separate link rows. `labels.explanation` supplies the accessible-name prefix; the node title stays visible. Titles without supporting detail remain plain text. Expanded content can contain application links and controls. Hovering a contribution card or focusing a control within it emphasizes its incoming and outgoing connections in a stronger neutral stroke. Keyboard focus takes precedence over pointer hover. Inactive connections retain their dashed pattern while emphasized. Connections alone never carry information.
 
 <Canvas of={Stories.Narrow} />
 <Canvas of={Stories.LargerText} />

@@ -16,7 +16,7 @@ export type ScoreSignalData = {
   /** Explicit rule state. false gives outgoing connectors a subdued dashed line.
    * Never inferred from the value or sentiment; omitted means unspecified. */
   triggered?: boolean;
-  /** Optional context displayed below the signal. */
+  /** Optional supporting detail, disclosed by the signal title. */
   description?: ReactNode;
 };
 

@@ -245,7 +245,11 @@ export const ExternalHeading: Story = {
 export const IndependentPrimitives: Story = {
   render: () => (
     <HorizontalGrid columns={{ xs: 1, md: 3 }} gap="3">
-      <ScoreSignal label="Documentation complete" value={true} />
+      <ScoreSignal
+        label="Documentation complete"
+        value={true}
+        description="The application's required documents have been reviewed."
+      />
       <ScoreContribution
         label="Documentation"
         score={2}

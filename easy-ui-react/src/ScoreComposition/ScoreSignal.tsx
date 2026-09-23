@@ -1,4 +1,7 @@
 import React from "react";
+import { useId } from "react-aria";
+import { Disclosure } from "../Disclosure";
+import { ScoreDisclosureTitle } from "./ScoreDisclosureTitle";
 import { visualizationTypographyStyle } from "../visualization/typography";
 import { classNames } from "../utilities/css";
 import { defaultLabels } from "./presentation";
@@ -20,6 +23,7 @@ export function ScoreSignal({
   typography,
 }: ScoreSignalProps) {
   const labels = { ...defaultLabels, ...overrides };
+  const valueId = useId();
   const available =
     value !== null && (typeof value !== "number" || Number.isFinite(value));
   const effectiveSentiment = available ? sentiment : "neutral";
@@ -43,39 +47,66 @@ export function ScoreSignal({
               ? labels.yes
               : labels.no
             : String(value)));
-  return (
+  const row = (
+    <span className={styles.signalRow}>
+      <span className={styles.signalLabel} data-viewrule="score-primary">
+        {label}
+      </span>
+      <span
+        className={classNames(
+          styles.signalValue,
+          !!status && styles.signalStatus,
+        )}
+        id={valueId}
+        data-sentiment={effectiveSentiment}
+      >
+        <strong>{text}</strong>
+        {status && (
+          <>
+            <span aria-hidden="true">·</span>
+            <span
+              className={styles.signalStatusLabel}
+              data-score-status-label=""
+            >
+              {status}
+            </span>
+          </>
+        )}
+      </span>
+    </span>
+  );
+  const content = (
     <div
       className={styles.signal}
+      data-expandable={description != null}
       style={typography && visualizationTypographyStyle(typography)}
     >
-      <div className={styles.signalRow}>
-        <span className={styles.signalLabel} data-viewrule="score-primary">
-          {label}
-        </span>
-        <span
-          className={classNames(
-            styles.signalValue,
-            !!status && styles.signalStatus,
-          )}
-          data-sentiment={effectiveSentiment}
+      {description != null ? (
+        <ScoreDisclosureTitle
+          accessibleLabel={`${labels.explanation}: ${label}`}
+          descriptionId={valueId}
+          className={styles.signalTitle}
         >
-          <strong>{text}</strong>
-          {status && (
-            <>
-              <span aria-hidden="true">·</span>
-              <span
-                className={styles.signalStatusLabel}
-                data-score-status-label=""
-              >
-                {status}
-              </span>
-            </>
-          )}
-        </span>
-      </div>
+          {row}
+        </ScoreDisclosureTitle>
+      ) : (
+        row
+      )}
       {description != null && (
-        <div className={styles.supportingText}>{description}</div>
+        <Disclosure.Content>
+          <div
+            className={styles.signalDescription}
+            data-viewrule="score-primary"
+          >
+            {description}
+          </div>
+        </Disclosure.Content>
       )}
     </div>
+  );
+  return description != null ? (
+    <Disclosure mountPolicy="unmount">{content}</Disclosure>
+  ) : (
+    content
   );
 }

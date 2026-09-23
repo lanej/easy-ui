@@ -336,14 +336,61 @@ export async function auditScoreComposition(
     initialConnections,
     hoveredConnections,
   });
+  const signalExplanation =
+    '[data-score-example] button[aria-label="Explanation: Missing package dimensions"]';
+  const expanded = (selector) =>
+    driver.evaluate(
+      (selector) =>
+        document.querySelector(selector).getAttribute("aria-expanded"),
+      selector,
+    );
   await driver.key("#refresh-data", "Tab");
+  assert.equal(
+    await driver.evaluate(
+      (selector) => document.activeElement === document.querySelector(selector),
+      signalExplanation,
+    ),
+    true,
+    "Tab reaches the first signal before its contributions",
+  );
+  assert.equal(await expanded(signalExplanation), "false");
+  const description = await driver.evaluate((selector) => {
+    const button = document.querySelector(selector);
+    return document.getElementById(button.getAttribute("aria-describedby"))
+      .textContent;
+  }, signalExplanation);
+  assert.match(description, /Yes.*Flagged/);
+  const signalHeight = () =>
+    driver.evaluate(
+      () =>
+        document
+          .querySelector('[data-score-id="dimensions"]')
+          .getBoundingClientRect().height,
+    );
+  const closedHeight = await signalHeight();
+  await driver.key(signalExplanation, "Enter");
+  assert.equal(await expanded(signalExplanation), "true");
+  assert.ok(
+    (await signalHeight()) > closedHeight,
+    "The signal grows to fit its description",
+  );
+  await endpoints("signal-expanded");
+  await scan("score-signal-expanded");
+  await driver.screenshot(`${outputDir}/score-signal-expanded.png`);
+  await driver.key(signalExplanation, "Space");
+  assert.equal(await expanded(signalExplanation), "false");
+  await driver.key(signalExplanation, "Enter");
+  // Signal controls follow DOM order, then continue into the contributions.
+  for (const id of ["dimensions", "weight", "ratio", "burst"]) {
+    await driver.key(`[data-score-id="${id}"] button`, "Tab");
+  }
   assert.equal(
     await driver.evaluate(
       (selector) => document.activeElement === document.querySelector(selector),
       explanation,
     ),
     true,
-    "Tab reaches the first explanation from the preceding preview control",
+    "Tab continues from the signal controls to the first contribution",
   );
   assert.deepEqual(
     (await connections()).map(({ highlighted }) => highlighted),
@@ -389,6 +436,11 @@ export async function auditScoreComposition(
     ["0", "0"],
   );
   await endpoints("refreshed");
+  assert.equal(
+    await expanded(signalExplanation),
+    "true",
+    "The signal keeps its disclosure state through refresh and reordering",
+  );
   assert.equal(
     (await connections()).filter(({ inactive }) => inactive).length,
     4,
@@ -447,6 +499,7 @@ export async function auditScoreComposition(
   await driver.screenshot(`${outputDir}/score-positive.png`);
   await driver.click("#refresh-data");
   await driver.key(explanation, "Enter");
+  await driver.key(signalExplanation, "Space");
   await driver.click("#rtl-layout");
   await endpoints("rtl");
   await driver.click("#rtl-layout");
@@ -510,6 +563,9 @@ export async function auditScoreComposition(
           ),
         ).display === "none",
     );
+    await driver.key(explanation, "Enter");
+    await driver.key(signalExplanation, "Enter");
+    assert.equal(await expanded(signalExplanation), "true");
     const data = await driver.evaluate(() => {
       const root = document.querySelector("[data-score-example]");
       const lists = [...root.querySelectorAll("[data-score-node]")].map(
@@ -550,10 +606,10 @@ export async function auditScoreComposition(
     );
     assert.match(data.sources, /Missing package dimensions/);
     assert.match(data.sources, /Declared weight mismatch/);
-    await driver.key(explanation, "Enter");
     await scan(`score-${width}`);
     await driver.screenshot(`${outputDir}/score-${width}.png`);
     await driver.key(explanation, "Enter");
+    await driver.key(signalExplanation, "Space");
     measurements.push({ name: `mobile-${width}`, ...data });
   }
   await diagnostics("score-composition");
@@ -563,7 +619,7 @@ export async function auditScoreComposition(
       "contributions show full and partial ratios with matching colors, contrasting boundaries, and exact meter widths",
       "explicit signal colors retain exact values and visible status labels",
       "score connectors follow DOM geometry and disclosure",
-      "score title disclosure and refreshed records",
+      "signal and contribution title disclosures preserve observations and expanded state through refresh",
       "hover and keyboard trace incoming/outgoing connections; untriggered sources keep dashed edges",
       "score RTL geometry",
       "score container responsiveness and large text",

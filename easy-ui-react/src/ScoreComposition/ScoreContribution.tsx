@@ -1,7 +1,6 @@
 import React from "react";
-import ExpandMoreIcon from "@easypost/easy-ui-icons/ExpandMore400";
 import { Disclosure } from "../Disclosure";
-import { Icon } from "../Icon";
+import { ScoreDisclosureTitle } from "./ScoreDisclosureTitle";
 import { visualizationTypographyStyle } from "../visualization/typography";
 import { defaultFormatScore, defaultLabels, scoreText } from "./presentation";
 import type { ScoreContributionData, ScorePresentationProps } from "./types";
@@ -66,25 +65,16 @@ export function ScoreContribution({
       style={typography && visualizationTypographyStyle(typography)}
     >
       {explanation != null ? (
-        <div className={styles.contributionTitle}>
-          <Disclosure.Trigger
-            variant="text"
-            isBlock
-            aria-label={`${labels.explanation}: ${label}`}
+        <ScoreDisclosureTitle
+          accessibleLabel={`${labels.explanation}: ${label}`}
+        >
+          <strong
+            className={styles.contributionLabel}
+            data-viewrule="score-primary"
           >
-            <span className={styles.titleContent}>
-              <strong
-                className={styles.contributionLabel}
-                data-viewrule="score-primary"
-              >
-                {label}
-              </strong>
-              <span className={styles.chevron}>
-                <Icon symbol={ExpandMoreIcon} size="sm" />
-              </span>
-            </span>
-          </Disclosure.Trigger>
-        </div>
+            {label}
+          </strong>
+        </ScoreDisclosureTitle>
       ) : (
         <strong
           className={styles.contributionLabel}

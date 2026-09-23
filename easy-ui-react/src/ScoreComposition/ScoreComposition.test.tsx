@@ -409,6 +409,91 @@ it("preserves an application-owned outcome when the score is unavailable", () =>
   );
 });
 
+it("unfolds signal details while retaining the observation in the control's accessible description", async () => {
+  const { user, rerender } = render(
+    <ScoreSignal
+      label="Weight mismatch"
+      value={false}
+      sentiment="positive"
+      statusLabel="Clear"
+      description={<a href="#source">Review the observed weight</a>}
+      labels={{ explanation: "Details" }}
+    />,
+  );
+  const button = screen.getByRole("button", {
+    name: "Details: Weight mismatch",
+  });
+  expect(button).toHaveAccessibleDescription(/No.*Clear/);
+  expect(button).toHaveAttribute("aria-expanded", "false");
+  expect(screen.getByText("No")).toBeVisible();
+  expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  await user.tab();
+  expect(button).toHaveFocus();
+  await user.keyboard("{Enter}");
+  expect(button).toHaveAttribute("aria-expanded", "true");
+  expect(
+    screen.getByRole("link", { name: "Review the observed weight" }),
+  ).toBeVisible();
+  await user.keyboard(" ");
+  expect(button).toHaveAttribute("aria-expanded", "false");
+  expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  rerender(
+    <ScoreSignal
+      label="Weight mismatch"
+      value={null}
+      description="Awaiting an observation."
+      labels={{ explanation: "Details" }}
+    />,
+  );
+  expect(button).toHaveAccessibleDescription("No data");
+  await user.click(button);
+  expect(screen.getByText("Awaiting an observation.")).toBeVisible();
+  rerender(<ScoreSignal label="Weight mismatch" value={0} />);
+  expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  expect(screen.getByText("0")).toBeVisible();
+});
+
+it("keeps signal disclosures independent and stable across observation updates and reordering", async () => {
+  const { user, rerender } = render(<ScoreComposition {...example} />);
+  const title = (label: string) =>
+    screen.getByRole("button", { name: `Explanation: ${label}` });
+  const dimensions = title("Missing package dimensions");
+  const weight = title("Declared weight mismatch");
+  await user.click(dimensions);
+  await user.click(weight);
+  expect(dimensions).toHaveAttribute("aria-expanded", "true");
+  expect(weight).toHaveAttribute("aria-expanded", "true");
+  expect(title("NDA / international label ratio")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  expect(title("Underdeclaration")).toHaveAttribute("aria-expanded", "false");
+  rerender(
+    <ScoreComposition
+      {...example}
+      signals={[...example.signals].reverse().map((signal) => ({
+        ...signal,
+        value: false,
+        sentiment: "positive",
+        statusLabel: "Clear",
+        description: `Updated context: ${signal.label}`,
+      }))}
+    />,
+  );
+  expect(dimensions).toHaveAttribute("aria-expanded", "true");
+  expect(dimensions).toHaveAccessibleDescription(/No.*Clear/);
+  expect(weight).toHaveAttribute("aria-expanded", "true");
+  expect(
+    screen.getByText("Updated context: Missing package dimensions"),
+  ).toBeVisible();
+  expect(
+    screen.getByText("Updated context: Declared weight mismatch"),
+  ).toBeVisible();
+  await user.click(weight);
+  expect(dimensions).toHaveAttribute("aria-expanded", "true");
+  expect(weight).toHaveAttribute("aria-expanded", "false");
+});
+
 it("opens explanations by keyboard and preserves their state through data refresh and reordering", async () => {
   const { user, rerender } = render(<ScoreComposition {...example} />);
   const button = screen.getByRole("button", {
@@ -420,6 +505,12 @@ it("opens explanations by keyboard and preserves their state through data refres
   expect(
     screen.queryByText(/Missing dimensions contribute/),
   ).not.toBeInTheDocument();
+  for (const signal of example.signals) {
+    await user.tab();
+    expect(
+      screen.getByRole("button", { name: `Explanation: ${signal.label}` }),
+    ).toHaveFocus();
+  }
   await user.tab();
   expect(button).toHaveFocus();
   await user.keyboard("{Enter}");
