@@ -182,25 +182,59 @@ try {
       await scatter
         .getByText("2,400 parcels", { exact: true })
         .waitFor({ state: "hidden" });
-      // Focus scrolls the table into view. Align the whole card to an integer
-      // viewport offset before capturing; fractional scroll clipping can change
-      // a few antialiased circle/focus-border pixels between identical builds.
+      // Keyboard focus scrolls this fractional-width grid card into view.
+      // Integer window scrolling alone leaves a fractional card origin. Align
+      // both axes for capture without changing its size or relaxing PNG parity.
       await scatter.evaluate((element) =>
         window.scrollTo({
           top: Math.floor(element.getBoundingClientRect().top + window.scrollY),
           behavior: "instant",
         }),
       );
-      await page.evaluate(
-        () =>
-          new Promise((resolve) =>
-            requestAnimationFrame(() => requestAnimationFrame(resolve)),
-          ),
-      );
-      await scatter.screenshot({
-        path: `${screenshotDir}/analytics-data-table.png`,
-        animations: "disabled",
+      const original = await scatter.evaluate((element) => {
+        const { x, y, width, height } = element.getBoundingClientRect();
+        const transform = element.style.transform;
+        element.style.transform = `translate(${Math.round(x) - x}px, ${Math.round(y) - y}px)`;
+        return { transform, width, height };
       });
+      try {
+        await page.evaluate(
+          () =>
+            new Promise((resolve) =>
+              requestAnimationFrame(() => requestAnimationFrame(resolve)),
+            ),
+        );
+        const bounds = await scatter.boundingBox();
+        assert.ok(bounds, "The selected chart card must remain visible");
+        assert.equal(
+          bounds.x,
+          Math.round(bounds.x),
+          "Capture x is pixel aligned",
+        );
+        assert.equal(
+          bounds.y,
+          Math.round(bounds.y),
+          "Capture y is pixel aligned",
+        );
+        assert.equal(
+          bounds.width,
+          original.width,
+          "Capture retains card width",
+        );
+        assert.equal(
+          bounds.height,
+          original.height,
+          "Capture retains card height",
+        );
+        await scatter.screenshot({
+          path: `${screenshotDir}/analytics-data-table.png`,
+          animations: "disabled",
+        });
+      } finally {
+        await scatter.evaluate((element, transform) => {
+          element.style.transform = transform;
+        }, original.transform);
+      }
     }
     await scatter.getByText("View data table", { exact: true }).click();
 
