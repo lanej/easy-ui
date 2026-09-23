@@ -1433,7 +1433,7 @@ describe("applicable controls and layer visibility", () => {
     ).not.toBeInTheDocument();
     expect(addControl).not.toHaveBeenCalled();
     expect(constructor.mock.calls[0][1]).toMatchObject({
-      attributionControl: {},
+      attributionControl: { compact: true },
     });
     expect(sources.has("easy-ui-transfers")).toBe(true);
     expect(sources.has("easy-ui-delivery-surface")).toBe(true);
@@ -1502,7 +1502,7 @@ describe("applicable controls and layer visibility", () => {
     expect(removeControl).toHaveBeenCalledTimes(2);
     expect(constructor).toHaveBeenCalledTimes(1);
     expect(constructor.mock.calls[0][1]).toMatchObject({
-      attributionControl: {},
+      attributionControl: { compact: true },
     });
   });
 

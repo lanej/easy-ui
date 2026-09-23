@@ -249,8 +249,8 @@ function NetworkMapSurfaceView() {
           style: latest.current.mapStyle,
           center: initial ? [...initial.center] : [-96, 38],
           zoom: initial?.zoom ?? 3,
-          // Let MapLibre collapse attribution on narrow maps while keeping it accessible.
-          attributionControl: {},
+          // Keep attribution expandable and collapse it on map interaction at every width.
+          attributionControl: { compact: true },
           renderWorldCopies: true,
           canvasContextAttributes: { antialias: true },
           cooperativeGestures: true,

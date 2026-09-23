@@ -139,7 +139,7 @@ Paint overrides set through this callback or the retained instance survive data,
 
 ## Controls and layer visibility
 
-`controls` configures the built-in toolbar, navigation buttons and scale. Each flag defaults to `true`; toolbar controls appear only when their data or selection applies. An explicit `true` retains that applicability check. Set an individual flag to `false` to hide it, or use `controls={false}` to hide all built-in controls. Provider attribution remains visible. Hiding controls does not remove map data or change layer visibility.
+`controls` configures the built-in toolbar, navigation buttons and scale. Each flag defaults to `true`; toolbar controls appear only when their data or selection applies. An explicit `true` retains that applicability check. Set an individual flag to `false` to hide it, or use `controls={false}` to hide all built-in controls. Provider attribution uses compact mode at every map width: credits are shown initially, collapse when the map is dragged, and remain available through the attribution button. Hiding controls does not remove attribution, map data or change layer visibility.
 
 | Flag              | Appears when enabled and…                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------------ |
