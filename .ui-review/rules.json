@@ -163,7 +163,12 @@
     "severity": "error",
     "reason": "Node boxes must fit the composition without horizontal loss at 320px or with larger text.",
     "designRules": ["DR-006", "DR-015"],
-    "pages": ["score-composition"],
+    "pages": [
+      "score-composition",
+      "score-signals-collapsed",
+      "score-contributions-collapsed",
+      "score-result-focus"
+    ],
     "container": "[data-score-layout]",
     "tolerance": 1
   },
@@ -174,7 +179,12 @@
     "severity": "error",
     "reason": "Signal boxes, contribution cards, and the result must remain distinct when text expands.",
     "designRules": ["DR-006", "DR-015"],
-    "pages": ["score-composition"]
+    "pages": [
+      "score-composition",
+      "score-signals-collapsed",
+      "score-contributions-collapsed",
+      "score-result-focus"
+    ]
   },
   {
     "id": "score-node-content-clipping",
@@ -183,7 +193,12 @@
     "severity": "error",
     "reason": "Exact values, decisions, and expanded explanations must not be clipped.",
     "designRules": ["DR-006", "DR-015"],
-    "pages": ["score-composition"]
+    "pages": [
+      "score-composition",
+      "score-signals-collapsed",
+      "score-contributions-collapsed",
+      "score-result-focus"
+    ]
   },
   {
     "id": "score-readable-primary-text",
@@ -192,7 +207,12 @@
     "severity": "error",
     "reason": "Primary observations, contributions, outcome text, and result context retain the 14px prose floor.",
     "designRules": ["DR-007"],
-    "pages": ["score-composition"],
+    "pages": [
+      "score-composition",
+      "score-signals-collapsed",
+      "score-contributions-collapsed",
+      "score-result-focus"
+    ],
     "min": 14
   },
   {
@@ -202,8 +222,61 @@
     "severity": "error",
     "reason": "Explanations retain 44px touch targets at every text size.",
     "designRules": ["DR-007", "DR-014"],
-    "pages": ["score-composition"],
+    "pages": [
+      "score-composition",
+      "score-signals-collapsed",
+      "score-contributions-collapsed",
+      "score-result-focus"
+    ],
     "minWidth": 44,
     "minHeight": 44
+  },
+  {
+    "id": "score-signals-collapsed-visible",
+    "type": "required-elements",
+    "selector": "[data-score-example] [data-score-layout]",
+    "severity": "error",
+    "reason": "Only explicitly collapsed columns hide their nodes; the result and both reopen controls remain available.",
+    "designRules": ["DR-006", "DR-007"],
+    "pages": ["score-signals-collapsed"],
+    "required": [
+      "[data-score-column=\"signals\"] > div > button",
+      "[data-score-column=\"contributions\"] > div > button",
+      "[data-score-node=\"result\"]",
+      "[data-score-id=\"underdeclaration\"]",
+      "[data-score-id=\"international\"]"
+    ]
+  },
+  {
+    "id": "score-contributions-collapsed-visible",
+    "type": "required-elements",
+    "selector": "[data-score-example] [data-score-layout]",
+    "severity": "error",
+    "reason": "Only explicitly collapsed columns hide their nodes; the result and both reopen controls remain available.",
+    "designRules": ["DR-006", "DR-007"],
+    "pages": ["score-contributions-collapsed"],
+    "required": [
+      "[data-score-column=\"signals\"] > div > button",
+      "[data-score-column=\"contributions\"] > div > button",
+      "[data-score-node=\"result\"]",
+      "[data-score-id=\"dimensions\"]",
+      "[data-score-id=\"weight\"]",
+      "[data-score-id=\"ratio\"]",
+      "[data-score-id=\"burst\"]"
+    ]
+  },
+  {
+    "id": "score-result-focus-visible",
+    "type": "required-elements",
+    "selector": "[data-score-example] [data-score-layout]",
+    "severity": "error",
+    "reason": "Only explicitly collapsed columns hide their nodes; the result and both reopen controls remain available.",
+    "designRules": ["DR-006", "DR-007"],
+    "pages": ["score-result-focus"],
+    "required": [
+      "[data-score-column=\"signals\"] > div > button",
+      "[data-score-column=\"contributions\"] > div > button",
+      "[data-score-node=\"result\"]"
+    ]
   }
 ]

@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useId } from "react-aria";
 import { visualizationTypographyStyle } from "../visualization/typography";
+import { ScoreColumn } from "./ScoreColumn";
 import { ScoreSignal } from "./ScoreSignal";
 import { ScoreContribution } from "./ScoreContribution";
 import { ScoreResult } from "./ScoreResult";
 import { ScoreConnectorLayer, type ScoreConnection } from "./ScoreConnector";
 import { defaultLabels } from "./presentation";
-import type { ScoreCompositionProps } from "./types";
+import type { ScoreCompositionColumn, ScoreCompositionProps } from "./types";
 import styles from "./ScoreComposition.module.scss";
 
 /**
@@ -18,6 +19,9 @@ export function ScoreComposition({
   signals,
   contributions,
   result,
+  collapsedColumns,
+  defaultCollapsedColumns = [],
+  onCollapsedColumnsChange,
   title,
   description,
   metadata,
@@ -31,6 +35,23 @@ export function ScoreComposition({
   const id = useId();
   const layoutRef = useRef<HTMLDivElement>(null);
   const labels = { ...defaultLabels, ...overrides };
+  const [localCollapsedColumns, setLocalCollapsedColumns] = useState(
+    defaultCollapsedColumns,
+  );
+  const collapsed = collapsedColumns ?? localCollapsedColumns;
+  const signalsCollapsed = signals.length > 0 && collapsed.includes("signals");
+  const contributionsCollapsed =
+    contributions.length > 0 && collapsed.includes("contributions");
+  const setColumnExpanded = (
+    column: ScoreCompositionColumn,
+    expanded: boolean,
+  ) => {
+    const next = (["signals", "contributions"] as const).filter((name) =>
+      name === column ? !expanded : collapsed.includes(name),
+    );
+    if (collapsedColumns === undefined) setLocalCollapsedColumns(next);
+    onCollapsedColumnsChange?.(next);
+  };
   const [hoveredContribution, setHoveredContribution] = useState<string | null>(
     null,
   );
@@ -39,19 +60,21 @@ export function ScoreComposition({
   );
   // Removed records must not retain a trace if their IDs are later reused.
   useEffect(() => {
-    const ids = new Set(contributions.map(({ id }) => id));
+    const ids = new Set(
+      contributionsCollapsed ? [] : contributions.map(({ id }) => id),
+    );
     setHoveredContribution((id) => (id !== null && ids.has(id) ? id : null));
     setFocusedContribution((id) => (id !== null && ids.has(id) ? id : null));
-  }, [contributions]);
+  }, [contributions, contributionsCollapsed]);
   const signalById = useMemo(
     () => new Map(signals.map((signal) => [signal.id, signal])),
     [signals],
   );
   const connections = useMemo<ScoreConnection[]>(
     () =>
-      contributions.flatMap((contribution) => [
+      (contributionsCollapsed ? [] : contributions).flatMap((contribution) => [
         ...[...new Set(contribution.signals)]
-          .filter((signal) => signalById.has(signal))
+          .filter((signal) => !signalsCollapsed && signalById.has(signal))
           .map((signal): ScoreConnection => ({
             from: ["signal", signal],
             to: ["contribution", contribution.id],
@@ -64,7 +87,7 @@ export function ScoreComposition({
           contributionId: contribution.id,
         },
       ]),
-    [contributions, signalById],
+    [contributions, signalById, signalsCollapsed, contributionsCollapsed],
   );
   return (
     <section
@@ -101,11 +124,24 @@ export function ScoreComposition({
           )}
         </header>
       )}
-      <div className={styles.layout} ref={layoutRef} data-score-layout="">
-        <div className={styles.column}>
-          <div id={`${id}-signals`} className={styles.columnLabel}>
-            {labels.signals}
-          </div>
+      <div
+        className={styles.layout}
+        ref={layoutRef}
+        data-score-layout=""
+        data-signals-collapsed={signalsCollapsed}
+        data-contributions-collapsed={contributionsCollapsed}
+      >
+        <ScoreColumn
+          column="signals"
+          labelId={`${id}-signals`}
+          label={labels.signals}
+          count={signals.length}
+          isCollapsed={signalsCollapsed}
+          onExpandedChange={(expanded) =>
+            setColumnExpanded("signals", expanded)
+          }
+          labels={labels}
+        >
           {signals.length ? (
             <ul
               role="list"
@@ -125,11 +161,18 @@ export function ScoreComposition({
           ) : (
             <p className={styles.empty}>{labels.noSignals}</p>
           )}
-        </div>
-        <div className={styles.column}>
-          <div id={`${id}-contributions`} className={styles.columnLabel}>
-            {labels.contributions}
-          </div>
+        </ScoreColumn>
+        <ScoreColumn
+          column="contributions"
+          labelId={`${id}-contributions`}
+          label={labels.contributions}
+          count={contributions.length}
+          isCollapsed={contributionsCollapsed}
+          onExpandedChange={(expanded) =>
+            setColumnExpanded("contributions", expanded)
+          }
+          labels={labels}
+        >
           {contributions.length ? (
             <ul
               role="list"
@@ -170,8 +213,8 @@ export function ScoreComposition({
           ) : (
             <p className={styles.empty}>{labels.noContributions}</p>
           )}
-        </div>
-        <div className={styles.column}>
+        </ScoreColumn>
+        <div className={styles.column} data-score-column="result">
           <div className={styles.columnLabel}>{labels.result}</div>
           <div className={styles.resultContainer}>
             <div data-score-node="result" data-score-id="result">
@@ -183,11 +226,13 @@ export function ScoreComposition({
             </div>
           </div>
         </div>
-        <ScoreConnectorLayer
-          layoutRef={layoutRef}
-          connections={connections}
-          highlightedContribution={focusedContribution ?? hoveredContribution}
-        />
+        {connections.length > 0 && (
+          <ScoreConnectorLayer
+            layoutRef={layoutRef}
+            connections={connections}
+            highlightedContribution={focusedContribution ?? hoveredContribution}
+          />
+        )}
       </div>
       {footer != null && <footer className={styles.footer}>{footer}</footer>}
     </section>

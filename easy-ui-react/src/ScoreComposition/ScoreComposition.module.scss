@@ -54,12 +54,41 @@
   min-width: 0;
 }
 .columnLabel {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
   margin-bottom: design-token("space.2");
   color: design-token("color.neutral.600");
   font-size: var(--ezui-viz-label-size, 12px);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+.columnHeader {
+  margin-bottom: design-token("space.2");
+  color: design-token("color.neutral.600");
+  > button {
+    padding-inline: 0;
+    border: 1px solid transparent;
+  }
+}
+.columnName {
+  min-width: 0;
+  flex: 1;
+  font-size: var(--ezui-viz-label-size, 12px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.columnCount {
+  font-size: var(--ezui-viz-detail-size, 12px);
+  font-variant-numeric: tabular-nums;
+}
+.columnContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 .signalList,
 .contributionList {
@@ -181,6 +210,14 @@
 }
 .signalTitle > button {
   padding-inline: 0;
+}
+.column[data-collapsed="true"] .columnHeader {
+  margin-bottom: 0;
+  > button {
+    padding-inline: design-token("space.1");
+    border-color: design-token("color.neutral.200");
+    background: design-token("color.neutral.100");
+  }
 }
 .titleContent {
   display: flex;
@@ -357,13 +394,34 @@
 
 @container (min-width: 48rem) {
   .layout {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.8fr);
+    --ezui-score-signals-width: 1.1fr;
+    --ezui-score-contributions-width: 1fr;
+    --ezui-score-result-width: 0.8fr;
+    grid-template-columns:
+      minmax(0, var(--ezui-score-signals-width))
+      minmax(0, var(--ezui-score-contributions-width))
+      minmax(0, var(--ezui-score-result-width));
     column-gap: 48px;
+    &[data-signals-collapsed="true"] {
+      --ezui-score-signals-width: max-content;
+    }
+    &[data-contributions-collapsed="true"] {
+      --ezui-score-contributions-width: max-content;
+    }
+    &[data-signals-collapsed="true"][data-contributions-collapsed="true"] {
+      --ezui-score-result-width: 1fr;
+    }
+  }
+  .column[data-collapsed="true"] {
+    max-width: 16rem;
+    align-self: start;
   }
   .connectors {
     display: block;
   }
-  .layout:has(.connectors) [data-score-sources-complete="true"] .sources {
+  .layout[data-signals-collapsed="false"]:has(.connectors)
+    [data-score-sources-complete="true"]
+    .sources {
     @include visually-hidden;
   }
 }

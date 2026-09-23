@@ -17,6 +17,17 @@ type Story = StoryObj<typeof ScoreComposition>;
 
 export const Default: Story = { args: scoreCompositionExample };
 
+export const FocusOnContributions: Story = {
+  args: { ...scoreCompositionExample, defaultCollapsedColumns: ["signals"] },
+};
+
+export const FocusOnResult: Story = {
+  args: {
+    ...scoreCompositionExample,
+    defaultCollapsedColumns: ["signals", "contributions"],
+  },
+};
+
 export const SignalSentiments: Story = {
   render: () => (
     <HorizontalGrid columns={{ xs: 1, md: 2 }} gap="3">

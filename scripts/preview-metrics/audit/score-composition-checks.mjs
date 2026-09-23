@@ -151,9 +151,9 @@ export async function auditScoreComposition(
   assert.equal(initialOutcome.decisionColor, initialOutcome.accentColor);
   measurements.push({ name: "negative-outcome", ...initialOutcome });
 
-  const endpoints = async (name) => {
+  const endpoints = async (name, expectedPaths = 6) => {
     // Wait for ResizeObserver to apply the latest DOM geometry, not a fixed delay.
-    await driver.wait(() => {
+    await driver.wait((expectedPaths) => {
       const root = document.querySelector("[data-score-example]");
       const svg = root.querySelector("[data-score-layout] > svg");
       if (!svg) return false;
@@ -173,14 +173,14 @@ export async function auditScoreComposition(
           );
         });
       return (
-        paths.length === 6 &&
+        paths.length === expectedPaths &&
         paths.every(
           (path) =>
             attached(path.getPointAtLength(0), true) &&
             attached(path.getPointAtLength(path.getTotalLength()), false),
         )
       );
-    });
+    }, expectedPaths);
     const geometry = await driver.evaluate(() => {
       const root = document.querySelector("[data-score-example]");
       const svg = root.querySelector("[data-score-layout] > svg");
@@ -344,7 +344,19 @@ export async function auditScoreComposition(
         document.querySelector(selector).getAttribute("aria-expanded"),
       selector,
     );
+  const signalsColumn =
+    '[data-score-example] [data-score-column="signals"] > div > button';
+  const contributionsColumn =
+    '[data-score-example] [data-score-column="contributions"] > div > button';
   await driver.key("#refresh-data", "Tab");
+  assert.equal(
+    await driver.evaluate(
+      (selector) => document.activeElement === document.querySelector(selector),
+      signalsColumn,
+    ),
+    true,
+  );
+  await driver.key(signalsColumn, "Tab");
   assert.equal(
     await driver.evaluate(
       (selector) => document.activeElement === document.querySelector(selector),
@@ -387,10 +399,18 @@ export async function auditScoreComposition(
   assert.equal(
     await driver.evaluate(
       (selector) => document.activeElement === document.querySelector(selector),
+      contributionsColumn,
+    ),
+    true,
+  );
+  await driver.key(contributionsColumn, "Tab");
+  assert.equal(
+    await driver.evaluate(
+      (selector) => document.activeElement === document.querySelector(selector),
       explanation,
     ),
     true,
-    "Tab continues from the signal controls to the first contribution",
+    "Tab continues from the signal controls through the column header to the first contribution",
   );
   assert.deepEqual(
     (await connections()).map(({ highlighted }) => highlighted),
@@ -418,6 +438,102 @@ export async function auditScoreComposition(
     "true",
   );
   await endpoints("expanded");
+  const columnState = () =>
+    driver.evaluate(() => {
+      const root = document.querySelector("[data-score-example]");
+      const visible = (node) =>
+        node.getBoundingClientRect().width > 0 &&
+        node.getBoundingClientRect().height > 0;
+      const contributions = root.querySelector(
+        '[data-score-column="contributions"]',
+      );
+      const result = root.querySelector('[data-score-node="result"]');
+      const source = root.querySelector('[data-score-node="contribution"] ul');
+      return {
+        nodes: [...root.querySelectorAll("[data-score-node]")]
+          .filter(visible)
+          .map((node) => node.dataset.scoreNode),
+        paths: root.querySelectorAll("[data-score-layout] > svg path").length,
+        contributionWidth: contributions.getBoundingClientRect().width,
+        resultWidth: result.getBoundingClientRect().width,
+        sourceVisible:
+          visible(source) &&
+          getComputedStyle(source.parentElement).clipPath === "none",
+        overflow: root.scrollWidth - root.clientWidth,
+        targets: [...root.querySelectorAll("button")]
+          .filter(visible)
+          .map((node) => node.getBoundingClientRect().height),
+      };
+    });
+  const allColumns = await columnState();
+  await driver.key(signalsColumn, "Enter");
+  assert.equal(await expanded(signalsColumn), "false");
+  await endpoints("signals-collapsed", 2);
+  const signalsCollapsed = await columnState();
+  assert.deepEqual(signalsCollapsed.nodes, [
+    "contribution",
+    "contribution",
+    "result",
+  ]);
+  assert.equal(signalsCollapsed.sourceVisible, true);
+  assert.ok(signalsCollapsed.contributionWidth > allColumns.contributionWidth);
+  await driver.key(signalsColumn, "Tab");
+  assert.equal(
+    await driver.evaluate(
+      (selector) => document.activeElement === document.querySelector(selector),
+      contributionsColumn,
+    ),
+    true,
+    "Closed signals are skipped by Tab",
+  );
+  await scan("score-signals-collapsed");
+  await driver.screenshot(`${outputDir}/score-signals-collapsed.png`);
+  await driver.key(contributionsColumn, "Space");
+  const resultFocus = await columnState();
+  assert.deepEqual(resultFocus.nodes, ["result"]);
+  assert.equal(resultFocus.paths, 0);
+  assert.ok(resultFocus.resultWidth > signalsCollapsed.resultWidth);
+  await driver.key(contributionsColumn, "Tab");
+  assert.equal(
+    await driver.evaluate(
+      () => document.activeElement.closest("[data-score-example]") === null,
+    ),
+    true,
+    "Both closed columns leave no hidden tab stops",
+  );
+  await scan("score-result-focus");
+  await driver.screenshot(`${outputDir}/score-result-focus.png`);
+  await driver.key(signalsColumn, "Enter");
+  const contributionsCollapsed = await columnState();
+  assert.deepEqual(contributionsCollapsed.nodes, [
+    "signal",
+    "signal",
+    "signal",
+    "signal",
+    "result",
+  ]);
+  assert.equal(
+    contributionsCollapsed.paths,
+    0,
+    "No fabricated signal → result edges",
+  );
+  assert.equal(await expanded(signalExplanation), "true");
+  await scan("score-contributions-collapsed");
+  await driver.screenshot(`${outputDir}/score-contributions-collapsed.png`);
+  await driver.key(contributionsColumn, "Enter");
+  assert.equal(await expanded(explanation), "true");
+  await endpoints("columns-restored");
+  assert.ok((await connections()).every(({ highlighted }) => !highlighted));
+  for (const state of [signalsCollapsed, contributionsCollapsed, resultFocus]) {
+    assert.ok(state.overflow <= 1);
+    assert.ok(state.targets.every((height) => height >= 44));
+  }
+  measurements.push({
+    name: "column-collapse",
+    signalsCollapsed,
+    contributionsCollapsed,
+    resultFocus,
+  });
   await driver.click("#refresh-data");
   assert.equal(
     await driver.evaluate(
@@ -502,6 +618,9 @@ export async function auditScoreComposition(
   await driver.key(signalExplanation, "Space");
   await driver.click("#rtl-layout");
   await endpoints("rtl");
+  await driver.click(signalsColumn);
+  await endpoints("rtl-signals-collapsed", 2);
+  await driver.click(signalsColumn);
   await driver.click("#rtl-layout");
   await driver.click("#large-text");
   await endpoints("large-text");
@@ -522,6 +641,11 @@ export async function auditScoreComposition(
   });
   await scan("score-dark");
   await driver.screenshot(`${outputDir}/score-dark.png`);
+  await driver.click(signalsColumn);
+  await endpoints("dark-signals-collapsed", 2);
+  await scan("score-dark-collapsed");
+  await driver.screenshot(`${outputDir}/score-dark-collapsed.png`);
+  await driver.click(signalsColumn);
   await driver.click("#dark-theme");
   await driver.click("#narrow-container");
   await driver.wait(
@@ -608,6 +732,19 @@ export async function auditScoreComposition(
     assert.match(data.sources, /Declared weight mismatch/);
     await scan(`score-${width}`);
     await driver.screenshot(`${outputDir}/score-${width}.png`);
+    await driver.key(signalsColumn, "Enter");
+    await driver.key(contributionsColumn, "Space");
+    const collapsed = await columnState();
+    assert.deepEqual(collapsed.nodes, ["result"]);
+    assert.equal(collapsed.paths, 0);
+    assert.ok(collapsed.overflow <= 1);
+    assert.ok(collapsed.targets.every((height) => height >= 44));
+    await scan(`score-${width}-collapsed`);
+    await driver.screenshot(`${outputDir}/score-${width}-collapsed.png`);
+    await driver.key(signalsColumn, "Enter");
+    await driver.key(contributionsColumn, "Enter");
+    assert.equal(await expanded(signalExplanation), "true");
+    assert.equal(await expanded(explanation), "true");
     await driver.key(explanation, "Enter");
     await driver.key(signalExplanation, "Space");
     measurements.push({ name: `mobile-${width}`, ...data });
@@ -621,6 +758,7 @@ export async function auditScoreComposition(
       "score connectors follow DOM geometry and disclosure",
       "signal and contribution title disclosures preserve observations and expanded state through refresh",
       "hover and keyboard trace incoming/outgoing connections; untriggered sources keep dashed edges",
+      "supporting columns collapse independently, preserve nested details, skip hidden tab stops, and reclaim width without fabricated edges",
       "score RTL geometry",
       "score container responsiveness and large text",
       "score dark-theme and mobile accessibility",

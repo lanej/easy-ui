@@ -119,12 +119,35 @@ Signals, contributions, and result are ordinary DOM content in reading order. CS
 
 Signals use compact, subtly bordered boxes. Internal padding separates their labels and values from connector endpoints. SVG curves attach to the outside of each node and stay within the connecting gutters; node backgrounds keep edges behind the content.
 
-SVG curves are decorative, hidden from assistive technology and pointer input. Their attachment points follow DOM resizing, font reflow, and disclosure expansion. The component has no graph engine, editor, dragging, panning, or zoom. With JavaScript disabled or before hydration, the complete explanation remains present except for optional closed disclosure content. No measurement is needed for server rendering.
+SVG curves are decorative, hidden from assistive technology and pointer input. Their attachment points follow DOM resizing, font reflow, and disclosure expansion. The component has no graph engine, editor, dragging, panning, or zoom. With JavaScript disabled or before hydration, the complete explanation remains present except for explicitly collapsed columns and optional closed disclosure content. No measurement is needed for server rendering.
 
 Contribution meters expose their label, exact score, and maximum. Source labels accompany the stacked layout; in three columns those same labels remain available to assistive technology while the curves show the relationships visually. Independently placed contribution cards always show their source labels. Signal titles with a description and contribution titles with an explanation are Disclosure buttons with an expand/collapse chevron, supporting keyboard and touch input. Signal details open below their observation row; contribution explanations open below the meter, without separate link rows. `labels.explanation` supplies the accessible-name prefix; the node title stays visible. Titles without supporting detail remain plain text. Expanded content can contain application links and controls. Hovering a contribution card or focusing a control within it emphasizes its incoming and outgoing connections in a stronger neutral stroke. Keyboard focus takes precedence over pointer hover. Inactive connections retain their dashed pattern while emphasized. Connections alone never carry information.
 
 <Canvas of={Stories.Narrow} />
 <Canvas of={Stories.LargerText} />
+
+## Collapse a column
+
+Select the Signals or Contributions header to collapse that entire column. Its compact handle keeps the name and record count visible, and the remaining columns take the freed space. On narrow layouts, the same controls fold their sections vertically. The result always remains visible; empty columns keep their empty-state message without a collapse control.
+
+Open node details and application content keep their state while hidden. Hidden columns leave the tab order and accessibility tree. If a controlled update collapses a column containing focus, focus returns to its header. Connectors only join visible nodes: hiding signals keeps contribution → result paths and reveals source names on the contribution cards; hiding contributions removes all paths without inventing signal → result relationships.
+
+Use `defaultCollapsedColumns` to start focused on contributions or the result. For application-managed state, provide `collapsedColumns` and `onCollapsedColumnsChange`; a controlled value stays unchanged until the application supplies the next value. The `ScoreCompositionColumn` type is `"signals" | "contributions"`. Localize action names with `labels.collapse` and `labels.expand`, and column names with `labels.signals` and `labels.contributions`.
+
+```tsx
+const [collapsedColumns, setCollapsedColumns] = useState<
+  ScoreCompositionColumn[]
+>(["signals"]);
+
+<ScoreComposition
+  {...scoreData}
+  collapsedColumns={collapsedColumns}
+  onCollapsedColumnsChange={setCollapsedColumns}
+/>;
+```
+
+<Canvas of={Stories.FocusOnContributions} />
+<Canvas of={Stories.FocusOnResult} />
 
 ## Values and scales
 
