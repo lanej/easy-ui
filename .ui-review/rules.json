@@ -67,7 +67,13 @@
     "severity": "error",
     "reason": "Chart labels must stay inside their SVG viewport.",
     "designRules": ["DR-006", "DR-007"],
-    "pages": ["main", "stress", "chart-composition", "chart-composition-large"]
+    "pages": [
+      "main",
+      "stress",
+      "chart-composition",
+      "chart-composition-large",
+      "score-chart-details"
+    ]
   },
   {
     "id": "native-axis-bounds",
@@ -126,7 +132,13 @@
     "severity": "warning",
     "reason": "Review intersecting SVG text boxes; rotated labels and deliberate label layers require visual interpretation.",
     "designRules": ["DR-006", "DR-007"],
-    "pages": ["main", "stress", "chart-composition", "chart-composition-large"]
+    "pages": [
+      "main",
+      "stress",
+      "chart-composition",
+      "chart-composition-large",
+      "score-chart-details"
+    ]
   },
   {
     "id": "service-mix-heading-height",
@@ -145,7 +157,7 @@
     "severity": "error",
     "reason": "Keep all four signals, two contributions, and the result available in the finite comparison, including below the fold on mobile.",
     "designRules": ["DR-006", "DR-007"],
-    "pages": ["score-composition"],
+    "pages": ["score-composition", "score-chart-details"],
     "required": [
       "[data-score-node=\"signal\"][data-score-id=\"dimensions\"]",
       "[data-score-node=\"signal\"][data-score-id=\"weight\"]",
@@ -167,7 +179,8 @@
       "score-composition",
       "score-signals-collapsed",
       "score-contributions-collapsed",
-      "score-result-focus"
+      "score-result-focus",
+      "score-chart-details"
     ],
     "container": "[data-score-layout]",
     "tolerance": 1
@@ -183,7 +196,8 @@
       "score-composition",
       "score-signals-collapsed",
       "score-contributions-collapsed",
-      "score-result-focus"
+      "score-result-focus",
+      "score-chart-details"
     ]
   },
   {
@@ -197,7 +211,8 @@
       "score-composition",
       "score-signals-collapsed",
       "score-contributions-collapsed",
-      "score-result-focus"
+      "score-result-focus",
+      "score-chart-details"
     ]
   },
   {
@@ -211,14 +226,15 @@
       "score-composition",
       "score-signals-collapsed",
       "score-contributions-collapsed",
-      "score-result-focus"
+      "score-result-focus",
+      "score-chart-details"
     ],
     "min": 14
   },
   {
     "id": "score-disclosure-targets",
     "type": "min-size",
-    "selector": "[data-score-example] button",
+    "selector": "[data-score-example] button, [data-score-example] summary",
     "severity": "error",
     "reason": "Explanations retain 44px touch targets at every text size.",
     "designRules": ["DR-007", "DR-014"],
@@ -226,7 +242,8 @@
       "score-composition",
       "score-signals-collapsed",
       "score-contributions-collapsed",
-      "score-result-focus"
+      "score-result-focus",
+      "score-chart-details"
     ],
     "minWidth": 44,
     "minHeight": 44
@@ -278,5 +295,18 @@
       "[data-score-column=\"contributions\"] > div > button",
       "[data-score-node=\"result\"]"
     ]
+  },
+  {
+    "id": "score-rich-charts-present",
+    "type": "required-elements",
+    "selector": "[data-score-example]",
+    "required": [
+      "[data-score-chart=\"history\"] [data-chart-state=\"ready\"] svg",
+      "[data-score-chart=\"response\"] [data-chart-state=\"ready\"] svg"
+    ],
+    "severity": "error",
+    "reason": "Expanded score examples must render both charts rather than pass on empty loading states.",
+    "designRules": ["DR-006", "DR-007"],
+    "pages": ["score-chart-details"]
   }
 ]

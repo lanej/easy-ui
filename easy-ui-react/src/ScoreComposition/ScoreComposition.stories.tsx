@@ -5,6 +5,7 @@ import { ScoreComposition } from "./ScoreComposition";
 import { ScoreSignal } from "./ScoreSignal";
 import { ScoreContribution } from "./ScoreContribution";
 import { ScoreResult } from "./ScoreResult";
+import { ScoreChartDetails } from "./ScoreComposition.charts";
 import { scoreCompositionExample } from "./ScoreComposition.examples";
 
 const meta: Meta<typeof ScoreComposition> = {
@@ -25,6 +26,32 @@ export const FocusOnResult: Story = {
   args: {
     ...scoreCompositionExample,
     defaultCollapsedColumns: ["signals", "contributions"],
+  },
+};
+
+export const ChartDetails: Story = {
+  args: {
+    ...scoreCompositionExample,
+    signals: scoreCompositionExample.signals.map((signal) => ({
+      ...signal,
+      description:
+        signal.id === "ratio" ? (
+          <ScoreChartDetails kind="history" />
+        ) : (
+          signal.description
+        ),
+    })),
+    contributions: scoreCompositionExample.contributions.map(
+      (contribution) => ({
+        ...contribution,
+        explanation:
+          contribution.id === "international" ? (
+            <ScoreChartDetails kind="response" />
+          ) : (
+            contribution.explanation
+          ),
+      }),
+    ),
   },
 };
 
