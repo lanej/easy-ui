@@ -2,6 +2,8 @@
 
 Native score explanations belong with the lightweight data visualizations, alongside MetricCard and BarList. This component has a constrained signals → contributions → result topology and no graph-engine dependency.
 
+![Score composition with four observed signals, full and partial contribution meters, and a Disable result.](../images/score-composition.png)
+
 ## Ownership
 
 The application supplies stable IDs, observed values, weighted/capped scores, source relationships, final aggregation, outcome wording and sentiment, and provenance. Easy UI preserves array order and exact supplied values. It does not infer risk, thresholds, causality, statistical confidence, or flow conservation.

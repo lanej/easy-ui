@@ -1,8 +1,10 @@
 ## 📝 Changes
 
-Please provide a brief summary of the changes made and why they were made.
+Explain the final behavior and why it changed in one or two short paragraphs. Summarize relevant validation; link detailed evidence instead of pasting logs or implementation history.
 
-Include any notes, screenshots, or videos that may be helpful for developers reviewing this pull request.
+## 📷 Screenshot
+
+Embed a current screenshot of the changed component or user-visible result in every new PR. Verify that it renders inline on GitHub; a local path or artifact download link is not sufficient.
 
 ## ✅ Checklist
 
