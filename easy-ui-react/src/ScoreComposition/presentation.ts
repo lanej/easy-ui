@@ -4,6 +4,8 @@ export const defaultLabels: Required<ScoreCompositionLabels> = {
   signals: "Signals",
   contributions: "Contributions",
   result: "Result",
+  collapse: "Collapse",
+  expand: "Expand",
   noSignals: "No signals supplied",
   noContributions: "No contributions supplied",
   missingValue: "No data",

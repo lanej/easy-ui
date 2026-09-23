@@ -505,12 +505,20 @@ it("opens explanations by keyboard and preserves their state through data refres
   expect(
     screen.queryByText(/Missing dimensions contribute/),
   ).not.toBeInTheDocument();
+  await user.tab();
+  expect(
+    screen.getByRole("button", { name: "Collapse: Signals (4)" }),
+  ).toHaveFocus();
   for (const signal of example.signals) {
     await user.tab();
     expect(
       screen.getByRole("button", { name: `Explanation: ${signal.label}` }),
     ).toHaveFocus();
   }
+  await user.tab();
+  expect(
+    screen.getByRole("button", { name: "Collapse: Contributions (2)" }),
+  ).toHaveFocus();
   await user.tab();
   expect(button).toHaveFocus();
   await user.keyboard("{Enter}");
@@ -724,10 +732,149 @@ it("traces explicit relationships through focus, hover, refresh, resizing, and R
     expect(
       paths().every((path) => path.getAttribute("data-inactive") === "false"),
     ).toBe(true);
+    rerender(<ScoreComposition {...props} collapsedColumns={["signals"]} />);
+    expect(paths()).toHaveLength(2);
+    // Keep only contribution → result, never invent a bypass through a hidden column.
+    expect(
+      paths().every((path) => path.getAttribute("d")?.startsWith("M 300")),
+    ).toBe(true);
+    rerender(
+      <ScoreComposition {...props} collapsedColumns={["contributions"]} />,
+    );
+    expect(paths()).toHaveLength(0);
+    rerender(
+      <ScoreComposition
+        {...props}
+        collapsedColumns={["signals", "contributions"]}
+      />,
+    );
+    expect(paths()).toHaveLength(0);
+    rerender(<ScoreComposition {...props} collapsedColumns={[]} />);
+    expect(paths()).toHaveLength(4);
     unmount();
     expect(disconnect).toHaveBeenCalled();
   } finally {
     bounds.mockRestore();
     vi.unstubAllGlobals();
   }
+});
+
+it("collapses columns independently by keyboard and preserves open node details on return", async () => {
+  const changed = vi.fn();
+  const { user, rerender } = render(
+    <ScoreComposition {...example} onCollapsedColumnsChange={changed} />,
+  );
+  const signal = screen.getByRole("button", {
+    name: "Explanation: Missing package dimensions",
+  });
+  await user.click(signal);
+  const column = screen.getByRole("button", { name: "Collapse: Signals (4)" });
+  column.focus();
+  await user.keyboard("{Enter}");
+  expect(changed).toHaveBeenLastCalledWith(["signals"]);
+  expect(column).toHaveAccessibleName("Expand: Signals (4)");
+  expect(column).toHaveAttribute("aria-expanded", "false");
+  expect(
+    document.getElementById(column.getAttribute("aria-controls")!),
+  ).toHaveAttribute("hidden");
+  expect(signal).not.toBeVisible();
+  expect(
+    screen.queryByRole("list", { name: "Signals" }),
+  ).not.toBeInTheDocument();
+  const contributions = screen.getByRole("button", {
+    name: "Collapse: Contributions (2)",
+  });
+  // Native tab exclusion is verified in the three-browser audit.
+  act(() => contributions.focus());
+  await user.keyboard(" ");
+  expect(changed).toHaveBeenLastCalledWith(["signals", "contributions"]);
+  expect(screen.queryByRole("meter")).not.toBeInTheDocument();
+  expect(screen.getByText("Disable")).toBeVisible();
+  expect(screen.getByText("2.00", { selector: "strong" })).toBeVisible();
+  // Refresh retained data while the column is closed.
+  rerender(
+    <ScoreComposition
+      {...example}
+      signals={[...example.signals].reverse()}
+      onCollapsedColumnsChange={changed}
+    />,
+  );
+  await user.click(column);
+  expect(signal).toBeVisible();
+  expect(signal).toHaveAttribute("aria-expanded", "true");
+  expect(changed).toHaveBeenLastCalledWith(["contributions"]);
+  expect(contributions).toHaveAttribute("aria-expanded", "false");
+});
+
+it("supports initial and controlled collapse, localized controls, and focus recovery", async () => {
+  const changed = vi.fn();
+  const props = {
+    ...example,
+    labels: {
+      signals: "Observations",
+      collapse: "Réduire",
+      expand: "Afficher",
+    },
+  };
+  const { user, rerender } = render(
+    <ScoreComposition
+      {...props}
+      defaultCollapsedColumns={["signals"]}
+      onCollapsedColumnsChange={changed}
+    />,
+  );
+  const column = screen.getByRole("button", {
+    name: "Afficher: Observations (4)",
+  });
+  expect(
+    screen.queryByRole("list", { name: "Observations" }),
+  ).not.toBeInTheDocument();
+  await user.click(column);
+  expect(screen.getByRole("list", { name: "Observations" })).toBeVisible();
+  rerender(
+    <ScoreComposition
+      {...props}
+      collapsedColumns={[]}
+      onCollapsedColumnsChange={changed}
+    />,
+  );
+  await user.click(column);
+  expect(changed).toHaveBeenLastCalledWith(["signals"]);
+  expect(column).toHaveAttribute("aria-expanded", "true");
+  const signal = screen.getByRole("button", {
+    name: "Explanation: Missing package dimensions",
+  });
+  await user.click(signal);
+  rerender(
+    <ScoreComposition
+      {...props}
+      collapsedColumns={["signals"]}
+      onCollapsedColumnsChange={changed}
+    />,
+  );
+  expect(column).toHaveFocus();
+  expect(signal).not.toBeVisible();
+  rerender(
+    <ScoreComposition
+      {...props}
+      collapsedColumns={[]}
+      onCollapsedColumnsChange={changed}
+    />,
+  );
+  expect(signal).toBeVisible();
+  expect(signal).toHaveAttribute("aria-expanded", "true");
+});
+
+it("retains empty states without column controls even when configured as collapsed", () => {
+  render(
+    <ScoreComposition
+      signals={[]}
+      contributions={[]}
+      result={{ score: 0 }}
+      defaultCollapsedColumns={["signals", "contributions"]}
+    />,
+  );
+  expect(screen.getByText("No signals supplied")).toBeVisible();
+  expect(screen.getByText("No contributions supplied")).toBeVisible();
+  expect(screen.queryByRole("button")).not.toBeInTheDocument();
 });

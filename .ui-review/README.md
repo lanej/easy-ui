@@ -55,7 +55,7 @@ The chart contract also reviews `chart-composition.html` and `native-regressions
 expanded/larger-text, and dark states. Scoped gates require all seven score nodes,
 non-overlapping boxes within the layout, 14px primary text (including signal labels
 and expanded explanations; 12px annotations retain the shared floor), and 44px
-explanation controls. Clipping checks inspect the selected node boxes, primary
+disclosure controls. Three additional pages explicitly collapse Signals, Contributions, or both at desktop, 320px, and 4K with larger text. Their required-element gates retain each visible node and both column controls without weakening the default seven-node comparison. Clipping checks inspect the selected node boxes, primary
 text containers, values, status labels, and result content. Intentionally hidden
 source summaries are excluded; screenshots complement these scoped measurements.
 The example retains an untriggered, explicitly clear weight-mismatch signal alongside flagged and elevated observations. The 4K layout preserves this finite comparison within a bounded reading width;

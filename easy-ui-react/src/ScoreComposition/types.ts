@@ -57,6 +57,9 @@ export type ScoreCompositionLabels = {
   signals?: string;
   contributions?: string;
   result?: string;
+  /** Accessible action labels for column disclosure controls. */
+  collapse?: string;
+  expand?: string;
   noSignals?: string;
   noContributions?: string;
   missingValue?: string;
@@ -85,10 +88,19 @@ export type ScorePresentationProps = {
   typography?: VisualizationTypography;
 };
 
+/** The result stays visible while its supporting columns can be collapsed. */
+export type ScoreCompositionColumn = "signals" | "contributions";
+
 export type ScoreCompositionProps = ScorePresentationProps & {
   signals: readonly ScoreSignalData[];
   contributions: readonly ScoreContributionData[];
   result: ScoreResultData;
+  /** Controlled collapsed columns. Nonempty supporting columns are collapsible. */
+  collapsedColumns?: readonly ScoreCompositionColumn[];
+  /** Initially collapsed columns (uncontrolled). Defaults to none. */
+  defaultCollapsedColumns?: readonly ScoreCompositionColumn[];
+  /** Requests the next collapsed columns; the result cannot be collapsed. */
+  onCollapsedColumnsChange?: (columns: ScoreCompositionColumn[]) => void;
   /** Optional visible heading. Without a name, the region uses "Score composition". */
   title?: string;
   description?: ReactNode;

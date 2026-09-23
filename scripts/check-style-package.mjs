@@ -77,7 +77,7 @@ const typeSource = `
 import { Chart, ChartLegend } from "@easypost/easy-ui/Chart";
 import { NetworkMapCellDetails } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard } from "@easypost/easy-ui/MetricCard";
-import { ScoreComposition, ScoreSignal, ScoreContribution, ScoreConnector, ScoreResult, type ScoreCompositionProps } from "@easypost/easy-ui/ScoreComposition";
+import { ScoreComposition, ScoreSignal, ScoreContribution, ScoreConnector, ScoreResult, type ScoreCompositionProps, type ScoreCompositionColumn } from "@easypost/easy-ui/ScoreComposition";
 import { Button } from "@easypost/easy-ui/Button";
 import { DataGrid } from "@easypost/easy-ui/DataGrid";
 import { Select } from "@easypost/easy-ui/Select";
@@ -126,7 +126,8 @@ export const example = <>
   />
 </>;
 void [Select, SelectField, sort, invalidSort, menu, field, heading, icon, responsive, className];
-const scoreProps: ScoreCompositionProps = {signals: [], contributions: [], result: {score: null}};
+const collapsedColumns: ScoreCompositionColumn[] = ["signals"];
+const scoreProps: ScoreCompositionProps = {signals: [], contributions: [], result: {score: null}, defaultCollapsedColumns: collapsedColumns, collapsedColumns, onCollapsedColumnsChange: columns => columns.includes("contributions")};
 void scoreProps;
 ${["Chart", "MetricCard", "Button", "DataGrid"]
   .map(
@@ -179,8 +180,10 @@ for (const load of [require, (specifier) => import(specifier)]) {
   assert.match(score, /Observed input/);
   assert.match(score, /9.00/);
   assert.match(score, /Application decision/);
-  // The outcome icon renders on the server; measured connectors do not.
-  assert.equal((score.match(/<svg/g) || []).length, 1);
+  // The outcome and two column disclosure icons render; measured connector paths do not.
+  assert.equal((score.match(/<svg/g) || []).length, 3);
+  assert.doesNotMatch(score, /vector-effect="non-scaling-stroke"/);
+  assert.match(score, /aria-label="Collapse: Signals \(1\)"/);
   assert.match(score, /<svg[^>]*aria-hidden="true"/);
   const { ThemeProvider } = await load("@easypost/easy-ui/Theme");
   const { Chart, ChartLegend } = await load("@easypost/easy-ui/Chart");
