@@ -290,6 +290,52 @@ export async function auditScoreComposition(
   await driver.screenshot(`${outputDir}/score-desktop.png`);
   const explanation =
     '[data-score-example] button[aria-label="Explanation: Underdeclaration"]';
+  const connections = () =>
+    driver.evaluate(() =>
+      [
+        ...document.querySelectorAll(
+          "[data-score-example] [data-score-layout] > svg path",
+        ),
+      ].map((path) => ({
+        inactive: path.dataset.inactive === "true",
+        highlighted: path.dataset.highlighted === "true",
+        stroke: getComputedStyle(path).stroke,
+        width: parseFloat(getComputedStyle(path).strokeWidth),
+        dash: getComputedStyle(path).strokeDasharray,
+      })),
+    );
+  const initialConnections = await connections();
+  assert.deepEqual(
+    initialConnections.map(({ inactive }) => inactive),
+    [false, true, false, false, false, false],
+  );
+  assert.equal(initialConnections[0].dash, "none");
+  assert.notEqual(initialConnections[1].dash, "none");
+  assert.notEqual(initialConnections[0].stroke, initialConnections[1].stroke);
+  assert.equal(
+    await driver.evaluate(
+      (selector) => document.querySelector(selector).textContent.trim(),
+      explanation,
+    ),
+    "Underdeclaration",
+  );
+  await driver.hover(explanation);
+  const hoveredConnections = await connections();
+  assert.deepEqual(
+    hoveredConnections.map(({ highlighted }) => highlighted),
+    [true, true, true, false, false, false],
+  );
+  assert.ok(hoveredConnections[0].width > initialConnections[0].width);
+  assert.notEqual(hoveredConnections[0].stroke, initialConnections[0].stroke);
+  assert.equal(hoveredConnections[1].dash, initialConnections[1].dash);
+  await driver.screenshot(`${outputDir}/score-traced.png`);
+  await driver.hover("h1");
+  assert.ok((await connections()).every(({ highlighted }) => !highlighted));
+  measurements.push({
+    name: "connection-tracing",
+    initialConnections,
+    hoveredConnections,
+  });
   await driver.key("#refresh-data", "Tab");
   assert.equal(
     await driver.evaluate(
@@ -299,6 +345,22 @@ export async function auditScoreComposition(
     true,
     "Tab reaches the first explanation from the preceding preview control",
   );
+  assert.deepEqual(
+    (await connections()).map(({ highlighted }) => highlighted),
+    [true, true, true, false, false, false],
+  );
+  await driver.hover('[data-score-id="international"] button');
+  assert.deepEqual(
+    (await connections()).map(({ highlighted }) => highlighted),
+    [true, true, true, false, false, false],
+    "Keyboard focus keeps its trace when the pointer crosses another card",
+  );
+  await driver.key(explanation, "Tab");
+  assert.deepEqual(
+    (await connections()).map(({ highlighted }) => highlighted),
+    [false, false, false, true, true, true],
+  );
+  await driver.hover("h1");
   await driver.key(explanation, "Enter");
   assert.equal(
     await driver.evaluate(
@@ -327,6 +389,11 @@ export async function auditScoreComposition(
     ["0", "0"],
   );
   await endpoints("refreshed");
+  assert.equal(
+    (await connections()).filter(({ inactive }) => inactive).length,
+    4,
+  );
+  assert.ok((await connections()).every(({ highlighted }) => !highlighted));
   const emptyFills = await contributionFills();
   assert.deepEqual(
     emptyFills.map(({ state }) => state),
@@ -496,7 +563,8 @@ export async function auditScoreComposition(
       "contributions show full and partial ratios with matching colors, contrasting boundaries, and exact meter widths",
       "explicit signal colors retain exact values and visible status labels",
       "score connectors follow DOM geometry and disclosure",
-      "score keyboard disclosure and refreshed records",
+      "score title disclosure and refreshed records",
+      "hover and keyboard trace incoming/outgoing connections; untriggered sources keep dashed edges",
       "score RTL geometry",
       "score container responsiveness and large text",
       "score dark-theme and mobile accessibility",

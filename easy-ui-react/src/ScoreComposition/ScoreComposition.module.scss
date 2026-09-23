@@ -152,6 +152,35 @@
 .contributionLabel {
   font-size: var(--ezui-viz-description-size, 14px);
 }
+.chevron {
+  display: flex;
+  flex: none;
+  color: design-token("color.neutral.600");
+}
+.contributionTitle > button {
+  min-height: 44px;
+  max-width: 100%;
+  padding: design-token("space.0.5");
+  color: inherit;
+  text-align: start;
+  font-size: var(--ezui-viz-control-size, 14px);
+  > span {
+    min-width: 0;
+    width: 100%;
+  }
+  &[aria-expanded="true"] .chevron {
+    transform: rotate(180deg);
+  }
+}
+.titleContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: design-token("space.1");
+  .contributionLabel {
+    min-width: 0;
+  }
+}
 .scoreLine {
   display: flex;
   flex-wrap: wrap;
@@ -199,12 +228,6 @@
     margin: 2px 0 0;
     padding-inline-start: 1.25em;
   }
-}
-.explanationTrigger > button {
-  min-height: 44px;
-  max-width: 100%;
-  padding-inline: 0;
-  font-size: var(--ezui-viz-control-size, 14px);
 }
 .explanation {
   font-size: var(--ezui-viz-description-size, 14px);
@@ -310,6 +333,14 @@
   fill: none;
   stroke: design-token("color.neutral.300");
   stroke-width: 1.5;
+  &[data-inactive="true"] {
+    stroke: design-token("color.neutral.200");
+    stroke-dasharray: 4 4;
+  }
+  &[data-highlighted="true"] {
+    stroke: design-token("color.neutral.600");
+    stroke-width: 2;
+  }
 }
 
 @container (min-width: 48rem) {
@@ -338,6 +369,12 @@
     background: CanvasText;
   }
   .connector {
-    stroke: GrayText;
+    &,
+    &[data-inactive="true"] {
+      stroke: GrayText;
+    }
+    &[data-highlighted="true"] {
+      stroke: CanvasText;
+    }
   }
 }

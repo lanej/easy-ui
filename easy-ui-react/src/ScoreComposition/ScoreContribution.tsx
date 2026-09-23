@@ -1,5 +1,7 @@
 import React from "react";
+import ExpandMoreIcon from "@easypost/easy-ui-icons/ExpandMore400";
 import { Disclosure } from "../Disclosure";
+import { Icon } from "../Icon";
 import { visualizationTypographyStyle } from "../visualization/typography";
 import { defaultFormatScore, defaultLabels, scoreText } from "./presentation";
 import type { ScoreContributionData, ScorePresentationProps } from "./types";
@@ -56,19 +58,41 @@ export function ScoreContribution({
   const effectiveSentiment = validMeter ? sentiment : "neutral";
   const valueText = scoreText(score, formatScore, labels, true);
   const maxText = scoreText(maxScore, formatScore, labels);
-  return (
+  const content = (
     <div
       className={styles.contribution}
       data-fill-state={fillState}
       data-sentiment={effectiveSentiment}
       style={typography && visualizationTypographyStyle(typography)}
     >
-      <strong
-        className={styles.contributionLabel}
-        data-viewrule="score-primary"
-      >
-        {label}
-      </strong>
+      {explanation != null ? (
+        <div className={styles.contributionTitle}>
+          <Disclosure.Trigger
+            variant="text"
+            isBlock
+            aria-label={`${labels.explanation}: ${label}`}
+          >
+            <span className={styles.titleContent}>
+              <strong
+                className={styles.contributionLabel}
+                data-viewrule="score-primary"
+              >
+                {label}
+              </strong>
+              <span className={styles.chevron}>
+                <Icon symbol={ExpandMoreIcon} size="sm" />
+              </span>
+            </span>
+          </Disclosure.Trigger>
+        </div>
+      ) : (
+        <strong
+          className={styles.contributionLabel}
+          data-viewrule="score-primary"
+        >
+          {label}
+        </strong>
+      )}
       <div className={styles.scoreLine}>
         <strong>{valueText}</strong>
         <span>/ {maxText}</span>
@@ -122,22 +146,17 @@ export function ScoreContribution({
         )}
       </div>
       {explanation != null && (
-        <Disclosure mountPolicy="unmount">
-          <div className={styles.explanationTrigger}>
-            <Disclosure.Trigger
-              variant="link"
-              aria-label={`${labels.explanation}: ${label}`}
-            >
-              {labels.explanation}
-            </Disclosure.Trigger>
+        <Disclosure.Content>
+          <div className={styles.explanation} data-viewrule="score-primary">
+            {explanation}
           </div>
-          <Disclosure.Content>
-            <div className={styles.explanation} data-viewrule="score-primary">
-              {explanation}
-            </div>
-          </Disclosure.Content>
-        </Disclosure>
+        </Disclosure.Content>
       )}
     </div>
+  );
+  return explanation != null ? (
+    <Disclosure mountPolicy="unmount">{content}</Disclosure>
+  ) : (
+    content
   );
 }

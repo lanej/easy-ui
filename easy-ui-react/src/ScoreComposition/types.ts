@@ -13,6 +13,9 @@ export type ScoreSignalData = {
   sentiment?: "neutral" | "positive" | "warning" | "negative";
   /** Visible meaning alongside the value. Colored states have localizable defaults. */
   statusLabel?: string;
+  /** Explicit rule state. false gives outgoing connectors a subdued dashed line.
+   * Never inferred from the value or sentiment; omitted means unspecified. */
+  triggered?: boolean;
   /** Optional context displayed below the signal. */
   description?: ReactNode;
 };

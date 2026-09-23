@@ -127,6 +127,7 @@ function Preview() {
                       value: typeof signal.value === "boolean" ? false : 0,
                       sentiment: "positive" as const,
                       statusLabel: "Clear",
+                      triggered: false,
                     }))
                 : [...scoreCompositionExample.signals]
             }

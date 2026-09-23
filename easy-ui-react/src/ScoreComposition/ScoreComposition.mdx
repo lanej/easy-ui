@@ -63,6 +63,8 @@ Use `statusLabel` for a short, visible explanation such as “Within target”, 
 />
 ```
 
+Set `triggered={false}` on a signal in the composition when the application knows its rule did not trigger. Its outgoing connectors use a lighter dashed line; keep the meaning explicit in `statusLabel` (for example “Clear”) and the contribution explanation. `true` and omitted values keep the normal solid connector. Trigger state is never inferred from false, zero, sentiment, or a contribution's score.
+
 Missing and invalid observations suppress supplied sentiment and status labels and display their existing neutral “No data” or “Invalid value” text. Update the observation, sentiment, and status together when application rules change.
 
 <Canvas of={Stories.SignalSentiments} />
@@ -103,7 +105,7 @@ Signals use compact, subtly bordered boxes. Internal padding separates their lab
 
 SVG curves are decorative, hidden from assistive technology and pointer input. Their attachment points follow DOM resizing, font reflow, and disclosure expansion. The component has no graph engine, editor, dragging, panning, or zoom. With JavaScript disabled or before hydration, the complete explanation remains present except for optional closed disclosure content. No measurement is needed for server rendering.
 
-Contribution meters expose their label, exact score, and maximum. Source labels accompany the stacked layout; in three columns those same labels remain available to assistive technology while the curves show the relationships visually. Independently placed contribution cards always show their source labels. “Explanation” buttons use the shared Disclosure component and support keyboard and touch input. Expanded content can contain application links and controls. Connections alone never carry information.
+Contribution meters expose their label, exact score, and maximum. Source labels accompany the stacked layout; in three columns those same labels remain available to assistive technology while the curves show the relationships visually. Independently placed contribution cards always show their source labels. Contribution titles with an explanation are Disclosure buttons with an expand/collapse chevron, supporting keyboard and touch input. The explanation opens below the meter, without a separate link row. `labels.explanation` supplies the accessible-name prefix; the contribution title stays visible. Titles without an explanation remain plain text. Expanded content can contain application links and controls. Hovering a contribution card or focusing a control within it emphasizes its incoming and outgoing connections in a stronger neutral stroke. Keyboard focus takes precedence over pointer hover. Inactive connections retain their dashed pattern while emphasized. Connections alone never carry information.
 
 <Canvas of={Stories.Narrow} />
 <Canvas of={Stories.LargerText} />
@@ -122,7 +124,7 @@ A meter requires a positive finite maximum and a finite score within `[0, maxSco
 
 Visible `title`, `description`, `metadata`, and `footer` are optional. Use `variant="bare"` inside your own card, and standard `aria-label`, `aria-labelledby`, and `aria-describedby` to associate surrounding content. Without a supplied name or title, the region is named “Score composition”. `typography` follows the shared visualization text roles and propagates to the primitives.
 
-`ScoreSignal`, `ScoreContribution`, and `ScoreResult` can be used independently with the same formatting and value contracts. `ScoreContribution.sourceLabels` contains readable source names for this usage. `ScoreConnector` draws one decorative path from `from={{x, y}}` to `to={{x, y}}` inside a caller-owned SVG; custom layouts own their measurements and equivalent textual relationships. These are presentation primitives for explainable scores, not arbitrary graph nodes.
+`ScoreSignal`, `ScoreContribution`, and `ScoreResult` can be used independently with the same formatting and value contracts. `ScoreContribution.sourceLabels` contains readable source names for this usage. `ScoreConnector` draws one decorative path from `from={{x, y}}` to `to={{x, y}}` inside a caller-owned SVG, with optional `isInactive` and `isHighlighted` states; custom layouts own their measurements and equivalent textual relationships. These are presentation primitives for explainable scores, not arbitrary graph nodes.
 
 <Canvas of={Stories.ExternalHeading} />
 <Canvas of={Stories.IndependentPrimitives} />
