@@ -48,3 +48,28 @@ The complete reports and native-scale detail captures are CI artifacts.
 The map workflow uses `maps/config.json` and `maps/rules.json` for separate View Rule runs on the composed map at 1440px and 390px, with default and increased text roles. It uses the same 12px annotation/14px prose floors, real WebGL rendering with software Chromium, and measured visible-label bounds. The three-browser map harness additionally checks label collisions, external selection placement, source geometry, route selection, callback changes, and exact layer data. Rendered artifacts must be inspected; canvas/occlusion behavior is not established by DOM font checks alone.
 
 The chart contract also reviews `chart-composition.html` and `native-regressions.html` at desktop and 320px, including increased typography in constrained 320px compositions. Three-browser checks record actual viewport and component widths; Safari may enforce a wider native window while the fixture remains constrained.
+
+## Score composition contract
+
+`score-composition.html` is included at desktop, 320px, and 4K in its default,
+expanded/larger-text, and dark states. Scoped gates require all seven score nodes,
+non-overlapping boxes within the layout, 14px primary text (including signal labels
+and expanded explanations; 12px annotations retain the shared floor), and 44px
+disclosure controls. Three additional pages explicitly collapse Signals, Contributions, or both at desktop, 320px, and 4K with larger text. Their required-element gates retain each visible node and both column controls without weakening the default seven-node comparison. Clipping checks inspect the selected node boxes, primary
+text containers, values, status labels, and result content. Intentionally hidden
+source summaries are excluded; screenshots complement these scoped measurements.
+The example retains an untriggered, explicitly clear weight-mismatch signal alongside flagged and elevated observations. The 4K layout preserves this finite comparison within a bounded reading width;
+it does not stretch the cards or invent additional evidence (DR-007).
+
+Bars encode fraction of each explicitly supplied cap, not absolute points across
+cards; exact scores, denominators, and percentages stay adjacent (DR-001–003).
+Sentiment is application-owned, and text labels distinguish meanings without
+color (DR-005/016). Frames protect signal text from edges and group related
+values; the result icon and accent identify the decision (DR-008/013).
+
+The three-browser score audit separately measures every connector against visible
+text and checks actual meter-boundary contrast in light and dark themes. The gold
+warning interior uses a contrasting inset edge; View Rule's solid-background
+`mark-contrast` check cannot measure that edge. Keyboard disclosure, refresh
+continuity, RTL, and forced-colors evidence complement these layout gates.
+These scoped measurements do not constitute full accessibility certification.

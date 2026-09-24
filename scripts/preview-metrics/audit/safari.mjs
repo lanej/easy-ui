@@ -61,12 +61,20 @@ try {
         await driver
           .actions()
           .sendKeys(
-            { Enter: Key.ENTER, Space: Key.SPACE, ArrowRight: Key.ARROW_RIGHT }[
-              key
-            ] ?? key,
+            {
+              Enter: Key.ENTER,
+              Space: Key.SPACE,
+              Tab: Key.TAB,
+              ArrowRight: Key.ARROW_RIGHT,
+            }[key] ?? key,
           )
           .perform();
       },
+      hover: async (selector) =>
+        driver
+          .actions()
+          .move({ origin: await driver.findElement(By.css(selector)) })
+          .perform(),
       click: async (selector) =>
         (await driver.findElement(By.css(selector))).click(),
       screenshot: async (path) =>

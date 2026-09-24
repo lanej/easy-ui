@@ -43,6 +43,82 @@
       "path": "/native-regressions.html?large=1&stress=1",
       "ready": "[data-native-ready]",
       "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "score-composition",
+      "path": "/score-composition.html",
+      "ready": "[data-score-node=\"result\"] [data-sentiment=\"negative\"]",
+      "viewports": ["desktop", "mobile", "4k"],
+      "checkpoints": [
+        {
+          "name": "default",
+          "setup": ".ui-review/checkpoints/score-default.mjs"
+        },
+        {
+          "name": "expanded-large",
+          "setup": ".ui-review/checkpoints/score-expanded-large.mjs"
+        },
+        {
+          "name": "dark",
+          "setup": ".ui-review/checkpoints/score-dark.mjs"
+        }
+      ]
+    },
+    {
+      "name": "score-signals-collapsed",
+      "path": "/score-composition.html",
+      "ready": "[data-score-node=\"result\"] [data-sentiment=\"negative\"]",
+      "viewports": ["desktop", "mobile", "4k"],
+      "checkpoints": [
+        {
+          "name": "collapsed",
+          "setup": ".ui-review/checkpoints/score-signals-collapsed.mjs"
+        }
+      ]
+    },
+    {
+      "name": "score-contributions-collapsed",
+      "path": "/score-composition.html",
+      "ready": "[data-score-node=\"result\"] [data-sentiment=\"negative\"]",
+      "viewports": ["desktop", "mobile", "4k"],
+      "checkpoints": [
+        {
+          "name": "collapsed",
+          "setup": ".ui-review/checkpoints/score-contributions-collapsed.mjs"
+        }
+      ]
+    },
+    {
+      "name": "score-result-focus",
+      "path": "/score-composition.html",
+      "ready": "[data-score-node=\"result\"] [data-sentiment=\"negative\"]",
+      "viewports": ["desktop", "mobile", "4k"],
+      "checkpoints": [
+        {
+          "name": "collapsed",
+          "setup": ".ui-review/checkpoints/score-result-focus.mjs"
+        }
+      ]
+    },
+    {
+      "name": "score-chart-details",
+      "path": "/score-composition.html?rich=1",
+      "ready": "[data-score-node=\"result\"] [data-sentiment=\"negative\"]",
+      "viewports": ["desktop", "mobile", "4k"],
+      "checkpoints": [
+        {
+          "name": "expanded",
+          "setup": ".ui-review/checkpoints/score-charts-expanded.mjs"
+        },
+        {
+          "name": "large",
+          "setup": ".ui-review/checkpoints/score-charts-large.mjs"
+        },
+        {
+          "name": "dark",
+          "setup": ".ui-review/checkpoints/score-charts-dark.mjs"
+        }
+      ]
     }
   ],
   "viewports": [

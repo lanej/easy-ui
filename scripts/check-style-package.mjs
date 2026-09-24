@@ -77,6 +77,7 @@ const typeSource = `
 import { Chart, ChartLegend } from "@easypost/easy-ui/Chart";
 import { NetworkMapCellDetails } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard } from "@easypost/easy-ui/MetricCard";
+import { ScoreComposition, ScoreSignal, ScoreContribution, ScoreConnector, ScoreResult, type ScoreCompositionProps, type ScoreCompositionColumn } from "@easypost/easy-ui/ScoreComposition";
 import { Button } from "@easypost/easy-ui/Button";
 import { DataGrid } from "@easypost/easy-ui/DataGrid";
 import { Select } from "@easypost/easy-ui/Select";
@@ -103,6 +104,11 @@ const responsive: ResponsiveProp<string> = { sm: "1rem" };
 const className: string = classNames("packed", false);
 
 export const example = <>
+  <ScoreComposition signals={[{id: "a", label: "Observed", value: true}]} contributions={[{id: "b", label: "Contribution", score: 1, maxScore: 2, signals: ["a"]}]} result={{score: 1, disposition: "Review"}} />
+  <ScoreSignal label="Observed" description={<span>Application-owned signal details.</span>} triggered={false} value={false} sentiment="positive" statusLabel="Clear" labels={{positiveSignal: "Favorable"}} />
+  <ScoreContribution label="Contribution" score={0} maxScore={1} sentiment="warning" labels={{fullContribution: "Full"}} sourceLabels={["Observed"]} />
+  <ScoreResult score={null} />
+  <svg><ScoreConnector isInactive isHighlighted from={{x: 0, y: 0}} to={{x: 20, y: 10}} /></svg>
   <ChartLegend items={[{name: "Ground", color: "#007f86", selected: true, symbol: "bar"}]} onItemToggle={(name: string) => { void name; }} />
   <NetworkMapCellDetails cell={{latMin: 0, latMax: 1, lonMin: 0, lonMax: 1, medianMinutes: 20, iqrMinutes: 4, n: 80}} surface={{cells: [], source: "Packed sample", asOf: "2026-09-22T00:00:00Z"}}>
     <strong>Application chart</strong>
@@ -120,6 +126,9 @@ export const example = <>
   />
 </>;
 void [Select, SelectField, sort, invalidSort, menu, field, heading, icon, responsive, className];
+const collapsedColumns: ScoreCompositionColumn[] = ["signals"];
+const scoreProps: ScoreCompositionProps = {signals: [], contributions: [], result: {score: null}, defaultCollapsedColumns: collapsedColumns, collapsedColumns, onCollapsedColumnsChange: columns => columns.includes("contributions")};
+void scoreProps;
 ${["Chart", "MetricCard", "Button", "DataGrid"]
   .map(
     (name) =>
@@ -148,7 +157,7 @@ const insideConsumer = (file) => {
   assert.ok(!relative(process.cwd(), path).startsWith(".."), "Dependency escaped isolated consumer: " + path);
   return path;
 };
-for (const subpath of ["Chart", "Chart/index", "MetricCard", "Sparkline", "NetworkMap", "utilities/css"]) {
+for (const subpath of ["Chart", "Chart/index", "MetricCard", "Sparkline", "NetworkMap", "ScoreComposition", "utilities/css"]) {
   const specifier = "@easypost/easy-ui/" + subpath;
   insideConsumer(require.resolve(specifier));
   insideConsumer(fileURLToPath(import.meta.resolve(specifier)));
@@ -162,6 +171,20 @@ for (const subpath of ["Chart/index.js", "Chart/index.mjs", "utilities/css.js", 
   await import("@easypost/easy-ui/" + subpath);
 }
 for (const load of [require, (specifier) => import(specifier)]) {
+  const { ScoreComposition } = await load("@easypost/easy-ui/ScoreComposition");
+  const score = renderToString(React.createElement(ScoreComposition, {
+    signals: [{id: "a", label: "Observed input", value: false}],
+    contributions: [{id: "b", label: "Contribution", score: 1, maxScore: 2, signals: ["a"]}],
+    result: {score: 9, disposition: "Application decision"}
+  }));
+  assert.match(score, /Observed input/);
+  assert.match(score, /9.00/);
+  assert.match(score, /Application decision/);
+  // The outcome and two column disclosure icons render; measured connector paths do not.
+  assert.equal((score.match(/<svg/g) || []).length, 3);
+  assert.doesNotMatch(score, /vector-effect="non-scaling-stroke"/);
+  assert.match(score, /aria-label="Collapse: Signals \(1\)"/);
+  assert.match(score, /<svg[^>]*aria-hidden="true"/);
   const { ThemeProvider } = await load("@easypost/easy-ui/Theme");
   const { Chart, ChartLegend } = await load("@easypost/easy-ui/Chart");
   const key = renderToString(React.createElement(ChartLegend, {

@@ -2,6 +2,8 @@
 
 The component stories and their MDX documentation are the maintained examples. Interactive previews and browser evidence are generated from those sources.
 
+- [Score composition](../../easy-ui-react/src/ScoreComposition/ScoreComposition.mdx) explains observed signals, capped contributions, and an application-supplied result. Its browser fixture is `comparisons/score-composition.html` in a built preview.
+
 - [Storybook](https://lanej.io/easy-ui/storybook/) covers individual components, grouped DataGrid reports, and application compositions.
 - [Map cell inspection](https://lanej.io/easy-ui/maps/regressions.html?inspection=1) demonstrates hover/click detail charts, mobile layouts, and keyboard access to supplied distributions.
 - [Rich chart data](https://lanej.io/easy-ui/comparisons/chart-data-view.html) demonstrates formatted costs and comparison badges inside the chart's existing “View data table” disclosure.
