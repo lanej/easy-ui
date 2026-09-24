@@ -1,0 +1,23 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "../scripts/generateCompatibilityEntries.mjs",
+        "../scripts/copyDistFiles.mjs"
+      ],
+      "outputs": [
+        "dist/**",
+        "[A-Z]*/**",
+        "utilities/**",
+        "visualization/**",
+        "examples/**",
+        "styles/**",
+        "types.d.ts",
+        "style.css",
+        ".compatibility-entries.json"
+      ]
+    }
+  }
+}

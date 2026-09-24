@@ -20,7 +20,12 @@ export default defineConfig({
     react({ jsxRuntime: "automatic" }),
     viteStaticCopy({
       targets: [
-        { src: "package.json", dest: ".", transform: cleanPkgJsonForDist },
+        {
+          src: "package.json",
+          dest: ".",
+          transform: (contents) =>
+            cleanPkgJsonForDist(contents, { preserveExports: true }),
+        },
         { src: "README.md", dest: "." },
         { src: "CHANGELOG.md", dest: "." },
         { src: "src/styles", dest: "." },
@@ -54,6 +59,8 @@ export default defineConfig({
       external: (id) =>
         [
           "react",
+          "echarts",
+          "maplibre-gl",
           "react-dom",
           "vitest",
           "@testing-library/react",

@@ -1,0 +1,271 @@
+import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import * as ChartStories from "./Chart.stories";
+
+<Meta of={ChartStories} />
+
+# Chart
+
+Full analytical charts using Apache ECharts, with Easy UI typography, colors, a responsive frame, status handling, and an exact-value data table. `MetricCard` and `Sparkline` complement these analytical views.
+
+Install the optional chart peer when using this entry point:
+
+```sh
+npm install echarts@^6.1.0
+```
+
+```tsx
+import { Chart, ChartOption } from "@easypost/easy-ui/Chart";
+
+const option: ChartOption = {
+  grid: { left: 48, right: 24, top: 32, bottom: 40 },
+  tooltip: { trigger: "axis" },
+  xAxis: { type: "category", data: ["Ground", "Two-day"] },
+  yAxis: { type: "value", name: "Parcels", min: 0 },
+  series: [{ id: "volume", name: "Volume", type: "bar", data: [1200, 400] }],
+};
+
+// Render inside the application's ThemeProvider.
+<Chart
+  title="Shipments by service"
+  description="Purchased labels · Aug 1–14 · Parcel counts"
+  option={option}
+  dataTable={{
+    columns: ["Service", "Parcels"],
+    rows: [
+      { id: "ground", values: ["Ground", 1200] },
+      { id: "two-day", values: ["Two-day", 400] },
+    ],
+  }}
+/>;
+```
+
+## Analytical examples
+
+The native `ChartOption` retains ECharts' documented configuration rather than creating a second chart grammar. It supports line/area, grouped/stacked bars, scatter/bubble, heatmap, Sankey, pie/donut, treemap, and the engine's other built-in series. These examples all use synthetic shipping data.
+
+<Canvas of={ChartStories.Sankey} />
+<Canvas of={ChartStories.TimeSeries} />
+<Canvas of={ChartStories.Area} />
+<Canvas of={ChartStories.GroupedBars} />
+<Canvas of={ChartStories.StackedBars} />
+<Canvas of={ChartStories.ScatterAndBubble} />
+<Canvas of={ChartStories.Heatmap} />
+<Canvas of={ChartStories.Donut} />
+<Canvas of={ChartStories.Treemap} />
+
+## Additional analytical patterns
+
+These additions retain the original gallery and use the same optional engine. Direct bar labels and labeled references make the comparison readable without hover. Thresholds and event markers have explicit meanings; neither implies causation.
+
+<Canvas of={ChartStories.LabeledBars} />
+<Canvas of={ChartStories.AnnotatedTimeSeries} />
+<Canvas of={ChartStories.ScenarioResponse} />
+
+The scenario curve uses a numeric adjustment axis. Current, proposed, and peak settings are synthetic model evaluations; the trial range is an example of an authorized interval, not a prediction interval.
+
+<Canvas of={ChartStories.Histogram} />
+<Canvas of={ChartStories.CumulativeDistribution} />
+<Canvas of={ChartStories.ArrivalSpread} />
+<Canvas of={ChartStories.PredictionBand} />
+
+Histogram and cumulative distribution share the same 1,000 parcels. The box plot receives explicitly defined min/P25/median/P75/max summaries. Prediction bounds are supplied model outputs. Applications own statistical calculations, coverage, and semantics; the component does not infer confidence from an average or a percentile.
+
+<Canvas of={ChartStories.ContributionWaterfall} />
+<Canvas of={ChartStories.WeekdayHourHeatmap} />
+
+The waterfall reconciles each signed ledger item to its running balance. The periodic matrix preserves sample counts in the table and suppresses rates with fewer than 50 observations in this synthetic example. That minimum is an example policy, not a statistical guarantee or a library default.
+
+## Interaction and data access
+
+ECharts supplies tooltips, legends, zoom, and linked-flow highlighting. `onSelect` forwards the series ID, data index, name, data type, value, and original datum; Sankey events distinguish nodes from edges. Keep stable IDs in application records. `onRowSelect` gives keyboard users the equivalent drill-down by table row ID. Both routes are demonstrated in the shipping gallery's scatter plot.
+
+Data refreshes and theme changes preserve local zoom ranges, legend selections, and graph pan/zoom when their application settings are unchanged. Give zoom and legend components and graph series stable `id` values if their order can change; anonymous components match by index. Changed range settings or `legend.selected` take effect on the next update. Graph camera preservation applies to the graph's default `view` coordinate system, including `baseOption` and active media overrides. Changing or removing authored `center`, `zoom`, `layout`, `coordinateSystem`, `roam`, or `scaleLimit` settings takes precedence over the retained camera. Theme changes update the existing engine. When changing the renderer requires a new instance, supported interaction state is restored. Remount the chart to reset all local interaction state. Removed series, annotations, and zoom controls are cleared.
+
+Use `zoomState` and `legendState` to coordinate charts. Entries target a stable `id` or an `index` (default zero); supplied entries are controlled, while unspecified components retain local interaction state. `onZoomChange` and `onLegendChange` report complete effective state after user/engine interactions. Updating props is silent, so sharing these callbacks between charts does not form a feedback loop. A controlled user change remains a request until the application supplies the new value. Explicit controlled state takes precedence over native option values and preserved local interaction. Provide native option values when you want initial values that remain user-changeable.
+
+<Canvas of={ChartStories.CoordinatedCharts} />
+
+Custom `color` palettes replace the default palette. Tooltips use ECharts rich text by default; formatter strings use `\n` for line breaks, as demonstrated by the waterfall.
+
+When the effective engine option has data zoom, including `baseOption.dataZoom`, the frame supplies keyboard-operable zoom in/out/reset buttons. By default they target the first effective zoom component; independent zoom windows remain unchanged and ECharts retains intentional linked-axis behavior. Set `zoomTarget={{ dataZoomId: "time" }}` or `dataZoomIndex` to target another component; arrays select an intentional group. Missing targets omit the controls. Reset covers the full percentage range for the targeted components. The data table always represents the full supplied dataset, including observations outside a zoomed viewport. `dataTable` is required by the convenience `Chart`; build it from the same records as the series. Supply already formatted values and units, and use `null` for unavailable values.
+
+The rendered plot is an image with the supplied description; its underlying SVG/canvas is hidden from screen readers. Exact values and drill-down are available through the semantic HTML table. The automatic HTML legend supports keyboard selection. Native engine legends and individual marks remain pointer interactions; provide application controls through `actions` or `ChartLegend` for those layouts. The ECharts ARIA switch alone does not establish accessibility compliance.
+
+## Mobile layout
+
+`Chart` and `ChartSurface` default to `layout="auto"`. Ordinary named bar, line,
+and scatter series with one Cartesian axis pair and an unpositioned plain legend
+get a wrapping HTML legend below the plot. It uses the engine's series colors,
+44px touch targets, and pressed states. Selection uses the same engine events and
+`legendState` / `onLegendChange` contract as native legends; `selectedMode: false`
+produces a static key, and `selectedMode: "single"` retains single selection.
+`legendLabel` localizes its accessible name.
+
+This layout gives axis labels and names their own space and suggests four value
+axis intervals. It never reduces the requested typography. `height` remains the
+plot height; the legend adds natural document height as it wraps. Keep category
+labels concise through the application's `axisLabel.formatter`, while retaining
+full labels in the exact-data table.
+
+Authored grids, native legend positioning/styling/formatters, multi-axis or
+multi-panel options, zoom controls, visual maps, and non-Cartesian series keep
+their native layout. Per-datum or gradient colors also retain the native legend.
+Use `layout="native"` to retain the engine's layout explicitly. `ChartLegend` is
+also independently exported: supply `items` (name, color, selected, symbol) and
+an optional `onItemToggle` callback for application-owned compositions.
+
+When the report already owns a card, use `variant="bare"` to avoid a second
+border and layer of padding. This transit example also combines the heading and
+calendar-day subtitle instead of repeating them across nested cards.
+
+<Canvas of={ChartStories.MobileLayout} />
+
+## Rich content inside “View data table”
+
+The chart's built-in data disclosure can contain formatted amounts, comparison
+badges, links, or native plots. Configure that existing view through `dataTable`;
+an additional table component is not required. The disclosure remains folded by
+default, and the plot and table should derive from the same application records.
+
+<Canvas of={ChartStories.RichDataTable} />
+
+```tsx
+<Chart
+  {...chartProps}
+  dataTable={{
+    columns: [
+      "Region / zone",
+      "Cost / package",
+      "Change vs August",
+      "Shipments",
+    ],
+    rows: records.map((record) => ({
+      id: record.id,
+      values: [
+        `${record.region} / ${record.zone}`,
+        record.cost,
+        record.change,
+        record.shipments,
+      ],
+    })),
+    pinnedColumnCount: 1,
+    columnOptions: {
+      0: { width: 120, minWidth: 120, whiteSpace: "normal" },
+      1: { isNumeric: true, allowsSorting: true },
+      2: { isNumeric: true, allowsSorting: true },
+      3: { isNumeric: true, allowsSorting: true },
+    },
+    maxHeight: 360,
+    renderCell: (value, columnIndex, row) => {
+      if (columnIndex === 1 && typeof value === "number") {
+        return <strong>${value.toFixed(2)}</strong>;
+      }
+      return null;
+    },
+  }}
+/>
+```
+
+`renderCell(value, columnIndex, row)` receives the original exact value, a
+zero-based column index, and the original `ChartDataRow`, including its stable
+ID. Return a React node to render badges, links, a `Sparkline`, a `RangePlot`, or
+application content. Returning `null` or `undefined` retains the normal value or
+`missingValueLabel`; zero remains a value. Custom renderers should retain exact
+values and accessible names, and handle units and comparison baselines explicitly.
+Formatting does not change `onRowSelect` IDs.
+
+Column options apply to the heading and cells: `alignment` (`start`, `center`,
+`end`), `isNumeric` (default end alignment), `width`, `minWidth`, and `whiteSpace`
+(`normal` or `nowrap`). Rich cells and sortable headings wrap unless overridden; plain tables retain
+their existing layout. Table overflow stays inside the disclosure. `maxHeight`
+defaults to 360px; use `"none"` for natural height.
+
+Column headings stay visible while the table scrolls vertically; set
+`stickyHeader: false` to opt out. `pinnedColumnCount` retains leading columns
+during horizontal scrolling (default zero). Pinning uses measured widths and
+logical inline positioning, including right-to-left layouts. As the viewport
+narrows or text grows, fewer leading columns pin so that at least half the
+scroll region remains available for other data, with room for complete sort
+controls and their focus rings. Combining a row's region and
+zone in one identifying cell preserves complete context on a phone.
+
+Set `allowsSorting: true` on individual columns to show header buttons. Activate
+a heading with pointer, Enter, or Space to cycle ascending, descending, then
+application order. Sorting applies only to the supplied table rows and never
+mutates them, changes plot order, or calls `onRowSelect`. Numbers sort numerically;
+strings use the current React Aria locale with natural numeric collation. Equal
+values retain their original order; null and nonfinite numbers remain last in
+either direction. Rich rendering does not affect sorting. If values are already
+formatted, supply `getSortValue(value, row)` on the column to return an original
+number or string; currency, dates and units are not parsed automatically.
+
+Use `defaultSortDescriptor: { column: 1, direction: "ascending" }` for an initial
+sort, or control it with `sortDescriptor` and `onSortChange`. The descriptor uses
+the column/direction shape familiar from DataGrid, with a zero-based column index.
+Controlled clicks emit a request; display changes only when the prop updates.
+Explicit `null` restores application order. Removing a column's sorting capability
+also restores application order. Sorting preserves row IDs, mounted cell state,
+and the current sort through ordinary record refreshes.
+
+The example keeps cost and change in separate numeric columns and puts the
+comparison baseline in the heading. Applications supply the changes and their
+meaning; the table does not infer whether a positive or negative change is good.
+
+Custom content mounts on first opening and remains mounted when folded again,
+preserving local state. Plain exact values remain available before it mounts.
+Standalone `ChartDataView` uses the same options and renders rich content
+immediately when no `disclosureLabel` is supplied.
+
+## States, scales, and themes
+
+- Use `variant` to choose the surrounding frame. `"card"` (the default) renders Easy UI's own bordered `Card` with padding. Use `"bare"` when a consumer already supplies its own surrounding Card and wants Chart's heading, description, plot, and data-table disclosure to render directly inside it, without nesting a second bordered Card. `aria-label`/`aria-busy` semantics on the chart region are identical in both variants.
+- Use `status` for loading, empty, and error. These states suppress stale plots and tables; `onRetry` delegates retry to the application. `notice` explains partial coverage or stale-but-intentionally-visible data.
+- The default status is empty when there are no table rows. Observed zero remains data. Engine import/render failures show `errorLabel`, call `onRenderError` once per failed attempt, and provide an in-place Retry button that reloads/reinitializes the engine using the latest props. Supplying changed option content also starts a fresh attempt; equivalent option objects, typography updates, and resize events do not repeatedly retry a failed engine. This recovery does not call the application's `onRetry`, which owns application data errors. Exact data remains available during an engine failure.
+- Use timestamps and an explicit time zone for full time series. Keep gaps; avoid implicit smoothing. Bar and area magnitudes start at zero. Bubble area, not radius, encodes quantity.
+- Assign stable `id` and explicit `itemStyle.color` values to series when filters or sorting can change their order. The engine's automatic palette is positional. Use patterns, labels, and reference lines when color alone is insufficient.
+- The frame reads resolved Easy UI CSS values and follows ThemeProvider changes. Animation is off by default and disabled under reduced-motion preferences. SVG is the default; choose canvas for dense plots.
+- The container resizes with its parent and disposes the engine and listeners on unmount. Changing options replaces previous series. Applications retain ownership of persisted zoom/filter state.
+
+If ECharts 6.1.0 throws while initializing an inside-zoom view, its own disposal can also throw. Chart contains that secondary error, releases the public renderer, and retries with a fresh engine. ECharts may retain the disposed instance in its internal registry on this exceptional path; Chart does not modify the engine's private registry.
+
+## Compose the surface and companions
+
+`Chart` remains the convenient complete composition. Its `title` and `description` are independently optional; an omitted value creates no empty heading or reserved gap. Set `aria-label` or `aria-labelledby` when the application supplies the visible heading, and `aria-describedby` to associate external explanatory content. Standard ARIA naming precedence applies.
+
+For application-owned layouts, import `ChartSurface`, `ChartProvider`, `ChartHeading`, `ChartZoomControls`, and `ChartDataView` from the same Chart entry point. `ChartSurface` requires only engine options; it renders no frame, heading, controls, or table and defaults to ready. It can stand alone or connect to independently positioned controls through a `ChartProvider`. Each provider owns one surface; use separate providers for separate charts. A native `ChartDataView` can sit outside that provider and supports exact values, missing data, and keyboard row selection. Its optional `disclosureLabel` adds a native disclosure; omit the label for a directly visible table.
+
+```tsx
+<ChartProvider>
+  <ChartHeading title="Shipment trends" titleId="shipment-heading" />
+  <ChartZoomControls target={{ dataZoomId: "time" }} />
+  <ChartSurface
+    option={option}
+    aria-labelledby="shipment-heading"
+    aria-describedby="shipment-data"
+  />
+  <ChartDataView
+    id="shipment-data"
+    title="Exact shipments"
+    dataTable={dataTable}
+  />
+</ChartProvider>
+```
+
+The application is responsible for supplying an equivalent data view and keyboard drill-down when composing a bare surface. A separately rendered `ChartDataView` stays available during engine loading or failure. The composed `Chart` already provides this behavior.
+
+<Canvas of={ChartStories.ExternalComposition} />
+<Canvas of={ChartStories.DescriptionWithoutTitle} />
+
+The `typography` prop uses the shared numeric roles `title`, `description`, `label`, `control`, `legend`, and `detail`, in CSS pixels. Defaults are 18/14/12/14/12/12. Pass the same values to independent companions when composing them. Role defaults reach HTML, SVG, and canvas, including analytical labels, legends, tooltips, and data views. Explicit engine-native text options override the corresponding defaults. Typography and font loading trigger engine layout updates; the component does not reduce consumer-supplied font sizes to fit.
+
+## Loading and package cost
+
+ECharts is an optional peer, dynamically imported only when a ready chart mounts. It is external to the Easy UI package output, so importing buttons or KPI cards does not import a chart engine. SSR emits the frame, loading label, and exact table; rendering initializes on the client. The ESM and CommonJS entry points use the same lazy loading path.
+
+The isolated production gallery measured the full engine chunk at approximately 1.14 MB minified / 382 KB gzip. This deliberate breadth supports specialist charts through one engine. Route-level lazy loading remains appropriate for analytical screens. The SVG sparkline retains its dependency-free implementation.
+
+<ArgTypes of={ChartStories.TimeSeries} />
+
+## Lightweight alternatives
+
+Use `MetricCard` and `Sparkline` for KPI summaries and compact trends, `BarList` for category comparisons, or `BulletChart` for a measure against a target. These components use native SVG/HTML/CSS and never import ECharts. Keep the full engine for analytical views that need its axes, layouts, and interactions. See `documentation/specs/DataVisualization.md` for reproducible bundle measurements and their limits.

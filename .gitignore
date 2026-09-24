@@ -4,4 +4,25 @@
 node_modules
 dist
 storybook-static
+docs-site/api/
+docs-site/storybook/
+docs-site/comparisons/
+docs-site/maps/
+docs-site/.nojekyll
+docs-site/revision.txt
 *.tsbuildinfo
+
+.viewrule-engine/
+scripts/preview-metrics/dist-guide/
+
+# Package-root compatibility files generated from easy-ui-react/dist.
+/easy-ui-react/[A-Z]*/
+# On case-insensitive filesystems, the component pattern also matches src.
+!/easy-ui-react/src/
+/easy-ui-react/utilities/
+/easy-ui-react/visualization/
+/easy-ui-react/examples/
+/easy-ui-react/styles/
+/easy-ui-react/types.d.ts
+/easy-ui-react/style.css
+/easy-ui-react/.compatibility-entries.json

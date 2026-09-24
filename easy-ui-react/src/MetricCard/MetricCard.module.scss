@@ -1,0 +1,42 @@
+@use "../styles/common" as *;
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: design-token("space.1");
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.label {
+  font-size: var(--ezui-viz-title-size, 18px);
+  color: design-token("color.neutral.700");
+}
+.supportingText {
+  font-size: var(--ezui-viz-description-size, 14px);
+  color: design-token("color.neutral.600");
+}
+.baseline,
+.comparisonLabel {
+  font-size: var(--ezui-viz-detail-size, 12px);
+}
+.baseline {
+  color: design-token("color.neutral.600");
+}
+.comparisonLabel[data-sentiment="positive"] {
+  color: design-token("color.neutral.900");
+}
+
+.value {
+  min-height: 40px;
+  color: design-token("color.neutral.900");
+  font-variant-numeric: tabular-nums;
+}
+
+.comparison {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: design-token("space.1");
+  overflow-wrap: anywhere;
+}

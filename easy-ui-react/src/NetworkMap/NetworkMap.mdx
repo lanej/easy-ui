@@ -1,0 +1,273 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as NetworkMapStories from "./NetworkMap.stories";
+
+<Meta of={NetworkMapStories} />
+
+# NetworkMap
+
+An optional MapLibre geographic surface for parcel journeys, warehouse flows and carrier facility operations. The basemap supplies streets and cities across national, regional and local zoom levels. Easy UI adds collision-managed facility labels, evidence-aware connections, controlled selection, scoped risk and weather layers, and an equivalent HTML data view.
+
+```sh
+npm install maplibre-gl@^6.9.0
+```
+
+```tsx
+import { useState } from "react";
+import {
+  NetworkMap,
+  MapFacility,
+  MapSegment,
+} from "@easypost/easy-ui/NetworkMap";
+import "maplibre-gl/dist/maplibre-gl.css";
+// Vite example: bundle the MapLibre module worker and pass the emitted URL.
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
+// Also import Easy UI's normal stylesheet and render inside ThemeProvider.
+
+const facilities: MapFacility[] = [
+  {
+    id: "sort",
+    label: "Detroit sort",
+    kind: "hub",
+    coordinates: [-83.18, 42.37],
+  },
+  {
+    id: "delivery",
+    label: "Dearborn distribution",
+    kind: "delivery",
+    coordinates: [-83.215, 42.307],
+  },
+];
+const segments: MapSegment[] = [
+  {
+    id: "transfer",
+    from: "sort",
+    to: "delivery",
+    label: "Observed Detroit → Dearborn handoff",
+    evidence: "transfer",
+  },
+];
+function Journey({ mapStyle }) {
+  const [selected, setSelected] = useState("delivery");
+  return (
+    <NetworkMap
+      title="Parcel journey"
+      description="Last observed handoffs · Sep 13, 2026 · UTC"
+      mapStyle={mapStyle}
+      workerUrl={workerUrl}
+      facilities={facilities}
+      segments={segments}
+      selectedFacilityId={selected}
+      onFacilitySelect={setSelected}
+      selectedSegmentId="transfer"
+      latestFacilityId="delivery"
+      controlLabels={{ fitAll: "Entire journey" }}
+    />
+  );
+}
+```
+
+`workerUrl` is required. MapLibre 6's module worker must be emitted by the application build. The Vite example above bundles the worker and its imports. With another bundler, emit the equivalent module worker, or serve MapLibre's worker and its `maplibre-gl-shared.mjs` dependency together and pass that URL. Use the same installed MapLibre version and keep the URL stable across all maps: MapLibre shares its worker configuration/pool within the application. A restrictive CSP must allow the chosen worker source. Map code and worker failures preserve exact data; stalled initialization offers Retry after 30 seconds.
+
+`mapStyle` is required. Choose a provider, retain its attribution, and configure its authentication, usage terms and availability in the application. The examples use the keyless OpenFreeMap Positron vector style with OpenMapTiles/OpenStreetMap attribution; this is an example provider choice, not a production service entitlement. Vector tiles, style assets and font files are additional viewport-dependent network requests. The component does not request customer records or compute routes or predictions.
+
+## Independent composition and naming
+
+`title` and `description` are independently optional; existing `null` values remain supported. Omitted content produces no empty heading wrapper. Supply `aria-label` for a useful name without a visible heading, or `aria-labelledby` to associate a caller-owned heading. `aria-describedby` can reference surrounding context and an externally placed data view. Without either naming prop, the surface uses its title or “Map”.
+
+`NetworkMap` composes the following exported parts. `NetworkMapProvider` shares one surface's records, layer visibility, camera commands and selection; it adds no layout wrapper. Place its companions anywhere within that provider:
+
+```tsx
+<NetworkMapProvider
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  surface={surface}
+  aria-labelledby="delivery-heading"
+  aria-describedby="delivery-records"
+  defaultLayerVisibility={{ deliverySurface: true }}
+>
+  <h2 id="delivery-heading">Delivery time</h2>
+  <aside>
+    <NetworkMapControlPanel />
+  </aside>
+  <NetworkMapSurface />
+  <NetworkMapLegend />
+  <NetworkMapDataView id="delivery-records" expanded />
+</NetworkMapProvider>
+```
+
+`NetworkMapHeading` and `NetworkMapSelectionDetails` are optional companions too. The control panel omits inapplicable actions; the legend includes only supplied visible layers. A surface-only or weather-only map requires no facility or segment arrays, logistics legend, or location disclosure. `NetworkMapDataView` renders the supplied layer records even when the engine fails; keep it, or associate your own equivalent data and keyboard interactions when composing a minimal surface.
+
+`NetworkMapSurface` also accepts the map props directly when used without a provider. It renders the viewport, attribution, loading/retry messages and configured native navigation/scale, with no surrounding heading, toolbar, legend, selected record, or data disclosure. Use one surface per provider.
+
+## Typography and layout
+
+`typography` accepts positive CSS-pixel sizes for `title`, `description`, `label`, `control`, `legend`, and `detail`. Defaults are 18, 14, 12, 14, 12, and 12 respectively. `label` reaches facility and MapLibre cluster labels and the distance scale; `detail` reaches exact tables and attribution. Font changes remeasure DOM labels and update engine text without replacing the map. Label placement uses measured height and width, reserves native-control space, and refreshes after font loading or resizing. Explicit consumer engine styling retains the documented paint ownership.
+
+The default selected record sits below the viewport and wraps long descriptions, including at a short map height or larger text sizes. With `NetworkMapProvider`, put the selection companion in a side panel or another application-owned region. Ordinary data, typography, visibility and callback updates preserve the map instance and user camera. Updating only interaction state avoids re-uploading unchanged GeoJSON sources; supply new immutable arrays/objects when changing records.
+
+<Canvas of={NetworkMapStories.LayerOnlyComposition} />
+
+## Three investigations
+
+<Canvas of={NetworkMapStories.ParcelJourney} />
+
+Seven scans across five observed facilities, four observed transfers, and one planned delivery leg. Entire journey fits the national handoffs; Selected leg fits both facilities; Latest events locates the last observation at street scale. An observation is not a live parcel position. Selecting a scan is an explicit camera request.
+
+<Canvas of={NetworkMapStories.ShipperFlow} />
+
+Three warehouses feed a delivery network. The origin filter updates the full daily flow and its relative line widths; a separately identified five-parcel sample drives the investigation sidebar. Parcel promise-miss risk and facility-cohort exception risk have different events and denominators. Selecting a facility links to a sampled parcel last observed there, or states that the sample contains none.
+
+<Canvas of={NetworkMapStories.CarrierOperations} />
+
+Regional throughput, expected volume, operating capacity, dwell, backlog and conditional exception risk. Current, stale and unavailable facility scores remain distinct. A forecast polygon carries its source and valid interval. Weather exposure does not establish the cause of a delay.
+
+## Camera, selection and labels
+
+Facilities have stable IDs; segments reference their endpoints. `selectedFacilityId` and `onFacilitySelect` control selection across markers and table rows. Provide the callback to enable selection. `selectedSegmentId` emphasizes a connection and makes Selected leg available when its geometry can be fitted. `latestFacilityId` identifies the last observed facility, never an interpolated position.
+
+When a linked panel already shows the selected facility's identity and decision fields, set `showSelectionDetails={false}` to omit the duplicate details. The default details use normal document flow below the map, keeping geography and attribution unobscured. Marker selection, equivalent table selection, and callbacks remain active. The card is visible by default.
+
+`initialView` applies once. Without it, the initial camera fits the supplied facilities, or supplied layer extents when there are no facilities. Dateline connections use split geometry and wrapped world copies to retain the short crossing. To request a later camera change, supply `focus={{ revision, facilityIds, maxZoom }}` and change `revision`. A caller with no facilities to fit — e.g. a delivery-time-surface-only view — can instead supply `focus={{ revision, facilityIds: [], bounds, maxZoom }}`; `bounds` (`{ minLat, maxLat, minLon, maxLon }`) wins over `facilityIds` whenever both are present. Data, selection and layer updates preserve manual pan/zoom. Keep the `mapStyle` object stable: replacing it recreates the map. The controls honor reduced motion. MapLibre also supports keyboard arrows and +/- on its canvas, zoom buttons, pan gestures and cooperative scrolling.
+
+`labelMinZoom` progressively reveals local facilities. Selected, last-observed and `primaryFacilityIds` labels receive priority; collision placement hides lower-priority labels when space is insufficient. Marker buttons and the data table retain complete names. Repeated scans at one facility should share one facility ID and one marker. This component is intended for bounded investigation cohorts; use a server-filtered or clustered source for very large fleets.
+
+## Styling through the map instance
+
+`onMapReady` receives the initialized map after the component's first source and paint updates. It runs once per map instance, including a replacement instance after changing `mapStyle` or `workerUrl`. Retain the instance to manage application-owned layers or later updates.
+
+Paint overrides set through this callback or the retained instance survive data, selection, and layer-visibility changes. When you override `easy-ui-observed`'s `line-color`, your expression owns that property's selection behavior. To return to automatic color styling, unset it with `map.setPaintProperty("easy-ui-observed", "line-color", null)`; the next component update restores the current automatic color expression. Source data and visibility continue updating while a paint override is active. An independent halo identifies the selected segment across every evidence type without replacing supplied colors or evidence dashes.
+
+## Controls and layer visibility
+
+`controls` configures the built-in toolbar, navigation buttons and scale. Each flag defaults to `true`; toolbar controls appear only when their data or selection applies. An explicit `true` retains that applicability check. Set an individual flag to `false` to hide it, or use `controls={false}` to hide all built-in controls. Provider attribution uses compact mode at every map width: credits are shown initially, collapse when the map is dragged, and remain available through the attribution button. Hiding controls does not remove attribution, map data or change layer visibility.
+
+| Flag              | Appears when enabled and…                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| `fitAll`          | Facilities have locations that can be fitted.                                              |
+| `selectedSegment` | The selected segment is drawable and has valid facility endpoints.                         |
+| `latestEvent`     | `latestFacilityId` identifies a facility with a valid location.                            |
+| `risk`            | A facility with a valid location has a finite risk probability from 0 through 1.           |
+| `weather`         | `areas` include renderable polygons.                                                       |
+| `deliverySurface` | `surface` includes a valid cell with an available estimate and positive observation count. |
+| `navigation`      | The map is initialized; supplies zoom controls independently of facility data.             |
+| `scale`           | The map is initialized; supplies the distance scale independently of facility data.        |
+
+Use `controlLabels` to replace any toolbar label: `fitAll`, `selectedSegment`, `latestEvent`, `risk`, `weather`, or `deliverySurface`. The default fit label is "Fit all locations"; the parcel journey examples explicitly use `controlLabels={{ fitAll: "Entire journey" }}`.
+
+Layer visibility is independent of these controls. `defaultLayerVisibility` initializes uncontrolled fields (`risk`, `weather`, `deliverySurface`) at mount; the defaults are `{ risk: true, weather: false, deliverySurface: false }`. Supply a field in `layerVisibility` to control it from application state. Omitted fields remain uncontrolled and can still be toggled internally. `onLayerVisibilityChange` receives the proposed full visibility object when a built-in layer toggle changes; update your controlled fields to apply that change.
+
+For a surface with application-owned controls, keep its visibility in your own state:
+
+```tsx
+function SurfaceView({ mapStyle, surface }) {
+  const [visible, setVisible] = useState(true);
+  return (
+    <>
+      <label>
+        <input
+          type="checkbox"
+          checked={visible}
+          onChange={(event) => setVisible(event.target.checked)}
+        />
+        Show delivery time
+      </label>
+      <NetworkMap
+        title="Delivery time"
+        description="Median minutes by delivery area"
+        mapStyle={mapStyle}
+        workerUrl={workerUrl}
+        facilities={[]}
+        segments={[]}
+        surface={surface}
+        controls={false}
+        layerVisibility={{ deliverySurface: visible }}
+        initialView={{ center: [-83.18, 42.37], zoom: 9 }}
+      />
+    </>
+  );
+}
+```
+
+To keep the built-in toggle instead, supply `onLayerVisibilityChange={(next) => setVisible(next.deliverySurface)}` and omit `controls={false}`. To hide only selected controls, pass an object such as `controls={{ risk: false, weather: false, scale: false }}`; all other applicable controls retain their defaults.
+
+For migration, `networkControls={false}` still suppresses the default `fitAll`, `selectedSegment`, `latestEvent`, and `risk` controls. Explicit individual flags take precedence, so `networkControls={false}` with `controls={{ fitAll: true }}` restores Fit all locations when applicable. Weather, delivery surface, navigation and scale are unaffected by this legacy option. Replace `initialDeliverySurfaceVisible` with `defaultLayerVisibility={{ deliverySurface: true }}`; the legacy prop remains a fallback when that default field is omitted, and a controlled `layerVisibility.deliverySurface` takes precedence over both.
+
+## Evidence and model outputs
+
+- `transfer`: observed endpoints, drawn as a solid connection. It does not establish the road traveled.
+- `measured`: supplied path geometry, required in `coordinates`; invalid or absent geometry is omitted.
+- `planned` / `inferred`: dashed connections with explicitly identified evidence.
+- `volume`: nonnegative flow count, mapped to relative line width within the supplied cohort. Put the time window and unit in the description and segment label.
+- `risk`: caller-supplied probability, comparable baseline, event, horizon, cohort, output time and freshness status. Current scores at or above 15% use the elevated visual treatment; stale/unavailable scores use an unknown treatment. Missing values never become zero.
+- `color` (facility): optional caller-supplied marker fill color, any valid CSS color. Falls back to the kind-based scheme when absent; risk and selection treatments still layer on top.
+- `areas`: application-filtered observed or forecast polygons with source and validity interval. The application owns authorization, freshness, geometry and time filtering.
+
+## Delivery-time surface
+
+<Canvas of={NetworkMapStories.ShipperFlow} />
+
+`surface` renders an optional fill layer over delivery-time grid cells (`MapSurfaceCell`). The switch appears when at least one valid cell has a finite nonnegative estimate and a finite positive observation count. Color follows median minutes: blue at zero, yellow around 60, and red at 120 or above. A genuine zero-minute estimate remains blue.
+
+Cells with missing or invalid estimates, or without observations, are unfilled and excluded from the quantitative color ramp. Their supplied values remain in the source records; a missing estimate is never replaced with zero. The visible layer includes a legend explaining this distinction.
+
+Opacity compares each drawable cell's observation count with the largest count among drawable cells. Unsupported cells do not affect that denominator. This represents relative sample volume, not statistical confidence or a measure of prediction accuracy. `iqrMinutes` records spread when supplied; the component does not derive uncertainty from `n`.
+
+For a consumer whose primary content is this surface, set `defaultLayerVisibility={{ deliverySurface: true }}` to show it initially, or control it with `layerVisibility`. The default is hidden. It can remain visible even when `controls.deliverySurface` is `false` or all controls are hidden.
+
+### Inspect a cell's distribution
+
+Hover a rendered cell for a detail card near the pointer; click or tap to keep it open. The card stays within the viewport, scrolls when needed, and reserves space for attribution. Move into the card to read it, use Close or Escape to dismiss it, or click elsewhere to close a pinned card. Pinned cards follow their cell as the camera moves and read the latest snapshot by geographic bounds; removed cells, hidden layers, and map reloads clear the card.
+
+The default content includes median, IQR width, observation count, source and timestamp. Supply observed quartiles and endpoints to add a native `RangePlot` showing the middle 50%, minimum, median and maximum:
+
+```tsx
+const cell: MapSurfaceCell = {
+  latMin: 42.28,
+  latMax: 42.34,
+  lonMin: -83.26,
+  lonMax: -83.16,
+  medianMinutes: 26,
+  iqrMinutes: 9,
+  n: 240,
+  distribution: { minMinutes: 8, q1Minutes: 23, q3Minutes: 32, maxMinutes: 78 },
+};
+```
+
+These values must come from the application. A median and IQR width alone do not determine quartile endpoints or a histogram. When a distribution is absent or invalid, the card retains the summary without inventing a chart. Supplied distributions are also available through **Inspect cell** in the exact-data table, including when the layer is hidden or WebGL fails. Charts in that table mount only when their detail is expanded.
+
+`NetworkMapCellDetails` exports the default engine-free content for use in an application panel. For a histogram, trend, fetched detail, or domain-specific units, replace the content using `renderCellDetails`. It receives the original cell, surface metadata, and active metric; returning `null` omits a map card for that cell. Both map inspection and the exact-data detail use this renderer.
+
+The renderer accepts any React content, including `Chart`, a native plot, another chart library, controls, loading/error states, or a combination. Supply `children` to `NetworkMapCellDetails` to replace only its plot while retaining median, IQR, observation count, active metric and provenance. Omit children to keep the default range plot; pass `null` to omit the plot entirely. Focusing an embedded control pins the inspector without moving focus away from that control.
+
+```tsx
+<NetworkMap
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  surface={surface}
+  renderCellDetails={(context) => (
+    <NetworkMapCellDetails {...context}>
+      <DeliveryHistogram observations={lookupObservations(context.cell)} />
+    </NetworkMapCellDetails>
+  )}
+  onCellHover={(cellOrNull) => highlightCell(cellOrNull)}
+  onCellSelect={(cell) => selectCell(cell)}
+/>
+```
+
+<Canvas of={NetworkMapStories.RichCellInspection} />
+
+The RichCellInspection recipe switches between a histogram, an estimated density curve and an independent daily-median history. Histogram bins and density estimates come from supplied synthetic observations, not from the cell's median or IQR. Equal-width bins state their interval boundaries and preserve empty bins; the curve declares its kernel bandwidth and density units. The application owns binning, estimation, history and sample lookup. Consumers with precomputed bins or density points can pass those straight to their chosen chart. The map has no chart-type registry or statistical inference layer.
+
+Keep a hover chart compact, include units and exact data, and let users pin it before sustained interaction. The same renderer runs in the map's keyboard-accessible details; custom charts should remain usable there. Optional chart engines load only when the corresponding content mounts. `showCellDetails={false}` with the existing callbacks supports a larger external inspector when a dashboard does not fit the map card.
+
+Set `showCellDetails={false}` to use an external inspector. Hover/select callbacks and equivalent data remain available; facility selection is independent. `onCellHover(null)` clears transient hover on pointer exit, camera movement, hiding/removing the cell, or map cleanup. Neither callback receives a reconstructed vector-tile copy of the application record.
+
+### Configure the surface scale
+
+`deliverySurfaceColorScale` accepts `{ value, color }` stops for the default median layer. `surface.metrics` can supply named alternatives (`{ key, label, field, colorScale }`), where `field` is `medianMinutes`, `iqrMinutes`, or `n`. The toolbar switches one metric at a time, with its own scale. Supply an appropriate scale for counts or other ranges; omit both options to retain the original 0–120-minute ramp and relative-count opacity. This changes presentation, not the supplied records or statistical meaning.
+
+## Accessibility, failure and packaging
+
+Marker buttons have full accessible names and controlled pressed state. Table rows offer equivalent selection, including records whose labels are hidden. The exact-data disclosure includes risk event, horizon, cohort, baseline and output timestamp; segment descriptions provide transfer evidence. Weather records retain coordinates, observation/forecast status, source and validity times. Surface records retain exact bounds, median, IQR, count, source and timestamp, including missing values and true zero. These records remain available regardless of layer visibility. Loading and failure states preserve this data. Initialization failures offer Retry; tile failures surface a reload notice and `onRenderError`. A basemap is an additional spatial view, not the only way to inspect or select records.
+
+The `NetworkMap` entry keeps MapLibre as an optional peer and loads it dynamically on mount. Importing and server-rendering the entry does not initialize WebGL; its HTML data view and loading state render on the server. Native charts and ECharts do not import this entry. Import the MapLibre CSS only in the application's map route. The published Easy UI stylesheet includes the small component wrapper styles, consistent with other components. See `scripts/preview-maps` for production bundle measurements, an independent native SVG control, browser interaction checks and actual Chrome, Firefox and Safari captures.

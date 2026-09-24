@@ -6,30 +6,67 @@
     "url": "git+https://github.com/EasyPost/easy-ui.git",
     "directory": "easy-ui-react"
   },
+  "files": [
+    "dist",
+    "/[A-Z]*/**",
+    "utilities/",
+    "visualization/",
+    "examples/",
+    "styles/",
+    "/types.d.ts",
+    "style.css",
+    "!src/**"
+  ],
   "exports": {
+    "./package.json": "./package.json",
+    "./types": {
+      "types": "./dist/types.d.ts"
+    },
+    "./style.css": "./dist/style.css",
+    "./styles/*": "./dist/styles/*",
+    "./utilities/*.js": "./dist/utilities/*.js",
+    "./utilities/*.mjs": "./dist/utilities/*.mjs",
+    "./utilities/*.d.ts": "./dist/utilities/*.d.ts",
+    "./utilities/*": {
+      "types": "./dist/utilities/*.d.ts",
+      "import": "./dist/utilities/*.mjs",
+      "require": "./dist/utilities/*.js"
+    },
+    "./*.js": "./dist/*.js",
+    "./*.mjs": "./dist/*.mjs",
+    "./*.d.ts": "./dist/*.d.ts",
+    "./*/index": {
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs",
+      "require": "./dist/*/index.js"
+    },
     "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*.mjs",
-      "require": "./dist/*.js",
-      "default": "./dist/*"
+      "types": [
+        "./dist/*/index.d.ts",
+        "./dist/*.d.ts"
+      ],
+      "import": "./dist/*/index.mjs",
+      "require": "./dist/*/index.js"
     }
   },
   "sideEffects": [
-    "**/*.css"
+    "**/*.css",
+    "**/*.scss"
   ],
   "publishConfig": {
     "access": "public",
     "directory": "dist"
   },
   "scripts": {
-    "build": "rm -rf dist && run-p build:js build:types",
+    "build": "rm -rf dist && run-p build:js build:types && node ../scripts/generateCompatibilityEntries.mjs",
     "build:js": "vite build",
     "build:types": "tsc --build",
-    "clean": "rm -rf node_modules dist .turbo",
+    "clean": "node ../scripts/generateCompatibilityEntries.mjs --clean && rm -rf node_modules dist .turbo",
     "dev": "npm run --prefix .. start:storybook",
     "lint": "run-p lint:*",
     "lint:js": "eslint src --ext .ts,.tsx",
     "lint:styles": "stylelint 'src/**/*.{css,scss}'",
+    "prepare": "cd .. && npm run build --workspace=@easypost/easy-ui-tokens --workspace=@easypost/easy-ui-icons --if-present; cd easy-ui-react && npm run build",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -56,7 +93,9 @@
   "peerDependencies": {
     "react": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
     "react-dom": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
-    "react-is": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+    "react-is": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+    "echarts": "^6.1.0",
+    "maplibre-gl": "^6.9.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -76,6 +115,16 @@
     "react-is": "^19.0.0",
     "sass": "^1.89.2",
     "vite-plugin-react-remove-attributes": "^1.0.3",
-    "vite-plugin-static-copy": "^3.1.2"
+    "vite-plugin-static-copy": "^3.1.2",
+    "echarts": "6.1.0",
+    "maplibre-gl": "6.9.0"
+  },
+  "peerDependenciesMeta": {
+    "echarts": {
+      "optional": true
+    },
+    "maplibre-gl": {
+      "optional": true
+    }
   }
 }

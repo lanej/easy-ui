@@ -75,6 +75,102 @@ describe("<DataGrid />", () => {
     expect(getOuterContainer()).toContainElement(getFooter());
   });
 
+  it("supports an uncapped height and explicit height limits", () => {
+    const { rerender } = render(createDataGrid({ maxRows: "all" }));
+    expect(getOuterContainer()).toHaveStyle({ maxHeight: "none" });
+    rerender(createDataGrid({ maxRows: 8, maxHeight: 240 }));
+    expect(getOuterContainer()).toHaveStyle({ maxHeight: "240px" });
+    rerender(createDataGrid({ maxRows: "all", maxHeight: "60vh" }));
+    expect(getOuterContainer()).toHaveStyle({ maxHeight: "60vh" });
+  });
+
+  it("applies column sizing and numeric alignment to headers and data cells", () => {
+    render(
+      createDataGrid({
+        columnOptions: {
+          email: { width: "40%", minWidth: 180, isNumeric: true },
+        },
+      }),
+    );
+    for (const cell of [
+      getColumn("Email"),
+      getAllByRole(getRow(1), "gridcell")[0],
+    ]) {
+      expect(cell).toHaveStyle({
+        width: "40%",
+        minWidth: "180px",
+        textAlign: "end",
+      });
+      expect(cell.firstElementChild).toHaveAttribute(
+        "class",
+        expect.stringContaining("numeric"),
+      );
+    }
+    expect(getColumn("Name")).not.toHaveAttribute("style");
+  });
+
+  it("allows explicit numeric alignment and wrapping without replacing rows", () => {
+    const { rerender } = render(
+      createDataGrid({
+        columnOptions: { email: { isNumeric: true, alignment: "center" } },
+      }),
+    );
+    expect(getColumn("Email")).toHaveStyle({ textAlign: "center" });
+    expect(getAllByRole(getRow(1), "gridcell")[0]).toHaveStyle({
+      whiteSpace: "nowrap",
+    });
+    expect(getColumn("Email").style.whiteSpace).toBe("");
+    rerender(
+      createDataGrid({
+        columnOptions: { email: { isNumeric: true, whiteSpace: "normal" } },
+      }),
+    );
+    expect(getAllByRole(getRow(1), "gridcell")[0]).toHaveStyle({
+      whiteSpace: "normal",
+    });
+    rerender(
+      createDataGrid({
+        columnOptions: {
+          email: { alignment: "start", width: 250, whiteSpace: "normal" },
+        },
+      }),
+    );
+    for (const cell of [
+      getColumn("Email"),
+      getAllByRole(getRow(1), "gridcell")[0],
+    ]) {
+      expect(cell).toHaveStyle({
+        width: "250px",
+        textAlign: "start",
+        whiteSpace: "normal",
+      });
+      expect(cell.firstElementChild).not.toHaveAttribute(
+        "class",
+        expect.stringContaining("numeric"),
+      );
+    }
+  });
+
+  it("keeps column options attached to column keys when control columns are inserted", () => {
+    render(
+      createDataGrid({
+        selectionMode: "multiple",
+        rowActions: () => [],
+        columnOptions: { email: { alignment: "end", minWidth: 160 } },
+      }),
+    );
+    expect(getColumn("Email")).toHaveStyle({
+      textAlign: "end",
+      minWidth: "160px",
+    });
+    expect(getRow(1).children[2]).toHaveStyle({
+      textAlign: "end",
+      minWidth: "160px",
+    });
+    expect(getRow(1).children[0]).not.toHaveAttribute("style");
+    expect(getRow(1).children[3]).not.toHaveAttribute("style");
+  });
+
   it("should support a header variant", () => {
     render(createDataGrid({ headerVariant: "secondary" }));
     expect(screen.getByRole("grid")).toHaveAttribute(

@@ -1,0 +1,52 @@
+.native-review {
+  max-width: 1280px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.native-review[data-native-stress="long-labels"] {
+  width: min(100%, 320px);
+  padding: 16px;
+}
+.native-review header {
+  margin-bottom: 28px;
+}
+.native-review h1 {
+  font-size: 26px;
+}
+.native-review h2 {
+  font-size: 20px;
+  margin: 24px 0 16px;
+}
+.native-sparkline-case p,
+.native-review header p,
+.native-review header label {
+  font-size: 14px;
+}
+.native-review header label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.native-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 20px;
+}
+.native-grid > * {
+  min-width: 0;
+}
+.native-stack {
+  display: grid;
+  gap: 24px;
+}
+.native-sparkline-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.native-sparkline-case {
+  max-width: 100%;
+}
+.native-sparkline-case > div + div {
+  margin-top: 12px;
+}
