@@ -119,7 +119,9 @@ export async function auditChartComposition(
     const controlSize = await driver.evaluate(() =>
       parseFloat(
         getComputedStyle(
-          document.querySelector("[data-external-chart-controls] button"),
+          document.querySelector(
+            "[data-external-chart-controls] button > span > span",
+          ),
         ).fontSize,
       ),
     );
@@ -267,7 +269,9 @@ export async function auditChartComposition(
           type: {
             title: textSize("#external-chart-title"),
             description: textSize("#external-chart-description"),
-            control: textSize("[data-external-chart-controls] button"),
+            control: textSize(
+              "[data-external-chart-controls] button > span > span",
+            ),
             detail: textSize("#external-chart-data table"),
           },
         };
