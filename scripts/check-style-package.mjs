@@ -76,7 +76,7 @@ const sassSource = `
 const typeSource = `
 import { Chart, ChartLegend } from "@easypost/easy-ui/Chart";
 import { NetworkMapCellDetails } from "@easypost/easy-ui/NetworkMap";
-import { MetricCard } from "@easypost/easy-ui/MetricCard";
+import { MetricCard, type MetricCardProps, type MetricContentProps } from "@easypost/easy-ui/MetricCard";
 import { Button } from "@easypost/easy-ui/Button";
 import { DataGrid } from "@easypost/easy-ui/DataGrid";
 import { Select } from "@easypost/easy-ui/Select";
@@ -101,6 +101,9 @@ const heading: Heading = "h2";
 const icon: IconSymbol = () => null;
 const responsive: ResponsiveProp<string> = { sm: "1rem" };
 const className: string = classNames("packed", false);
+const metricCardWithoutTrend: "trend" extends keyof MetricCardProps ? false : true = true;
+const metricContentWithoutTrend: "trend" extends keyof MetricContentProps ? false : true = true;
+void [metricCardWithoutTrend, metricContentWithoutTrend];
 
 export const example = <>
   <ChartLegend items={[{name: "Ground", color: "#007f86", selected: true, symbol: "bar"}]} onItemToggle={(name: string) => { void name; }} />
@@ -148,7 +151,7 @@ const insideConsumer = (file) => {
   assert.ok(!relative(process.cwd(), path).startsWith(".."), "Dependency escaped isolated consumer: " + path);
   return path;
 };
-for (const subpath of ["Chart", "Chart/index", "MetricCard", "Sparkline", "NetworkMap", "utilities/css"]) {
+for (const subpath of ["Chart", "Chart/index", "MetricCard", "NetworkMap", "utilities/css"]) {
   const specifier = "@easypost/easy-ui/" + subpath;
   insideConsumer(require.resolve(specifier));
   insideConsumer(fileURLToPath(import.meta.resolve(specifier)));
@@ -160,6 +163,11 @@ for (const subpath of ["Chart", "Chart/index", "MetricCard", "Sparkline", "Netwo
 for (const subpath of ["Chart/index.js", "Chart/index.mjs", "utilities/css.js", "utilities/css.mjs"]) {
   insideConsumer(require.resolve("@easypost/easy-ui/" + subpath));
   await import("@easypost/easy-ui/" + subpath);
+}
+for (const subpath of ["Sparkline", "Sparkline/index", "Sparkline/index.js", "Sparkline/index.mjs"]) {
+  const specifier = "@easypost/easy-ui/" + subpath;
+  assert.throws(() => require.resolve(specifier), { code: "MODULE_NOT_FOUND" });
+  await assert.rejects(import(specifier), { code: "ERR_MODULE_NOT_FOUND" });
 }
 for (const load of [require, (specifier) => import(specifier)]) {
   const { ThemeProvider } = await load("@easypost/easy-ui/Theme");

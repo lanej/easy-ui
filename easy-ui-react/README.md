@@ -1,5 +1,8 @@
 # Easy UI
 
+Node.js 22.12 or newer is required to install and build this package, including
+the default MapLibre dependency. MapLibre is loaded only when a map is rendered.
+
 [Easy UI](https://github.com/EasyPost/easy-ui) is a component library designed to help developers create the best experience for shippers who use EasyPost.
 
 ## Getting Started
@@ -47,6 +50,12 @@ function App() {
 See our [Storybook](https://main--63f50c7c86f6514d2e0ef4be.chromatic.com/) for detailed component documentation.
 
 Packages support TypeScript's legacy `moduleResolution: "node"` as well as modern export-aware resolution. The build generates package-root component entries, deep declarations such as `DataGrid/types` and `Select/SelectField`, flat utilities, and CSS/Sass compatibility files that forward to or copy the canonical `dist` outputs. These retain the original named exports; a default export is forwarded only when the target actually provides one. No application `tsconfig` changes are required.
+
+### Map components
+
+Map components use MapLibre GL JS `^6.9.0`, installed automatically as an Easy UI dependency. The renderer is fixed, not a pluggable engine. Map code remains lazy-loaded, so importing other components or server-rendering a map does not initialize MapLibre or WebGL.
+
+Applications using maps must still import CSS and emit the module worker, passing the worker URL and a basemap style to `NetworkMap` or `NetworkMapSurface`. Import `@easypost/easy-ui/NetworkMap/maplibre-gl.css` and bundle `@easypost/easy-ui/NetworkMap/maplibre-gl-worker.mjs` with your application's worker loader (in Vite, append `?worker&url`). These entries resolve Easy UI's installed MapLibre version, including in nested installs, without an application-level MapLibre dependency. The worker entry must be bundled rather than served directly. Basemap styles and tile sources are configurable without substituting another renderer; applications retain responsibility for provider attribution, access and availability.
 
 ### Sass entry points
 

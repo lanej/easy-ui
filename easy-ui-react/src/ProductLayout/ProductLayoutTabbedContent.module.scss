@@ -10,7 +10,7 @@
   padding-top: design-token("space.1.5");
   margin: 0 calc(#{design-token("space.2")} * -1);
   margin-bottom: calc(#{design-token("space.2")} * -1);
-  background: design-token("color.gray.000");
+  background: design-token("color.neutral.000");
 
   @include ProductLayout.breakpoint-large-screen {
     margin: 0;

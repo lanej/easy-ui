@@ -2,7 +2,8 @@ import { Meta, StoryObj } from "@storybook/react-vite";
 import { BulletChart } from "./BulletChart";
 
 const meta: Meta<typeof BulletChart> = {
-  title: "Components/BulletChart",
+  id: "components-bulletchart",
+  title: "Organisms/Charts/BulletChart",
   component: BulletChart,
 };
 export default meta;

@@ -1,6 +1,6 @@
 # Network intelligence maps
 
-Status: implemented for review in [Lane J draft PR #1](https://github.com/lanej/easy-ui/pull/1), together with charts, modular ECharts, View Rule guide examples, and grouped DataGrid. `NetworkMap` uses optional MapLibre GL JS with OpenFreeMap/OSM example tiles. Three stories cover parcel, shipper and carrier investigations. The ECharts map prototypes have been removed; analytical charts and parcel event timelines remain in the combined contribution. This document distinguishes the initial implementation from later adoption requirements.
+Status: implemented for review in [Lane J draft PR #1](https://github.com/lanej/easy-ui/pull/1), together with charts, modular ECharts, View Rule guide examples, and grouped DataGrid. `NetworkMap` uses required, lazy-loaded MapLibre GL JS with OpenFreeMap/OSM example tiles. Three stories cover parcel, shipper and carrier investigations. The ECharts map prototypes have been removed; analytical charts and parcel event timelines remain in the combined contribution. This document distinguishes the initial implementation from later adoption requirements.
 
 ## Problem and boundary
 
@@ -74,7 +74,7 @@ For multiple warehouses and large cohorts, the application queries and aggregate
 
 Use MapLibre GL JS for basemap rendering, camera controls, zoom-dependent layers and label placement. Choose a basemap style and tile source separately, with suitable coverage, attribution and availability. Preserve attribution in examples and supported application integrations. Account for CSS, workers and tile/style loading in the integration contract.
 
-Start with MapLibre sources and layers. Add deck.gl only if a measured density or rendering requirement justifies another engine dependency. Keep MapLibre behind an explicit optional package entry and lazy load it for map consumers; importing charts or native KPI components must not load map code, workers or tiles. Keep server rendering safe and provide a useful loading/error state and a non-map table/list alternative.
+Use MapLibre sources and layers as the fixed renderer; no alternate-engine adapter is exposed. MapLibre GL JS `^6.9.0` is a regular Easy UI dependency, installed automatically rather than an optional peer requiring a separate application install. Keep map code behind its explicit package entry and lazy load it for map consumers; importing charts or native KPI components must not load map code, workers or tiles. Basemap styles and tile sources remain separately configurable. Keep server rendering safe and provide a useful loading/error state and a non-map table/list alternative.
 
 The old ECharts map extension's 23.4 kB gzip figure measures the reference prototype only. It is not a budget or estimate for MapLibre. Measure JavaScript, CSS, worker assets, initial style/tile requests, memory and interaction latency separately on agreed parcel/facility workloads and mobile hardware. Report engine and basemap costs separately.
 
@@ -95,6 +95,6 @@ The first implementation must support the camera actions, prioritized labels, se
 - [x] Import/SSR and consumer-build checks establish optional loading; representative interaction checks and per-asset gzip measurements are reported. Full session transfer, memory and target-device latency remain follow-on gates.
 - [x] Actual screenshots and interaction evidence accompany review in Chrome, Firefox and Safari. Pixel equality alone is not a design-quality gate.
 
-The implementation includes the three fixture-based investigations, optional MapLibre entry, camera actions, directional observed transfers, progressive collision-managed labels, shared selection, exact data, risk and weather layers. See the PR description and `scripts/preview-maps` for the validation evidence.
+The implementation includes the three fixture-based investigations, lazy-loaded MapLibre entry, camera actions, directional observed transfers, progressive collision-managed labels, shared selection, exact data, risk and weather layers. See the PR description and `scripts/preview-maps` for the validation evidence.
 
 Follow-on capabilities remain separate: live model/data services, time playback, carrier/service query controls, automatic follow mode, viewport queries and high-density clustering, grouping labels with counts, model uncertainty intervals, explicit affected-cohort tables beyond the small example sample, and measured memory/latency budgets on target mobile hardware. They are not implied by the initial examples. Production tile choice and Figma approval remain adoption decisions.

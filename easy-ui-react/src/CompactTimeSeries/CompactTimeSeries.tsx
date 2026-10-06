@@ -70,6 +70,8 @@ export type CompactTimeSeriesProps = {
   missingValueLabel?: string;
   /** Exact-data disclosure text; defaults to "View data". */
   dataTableLabel?: string;
+  /** Show the raw-data disclosure; defaults to true. */
+  showDataTable?: boolean;
   /** Exact-table headings in series/time/value order; default to "Series", "Time", and "Value". */
   columnLabels?: readonly [string, string, string];
 };
@@ -94,6 +96,7 @@ export function CompactTimeSeries({
   invalidDataLabel = "Cannot plot these observations on the supplied scales",
   missingValueLabel = "Unavailable",
   dataTableLabel = "View data",
+  showDataTable = true,
   columnLabels = ["Series", "Time", "Value"],
 }: CompactTimeSeriesProps) {
   const { ref, width } = usePlotWidth();
@@ -289,7 +292,7 @@ export function CompactTimeSeries({
             : missingValueLabel}
         </p>
       )}
-      {series.some((item) => item.points.length) && (
+      {showDataTable && series.some((item) => item.points.length) && (
         <details className={styles.details}>
           <summary>{dataTableLabel}</summary>
           <div

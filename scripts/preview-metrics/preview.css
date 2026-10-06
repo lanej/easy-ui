@@ -70,11 +70,7 @@ h1 {
 .capacity-panel {
   grid-column: 1 / -1;
 }
-.capacity-panel .target-stack {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.comparison-grid h2,
-[aria-label="Compact trend examples"] h2 {
+.comparison-grid h2 {
   margin: 0 0 6px;
 }
 .panel-note {
@@ -87,28 +83,8 @@ h1 {
   display: grid;
   gap: 24px;
 }
-.sparkline-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  table-layout: fixed;
-}
-.sparkline-table th,
-.sparkline-table td {
-  text-align: left;
-  padding: 10px 8px;
-  border-bottom: 1px solid #e4e9f1;
-}
-.sparkline-table thead th {
-  color: #50647e;
-  font-size: 12px;
-  font-weight: 500;
-}
-.sparkline-table td:nth-child(2) {
-  font-variant-numeric: tabular-nums;
-}
-.sparkline-table td:last-child {
-  width: 30%;
+.capacity-panel .target-stack {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 [aria-label="Analytical chart examples"] {
   margin-top: 48px;
@@ -119,13 +95,6 @@ h1 {
   }
   .capacity-panel .target-stack {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .sparkline-table {
-    font-size: 12px;
-  }
-  .sparkline-table th,
-  .sparkline-table td {
-    padding: 8px 4px;
   }
 }
 

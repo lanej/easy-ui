@@ -5,11 +5,11 @@ import * as NetworkMapStories from "./NetworkMap.stories";
 
 # NetworkMap
 
-An optional MapLibre geographic surface for parcel journeys, warehouse flows and carrier facility operations. The basemap supplies streets and cities across national, regional and local zoom levels. Easy UI adds collision-managed facility labels, evidence-aware connections, controlled selection, scoped risk and weather layers, and an equivalent HTML data view.
+Set `showDataTable={false}` to omit raw layer tables from the convenience composition. The map, legend, controls, and selection details remain independent. Tables stay enabled by default; custom compositions can omit `NetworkMapDataView` entirely.
 
-```sh
-npm install maplibre-gl@^6.9.0
-```
+A MapLibre geographic surface for parcel journeys, warehouse flows and carrier facility operations. The basemap supplies streets and cities across national, regional and local zoom levels. Easy UI adds collision-managed facility labels, evidence-aware connections, controlled selection, scoped risk and weather layers, and an equivalent HTML data view.
+
+MapLibre GL JS `^6.9.0` is a required Easy UI dependency and installs automatically with Easy UI. There is no separate map-engine install step or interchangeable renderer. Basemap styles and tile sources remain application-configured; changing them does not replace MapLibre.
 
 ```tsx
 import { useState } from "react";
@@ -18,9 +18,9 @@ import {
   MapFacility,
   MapSegment,
 } from "@easypost/easy-ui/NetworkMap";
-import "maplibre-gl/dist/maplibre-gl.css";
+import "@easypost/easy-ui/NetworkMap/maplibre-gl.css";
 // Vite example: bundle the MapLibre module worker and pass the emitted URL.
-import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
+import workerUrl from "@easypost/easy-ui/NetworkMap/maplibre-gl-worker.mjs?worker&url";
 // Also import Easy UI's normal stylesheet and render inside ThemeProvider.
 
 const facilities: MapFacility[] = [
@@ -66,13 +66,15 @@ function Journey({ mapStyle }) {
 }
 ```
 
-`workerUrl` is required. MapLibre 6's module worker must be emitted by the application build. The Vite example above bundles the worker and its imports. With another bundler, emit the equivalent module worker, or serve MapLibre's worker and its `maplibre-gl-shared.mjs` dependency together and pass that URL. Use the same installed MapLibre version and keep the URL stable across all maps: MapLibre shares its worker configuration/pool within the application. A restrictive CSP must allow the chosen worker source. Map code and worker failures preserve exact data; stalled initialization offers Retry after 30 seconds.
+`workerUrl` is required. MapLibre 6's module worker must be emitted by the application build. The Vite example above bundles Easy UI's worker entry and its imports. Both public asset entries resolve MapLibre from Easy UI's own dependency, so nested installs and applications using another MapLibre version do not select the wrong worker or CSS. With another bundler, bundle the same worker entry and pass its emitted URL; the entry's bare package import is not a directly served worker URL. For unbundled hosting, serve the worker and its `maplibre-gl-shared.mjs` dependency from Easy UI's resolved MapLibre installation together. Keep the worker URL stable across all maps: MapLibre shares its worker configuration/pool within the application. A restrictive CSP must allow the chosen worker source. Map code and worker failures preserve exact data; stalled initialization offers Retry after 30 seconds.
 
 `mapStyle` is required. Choose a provider, retain its attribution, and configure its authentication, usage terms and availability in the application. The examples use the keyless OpenFreeMap Positron vector style with OpenMapTiles/OpenStreetMap attribution; this is an example provider choice, not a production service entitlement. Vector tiles, style assets and font files are additional viewport-dependent network requests. The component does not request customer records or compute routes or predictions.
 
 ## Independent composition and naming
 
 `title` and `description` are independently optional; existing `null` values remain supported. Omitted content produces no empty heading wrapper. Supply `aria-label` for a useful name without a visible heading, or `aria-labelledby` to associate a caller-owned heading. `aria-describedby` can reference surrounding context and an externally placed data view. Without either naming prop, the surface uses its title or “Map”.
+
+Set `showViewScale={false}` to omit the view-scale badge when a heading is present. Set `showLegend={false}` to omit the built-in legend. Neither changes the map's layers. A minimal convenience composition can use `controls={false}`, `showLegend={false}`, and `showDataTable={false}`, without a title or description. Provider attribution remains available.
 
 `NetworkMap` composes the following exported parts. `NetworkMapProvider` shares one surface's records, layer visibility, camera commands and selection; it adds no layout wrapper. Place its companions anywhere within that provider:
 
@@ -141,20 +143,297 @@ Paint overrides set through this callback or the retained instance survive data,
 
 `controls` configures the built-in toolbar, navigation buttons and scale. Each flag defaults to `true`; toolbar controls appear only when their data or selection applies. An explicit `true` retains that applicability check. Set an individual flag to `false` to hide it, or use `controls={false}` to hide all built-in controls. Provider attribution uses compact mode at every map width: credits are shown initially, collapse when the map is dragged, and remain available through the attribution button. Hiding controls does not remove attribution, map data or change layer visibility.
 
-| Flag              | Appears when enabled and…                                                                  |
-| ----------------- | ------------------------------------------------------------------------------------------ |
-| `fitAll`          | Facilities have locations that can be fitted.                                              |
-| `selectedSegment` | The selected segment is drawable and has valid facility endpoints.                         |
-| `latestEvent`     | `latestFacilityId` identifies a facility with a valid location.                            |
-| `risk`            | A facility with a valid location has a finite risk probability from 0 through 1.           |
-| `weather`         | `areas` include renderable polygons.                                                       |
-| `deliverySurface` | `surface` includes a valid cell with an available estimate and positive observation count. |
-| `navigation`      | The map is initialized; supplies zoom controls independently of facility data.             |
-| `scale`           | The map is initialized; supplies the distance scale independently of facility data.        |
+<div
+  role="region"
+  aria-label="Built-in map controls reference"
+  tabIndex={0}
+  style={{ overflowX: "auto" }}
+>
+  <table aria-label="Built-in map controls">
+    <thead>
+      <tr>
+        <th scope="col">Flag</th>
+        <th scope="col">Appears when enabled and…</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">
+          <code>fitAll</code>
+        </th>
+        <td>
+          Facilities, areas, surface cells, or overlays have locations that can
+          be fitted.
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>selectedSegment</code>
+        </th>
+        <td>
+          The selected segment is drawable and has valid facility endpoints.
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>latestEvent</code>
+        </th>
+        <td>
+          <code>latestFacilityId</code> identifies a facility with a valid
+          location.
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>risk</code>
+        </th>
+        <td>
+          A facility with a valid location has a finite risk probability from 0
+          through 1.
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>weather</code>
+        </th>
+        <td>
+          <code>areas</code> include renderable polygons.
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>deliverySurface</code>
+        </th>
+        <td>
+          <code>surface</code> includes a valid cell with an available estimate
+          and positive observation count.
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>navigation</code>
+        </th>
+        <td>
+          The map is initialized; supplies zoom controls independently of
+          facility data.
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>scale</code>
+        </th>
+        <td>
+          The map is initialized; supplies the distance scale independently of
+          facility data.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 Use `controlLabels` to replace any toolbar label: `fitAll`, `selectedSegment`, `latestEvent`, `risk`, `weather`, or `deliverySurface`. The default fit label is "Fit all locations"; the parcel journey examples explicitly use `controlLabels={{ fitAll: "Entire journey" }}`.
 
+### Caller-defined toolbar controls
+
+`toolbarControls` replaces the default toolbar with an ordered list of
+`NetworkMapToolbarControl` definitions. Names such as Facility risk and Weather
+are defaults, not required control types or labels. Include only the controls
+your application needs; `toolbarControls={[]}` omits the toolbar without hiding
+overlays, navigation, scale, or attribution. `controls={false}` remains the
+master opt-out for all built-in controls, including the configured toolbar.
+
+Each definition has a unique, nonempty `id`, a `label`, and optional `disabled`.
+The available types are:
+
+<div
+  role="region"
+  aria-label="Caller-defined toolbar control types reference"
+  tabIndex={0}
+  style={{ overflowX: "auto" }}
+>
+  <table aria-label="Caller-defined toolbar control types">
+    <thead>
+      <tr>
+        <th scope="col">Type</th>
+        <th scope="col">Binding</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">
+          <code>action</code>
+        </th>
+        <td>
+          <code>action: "fitAll"</code>, <code>"selectedSegment"</code>, or{" "}
+          <code>"latestEvent"</code>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>layer</code>
+        </th>
+        <td>
+          <code>layer: "risk"</code>, <code>"weather"</code>, or{" "}
+          <code>"deliverySurface"</code>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>overlay</code>
+        </th>
+        <td>
+          <code>overlayId</code> referencing any supplied GeoJSON overlay
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>button</code>
+        </th>
+        <td>
+          Caller-supplied <code>onPress</code> callback
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">
+          <code>surfaceMetrics</code>
+        </th>
+        <td>
+          The supplied surface metric radio choices; <code>label</code> names
+          their group
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+```tsx
+<NetworkMap
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  overlays={overlays}
+  toolbarControls={[
+    { id: "fit", type: "action", action: "fitAll", label: "Fit coverage" },
+    {
+      id: "zones",
+      type: "overlay",
+      overlayId: "delivery-zones",
+      label: "Delivery zones",
+    },
+    {
+      id: "observations",
+      type: "overlay",
+      overlayId: "observations",
+      label: "Scan observations",
+    },
+  ]}
+  onOverlayVisibilityChange={(overlayId, visible) => {
+    recordLayerPreference(overlayId, visible);
+  }}
+/>
+```
+
+An overlay checkbox controls all layers in that overlay, including fills and
+outlines, independently of the logistics-specific toggles. Without `visible`,
+each overlay manages its own visibility, initially `defaultVisible ?? true`.
+Defaults apply when an overlay ID first appears; toggles survive data updates
+and removing its checkbox. Removing the overlay itself clears its local
+preference. Supplying `visible` makes the overlay controlled: the visibility
+callback reports the requested change, and the parent must update `visible`.
+Hiding controls never changes that visibility. Layer toggles and styling updates
+retain the map instance and camera.
+
+Configured built-in actions and layer toggles still honor `controls` flags and
+data applicability. Missing overlay IDs and overlays with no rendering layers
+produce no checkbox. Explicit definitions own their labels; `controlLabels`
+only renames the default toolbar. All items are disabled until the engine is
+ready, and a definition's `disabled` can keep an individual item unavailable.
+
 Layer visibility is independent of these controls. `defaultLayerVisibility` initializes uncontrolled fields (`risk`, `weather`, `deliverySurface`) at mount; the defaults are `{ risk: true, weather: false, deliverySurface: false }`. Supply a field in `layerVisibility` to control it from application state. Omitted fields remain uncontrolled and can still be toggled internally. `onLayerVisibilityChange` receives the proposed full visibility object when a built-in layer toggle changes; update your controlled fields to apply that change.
+
+## Custom geographic overlays
+
+`overlays` accepts independent GeoJSON feature collections, including points,
+lines, polygons, multi-geometries, and geometry collections. Each `MapOverlay`
+has a stable `id`, `data`, optional `label` and `visible`, and an ordered `layers`
+array. Layers use MapLibre's circle, line, fill, symbol, heatmap, or fill-extrusion
+definitions, including filters, zoom limits, paint expressions and layout
+properties. Omit `source` and `source-layer`: the component manages each
+overlay's GeoJSON source. Overlay and layer IDs must be nonempty and unique
+within their respective scopes.
+
+```tsx
+<NetworkMap
+  aria-label="Service coverage"
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  controls={false}
+  showLegend={false}
+  showDataTable={false}
+  overlays={[
+    {
+      id: "coverage",
+      data: coverageGeoJSON,
+      visible: coverageVisible,
+      layers: [
+        {
+          id: "area",
+          type: "fill",
+          paint: { "fill-color": coverageColor, "fill-opacity": 0.2 },
+        },
+        {
+          id: "boundary",
+          type: "line",
+          paint: { "line-color": coverageColor, "line-width": 2 },
+        },
+      ],
+    },
+  ]}
+  onOverlaySelect={({ overlayId, feature, coordinate }) => {
+    selectCoverage(overlayId, feature, coordinate);
+  }}
+/>
+```
+
+Caller-owned controls can change each overlay's `visible` field; an optional
+`toolbarControls` entry can bind a checkbox to any overlay ID. No checkbox is
+required. This visibility is independent of the built-in risk, weather and
+delivery-surface toggles. Later overlays and later layers draw on top. A click
+selects the topmost overlay feature once, even if several layers draw it.
+`coordinate` is the clicked longitude/latitude; exact-data selections omit it.
+When enabled, the data view supplies each overlay's geometry and properties,
+with keyboard-actionable feature names when `onOverlaySelect` is supplied.
+
+Supply new immutable data or layer definitions to update an overlay without
+recreating the map or resetting its camera. Removed overlays release their
+layers and sources. Initial fit and Fit all locations include visible overlay
+geometry. Use theme tokens for caller-owned colors; symbol text and icons need
+the corresponding glyphs and sprites in the application's map style.
+
+Supply `renderOverlayDetails` to show rich React content when a point, line, or
+area is clicked or tapped. It receives the original `feature`, its `overlay`,
+`overlayId`, and the clicked `coordinate`. The content can include charts,
+controls, or application-owned details; returning `null` omits the card.
+`onOverlaySelect` remains independent and receives the same original record.
+Cards stay within the map, follow camera movement, and close with Escape, Close,
+an outside click, or when their feature or visible overlay is removed.
+Give features stable IDs to retain their updated details across immutable data
+replacements. Without an ID, replacing the feature closes its card.
+
+```tsx
+<NetworkMap
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  overlays={overlays}
+  showDataTable={false}
+  renderOverlayDetails={(context) => (
+    <FeatureVolumeChart feature={context.feature} />
+  )}
+/>
+```
+
+The raw geometry/properties table remains optional. When included, each feature
+also has a keyboard-accessible inspection disclosure using the same renderer;
+its content mounts only when expanded, including when WebGL is unavailable.
 
 For a surface with application-owned controls, keep its visibility in your own state:
 
@@ -270,4 +549,4 @@ Set `showCellDetails={false}` to use an external inspector. Hover/select callbac
 
 Marker buttons have full accessible names and controlled pressed state. Table rows offer equivalent selection, including records whose labels are hidden. The exact-data disclosure includes risk event, horizon, cohort, baseline and output timestamp; segment descriptions provide transfer evidence. Weather records retain coordinates, observation/forecast status, source and validity times. Surface records retain exact bounds, median, IQR, count, source and timestamp, including missing values and true zero. These records remain available regardless of layer visibility. Loading and failure states preserve this data. Initialization failures offer Retry; tile failures surface a reload notice and `onRenderError`. A basemap is an additional spatial view, not the only way to inspect or select records.
 
-The `NetworkMap` entry keeps MapLibre as an optional peer and loads it dynamically on mount. Importing and server-rendering the entry does not initialize WebGL; its HTML data view and loading state render on the server. Native charts and ECharts do not import this entry. Import the MapLibre CSS only in the application's map route. The published Easy UI stylesheet includes the small component wrapper styles, consistent with other components. See `scripts/preview-maps` for production bundle measurements, an independent native SVG control, browser interaction checks and actual Chrome, Firefox and Safari captures.
+The `NetworkMap` entry uses Easy UI's required MapLibre dependency and loads it dynamically on mount. Automatic installation does not mean eager loading: importing and server-rendering the entry does not initialize WebGL; its HTML data view and loading state render on the server. Native charts and ECharts do not import this entry. Import `@easypost/easy-ui/NetworkMap/maplibre-gl.css` only in the application's map route. The published Easy UI stylesheet includes the small component wrapper styles, consistent with other components. See `scripts/preview-maps` for production bundle measurements, an independent native SVG control, browser interaction checks and actual Chrome, Firefox and Safari captures.

@@ -2,7 +2,8 @@ import { Meta, StoryObj } from "@storybook/react-vite";
 import { RangePlot } from "./RangePlot";
 
 const meta: Meta<typeof RangePlot> = {
-  title: "Components/RangePlot",
+  id: "components-rangeplot",
+  title: "Organisms/Charts/RangePlot",
   component: RangePlot,
 };
 export default meta;

@@ -14,7 +14,12 @@ export type { NetworkMapDataViewProps } from "./NetworkMapCompanions";
 export type { VisualizationTypography } from "../visualization/typography";
 export type {
   NetworkMapProps,
+  MapOverlay,
+  MapOverlayLayer,
+  MapOverlaySelection,
+  MapOverlayDetailsContext,
   NetworkMapControls,
+  NetworkMapToolbarControl,
   NetworkMapControlLabels,
   NetworkMapLayerVisibility,
   MapCoordinate,

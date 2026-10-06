@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useId } from "react-aria";
+import ExpandMoreIcon400 from "@easypost/easy-ui-icons/ExpandMore400";
+import { Icon } from "../Icon";
 import { Disclosure } from "../Disclosure";
 import { ThemeProvider } from "../Theme";
 import { Card } from "../Card";
@@ -347,33 +349,39 @@ export function PricingExample({
           <div className="demo-toolbar">
             <label>
               Task
-              <select
-                id="task"
-                value={task}
-                onChange={(e) => setTask(e.target.value as Task)}
-              >
-                <option value="routine">Compare proposals for review</option>
-                <option value="trend">
-                  Compare demand trends before review
-                </option>
-                <option value="audit">
-                  Document one proposal&apos;s rationale
-                </option>
-              </select>
+              <div className={styles.selectControl}>
+                <select
+                  id="task"
+                  value={task}
+                  onChange={(e) => setTask(e.target.value as Task)}
+                >
+                  <option value="routine">Compare proposals for review</option>
+                  <option value="trend">
+                    Compare demand trends before review
+                  </option>
+                  <option value="audit">
+                    Document one proposal&apos;s rationale
+                  </option>
+                </select>
+                <Icon symbol={ExpandMoreIcon400} size="sm" />
+              </div>
             </label>
             <label>
               Presentation
-              <select
-                id="mode"
-                value={mode}
-                onChange={(e) => changeMode(e.target.value as Mode)}
-              >
-                {Object.entries(modes).map(([id, label]) => (
-                  <option key={id} value={id}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+              <div className={styles.selectControl}>
+                <select
+                  id="mode"
+                  value={mode}
+                  onChange={(e) => changeMode(e.target.value as Mode)}
+                >
+                  {Object.entries(modes).map(([id, label]) => (
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <Icon symbol={ExpandMoreIcon400} size="sm" />
+              </div>
             </label>
             <span id="reset">
               <Button

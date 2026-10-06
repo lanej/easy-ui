@@ -19,7 +19,8 @@ const Template = (args: FocusedProductLayoutProps) => (
 );
 
 const meta: Meta<typeof FocusedProductLayout> = {
-  title: "Components/ProductLayout/FocusedProductLayout",
+  id: "components-productlayout-focusedproductlayout",
+  title: "Organisms/Layouts/FocusedProductLayout",
   component: FocusedProductLayout,
   args: {
     helpMenuItems: helpMenuItems(),

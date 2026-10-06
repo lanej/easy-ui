@@ -1,10 +1,12 @@
-import type { ChartProps } from "./Chart";
+import type { ChartExampleProps } from "./Chart.examples";
+import tokens from "@easypost/easy-ui-tokens/js/tokens";
+import { visualizationColors, divergingPalette } from "../visualization/colors";
 
 // Synthetic, fixed fixtures. Tables and marks derive from the same records.
-const blue = "#113abf",
-  purple = "#772bb0",
-  teal = "#007f86",
-  orange = "#9b5900";
+const blue = visualizationColors.primary,
+  purple = visualizationColors.secondary,
+  teal = visualizationColors.tertiary,
+  orange = visualizationColors.warning;
 const grid = { left: 58, right: 28, top: 64, bottom: 58 };
 const day = (n: number) => Date.UTC(2026, 7, n);
 const date = (n: number) =>
@@ -38,7 +40,7 @@ export const reliabilityCohorts = [
     color: teal,
   },
 ];
-export const reliabilityExample: ChartProps = {
+export const reliabilityExample: ChartExampleProps = {
   title: "Delivery promise reliability",
   description:
     "Accepted Aug 1–7 · Calendar days · All 2,400 parcels remain in the denominator; unresolved parcels are included. Observed through Aug 21.",
@@ -78,7 +80,7 @@ export const reliabilityExample: ChartProps = {
               silent: true,
               symbol: "none",
               label: { show: false },
-              lineStyle: { type: "dashed", color: "#47547f" },
+              lineStyle: { type: "dashed", color: visualizationColors.muted },
               data: [{ xAxis: 3 }, { yAxis: 90 }],
             },
           }
@@ -135,7 +137,7 @@ export const competitivenessCells = weights.flatMap((weight, y) =>
     };
   }),
 );
-export const competitivenessExample: ChartProps = {
+export const competitivenessExample: ChartExampleProps = {
   title: "Rate competitiveness by cohort",
   description:
     "USD/parcel · Matched zone, weight and service cohorts · Negative is cheaper than the benchmark. All-in illustrative rates, same observation window.",
@@ -172,7 +174,7 @@ export const competitivenessExample: ChartProps = {
       itemWidth: 10,
       text: ["+30%", "−30%"],
       calculable: false,
-      inRange: { color: ["#7193ec", "#ffffff", "#ddb17b"] },
+      inRange: { color: divergingPalette },
     },
     series: [
       {
@@ -182,7 +184,7 @@ export const competitivenessExample: ChartProps = {
           .filter((c) => c.difference !== null)
           .map((c) => ({
             value: [c.x, c.y, c.difference!],
-            label: { color: "#000000" },
+            label: { color: tokens["color.gray.900"] },
           })),
         label: {
           show: true,
@@ -192,7 +194,10 @@ export const competitivenessExample: ChartProps = {
             return `${n > 0 ? "+" : ""}${n}%`;
           },
         },
-        itemStyle: { borderWidth: 3, borderColor: "#ffffff" },
+        itemStyle: {
+          borderWidth: 3,
+          borderColor: visualizationColors.background,
+        },
       },
     ],
   },
@@ -236,7 +241,7 @@ export const priceScenarios = [
   high: Math.round(volume * 1.2),
   contribution: Math.round((price - 4.6) * volume),
 }));
-export const priceResponseExample: ChartProps = {
+export const priceResponseExample: ChartExampleProps = {
   title: "Price, volume and contribution",
   description:
     "Illustrative next-week model · Price in USD/parcel · Shaded volume envelope shows supplied low/high scenarios, not a confidence interval.",
@@ -289,7 +294,7 @@ export const priceResponseExample: ChartProps = {
         stack: "envelope",
         data: priceScenarios.map((s) => s.high - s.low),
         lineStyle: { opacity: 0 },
-        areaStyle: { color: "rgba(17,58,191,0.16)" },
+        areaStyle: { color: blue, opacity: 0.16 },
         symbol: "none",
         silent: true,
         tooltip: { show: false },
@@ -303,7 +308,7 @@ export const priceResponseExample: ChartProps = {
         markLine: {
           symbol: "none",
           label: { show: false },
-          lineStyle: { type: "dotted", color: "#47547f" },
+          lineStyle: { type: "dotted", color: visualizationColors.muted },
           data: [{ xAxis: "$6.00" }],
         },
       },
@@ -341,7 +346,7 @@ export const dailyCapacity = [
   capacity: 10000,
   kind: i < 5 ? "Observed" : "Forecast",
 }));
-export const capacityExample: ChartProps = {
+export const capacityExample: ChartExampleProps = {
   title: "Volume against operating capacity",
   description:
     "Oakland warehouse · Parcels/day · Observed through Aug 5, forecast Aug 6–9 · All dates UTC. Capacity is an application-supplied operating limit.",
@@ -379,15 +384,21 @@ export const capacityExample: ChartProps = {
           label: { show: false },
           data: [
             [
-              { yAxis: 0, itemStyle: { color: "rgba(0,127,134,0.05)" } },
+              { yAxis: 0, itemStyle: { color: teal, opacity: 0.05 } },
               { yAxis: 8000 },
             ],
             [
-              { yAxis: 8000, itemStyle: { color: "rgba(155,89,0,0.08)" } },
+              { yAxis: 8000, itemStyle: { color: orange, opacity: 0.08 } },
               { yAxis: 10000 },
             ],
             [
-              { yAxis: 10000, itemStyle: { color: "rgba(188,69,67,0.10)" } },
+              {
+                yAxis: 10000,
+                itemStyle: {
+                  color: visualizationColors.negative,
+                  opacity: 0.1,
+                },
+              },
               { yAxis: 13000 },
             ],
           ],
@@ -457,7 +468,7 @@ export const trackingIntervals = [
     start: 28,
     end: 35,
     evidence: "No scans; movement unknown",
-    color: "#47547f",
+    color: visualizationColors.muted,
   },
   {
     id: "destination",
@@ -488,7 +499,7 @@ const utc = (hours: number) =>
   new Date(trackingStart + hours * 3600000)
     .toISOString()
     .replace(":00.000Z", "Z");
-export const shipmentTimelineExample: ChartProps = {
+export const shipmentTimelineExample: ChartExampleProps = {
   title: "Parcel P-104 tracking timeline",
   description:
     "Hours since Aug 3, 08:00 UTC · Last update Aug 5, 03:00 UTC · Dwell and movement intervals are bounded by scans; positions between scans are unknown.",
@@ -536,7 +547,7 @@ export const shipmentTimelineExample: ChartProps = {
         data: trackingIntervals.map((s) => ({
           name: s.id,
           value: s.end - s.start,
-          label: { color: "#172b4d", opacity: 1 },
+          label: { color: visualizationColors.text, opacity: 1 },
           itemStyle: {
             color: s.color,
             opacity: s.id === "arrival" ? 0.45 : 1,
@@ -632,7 +643,7 @@ export const warehouseProgress = [
     scanHour: 42,
   },
 ];
-export const warehouseProgressExample: ChartProps = {
+export const warehouseProgressExample: ChartExampleProps = {
   title: "Parcels from multiple warehouses",
   description:
     "Shared UTC timeline from Aug 3, 08:00 · Snapshot at hour 43 · Solid bars span acceptance to last observed event; pale intervals are predicted arrival windows.",
@@ -696,7 +707,7 @@ export const warehouseProgressExample: ChartProps = {
         type: "bar",
         stack: "progress",
         itemStyle: {
-          color: "#c9b3e0",
+          color: visualizationColors.secondarySurface,
           borderColor: purple,
           borderWidth: 1,
           borderType: "dashed",
@@ -707,7 +718,7 @@ export const warehouseProgressExample: ChartProps = {
         markLine: {
           symbol: "none",
           label: { show: false },
-          lineStyle: { color: "#47547f", type: "dotted" },
+          lineStyle: { color: visualizationColors.muted, type: "dotted" },
           data: [{ xAxis: 43 }],
         },
       },

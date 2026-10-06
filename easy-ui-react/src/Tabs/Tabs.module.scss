@@ -10,27 +10,27 @@
   @include component-token(
     "tab-nav",
     "background-color",
-    design-token("color.gray.000")
+    design-token("color.neutral.000")
   );
   @include component-token(
     "tab-nav",
     "link-color",
-    design-token("color.blue.800")
+    design-token("color.primary.800")
   );
   @include component-token(
     "tab-nav",
     "current-page-color",
-    design-token("color.blue.500")
+    design-token("color.primary.500")
   );
   @include component-token(
     "tab-nav",
     "edge-shadow-left",
-    4px 0px 4px 0px design-token("color.gray.300")
+    4px 0px 4px 0px design-token("color.neutral.300")
   );
   @include component-token(
     "tab-nav",
     "edge-shadow-right",
-    -4px 0px 4px 0px design-token("color.gray.300")
+    -4px 0px 4px 0px design-token("color.neutral.300")
   );
   @include component-token("tab-nav", "edge-shadow-opacity", 0.4);
 

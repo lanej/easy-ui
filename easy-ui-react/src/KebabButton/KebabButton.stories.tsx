@@ -8,7 +8,8 @@ import { KebabButton } from "./KebabButton";
 type Story = StoryObj<typeof KebabButton>;
 
 const meta: Meta<typeof KebabButton> = {
-  title: "Components/Button/KebabButton",
+  id: "components-button-kebabbutton",
+  title: "Molecules/Actions/KebabButton",
   component: KebabButton,
   argTypes: {
     accessibilityLabel: {

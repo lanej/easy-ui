@@ -7,7 +7,8 @@ import { VerticalStack } from "../VerticalStack";
 type Story = StoryObj<typeof SplitToggleCard>;
 
 const meta: Meta<typeof SplitToggleCard> = {
-  title: "Components/Cards/SplitToggleCard",
+  id: "components-cards-splittogglecard",
+  title: "Molecules/Cards/SplitToggleCard",
   component: SplitToggleCard,
   args: {
     isDisabled: false,

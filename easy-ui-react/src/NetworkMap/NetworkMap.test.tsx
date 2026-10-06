@@ -16,7 +16,7 @@ import {
 } from "./NetworkMapCompanions";
 import { loadMapEngine } from "./engine";
 import { surfaceData } from "./geometry";
-import type { NetworkMapProps } from "./types";
+import type { MapOverlayDetailsContext, NetworkMapProps } from "./types";
 vi.mock("./engine", () => ({ loadMapEngine: vi.fn() }));
 const fitBounds = vi.fn(),
   easeTo = vi.fn(),
@@ -33,6 +33,7 @@ const sourceDefs = new Map<string, Record<string, unknown>>();
 // beyond just line-color (see layerPaint below, which only tracks that one property).
 const layerDefs = new Map<string, Record<string, unknown>>();
 const constructor = vi.fn();
+const queryRenderedFeatures = vi.fn().mockReturnValue([]);
 const layerPaint = new Map<string, unknown>();
 const paintProperties = new Map<string, Map<string, unknown>>();
 // Records addLayer/addSource/setPaintProperty/setLayoutProperty call order (by id) so tests can
@@ -103,6 +104,19 @@ class FakeMap {
     layerDefs.set(layer.id, layer);
     callOrder.push(`addLayer:${layer.id}`);
   }
+  getLayer(id: string) {
+    return layerDefs.get(id);
+  }
+  removeLayer(id: string) {
+    layerDefs.delete(id);
+  }
+  removeSource(id: string) {
+    sources.delete(id);
+  }
+  moveLayer() {}
+  off(type: string, listener: (...args: unknown[]) => void) {
+    if (listeners[type] === listener) delete listeners[type];
+  }
   addImage() {}
   getSource(id: string) {
     return sources.has(id) ? { setData, getClusterExpansionZoom } : undefined;
@@ -110,6 +124,7 @@ class FakeMap {
   querySourceFeatures(_id: string, params?: { filter?: unknown }) {
     return sourceFeatures.filter((f) => matchesFilter(f, params?.filter));
   }
+  queryRenderedFeatures = queryRenderedFeatures;
   isSourceLoaded() {
     return true;
   }
@@ -170,6 +185,7 @@ const props = {
 } satisfies NetworkMapProps;
 beforeEach(() => {
   vi.clearAllMocks();
+  queryRenderedFeatures.mockReturnValue([]);
   sources.clear();
   sourceDefs.clear();
   layerDefs.clear();
@@ -189,6 +205,59 @@ beforeEach(() => {
   );
 });
 afterEach(() => vi.unstubAllGlobals());
+
+it("can hide and restore raw layer records independently of the map", async () => {
+  const { container, rerender } = render(
+    <NetworkMap {...props} showDataTable={false} />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  await waitFor(() =>
+    expect(
+      container.querySelector('[data-map-state="ready"]'),
+    ).toBeInTheDocument(),
+  );
+  expect(
+    screen.queryByText("Locations and exact data"),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByRole("table", { hidden: true })).not.toBeInTheDocument();
+  rerender(<NetworkMap {...props} />);
+  expect(screen.getByText("Locations and exact data")).toBeInTheDocument();
+});
+it("selects a facility through its location name without an action column", () => {
+  render(
+    <NetworkMapProvider {...props}>
+      <NetworkMapDataView expanded />
+    </NetworkMapProvider>,
+  );
+  const locations = within(
+    screen.getByRole("region", { name: "Network location data" }),
+  );
+  expect(locations.getAllByRole("columnheader")).toHaveLength(5);
+  expect(locations.queryByRole("columnheader", { name: "Select" })).toBeNull();
+  const action = locations.getByRole("button", {
+    name: "Select location: Oakland",
+  });
+  expect(action).toHaveTextContent("Oakland");
+  expect(locations.getByRole("rowheader")).toContainElement(action);
+  fireEvent.click(action);
+  expect(props.onFacilitySelect).toHaveBeenCalledWith("one");
+});
+it("shows a plain location name when facility selection is unavailable", () => {
+  render(
+    <NetworkMapProvider {...props} onFacilitySelect={undefined}>
+      <NetworkMapDataView expanded />
+    </NetworkMapProvider>,
+  );
+  const locations = within(
+    screen.getByRole("region", { name: "Network location data" }),
+  );
+  expect(
+    locations.getByRole("rowheader", { name: "Oakland" }),
+  ).toBeInTheDocument();
+  expect(locations.queryByRole("button")).toBeNull();
+  expect(locations.getAllByRole("columnheader")).toHaveLength(5);
+});
 it("restores camera commands during Strict Mode replay and map reloads", async () => {
   const view = (
     facilities: NetworkMapProps["facilities"] = props.facilities,
@@ -216,7 +285,12 @@ it("restores camera commands during Strict Mode replay and map reloads", async (
   expect(updatedBounds[0][1]).toBe(48.86);
 
   act(() => listeners.error({ error: new Error("Transient basemap failure") }));
-  fireEvent.click(screen.getByRole("button", { name: "Reload map" }));
+  const reloadButton = screen.getByRole("button", { name: "Reload map" });
+  expect(reloadButton).toHaveAttribute(
+    "class",
+    expect.stringContaining("variantFilled"),
+  );
+  fireEvent.click(reloadButton);
   await waitFor(() => expect(constructor).toHaveBeenCalledTimes(2));
   act(() => listeners.load());
   expect(fitBounds).toHaveBeenCalledTimes(3);
@@ -424,6 +498,363 @@ it("calls onMapReady exactly once, with the live map instance, only after the co
   );
   expect(onMapReady).toHaveBeenCalledTimes(1);
   expect(callOrder.filter((c) => c === "onMapReady")).toHaveLength(1);
+});
+
+it("does not announce readiness when overlay initialization fails", async () => {
+  const onMapReady = vi.fn();
+  const onRenderError = vi.fn();
+  const { container } = render(
+    <NetworkMap
+      {...props}
+      overlays={[
+        {
+          id: "caller",
+          data: { type: "FeatureCollection", features: [] },
+          layers: [{ id: "points", type: "circle" }],
+        },
+      ]}
+      onMapReady={onMapReady}
+      onRenderError={onRenderError}
+    />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  sources.add("easy-ui-overlay-caller");
+  act(() => listeners.load());
+  expect(onMapReady).not.toHaveBeenCalled();
+  expect(onRenderError).toHaveBeenCalledWith(
+    expect.objectContaining({
+      message: "Map overlay source already exists: easy-ui-overlay-caller",
+    }),
+  );
+  expect(container.querySelector('[data-map-state="error"]')).not.toBeNull();
+  expect(container.querySelector('[data-map-state="ready"]')).toBeNull();
+});
+
+it("updates and removes overlay data without replacing the map or user camera", async () => {
+  const overlay = {
+    id: "coverage",
+    data: {
+      type: "FeatureCollection" as const,
+      features: [
+        {
+          type: "Feature" as const,
+          id: "area",
+          properties: {},
+          geometry: {
+            type: "Polygon" as const,
+            coordinates: [
+              [
+                [-170, -20],
+                [170, -20],
+                [170, 20],
+                [-170, 20],
+                [-170, -20],
+              ],
+            ],
+          },
+        },
+      ],
+    },
+    layers: [{ id: "area", type: "fill" as const }],
+  };
+  const onMapReady = vi.fn();
+  const view = render(
+    <NetworkMap
+      {...props}
+      facilities={[]}
+      overlays={[overlay]}
+      onMapReady={onMapReady}
+    />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  expect(fitBounds).toHaveBeenCalledWith(
+    [
+      [-170, -20],
+      [170, 20],
+    ],
+    expect.any(Object),
+  );
+  expect(layerDefs.has("easy-ui-overlay-coverage/area")).toBe(true);
+  const fitCount = fitBounds.mock.calls.length;
+  view.rerender(
+    <NetworkMap
+      {...props}
+      facilities={[]}
+      overlays={[
+        { ...overlay, visible: false, data: { ...overlay.data, features: [] } },
+      ]}
+      onMapReady={onMapReady}
+    />,
+  );
+  expect(constructor).toHaveBeenCalledTimes(1);
+  expect(onMapReady).toHaveBeenCalledTimes(1);
+  expect(fitBounds).toHaveBeenCalledTimes(fitCount);
+  expect(setLayoutProperty).toHaveBeenCalledWith(
+    "easy-ui-overlay-coverage/area",
+    "visibility",
+    "none",
+  );
+  view.rerender(<NetworkMap {...props} onMapReady={onMapReady} />);
+  expect(layerDefs.has("easy-ui-overlay-coverage/area")).toBe(false);
+  expect(sources.has("easy-ui-overlay-coverage")).toBe(false);
+  expect(constructor).toHaveBeenCalledTimes(1);
+});
+
+it("opens custom overlay content with original records and dismisses without rebuilding the map", async () => {
+  const feature = {
+    type: "Feature" as const,
+    id: "scan",
+    properties: { label: "Chicago scan", count: 12 },
+    geometry: { type: "Point" as const, coordinates: [1, 2] },
+  };
+  const overlay = {
+    id: "scans",
+    data: { type: "FeatureCollection" as const, features: [feature] },
+    layers: [{ id: "points", type: "circle" as const }],
+  };
+  const renderOverlayDetails = vi.fn(({ feature }) => (
+    <p>Daily parcels: {feature.properties.count}</p>
+  ));
+  const onOverlaySelect = vi.fn();
+  const view = render(
+    <NetworkMap
+      {...props}
+      facilities={[]}
+      overlays={[overlay]}
+      showDataTable={false}
+      renderOverlayDetails={renderOverlayDetails}
+      onOverlaySelect={onOverlaySelect}
+    />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  const uploaded = sourceDefs.get("easy-ui-overlay-scans")?.data as {
+    features: { properties: Record<string, unknown> }[];
+  };
+  queryRenderedFeatures.mockReturnValue([
+    {
+      layer: { id: "easy-ui-overlay-scans/points" },
+      properties: uploaded.features[0].properties,
+    },
+  ]);
+  const select = () =>
+    act(() =>
+      listeners.click({ point: { x: 10, y: 20 }, lngLat: { lng: 1, lat: 2 } }),
+    );
+  select();
+  expect(
+    screen.getByRole("region", { name: "Overlay feature details" }),
+  ).toHaveTextContent("Daily parcels: 12");
+  expect(renderOverlayDetails.mock.lastCall?.[0].feature).toBe(feature);
+  expect(onOverlaySelect).toHaveBeenLastCalledWith({
+    overlayId: "scans",
+    feature,
+    coordinate: [1, 2],
+  });
+  expect(
+    screen.getByRole("button", { name: "Close overlay details" }),
+  ).toHaveFocus();
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(
+    screen.queryByRole("region", { name: "Overlay feature details" }),
+  ).toBeNull();
+  select();
+  fireEvent.mouseDown(document.body);
+  fireEvent.mouseUp(document.body);
+  expect(
+    screen.queryByRole("region", { name: "Overlay feature details" }),
+  ).toBeNull();
+  view.rerender(
+    <NetworkMap
+      {...props}
+      facilities={[]}
+      overlays={[overlay]}
+      showDataTable={false}
+      renderOverlayDetails={() => null}
+      onOverlaySelect={onOverlaySelect}
+    />,
+  );
+  select();
+  expect(
+    screen.queryByRole("region", { name: "Overlay feature details" }),
+  ).toBeNull();
+  expect(onOverlaySelect).toHaveBeenCalledTimes(3);
+  expect(constructor).toHaveBeenCalledTimes(1);
+});
+
+it("lazily makes overlay charts available through the optional data view without WebGL", () => {
+  const feature = {
+    type: "Feature" as const,
+    properties: { label: "Scan" },
+    geometry: { type: "Point" as const, coordinates: [1, 2] },
+  };
+  const overlay = {
+    id: "scans",
+    data: { type: "FeatureCollection" as const, features: [feature] },
+    layers: [{ id: "points", type: "circle" as const }],
+  };
+  const renderOverlayDetails = vi.fn((_context: MapOverlayDetailsContext) => (
+    <p>Daily observations</p>
+  ));
+  render(
+    <NetworkMapProvider
+      {...props}
+      facilities={[]}
+      overlays={[overlay]}
+      renderOverlayDetails={renderOverlayDetails}
+    >
+      <NetworkMapDataView expanded />
+    </NetworkMapProvider>,
+  );
+  expect(renderOverlayDetails).not.toHaveBeenCalled();
+  const details = screen.getByText("Inspect Scan").closest("details")!;
+  act(() => {
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+  });
+  expect(screen.getByText("Daily observations")).toBeInTheDocument();
+  expect(renderOverlayDetails.mock.lastCall?.[0]).toMatchObject({
+    overlayId: "scans",
+    overlay,
+    feature,
+  });
+  act(() => {
+    details.open = false;
+    fireEvent(details, new Event("toggle"));
+  });
+  expect(screen.queryByText("Daily observations")).toBeNull();
+  expect(constructor).not.toHaveBeenCalled();
+});
+
+it("binds arbitrary toolbar checkboxes to overlay visibility without re-uploading data", async () => {
+  const overlay = {
+    id: "coverage",
+    data: { type: "FeatureCollection" as const, features: [] },
+    layers: [{ id: "area", type: "fill" as const }],
+  };
+  const onOverlayVisibilityChange = vi.fn();
+  const toolbarControls = [
+    {
+      id: "zones",
+      type: "overlay" as const,
+      overlayId: "coverage",
+      label: "Delivery zones",
+    },
+  ];
+  const view = render(
+    <NetworkMap
+      {...props}
+      overlays={[overlay]}
+      toolbarControls={toolbarControls}
+      onOverlayVisibilityChange={onOverlayVisibilityChange}
+    />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  const dataUpdates = setData.mock.calls.length;
+  const fits = fitBounds.mock.calls.length;
+  expect(screen.queryByRole("checkbox", { name: "Facility risk" })).toBeNull();
+  expect(
+    screen.getByRole("checkbox", { name: "Delivery zones" }),
+  ).toBeChecked();
+  fireEvent.click(screen.getByRole("checkbox", { name: "Delivery zones" }));
+  expect(
+    screen.getByRole("checkbox", { name: "Delivery zones" }),
+  ).not.toBeChecked();
+  expect(setLayoutProperty).toHaveBeenCalledWith(
+    "easy-ui-overlay-coverage/area",
+    "visibility",
+    "none",
+  );
+  expect(onOverlayVisibilityChange).toHaveBeenCalledWith("coverage", false);
+  expect(setData).toHaveBeenCalledTimes(dataUpdates);
+  expect(fitBounds).toHaveBeenCalledTimes(fits);
+  expect(constructor).toHaveBeenCalledTimes(1);
+  view.rerender(
+    <NetworkMap
+      {...props}
+      overlays={[overlay]}
+      toolbarControls={[]}
+      onOverlayVisibilityChange={onOverlayVisibilityChange}
+    />,
+  );
+  expect(
+    screen.queryByRole("group", { name: "Network camera and layers" }),
+  ).toBeNull();
+  view.rerender(
+    <NetworkMap
+      {...props}
+      overlays={[overlay]}
+      toolbarControls={toolbarControls}
+      onOverlayVisibilityChange={onOverlayVisibilityChange}
+    />,
+  );
+  expect(
+    screen.getByRole("checkbox", { name: "Delivery zones" }),
+  ).not.toBeChecked();
+  fireEvent.click(screen.getByRole("checkbox", { name: "Delivery zones" }));
+  expect(setLayoutProperty).toHaveBeenCalledWith(
+    "easy-ui-overlay-coverage/area",
+    "visibility",
+    "visible",
+  );
+  expect(constructor).toHaveBeenCalledTimes(1);
+});
+
+it("keeps externally controlled overlay toggles controlled and honors the master control opt-out", async () => {
+  const overlay = {
+    id: "points",
+    data: { type: "FeatureCollection" as const, features: [] },
+    layers: [{ id: "observations", type: "circle" as const }],
+    visible: false,
+  };
+  const toolbarControls = [
+    {
+      id: "points",
+      type: "overlay" as const,
+      overlayId: "points",
+      label: "Scans",
+    },
+  ];
+  const onOverlayVisibilityChange = vi.fn();
+  const view = render(
+    <NetworkMap
+      {...props}
+      overlays={[overlay]}
+      toolbarControls={toolbarControls}
+      onOverlayVisibilityChange={onOverlayVisibilityChange}
+    />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  fireEvent.click(screen.getByRole("checkbox", { name: "Scans" }));
+  expect(onOverlayVisibilityChange).toHaveBeenCalledWith("points", true);
+  expect(screen.getByRole("checkbox", { name: "Scans" })).not.toBeChecked();
+  view.rerender(
+    <NetworkMap
+      {...props}
+      overlays={[{ ...overlay, visible: true }]}
+      toolbarControls={toolbarControls}
+      onOverlayVisibilityChange={onOverlayVisibilityChange}
+    />,
+  );
+  expect(screen.getByRole("checkbox", { name: "Scans" })).toBeChecked();
+  expect(setLayoutProperty).toHaveBeenCalledWith(
+    "easy-ui-overlay-points/observations",
+    "visibility",
+    "visible",
+  );
+  view.rerender(
+    <NetworkMap
+      {...props}
+      controls={false}
+      overlays={[{ ...overlay, visible: true }]}
+      toolbarControls={toolbarControls}
+    />,
+  );
+  expect(screen.queryByRole("checkbox", { name: "Scans" })).toBeNull();
+  expect(constructor).toHaveBeenCalledTimes(1);
 });
 
 describe("consumer paint ownership", () => {
@@ -1025,6 +1456,41 @@ describe("delivery surface inspection", () => {
     return result;
   }
 
+  it("does not suppress cell hover when an overlay renderer returns null", async () => {
+    const feature = {
+      type: "Feature" as const,
+      id: "scan",
+      properties: {},
+      geometry: { type: "Point" as const, coordinates: [-122, 37] },
+    };
+    const overlay = {
+      id: "scans",
+      data: { type: "FeatureCollection" as const, features: [feature] },
+      layers: [{ id: "points", type: "circle" as const }],
+    };
+    await ready({ overlays: [overlay], renderOverlayDetails: () => null });
+    const uploaded = sourceDefs.get("easy-ui-overlay-scans")?.data as {
+      features: { properties: Record<string, unknown> }[];
+    };
+    queryRenderedFeatures.mockReturnValue([
+      {
+        layer: { id: "easy-ui-overlay-scans/points" },
+        properties: uploaded.features[0].properties,
+      },
+    ]);
+    act(() =>
+      listeners.click({
+        point: { x: 12, y: 34 },
+        lngLat: { lng: -122, lat: 37 },
+      }),
+    );
+    expect(
+      screen.queryByRole("region", { name: "Overlay feature details" }),
+    ).toBeNull();
+    enter();
+    expect(card()).toHaveTextContent("45 min");
+  });
+
   it("inspects the original record and supplied distribution without changing facility selection", async () => {
     const onCellHover = vi.fn();
     await ready({ onCellHover });
@@ -1093,7 +1559,8 @@ describe("delivery surface inspection", () => {
     const onCellSelect = vi.fn();
     await ready({ onCellSelect });
     click();
-    fireEvent.pointerDown(document.body);
+    fireEvent.mouseDown(document.body);
+    fireEvent.mouseUp(document.body);
     expect(card()).not.toBeInTheDocument();
     act(() =>
       listeners["click:easy-ui-delivery-surface-fill"]({

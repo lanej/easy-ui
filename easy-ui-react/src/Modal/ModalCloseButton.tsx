@@ -2,6 +2,7 @@ import CloseIcon from "@easypost/easy-ui-icons/Close";
 import React, { useCallback } from "react";
 import { Icon } from "../Icon";
 import { Text } from "../Text";
+import { UnstyledButton } from "../UnstyledButton";
 import { useModalTriggerContext } from "./context";
 
 import styles from "./Modal.module.scss";
@@ -18,9 +19,9 @@ export function ModalCloseButton() {
   }
 
   return (
-    <button className={styles.closeBtn} onClick={handleClick}>
+    <UnstyledButton className={styles.closeBtn} onPress={handleClick}>
       <Text visuallyHidden>Close modal</Text>
       <Icon symbol={CloseIcon} size="sm" />
-    </button>
+    </UnstyledButton>
   );
 }

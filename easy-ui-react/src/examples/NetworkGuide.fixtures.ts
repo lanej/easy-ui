@@ -1,5 +1,7 @@
 import type { MapFacility, MapSegment, MapArea } from "../NetworkMap/types";
 import type { ChartProps } from "../Chart";
+import tokens from "@easypost/easy-ui-tokens/js/tokens";
+import { visualizationColors } from "../visualization/colors";
 
 export const snapshot = "2026-09-13T14:00:00Z";
 export const hours = Array.from(
@@ -208,7 +210,9 @@ export function volumeChart(
           name: "Observed",
           type: "bar",
           data: observed,
-          itemStyle: { color: "#2450ca" },
+          itemStyle: {
+            color: visualizationColors.primary,
+          },
           barMaxWidth: 24,
         },
         {
@@ -216,16 +220,27 @@ export function volumeChart(
           type: "line",
           data: baseline,
           showSymbol: false,
-          lineStyle: { color: "#517687", type: "dashed", width: 2 },
-          itemStyle: { color: "#517687" },
+          lineStyle: {
+            color: visualizationColors.muted,
+            type: "dashed",
+            width: 2,
+          },
+          itemStyle: {
+            color: visualizationColors.muted,
+          },
         },
         {
           name: "Capacity",
           type: "line",
           data: hours.map(() => hub.capacity),
           showSymbol: false,
-          lineStyle: { color: "#ad5700", width: 2 },
-          itemStyle: { color: "#ad5700" },
+          lineStyle: {
+            color: visualizationColors.warning,
+            width: 2,
+          },
+          itemStyle: {
+            color: visualizationColors.warning,
+          },
         },
       ],
     },
@@ -265,7 +280,14 @@ export function pressureChart(
           return `${hubs[y].name} · ${buckets[x]}: ${value < 0 ? "Unavailable" : `${value}%`}`;
         },
       },
-      grid: { left: 118, right: 22, top: 14, bottom: 85 },
+      grid: {
+        left: 0,
+        right: 0,
+        top: 14,
+        bottom: 85,
+        outerBoundsMode: "same",
+        outerBoundsContain: "all",
+      },
       xAxis: {
         type: "category",
         data: buckets,
@@ -287,8 +309,17 @@ export function pressureChart(
         bottom: 4,
         calculable: false,
         text: ["130%", "0%"],
+        textStyle: {
+          color: visualizationColors.text,
+        },
         inRange: {
-          color: ["#f0f5fc", "#b4cee8", "#568cae", "#edc182", "#d97835"],
+          color: [
+            tokens["color.blue.050"],
+            tokens["color.blue.200"],
+            tokens["color.blue.300"],
+            tokens["color.yellow.400"],
+            tokens["color.orange.300"],
+          ],
         },
       },
       series: [
@@ -297,18 +328,29 @@ export function pressureChart(
           data: rows.map((r) => ({
             // -1 is a rendering sentinel only; exact-data rows retain null.
             value: [r.x, r.y, r.value ?? -1],
-            itemStyle: r.value === null ? { color: "#e4e7ec" } : undefined,
+            itemStyle:
+              r.value === null
+                ? { color: tokens["color.gray.100"] }
+                : undefined,
           })),
           label: {
             show: true,
-            color: "#111827",
+            color: tokens["color.gray.900"],
             formatter: (p) => {
               const value = (p.value as (number | null)[])[2];
               return value === null || value < 0 ? "—" : `${value}%`;
             },
           },
-          itemStyle: { borderColor: "#fff", borderWidth: 2 },
-          emphasis: { itemStyle: { borderColor: "#172b4d", borderWidth: 2 } },
+          itemStyle: {
+            borderColor: visualizationColors.background,
+            borderWidth: 2,
+          },
+          emphasis: {
+            itemStyle: {
+              borderColor: visualizationColors.text,
+              borderWidth: 2,
+            },
+          },
         },
       ],
     },
@@ -354,13 +396,31 @@ export function flowChart(hub: Hub): Pick<ChartProps, "option" | "dataTable"> {
             (name) => ({ name }),
           ),
           links,
-          label: { fontSize: 12, color: "#172b4d" },
+          label: {
+            fontSize: 12,
+            color: visualizationColors.text,
+          },
           emphasis: { focus: "adjacency" },
           lineStyle: { color: "source", opacity: 0.33, curveness: 0.48 },
           levels: [
-            { depth: 0, itemStyle: { color: "#2450ca" } },
-            { depth: 1, itemStyle: { color: "#568cae" } },
-            { depth: 2, itemStyle: { color: "#8764b8" } },
+            {
+              depth: 0,
+              itemStyle: {
+                color: visualizationColors.primary,
+              },
+            },
+            {
+              depth: 1,
+              itemStyle: {
+                color: visualizationColors.muted,
+              },
+            },
+            {
+              depth: 2,
+              itemStyle: {
+                color: visualizationColors.secondary,
+              },
+            },
           ],
         },
       ],

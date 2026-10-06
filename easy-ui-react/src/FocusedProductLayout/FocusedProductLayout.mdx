@@ -61,6 +61,11 @@ Use the `sidePanel` prop and the `FocusedProductLayout.SidePanel` component to r
 
 Side panels are rendered as an `<aside />`.
 
+The side panel keeps its dark branded background in both color schemes and
+provides a light inherited foreground for plain content. The main content
+surface follows the selected theme. Give custom logos and content their own
+appropriate foreground/background pairs rather than assuming a light page.
+
 ```tsx
 <FocusedProductLayout
   {/* other focused product layout props... */}

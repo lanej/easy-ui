@@ -16,8 +16,10 @@ export type ChartProps = ChartSurfaceProps & {
   title?: string | null;
   /** Independently optional visible description and default plot description. */
   description?: string | null;
-  /** Exact data equivalent; use ChartSurface with an external ChartDataView for other layouts. */
-  dataTable: ChartDataTable;
+  /** Optional exact data equivalent; omit when an application supplies another data view. */
+  dataTable?: ChartDataTable;
+  /** Show a supplied raw-data table; defaults to true. */
+  showDataTable?: boolean;
   notice?: string;
   actions?: ReactNode;
   onRowSelect?: (id: string) => void;
@@ -37,7 +39,8 @@ export function Chart({
   title,
   description,
   dataTable,
-  status = dataTable.rows.length ? "ready" : "empty",
+  showDataTable = true,
+  status = dataTable && !dataTable.rows.length ? "empty" : "ready",
   notice,
   actions,
   onRowSelect,
@@ -86,7 +89,7 @@ export function Chart({
           {notice}
         </Text>
       )}
-      {status === "ready" && (
+      {status === "ready" && showDataTable && dataTable && (
         <ChartDataView
           dataTable={dataTable}
           title={title ?? name}

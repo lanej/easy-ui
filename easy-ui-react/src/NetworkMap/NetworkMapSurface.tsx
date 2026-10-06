@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "../Button";
 import type {
   GeoJSONSource,
   Map as MapInstance,
@@ -6,6 +7,7 @@ import type {
   Marker,
 } from "maplibre-gl";
 import { loadMapEngine } from "./engine";
+import { createOverlayRenderer, overlayFitBounds } from "./overlays";
 import {
   buildDeliverySurfaceFilter,
   buildDeliverySurfacePaint,
@@ -26,6 +28,7 @@ import type { MapFacility, NetworkMapProps } from "./types";
 import { NetworkMapCellDetails } from "./NetworkMapCellDetails";
 import { NetworkMapCellPopover } from "./NetworkMapCellPopover";
 import { useSurfaceInspection } from "./useSurfaceInspection";
+import { useOverlayInspection } from "./useOverlayInspection";
 import {
   NetworkMapProvider,
   useNetworkMap,
@@ -100,6 +103,11 @@ function NetworkMapSurfaceView() {
     pin,
     cancelLeave,
   } = useSurfaceInspection(options, deliverySurface, activeMetric?.field);
+  const {
+    inspection: overlayInspection,
+    context: overlayContext,
+    events: overlayInspectionEvents,
+  } = useOverlayInspection(options);
   const layers = useRef(visibility);
   layers.current = visibility;
   const activeMetricRef = useRef(activeMetric);
@@ -159,7 +167,7 @@ function NetworkMapSurfaceView() {
                   ] as [number, number][],
               ) ?? []),
             ];
-        flyToBounds(geographicBounds(points), 11);
+        flyToBounds(overlayFitBounds(points, p.overlays), 11);
       },
       selectedSegment: () => {
         const p = latest.current;
@@ -181,6 +189,7 @@ function NetworkMapSurfaceView() {
     };
     let disposed = false,
       observer: ResizeObserver | undefined;
+    let overlayRenderer: ReturnType<typeof createOverlayRenderer> | undefined;
     let markers: {
       facility: MapFacility;
       marker: Marker;
@@ -256,6 +265,11 @@ function NetworkMapSurfaceView() {
           cooperativeGestures: true,
         });
         instance.current = map;
+        overlayRenderer = createOverlayRenderer(map, (selection) => {
+          inspectionEvents.close();
+          overlayInspectionEvents.select(selection, map);
+          latest.current.onOverlaySelect?.(selection);
+        });
         let navigation:
           InstanceType<typeof engine.NavigationControl> | undefined;
         let scale: InstanceType<typeof engine.ScaleControl> | undefined;
@@ -389,10 +403,16 @@ function NetworkMapSurfaceView() {
         // so selection/data refreshes must leave it alone. Clearing it restores automatic color.
         let lastObservedColor: string | undefined;
         const update = () => {
-          if (disposed || !map.getSource("easy-ui-transfers")) return;
+          if (disposed || !map.getSource("easy-ui-transfers")) return false;
           element.dataset.mapIdle = "false";
           const p = latest.current,
             css = getComputedStyle(element);
+          try {
+            overlayRenderer?.update(p.overlays);
+          } catch (error) {
+            fail(error);
+            return false;
+          }
           const blue = css.getPropertyValue("--map-route").trim() || "#113abf";
           const muted = css.getPropertyValue("--map-muted").trim() || "#6a7e9d";
           if (p.facilities !== lastFacilities || p.segments !== lastSegments) {
@@ -578,6 +598,7 @@ function NetworkMapSurfaceView() {
             }
           }
           position();
+          return true;
         };
         refresh.current = update;
         map.on("load", () => {
@@ -650,7 +671,10 @@ function NetworkMapSurfaceView() {
             "click",
             "easy-ui-delivery-surface-fill",
             (event: MapLayerMouseEvent) => {
-              if (!disposed) inspectionEvents.select(event);
+              if (!disposed) {
+                overlayInspectionEvents.close();
+                inspectionEvents.select(event);
+              }
             },
           );
           // The halo is behind evidence strokes/casing, keeping caller colors and dashes intact.
@@ -827,7 +851,7 @@ function NetworkMapSurfaceView() {
           lastAreas = latest.current.areas;
           lastSurface = latest.current.surface;
           lastClusterFacilities = latest.current.facilities;
-          update();
+          if (!update()) return;
           // Fires after this mount's own sources/layers exist AND its own first data/paint pass
           // (the update() call above) has run, so a consumer's own overrides always land last.
           latest.current.onMapReady?.(map);
@@ -838,7 +862,10 @@ function NetworkMapSurfaceView() {
         });
         map.on("move", () => {
           position();
-          if (!disposed) inspectionEvents.move(map);
+          if (!disposed) {
+            inspectionEvents.move(map);
+            overlayInspectionEvents.move(map);
+          }
         });
         map.on("moveend", () => {
           if (!disposed) setZoom(map.getZoom());
@@ -894,9 +921,11 @@ function NetworkMapSurfaceView() {
         element.removeEventListener("toggle", positionLabels, true);
       }
       markers.forEach((m) => m.marker.remove());
+      overlayRenderer?.dispose();
       instance.current?.remove();
       instance.current = null;
       inspectionEvents.close();
+      overlayInspectionEvents.close();
     };
   }, [
     options.mapStyle,
@@ -909,6 +938,7 @@ function NetworkMapSurfaceView() {
     fit,
     flyToBounds,
     inspectionEvents,
+    overlayInspectionEvents,
   ]);
 
   useEffect(() => {
@@ -933,6 +963,8 @@ function NetworkMapSurfaceView() {
     deliverySurface,
     activeMetric,
     options.deliverySurfaceColorScale,
+    options.overlays,
+    options.onOverlaySelect,
   ]);
   useEffect(() => {
     if (state !== "ready" || !options.focus) return;
@@ -955,6 +987,10 @@ function NetworkMapSurfaceView() {
     instance.current?.resize();
   }, [height]);
 
+  const overlayContent = overlayContext
+    ? options.renderOverlayDetails?.(overlayContext)
+    : null;
+  const hasOverlayContent = overlayContent != null && overlayContent !== false;
   return (
     <div
       className={styles.viewport}
@@ -965,13 +1001,53 @@ function NetworkMapSurfaceView() {
       aria-labelledby={options["aria-labelledby"]}
       aria-describedby={options["aria-describedby"]}
       style={visualizationTypographyStyle(options.typography)}
+      onClickCapture={(event) => {
+        const marker =
+          event.target instanceof Element
+            ? event.target.closest(".maplibregl-marker")
+            : null;
+        if (
+          event.target === instance.current?.getCanvas() ||
+          (marker && container.current?.contains(marker))
+        ) {
+          inspectionEvents.close();
+          overlayInspectionEvents.close();
+        }
+      }}
     >
       <div
         ref={container}
         className={styles.canvas}
         style={{ height: Math.max(220, height) }}
       />
-      {inspection &&
+      {overlayInspection &&
+        overlayContext &&
+        hasOverlayContent &&
+        (() => {
+          return (
+            <NetworkMapCellPopover
+              x={overlayInspection.x}
+              y={overlayInspection.y}
+              pinned
+              label="Overlay feature details"
+              heading={String(
+                overlayContext.feature.properties?.label ??
+                  overlayContext.feature.id ??
+                  overlayContext.overlay.label ??
+                  overlayContext.overlayId,
+              )}
+              closeLabel="Close overlay details"
+              onClose={overlayInspectionEvents.close}
+              onPin={() => {}}
+              onEnter={() => {}}
+              onLeave={() => {}}
+            >
+              {overlayContent}
+            </NetworkMapCellPopover>
+          );
+        })()}
+      {!hasOverlayContent &&
+        inspection &&
         cell &&
         surface &&
         (() => {
@@ -1005,18 +1081,28 @@ function NetworkMapSurfaceView() {
         >
           {state === "error" ? "Unable to display the map." : "Loading map…"}
           {state === "error" && (
-            <button type="button" onClick={() => setRetry((n) => n + 1)}>
-              Retry map
-            </button>
+            <Button
+              size="sm"
+              variant="outlined"
+              type="button"
+              onPress={() => setRetry((n) => n + 1)}
+            >
+              <span className={styles.controlLabel}>Retry map</span>
+            </Button>
           )}
         </div>
       )}
       {basemapError && (
         <p className={styles.warning} role="status">
           Some basemap data could not load.{" "}
-          <button type="button" onClick={() => setRetry((n) => n + 1)}>
-            Reload map
-          </button>
+          <Button
+            size="sm"
+            variant="filled"
+            type="button"
+            onPress={() => setRetry((n) => n + 1)}
+          >
+            <span className={styles.controlLabel}>Reload map</span>
+          </Button>
         </p>
       )}
     </div>

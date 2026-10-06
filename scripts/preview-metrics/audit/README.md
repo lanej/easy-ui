@@ -19,14 +19,13 @@ labels during keyboard scrolling. A separate wrapped-row case grows text while d
 checks that neither the values nor the next row are covered. These assertions
 run unchanged in all three browsers alongside the chart checks.
 
-The native acceptance fixture additionally measures actual 4-by-4 CSS-pixel
-Sparkline markers at 80/160/480-pixel plot widths, aligns singleton time labels
+The native acceptance fixture additionally aligns singleton time labels
 with both series, and retains positions within explicit time domains. It checks
 full exact values beside abbreviated axes, distinct missing/invalid/zero/overflow
 states, shared BarList scales with explicit clamping, and unframed metric
 composition. Increasing every typography role reruns geometry and accessibility
 checks. Measurements and computed text sizes are retained in `audit.json`, with
-`native-markers.png`, `native-data.png`, and `native-typography.png` screenshots.
+`native-geometry.png`, `native-data.png`, and `native-typography.png` screenshots.
 
 `axe-core` runs all applicable WCAG 2.0/2.1/2.2 A/AA and best-practice rules.
 No rules or violations are suppressed. Every scan records both `violations`

@@ -9,9 +9,11 @@ import {
   MetricComparisonContent,
 } from "./MetricCard";
 import { Card } from "../Card";
+import { SignedValue } from "../SignedValue";
 
 const meta: Meta<typeof MetricCard> = {
-  title: "Components/MetricCard",
+  id: "components-metriccard",
+  title: "Molecules/Feedback/MetricCard",
   component: MetricCard,
 };
 export default meta;
@@ -26,11 +28,6 @@ export const Default: Story = {
       label: "4.2% lower",
       baseline: "vs previous 30 days",
       sentiment: "positive",
-    },
-    trend: {
-      values: [5.8, 5.6, 5.7, 5.5, 5.4, 5.2],
-      accessibilityLabel:
-        "Six equal time buckets in June: average rated cost fell from $5.80 to $5.20",
     },
   },
 };
@@ -50,11 +47,6 @@ export const ShippingOverview: Story = {
           value="24,810"
           supportingText="June 1–30"
           comparison={{ label: "8.3% higher", baseline: "vs previous 30 days" }}
-          trend={{
-            values: [680, 750, 720, 810, 790, 900, 950],
-            accessibilityLabel:
-              "Sample daily label volume generally rose from 680 to 950",
-          }}
         />
         <MetricCard
           {...Default.args}
@@ -70,11 +62,6 @@ export const ShippingOverview: Story = {
             baseline: "vs previous 30 days",
             sentiment: "positive",
           }}
-          trend={{
-            values: [95.8, 96.2, 96, 96.9, 97.1, 97.6, 97.8],
-            accessibilityLabel:
-              "Sample daily on-time percentage rose from 95.8% to 97.8%",
-          }}
         />
         <MetricCard
           label="Average transit"
@@ -84,11 +71,6 @@ export const ShippingOverview: Story = {
             label: "0.2 days lower",
             baseline: "vs previous 30 days",
             sentiment: "positive",
-          }}
-          trend={{
-            values: [2.8, 2.7, 2.9, 2.6, 2.7, 2.5, 2.4],
-            accessibilityLabel:
-              "Sample daily average transit time fell from 2.8 to 2.4 days",
           }}
         />
       </HorizontalGrid>
@@ -107,17 +89,6 @@ export const NoData: Story = {
 export const Zero: Story = {
   args: { label: "Delivery exceptions", value: "0" },
 };
-export const MissingObservations: Story = {
-  ...Default,
-  args: {
-    ...Default.args,
-    trend: {
-      values: [5.8, 5.6, null, 5.5, 5.4, 5.2],
-      accessibilityLabel:
-        "Average rated cost declined; the third time bucket is unavailable",
-    },
-  },
-};
 export const CallerOwnedFrame: Story = {
   render: () => (
     <Card
@@ -131,7 +102,6 @@ export const CallerOwnedFrame: Story = {
           label="Average rated cost"
           value="$5.20"
           supportingText="USD · June"
-          trend={Default.args!.trend}
         />
         <MetricComparisonContent
           label="4.2% lower"
@@ -140,5 +110,34 @@ export const CallerOwnedFrame: Story = {
         />
       </VerticalStack>
     </Card>
+  ),
+};
+
+export const SignedValues: Story = {
+  render: () => (
+    <HorizontalGrid columns={{ xs: 1, sm: 2 }} gap="2">
+      <MetricCard
+        label="Contribution / day"
+        value={
+          <SignedValue
+            value={120}
+            colorBySign
+            formatValue={(value) => `+$${value}`}
+          />
+        }
+        supportingText="Proposed contribution"
+      />
+      <MetricCard
+        label="Contribution range / day"
+        value={
+          <>
+            <SignedValue value={-20} colorBySign formatValue={() => "−$20"} />{" "}
+            to{" "}
+            <SignedValue value={100} colorBySign formatValue={() => "+$100"} />
+          </>
+        }
+        supportingText="Scenario bounds"
+      />
+    </HorizontalGrid>
   ),
 };

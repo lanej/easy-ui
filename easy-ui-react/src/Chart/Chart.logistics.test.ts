@@ -1,4 +1,6 @@
 import { color, init, setPlatformAPI } from "echarts";
+import { themedOption } from "./theme";
+import { divergingPalette } from "../visualization/colors";
 import {
   logisticsExamples,
   reliabilityCohorts,
@@ -24,7 +26,9 @@ it.each(logisticsExamples.map((example) => [example.title, example] as const))(
       height: 360,
     });
     try {
-      chart.setOption({ ...example.option, animation: false });
+      chart.setOption(
+        themedOption(document.createElement("div"), example.option, false),
+      );
       const svg = chart.renderToSVGString();
       expect(svg).toContain("<path");
       expect(svg).not.toMatch(/NaN|Infinity/);
@@ -68,11 +72,7 @@ it("suppresses small matched cohorts and preserves readable signed price differe
     if (c.n < 30) expect(c.difference).toBeNull();
     else {
       expect(c.difference).toBeCloseTo((c.offered / c.benchmark - 1) * 100, 1);
-      const bg = color.lerp((c.difference! + 30) / 60, [
-        "#7193ec",
-        "#ffffff",
-        "#ddb17b",
-      ]);
+      const bg = color.lerp((c.difference! + 30) / 60, divergingPalette);
       expect((luminance(bg) + 0.05) / 0.05).toBeGreaterThanOrEqual(4.5);
     }
   }

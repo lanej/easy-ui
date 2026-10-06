@@ -14,7 +14,10 @@ const config: StorybookConfig = {
 
   stories: [
     "../easy-ui-react/src/**/*.mdx",
-    "../easy-ui-react/src/**/*.stories.tsx",
+    "../easy-ui-react/src/!(examples)/**/*.stories.tsx",
+    "../easy-ui-react/src/examples/*Chart.stories.tsx",
+    "../easy-ui-react/src/examples/NetworkInvestigationMap.stories.tsx",
+    "../easy-ui-react/src/examples/EncodingComparisons.stories.tsx",
   ],
 
   async viteFinal(config) {

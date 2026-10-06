@@ -148,7 +148,8 @@ const Template = (args: Partial<ForgeLayoutProps>) => {
 };
 
 const meta: Meta<typeof ForgeLayout> = {
-  title: "Components/ProductLayout/ForgeLayout",
+  id: "components-productlayout-forgelayout",
+  title: "Organisms/Layouts/ForgeLayout",
   component: ForgeLayout,
   decorators: [
     (Story) => (
@@ -251,7 +252,10 @@ const FORGE_APP_PAGE_KEYS = Object.keys(FORGE_APP_PAGES) as ForgeAppPageKey[];
  * Replicates the Forge app's `AuthenticatedForgeAppLayout`, including the four
  * places a rail needs care. Switch pages to see each one.
  */
-const ForgeAppTemplate = (args: Partial<ForgeLayoutProps>) => {
+const ForgeAppTemplate = ({
+  navToggleIcon = "panel",
+  ...args
+}: Partial<ForgeLayoutProps> & { navToggleIcon?: "panel" | "menu" }) => {
   const [pageKey, setPageKey] = useState<ForgeAppPageKey>("dashboard");
   const [prefersRail, setPrefersRail] = useState(false);
   const page = FORGE_APP_PAGES[pageKey];
@@ -359,7 +363,7 @@ const ForgeAppTemplate = (args: Partial<ForgeLayoutProps>) => {
               `columns={3}` works too, but then the count has to track the
               conditional logo.
             */}
-            <ForgeLayout.NavToggle />
+            <ForgeLayout.NavToggle icon={navToggleIcon} />
             <HorizontalGrid gap="2" columns={2} alignItems="center">
               {page.hasProductLogo && (
                 <Text variant="subtitle1" color="primary.500">
@@ -438,4 +442,8 @@ export const ForgeApp: Story = {
       include: ["mode"],
     },
   },
+};
+
+export const MenuNavigation: Story = {
+  render: (args) => <ForgeAppTemplate {...args} navToggleIcon="menu" />,
 };

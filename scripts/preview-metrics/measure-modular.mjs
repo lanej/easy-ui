@@ -137,7 +137,7 @@ const report = {
   source: process.env.GITHUB_SHA ?? "local",
   version: "6.1.0",
   method:
-    "Two independent Vite production builds of the unchanged gallery: all 24 analytical recipes and all six native components. Full dependency closure from index.html including lazy imports; React, Easy UI, tokens and fixtures included. Gzip per unique asset; CSS separate and fonts excluded. Each preset runs on a separate page so ECharts' global module registry cannot contaminate the result. Module inventory asserts unused chart implementations and the full entry are absent from the modular build.",
+    "Two independent Vite production builds of the unchanged gallery: all 24 analytical recipes and all five native components. Full dependency closure from index.html including lazy imports; React, Easy UI, tokens and fixtures included. Gzip per unique asset; CSS separate and fonts excluded. Each preset runs on a separate page so ECharts' global module registry cannot contaminate the result. Module inventory asserts unused chart implementations and the full entry are absent from the modular build.",
   engineMethod:
     "Separate production entries exporting only init with each preset's registration retained. Excludes React, Easy UI and fixtures. The trend preset is a size probe with reduced capabilities, not a full-portfolio substitute. Transfer measurements only; no runtime-speed claim.",
   results,
@@ -150,7 +150,14 @@ await writeFile(
 );
 console.log(
   JSON.stringify(
-    { results: results.map(({ assets, ...summary }) => summary), engines },
+    {
+      results: results.map(({ preset, javascriptGzipBytes, cssGzipBytes }) => ({
+        preset,
+        javascriptGzipBytes,
+        cssGzipBytes,
+      })),
+      engines,
+    },
     null,
     2,
   ),

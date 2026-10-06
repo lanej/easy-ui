@@ -22,7 +22,8 @@ import {
   weatherAreas,
 } from "./NetworkMap.fixtures";
 const meta: Meta<typeof NetworkMapExample> = {
-  title: "Components/NetworkMap",
+  id: "components-networkmap",
+  title: "Organisms/Maps/NetworkMap",
   component: NetworkMapExample,
   parameters: { layout: "fullscreen" },
 };

@@ -1,12 +1,17 @@
 import type { BarSeriesOption, LineSeriesOption } from "echarts";
-import type { ChartProps } from "./Chart";
+import type { ChartExampleProps } from "./Chart.examples";
+import tokens from "@easypost/easy-ui-tokens/js/tokens";
+import {
+  visualizationColors,
+  sequentialPalette,
+} from "../visualization/colors";
 import { barExample, timeSeriesExample } from "./Chart.examples";
 
 // Synthetic examples only. Each plot and its exact table share these records.
-const blue = "#113abf",
-  purple = "#772bb0",
-  teal = "#007f86",
-  orange = "#9b5900";
+const blue = visualizationColors.primary,
+  purple = visualizationColors.secondary,
+  teal = visualizationColors.tertiary,
+  orange = visualizationColors.warning;
 const grid = { left: 52, right: 24, top: 64, bottom: 48 };
 const usd = (value: unknown) => `$${Number(value).toLocaleString("en-US")}`;
 const day = (n: number) => Date.UTC(2026, 7, n);
@@ -17,7 +22,7 @@ const shortDate = (value: number) =>
     timeZone: "UTC",
   }).format(value);
 
-export const labeledBarsExample: ChartProps = {
+export const labeledBarsExample: ChartExampleProps = {
   ...barExample,
   title: "Costs with direct labels",
   description:
@@ -43,6 +48,7 @@ export const labeledBarsExample: ChartProps = {
           show: true,
           position: "right",
           fontSize: 12,
+          color: visualizationColors.text,
           formatter: (params) => `$${Number(params.value).toFixed(2)}`,
         },
         barMaxWidth: 22,
@@ -51,7 +57,7 @@ export const labeledBarsExample: ChartProps = {
   },
 };
 
-export const annotatedTrendExample: ChartProps = {
+export const annotatedTrendExample: ChartExampleProps = {
   ...timeSeriesExample,
   title: "Targets, thresholds, and events",
   description:
@@ -66,7 +72,7 @@ export const annotatedTrendExample: ChartProps = {
           ? {
               markArea: {
                 silent: true,
-                itemStyle: { color: "rgba(189,105,0,0.06)" },
+                itemStyle: { color: orange, opacity: 0.06 },
                 data: [[{ yAxis: 90 }, { yAxis: 95 }]],
               },
               markLine: {
@@ -74,6 +80,7 @@ export const annotatedTrendExample: ChartProps = {
                 symbol: "none",
                 label: {
                   fontSize: 12,
+                  color: visualizationColors.text,
                   position: "insideEndTop",
                   formatter: "{b}",
                 },
@@ -91,7 +98,10 @@ export const annotatedTrendExample: ChartProps = {
                   {
                     xAxis: day(6),
                     name: "Service change",
-                    lineStyle: { type: "dotted", color: "#627891" },
+                    lineStyle: {
+                      type: "dotted",
+                      color: visualizationColors.muted,
+                    },
                     label: { position: "insideStartTop", rotate: 90 },
                   },
                 ],
@@ -111,7 +121,7 @@ const scenarios = Array.from({ length: 9 }, (_, i) => {
     receipts: -adjustment * 3 - (adjustment * adjustment) / 2,
   };
 });
-export const scenarioExample: ChartProps = {
+export const scenarioExample: ChartExampleProps = {
   title: "Scenario response",
   description:
     "Synthetic model · Changes relative to current pricing. Named settings and the shaded trial range are illustrative, not recommendations.",
@@ -149,6 +159,7 @@ export const scenarioExample: ChartProps = {
           symbol: "none",
           label: {
             fontSize: 12,
+            color: visualizationColors.text,
             position: "insideStartBottom",
             formatter: "{b}",
           },
@@ -156,13 +167,13 @@ export const scenarioExample: ChartProps = {
             {
               yAxis: 0,
               name: "No change",
-              lineStyle: { color: "#627891", type: "dotted" },
+              lineStyle: { color: visualizationColors.muted, type: "dotted" },
             },
           ],
         },
         markArea: {
           silent: true,
-          itemStyle: { color: "rgba(17,58,191,0.06)" },
+          itemStyle: { color: blue, opacity: 0.06 },
           label: { fontSize: 12, color: blue, position: "insideTop" },
           data: [[{ xAxis: -3, name: "Trial range" }, { xAxis: -1 }]],
         },
@@ -182,8 +193,9 @@ export const scenarioExample: ChartProps = {
           label: {
             show: true,
             fontSize: 12,
+            color: visualizationColors.text,
             formatter: "{b}",
-            backgroundColor: "rgba(255,255,255,0.9)",
+            backgroundColor: visualizationColors.background,
             padding: [2, 3],
           },
           data: [
@@ -230,7 +242,7 @@ const distributionTable = {
     ],
   })),
 };
-export const histogramExample: ChartProps = {
+export const histogramExample: ChartExampleProps = {
   title: "Transit distribution",
   description:
     "1,000 synthetic delivered parcels · Equal one-day buckets. Bar labels show exact counts.",
@@ -254,13 +266,18 @@ export const histogramExample: ChartProps = {
         data: counts,
         barCategoryGap: "5%",
         itemStyle: { color: blue },
-        label: { show: true, position: "top", fontSize: 12 },
+        label: {
+          show: true,
+          position: "top",
+          fontSize: 12,
+          color: visualizationColors.text,
+        },
       },
     ],
   },
   dataTable: distributionTable,
 };
-export const cumulativeExample: ChartProps = {
+export const cumulativeExample: ChartExampleProps = {
   title: "Delivered by day",
   description:
     "Same 1,000 parcels · Cumulative observed share. By day 3: 74%; by day 4: 90%. This is not a delivery forecast.",
@@ -303,6 +320,7 @@ export const cumulativeExample: ChartProps = {
           symbol: "none",
           label: {
             formatter: "90%",
+            color: visualizationColors.text,
             position: "insideEndBottom",
             fontSize: 12,
           },
@@ -320,7 +338,7 @@ const summaries = [
   { name: "Two-day", count: 350, values: [1, 1.5, 2, 2.5, 4] },
   { name: "Next-day", count: 250, values: [0.5, 1, 1, 1.5, 3] },
 ];
-export const boxPlotExample: ChartProps = {
+export const boxPlotExample: ChartExampleProps = {
   title: "Arrival spread by service",
   description:
     "Supplied synthetic summaries · Whiskers: min/max; box: P25–P75; center: median. Bounds are descriptive, not confidence intervals.",
@@ -348,7 +366,10 @@ export const boxPlotExample: ChartProps = {
         type: "boxplot",
         layout: "horizontal",
         data: summaries.map((row) => row.values),
-        itemStyle: { color: "#dce5ff", borderColor: blue },
+        itemStyle: {
+          color: visualizationColors.primarySurface,
+          borderColor: blue,
+        },
         boxWidth: [12, 32],
       },
     ],
@@ -377,7 +398,7 @@ const forecast = Array.from({ length: 10 }, (_, i) => ({
   lower: i >= 4 ? [96.4, 95.8, 95.8, 95.7, 95.6, 95.5][i - 4] : null,
   upper: i >= 4 ? [96.4, 97.6, 98.2, 98.7, 99.2, 99.5][i - 4] : null,
 }));
-export const predictionBandExample: ChartProps = {
+export const predictionBandExample: ChartExampleProps = {
   title: "Observed and predicted performance",
   description:
     "Aug 1–10 · UTC · Synthetic model output. Shading is a supplied 80% prediction interval; it is not a target or confidence interval.",
@@ -408,7 +429,7 @@ export const predictionBandExample: ChartProps = {
         stack: "interval",
         symbol: "none",
         lineStyle: { opacity: 0 },
-        areaStyle: { color: "rgba(17,58,191,0.18)" },
+        areaStyle: { color: blue, opacity: 0.18 },
         silent: true,
         tooltip: { show: false },
         data: forecast.map((row) => [
@@ -435,9 +456,10 @@ export const predictionBandExample: ChartProps = {
         markLine: {
           silent: true,
           symbol: "none",
-          lineStyle: { type: "dotted", color: "#627891" },
+          lineStyle: { type: "dotted", color: visualizationColors.muted },
           label: {
             formatter: "Forecast starts",
+            color: visualizationColors.text,
             fontSize: 12,
             position: "insideEndTop",
           },
@@ -477,7 +499,7 @@ const bridge = [
   return { ...row, before, after: before + row.change };
 });
 const balance = bridge[bridge.length - 1].after;
-export const waterfallExample: ChartProps = {
+export const waterfallExample: ChartExampleProps = {
   title: "From receipts to contribution",
   description:
     "Synthetic USD ledger · $24,000 − $9,000 − $1,200 + $500 = $14,300. Costs and fees are explicit; bar heights reconcile to the table.",
@@ -528,6 +550,7 @@ export const waterfallExample: ChartProps = {
           show: true,
           position: "top",
           fontSize: 12,
+          color: visualizationColors.text,
           formatter: (params) =>
             params.dataIndex === bridge.length
               ? "$14.3k"
@@ -542,7 +565,11 @@ export const waterfallExample: ChartProps = {
           {
             value: balance,
             itemStyle: { color: teal },
-            label: { position: "insideTop", color: "#ffffff", distance: 8 },
+            label: {
+              position: "insideTop",
+              color: visualizationColors.background,
+              distance: 8,
+            },
           },
         ],
       },
@@ -579,7 +606,7 @@ const cells = weekdays.flatMap((weekday, y) =>
     };
   }),
 );
-export const periodicHeatmapExample: ChartProps = {
+export const periodicHeatmapExample: ChartExampleProps = {
   title: "Exceptions by weekday and hour",
   description:
     "Synthetic UTC cohorts · Percent of parcels with exceptions. Cells with fewer than 50 parcels are blank; table retains counts. No causal inference.",
@@ -608,7 +635,7 @@ export const periodicHeatmapExample: ChartProps = {
       itemHeight: 110,
       text: ["3%", "0%"],
       calculable: false,
-      inRange: { color: ["#eff3ff", "#9eafe8", blue] },
+      inRange: { color: sequentialPalette },
     },
     series: [
       {
@@ -619,14 +646,22 @@ export const periodicHeatmapExample: ChartProps = {
           .map((cell) => ({
             value: [cell.x, cell.y, cell.rate],
             // Black/white switch keeps small labels above 4.5:1 on this scale.
-            label: { color: cell.rate! >= 2.3 ? "#ffffff" : "#000000" },
+            label: {
+              color:
+                cell.rate! >= 2.2
+                  ? tokens["color.gray.000"]
+                  : tokens["color.gray.900"],
+            },
           })),
         label: {
           show: true,
           fontSize: 12,
           formatter: (params) => `${(params.value as number[])[2]}%`,
         },
-        itemStyle: { borderColor: "#ffffff", borderWidth: 2 },
+        itemStyle: {
+          borderColor: visualizationColors.background,
+          borderWidth: 2,
+        },
       },
     ],
   },

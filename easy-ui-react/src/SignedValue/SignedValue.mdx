@@ -1,0 +1,16 @@
+import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import * as SignedValueStories from "./SignedValue.stories";
+
+<Meta of={SignedValueStories} />
+
+# SignedValue
+
+Formats a number separately from its sign. Set `colorBySign` to use EasyPost positive, negative, and neutral text colors. Coloring is opt-in; an explicit `color` overrides it. Override `positiveColor` and `negativeColor` when a positive change is undesirable, such as increased cost. Zero and non-finite values use `zeroColor`.
+
+Use `formatValue` for currency, percentages, or other units. For a range crossing zero, render each endpoint separately so its color matches its own sign. Signs remain visible without relying on color.
+
+<Canvas of={SignedValueStories.MixedRange} />
+<Canvas of={SignedValueStories.Positive} />
+<Canvas of={SignedValueStories.Negative} />
+<Canvas of={SignedValueStories.Uncolored} />
+<ArgTypes of={SignedValueStories} />

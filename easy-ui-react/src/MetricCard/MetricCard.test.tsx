@@ -6,21 +6,16 @@ import {
   MetricContent,
   MetricComparisonContent,
 } from "./MetricCard";
-
-const trend = {
-  values: [6, 5.8, 5.2],
-  accessibilityLabel: "Average rated cost fell over three days",
-};
+import { SignedValue } from "../SignedValue";
 
 describe("<MetricCard />", () => {
-  it("shows the value, period, comparison baseline, and accessible trend", () => {
+  it("shows the value, period, and comparison baseline without a chart", () => {
     render(
       <MetricCard
         label="Average rated cost"
         value="$5.20"
         supportingText="June 1–30 · USD"
         comparison={{ label: "4.2% lower", baseline: "vs previous 30 days" }}
-        trend={trend}
       />,
     );
     expect(
@@ -30,9 +25,7 @@ describe("<MetricCard />", () => {
     expect(screen.getByText("June 1–30 · USD")).toBeInTheDocument();
     expect(screen.getByText("4.2% lower")).toBeInTheDocument();
     expect(screen.getByText("vs previous 30 days")).toBeInTheDocument();
-    expect(screen.getByRole("img")).toHaveAccessibleName(
-      trend.accessibilityLabel,
-    );
+    expect(screen.queryByRole("img")).toBeNull();
   });
 
   it("does not infer a positive sentiment from an increase", () => {
@@ -65,7 +58,7 @@ describe("<MetricCard />", () => {
     const { rerender } = render(<MetricCard label="Exceptions" value="0" />);
     expect(screen.getByText("0")).toBeInTheDocument();
     expect(screen.queryByText("No data")).toBeNull();
-    rerender(<MetricCard label="Exceptions" value={null} trend={trend} />);
+    rerender(<MetricCard label="Exceptions" value={null} />);
     expect(screen.getByText("No data")).toBeInTheDocument();
     expect(screen.queryByRole("img")).toBeNull();
   });
@@ -74,7 +67,6 @@ describe("<MetricCard />", () => {
     const props = {
       label: "Cost",
       value: "$5.20",
-      trend,
       comparison: { label: "4.2% lower", baseline: "vs May" },
     };
     const { rerender } = render(<MetricCard {...props} isLoading />);
@@ -111,7 +103,6 @@ it("reuses unframed metric content in a caller-owned region without another card
       <MetricContent
         label="Cost"
         value="$5.20"
-        trend={trend}
         comparison={{ label: "Lower", baseline: "vs May" }}
         typography={{ title: 22 }}
       />
@@ -127,7 +118,6 @@ it("reuses unframed metric content in a caller-owned region without another card
     <MetricContent
       label="Cost"
       value="$5.20"
-      trend={trend}
       comparison={{ label: "Lower", baseline: "vs May" }}
       isLoading
     />,
@@ -144,4 +134,29 @@ it("renders comparison content independently with its explicit baseline and neut
   expect(screen.getByText("vs May")).toBeInTheDocument();
   expect(screen.getByTestId("root").className).toContain("variantGray");
   expect(screen.queryByRole("region")).toBeNull();
+});
+
+it("composes signed-value atoms without another card and suppresses them while loading", () => {
+  const props = {
+    label: "Contribution",
+    value: (
+      <>
+        <SignedValue value={-20} colorBySign /> to{" "}
+        <SignedValue value={100} colorBySign />
+      </>
+    ),
+    valueSize: 14,
+    typography: { title: 12, description: 12 },
+  };
+  const { rerender } = render(<MetricContent {...props} />);
+  expect(screen.getByText("-20")).toBeInTheDocument();
+  expect(screen.getByText("+100")).toBeInTheDocument();
+  expect(screen.getByText("-20").closest("strong")).toHaveTextContent(
+    "-20 to +100",
+  );
+  expect(screen.queryByRole("region")).toBeNull();
+  rerender(<MetricContent {...props} isLoading />);
+  expect(screen.queryByText("-20")).toBeNull();
+  expect(screen.queryByText("+100")).toBeNull();
+  expect(screen.getByRole("status")).toHaveTextContent("Loading…");
 });

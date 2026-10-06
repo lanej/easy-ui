@@ -1,5 +1,6 @@
 import React, { AriaAttributes, useEffect, useRef, useState } from "react";
 import { isEqual } from "lodash";
+import { Button } from "../Button";
 import { useColorScheme, useTheme } from "../Theme";
 import {
   VisualizationTypography,
@@ -96,13 +97,14 @@ export function ChartSurface({
             ? emptyLabel
             : errorLabel}
         {status === "error" && props.onRetry && (
-          <button
+          <Button
+            size="sm"
+            variant="outlined"
             type="button"
-            className={styles.control}
-            onClick={props.onRetry}
+            onPress={props.onRetry}
           >
-            {retryLabel}
-          </button>
+            <span className={styles.controlLabel}>{retryLabel}</span>
+          </Button>
         )}
       </div>
     );
@@ -409,13 +411,14 @@ function ChartEngine(props: EngineProps) {
         <div role={state === "error" ? "alert" : "status"}>
           {state === "error" ? props.errorLabel : props.loadingLabel}
           {state === "error" && (
-            <button
+            <Button
+              size="sm"
+              variant="outlined"
               type="button"
-              className={styles.control}
-              onClick={() => setRetry((n) => n + 1)}
+              onPress={() => setRetry((n) => n + 1)}
             >
-              {props.retryLabel}
-            </button>
+              <span className={styles.controlLabel}>{props.retryLabel}</span>
+            </Button>
           )}
         </div>
       )}

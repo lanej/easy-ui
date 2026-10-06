@@ -14,7 +14,8 @@ import { DatePicker, DatePickerProps } from "./DatePicker";
 type Story = StoryObj<typeof DatePicker>;
 
 const meta: Meta<typeof DatePicker> = {
-  title: "Components/DatePicker/DatePicker",
+  id: "components-datepicker-datepicker",
+  title: "Molecules/Forms/DatePicker",
   args: { "aria-label": "Date picker" },
   component: DatePicker,
   decorators: [InputDecorator],

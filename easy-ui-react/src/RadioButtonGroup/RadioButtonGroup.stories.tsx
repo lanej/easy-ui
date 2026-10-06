@@ -6,7 +6,8 @@ import { RadioButtonGroup, RadioButtonGroupProps } from "./RadioButtonGroup";
 type Story = StoryObj<typeof RadioButtonGroup>;
 
 const meta: Meta<typeof RadioButtonGroup> = {
-  title: "Components/RadioButtonGroup",
+  id: "components-radiobuttongroup",
+  title: "Molecules/Forms/RadioButtonGroup",
   component: RadioButtonGroup,
   args: {
     color: "primary.500",

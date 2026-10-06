@@ -7,7 +7,20 @@ import {
   Markdown,
 } from "@storybook/addon-docs/blocks";
 import Contributing from "../../.github/CONTRIBUTING.md?raw";
+import StorybookOrganization from "../../.storybook/ORGANIZATION.md?raw";
+import AtomicCompositionDiagram from "../../.storybook/diagrams/atomic-composition.svg?url";
+import ComponentAndVariantsDiagram from "../../.storybook/diagrams/component-and-variants.svg?url";
 
 <Meta title="Contributing" />
 
 <Markdown>{Contributing}</Markdown>
+
+<Markdown>
+  {StorybookOrganization.replace(
+    "./diagrams/atomic-composition.svg",
+    AtomicCompositionDiagram,
+  ).replace(
+    "./diagrams/component-and-variants.svg",
+    ComponentAndVariantsDiagram,
+  )}
+</Markdown>

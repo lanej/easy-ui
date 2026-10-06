@@ -4,7 +4,8 @@ import { HorizontalGrid } from "../HorizontalGrid";
 import { CompactTimeSeries } from "./CompactTimeSeries";
 
 const meta: Meta<typeof CompactTimeSeries> = {
-  title: "Components/CompactTimeSeries",
+  id: "components-compacttimeseries",
+  title: "Organisms/Charts/CompactTimeSeries",
   component: CompactTimeSeries,
 };
 export default meta;
@@ -39,6 +40,10 @@ export const Default: Story = {
       },
     ],
   },
+};
+
+export const WithoutDataTable: Story = {
+  args: { ...Default.args, showDataTable: false },
 };
 export const Comparison: Story = {
   args: {

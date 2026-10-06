@@ -1,6 +1,12 @@
 import { merge } from "lodash";
 import type { ChartOption } from "./types";
 import {
+  resolveVisualizationColor,
+  resolveVisualizationColors,
+  visualizationColors,
+  visualizationPalette,
+} from "../visualization/colors";
+import {
   resolveVisualizationTypography,
   VisualizationTypography,
 } from "../visualization/typography";
@@ -14,11 +20,9 @@ export function themedOption(
 ): ChartOption {
   const sizes = resolveVisualizationTypography(typography);
   const css = getComputedStyle(element);
-  const token = (name: string, fallback: string) =>
-    css.getPropertyValue(`--ezui-${name}`).trim() || fallback;
-  const text = token("color-neutral-800", "#172b4d");
-  const muted = token("color-neutral-600", "#50647e");
-  const line = token("color-neutral-200", "#dfe5ed");
+  const text = resolveVisualizationColor(css, visualizationColors.text);
+  const muted = resolveVisualizationColor(css, visualizationColors.muted);
+  const line = resolveVisualizationColor(css, visualizationColors.border);
   const axis = {
     axisLabel: {
       color: muted,
@@ -41,19 +45,16 @@ export function themedOption(
       fontSize: sizes.label,
       lineHeight: sizes.label * 1.5,
     },
-    color: [
-      token("color-primary-600", "#113abf"),
-      token("color-secondary-600", "#772bb0"),
-      "#007f86",
-      "#bd6900",
-      "#bd4278",
-      "#627891",
-    ],
+    color: resolveVisualizationColors({ color: visualizationPalette }, css)
+      .color,
     legend: { textStyle: { color: text, fontSize: sizes.legend } },
     tooltip: {
       confine: true,
       renderMode: "richText",
-      backgroundColor: token("color-neutral-050", "#ffffff"),
+      backgroundColor: resolveVisualizationColor(
+        css,
+        visualizationColors.background,
+      ),
       borderColor: line,
       textStyle: { color: text, fontSize: sizes.detail },
     },
@@ -121,6 +122,12 @@ export function themedOption(
         defaults.legend,
         inherited?.legend,
       );
+    if (input.visualMap)
+      result.visualMap = withDefaults(
+        input.visualMap,
+        { textStyle: { color: text, fontSize: sizes.label } },
+        inherited?.visualMap,
+      );
     if (input.tooltip)
       result.tooltip = merge(
         {},
@@ -164,7 +171,7 @@ export function themedOption(
       );
     return result;
   };
-  const result = decorate(option);
+  const result = resolveVisualizationColors(decorate(option), css);
   if (reducedMotion) disableAnimation(result);
   return result;
 }

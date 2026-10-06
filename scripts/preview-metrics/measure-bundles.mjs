@@ -7,16 +7,9 @@ import config from "./vite.config.mjs";
 
 const results = [];
 for (const components of [
-  ["MetricCard", "Sparkline"],
-  ["MetricCard", "Sparkline", "BarList", "BulletChart"],
-  [
-    "MetricCard",
-    "Sparkline",
-    "BarList",
-    "BulletChart",
-    "CompactTimeSeries",
-    "RangePlot",
-  ],
+  ["MetricCard"],
+  ["MetricCard", "BarList", "BulletChart"],
+  ["MetricCard", "BarList", "BulletChart", "CompactTimeSeries", "RangePlot"],
 ]) {
   const result = await build(
     mergeConfig(config, {

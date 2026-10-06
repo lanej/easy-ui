@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "../../easy-ui-react/src/Theme";
 import { Card } from "../../easy-ui-react/src/Card";
-import { Sparkline } from "../../easy-ui-react/src/Sparkline";
 import { CompactTimeSeries } from "../../easy-ui-react/src/CompactTimeSeries";
 import { RangePlot } from "../../easy-ui-react/src/RangePlot";
 import { BulletChart } from "../../easy-ui-react/src/BulletChart";
@@ -57,34 +56,6 @@ function NativeRegressions() {
           Increase native text size
         </label>
       </header>
-      <section aria-label="Responsive marker cases" data-native-case="markers">
-        <h2>Responsive markers</h2>
-        <div className="native-sparkline-row">
-          {[80, 160, 480].map((width) => (
-            <div
-              className="native-sparkline-case"
-              key={width}
-              data-native-sparkline-width={width}
-              style={{ width }}
-            >
-              <p>{width}px maximum</p>
-              <div data-native-sparkline-kind="segments">
-                <Sparkline
-                  values={[1, 3, null, 2, 4]}
-                  markers="all"
-                  accessibilityLabel={`Two segments at ${width} pixel maximum width`}
-                />
-              </div>
-              <div data-native-sparkline-kind="singleton">
-                <Sparkline
-                  values={[2]}
-                  accessibilityLabel={`Single observation at ${width} pixel maximum width`}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
       <section
         aria-label="Native time geometry and precision"
         data-native-case="time"
@@ -262,11 +233,6 @@ function NativeRegressions() {
                   supportingText="USD · June"
                   typography={typography}
                   valueSize={large ? 36 : 28}
-                  trend={{
-                    values: [6, 5.8, 5.2],
-                    accessibilityLabel:
-                      "Three equal buckets: cost declined to $5.20",
-                  }}
                 />
                 <MetricComparisonContent
                   label="4.2% lower"

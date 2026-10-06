@@ -1,9 +1,51 @@
 import type { ReactNode } from "react";
-import type { Map as MapInstance, StyleSpecification } from "maplibre-gl";
+import type {
+  Map as MapInstance,
+  StyleSpecification,
+  CircleLayerSpecification,
+  FillLayerSpecification,
+  LineLayerSpecification,
+  SymbolLayerSpecification,
+  HeatmapLayerSpecification,
+  FillExtrusionLayerSpecification,
+} from "maplibre-gl";
+import type { Feature, FeatureCollection } from "geojson";
 import type { VisualizationTypography } from "../visualization/typography";
 
 /** Geographic position in longitude, latitude order (WGS84 degrees). */
 export type MapCoordinate = readonly [number, number];
+
+type OverlayLayerWithoutSource<Layer> = Layer extends unknown
+  ? Omit<Layer, "source" | "source-layer">
+  : never;
+
+export type MapOverlayLayer = OverlayLayerWithoutSource<
+  | CircleLayerSpecification
+  | FillLayerSpecification
+  | LineLayerSpecification
+  | SymbolLayerSpecification
+  | HeatmapLayerSpecification
+  | FillExtrusionLayerSpecification
+>;
+
+export type MapOverlay = {
+  id: string;
+  label?: string;
+  data: FeatureCollection;
+  layers: readonly MapOverlayLayer[];
+  visible?: boolean;
+  defaultVisible?: boolean;
+};
+
+export type MapOverlaySelection = {
+  overlayId: string;
+  feature: Feature;
+  coordinate?: MapCoordinate;
+};
+
+export type MapOverlayDetailsContext = MapOverlaySelection & {
+  overlay: MapOverlay;
+};
 
 /** Caller-supplied model output. A facility cohort score is not a parcel score. */
 export type MapRisk = {
@@ -240,6 +282,21 @@ export type NetworkMapLayerVisibility = {
   deliverySurface: boolean;
 };
 
+type ToolbarControlBase = {
+  id: string;
+  label: string;
+  disabled?: boolean;
+};
+
+export type NetworkMapToolbarControl = ToolbarControlBase &
+  (
+    | { type: "action"; action: "fitAll" | "selectedSegment" | "latestEvent" }
+    | { type: "button"; onPress: () => void }
+    | { type: "layer"; layer: keyof NetworkMapLayerVisibility }
+    | { type: "overlay"; overlayId: string }
+    | { type: "surfaceMetrics" }
+  );
+
 /** Presentation and controlled selection contract for an optional geographic map. */
 export type NetworkMapProps = {
   /** Optional visible heading. Independent of the description; null remains supported. */
@@ -264,6 +321,12 @@ export type NetworkMapProps = {
   segments?: readonly MapSegment[];
   /** Optional time-filtered weather/disruption polygons. */
   areas?: readonly MapArea[];
+  overlays?: readonly MapOverlay[];
+  onOverlayVisibilityChange?: (overlayId: string, visible: boolean) => void;
+  onOverlaySelect?: (selection: MapOverlaySelection) => void;
+  renderOverlayDetails?: (context: MapOverlayDetailsContext) => ReactNode;
+  showLegend?: boolean;
+  showViewScale?: boolean;
   /** Optional delivery-time field surface, rendered as a data-driven fill layer. */
   surface?: MapSurface;
   /**
@@ -291,6 +354,8 @@ export type NetworkMapProps = {
   selectedFacilityId?: string;
   /** Show the selected facility details below the map; defaults to true. Set false when a linked panel already provides this context. */
   showSelectionDetails?: boolean;
+  /** Show the raw layer-data disclosure; defaults to true. */
+  showDataTable?: boolean;
   /** Receives marker, equivalent table, Selected leg destination or Latest events selection. */
   onFacilitySelect?: (id: string) => void;
   /** Controlled segment emphasis and Selected leg camera target. */
@@ -312,6 +377,7 @@ export type NetworkMapProps = {
    * recreating the map. Explicit flags take precedence over the legacy networkControls group.
    */
   controls?: false | NetworkMapControls;
+  toolbarControls?: readonly NetworkMapToolbarControl[];
   /** Override toolbar labels; fitAll defaults to "Fit all locations" for every map. */
   controlLabels?: Partial<NetworkMapControlLabels>;
   /**

@@ -28,6 +28,10 @@
  * match, which scales the artwork uniformly, and carries the offset that centers
  * the artwork within the box.
  */
+.logo {
+  color: design-token("color.neutral.900");
+}
+
 .logoGlyph {
   width: design-token("size.icon.md");
   height: design-token("size.icon.md");

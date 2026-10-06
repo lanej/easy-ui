@@ -13,7 +13,8 @@ import {
 import styles from "./examples.module.scss";
 
 const meta: Meta<typeof Chart> = {
-  title: "Components/Chart/Logistics",
+  id: "components-chart-logistics",
+  title: "Organisms/Charts/Chart/Logistics",
   component: Chart,
   excludeStories: ["LogisticsExamples"],
 };

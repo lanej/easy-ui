@@ -10,6 +10,7 @@
     "flex-basis"
   );
   background: design-token("color.blue.800");
+  color: design-token("color.gray.000");
   order: component-token("focused-product-layout", "side-panel-order");
   padding: design-token("space.3");
 

@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import styles from "./NetworkMap.module.scss";
+import { useOverlay } from "react-aria";
+import { Button } from "../Button";
 
 /** A non-modal inspector stays within the viewport and leaves room for attribution. */
 export function NetworkMapCellPopover({
@@ -17,6 +19,9 @@ export function NetworkMapCellPopover({
   onEnter,
   onLeave,
   children,
+  label = "Delivery cell details",
+  heading,
+  closeLabel = "Close cell details",
 }: {
   x: number;
   y: number;
@@ -26,6 +31,9 @@ export function NetworkMapCellPopover({
   onEnter: () => void;
   onLeave: () => void;
   children: ReactNode;
+  label?: string;
+  heading?: string;
+  closeLabel?: string;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -39,6 +47,21 @@ export function NetworkMapCellPopover({
     }
     onClose();
   }, [onClose]);
+  const { overlayProps } = useOverlay(
+    {
+      isOpen: true,
+      isDismissable: pinned,
+      onClose: dismiss,
+      shouldCloseOnInteractOutside: (target) => {
+        const canvas =
+          element.current?.parentElement?.querySelector(".maplibregl-canvas");
+        if (target === canvas) return false;
+        const marker = target.closest(".maplibregl-marker");
+        return !marker || !canvas?.closest(".maplibregl-map")?.contains(marker);
+      },
+    },
+    element,
+  );
   useEffect(() => {
     const node = element.current;
     const viewport = node?.parentElement;
@@ -73,44 +96,47 @@ export function NetworkMapCellPopover({
   }, [pinned]);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") dismiss();
-    };
-    const outside = (event: PointerEvent) => {
-      if (pinned && !element.current?.contains(event.target as Node)) onClose();
+      if (
+        event.key === "Escape" &&
+        !event.defaultPrevented &&
+        !element.current?.contains(event.target as Node)
+      )
+        dismiss();
     };
     document.addEventListener("keydown", escape);
-    document.addEventListener("pointerdown", outside);
-    return () => {
-      document.removeEventListener("keydown", escape);
-      document.removeEventListener("pointerdown", outside);
-    };
-  }, [pinned, onClose, dismiss]);
+    return () => document.removeEventListener("keydown", escape);
+  }, [dismiss]);
   return (
     <div
+      {...overlayProps}
       ref={element}
       className={styles.cellPopover}
       style={position}
       role="region"
-      aria-label="Delivery cell details"
+      aria-label={label}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
       onFocus={onPin}
     >
       <div className={styles.cellPopoverHeader}>
-        <strong>{pinned ? "Selected cell" : "Delivery cell"}</strong>
+        <strong>
+          {heading ?? (pinned ? "Selected cell" : "Delivery cell")}
+        </strong>
         {!pinned && (
-          <button type="button" onClick={onPin}>
-            Keep open
-          </button>
+          <Button size="sm" variant="outlined" type="button" onPress={onPin}>
+            <span className={styles.controlLabel}>Keep open</span>
+          </Button>
         )}
-        <button
+        <Button
+          size="sm"
+          variant="outlined"
           type="button"
-          ref={closeButton}
-          onClick={dismiss}
-          aria-label="Close cell details"
+          ref={closeButton as React.RefObject<null>}
+          onPress={dismiss}
+          aria-label={closeLabel}
         >
-          Close
-        </button>
+          <span className={styles.controlLabel}>Close</span>
+        </Button>
       </div>
       {children}
     </div>

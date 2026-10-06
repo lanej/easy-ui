@@ -8,6 +8,7 @@ import React, {
 import { resolveMapControls } from "./controls";
 import { useLayerVisibility } from "./useLayerVisibility";
 import { useSurfaceMetric } from "./useSurfaceMetric";
+import { useOverlayVisibility } from "./useOverlayVisibility";
 import type {
   MapArea,
   MapFacility,
@@ -26,11 +27,14 @@ type MapCommands = {
 };
 
 function useMapState(input: NetworkMapProps) {
+  const { resolvedOverlays, changeOverlayVisibility } =
+    useOverlayVisibility(input);
   const props = {
     ...input,
     facilities: input.facilities ?? emptyFacilities,
     segments: input.segments ?? emptySegments,
     areas: input.areas ?? emptyAreas,
+    overlays: resolvedOverlays,
   };
   const { visibility, changeVisibility } = useLayerVisibility(props);
   const { activeMetric, setActiveMetric } = useSurfaceMetric(
@@ -48,6 +52,7 @@ function useMapState(input: NetworkMapProps) {
     props,
     visibility,
     changeVisibility,
+    changeOverlayVisibility,
     activeMetric,
     setActiveMetric,
     state,

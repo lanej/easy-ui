@@ -6,7 +6,8 @@ import { Button } from "../Button";
 type Story = StoryObj<typeof ThemeProvider>;
 
 const meta: Meta<typeof ThemeProvider> = {
-  title: "Components/Theme",
+  id: "components-theme",
+  title: "Foundations/Theme",
   component: ThemeProvider,
 };
 

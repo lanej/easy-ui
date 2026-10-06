@@ -7,7 +7,8 @@ type Story = StoryObj<typeof CheckableCard>;
 const Template = (args: CheckableCardProps) => <CheckableCard {...args} />;
 
 const meta: Meta<typeof CheckableCard> = {
-  title: "Components/Cards/CheckableCard",
+  id: "components-cards-checkablecard",
+  title: "Molecules/Cards/CheckableCard",
   component: CheckableCard,
 };
 

@@ -14,7 +14,8 @@ const formSubmissionAction = action("Form submitted!");
 const sectionAction = action("Action in section clicked!");
 
 const meta: Meta<typeof FormLayout> = {
-  title: "Components/FormLayout",
+  id: "components-formlayout",
+  title: "Organisms/Layouts/FormLayout",
   component: FormLayout,
   decorators: [
     (Story) => (
@@ -354,6 +355,12 @@ export const WithTabs: Story = {
 
 function Divider(props: ComponentProps<"div">) {
   return (
-    <div style={{ height: 0, borderBottom: "1px solid #C6CFE0" }} {...props} />
+    <div
+      style={{
+        height: 0,
+        borderBottom: "1px solid var(--ezui-color-neutral-200)",
+      }}
+      {...props}
+    />
   );
 }

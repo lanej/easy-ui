@@ -13,35 +13,6 @@
     a {
       color: design-token("color.primary.700");
     }
-    h1 {
-      margin: 0 0 8px;
-      font-size: 30px;
-      line-height: 1.3;
-    }
-    nav {
-      font-size: 13px;
-    }
-    .eyebrow {
-      color: design-token("color.primary.700");
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      margin: 20px 0 12px;
-    }
-    .title-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 24px;
-      align-items: start;
-    }
-    .title-row p {
-      margin: 0;
-    }
-    .snapshot {
-      font-size: 12px;
-      flex-shrink: 0;
-      text-align: right;
-    }
     .assumptions {
       margin: 12px 0 20px;
     }
@@ -55,18 +26,10 @@
       flex-wrap: wrap;
       gap: 16px;
     }
-    .toolbar label {
-      display: grid;
-      gap: 4px;
-      min-width: 220px;
-    }
-    select {
-      padding: 8px;
-      border: 1px solid design-token("color.neutral.300");
-      background: design-token("color.neutral.000");
-      color: inherit;
-      border-radius: 4px;
-      font: inherit;
+    .toolbar-field {
+      width: 260px;
+      max-width: 100%;
+      min-width: 0;
     }
     .consequence {
       border-left: 3px solid design-token("color.primary.600");
@@ -80,17 +43,8 @@
       border-block: 1px solid design-token("color.neutral.200");
       padding: 14px 0;
     }
-    .decision-summary div {
-      display: grid;
-      gap: 5px;
+    .decision-summary > div {
       min-width: 0;
-    }
-    .decision-summary span {
-      font-size: 12px;
-      color: design-token("color.neutral.700");
-    }
-    .decision-summary strong {
-      font-size: 16px;
     }
     .workspace {
       display: grid;
@@ -110,7 +64,7 @@
       overflow-x: auto;
     }
     .matrix-scroll > section {
-      min-width: 560px;
+      min-width: 360px;
     }
     .status {
       padding: 12px 0;
@@ -121,6 +75,29 @@
     }
     .tabs {
       margin: 16px 0 0;
+    }
+    .tabs > div {
+      @include component-token(
+        "tab-nav",
+        "background-color",
+        design-token("color.neutral.025")
+      );
+      @include component-token(
+        "tab-nav",
+        "border-color",
+        design-token("color.neutral.200")
+      );
+      @include component-token(
+        "tab-nav",
+        "current-page-color",
+        design-token("color.primary.600")
+      );
+    }
+    .tabs [role="tab"] {
+      color: design-token("color.neutral.900");
+    }
+    .tabs [role="tab"][aria-selected="true"] {
+      color: design-token("color.primary.700");
     }
     [data-mode="fragmented"] .workspace {
       display: block;
@@ -138,18 +115,7 @@
       }
     }
     @media (max-width: 650px) {
-      h1 {
-        font-size: 24px;
-      }
-      .title-row {
-        display: block;
-      }
-      .snapshot {
-        text-align: left;
-        margin-top: 8px;
-      }
-      .toolbar label {
-        min-width: 0;
+      .toolbar-field {
         width: 100%;
       }
       .decision-summary {

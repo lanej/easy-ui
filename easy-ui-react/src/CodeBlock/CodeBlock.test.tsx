@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import React from "react";
 import { vi } from "vitest";
 import { mockGetComputedStyle, render, userClick } from "../utilities/test";
@@ -42,11 +42,12 @@ describe("<CodeBlock />", () => {
     });
 
     const copyBtn = screen.getByRole("button", { name: /copy code/i });
+    expect(copyBtn).toHaveAttribute("type", "button");
     await user.click(copyBtn);
 
-    expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith(
-      "hello javascript",
-    );
+    expect(
+      window.navigator.clipboard.writeText,
+    ).toHaveBeenCalledExactlyOnceWith("hello javascript");
   });
 
   it("should support hiding copy", async () => {
@@ -60,6 +61,33 @@ describe("<CodeBlock />", () => {
     expect(
       screen.queryByRole("button", { name: /copy code/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("preserves the copy tooltip and activates once from the keyboard", async () => {
+    const { user } = render(
+      <>
+        <CodeBlock language="javascript" onLanguageChange={() => {}}>
+          <CodeBlock.Header>Header</CodeBlock.Header>
+          <CodeBlock.Snippet code="hello javascript" language="javascript" />
+        </CodeBlock>
+        <button type="button">Next action</button>
+      </>,
+    );
+    Object.assign(window.navigator.clipboard, {
+      writeText: vi.fn().mockResolvedValue(undefined),
+    });
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Copy code" })).toHaveFocus();
+    act(() => vi.runAllTimers());
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Copy code block");
+    await user.tab();
+    act(() => vi.runAllTimers());
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    await user.tab({ shift: true });
+    await user.keyboard("{Enter}");
+    expect(
+      window.navigator.clipboard.writeText,
+    ).toHaveBeenCalledExactlyOnceWith("hello javascript");
   });
 
   it("should support language change", async () => {

@@ -36,7 +36,8 @@ import { RichChartDataExample } from "./RichDataTable.examples";
 import { MobileChartsExample } from "./MobileCharts.examples";
 
 const meta: Meta<typeof Chart> = {
-  title: "Components/Chart",
+  id: "components-chart",
+  title: "Organisms/Charts/Chart",
   component: Chart,
   excludeStories: ["AnalyticalExamples", "AnalyticalExtensions"],
 };
@@ -54,6 +55,12 @@ export const MobileLayout: Story = {
 };
 
 export const TimeSeries: Story = { args: timeSeriesExample };
+export const WithoutDataTable: Story = {
+  args: { ...timeSeriesExample, dataTable: undefined },
+};
+export const HiddenDataTable: Story = {
+  args: { ...timeSeriesExample, showDataTable: false },
+};
 export const Area: Story = { args: areaExample };
 export const GroupedBars: Story = { args: barExample };
 export const StackedBars: Story = { args: stackedBarExample };

@@ -65,7 +65,7 @@ function GreenButton(buttonProps: ButtonProps) {
 
 ## Dark or Light Mode
 
-`ThemeProvider` has built in support for dark and light themes using the `colorScheme` prop:
+The default theme includes light and dark palettes. `Provider` and `ThemeProvider` accept `colorScheme="light"`, `"dark"`, `"system"` (the default), or `"inverted"`. System mode follows the operating system automatically; inversion reverses the parent scheme. Native form controls follow the same scheme.
 
 ```tsx
 // Force dark mode

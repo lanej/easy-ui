@@ -9,7 +9,8 @@ import { DateRangePicker, DateRangePickerProps } from "./DateRangePicker";
 type Story = StoryObj<typeof DateRangePicker>;
 
 const meta: Meta<typeof DateRangePicker> = {
-  title: "Components/DatePicker/DateRangePicker",
+  id: "components-datepicker-daterangepicker",
+  title: "Molecules/Forms/DateRangePicker",
   component: DateRangePicker,
   args: { "aria-label": "Range date picker" },
   decorators: [InputDecorator],

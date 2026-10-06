@@ -4,6 +4,8 @@
 
 Easy UI Tokens uses [Style Dictionary](https://amzn.github.io/style-dictionary) as its organizational paradigm and build tool. It transpiles JSON configuration values to platform-specific variables.
 
+`src/theme/light.json` and `src/theme/dark.json` expose the same theme-aware aliases. Easy UI's `Provider` selects these automatically using its `colorScheme` prop. Use theme aliases such as `color.neutral.900` and `color.primary.500` for surfaces and text that follow the scheme; raw palette colors such as `color.blue.500` stay fixed.
+
 ## Usage
 
 ### JavaScript

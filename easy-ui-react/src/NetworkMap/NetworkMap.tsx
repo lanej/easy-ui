@@ -24,8 +24,8 @@ export function NetworkMap(props: NetworkMapProps) {
         <NetworkMapControlPanel />
         <NetworkMapSurface />
         {props.showSelectionDetails !== false && <NetworkMapSelectionDetails />}
-        <NetworkMapLegend />
-        <NetworkMapDataView />
+        {props.showLegend !== false && <NetworkMapLegend />}
+        {props.showDataTable !== false && <NetworkMapDataView />}
       </div>
     </NetworkMapProvider>
   );

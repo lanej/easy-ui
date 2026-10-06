@@ -27,7 +27,8 @@ const Template = (args: ToggleCardProps) => {
 };
 
 const meta: Meta<typeof ToggleCard> = {
-  title: "Components/Cards/ToggleCard",
+  id: "components-cards-togglecard",
+  title: "Molecules/Cards/ToggleCard",
   component: ToggleCard,
   decorators: [InlineStoryDecorator],
 };

@@ -38,8 +38,10 @@ const outflow: Record<string, number[]> = {
 
 export function NetworkMapExample({
   audience = "parcel",
+  showDataTable = true,
 }: {
   audience?: MapAudience;
+  showDataTable?: boolean;
 }) {
   const [selected, setSelected] = useState(
     audience === "parcel" ? "dbn" : "dtw",
@@ -445,6 +447,7 @@ export function NetworkMapExample({
         </aside>
         <div className={styles.mapColumn}>
           <NetworkMap
+            showDataTable={showDataTable}
             title={
               audience === "parcel"
                 ? "Parcel journey"

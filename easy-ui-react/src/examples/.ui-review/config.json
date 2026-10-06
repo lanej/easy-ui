@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "baseURL": "http://localhost:9013",
+  "sourcePaths": [
+    "NetworkGuide.examples.tsx",
+    "NetworkGuide.module.scss",
+    "NetworkGuide.fixtures.ts",
+    "NetworkGuide.geography.ts",
+    "NetworkInvestigation.stories.tsx",
+    "NetworkInvestigationMap.examples.tsx",
+    "NetworkInvestigationMap.stories.tsx",
+    "NetworkInvestigationMap.overlays.ts",
+    "PricingReview.examples.tsx",
+    "PricingReviewCharts.examples.tsx",
+    "PricingReviewChartFrame.examples.tsx",
+    "PriceComparisonChart.examples.tsx",
+    "ContributionComparisonChart.examples.tsx",
+    "DemandComparisonChart.examples.tsx",
+    "PriceComparisonChart.stories.tsx",
+    "ContributionComparisonChart.stories.tsx",
+    "DemandComparisonChart.stories.tsx",
+    "PricingReview.module.scss",
+    "DesignGuide.stories.tsx"
+  ],
+  "accessibility": true,
+  "pages": [
+    {
+      "name": "network-investigation-map",
+      "path": "/iframe.html?id=patterns-network-investigation-map--default&viewMode=story",
+      "ready": "[data-map-example-checked=\"true\"] [data-map-state=\"ready\"]"
+    },
+    {
+      "name": "network-investigation-map-bare",
+      "path": "/iframe.html?id=patterns-network-investigation-map--bare-map&viewMode=story",
+      "ready": "[data-map-example-checked=\"true\"] [data-map-state=\"ready\"]"
+    },
+    {
+      "name": "network-investigation-map-overlays",
+      "path": "/iframe.html?id=patterns-network-investigation-map--rich-overlays&viewMode=story",
+      "ready": "[data-map-example-checked=\"true\"] [data-map-state=\"ready\"]"
+    },
+    {
+      "name": "network-investigation-map-configurable",
+      "path": "/iframe.html?id=patterns-network-investigation-map--configurable-layers&viewMode=story",
+      "ready": "[data-map-example-checked=\"true\"] [data-map-state=\"ready\"]"
+    },
+    {
+      "name": "network-investigation-docs",
+      "path": "/iframe.html?id=patterns-network-investigation--docs&viewMode=docs",
+      "ready": "#anchor--primary--patterns-network-investigation--linked [data-network-guide] [data-map-state=\"ready\"]"
+    },
+    {
+      "name": "network-investigation",
+      "path": "/iframe.html?id=patterns-network-investigation--linked&viewMode=story",
+      "ready": "[data-network-layout-checked=\"true\"] [data-map-state=\"ready\"]"
+    },
+    {
+      "name": "contribution-comparison-docs",
+      "path": "/iframe.html?id=patterns-pricing-review-charts-contribution-comparison--docs&viewMode=docs",
+      "ready": "#anchor--primary--patterns-pricing-review-charts-contribution-comparison--default [data-review-comparison] [data-chart-state=\"ready\"] svg"
+    },
+    {
+      "name": "demand-comparison-docs",
+      "path": "/iframe.html?id=patterns-pricing-review-charts-demand-comparison--docs&viewMode=docs",
+      "ready": "#anchor--primary--patterns-pricing-review-charts-demand-comparison--default [data-review-comparison] [data-chart-state=\"ready\"] svg"
+    },
+    {
+      "name": "price-comparison-docs",
+      "path": "/iframe.html?id=patterns-pricing-review-charts-price-comparison--docs&viewMode=docs",
+      "ready": "#anchor--primary--patterns-pricing-review-charts-price-comparison--default [data-review-comparison] [data-chart-state=\"ready\"] svg"
+    },
+    {
+      "name": "graphical-queue",
+      "path": "/iframe.html?id=patterns-pricing-review--graphical&viewMode=story",
+      "ready": "[data-review-layout-checked=\"true\"] [data-review-comparisons] [aria-label=\"Demand / day\"] [data-chart-state=\"ready\"] svg"
+    },
+    {
+      "name": "queue",
+      "path": "/iframe.html?id=patterns-pricing-review--compact&viewMode=story",
+      "ready": "[data-review-proposal=\"C\"] button"
+    },
+    {
+      "name": "investigation",
+      "path": "/iframe.html?id=patterns-pricing-review--investigating&viewMode=story",
+      "ready": "[aria-label=\"Investigation for proposal B\"] [data-chart-state=\"ready\"] svg"
+    },
+    {
+      "name": "multiple-investigations",
+      "path": "/iframe.html?id=patterns-pricing-review--multiple-investigations&viewMode=story",
+      "ready": "[data-review-layout-checked=\"true\"] [aria-label=\"Investigation for proposal A\"] [data-chart-state=\"ready\"] svg"
+    }
+  ],
+  "viewports": [
+    { "name": "desktop", "width": 1440, "height": 1000 },
+    { "name": "tablet", "width": 768, "height": 1000 },
+    { "name": "mobile", "width": 320, "height": 844 }
+  ],
+  "detailCapture": {
+    "width": 1280,
+    "height": 1000,
+    "overlap": 64,
+    "maxTiles": 24
+  }
+}

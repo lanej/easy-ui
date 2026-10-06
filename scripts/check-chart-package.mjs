@@ -1,9 +1,38 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import React from "react";
 import { renderToString } from "react-dom/server";
 
 const require = createRequire(import.meta.url);
+const publishedPackage = require("../easy-ui-react/dist/package.json");
+assert.equal(publishedPackage.dependencies["maplibre-gl"], "^6.9.0");
+assert.equal(publishedPackage.engines.node, ">=22.12.0");
+assert.equal(publishedPackage.peerDependencies?.["maplibre-gl"], undefined);
+assert.equal(publishedPackage.peerDependenciesMeta?.["maplibre-gl"], undefined);
+for (const asset of ["maplibre-gl.css", "maplibre-gl-worker.mjs"]) {
+  assert.equal(
+    publishedPackage.exports[`./NetworkMap/${asset}`],
+    `./NetworkMap/${asset}`,
+  );
+  assert.match(
+    readFileSync(
+      new URL(`../easy-ui-react/dist/NetworkMap/${asset}`, import.meta.url),
+      "utf8",
+    ),
+    new RegExp(`maplibre-gl/dist/${asset.replaceAll(".", "\\.")}`),
+  );
+}
+assert.match(
+  readFileSync(
+    new URL(
+      "../easy-ui-react/dist/NetworkMap/maplibre-gl-worker.mjs",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+  /self\.worker \?\?= new MapLibreWorker\(self\)/,
+);
 const props = {
   title: "Server-rendered chart",
   description: "One observed shipment",

@@ -22,7 +22,8 @@ const Content = (props: PlaceholderBoxProps) => (
 const Template = (args: VerticalStackProps) => <VerticalStack {...args} />;
 
 const meta: Meta<typeof VerticalStack> = {
-  title: "Primitives/VerticalStack",
+  id: "primitives-verticalstack",
+  title: "Atoms/Layout/VerticalStack",
   component: VerticalStack,
   args: {
     gap: "2",

@@ -21,7 +21,8 @@ const Content = (props: PlaceholderBoxProps) => (
 const Template = (args: HorizontalGridProps) => <HorizontalGrid {...args} />;
 
 const meta: Meta<typeof HorizontalGrid> = {
-  title: "Primitives/HorizontalGrid",
+  id: "primitives-horizontalgrid",
+  title: "Atoms/Layout/HorizontalGrid",
   component: HorizontalGrid,
   args: {
     columns: 4,

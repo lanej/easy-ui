@@ -15,7 +15,8 @@ import { CustomerPortalLayout } from "./CustomerPortalLayout";
 type Story = StoryObj<typeof CustomerPortalLayout>;
 
 const meta: Meta<typeof CustomerPortalLayout> = {
-  title: "Components/ProductLayout/CustomerPortalLayout",
+  id: "components-productlayout-customerportallayout",
+  title: "Organisms/Layouts/CustomerPortalLayout",
   component: CustomerPortalLayout,
   decorators: [
     (Story) => (
@@ -49,7 +50,7 @@ export const StandardContent: Story = {
         <div
           style={{
             height: 400,
-            background: "white",
+            background: "var(--ezui-color-neutral-000)",
             borderRadius: 8,
           }}
         />
@@ -78,7 +79,7 @@ export const TestMode: Story = {
         <div
           style={{
             height: 400,
-            background: "white",
+            background: "var(--ezui-color-neutral-000)",
             borderRadius: 8,
           }}
         />
@@ -107,7 +108,7 @@ export const DisplayEasyPostLogo: Story = {
         <div
           style={{
             height: 400,
-            background: "white",
+            background: "var(--ezui-color-neutral-000)",
             borderRadius: 8,
           }}
         />

@@ -3,10 +3,7 @@ import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "../../easy-ui-react/src/Theme";
 import { MetricCard } from "../../easy-ui-react/src/MetricCard";
-import {
-  Default,
-  MissingObservations,
-} from "../../easy-ui-react/src/MetricCard/MetricCard.stories";
+import { Default } from "../../easy-ui-react/src/MetricCard/MetricCard.stories";
 import "../../easy-ui-react/src/styles/global.scss";
 import "../../.storybook/public/poppins.css";
 import "./preview.css";
@@ -52,7 +49,7 @@ createRoot(document.getElementById("root")!).render(
       <LightweightExamples />
       <NativeExtensions />
       <section aria-label="Metric state examples">
-        <h2>Loading, unavailable, zero, and missing data</h2>
+        <h2>Loading, unavailable, and zero values</h2>
         <div className="state-grid">
           <MetricCard
             label="Delivery exceptions"
@@ -70,16 +67,11 @@ createRoot(document.getElementById("root")!).render(
             value="$5.20"
             isLoading
           />
-          <MetricCard
-            {...MissingObservations.args}
-            label="Average rated cost — missing bucket"
-            value="$5.20"
-          />
         </div>
       </section>
       <p className="note">
-        Missing buckets remain gaps. Loading suppresses stale values and trends.
-        All numbers shown here are illustrative.
+        Loading suppresses stale values and comparisons. All numbers shown here
+        are illustrative.
       </p>
       {!lightweightOnly && (
         <Suspense fallback={<p role="status">Loading analytical examples…</p>}>

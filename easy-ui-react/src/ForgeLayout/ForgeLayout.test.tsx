@@ -233,6 +233,43 @@ describe("<ForgeLayout />", () => {
   });
 
   describe("nav toggle", () => {
+    it("supports a hamburger without changing the nav state contract", async () => {
+      const onNavStateChange = vi.fn();
+      const { user } = render(
+        createForgeLayout({ navToggleIcon: "menu", onNavStateChange }),
+      );
+      const toggle = screen.getByRole("button", {
+        name: "Collapse navigation",
+      });
+      expect(toggle.querySelector("svg path")).toHaveAttribute(
+        "d",
+        expect.stringContaining("680v45.38"),
+      );
+      await userClick(user, toggle);
+      expect(onNavStateChange).toHaveBeenCalledExactlyOnceWith("rail");
+      expect(
+        screen.getByRole("button", { name: "Expand navigation" }),
+      ).toHaveAttribute("aria-expanded", "false");
+    });
+
+    it("lets the caller omit the navigation toggle", () => {
+      render(createForgeLayout({ omitNavToggle: true }));
+      expect(
+        screen.queryByRole("button", { name: "Collapse navigation" }),
+      ).toBeNull();
+      expect(
+        screen.getByRole("navigation", { name: "Main" }),
+      ).toBeInTheDocument();
+    });
+
+    it("uses inherited themed text for the wordmark", () => {
+      render(createForgeLayout());
+      const paths = screen
+        .getByRole("navigation", { name: "Main" })
+        .querySelectorAll("svg > g > path");
+      expect(paths[1]).toHaveAttribute("fill", "currentColor");
+    });
+
     it("should be wired to the nav it controls", async () => {
       render(createForgeLayout({ defaultNavState: "expanded" }));
       const toggle = screen.getByRole("button", {
@@ -336,6 +373,8 @@ function createForgeLayout(
     content?: ReactNode;
     selectedHref?: string;
     renderLogo?: ForgeLayoutNavProps["renderLogo"];
+    navToggleIcon?: "panel" | "menu";
+    omitNavToggle?: boolean;
     onMenuAction1?: () => void;
     onMenuAction2?: () => void;
     onBackButton?: () => void;
@@ -350,6 +389,8 @@ function createForgeLayout(
     content = <div>Content</div>,
     selectedHref = "/1",
     renderLogo,
+    navToggleIcon,
+    omitNavToggle = false,
     onMenuAction1 = vi.fn(),
     onMenuAction2 = vi.fn(),
     onBackButton = vi.fn(),
@@ -403,7 +444,7 @@ function createForgeLayout(
           </ForgeLayout.BreadcrumbsNavigation>
         </ForgeLayout.Controls>
         <ForgeLayout.Controls visibleWhenNavStateIs="expanded">
-          <ForgeLayout.NavToggle />
+          {!omitNavToggle && <ForgeLayout.NavToggle icon={navToggleIcon} />}
           <ForgeLayout.ModeSwitcher onModeChange={onModeChange} />
           <ForgeLayout.Search />
         </ForgeLayout.Controls>

@@ -1,10 +1,19 @@
 import type { ChartProps } from "./Chart";
 
+import tokens from "@easypost/easy-ui-tokens/js/tokens";
+import {
+  visualizationColors,
+  sequentialPalette,
+} from "../visualization/colors";
+
+export type ChartExampleProps = ChartProps &
+  Required<Pick<ChartProps, "dataTable">>;
+
 // Public, synthetic fixtures. The plots and exact-value tables share these records.
-const blue = "#113abf";
-const purple = "#772bb0";
-const teal = "#007f86";
-const orange = "#bd6900";
+const blue = visualizationColors.primary;
+const purple = visualizationColors.secondary;
+const teal = visualizationColors.tertiary;
+const orange = visualizationColors.warning;
 const colors = [blue, purple, teal];
 const carriers = ["Carrier A", "Carrier B", "Carrier C"];
 const grid = { left: 52, right: 20, top: 72, bottom: 48, containLabel: false };
@@ -23,7 +32,7 @@ const performance = [
   [93.8, 94.4, 94.1, 95, 94.7, 95.4, 95.8, 96.1, 96.5, 96.4],
 ];
 
-export const timeSeriesExample: ChartProps = {
+export const timeSeriesExample: ChartExampleProps = {
   title: "On-time delivery",
   description:
     "Aug 1–14 · UTC · Delivered parcels with an estimate. Dashed line: 97% target; unavailable observations remain gaps.",
@@ -67,7 +76,7 @@ export const timeSeriesExample: ChartProps = {
               silent: true,
               symbol: "none",
               label: { show: false },
-              lineStyle: { type: "dashed", color: "#627891" },
+              lineStyle: { type: "dashed", color: visualizationColors.muted },
               data: [{ yAxis: 97, name: "97% target" }],
             },
           }
@@ -88,7 +97,7 @@ const volume = [
   [320, 360, 340, 380, 410, 430, 390, 460, 480, 510],
   [180, 210, 190, 240, 230, 280, 260, 310, 330, 350],
 ];
-export const areaExample: ChartProps = {
+export const areaExample: ChartExampleProps = {
   title: "Daily parcel volume",
   description:
     "Aug 1–14 · UTC · Stacked shipment counts by carrier; the vertical scale starts at zero.",
@@ -123,7 +132,7 @@ export const areaExample: ChartProps = {
 const services = ["Ground", "Two-day", "Next-day"];
 const spend = [5.2, 8.4, 12.6];
 const benchmark = [5.6, 8, 13.8];
-export const barExample: ChartProps = {
+export const barExample: ChartExampleProps = {
   title: "Rated cost vs benchmark",
   description:
     "USD per label · Matched service cohorts · Benchmarks are illustrative comparisons, not observed savings.",
@@ -150,7 +159,7 @@ export const barExample: ChartProps = {
         name: "Benchmark",
         type: "bar",
         data: benchmark,
-        itemStyle: { color: "#98aacd" },
+        itemStyle: { color: visualizationColors.muted },
         barMaxWidth: 34,
       },
     ],
@@ -169,7 +178,7 @@ const mix = [
   [45, 40, 15],
   [70, 20, 10],
 ];
-export const stackedBarExample: ChartProps = {
+export const stackedBarExample: ChartExampleProps = {
   title: "Transit-time distribution",
   description:
     "Delivered parcels · Normalized to 100% within each carrier · Calendar-day bins are explicit.",
@@ -277,7 +286,7 @@ const points = [
     count: 220,
   },
 ];
-export const scatterExample: ChartProps = {
+export const scatterExample: ChartExampleProps = {
   title: "Cost and speed tradeoffs",
   description:
     "Matched service cohorts · Bubble area represents parcel count · Lower and farther left means cheaper and faster.",
@@ -359,7 +368,7 @@ const nodes = [
   "In transit",
   "Exception",
 ];
-export const sankeyExample: ChartProps = {
+export const sankeyExample: ChartExampleProps = {
   title: "Where parcels go",
   description:
     "12,000 parcels · Origin → carrier → current outcome · Link width encodes parcel count; flows balance at each carrier.",
@@ -384,13 +393,13 @@ export const sankeyExample: ChartProps = {
         nodeAlign: "justify",
         emphasis: { focus: "adjacency" },
         lineStyle: { color: "source", opacity: 0.22, curveness: 0.5 },
-        label: { fontSize: 12 },
+        label: { fontSize: 12, color: visualizationColors.text },
         data: nodes.map((name, index) => ({
           name,
           itemStyle: {
             color:
               index < 3
-                ? "#627891"
+                ? visualizationColors.muted
                 : index < 6
                   ? colors[index - 3]
                   : [teal, blue, orange][index - 6],
@@ -453,7 +462,7 @@ const cells = weights.flatMap((weight, y) =>
     count: rates[y][x] === null ? null : 180 + x * 35 + y * 60,
   })),
 );
-export const heatmapExample: ChartProps = {
+export const heatmapExample: ChartExampleProps = {
   title: "Performance by zone and weight",
   description:
     "On-time delivery (%) · Delivered parcels with an estimate · Blank cell is unavailable; sample counts are in the table.",
@@ -480,7 +489,7 @@ export const heatmapExample: ChartProps = {
       itemHeight: 140,
       text: ["100%", "90%"],
       calculable: false,
-      inRange: { color: ["#eaf0ff", "#7394ff", blue] },
+      inRange: { color: sequentialPalette },
     },
     series: [
       {
@@ -491,13 +500,21 @@ export const heatmapExample: ChartProps = {
           formatter: (params) => `${(params.value as number[])[2]}%`,
           fontSize: 12,
         },
-        itemStyle: { borderWidth: 3, borderColor: "#ffffff" },
+        itemStyle: {
+          borderWidth: 3,
+          borderColor: visualizationColors.background,
+        },
         data: cells
           .filter((cell) => cell.rate !== null)
           .map((cell) => ({
             value: [cell.x, cell.y, cell.rate!, cell.count!],
             // Black retains 4.5:1 contrast through the middle of this scale.
-            label: { color: cell.rate! > 97 ? "#ffffff" : "#000000" },
+            label: {
+              color:
+                cell.rate! > 97
+                  ? tokens["color.gray.000"]
+                  : tokens["color.gray.900"],
+            },
           })),
       },
     ],
@@ -517,7 +534,7 @@ const exceptions = [
   { name: "Carrier", value: 56 },
   { name: "Other", value: 44 },
 ];
-export const donutExample: ChartProps = {
+export const donutExample: ChartExampleProps = {
   title: "Exception reasons",
   description:
     "260 parcels currently in exception · Mutually exclusive primary reasons · Counts are illustrative.",
@@ -575,7 +592,7 @@ const hierarchy = [
   { name: "Central", values: [2200, 900, 400] },
   { name: "East", values: [2800, 1200, 500] },
 ];
-export const treemapExample: ChartProps = {
+export const treemapExample: ChartExampleProps = {
   title: "Volume by origin and service",
   description:
     "12,000 parcels · Nested rectangles group services within origins · Area encodes volume.",
@@ -600,13 +617,13 @@ export const treemapExample: ChartProps = {
           show: true,
           formatter: "{b}\n{c}",
           lineHeight: 18,
-          color: "#ffffff",
+          color: visualizationColors.background,
           fontSize: 12,
         },
         upperLabel: {
           show: true,
           height: 24,
-          color: "#172b4d",
+          color: visualizationColors.background,
           formatter: "{b}",
         },
         levels: [
@@ -618,13 +635,13 @@ export const treemapExample: ChartProps = {
             itemStyle: {
               gapWidth: 2,
               borderWidth: 4,
-              borderColor: "#edf1f7",
+              borderColor: visualizationColors.border,
             },
           },
         ],
         data: hierarchy.map((origin, index) => ({
           name: origin.name,
-          itemStyle: { color: colors[index] },
+          itemStyle: { color: colors[index], borderColor: colors[index] },
           children: services.map((_name, i) => ({
             name: ["Ground", "2-day", "1-day"][i],
             value: origin.values[i],

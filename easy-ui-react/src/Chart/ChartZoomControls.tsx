@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../Button";
 import { dispatchZoom, selectedZooms, useChartContext } from "./ChartProvider";
 import type { ChartZoomTarget } from "./types";
 import {
@@ -39,11 +40,12 @@ export function ChartZoomControls({
       aria-label={label ?? labels.join(" / ")}
     >
       {[0.5, 2, 0].map((factor, index) => (
-        <button
+        <Button
+          size="sm"
+          variant="outlined"
           type="button"
-          className={styles.control}
           key={factor}
-          onClick={() => {
+          onPress={() => {
             if (connection.instance.current)
               dispatchZoom(
                 connection.instance.current,
@@ -52,8 +54,8 @@ export function ChartZoomControls({
               );
           }}
         >
-          {labels[index]}
-        </button>
+          <span className={styles.controlLabel}>{labels[index]}</span>
+        </Button>
       ))}
     </div>
   );

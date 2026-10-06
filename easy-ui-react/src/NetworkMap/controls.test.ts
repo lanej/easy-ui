@@ -400,3 +400,42 @@ it("shows a layer toggle when valid data follows an invalid record", () => {
     }),
   ).toEqual(allEnabled);
 });
+
+it("fits visible overlay geometry without creating built-in layer toggles", () => {
+  const overlay = {
+    id: "points",
+    data: {
+      type: "FeatureCollection" as const,
+      features: [
+        {
+          type: "Feature" as const,
+          properties: {},
+          geometry: { type: "Point" as const, coordinates: [-87.63, 41.88] },
+        },
+      ],
+    },
+    layers: [{ id: "points", type: "circle" as const }],
+  };
+  const options = {
+    mapStyle: props.mapStyle,
+    workerUrl: props.workerUrl,
+    overlays: [overlay],
+  };
+  expect(resolveMapControls(options)).toEqual({
+    ...allEnabled,
+    selectedSegment: false,
+    latestEvent: false,
+    risk: false,
+    weather: false,
+    deliverySurface: false,
+  });
+  expect(
+    resolveMapControls({
+      ...options,
+      overlays: [{ ...overlay, visible: false }],
+    }).fitAll,
+  ).toBe(true);
+  expect(
+    resolveMapControls({ ...options, controls: { fitAll: false } }).fitAll,
+  ).toBe(false);
+});

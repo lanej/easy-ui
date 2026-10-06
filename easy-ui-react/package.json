@@ -1,6 +1,9 @@
 {
   "name": "@easypost/easy-ui",
   "version": "1.0.0-alpha.137",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/EasyPost/easy-ui.git",
@@ -23,6 +26,8 @@
       "types": "./dist/types.d.ts"
     },
     "./style.css": "./dist/style.css",
+    "./NetworkMap/maplibre-gl.css": "./dist/NetworkMap/maplibre-gl.css",
+    "./NetworkMap/maplibre-gl-worker.mjs": "./dist/NetworkMap/maplibre-gl-worker.mjs",
     "./styles/*": "./dist/styles/*",
     "./utilities/*.js": "./dist/utilities/*.js",
     "./utilities/*.mjs": "./dist/utilities/*.mjs",
@@ -51,7 +56,8 @@
   },
   "sideEffects": [
     "**/*.css",
-    "**/*.scss"
+    "**/*.scss",
+    "**/maplibre-gl-worker.mjs"
   ],
   "publishConfig": {
     "access": "public",
@@ -81,6 +87,7 @@
     "@react-types/grid": "^3.4.0",
     "@react-types/shared": "^3.36.1",
     "lodash": "^4.17.21",
+    "maplibre-gl": "^6.9.0",
     "overlayscrollbars": "^2.3.0",
     "overlayscrollbars-react": "^0.5.6",
     "react-aria": "^3.51.0",
@@ -94,8 +101,7 @@
     "react": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
     "react-dom": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
     "react-is": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
-    "echarts": "^6.1.0",
-    "maplibre-gl": "^6.9.0"
+    "echarts": "^6.1.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -116,14 +122,10 @@
     "sass": "^1.89.2",
     "vite-plugin-react-remove-attributes": "^1.0.3",
     "vite-plugin-static-copy": "^3.1.2",
-    "echarts": "6.1.0",
-    "maplibre-gl": "6.9.0"
+    "echarts": "6.1.0"
   },
   "peerDependenciesMeta": {
     "echarts": {
-      "optional": true
-    },
-    "maplibre-gl": {
       "optional": true
     }
   }

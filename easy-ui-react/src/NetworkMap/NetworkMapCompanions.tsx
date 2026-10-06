@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import type { MapSurfaceCellDetailsContext } from "./types";
+import { UnstyledButton } from "../UnstyledButton";
+import type {
+  MapOverlayDetailsContext,
+  MapSurfaceCellDetailsContext,
+} from "./types";
 import { useId } from "react-aria";
 import { useNetworkMap } from "./NetworkMapContext";
 import { NetworkMapToolbar } from "./NetworkMapToolbar";
@@ -36,9 +40,11 @@ export function NetworkMapHeading() {
         {options.title && <h3>{options.title}</h3>}
         {options.description && <p>{options.description}</p>}
       </div>
-      <span className={styles.scale}>
-        {zoom < 6 ? "National" : zoom < 10 ? "Regional" : "Local"} view
-      </span>
+      {options.showViewScale !== false && (
+        <span className={styles.scale}>
+          {zoom < 6 ? "National" : zoom < 10 ? "Regional" : "Local"} view
+        </span>
+      )}
     </div>
   );
 }
@@ -52,6 +58,7 @@ export function NetworkMapControlPanel() {
     state,
     visibility,
     changeVisibility,
+    changeOverlayVisibility,
     activeMetric,
     setActiveMetric,
     commands,
@@ -62,6 +69,11 @@ export function NetworkMapControlPanel() {
       labelledBy={options["aria-labelledby"]}
       controls={controls}
       labels={options.controlLabels}
+      toolbarControls={
+        options.controls === false ? [] : options.toolbarControls
+      }
+      overlays={options.overlays}
+      onOverlayVisibilityChange={changeOverlayVisibility}
       ready={state === "ready"}
       visibility={visibility}
       onVisibilityChange={changeVisibility}
@@ -220,15 +232,88 @@ export function NetworkMapDataView({
   const externalLabel = options["aria-labelledby"]?.trim();
   const labelledBy = (kind: string) =>
     externalLabel ? `${externalLabel} ${suffixId}-${kind}` : undefined;
-  const { facilities, segments, areas, surface, onFacilitySelect } = options;
+  const {
+    facilities,
+    segments,
+    areas,
+    surface,
+    onFacilitySelect,
+    overlays = [],
+  } = options;
   const hasCellDetails = Boolean(
     options.renderCellDetails ||
     surface?.cells.some((cell) => cell.distribution),
   );
-  if (!facilities.length && !segments.length && !areas.length && !surface)
+  if (
+    !facilities.length &&
+    !segments.length &&
+    !areas.length &&
+    !surface &&
+    !overlays.length
+  )
     return null;
   const content = (
     <>
+      {overlays.map((overlay) => (
+        <div
+          key={overlay.id}
+          className={styles.tableScroll}
+          tabIndex={0}
+          role="region"
+          aria-label={`${accessibleName} ${overlay.label ?? overlay.id} overlay data`}
+        >
+          <table>
+            <caption>{overlay.label ?? overlay.id}</caption>
+            <thead>
+              <tr>
+                <th scope="col">Feature</th>
+                <th scope="col">Geometry</th>
+                <th scope="col">Properties</th>
+              </tr>
+            </thead>
+            <tbody>
+              {overlay.data.features.map((feature, index) => {
+                const label = String(
+                  feature.properties?.label ?? feature.id ?? index + 1,
+                );
+                return (
+                  <tr key={index}>
+                    <th scope="row">
+                      {options.onOverlaySelect ? (
+                        <UnstyledButton
+                          type="button"
+                          className={styles.locationAction}
+                          aria-label={`Select overlay feature: ${label}`}
+                          onPress={() =>
+                            options.onOverlaySelect?.({
+                              overlayId: overlay.id,
+                              feature,
+                            })
+                          }
+                        >
+                          {label}
+                        </UnstyledButton>
+                      ) : (
+                        label
+                      )}
+                      {options.renderOverlayDetails && (
+                        <OverlayDataDetails
+                          overlayId={overlay.id}
+                          overlay={overlay}
+                          feature={feature}
+                          label={label}
+                        />
+                      )}
+                    </th>
+                    <td>{JSON.stringify(feature.geometry)}</td>
+                    <td>{JSON.stringify(feature.properties)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ))}
       {facilities.length > 0 && (
         <div
           className={styles.tableScroll}
@@ -251,13 +336,25 @@ export function NetworkMapDataView({
                 <th scope="col">Facility cohort risk</th>
                 <th scope="col">Baseline</th>
                 <th scope="col">Evidence / scope</th>
-                <th scope="col">Select</th>
               </tr>
             </thead>
             <tbody>
               {facilities.map((facility) => (
                 <tr key={facility.id}>
-                  <th scope="row">{facility.label}</th>
+                  <th scope="row">
+                    {onFacilitySelect ? (
+                      <UnstyledButton
+                        type="button"
+                        className={styles.locationAction}
+                        aria-label={`Select location: ${facility.label}`}
+                        onPress={() => onFacilitySelect(facility.id)}
+                      >
+                        {facility.label}
+                      </UnstyledButton>
+                    ) : (
+                      facility.label
+                    )}
+                  </th>
                   <td>{facility.coordinates.join(", ")}</td>
                   <td>
                     {facility.risk
@@ -273,16 +370,6 @@ export function NetworkMapDataView({
                     {facility.risk
                       ? `${facility.risk.event}; next ${facility.risk.horizonHours} hours; ${facility.risk.cohort}; as of ${facility.risk.asOf}`
                       : (facility.detail ?? "No risk estimate")}
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      aria-label={`Select row: ${facility.label}`}
-                      disabled={!onFacilitySelect}
-                      onClick={() => onFacilitySelect?.(facility.id)}
-                    >
-                      Select
-                    </button>
                   </td>
                 </tr>
               ))}
@@ -465,6 +552,23 @@ export function NetworkMapDataView({
 }
 
 /** Mount a potentially expensive application chart only while its row is expanded. */
+function OverlayDataDetails({
+  label,
+  ...context
+}: MapOverlayDetailsContext & { label: string }) {
+  const { props: options } = useNetworkMap();
+  const [open, setOpen] = useState(false);
+  return (
+    <details
+      className={styles.cellDataDetails}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary>Inspect {label}</summary>
+      {open && options.renderOverlayDetails?.(context)}
+    </details>
+  );
+}
+
 function CellDataDetails({
   index,
   ...context

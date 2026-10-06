@@ -1,0 +1,33 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as PriceRangeSliderStories from "./PriceRangeSlider.stories";
+
+<Meta of={PriceRangeSliderStories} />
+
+# PriceRangeSlider
+
+Adopted from logistics-services' shared price-envelope editor, without its data-provider dependency. Both dollar inputs and the track edit one controlled range. The percentage describes each price relative to the supplied standard price; being below or above standard is not a success or warning state.
+
+<Canvas of={PriceRangeSliderStories.NarrowRange} />
+
+## Controlled range
+
+Supply a finite positive `basePriceUsd`, a finite nonnegative ordered `range` (`minRatio <= maxRatio`), and update that range in `onRangeChange`. Ratios are never rounded before the callback. Displayed dollars use two decimal places. Dollar fields commit on blur or Enter; Escape discards a draft. Invalid or crossing values stay visible with an error until corrected or reset.
+
+The track frames the current prices, rather than setting commercial limits. Direct entry can move outside that frame. Pointer movement freezes the scale and opposite endpoint until release; crossing a handle reorders the bounds. Arrow keys change prices by one cent without crossing the other bound; Home and End move to the allowed end of the current frame. The scale refits after the handle loses focus.
+
+Increment `resetKey` when applying a preset, including an unchanged preset, to discard local drafts. An unavailable standard price disables both fields and handles.
+
+<Canvas of={PriceRangeSliderStories.AcrossStandard} />
+
+<Canvas of={PriceRangeSliderStories.EqualBounds} />
+
+<Canvas of={PriceRangeSliderStories.Unavailable} />
+
+## Properties
+
+- `basePriceUsd: number` — standard parcel price in US dollars.
+- `range: PriceRatioRange` — controlled minimum and maximum ratios of standard.
+- `onRangeChange: (range: PriceRatioRange) => void` — receives the next unrounded ratios.
+- `resetKey?: number` — increment to reset drafts after choosing a preset; defaults to zero.
+
+`PriceRatioRange` contains `minRatio: number` and `maxRatio: number`. Import both the component and type from `@easypost/easy-ui/PriceRangeSlider`.

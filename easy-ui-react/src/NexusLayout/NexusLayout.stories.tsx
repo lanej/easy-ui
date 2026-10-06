@@ -19,7 +19,8 @@ import { PlaceholderBox } from "../utilities/storybook";
 type Story = StoryObj<typeof NexusLayout>;
 
 const meta: Meta<typeof NexusLayout> = {
-  title: "Components/ProductLayout/NexusLayout",
+  id: "components-productlayout-nexuslayout",
+  title: "Organisms/Layouts/NexusLayout",
   component: NexusLayout,
   decorators: [
     (Story) => (
@@ -82,7 +83,7 @@ export const StandardContent: Story = {
         <div
           style={{
             height: 400,
-            background: "white",
+            background: "var(--ezui-color-neutral-000)",
             borderRadius: 8,
           }}
         />

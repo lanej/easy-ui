@@ -6,7 +6,8 @@ import { Disclosure } from "./Disclosure";
 type Story = StoryObj<typeof Disclosure>;
 
 const meta: Meta<typeof Disclosure> = {
-  title: "Components/Disclosure",
+  id: "components-disclosure",
+  title: "Molecules/Overlays/Disclosure",
   component: Disclosure,
   parameters: {
     controls: { include: ["defaultExpanded", "mountPolicy"] },

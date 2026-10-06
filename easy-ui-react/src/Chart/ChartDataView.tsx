@@ -1,4 +1,6 @@
 import React, { AriaAttributes, CSSProperties, useState } from "react";
+import { Button } from "../Button";
+import { UnstyledButton } from "../UnstyledButton";
 import {
   VisualizationTypography,
   visualizationTypographyStyle,
@@ -112,10 +114,10 @@ export function ChartDataView({
                 }
               >
                 {dataTable.columnOptions?.[index]?.allowsSorting ? (
-                  <button
+                  <UnstyledButton
                     type="button"
                     className={styles.sortButton}
-                    onClick={() => toggleSort(index)}
+                    onPress={() => toggleSort(index)}
                   >
                     <span>{label}</span>
                     <span aria-hidden="true" className={styles.sortIndicator}>
@@ -125,7 +127,7 @@ export function ChartDataView({
                           : "↓"
                         : "↕"}
                     </span>
-                  </button>
+                  </UnstyledButton>
                 ) : (
                   label
                 )}
@@ -149,14 +151,17 @@ export function ChartDataView({
               ))}
               {onRowSelect && (
                 <td>
-                  <button
+                  <Button
+                    size="sm"
+                    variant="outlined"
                     type="button"
-                    className={styles.control}
-                    onClick={() => onRowSelect(row.id)}
+                    onPress={() => onRowSelect(row.id)}
                     aria-label={`${selectRowLabel}: ${row.values[0] ?? row.id}`}
                   >
-                    {selectRowLabel}
-                  </button>
+                    <span className={styles.controlLabel}>
+                      {selectRowLabel}
+                    </span>
+                  </Button>
                 </td>
               )}
             </tr>

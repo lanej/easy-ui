@@ -9,7 +9,8 @@ import { Spinner, SpinnerProps } from "./Spinner";
 type Story = StoryObj<typeof Spinner>;
 
 const meta: Meta<typeof Spinner> = {
-  title: "Components/Spinner",
+  id: "components-spinner",
+  title: "Atoms/Feedback/Spinner",
   component: Spinner,
   args: {
     size: "md",

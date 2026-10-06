@@ -69,11 +69,16 @@ for (const entry of await readdir(resolve(site, "api"), { recursive: true })) {
   }
 }
 const props = await readFile(
-  resolve(site, "api/types/Sparkline.SparklineProps.html"),
+  resolve(site, "api/types/Chart.ChartProps.html"),
   "utf8",
 );
-assert.match(props, /id="markers"/);
-assert.match(props, /endpoints/);
+assert.match(props, /class="tsd-kind-property">dataTable<\/span>/);
+assert.match(props, /Chart\.ChartSurfaceProps\.html/);
+const surfaceProps = await readFile(
+  resolve(site, "api/types/Chart.ChartSurfaceProps.html"),
+  "utf8",
+);
+assert.match(surfaceProps, /class="tsd-kind-property">option<\/span>/);
 const mapProps = await readFile(
   resolve(site, "api/types/NetworkMap.NetworkMapProps.html"),
   "utf8",
@@ -113,5 +118,5 @@ for (const [, href] of fonts.matchAll(/url\("([^"]+)"\)/g)) {
 await checkLink("storybook/index.html", "./easypost-logo.svg");
 await stat(resolve(site, ".nojekyll"));
 console.log(
-  `Documentation site passes: ${pages.length} entry pages, ${checked} asset/navigation links, and Sparkline/NetworkMap API documentation.`,
+  `Documentation site passes: ${pages.length} entry pages, ${checked} asset/navigation links, and Chart/NetworkMap API documentation.`,
 );

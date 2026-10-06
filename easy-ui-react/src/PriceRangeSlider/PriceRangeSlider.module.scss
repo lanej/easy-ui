@@ -1,0 +1,216 @@
+@use "../styles/common" as *;
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.field {
+  --bound-color: #{design-token("color.neutral.600")};
+  --bound-text: #{design-token("color.neutral.600")};
+
+  &[data-position="below"] {
+    --bound-color: #{design-token("color.primary.500")};
+    --bound-text: #{design-token("color.primary.700")};
+  }
+  &[data-position="above"] {
+    --bound-color: #{design-token("color.primary.500")};
+    --bound-text: #{design-token("color.primary.700")};
+  }
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label {
+  color: design-token("color.neutral.600");
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.priceEntry {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 0 8px;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--bound-color) 42%,
+      design-token("color.neutral.300")
+    );
+  border-radius: 8px;
+  background: color-mix(
+    in srgb,
+    var(--bound-color) 4%,
+    design-token("color.neutral.000")
+  );
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  color: design-token("color.neutral.900");
+
+  > span {
+    color: design-token("color.neutral.600");
+    font-weight: 400;
+  }
+
+  &:focus-within {
+    border-color: design-token("color.primary.500");
+    outline: 2px solid design-token("color.primary.500");
+    outline-offset: 2px;
+  }
+
+  &[data-invalid="true"] {
+    border-color: design-token("color.negative.600");
+  }
+
+  input {
+    min-width: 0;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      margin: 0;
+      appearance: none;
+    }
+  }
+}
+
+.error {
+  color: design-token("color.negative.600");
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.standardShare {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.4;
+  color: var(--bound-text);
+  font-weight: 500;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.shareText {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.direction {
+  flex: 0 0 8px;
+  text-align: center;
+}
+
+.trackArea {
+  padding-inline: 22px;
+}
+
+.track {
+  position: relative;
+  height: 44px;
+  touch-action: none;
+}
+
+.rail,
+.selectedRange {
+  position: absolute;
+  top: 20px;
+  height: 4px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.rail {
+  inset-inline: 0;
+  background: design-token("color.neutral.300");
+}
+
+.selectedRange {
+  background: design-token("color.primary.500");
+}
+
+.handle {
+  position: absolute;
+  top: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  transform: translateX(-50%);
+  cursor: ew-resize;
+  touch-action: none;
+
+  &::after {
+    position: absolute;
+    inset: 12px;
+    content: "";
+    border: 2px solid design-token("color.primary.500");
+    border-radius: 50%;
+    background: design-token("color.neutral.000");
+    box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid design-token("color.primary.500");
+    outline-offset: 0;
+  }
+
+  &:hover::after,
+  &:active::after {
+    background: design-token("color.primary.500");
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+}
+
+.endpoints {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: design-token("color.neutral.600");
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 599px) {
+  .fields {
+    gap: 14px;
+  }
+
+  .priceEntry {
+    padding-inline: 10px;
+  }
+}

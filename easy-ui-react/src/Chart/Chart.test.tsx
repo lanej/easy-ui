@@ -4,6 +4,7 @@ import { act, fireEvent, screen } from "@testing-library/react";
 import { render, mockMatchMedia } from "../utilities/test";
 import { ThemeProvider } from "../Theme";
 import { Chart, ChartProps } from "./Chart";
+import { ChartLegend } from "./ChartLegend";
 import { loadChartEngine } from "./engine";
 
 vi.mock("./engine", () => ({ loadChartEngine: vi.fn() }));
@@ -48,6 +49,23 @@ const view = (props: Partial<ChartProps> = {}) => (
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(loadChartEngine).mockResolvedValue(engine);
+});
+
+it("renders chart options without requiring a raw-data table", async () => {
+  render(view({ dataTable: undefined }));
+  await screen.findByRole("img", { name: fixture.description });
+  expect(screen.queryByText("View data table")).not.toBeInTheDocument();
+  expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  expect(setOption).toHaveBeenCalled();
+});
+
+it("can hide and restore a supplied raw-data table without disabling the plot", async () => {
+  const { rerender } = render(view({ showDataTable: false }));
+  await screen.findByRole("img", { name: fixture.description });
+  expect(screen.queryByText("View data table")).not.toBeInTheDocument();
+  expect(screen.queryByRole("table", { hidden: true })).not.toBeInTheDocument();
+  rerender(view({ showDataTable: true }));
+  expect(screen.getByText("View data table")).toBeInTheDocument();
 });
 
 it("loads the engine lazily and replaces removed series on data updates", async () => {
@@ -273,14 +291,17 @@ it("supports keyboard zoom controls and respects reduced motion", async () => {
       setOption.mock.calls[setOption.mock.calls.length - 1][0].series[0]
         .animation,
     ).toBe(false);
-    screen.getByRole("button", { name: "Zoom in" }).focus();
+    act(() => screen.getByRole("button", { name: "Zoom in" }).focus());
     await user.keyboard("{Enter}");
+    expect(dispatchAction).toHaveBeenCalledTimes(1);
     expect(dispatchAction).toHaveBeenLastCalledWith({
       type: "dataZoom",
       dataZoomIndex: 0,
       start: 25,
       end: 75,
     });
+    await user.keyboard(" ");
+    expect(dispatchAction).toHaveBeenCalledTimes(2);
     await user.click(screen.getByRole("button", { name: "Reset zoom" }));
     expect(dispatchAction).toHaveBeenLastCalledWith({
       type: "dataZoom",
@@ -291,6 +312,27 @@ it("supports keyboard zoom controls and respects reduced motion", async () => {
   } finally {
     restore();
   }
+});
+
+it("composes controlled legend toggles with exactly-once keyboard activation", async () => {
+  const user = userEvent.setup();
+  const onItemToggle = vi.fn();
+  const props = {
+    items: [{ name: "Ground", color: "#2446f5", selected: true }],
+    onItemToggle,
+  };
+  const { rerender } = render(<ChartLegend {...props} />);
+  const toggle = screen.getByRole("button", { name: "Ground" });
+  act(() => toggle.focus());
+  await user.keyboard("{Enter}");
+  expect(onItemToggle).toHaveBeenCalledExactlyOnceWith("Ground");
+  expect(toggle).toHaveAttribute("aria-pressed", "true");
+  rerender(
+    <ChartLegend {...props} items={[{ ...props.items[0], selected: false }]} />,
+  );
+  expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await user.keyboard(" ");
+  expect(onItemToggle).toHaveBeenCalledTimes(2);
 });
 
 it("updates the existing renderer when the surrounding color scheme changes", async () => {

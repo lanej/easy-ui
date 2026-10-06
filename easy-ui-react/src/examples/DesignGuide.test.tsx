@@ -9,6 +9,7 @@ import {
 } from "../utilities/test";
 import { PricingExample } from "./DesignGuide.examples";
 import { NetworkGuideExample } from "./NetworkGuide.examples";
+import { ThemeProvider } from "../Theme";
 
 // Keep these composition tests independent of asynchronous chart/map engines.
 vi.mock("../Chart", () => ({
@@ -117,7 +118,11 @@ describe("Reusable guide interactions", () => {
   });
 
   it("uses standard keyboard tab navigation and retains linked hub selection across panels", async () => {
-    const { user } = render(<NetworkGuideExample initialMode="fragmented" />);
+    const { user } = render(
+      <ThemeProvider colorScheme="light">
+        <NetworkGuideExample initialMode="fragmented" />
+      </ThemeProvider>,
+    );
     const network = screen.getByRole("tab", { name: "Network" });
     expect(network).toHaveAttribute("aria-selected", "true");
     expect(screen.getAllByRole("tabpanel")).toHaveLength(1);
@@ -126,8 +131,8 @@ describe("Reusable guide interactions", () => {
       screen.getByRole("button", { name: "Select Buffalo on map" }),
     );
     expect(
-      screen.getByRole("combobox", { name: "Investigate hub" }),
-    ).toHaveValue("buf");
+      screen.getByRole("button", { name: /Investigate hub/ }),
+    ).toHaveTextContent("Buffalo");
     await userClick(user, network);
     await user.keyboard("{ArrowRight}");
     const trajectory = screen.getByRole("tab", { name: "Trajectory" });
@@ -147,10 +152,10 @@ describe("Reusable guide interactions", () => {
 
   it("generates independent tab and panel IDs in multiple network examples", () => {
     render(
-      <>
+      <ThemeProvider colorScheme="light">
         <NetworkGuideExample initialMode="fragmented" />
         <NetworkGuideExample initialMode="fragmented" />
-      </>,
+      </ThemeProvider>,
     );
     const tabs = screen.getAllByRole("tab");
     expect(new Set(tabs.map((tab) => tab.id)).size).toBe(8);

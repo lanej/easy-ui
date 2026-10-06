@@ -3,6 +3,33 @@ import { screen } from "@testing-library/react";
 import { render } from "../utilities/test";
 import { CompactTimeSeries } from "./CompactTimeSeries";
 
+it("makes the raw-data disclosure independently optional", () => {
+  const props = {
+    label: "Demand",
+    description: "Daily parcels",
+    domain: [0, 20] as const,
+    formatTime: String,
+    series: [
+      {
+        id: "a",
+        label: "A",
+        points: [
+          { time: 0, value: 5 },
+          { time: 1, value: 10 },
+        ],
+      },
+    ],
+  };
+  const { container, rerender } = render(
+    <CompactTimeSeries {...props} showDataTable={false} />,
+  );
+  expect(container.querySelector("svg")).toBeInTheDocument();
+  expect(container.querySelector("details")).toBeNull();
+  expect(screen.queryByRole("table", { hidden: true })).not.toBeInTheDocument();
+  rerender(<CompactTimeSeries {...props} />);
+  expect(screen.getByText("View data")).toBeInTheDocument();
+});
+
 it("preserves elapsed spacing, gaps, exact zeros and shared scales without an engine", () => {
   const props = {
     label: "Volume",

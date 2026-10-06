@@ -9,7 +9,8 @@ type Story = StoryObj<typeof Toggle>;
 const Template = (args: ToggleProps) => <Toggle {...args} />;
 
 const meta: Meta<typeof Toggle> = {
-  title: "Components/Toggle",
+  id: "components-toggle",
+  title: "Atoms/Inputs/Toggle",
   component: Toggle,
   args: {
     children: "Toggle item",

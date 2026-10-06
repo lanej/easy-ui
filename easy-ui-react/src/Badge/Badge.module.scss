@@ -91,9 +91,9 @@
 // prettier-ignore
 .variantWarning {
   @include component-token("badge", "primary.color.background", design-token("color.warning.500"));
-  @include component-token("badge", "primary.color.text", design-token("color.neutral.900"));
+  @include component-token("badge", "primary.color.text", design-token("color.text.on-warning"));
   @include component-token("badge", "secondary.color.background", design-token("color.warning.300"));
-  @include component-token("badge", "secondary.color.text", design-token("color.primary.800"));
+  @include component-token("badge", "secondary.color.text", design-token("color.text.on-status"));
 }
 
 // prettier-ignore

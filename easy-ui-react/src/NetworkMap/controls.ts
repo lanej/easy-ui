@@ -5,6 +5,7 @@ import {
   validSurfaceBounds,
 } from "./geometry";
 import { hasSupportedSurfaceEstimate } from "./surfaceRendering";
+import { overlayCoordinates } from "./overlays";
 import type {
   NetworkMapControlLabels,
   NetworkMapControls,
@@ -36,7 +37,8 @@ export function resolveMapControls(
       (props.areas ?? []).some((area) =>
         validAreaCoordinates(area.coordinates),
       ) ||
-      (props.surface?.cells ?? []).some(validSurfaceBounds),
+      (props.surface?.cells ?? []).some(validSurfaceBounds) ||
+      overlayCoordinates(props.overlays, true).length > 0,
     selectedSegment:
       selectedSegment !== undefined &&
       segmentData(facilities, [selectedSegment]).features.length > 0,

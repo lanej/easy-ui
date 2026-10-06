@@ -6,7 +6,7 @@ Keep fixture runtime dependencies in this package and its Vite aliases, includin
 
 `mobile-data-grid.html` opens a ten-column benchmark report with readable column widths, wrapping headings, a fixed zone column and signed changes. The full comparison fits on a wide desktop and scrolls within its card on a phone; a focused metric view with its actual sample count is optional. Test 320/390 px and Larger text; `?expanded=1` exercises wrapped rich rows with expanded details. The fixture reuses the DataGrid Mobile Benchmarks story composition.
 
-The original first gallery shows MetricCard KPIs, Sparkline report rows, BarList category comparisons, and BulletChart targets. The analytical gallery retains Sankey, time series, stacked area, grouped and stacked bars, scatter/bubble, heatmap, donut, and treemap. Open `?portfolio=lightweight` to load only the lightweight portfolio; `?renderer=canvas` exercises the analytical canvas renderer.
+The original first gallery shows MetricCard KPIs, BarList category comparisons, and BulletChart targets. The analytical gallery retains Sankey, time series, stacked area, grouped and stacked bars, scatter/bubble, heatmap, donut, and treemap. Open `?portfolio=lightweight` to load only the lightweight portfolio; `?renderer=canvas` exercises the analytical canvas renderer.
 
 ```sh
 cd scripts/preview-metrics
@@ -25,7 +25,7 @@ The preview complements monorepo CI and the Storybook build. Keep generated capt
 
 ## Additive galleries
 
-`NativeExtensions` adds CompactTimeSeries comparisons/steps, RangePlot benchmarks/percentiles, shared-scale small multiples, and marker variants. `AnalyticalExtensions` adds nine analytical task examples. Both original galleries stay visible. The lightweight-only URL includes all six native components and still makes zero analytical chunk requests.
+`NativeExtensions` adds CompactTimeSeries comparisons/steps, RangePlot benchmarks/percentiles, and shared-scale small multiples. `AnalyticalExtensions` adds nine analytical task examples. Both original galleries stay visible. The lightweight-only URL includes all five native components and still makes zero analytical chunk requests.
 
 The screenshot artifact adds `native-extensions-{desktop,mobile,review}.png` and `analytical-extensions-{desktop,mobile,review}.png`. Browser capture checks SVG and canvas renderers, the compact chart's keyboard data disclosure, and both original and additional galleries. Record the source revision with each browser artifact.
 
@@ -39,6 +39,6 @@ The screenshot artifact adds `native-extensions-{desktop,mobile,review}.png` and
 
 `chart-data-view.html` exercises rich content inside the chart's existing folded data disclosure. Expand “View data table” for currency formatting, shipment counts, and comparison badges from the same observations as the plot. Custom cells mount on first opening and remain mounted across collapse. Column widths, numeric alignment, large text, and keyboard scrolling are included in the shared browser audit.
 
-`native-regressions.html` exercises all six native components with synthetic edge cases. The shared [browser audit](./audit/README.md) measures circular Sparkline markers at 80, 160, and 480 CSS pixels, singleton time labels, and explicit elapsed-time positions. It also checks abbreviated axes against full exact values, distinct missing/invalid/zero/overflow states, shared BarList scales, unframed metric composition, and every supported typography role at larger sizes. The native fixture imports no chart engine.
+`native-regressions.html` exercises all five native components with synthetic edge cases. The shared [browser audit](./audit/README.md) measures singleton time labels and explicit elapsed-time positions. It also checks abbreviated axes against full exact values, distinct missing/invalid/zero/overflow states, shared BarList scales, unframed metric composition, and every supported typography role at larger sizes. The native fixture imports no chart engine.
 
-Each Chrome, Firefox, and Safari audit records the measured geometry and text sizes in `audit.json`, plus `native-markers.png`, `native-data.png`, and `native-typography.png`. These checks are part of both the full and modular builds.
+Each Chrome, Firefox, and Safari audit records the measured geometry and text sizes in `audit.json`, plus `native-geometry.png`, `native-data.png`, and `native-typography.png`. These checks are part of both the full and modular builds.

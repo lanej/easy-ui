@@ -1,7 +1,7 @@
 import "./console.mjs";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { Sparkline } from "../../easy-ui-react/src/Sparkline";
+import { MetricCard } from "../../easy-ui-react/src/MetricCard";
 import "../../.storybook/public/poppins.css";
 import "../../easy-ui-react/src/styles/global.scss";
 import "./preview.css";
@@ -9,17 +9,13 @@ import { ThemeProvider } from "../../easy-ui-react/src/Theme";
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider colorScheme="light">
     <main className="control">
-      <h1>Lightweight trend</h1>
-      <p>On-time delivery · preceding seven days</p>
-      <strong>97.4%</strong>
-      <div style={{ width: 240, height: 64 }}>
-        <Sparkline
-          values={[94, 95, 94.5, 96, 95.8, 97, 97.4]}
-          accessibilityLabel="On-time delivery rose from 94% to 97.4% over seven days"
-          markers="all"
-        />
-      </div>
-      <p>This native SVG entry has no map runtime or basemap requests.</p>
+      <h1>Lightweight metric</h1>
+      <MetricCard
+        label="On-time delivery"
+        value="97.4%"
+        supportingText="Preceding seven days"
+      />
+      <p>This metric entry has no chart or map runtime or basemap requests.</p>
       <a href="index.html">Open map examples</a>
     </main>
   </ThemeProvider>,

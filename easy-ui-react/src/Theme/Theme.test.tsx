@@ -12,6 +12,62 @@ const theme = createTheme(({ colorScheme }) =>
 );
 
 describe("<ThemeProvider />", () => {
+  it("uses matching default light and dark token sets", () => {
+    const light = defaultTheme({ colorScheme: "light" });
+    const dark = defaultTheme({ colorScheme: "dark" });
+    expect(Object.keys(dark).sort()).toEqual(Object.keys(light).sort());
+    expect(light["color.neutral.000"]).toBe(
+      "var(--ezui-theme-light-color-neutral-000)",
+    );
+    expect(dark["color.neutral.000"]).toBe(
+      "var(--ezui-theme-dark-color-neutral-000)",
+    );
+    expect(dark["color.primary.500"]).toBe(
+      "var(--ezui-theme-dark-color-primary-500)",
+    );
+  });
+
+  it("switches the default palette and native controls together", () => {
+    const { rerender } = render(
+      <ThemeProvider colorScheme="light">
+        <div>Child</div>
+      </ThemeProvider>,
+    );
+    rerender(
+      <ThemeProvider colorScheme="dark">
+        <div>Child</div>
+      </ThemeProvider>,
+    );
+    expect(getThemeForElement(screen.getByText("Child"))).toMatchObject({
+      "--ezui-color-neutral-000": "var(--ezui-theme-dark-color-neutral-000)",
+      "color-scheme": "dark",
+    });
+  });
+
+  it("renders both default palettes for system preference and inversion", () => {
+    const { container, rerender } = render(
+      <ThemeProvider colorScheme="system">
+        <div>Child</div>
+      </ThemeProvider>,
+    );
+    const systemCss = container.querySelector("style")?.textContent;
+    expect(systemCss).toContain("prefers-color-scheme: dark");
+    expect(systemCss).toContain("var(--ezui-theme-light-color-neutral-000)");
+    expect(systemCss).toContain("var(--ezui-theme-dark-color-neutral-000)");
+    rerender(
+      <ThemeProvider colorScheme="dark">
+        <div>Outer</div>
+        <ThemeProvider colorScheme="inverted">
+          <div>Inner</div>
+        </ThemeProvider>
+      </ThemeProvider>,
+    );
+    expect(getThemeForElement(screen.getByText("Inner"))).toMatchObject({
+      "--ezui-color-neutral-000": "var(--ezui-theme-light-color-neutral-000)",
+      "color-scheme": "light",
+    });
+  });
+
   it("should render specified theme", () => {
     render(
       <ThemeProvider theme={theme}>

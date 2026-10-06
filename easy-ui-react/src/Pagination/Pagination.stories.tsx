@@ -5,7 +5,8 @@ import { Pagination, PaginationSize } from "./Pagination";
 type Story = StoryObj<typeof Pagination>;
 
 const meta: Meta<typeof Pagination> = {
-  title: "Components/Pagination",
+  id: "components-pagination",
+  title: "Molecules/Navigation/Pagination",
   component: Pagination,
 };
 

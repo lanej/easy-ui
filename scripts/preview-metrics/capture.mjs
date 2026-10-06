@@ -256,9 +256,8 @@ try {
     assert.equal(
       await lightweight
         .getByRole("region", { name: "Compact trend examples", exact: true })
-        .getByRole("img")
         .count(),
-      4,
+      0,
     );
     const native = page.getByRole("region", {
       name: "Native chart extensions",
@@ -319,7 +318,20 @@ try {
       name: "Shipping overview example",
       exact: true,
     });
-    assert.equal(await overview.getByRole("img").count(), 4);
+    assert.equal(await overview.getByRole("img").count(), 0);
+    for (const label of [
+      "Labels purchased",
+      "Average rated cost",
+      "On-time delivery rate",
+      "Average transit",
+    ]) {
+      assert.equal(
+        await overview
+          .getByRole("region", { name: label, exact: true })
+          .count(),
+        1,
+      );
+    }
     results.push({
       name,
       width,
@@ -328,7 +340,7 @@ try {
       keyboardZoom: true,
       pointerSelection: true,
       keyboardRowSelection: true,
-      trendCount: 8,
+      metricCards: 4,
       barListRows: 3,
       bulletCharts: 2,
       compactTimeSeries: 4,

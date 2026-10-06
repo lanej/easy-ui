@@ -12,7 +12,8 @@ const Template = (props: ColorPickerInputFieldProps) => {
 };
 
 const meta: Meta<typeof ColorPickerInputField> = {
-  title: "Components/ColorPicker/ColorPickerInputField",
+  id: "components-colorpicker-colorpickerinputfield",
+  title: "Molecules/Forms/ColorPicker/Input Field",
   component: ColorPickerInputField,
   args: {},
   parameters: {

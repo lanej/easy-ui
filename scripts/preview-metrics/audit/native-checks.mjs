@@ -21,34 +21,12 @@ async function geometry(driver) {
       const rect = element.getBoundingClientRect();
       return rect.x + rect.width / 2;
     };
-    const markers = [
-      ...document.querySelectorAll("[data-native-sparkline-width]"),
-    ].map((container) => ({
-      requestedWidth: Number(container.dataset.nativeSparklineWidth),
-      expectedWidth: Math.min(
-        Number(container.dataset.nativeSparklineWidth),
-        container.parentElement.getBoundingClientRect().width,
-      ),
-      plots: [...container.querySelectorAll("svg")].map((svg) => ({
-        width: svg.getBoundingClientRect().width,
-        paths: svg.querySelectorAll("polyline").length,
-        circles: [...svg.querySelectorAll("circle")].map((circle) => {
-          const box = circle.getBoundingClientRect();
-          return {
-            width: box.width,
-            height: box.height,
-            centerOffset: center(circle) - center(svg),
-          };
-        }),
-      })),
-    }));
     const singleton = document.querySelector('[data-native-case="singleton"]');
     const tick = singleton.querySelector("[data-chart-time-axis] span");
     const explicit = document.querySelector(
       '[data-native-case="explicit-time"] svg',
     );
     return {
-      markers,
       singleton: {
         ticks: singleton.querySelectorAll("[data-chart-time-axis] span").length,
         offsets: [...singleton.querySelectorAll("circle")].map(
@@ -69,21 +47,6 @@ async function geometry(driver) {
 }
 
 function assertGeometry(measurements) {
-  assert.equal(measurements.markers.length, 3);
-  for (const item of measurements.markers) {
-    assert.equal(item.plots.length, 2);
-    for (const plot of item.plots) {
-      close(plot.width, item.expectedWidth, "Requested Sparkline width");
-      for (const point of plot.circles) {
-        close(point.width, 4, "Sparkline marker CSS width");
-        close(point.height, 4, "Sparkline marker CSS height");
-      }
-    }
-    assert.equal(item.plots[0].paths, 2, "Missing buckets split segments");
-    assert.equal(item.plots[0].circles.length, 4);
-    assert.equal(item.plots[1].circles.length, 1);
-    close(item.plots[1].circles[0].centerOffset, 0, "Singleton is centered");
-  }
   assert.equal(measurements.singleton.ticks, 1);
   assert.equal(measurements.singleton.offsets.length, 2);
   for (const offset of measurements.singleton.offsets)
@@ -264,7 +227,7 @@ export async function auditNativeRegressions(
   await driver.evaluate(() => document.fonts.ready.then(() => true));
   const defaultGeometry = await geometry(driver);
   assertGeometry(defaultGeometry);
-  await driver.screenshot(`${outputDir}/native-markers.png`);
+  await driver.screenshot(`${outputDir}/native-geometry.png`);
 
   await driver.key('[data-native-case="precision"] summary', "Enter");
   const defaultTableLines = await exactTableLines(driver);
@@ -480,7 +443,6 @@ export async function auditNativeRegressions(
   await scan("native-mobile-larger-text");
   await diagnostics("native-mobile-larger-text");
   for (const [name, selector] of [
-    ["markers", '[data-native-case="markers"]'],
     ["time", '[data-native-case="time"]'],
     ["exact", '[data-native-case="precision"]'],
     ["range", '[data-native-case="range-overflow"]'],
@@ -517,7 +479,6 @@ export async function auditNativeRegressions(
   await driver.resize(1440, 1000);
   return {
     checks: [
-      "4 px circular markers at 80/160/480 px widths",
       "singleton label and shared timestamp alignment",
       "explicit elapsed time positions",
       "abbreviated axes preserve exact observations",

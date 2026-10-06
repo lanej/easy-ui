@@ -111,23 +111,16 @@ button.legendItem {
   margin-block: design-token("space.1");
 }
 
-.control,
 .summary {
   cursor: pointer;
   color: design-token("color.primary.600");
   font: inherit;
   font-size: var(--ezui-viz-control-size, 14px);
-}
-
-.control {
-  padding: 4px 8px;
-  border: 1px solid design-token("color.neutral.300");
-  border-radius: 4px;
-  background: transparent;
-}
-
-.summary {
   padding-block: design-token("space.1");
+}
+
+.controlLabel {
+  font-size: var(--ezui-viz-control-size, 14px);
 }
 
 .tableScroll {
@@ -208,7 +201,6 @@ button.legendItem {
   flex: none;
 }
 
-.control:focus-visible,
 .legendItem:focus-visible,
 .summary:focus-visible,
 .tableScroll:focus-visible,

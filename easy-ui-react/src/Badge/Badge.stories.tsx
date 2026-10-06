@@ -16,7 +16,8 @@ type Story = StoryObj<typeof Badge>;
 const Template = (args: BadgeProps) => <Badge {...args} />;
 
 const meta: Meta<typeof Badge> = {
-  title: "Components/Badge",
+  id: "components-badge",
+  title: "Atoms/Feedback/Badge",
   component: Badge,
   argTypes: {
     children: {

@@ -12,7 +12,8 @@ const Template = (args: PillGroupProps<object>) => {
 };
 
 const meta: Meta<typeof PillGroup> = {
-  title: "Components/PillGroup",
+  id: "components-pillgroup",
+  title: "Molecules/Forms/PillGroup",
   component: PillGroup,
   args: {
     horizontalStackContainerProps: { gap: "2" },

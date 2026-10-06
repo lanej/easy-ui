@@ -5,7 +5,7 @@ import * as ChartStories from "./Chart.stories";
 
 # Chart
 
-Full analytical charts using Apache ECharts, with Easy UI typography, colors, a responsive frame, status handling, and an exact-value data table. `MetricCard` and `Sparkline` complement these analytical views.
+Full analytical charts using Apache ECharts, with Easy UI typography, colors, a responsive frame, status handling, and an exact-value data table. `MetricCard` complements these analytical views with exact KPI content.
 
 Install the optional chart peer when using this entry point:
 
@@ -77,6 +77,8 @@ The waterfall reconciles each signed ledger item to its running balance. The per
 
 ## Interaction and data access
 
+The raw-data table is optional. Omit `dataTable` to render just the chart, or set `showDataTable={false}` to hide a supplied table. Supplied tables remain visible by default. Without a table, chart status defaults to ready; pass an explicit `status` for loading, empty, or error states. Applications can supply an alternative exact-value view using `ChartDataView` or their own accessible UI.
+
 ECharts supplies tooltips, legends, zoom, and linked-flow highlighting. `onSelect` forwards the series ID, data index, name, data type, value, and original datum; Sankey events distinguish nodes from edges. Keep stable IDs in application records. `onRowSelect` gives keyboard users the equivalent drill-down by table row ID. Both routes are demonstrated in the shipping gallery's scatter plot.
 
 Data refreshes and theme changes preserve local zoom ranges, legend selections, and graph pan/zoom when their application settings are unchanged. Give zoom and legend components and graph series stable `id` values if their order can change; anonymous components match by index. Changed range settings or `legend.selected` take effect on the next update. Graph camera preservation applies to the graph's default `view` coordinate system, including `baseOption` and active media overrides. Changing or removing authored `center`, `zoom`, `layout`, `coordinateSystem`, `roam`, or `scaleLimit` settings takes precedence over the retained camera. Theme changes update the existing engine. When changing the renderer requires a new instance, supported interaction state is restored. Remount the chart to reset all local interaction state. Removed series, annotations, and zoom controls are cleared.
@@ -87,7 +89,9 @@ Use `zoomState` and `legendState` to coordinate charts. Entries target a stable 
 
 Custom `color` palettes replace the default palette. Tooltips use ECharts rich text by default; formatter strings use `\n` for line breaks, as demonstrated by the waterfall.
 
-When the effective engine option has data zoom, including `baseOption.dataZoom`, the frame supplies keyboard-operable zoom in/out/reset buttons. By default they target the first effective zoom component; independent zoom windows remain unchanged and ECharts retains intentional linked-axis behavior. Set `zoomTarget={{ dataZoomId: "time" }}` or `dataZoomIndex` to target another component; arrays select an intentional group. Missing targets omit the controls. Reset covers the full percentage range for the targeted components. The data table always represents the full supplied dataset, including observations outside a zoomed viewport. `dataTable` is required by the convenience `Chart`; build it from the same records as the series. Supply already formatted values and units, and use `null` for unavailable values.
+Default series, labels, borders, and tooltips use EasyPost theme tokens. Use CSS token references such as `var(--ezui-color-primary-600)` in native color fields to follow the nearest theme, including dark mode. Explicit color values and custom palettes remain application-owned. Bundled heatmaps use EasyPost sequential or diverging ramps with contrast-checked labels rather than unrelated vendor palettes.
+
+When the effective engine option has data zoom, including `baseOption.dataZoom`, the frame supplies keyboard-operable zoom in/out/reset buttons. By default they target the first effective zoom component; independent zoom windows remain unchanged and ECharts retains intentional linked-axis behavior. Set `zoomTarget={{ dataZoomId: "time" }}` or `dataZoomIndex` to target another component; arrays select an intentional group. Missing targets omit the controls. Reset covers the full percentage range for the targeted components. The data table always represents the full supplied dataset, including observations outside a zoomed viewport. `dataTable` is optional in the convenience `Chart`; when provided, build it from the same records as the series. Supply already formatted values and units, and use `null` for unavailable values.
 
 The rendered plot is an image with the supplied description; its underlying SVG/canvas is hidden from screen readers. Exact values and drill-down are available through the semantic HTML table. The automatic HTML legend supports keyboard selection. Native engine legends and individual marks remain pointer interactions; provide application controls through `actions` or `ChartLegend` for those layouts. The ECharts ARIA switch alone does not establish accessibility compliance.
 
@@ -168,7 +172,7 @@ default, and the plot and table should derive from the same application records.
 
 `renderCell(value, columnIndex, row)` receives the original exact value, a
 zero-based column index, and the original `ChartDataRow`, including its stable
-ID. Return a React node to render badges, links, a `Sparkline`, a `RangePlot`, or
+ID. Return a React node to render badges, links, a `RangePlot` or
 application content. Returning `null` or `undefined` retains the normal value or
 `missingValueLabel`; zero remains a value. Custom renderers should retain exact
 values and accessible names, and handle units and comparison baselines explicitly.
@@ -262,10 +266,10 @@ The `typography` prop uses the shared numeric roles `title`, `description`, `lab
 
 ECharts is an optional peer, dynamically imported only when a ready chart mounts. It is external to the Easy UI package output, so importing buttons or KPI cards does not import a chart engine. SSR emits the frame, loading label, and exact table; rendering initializes on the client. The ESM and CommonJS entry points use the same lazy loading path.
 
-The isolated production gallery measured the full engine chunk at approximately 1.14 MB minified / 382 KB gzip. This deliberate breadth supports specialist charts through one engine. Route-level lazy loading remains appropriate for analytical screens. The SVG sparkline retains its dependency-free implementation.
+The isolated production gallery measured the full engine chunk at approximately 1.14 MB minified / 382 KB gzip. This deliberate breadth supports specialist charts through one engine. Route-level lazy loading remains appropriate for analytical screens. The standalone SVG Sparkline component has been removed; compose a compact `Chart` for trends instead.
 
 <ArgTypes of={ChartStories.TimeSeries} />
 
 ## Lightweight alternatives
 
-Use `MetricCard` and `Sparkline` for KPI summaries and compact trends, `BarList` for category comparisons, or `BulletChart` for a measure against a target. These components use native SVG/HTML/CSS and never import ECharts. Keep the full engine for analytical views that need its axes, layouts, and interactions. See `documentation/specs/DataVisualization.md` for reproducible bundle measurements and their limits.
+Use `MetricCard` for KPI summaries, `Chart` for compact trends, `BarList` for category comparisons, or `BulletChart` for a measure against a target. `MetricCard`, `BarList`, and `BulletChart` use native HTML/CSS and never import ECharts. Trends use the same ECharts engine as analytical views. See `documentation/specs/DataVisualization.md` for reproducible bundle measurements and their limits.

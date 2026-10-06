@@ -1,6 +1,6 @@
 # Modular ECharts preview
 
-This private preview measures ECharts 6.1.0 with an explicit module registry across all 24 analytical recipes, all six lightweight components, SVG, and Canvas. It is part of the combined Lane J visualization PR alongside charts, native visualizations, maps, the data grid, and their documentation.
+This private preview measures ECharts 6.1.0 with an explicit module registry across all 24 analytical recipes, all five lightweight components, SVG, and Canvas. It is part of the combined Lane J visualization PR alongside charts, native visualizations, maps, the data grid, and their documentation.
 
 The public `Chart` and `ChartSurface` keep the optional, lazy full-engine loader and native ECharts option support. A Vite plugin replaces only the private preview's loader when building the modular gallery. No Recharts code or dependency is included.
 

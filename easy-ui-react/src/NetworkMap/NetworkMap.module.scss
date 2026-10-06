@@ -12,10 +12,6 @@
   input {
     cursor: pointer;
   }
-  button,
-  input {
-    font: inherit;
-  }
 }
 .heading {
   overflow-wrap: anywhere;
@@ -57,22 +53,9 @@
   gap: 8px;
   align-items: center;
   font-size: var(--ezui-viz-control-size, 14px);
-  button {
-    padding: 7px 10px;
-    border: 1px solid design-token("color.neutral.300");
-    border-radius: 6px;
-    background: design-token("color.neutral.000");
-    color: design-token("color.neutral.900");
-  }
-  label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px;
-  }
-  input {
-    accent-color: design-token("color.primary.600");
-  }
+}
+.controlLabel {
+  font-size: var(--ezui-viz-control-size, 14px);
 }
 .viewport {
   min-width: 0;
@@ -302,14 +285,6 @@
   strong {
     flex: 1;
   }
-  button {
-    min-height: 32px;
-    border: 1px solid design-token("color.neutral.300");
-    border-radius: 4px;
-    background: design-token("color.neutral.000");
-    color: inherit;
-    padding: 4px 8px;
-  }
 }
 .cellDetails {
   padding: 12px;
@@ -348,8 +323,8 @@
 .warning {
   font-size: var(--ezui-viz-label-size, 12px);
   padding: 10px 20px;
-  color: #614000;
-  background: #fff5de;
+  color: design-token("color.warning.900");
+  background: design-token("color.warning.100");
   margin: 0;
   p {
     margin: 4px 0;
@@ -383,12 +358,11 @@
     text-align: left;
     margin: 8px 0;
   }
-  button {
-    border: 1px solid design-token("color.neutral.300");
-    border-radius: 4px;
-    padding: 5px 8px;
-    background: design-token("color.neutral.000");
+  button.locationAction {
     color: design-token("color.primary.600");
+    font-weight: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 }
 .segmentList {
@@ -417,39 +391,26 @@
 .data,
 .viewport {
   button,
-  input {
-    font: inherit;
-  }
-  button,
   input,
   summary {
     cursor: pointer;
   }
-  button:focus-visible,
-  input:focus-visible,
   summary:focus-visible {
     outline: 3px solid design-token("color.primary.600");
     outline-offset: 3px;
   }
-  button:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
 }
-
-.root button:focus-visible,
-.root summary:focus-visible,
-.root input:focus-visible {
+.locationAction:focus-visible {
   outline: 3px solid design-token("color.primary.600");
   outline-offset: 3px;
-}
-.root button:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 .canvas :global(.maplibregl-ctrl-attrib) {
   font-size: var(--ezui-viz-detail-size, 12px);
+  a {
+    color: inherit;
+    text-decoration: underline;
+  }
 }
 .canvas :global(.maplibregl-ctrl) {
   max-width: calc(100% - 20px);

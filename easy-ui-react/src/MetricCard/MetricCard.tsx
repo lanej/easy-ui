@@ -1,7 +1,7 @@
 import React from "react";
 import { Badge, BadgeVariant } from "../Badge";
 import { Card } from "../Card";
-import { Sparkline, SparklineProps } from "../Sparkline";
+import { Text } from "../Text";
 import {
   visualizationTypographyStyle,
   type VisualizationTypography,
@@ -18,19 +18,17 @@ export type MetricComparison = {
   sentiment?: "positive" | "negative" | "neutral";
 };
 
-/** Exact KPI content, optional comparison, and optional compact trend. */
+/** Exact KPI content and an optional comparison. */
 export type MetricContentProps = {
   /** Name of the metric. */
   label: string;
   /** Formatted value with units. null means unavailable; "0" is a real value. */
-  value: string | null;
+  value: string | React.ReactElement | null;
   /** Selected period, coverage, or other metric context. */
   supportingText?: string;
   /** Change relative to an explicit baseline, calculated by the caller. */
   comparison?: MetricComparison;
-  /** Optional compact trend with an accessible summary. */
-  trend?: SparklineProps;
-  /** Show a loading status and suppress the previous value and trend. */
+  /** Show a loading status and suppress the previous value and comparison. */
   isLoading?: boolean;
   /** Localized loading message; defaults to "Loading…". */
   loadingLabel?: string;
@@ -73,10 +71,12 @@ export function MetricComparisonContent({
     >
       <Badge variant={comparisonVariants[sentiment]}>
         <span className={styles.comparisonLabel} data-sentiment={sentiment}>
-          {label}
+          <Text>{label}</Text>
         </span>
       </Badge>
-      <span className={styles.baseline}>{baseline}</span>
+      <span className={styles.baseline}>
+        <Text>{baseline}</Text>
+      </span>
     </div>
   );
 }
@@ -87,7 +87,6 @@ export function MetricContent({
   value,
   supportingText,
   comparison,
-  trend,
   isLoading = false,
   loadingLabel = "Loading…",
   emptyLabel = "No data",
@@ -102,7 +101,9 @@ export function MetricContent({
       aria-busy={isLoading}
       style={visualizationTypographyStyle(typography)}
     >
-      <span className={styles.label}>{label}</span>
+      <span className={styles.label}>
+        <Text>{label}</Text>
+      </span>
       <div
         className={styles.value}
         style={{
@@ -113,13 +114,16 @@ export function MetricContent({
         {isLoading ? (
           <span role="status">{loadingLabel}</span>
         ) : (
-          <strong>{value === null ? emptyLabel : value}</strong>
+          <Text as="strong" fontVariantNumeric="tabular-nums">
+            {value === null ? emptyLabel : value}
+          </Text>
         )}
       </div>
       {supportingText && (
-        <span className={styles.supportingText}>{supportingText}</span>
+        <span className={styles.supportingText}>
+          <Text>{supportingText}</Text>
+        </span>
       )}
-      {hasValue && trend && <Sparkline {...trend} />}
       {hasValue && comparison && (
         <MetricComparisonContent {...comparison} typography={typography} />
       )}

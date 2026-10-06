@@ -144,7 +144,8 @@ const Template = (args: Partial<DataGridProps>) => {
 };
 
 const meta: Meta<typeof DataGrid> = {
-  title: "Components/DataGrid",
+  id: "components-datagrid",
+  title: "Organisms/Tables/DataGrid",
   component: DataGrid,
   args: {
     headerVariant: "primary",

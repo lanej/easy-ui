@@ -17,7 +17,6 @@
   font-size: 20px;
   margin: 24px 0 16px;
 }
-.native-sparkline-case p,
 .native-review header p,
 .native-review header label {
   font-size: 14px;
@@ -38,15 +37,4 @@
 .native-stack {
   display: grid;
   gap: 24px;
-}
-.native-sparkline-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-.native-sparkline-case {
-  max-width: 100%;
-}
-.native-sparkline-case > div + div {
-  margin-top: 12px;
 }

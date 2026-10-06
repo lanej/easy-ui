@@ -1,0 +1,40 @@
+@use "../styles/common" as *;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 14px;
+  border: 1px solid design-token("color.neutral.300");
+  border-radius: 10px;
+  background: design-token("color.neutral.000");
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+button.card {
+  cursor: pointer;
+}
+
+button.card:hover {
+  background: design-token("color.neutral.050");
+}
+
+.selected {
+  border-color: design-token("color.primary.500");
+  background: design-token("color.primary.050");
+  box-shadow: inset 3px 0 0 design-token("color.primary.500");
+}
+
+button.card.selected:hover {
+  background: design-token("color.primary.050");
+}
+
+button.card:focus-visible {
+  outline: 2px solid design-token("color.primary.500");
+  outline-offset: 2px;
+}

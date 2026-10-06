@@ -47,3 +47,22 @@ export const basemap: StyleSpecification = {
     },
   ],
 };
+
+export const darkBasemap: StyleSpecification = {
+  ...basemap,
+  layers: basemap.layers.map((layer) => {
+    if (layer.type === "background")
+      return { ...layer, paint: { "background-color": "#171e2d" } };
+    if (layer.type === "fill")
+      return { ...layer, paint: { "fill-color": "#263e51" } };
+    if (layer.type === "line")
+      return {
+        ...layer,
+        paint: {
+          ...layer.paint,
+          "line-color": layer.id === "shore" ? "#426077" : "#424d60",
+        },
+      };
+    return layer;
+  }),
+};

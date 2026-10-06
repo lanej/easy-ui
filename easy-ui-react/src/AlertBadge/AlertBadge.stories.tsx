@@ -22,7 +22,8 @@ const Template = (args: AlertBadgeProps) => (
 );
 
 const meta: Meta<typeof AlertBadge> = {
-  title: "Components/AlertBadge",
+  id: "components-alertbadge",
+  title: "Atoms/Feedback/AlertBadge",
   component: AlertBadge,
   argTypes: {
     children: {

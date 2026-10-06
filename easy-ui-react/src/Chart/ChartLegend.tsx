@@ -1,4 +1,5 @@
 import React from "react";
+import { UnstyledButton } from "../UnstyledButton";
 import {
   VisualizationTypography,
   visualizationTypographyStyle,
@@ -50,14 +51,14 @@ export function ChartLegend({
         return (
           <li key={name}>
             {onItemToggle ? (
-              <button
+              <UnstyledButton
                 type="button"
                 className={styles.legendItem}
                 aria-pressed={selected}
-                onClick={() => onItemToggle(name)}
+                onPress={() => onItemToggle(name)}
               >
                 {content}
-              </button>
+              </UnstyledButton>
             ) : (
               <span className={styles.legendItem}>{content}</span>
             )}

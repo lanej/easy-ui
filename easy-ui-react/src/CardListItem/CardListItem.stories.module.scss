@@ -1,0 +1,21 @@
+@use "../styles/common" as *;
+.example {
+  width: 100%;
+  max-width: 400px;
+  color: design-token("color.neutral.900");
+  font-size: 14px;
+}
+.example h2 {
+  font-size: 20px;
+}
+.example p {
+  color: design-token("color.neutral.600");
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}

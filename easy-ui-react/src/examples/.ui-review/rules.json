@@ -1,0 +1,129 @@
+[
+  {
+    "id": "network-investigation-readable-text",
+    "type": "min-font-size",
+    "selector": "[data-network-guide]",
+    "min": 12,
+    "severity": "error",
+    "pages": ["network-investigation", "network-investigation-docs"],
+    "reason": "Network investigation labels remain readable in both themes."
+  },
+  {
+    "id": "network-investigation-label-clipping",
+    "type": "no-clip",
+    "selector": "[data-network-guide] h1, [data-network-guide] .toolbar label, [data-network-guide] .toolbar button",
+    "severity": "error",
+    "pages": ["network-investigation", "network-investigation-docs"],
+    "reason": "Titles, selector labels, and toolbar controls wrap without clipping."
+  },
+  {
+    "id": "pricing-review-readable-text",
+    "type": "min-font-size",
+    "selector": "main",
+    "min": 12,
+    "severity": "error",
+    "reason": "Annotations retain a 12px floor across queue and investigation states, including mobile.",
+    "pages": [
+      "graphical-queue",
+      "queue",
+      "investigation",
+      "multiple-investigations"
+    ]
+  },
+  {
+    "id": "pricing-review-readable-decisions",
+    "type": "min-font-size",
+    "selector": "main h1, main h2, main h3, main strong",
+    "min": 14,
+    "severity": "error",
+    "reason": "Proposal identity, prices, scenario ranges, and headings remain readable at 14px or larger.",
+    "pages": [
+      "graphical-queue",
+      "queue",
+      "investigation",
+      "multiple-investigations"
+    ]
+  },
+  {
+    "id": "pricing-review-label-clipping",
+    "type": "no-clip",
+    "selector": "main h1, main h2, main h3, main strong, main button, main label, main p",
+    "severity": "error",
+    "reason": "Decision labels and investigation copy must wrap rather than clip.",
+    "pages": [
+      "graphical-queue",
+      "queue",
+      "investigation",
+      "multiple-investigations"
+    ]
+  },
+  {
+    "id": "pricing-review-controls",
+    "type": "min-size",
+    "selector": "main button",
+    "minWidth": 24,
+    "minHeight": 24,
+    "severity": "error",
+    "reason": "Review, hold, filter, and disclosure buttons remain usable at narrow widths.",
+    "pages": [
+      "graphical-queue",
+      "queue",
+      "investigation",
+      "multiple-investigations"
+    ]
+  },
+  {
+    "id": "pricing-review-page-bounds",
+    "type": "within-bounds",
+    "selector": "[data-review-proposal]",
+    "container": "main",
+    "tolerance": 1,
+    "severity": "error",
+    "reason": "Every proposal stays within the review workspace without document-level horizontal overflow.",
+    "pages": [
+      "graphical-queue",
+      "queue",
+      "investigation",
+      "multiple-investigations"
+    ]
+  },
+  {
+    "id": "pricing-chart-docs-readable-text",
+    "type": "min-font-size",
+    "selector": "[data-review-comparison]",
+    "min": 12,
+    "severity": "error",
+    "pages": [
+      "price-comparison-docs",
+      "contribution-comparison-docs",
+      "demand-comparison-docs"
+    ],
+    "reason": "Standalone chart annotations remain readable without shrinking type to reduce height."
+  },
+  {
+    "id": "pricing-chart-docs-label-clipping",
+    "type": "no-clip",
+    "selector": "[data-review-comparison] h2, [data-review-comparison] p, [data-review-comparison] summary",
+    "severity": "error",
+    "pages": [
+      "price-comparison-docs",
+      "contribution-comparison-docs",
+      "demand-comparison-docs"
+    ],
+    "reason": "Inline titles and subtitles wrap naturally rather than clip in docs."
+  },
+  {
+    "id": "pricing-chart-docs-disclosure-size",
+    "type": "min-size",
+    "selector": "[data-review-comparison] summary",
+    "minWidth": 24,
+    "minHeight": 24,
+    "severity": "error",
+    "pages": [
+      "price-comparison-docs",
+      "contribution-comparison-docs",
+      "demand-comparison-docs"
+    ],
+    "reason": "Compact data disclosures preserve usable control sizes."
+  }
+]

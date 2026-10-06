@@ -4,7 +4,8 @@ import { HorizontalGrid } from "../HorizontalGrid";
 import { BarList } from "./BarList";
 
 const meta: Meta<typeof BarList> = {
-  title: "Components/BarList",
+  id: "components-barlist",
+  title: "Organisms/Charts/BarList",
   component: BarList,
 };
 export default meta;

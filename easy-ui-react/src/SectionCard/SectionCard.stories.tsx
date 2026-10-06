@@ -11,7 +11,8 @@ import { SectionCard } from "./SectionCard";
 type Story = StoryObj<typeof SectionCard>;
 
 const meta: Meta<typeof SectionCard> = {
-  title: "Components/Cards/SectionCard",
+  id: "components-cards-sectioncard",
+  title: "Molecules/Cards/SectionCard",
   component: SectionCard,
   parameters: {
     controls: {

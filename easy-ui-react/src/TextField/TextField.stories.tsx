@@ -13,7 +13,8 @@ type Story = StoryObj<typeof TextField>;
 const Template = (args: TextFieldProps) => <TextField {...args} />;
 
 const meta: Meta<typeof TextField> = {
-  title: "Components/TextField",
+  id: "components-textfield",
+  title: "Atoms/Inputs/TextField",
   component: TextField,
   decorators: [InputDecorator],
 };

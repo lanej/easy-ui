@@ -15,8 +15,8 @@ export type Theme = {
 };
 export type ColorScheme = "light" | "dark" | "system" | "inverted";
 
-export const defaultTheme = createTheme(() => {
-  return getThemeFromTokens("theme.light");
+export const defaultTheme = createTheme(({ colorScheme }) => {
+  return getThemeFromTokens(`theme.${colorScheme}`);
 });
 
 const invertedColorSchemes: Record<ColorScheme, ColorScheme> = {
@@ -162,23 +162,28 @@ function Style({ isRoot }: { isRoot: boolean }) {
   const css = useMemo(() => {
     return resolvedColorScheme === "system"
       ? `${selector} {
+        color-scheme: light;
         ${renderThemeVariables(themeCreator({ colorScheme: "light" }))}
       }
       @media (prefers-color-scheme: dark) {
         ${selector} {
+          color-scheme: dark;
           ${renderThemeVariables(themeCreator({ colorScheme: "dark" }))}
         }
       }`
       : resolvedColorScheme === "inverted"
         ? `${selector} {
+        color-scheme: dark;
         ${renderThemeVariables(themeCreator({ colorScheme: "dark" }))}
       }
       @media (prefers-color-scheme: dark) {
         ${selector} {
+          color-scheme: light;
           ${renderThemeVariables(themeCreator({ colorScheme: "light" }))}
         }
       }`
         : `${selector} {
+        color-scheme: ${resolvedColorScheme};
         ${renderThemeVariables(
           themeCreator({ colorScheme: resolvedColorScheme }),
         )}

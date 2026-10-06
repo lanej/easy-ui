@@ -43,7 +43,7 @@
   flex-direction: column;
   padding: design-token("space.3");
   order: component-token("focused-product-layout", "content-order");
-  background: design-token("color.gray.000");
+  background: design-token("color.neutral.000");
 
   @include ProductLayout.breakpoint-large-screen {
     padding: design-token("space.3") design-token("space.5");

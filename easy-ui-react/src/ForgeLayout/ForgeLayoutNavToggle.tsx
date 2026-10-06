@@ -1,5 +1,6 @@
 import LeftPanelCloseIcon from "@easypost/easy-ui-icons/LeftPanelClose";
 import LeftPanelOpenIcon from "@easypost/easy-ui-icons/LeftPanelOpen";
+import MenuIcon from "@easypost/easy-ui-icons/Menu";
 import React, { useCallback } from "react";
 import { mergeProps, useFocusRing, useHover } from "react-aria";
 import { Icon } from "../Icon";
@@ -23,6 +24,7 @@ export type ForgeLayoutNavToggleProps = Omit<
    * "Collapse navigation" or "Expand navigation" depending on the nav state.
    */
   accessibilityLabel?: string;
+  icon?: "panel" | "menu";
 };
 
 /**
@@ -46,7 +48,7 @@ export type ForgeLayoutNavToggleProps = Omit<
  * ```
  */
 export function ForgeLayoutNavToggle(props: ForgeLayoutNavToggleProps) {
-  const { accessibilityLabel, ...buttonProps } = props;
+  const { accessibilityLabel, icon = "panel", ...buttonProps } = props;
   const { navState, setNavState, navId } = useForgeLayout();
   const { focusProps, isFocusVisible } = useFocusRing(props);
   const { hoverProps, isHovered } = useHover(props);
@@ -81,7 +83,15 @@ export function ForgeLayoutNavToggle(props: ForgeLayoutNavToggleProps) {
       aria-controls={navId}
     >
       <Text visuallyHidden>{label}</Text>
-      <Icon symbol={isExpanded ? LeftPanelCloseIcon : LeftPanelOpenIcon} />
+      <Icon
+        symbol={
+          icon === "menu"
+            ? MenuIcon
+            : isExpanded
+              ? LeftPanelCloseIcon
+              : LeftPanelOpenIcon
+        }
+      />
     </UnstyledButton>
   );
 }

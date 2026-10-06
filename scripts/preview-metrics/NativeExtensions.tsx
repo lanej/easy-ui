@@ -7,7 +7,6 @@ import {
   WarehouseCapacity,
   ForecastCapacity,
 } from "../../easy-ui-react/src/BulletChart/BulletChart.stories";
-import { Sparkline } from "../../easy-ui-react/src/Sparkline";
 import {
   Comparison,
   StepChanges,
@@ -103,35 +102,6 @@ export function NativeExtensions() {
           <Shared />
         </div>
       </Card>
-      <div className="extension-panel-spacing">
-        <Card background="primary" padding="3">
-          <div className="extension-panel">
-            <h2>Choose the observation markers</h2>
-            <p className="panel-note">
-              Segment endpoints are marked by default · Missing intervals remain
-              gaps
-            </p>
-            <div className="marker-grid">
-              {(["all", "endpoints", "extrema"] as const).map((mode) => (
-                <div key={mode}>
-                  <p className="panel-note">
-                    {mode === "all"
-                      ? "All observations"
-                      : mode === "endpoints"
-                        ? "Segment endpoints"
-                        : "Global extrema"}
-                  </p>
-                  <Sparkline
-                    markers={mode}
-                    values={[4, 6, 5, null, 7, 8, 6]}
-                    accessibilityLabel={`${mode} markers; fourth bucket is missing`}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
     </section>
   );
 }

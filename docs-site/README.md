@@ -17,7 +17,7 @@ node scripts/check-docs-site.mjs
 `build:docs` builds tokens and icons first, runs the locked local TypeDoc
 installation with the repository's TypeScript, and produces `docs-site/`.
 Generated subdirectories are ignored by Git. The link check verifies entry
-pages, nested API navigation, static assets and the sparkline marker reference
+pages, nested API navigation, static assets and the Chart options and exact-data reference
 under a project subpath.
 
 To preview, serve the parent of `docs-site/` and open `/docs-site/`; relative URLs
