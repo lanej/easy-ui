@@ -265,15 +265,6 @@ export async function checkSurfaceInspection({
   await browser.clickNamed("button", "Toggle large text");
   await browser.resize(390, 850);
   await settle();
-  target = await point();
-  await browser.move(target.x, target.y);
-  await browser.wait(isOpen);
-  const needsPin = await browser.evaluate(() =>
-    Array.from(
-      document.querySelectorAll('[aria-label="Delivery cell details"] button'),
-    ).some((button) => button.textContent === "Keep open"),
-  );
-  if (needsPin) await browser.clickNamed("button", "Keep open");
   check(
     "resizing after an outside control preserves the pinned inspector",
     await browser.evaluate(() =>
@@ -282,6 +273,9 @@ export async function checkSurfaceInspection({
         .textContent.includes("Selected cell"),
     ),
   );
+  target = await point();
+  await browser.move(target.x, target.y);
+  await browser.wait(isOpen);
   await browser.select(`${selector} select`, "density");
   await browser.wait(() =>
     document.querySelector(

@@ -59,7 +59,7 @@ async function size(keys) {
 const lightweight = closure("lightweight.html", true);
 assert(
   ![...lightweight].some((k) => /maplibre|NetworkMap/.test(k)),
-  "Native SVG entry must exclude maps",
+  "Native metric entry must exclude maps",
 );
 const engine = Object.keys(manifest).find((k) => /maplibre-gl/.test(k));
 const charts = Object.keys(manifest).find((k) => /echarts/.test(k));
@@ -99,7 +99,7 @@ const report = {
     "Production Vite consumer, gzip per asset; includes React and demo application where applicable.",
     "MapLibre 6 uses a separate module worker. Vite bundles and emits that worker; its complete file size is included in gallery JavaScript and listed separately. Shared code can be duplicated between the main and worker bundles.",
     "Fonts and viewport-dependent basemap tiles are separate requests; tile request counts are recorded by browser audit. Cross-origin transfer sizes may be unavailable.",
-    "Engine is optional and lazy. Lightweight SVG consumers do not import MapLibre or its CSS.",
+    "Engine is lazy. Lightweight metric consumers do not import MapLibre or its CSS.",
   ],
 };
 assert.equal(

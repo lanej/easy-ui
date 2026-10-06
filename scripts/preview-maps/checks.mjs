@@ -459,12 +459,14 @@ export async function auditMaps(browser, identity, base, output) {
       await scan(`${audience}-mobile`);
     }
     await browser.open(`${base}/lightweight.html`);
-    await browser.wait(() => document.querySelector('svg[role="img"]'));
+    await browser.wait(() =>
+      document.querySelector("main")?.textContent.includes("97.4%"),
+    );
     const requests = await browser.evaluate(() =>
       performance.getEntriesByType("resource").map((r) => r.name),
     );
     check(
-      "native SVG page loads no MapLibre, map CSS or tiles",
+      "native metric page loads no MapLibre, map CSS or tiles",
       !requests.some((r) => /maplibre|NetworkMap|tiles\.openfreemap/.test(r)),
     );
     await scan("lightweight");
