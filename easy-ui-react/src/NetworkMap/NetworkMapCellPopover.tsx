@@ -53,6 +53,12 @@ export function NetworkMapCellPopover({
       isDismissable: pinned,
       onClose: dismiss,
       shouldCloseOnInteractOutside: (target) => {
+        if (
+          target.closest(
+            'button, a, input, select, textarea, label, [role="button"], [role="link"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"], [role="combobox"], [role="slider"], [role="spinbutton"], [role="textbox"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="treeitem"]',
+          )
+        )
+          return false;
         const canvas =
           element.current?.parentElement?.querySelector(".maplibregl-canvas");
         if (target === canvas) return false;

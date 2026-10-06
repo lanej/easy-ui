@@ -92,7 +92,7 @@ export default defineConfig({
     environment: "jsdom",
     css: true,
     setupFiles: "./vitest.setup.ts",
-    exclude: ["src/utilities/test.ts"],
+    exclude: ["**/node_modules/**", "src/utilities/test.ts"],
   },
 });
 

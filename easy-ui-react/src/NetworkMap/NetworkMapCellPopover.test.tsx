@@ -1,10 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Select } from "../Select";
+import { TabPanels } from "../TabPanels";
+import {
+  mockGetComputedStyle,
+  mockIntersectionObserver,
+} from "../utilities/test";
 import { NetworkMapCellPopover } from "./NetworkMapCellPopover";
 
+let restoreGetComputedStyle: () => void;
+let restoreIntersectionObserver: () => void;
+
 beforeEach(() => {
+  restoreGetComputedStyle = mockGetComputedStyle();
+  restoreIntersectionObserver = mockIntersectionObserver();
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -14,7 +24,49 @@ beforeEach(() => {
     },
   );
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  restoreGetComputedStyle();
+  restoreIntersectionObserver();
+  vi.unstubAllGlobals();
+});
+
+it("lets an outside control hide the layer on its first pointer click", async () => {
+  vi.stubGlobal("PointerEvent", MouseEvent);
+  const onHide = vi.fn();
+  const user = userEvent.setup();
+  function Harness() {
+    const [visible, setVisible] = useState(true);
+    return (
+      <div>
+        <button
+          onClick={() => {
+            onHide();
+            setVisible(false);
+          }}
+        >
+          Hide layer
+        </button>
+        {visible && (
+          <NetworkMapCellPopover
+            x={20}
+            y={20}
+            pinned
+            onClose={() => setVisible(false)}
+            onPin={() => {}}
+            onEnter={() => {}}
+            onLeave={() => {}}
+          >
+            Cell observations
+          </NetworkMapCellPopover>
+        )}
+      </div>
+    );
+  }
+  render(<Harness />);
+  await user.click(screen.getByRole("button", { name: "Hide layer" }));
+  expect(onHide).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("region")).not.toBeInTheDocument();
+});
 
 it("keeps a pinned inspector open when selecting a portalled option", async () => {
   const onClose = vi.fn();
@@ -60,6 +112,48 @@ it("keeps a pinned inspector open when selecting a portalled option", async () =
   ).toBeInTheDocument();
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+it("activates an outside ARIA tab exactly once on its first pointer click", async () => {
+  vi.stubGlobal("PointerEvent", MouseEvent);
+  const onSelectionChange = vi.fn();
+  const user = userEvent.setup();
+  render(
+    <div>
+      <TabPanels
+        aria-label="Map views"
+        keyboardActivation="manual"
+        defaultSelectedKey="map"
+        onSelectionChange={onSelectionChange}
+      >
+        <TabPanels.Tabs>
+          <TabPanels.Item key="map">Map</TabPanels.Item>
+          <TabPanels.Item key="data">Data</TabPanels.Item>
+        </TabPanels.Tabs>
+        <TabPanels.Panels>
+          <TabPanels.Item key="map">Map view</TabPanels.Item>
+          <TabPanels.Item key="data">Data view</TabPanels.Item>
+        </TabPanels.Panels>
+      </TabPanels>
+      <NetworkMapCellPopover
+        x={20}
+        y={20}
+        pinned
+        onClose={() => {}}
+        onPin={() => {}}
+        onEnter={() => {}}
+        onLeave={() => {}}
+      >
+        Cell observations
+      </NetworkMapCellPopover>
+    </div>,
+  );
+  await user.click(screen.getByRole("tab", { name: "Data" }));
+  expect(screen.getByRole("tab", { name: "Data" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  expect(onSelectionChange).toHaveBeenCalledExactlyOnceWith("data");
 });
 
 it("lets the map handle canvas and facility-marker clicks while an inspector is open", async () => {
