@@ -1,0 +1,164 @@
+@use "../styles/common" as *;
+
+.root {
+  @include component-token(
+    "risk-score",
+    "color.text",
+    design-token("color.neutral.700")
+  );
+  @include component-token(
+    "risk-score",
+    "color.background",
+    design-token("color.neutral.100")
+  );
+  @include component-token(
+    "risk-score",
+    "color.fill",
+    design-token("color.neutral.600")
+  );
+  @include font-style("body2");
+  display: inline-flex;
+  flex-direction: column;
+  gap: design-token("space.1");
+  inline-size: max-content;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  vertical-align: middle;
+
+  &[data-assessment="low"] {
+    @include component-token(
+      "risk-score",
+      "color.text",
+      design-token("color.positive.700")
+    );
+    @include component-token(
+      "risk-score",
+      "color.background",
+      design-token("color.positive.100")
+    );
+    @include component-token(
+      "risk-score",
+      "color.fill",
+      design-token("color.positive.700")
+    );
+  }
+
+  &[data-assessment="medium"] {
+    @include component-token(
+      "risk-score",
+      "color.text",
+      design-token("color.warning.800")
+    );
+    @include component-token(
+      "risk-score",
+      "color.background",
+      design-token("color.warning.100")
+    );
+    @include component-token(
+      "risk-score",
+      "color.fill",
+      design-token("color.warning.700")
+    );
+  }
+
+  &[data-assessment="high"] {
+    @include component-token(
+      "risk-score",
+      "color.text",
+      design-token("color.negative.700")
+    );
+    @include component-token(
+      "risk-score",
+      "color.background",
+      design-token("color.negative.100")
+    );
+    @include component-token(
+      "risk-score",
+      "color.fill",
+      design-token("color.negative.700")
+    );
+  }
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: design-token("space.1");
+  min-inline-size: 0;
+}
+
+.score {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: design-token("space.0.5");
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.value {
+  @include font-style("heading4");
+  color: design-token("color.neutral.900");
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.maximum {
+  color: design-token("color.neutral.600");
+  overflow-wrap: anywhere;
+  min-inline-size: 0;
+}
+
+.assessment {
+  @include font-style("subtitle2");
+  padding: design-token("space.0.5") design-token("space.1");
+  border-radius: design-token("shape.border_radius.lg");
+  background: component-token("risk-score", "color.background");
+  color: component-token("risk-score", "color.text");
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.track {
+  display: flex;
+  block-size: design-token("space.0.5");
+  inline-size: 100%;
+  border-radius: design-token("shape.border_radius.lg");
+  overflow: hidden;
+  background: design-token("color.neutral.200");
+}
+
+.fill {
+  block-size: 100%;
+  background: component-token("risk-score", "color.fill");
+}
+
+.root[data-size="sm"] {
+  gap: design-token("space.0.5");
+
+  .value {
+    @include font-style("subtitle1");
+  }
+
+  .assessment {
+    padding-block: design-token("space.0.25");
+  }
+}
+
+@media (forced-colors: active) {
+  .assessment {
+    outline: 1px solid CanvasText;
+  }
+
+  .track {
+    outline: 1px solid CanvasText;
+    background: Canvas;
+  }
+
+  .fill {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+}
