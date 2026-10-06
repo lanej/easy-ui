@@ -18,6 +18,14 @@ function observe(page) {
       errors.push(message.text());
   });
 }
+async function colorMarks(region, token) {
+  const color = await region.evaluate(
+    (element, name) => getComputedStyle(element).getPropertyValue(name).trim(),
+    token,
+  );
+  assert.ok(color, `The chart theme must supply ${token}`);
+  return region.locator(`svg path[fill=${JSON.stringify(color)}]`);
+}
 const results = [];
 const manifest = JSON.parse(
   await readFile(`${outputDir}/.vite/manifest.json`, "utf8"),
@@ -108,7 +116,7 @@ try {
       }
       // Adjacency emphasis was an important gap in the Recharts experiment.
       const beforeHover = await sankey.locator("svg").innerHTML();
-      const blueMarks = sankey.locator('svg path[fill="#113abf"]');
+      const blueMarks = await colorMarks(sankey, "--ezui-color-primary-600");
       const nodeIndex = await blueMarks.evaluateAll((paths) =>
         paths.findIndex((path) => {
           const box = path.getBoundingClientRect();
@@ -150,7 +158,7 @@ try {
       name: "Cost and speed tradeoffs",
       exact: true,
     });
-    const marks = scatter.locator('svg path[fill="#113abf"]');
+    const marks = await colorMarks(scatter, "--ezui-color-primary-600");
     const largest = await marks.evaluateAll(
       (paths) =>
         paths
@@ -292,7 +300,11 @@ try {
       name: "From receipts to contribution",
       exact: true,
     });
-    await waterfall.locator('svg path[fill="#9b5900"]').first().hover();
+    const expenseMarks = await colorMarks(
+      waterfall,
+      "--ezui-color-warning-700",
+    );
+    await expenseMarks.first().hover();
     await waterfall.getByText("Delivery: $-9,000", { exact: true }).waitFor();
     await waterfall.getByText("Balance: $15,000", { exact: true }).waitFor();
     assert.doesNotMatch(

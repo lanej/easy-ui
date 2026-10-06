@@ -356,7 +356,7 @@ export async function auditNativeRegressions(
   assert.ok(data.metric.text.includes("$5.20"));
   assert.ok(data.metric.text.includes("4.2% lower"));
   assert.ok(data.metric.text.includes("vs previous 30 days"));
-  assert.equal(data.metric.trends, 1);
+  assert.equal(data.metric.trends, 0, "Metric content has no SVG sparkline");
   await scan("native-exact-data");
   await diagnostics("native-exact-data");
   await driver.evaluate(() =>
