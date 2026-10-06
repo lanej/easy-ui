@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import tokens from "@easypost/easy-ui-tokens/js/tokens";
 import { ChartSurface, ChartDataView, type ChartOption } from "../Chart";
 import { useColorScheme, useTheme } from "../Theme";
 import {
@@ -44,14 +45,14 @@ export const ratioLevels = [
 const percent = (value: number) => `${Math.round(value * 100)}%`;
 
 const defaultColors = {
-  line: "#113abf",
-  surface: "#ffffff",
-  guide: "#627891",
-  positive: "#d9f4e8",
-  warning: "#fff0c2",
-  negative: "#ffe0e0",
+  line: tokens["theme.light.color.primary.600"],
+  surface: tokens["theme.light.color.neutral.000"],
+  guide: tokens["theme.light.color.neutral.600"],
+  positive: tokens["theme.light.color.positive.100"],
+  warning: tokens["theme.light.color.warning.300"],
+  negative: tokens["theme.light.color.negative.100"],
 };
-type Colors = typeof defaultColors;
+type Colors = { [Name in keyof typeof defaultColors]: string };
 
 /** A copyable recipe using Chart's existing point, reference, and region options. */
 export function scoreCurveOption(
@@ -157,14 +158,16 @@ export function ScoreChartDetails({
   kind,
   refreshed = false,
   typography,
+  showDataTable = true,
 }: {
   kind: "response" | "history";
   refreshed?: boolean;
   typography?: VisualizationTypography;
+  showDataTable?: boolean;
 }) {
   const detailTypography = { label: 14, detail: 14, ...typography };
   const ref = useRef<HTMLDivElement>(null);
-  const [colors, setColors] = useState(defaultColors);
+  const [colors, setColors] = useState<Colors>(defaultColors);
   const theme = useTheme();
   const { resolvedColorScheme } = useColorScheme();
   useEffect(() => {
@@ -244,24 +247,26 @@ export function ScoreChartDetails({
           </li>
         ))}
       </ul>
-      <ChartDataView
-        title={name}
-        typography={detailTypography}
-        disclosureLabel="View exact chart data"
-        dataTable={{
-          columns:
-            kind === "response"
-              ? ["Label ratio", "Points"]
-              : ["Window", "Label ratio"],
-          rows: points.map(([x, y]) => ({
-            id: String(x),
-            values:
+      {showDataTable && (
+        <ChartDataView
+          title={name}
+          typography={detailTypography}
+          disclosureLabel="View exact chart data"
+          dataTable={{
+            columns:
               kind === "response"
-                ? [percent(x), y.toFixed(2)]
-                : [String(x), percent(y)],
-          })),
-        }}
-      />
+                ? ["Label ratio", "Points"]
+                : ["Window", "Label ratio"],
+            rows: points.map(([x, y]) => ({
+              id: String(x),
+              values:
+                kind === "response"
+                  ? [percent(x), y.toFixed(2)]
+                  : [String(x), percent(y)],
+            })),
+          }}
+        />
+      )}
       <p className={styles.caption}>
         {kind === "response"
           ? `Synthetic evaluations with burst fixed at ${refreshed ? 0 : 3}. Lines join supplied points; shaded levels are application rules.`

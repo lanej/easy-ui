@@ -9,7 +9,8 @@ import { ScoreChartDetails } from "./ScoreComposition.charts";
 import { scoreCompositionExample } from "./ScoreComposition.examples";
 
 const meta: Meta<typeof ScoreComposition> = {
-  title: "Components/ScoreComposition",
+  id: "components-scorecomposition",
+  title: "Organisms/Charts/ScoreComposition",
   component: ScoreComposition,
   parameters: { layout: "padded" },
 };

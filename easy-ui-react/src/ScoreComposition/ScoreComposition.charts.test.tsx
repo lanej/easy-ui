@@ -19,6 +19,22 @@ vi.mock("../Chart", async (original) => ({
   )),
 }));
 beforeEach(() => vi.useFakeTimers());
+
+it("keeps score-chart raw data optional", () => {
+  const { rerender } = render(
+    <ThemeProvider colorScheme="light">
+      <ScoreChartDetails kind="response" showDataTable={false} />
+    </ThemeProvider>,
+  );
+  expect(screen.getByRole("img")).toBeInTheDocument();
+  expect(screen.queryByText("View exact chart data")).not.toBeInTheDocument();
+  rerender(
+    <ThemeProvider colorScheme="light">
+      <ScoreChartDetails kind="response" />
+    </ThemeProvider>,
+  );
+  expect(screen.getByText("View exact chart data")).toBeInTheDocument();
+});
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
