@@ -26,3 +26,4 @@ scripts/preview-metrics/dist-guide/
 /easy-ui-react/types.d.ts
 /easy-ui-react/style.css
 /easy-ui-react/.compatibility-entries.json
+.preview-tokens/

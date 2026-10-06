@@ -99,6 +99,10 @@ export function previewConfig(engine = "full", outDir = "dist") {
     },
     resolve: {
       alias: {
+        "@easypost/easy-ui-tokens/js/tokens": local(
+          "./.preview-tokens/dist/js/tokens.mjs",
+        ),
+        "@easypost/easy-ui-tokens": local("./.preview-tokens/dist"),
         "overlayscrollbars/overlayscrollbars.css": local(
           "./node_modules/overlayscrollbars/styles/overlayscrollbars.css",
         ),
@@ -115,7 +119,6 @@ export function previewConfig(engine = "full", outDir = "dist") {
             "react",
             "react-dom",
             "lodash",
-            "@easypost/easy-ui-tokens",
             "@easypost/easy-ui-icons",
             "echarts",
             "maplibre-gl",

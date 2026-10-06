@@ -154,6 +154,21 @@ export async function auditMobileCharts(
   await driver.key(`${legend} button`, "Enter");
   await driver.resize(390, 1000);
   await driver.click("#dark-theme");
+  const darkTheme = await driver.evaluate(() => {
+    const style = getComputedStyle(document.querySelector("main"));
+    return {
+      foreground: style.getPropertyValue("--ezui-color-neutral-800").trim(),
+      surface: style.getPropertyValue("--ezui-color-neutral-000").trim(),
+      background: style.backgroundColor,
+    };
+  });
+  assert.ok(darkTheme.foreground, "The dark preview must supply text tokens");
+  assert.ok(darkTheme.surface, "The dark preview must supply surface tokens");
+  assert.match(
+    darkTheme.background,
+    /^rgb\(/,
+    "The dark preview surface must be opaque",
+  );
   assert.equal(
     await driver.evaluate(() =>
       document

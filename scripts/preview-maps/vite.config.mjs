@@ -9,6 +9,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      "@easypost/easy-ui-tokens/js/tokens": local(
+        "./.preview-tokens/dist/js/tokens.mjs",
+      ),
+      "@easypost/easy-ui-tokens": local("./.preview-tokens/dist"),
       "overlayscrollbars/overlayscrollbars.css": local(
         "./node_modules/overlayscrollbars/styles/overlayscrollbars.css",
       ),
@@ -23,7 +27,6 @@ export default defineConfig({
           "maplibre-gl",
           "echarts",
           "lodash",
-          "@easypost/easy-ui-tokens",
           "@easypost/easy-ui-icons",
         ].map((name) => [name, local(`./node_modules/${name}`)]),
       ),
