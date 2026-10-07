@@ -63,6 +63,11 @@
   border-top: 1px solid design-token("color.neutral.200");
 }
 .canvas {
+  // Native controls contain 29px buttons, including under consumer box-sizing rules.
+  :global(.maplibregl-ctrl-group) {
+    min-width: 29px;
+  }
+
   // Keep marker z-indices inside the map, beneath the selected-facility card.
   isolation: isolate;
   --map-route: #{design-token("color.primary.600")};

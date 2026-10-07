@@ -1,5 +1,7 @@
 export { NetworkMap } from "./NetworkMap";
 export { NetworkMapProvider } from "./NetworkMapContext";
+export { NetworkMapInspectionTrigger } from "./NetworkMapInspectionTrigger";
+export type { NetworkMapInspectionTriggerProps } from "./NetworkMapInspectionTrigger";
 export { NetworkMapSurface } from "./NetworkMapSurface";
 export { NetworkMapCellDetails } from "./NetworkMapCellDetails";
 export type { NetworkMapCellDetailsProps } from "./NetworkMapCellDetails";
@@ -18,6 +20,9 @@ export type {
   MapOverlayLayer,
   MapOverlaySelection,
   MapOverlayDetailsContext,
+  MapOverlayHoverDetailsContext,
+  MapFacilityDetailsContext,
+  MapInspectionTarget,
   NetworkMapControls,
   NetworkMapToolbarControl,
   NetworkMapControlLabels,

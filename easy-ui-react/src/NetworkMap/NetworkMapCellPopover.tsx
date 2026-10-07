@@ -2,9 +2,11 @@ import React, {
   ReactNode,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import styles from "./NetworkMap.module.scss";
 import { useOverlay } from "react-aria";
 import { Button } from "../Button";
@@ -22,6 +24,11 @@ export function NetworkMapCellPopover({
   label = "Delivery cell details",
   heading,
   closeLabel = "Close cell details",
+  positioning = "parent",
+  id,
+  elementRef,
+  returnFocusElement,
+  styleSource,
 }: {
   x: number;
   y: number;
@@ -34,6 +41,11 @@ export function NetworkMapCellPopover({
   label?: string;
   heading?: string;
   closeLabel?: string;
+  positioning?: "parent" | "viewport";
+  id?: string;
+  elementRef?: React.RefObject<HTMLDivElement | null>;
+  returnFocusElement?: HTMLElement | null;
+  styleSource?: HTMLElement | null;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -41,12 +53,15 @@ export function NetworkMapCellPopover({
   const dismiss = useCallback(() => {
     const node = element.current;
     if (node?.contains(document.activeElement)) {
-      node.parentElement
-        ?.querySelector<HTMLCanvasElement>("canvas")
-        ?.focus({ preventScroll: true });
+      if (returnFocusElement?.isConnected)
+        returnFocusElement.focus({ preventScroll: true });
+      else
+        node.parentElement
+          ?.querySelector<HTMLCanvasElement>("canvas")
+          ?.focus({ preventScroll: true });
     }
     onClose();
-  }, [onClose]);
+  }, [onClose, returnFocusElement]);
   const { overlayProps } = useOverlay(
     {
       isOpen: true,
@@ -73,8 +88,12 @@ export function NetworkMapCellPopover({
     const viewport = node?.parentElement;
     if (!node || !viewport) return;
     const place = () => {
-      const width = viewport.clientWidth;
-      const height = viewport.clientHeight;
+      const width =
+        positioning === "viewport"
+          ? document.documentElement.clientWidth
+          : viewport.clientWidth;
+      const height =
+        positioning === "viewport" ? window.innerHeight : viewport.clientHeight;
       const left =
         x + 16 + node.offsetWidth <= width - 8
           ? x + 16
@@ -92,8 +111,12 @@ export function NetworkMapCellPopover({
     const observer = new ResizeObserver(place);
     observer.observe(node);
     observer.observe(viewport);
-    return () => observer.disconnect();
-  }, [x, y]);
+    window.addEventListener("resize", place);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", place);
+    };
+  }, [x, y, positioning]);
   useEffect(() => {
     // Entering an embedded control pins the card without stealing its focus.
     // A map click still moves focus into the inspector for keyboard dismissal.
@@ -112,17 +135,130 @@ export function NetworkMapCellPopover({
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
   }, [dismiss]);
-  return (
+  useEffect(() => {
+    if (!id || !returnFocusElement) return;
+    const original =
+      returnFocusElement
+        .getAttribute("aria-describedby")
+        ?.split(/\s+/)
+        .filter(Boolean) ?? [];
+    returnFocusElement.setAttribute(
+      "aria-describedby",
+      [...new Set([...original, id])].join(" "),
+    );
+    return () => {
+      const remaining = returnFocusElement
+        .getAttribute("aria-describedby")
+        ?.split(/\s+/)
+        .filter((part) => part !== id)
+        .join(" ");
+      if (remaining)
+        returnFocusElement.setAttribute("aria-describedby", remaining);
+      else returnFocusElement.removeAttribute("aria-describedby");
+    };
+  }, [id, returnFocusElement]);
+  useLayoutEffect(() => {
+    const node = element.current;
+    const restoreTo =
+      returnFocusElement ??
+      node?.parentElement?.querySelector<HTMLCanvasElement>("canvas");
+    return () => {
+      // Context/data cleanup can remove a focused card without a Close action.
+      if (node?.contains(document.activeElement) && restoreTo?.isConnected)
+        restoreTo.focus({ preventScroll: true });
+    };
+  }, [returnFocusElement]);
+  // Preserve nested and system themes when a viewport card is portalled to body.
+  useLayoutEffect(() => {
+    const node = element.current;
+    if (positioning !== "viewport" || !styleSource || !node) return;
+    let copied = new Set<string>();
+    const sync = () => {
+      const css = getComputedStyle(styleSource);
+      const next = new Set<string>();
+      for (let index = 0; index < css.length; index++) {
+        const property = css.item(index);
+        if (!property.startsWith("--ezui-")) continue;
+        next.add(property);
+        const value = css.getPropertyValue(property);
+        if (node.style.getPropertyValue(property) !== value)
+          node.style.setProperty(property, value);
+      }
+      for (const property of copied)
+        if (!next.has(property)) node.style.removeProperty(property);
+      copied = next;
+      node.style.fontFamily = css.fontFamily;
+      node.style.colorScheme = css.colorScheme;
+    };
+    sync();
+    const ancestors = new Set<Element>();
+    for (
+      let parent: Element | null = styleSource;
+      parent;
+      parent = parent.parentElement
+    )
+      ancestors.add(parent);
+    const isStylesheet = (target: Node) =>
+      target instanceof HTMLStyleElement ||
+      target instanceof HTMLLinkElement ||
+      target.parentElement instanceof HTMLStyleElement;
+    const observer = new MutationObserver((records) => {
+      if (
+        records.some(
+          (record) =>
+            (record.type === "attributes" &&
+              ancestors.has(record.target as Element) &&
+              !record.attributeName?.startsWith("data-map-")) ||
+            isStylesheet(record.target) ||
+            [...record.addedNodes, ...record.removedNodes].some(isStylesheet),
+        )
+      )
+        sync();
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    media?.addEventListener?.("change", sync);
+    const load = (event: Event) => {
+      if (event.target instanceof HTMLLinkElement) sync();
+    };
+    document.addEventListener("load", load, true);
+    return () => {
+      observer.disconnect();
+      media?.removeEventListener?.("change", sync);
+      document.removeEventListener("load", load, true);
+    };
+  }, [positioning, styleSource]);
+  const content = (
     <div
       {...overlayProps}
-      ref={element}
+      id={id}
+      ref={(node) => {
+        element.current = node;
+        if (elementRef) elementRef.current = node;
+      }}
       className={styles.cellPopover}
-      style={position}
+      style={
+        positioning === "viewport"
+          ? {
+              ...position,
+              position: "fixed",
+              zIndex: 1000,
+              maxWidth: "calc(100vw - 16px)",
+              maxHeight: "min(480px, calc(100vh - 56px))",
+            }
+          : position
+      }
       role="region"
       aria-label={label}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
       onFocus={onPin}
+      onClickCapture={onPin}
     >
       <div className={styles.cellPopoverHeader}>
         <strong>
@@ -147,4 +283,7 @@ export function NetworkMapCellPopover({
       {children}
     </div>
   );
+  return positioning === "viewport"
+    ? createPortal(content, document.body)
+    : content;
 }

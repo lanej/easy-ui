@@ -550,3 +550,30 @@ Set `showCellDetails={false}` to use an external inspector. Hover/select callbac
 Marker buttons have full accessible names and controlled pressed state. Table rows offer equivalent selection, including records whose labels are hidden. The exact-data disclosure includes risk event, horizon, cohort, baseline and output timestamp; segment descriptions provide transfer evidence. Weather records retain coordinates, observation/forecast status, source and validity times. Surface records retain exact bounds, median, IQR, count, source and timestamp, including missing values and true zero. These records remain available regardless of layer visibility. Loading and failure states preserve this data. Initialization failures offer Retry; tile failures surface a reload notice and `onRenderError`. A basemap is an additional spatial view, not the only way to inspect or select records.
 
 The `NetworkMap` entry uses Easy UI's required MapLibre dependency and loads it dynamically on mount. Automatic installation does not mean eager loading: importing and server-rendering the entry does not initialize WebGL; its HTML data view and loading state render on the server. Native charts and ECharts do not import this entry. Import `@easypost/easy-ui/NetworkMap/maplibre-gl.css` only in the application's map route. The published Easy UI stylesheet includes the small component wrapper styles, consistent with other components. See `scripts/preview-maps` for production bundle measurements, an independent native SVG control, browser interaction checks and actual Chrome, Firefox and Safari captures.
+
+
+## Facility and overlay inspection
+
+`renderFacilityDetails({ facility })` supplies rich facility content for pointer hover, keyboard focus and click/tap pinning. `renderOverlayHoverDetails({ overlays, selections, coordinate })` supplies content for **all** overlapping original overlay features, ordered from topmost to bottommost and deduplicated across layers, tiles and world copies. The `overlays` field also identifies whole collections inspected through DOM controls when they contain no drawable features. Single-location paths and missing coordinates retain their domain details without invented geometry. The application can group those selections into domain paths; it never needs generated engine layer IDs or marker DOM attributes. `renderOverlayDetails` remains a compatible click-only fallback for the first selected feature, and `onOverlaySelect` retains its single topmost-feature callback.
+
+Easy UI owns pointer-to-card handoff, focus, Escape/Close dismissal, accessible descriptions, click-to-pin, viewport bounds and movement cleanup. Embedded controls pin the card without stealing their focus. Hover closes on camera movement or external scroll; pinned cards follow their map coordinate or DOM trigger. Removed/hidden features and ambiguous immutable replacements clear their inspection. Stable, type-qualified GeoJSON IDs retain fresh records after immutable updates. Use `inspectionRevision` to dismiss on an application context change even when it reuses feature IDs.
+
+Under `NetworkMapProvider`, wrap a named, focusable control in `NetworkMapInspectionTrigger`. Its application action remains independent from inspection. A `facilityId` targets a facility; `overlayId` targets a collection, and optional `featureId` targets exactly one feature (numeric and string IDs remain distinct). `NetworkMapSurface` displays the shared inspector. Inspection does not require `onFacilitySelect` and does not change controlled selection by itself.
+
+```tsx
+<NetworkMapProvider
+  {...mapProps}
+  inspectionRevision={checkpointId}
+  renderFacilityDetails={({ facility }) => <FacilityEvidence facility={facility} />}
+  renderOverlayHoverDetails={({ selections }) => <PathEvidence features={selections} />}
+>
+  <NetworkMapInspectionTrigger target={{ overlayId: "candidate-1" }}>
+    <Button onPress={focusCandidate}>Candidate 1</Button>
+  </NetworkMapInspectionTrigger>
+  <NetworkMapSurface />
+</NetworkMapProvider>
+```
+
+Interactive details use a named, nonmodal region rather than an ARIA tooltip. Ordinary Tooltip remains the primitive for short, noninteractive help. Rich inspectors reuse NetworkMap's existing details popover and React Aria dismissal. A null or false renderer omits its card and accessible description, clears its inspection state, and does not suppress delivery-cell inspection or pin an invisible card. Viewport cards scroll within a 480px height limit and inherit live nested/system theme changes.
+
+The local `scripts/preview-maps/rich-inspection.html` example demonstrates both renderers, shared routes, public keyboard triggers, nested Light/Dark themes, immutable refreshes and explicit context dismissal without external tiles.

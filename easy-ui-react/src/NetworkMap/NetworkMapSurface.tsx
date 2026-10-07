@@ -28,7 +28,6 @@ import type { MapFacility, NetworkMapProps } from "./types";
 import { NetworkMapCellDetails } from "./NetworkMapCellDetails";
 import { NetworkMapCellPopover } from "./NetworkMapCellPopover";
 import { useSurfaceInspection } from "./useSurfaceInspection";
-import { useOverlayInspection } from "./useOverlayInspection";
 import {
   NetworkMapProvider,
   useNetworkMap,
@@ -63,6 +62,7 @@ export function NetworkMapSurface(
 function NetworkMapSurfaceView() {
   const {
     props: options,
+    mapInspection,
     controls,
     visibility,
     activeMetric,
@@ -103,11 +103,9 @@ function NetworkMapSurfaceView() {
     pin,
     cancelLeave,
   } = useSurfaceInspection(options, deliverySurface, activeMetric?.field);
-  const {
-    inspection: overlayInspection,
-    context: overlayContext,
-    events: overlayInspectionEvents,
-  } = useOverlayInspection(options);
+  const overlayInspectionEvents = mapInspection.events;
+  const { inspection: featureInspection, facility: inspectedFacility } =
+    mapInspection;
   const layers = useRef(visibility);
   layers.current = visibility;
   const activeMetricRef = useRef(activeMetric);
@@ -189,6 +187,7 @@ function NetworkMapSurfaceView() {
     };
     let disposed = false,
       observer: ResizeObserver | undefined;
+    let detachInspection: (() => void) | undefined;
     let overlayRenderer: ReturnType<typeof createOverlayRenderer> | undefined;
     let markers: {
       facility: MapFacility;
@@ -265,11 +264,19 @@ function NetworkMapSurfaceView() {
           cooperativeGestures: true,
         });
         instance.current = map;
-        overlayRenderer = createOverlayRenderer(map, (selection) => {
-          inspectionEvents.close();
-          overlayInspectionEvents.select(selection, map);
-          latest.current.onOverlaySelect?.(selection);
-        });
+        detachInspection = overlayInspectionEvents.attach(map, element);
+        overlayRenderer = createOverlayRenderer(
+          map,
+          (selection) => {
+            latest.current.onOverlaySelect?.(selection);
+          },
+          {
+            inspect: (...args) => {
+              overlayInspectionEvents.inspect(...args);
+            },
+            leave: overlayInspectionEvents.leave,
+          },
+        );
         let navigation:
           InstanceType<typeof engine.NavigationControl> | undefined;
         let scale: InstanceType<typeof engine.ScaleControl> | undefined;
@@ -548,11 +555,11 @@ function NetworkMapSurfaceView() {
                     : "normal"
                   : "unknown"
                 : "off";
-            button.title = f.label;
-            button.disabled = !p.onFacilitySelect;
+            button.title = p.renderFacilityDetails ? "" : f.label;
+            button.disabled = !p.onFacilitySelect && !p.renderFacilityDetails;
             button.setAttribute(
               "aria-label",
-              `Select ${f.label}${f.detail ? `: ${f.detail}` : ""}`,
+              `${!p.onFacilitySelect && p.renderFacilityDetails ? "Inspect" : "Select"} ${f.label}${f.detail ? `: ${f.detail}` : ""}`,
             );
             button.setAttribute(
               "aria-pressed",
@@ -580,10 +587,27 @@ function NetworkMapSurfaceView() {
             label.textContent = f.label;
             label.setAttribute("aria-hidden", "true");
             if (!existing) button.append(dot, label);
-            if (!existing)
-              button.addEventListener("click", () =>
-                latest.current.onFacilitySelect?.(f.id),
+            if (!existing) {
+              const inspect = (pinned = false) => {
+                overlayInspectionEvents.target(
+                  { facilityId: f.id },
+                  button,
+                  pinned,
+                );
+              };
+              button.addEventListener("mouseenter", () => inspect());
+              button.addEventListener("mouseleave", (event) =>
+                overlayInspectionEvents.leave(event.relatedTarget),
               );
+              button.addEventListener("focus", () => inspect());
+              button.addEventListener("blur", (event) =>
+                overlayInspectionEvents.leave(event.relatedTarget),
+              );
+              button.addEventListener("click", () => {
+                inspect(true);
+                latest.current.onFacilitySelect?.(f.id);
+              });
+            }
             if (existing) {
               existing.facility = f;
               existing.marker.setLngLat([...f.coordinates]);
@@ -864,7 +888,7 @@ function NetworkMapSurfaceView() {
           position();
           if (!disposed) {
             inspectionEvents.move(map);
-            overlayInspectionEvents.move(map);
+            overlayInspectionEvents.move();
           }
         });
         map.on("moveend", () => {
@@ -922,6 +946,7 @@ function NetworkMapSurfaceView() {
       }
       markers.forEach((m) => m.marker.remove());
       overlayRenderer?.dispose();
+      detachInspection?.();
       instance.current?.remove();
       instance.current = null;
       inspectionEvents.close();
@@ -965,6 +990,7 @@ function NetworkMapSurfaceView() {
     options.deliverySurfaceColorScale,
     options.overlays,
     options.onOverlaySelect,
+    options.renderFacilityDetails,
   ]);
   useEffect(() => {
     if (state !== "ready" || !options.focus) return;
@@ -987,10 +1013,17 @@ function NetworkMapSurfaceView() {
     instance.current?.resize();
   }, [height]);
 
-  const overlayContent = overlayContext
-    ? options.renderOverlayDetails?.(overlayContext)
-    : null;
-  const hasOverlayContent = overlayContent != null && overlayContent !== false;
+  const overlayContent = mapInspection.content;
+  const hasOverlayContent =
+    overlayContent != null &&
+    overlayContent !== false &&
+    (!inspection?.pinned || featureInspection?.pinned === true);
+  useEffect(() => {
+    if (hasOverlayContent && inspection) inspectionEvents.close();
+  }, [hasOverlayContent, inspection, inspectionEvents]);
+  useEffect(() => {
+    inspectionEvents.close();
+  }, [options.inspectionRevision, inspectionEvents]);
   return (
     <div
       className={styles.viewport}
@@ -1020,32 +1053,40 @@ function NetworkMapSurfaceView() {
         className={styles.canvas}
         style={{ height: Math.max(220, height) }}
       />
-      {overlayInspection &&
-        overlayContext &&
-        hasOverlayContent &&
-        (() => {
-          return (
-            <NetworkMapCellPopover
-              x={overlayInspection.x}
-              y={overlayInspection.y}
-              pinned
-              label="Overlay feature details"
-              heading={String(
-                overlayContext.feature.properties?.label ??
-                  overlayContext.feature.id ??
-                  overlayContext.overlay.label ??
-                  overlayContext.overlayId,
-              )}
-              closeLabel="Close overlay details"
-              onClose={overlayInspectionEvents.close}
-              onPin={() => {}}
-              onEnter={() => {}}
-              onLeave={() => {}}
-            >
-              {overlayContent}
-            </NetworkMapCellPopover>
-          );
-        })()}
+      {featureInspection && hasOverlayContent && (
+        <NetworkMapCellPopover
+          id={mapInspection.id}
+          elementRef={mapInspection.card}
+          returnFocusElement={
+            featureInspection.anchor ?? instance.current?.getCanvas()
+          }
+          styleSource={container.current}
+          positioning="viewport"
+          x={featureInspection.x}
+          y={featureInspection.y}
+          pinned={featureInspection.pinned}
+          label={
+            inspectedFacility ? "Facility details" : "Overlay feature details"
+          }
+          heading={
+            inspectedFacility?.label ??
+            (mapInspection.overlays.length === 1
+              ? (mapInspection.overlays[0].label ?? "Overlay feature")
+              : "Shared map features")
+          }
+          closeLabel={
+            inspectedFacility
+              ? "Close facility details"
+              : "Close overlay details"
+          }
+          onClose={overlayInspectionEvents.close}
+          onPin={overlayInspectionEvents.pin}
+          onEnter={overlayInspectionEvents.keep}
+          onLeave={overlayInspectionEvents.leave}
+        >
+          {overlayContent}
+        </NetworkMapCellPopover>
+      )}
       {!hasOverlayContent &&
         inspection &&
         cell &&

@@ -74,7 +74,11 @@ function matchesFilter(
   return true;
 }
 class FakeMap {
+  element: HTMLElement;
+  canvas = document.createElement("canvas");
   constructor(options: unknown) {
+    this.element = (options as { container: HTMLElement }).container;
+    this.element.append(this.canvas);
     // Passing `this` lets tests recover the exact instance the component received, e.g. to
     // assert onMapReady was called with that same live map object.
     constructor(this, options);
@@ -130,7 +134,13 @@ class FakeMap {
     return true;
   }
   getCanvas() {
-    return { style: {} as CSSStyleDeclaration };
+    return this.canvas;
+  }
+  getContainer() {
+    return this.element;
+  }
+  isMoving() {
+    return false;
   }
   setPaintProperty = setPaintProperty;
   getPaintProperty(id: string, prop: string) {
@@ -1525,39 +1535,74 @@ describe("delivery surface inspection", () => {
     return result;
   }
 
-  it("does not suppress cell hover when an overlay renderer returns null", async () => {
-    const feature = {
-      type: "Feature" as const,
-      id: "scan",
-      properties: {},
-      geometry: { type: "Point" as const, coordinates: [-122, 37] },
-    };
-    const overlay = {
-      id: "scans",
-      data: { type: "FeatureCollection" as const, features: [feature] },
-      layers: [{ id: "points", type: "circle" as const }],
-    };
-    await ready({ overlays: [overlay], renderOverlayDetails: () => null });
-    const uploaded = sourceDefs.get("easy-ui-overlay-scans")?.data as {
-      features: { properties: Record<string, unknown> }[];
-    };
-    queryRenderedFeatures.mockReturnValue([
-      {
-        layer: { id: "easy-ui-overlay-scans/points" },
-        properties: uploaded.features[0].properties,
-      },
-    ]);
-    act(() =>
-      listeners.click({
-        point: { x: 12, y: 34 },
-        lngLat: { lng: -122, lat: 37 },
-      }),
-    );
-    expect(
-      screen.queryByRole("region", { name: "Overlay feature details" }),
-    ).toBeNull();
-    enter();
+  it.each(["legacy", "hover"])(
+    "does not suppress cell hover when a %s overlay renderer returns null",
+    async (renderer) => {
+      const feature = {
+        type: "Feature" as const,
+        id: "scan",
+        properties: {},
+        geometry: { type: "Point" as const, coordinates: [-122, 37] },
+      };
+      const overlay = {
+        id: "scans",
+        data: { type: "FeatureCollection" as const, features: [feature] },
+        layers: [{ id: "points", type: "circle" as const }],
+      };
+      await ready({
+        overlays: [overlay],
+        ...(renderer === "legacy"
+          ? { renderOverlayDetails: () => null }
+          : { renderOverlayHoverDetails: () => null }),
+      });
+      const uploaded = sourceDefs.get("easy-ui-overlay-scans")?.data as {
+        features: { properties: Record<string, unknown> }[];
+      };
+      queryRenderedFeatures.mockReturnValue([
+        {
+          layer: { id: "easy-ui-overlay-scans/points" },
+          properties: uploaded.features[0].properties,
+        },
+      ]);
+      act(() =>
+        listeners.click({
+          point: { x: 12, y: 34 },
+          lngLat: { lng: -122, lat: 37 },
+        }),
+      );
+      expect(
+        screen.queryByRole("region", { name: "Overlay feature details" }),
+      ).toBeNull();
+      enter();
+      if (renderer === "hover")
+        act(() =>
+          listeners.mousemove({
+            point: { x: 12, y: 34 },
+            lngLat: { lng: -122, lat: 37 },
+          }),
+        );
+      expect(card()).toHaveTextContent("45 min");
+    },
+  );
+
+  it("preserves a pinned cell through facility hover and replaces it on an explicit facility click", async () => {
+    await ready({
+      renderFacilityDetails: ({ facility }) => (
+        <span>{facility.label} metadata</span>
+      ),
+    });
+    click();
+    const marker = screen.getByRole("button", { name: "Select Oakland" });
+    fireEvent.mouseEnter(marker);
     expect(card()).toHaveTextContent("45 min");
+    expect(
+      screen.queryByRole("region", { name: "Facility details" }),
+    ).toBeNull();
+    fireEvent.click(marker);
+    expect(card()).toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Facility details" }),
+    ).toHaveTextContent("Oakland metadata");
   });
 
   it("inspects the original record and supplied distribution without changing facility selection", async () => {

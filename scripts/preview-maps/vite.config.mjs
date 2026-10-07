@@ -43,6 +43,7 @@ export default defineConfig({
         lightweight: local("./lightweight.html"),
         regressions: local("./regressions.html"),
         composition: local("./composition.html"),
+        richInspection: local("./rich-inspection.html"),
       },
     },
   },

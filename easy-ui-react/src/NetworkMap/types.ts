@@ -47,6 +47,21 @@ export type MapOverlayDetailsContext = MapOverlaySelection & {
   overlay: MapOverlay;
 };
 
+/** Domain content for a facility's hover, focus and pinned inspection. */
+export type MapFacilityDetailsContext = { facility: MapFacility };
+
+/** All original features under the pointer, deduplicated across layers and tiles. */
+export type MapOverlayHoverDetailsContext = {
+  /** Inspected collections, including geometry-free collections targeted by a DOM control. */
+  overlays: readonly MapOverlay[];
+  selections: readonly MapOverlayDetailsContext[];
+  coordinate?: MapCoordinate;
+};
+
+/** Public DOM inspection target; omitted featureId inspects the overlay's whole collection. */
+export type MapInspectionTarget =
+  { facilityId: string } | { overlayId: string; featureId?: string | number };
+
 /** Caller-supplied model output. A facility cohort score is not a parcel score. */
 export type MapRisk = {
   /** Probability between zero and one; null is unknown, never zero risk. */
@@ -324,7 +339,16 @@ export type NetworkMapProps = {
   overlays?: readonly MapOverlay[];
   onOverlayVisibilityChange?: (overlayId: string, visible: boolean) => void;
   onOverlaySelect?: (selection: MapOverlaySelection) => void;
+  /** Legacy selected-feature renderer, retained as a click-only fallback. */
   renderOverlayDetails?: (context: MapOverlayDetailsContext) => ReactNode;
+  /** Rich hover/focus/click content for facilities. Lifecycle and positioning belong to NetworkMap. */
+  renderFacilityDetails?: (context: MapFacilityDetailsContext) => ReactNode;
+  /** Rich hover/focus/click content for all overlapping overlay features. */
+  renderOverlayHoverDetails?: (
+    context: MapOverlayHoverDetailsContext,
+  ) => ReactNode;
+  /** Change when the inspected application context changes (checkpoint, lane, cohort, etc.). */
+  inspectionRevision?: string | number;
   showLegend?: boolean;
   showViewScale?: boolean;
   /** Optional delivery-time field surface, rendered as a data-driven fill layer. */

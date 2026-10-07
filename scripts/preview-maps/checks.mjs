@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { checkMapComposition } from "./composition-checks.mjs";
+import { checkRichInspection } from "./rich-inspection-checks.mjs";
 import { checkSurfaceInspection } from "./inspection-checks.mjs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 const zoom = () =>
@@ -458,6 +459,15 @@ export async function auditMaps(browser, identity, base, output) {
       await capture(`${audience}-mobile`);
       await scan(`${audience}-mobile`);
     }
+    await checkRichInspection({
+      browser,
+      base,
+      check,
+      settle,
+      capture,
+      scan,
+      clean,
+    });
     await browser.open(`${base}/lightweight.html`);
     await browser.wait(() =>
       document.querySelector("main")?.textContent.includes("97.4%"),

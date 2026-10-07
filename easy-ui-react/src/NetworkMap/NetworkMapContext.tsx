@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useMapInspection } from "./useMapInspection";
 import { resolveMapControls } from "./controls";
 import { useLayerVisibility } from "./useLayerVisibility";
 import { useSurfaceMetric } from "./useSurfaceMetric";
@@ -36,6 +37,7 @@ function useMapState(input: NetworkMapProps) {
     areas: input.areas ?? emptyAreas,
     overlays: resolvedOverlays,
   };
+  const mapInspection = useMapInspection(props);
   const { visibility, changeVisibility } = useLayerVisibility(props);
   const { activeMetric, setActiveMetric } = useSurfaceMetric(
     props.surface?.metrics,
@@ -50,6 +52,7 @@ function useMapState(input: NetworkMapProps) {
   });
   return {
     props,
+    mapInspection,
     visibility,
     changeVisibility,
     changeOverlayVisibility,

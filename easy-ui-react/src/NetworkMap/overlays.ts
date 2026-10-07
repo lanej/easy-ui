@@ -74,6 +74,16 @@ type OverlayEntry = {
 export function createOverlayRenderer(
   map: MapInstance,
   onSelect: (selection: MapOverlaySelection) => void,
+  inspection?: {
+    inspect: (
+      selections: readonly MapOverlaySelection[],
+      coordinate: MapCoordinate,
+      x: number,
+      y: number,
+      pinned?: boolean,
+    ) => void;
+    leave: (related?: EventTarget | null) => void;
+  },
 ) {
   const owned = new Map<string, OverlayEntry>();
   const layerOwners = new Map<string, string>();
@@ -104,27 +114,64 @@ export function createOverlayRenderer(
     };
   };
   let listening = false;
-  const click = (event: MapMouseEvent) => {
+  const hits = (event: MapMouseEvent) => {
     const target = event.originalEvent?.target;
     if (
       target instanceof Element &&
       target.closest(".maplibregl-marker, .maplibregl-ctrl")
     )
-      return;
-    const feature = map.queryRenderedFeatures(event.point, {
+      return null;
+    const selections: MapOverlaySelection[] = [];
+    for (const feature of map.queryRenderedFeatures(event.point, {
       layers: [...layerOwners.keys()],
-    })[0];
-    const overlayId = feature && layerOwners.get(feature.layer.id);
-    const entry = overlayId && owned.get(overlayId);
-    const original =
-      entry && entry.features.get(feature.properties[entry.featureKey]);
-    if (overlayId && original)
-      onSelect({
-        overlayId,
-        feature: original,
-        coordinate: [event.lngLat.lng, event.lngLat.lat],
-      });
+    })) {
+      const overlayId = layerOwners.get(feature.layer.id);
+      const entry = overlayId && owned.get(overlayId);
+      const original =
+        entry && entry.features.get(feature.properties[entry.featureKey]);
+      // A feature can appear through casing, line and tile/world copies. Keep one per overlay.
+      if (overlayId && original && entry && entry.overlay.visible !== false) {
+        const key = original;
+        // The same object may intentionally belong to multiple overlays.
+        if (
+          selections.some((s) => s.overlayId === overlayId && s.feature === key)
+        )
+          continue;
+        selections.push({
+          overlayId,
+          feature: original,
+          coordinate: [event.lngLat.lng, event.lngLat.lat],
+        });
+      }
+    }
+    return selections;
   };
+  const inspect = (event: MapMouseEvent, pinned: boolean) => {
+    const selections = hits(event);
+    if (!selections) return;
+    if (!selections.length) {
+      if (!pinned) inspection?.leave();
+      return;
+    }
+    if (pinned) onSelect(selections[0]);
+    if (!inspection) return;
+    const bounds = map.getContainer().getBoundingClientRect();
+    inspection?.inspect(
+      selections,
+      [event.lngLat.lng, event.lngLat.lat],
+      bounds.left + event.point.x,
+      bounds.top + event.point.y,
+      pinned,
+    );
+  };
+  const click = (event: MapMouseEvent) => inspect(event, true);
+  const hover = (event: MapMouseEvent) => {
+    if (!map.isMoving()) inspect(event, false);
+  };
+  const leave = (event: MapMouseEvent) =>
+    inspection?.leave(
+      (event.originalEvent as MouseEvent | undefined)?.relatedTarget,
+    );
   let previousOrder = "";
   const removeLayers = (entry: OverlayEntry) => {
     for (const layerId of [...entry.layerIds].reverse()) {
@@ -226,15 +273,29 @@ export function createOverlayRenderer(
       }
       if (layerOwners.size > 0 && !listening) {
         map.on("click", click);
+        if (inspection) {
+          map.on("mousemove", hover);
+          map.on("mouseout", leave);
+        }
         listening = true;
       } else if (!layerOwners.size && listening) {
         map.off("click", click);
+        if (inspection) {
+          map.off("mousemove", hover);
+          map.off("mouseout", leave);
+        }
         listening = false;
       }
     },
     dispose() {
       for (const id of [...owned.keys()]) removeOverlay(id);
-      if (listening) map.off("click", click);
+      if (listening) {
+        map.off("click", click);
+        if (inspection) {
+          map.off("mousemove", hover);
+          map.off("mouseout", leave);
+        }
+      }
       listening = false;
     },
   };

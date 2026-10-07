@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Select } from "../Select";
 import { TabPanels } from "../TabPanels";
@@ -210,4 +210,41 @@ it("closes once from the shared button and returns focus to the map canvas", asy
   await user.click(close);
   expect(onClose).toHaveBeenCalledOnce();
   expect(container.querySelector("canvas")).toHaveFocus();
+});
+
+it("updates a stable viewport card when source theme variables change or disappear", async () => {
+  const source = document.createElement("div");
+  source.style.setProperty("--ezui-color-neutral-000", "#ffffff");
+  source.style.setProperty("--ezui-custom-token", "old");
+  document.body.append(source);
+  const content = <span>Stable content</span>;
+  const { unmount } = render(
+    <NetworkMapCellPopover
+      x={20}
+      y={20}
+      pinned={false}
+      positioning="viewport"
+      styleSource={source}
+      onClose={() => {}}
+      onPin={() => {}}
+      onEnter={() => {}}
+      onLeave={() => {}}
+    >
+      {content}
+    </NetworkMapCellPopover>,
+  );
+  const card = screen.getByRole("region");
+  expect(card.style.getPropertyValue("--ezui-color-neutral-000")).toBe(
+    "#ffffff",
+  );
+  source.style.setProperty("--ezui-color-neutral-000", "#101b2b");
+  source.style.removeProperty("--ezui-custom-token");
+  await waitFor(() =>
+    expect(card.style.getPropertyValue("--ezui-color-neutral-000")).toBe(
+      "#101b2b",
+    ),
+  );
+  expect(card.style.getPropertyValue("--ezui-custom-token")).toBe("");
+  unmount();
+  source.remove();
 });

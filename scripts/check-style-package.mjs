@@ -75,7 +75,7 @@ const sassSource = `
 
 const typeSource = `
 import { Chart, ChartLegend } from "@easypost/easy-ui/Chart";
-import { NetworkMapCellDetails } from "@easypost/easy-ui/NetworkMap";
+import { NetworkMapCellDetails, NetworkMapInspectionTrigger, type MapFacilityDetailsContext, type MapOverlayHoverDetailsContext, type MapInspectionTarget } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard, type MetricCardProps, type MetricContentProps } from "@easypost/easy-ui/MetricCard";
 import { ScoreComposition, ScoreSignal, ScoreContribution, ScoreConnector, ScoreResult, type ScoreCompositionProps, type ScoreCompositionColumn } from "@easypost/easy-ui/ScoreComposition";
 import { Button } from "@easypost/easy-ui/Button";

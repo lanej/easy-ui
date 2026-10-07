@@ -24,3 +24,8 @@ Open `regressions.html?inspection=1` for a local-basemap distribution example. H
 `inspection-checks.mjs` adds real pointer, keyboard, containment, font-size, console, and accessibility checks to all three existing browser audits. The native chart uses explicit synthetic quartiles; it does not derive a distribution from the median and IQR. Cards scroll within constrained viewports and leave room for provider attribution.
 
 `regressions.html?inspection=1&charts=1` demonstrates arbitrary chart content using the same renderer. Pin the left cell and switch Chart view between a histogram, estimated density and native daily-median history. The application recipe supplies observations and declares its binning and kernel bandwidth; the right cell remains summary-only. Charts and exact-value disclosures also work from Inspect cell with the layer hidden. Focusing an embedded selector pins the card without stealing focus. The optional ECharts engine is isolated from the ordinary map gallery and loads only when a chart mounts; `measure.mjs` checks these dependency boundaries.
+
+
+## Facility and shared-route inspection
+
+`rich-inspection.html` uses synthetic facilities and overlapping route collections with a local empty basemap. It demonstrates public inspection triggers, original-feature grouping, embedded controls, pinning, immutable refreshes and explicit context dismissal. `rich-inspection-checks.mjs` runs through the shared Chrome/Firefox/Safari adapters, covering Light/Dark nested themes, desktop viewport bounds (with an optional narrow-width check), keyboard focus and dismissal, shared connections, native zoom containment and camera cleanup.

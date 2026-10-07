@@ -400,3 +400,61 @@ it("fits connected GeoJSON extents rather than wrapping a wide area into its com
     [190, 0],
   ]);
 });
+
+it("shares deduplicated overlapping original features between hover and pinning", () => {
+  const { map } = fakeMap();
+  const inspect = vi.fn(),
+    leave = vi.fn(),
+    select = vi.fn();
+  const container = document.createElement("div");
+  const extended = {
+    ...map,
+    getContainer: () => container,
+    isMoving: () => false,
+  };
+  const renderer = createOverlayRenderer(
+    extended as unknown as MapInstance,
+    select,
+    { inspect, leave },
+  );
+  const first = investigationOverlays("light")[2];
+  const second = { ...first, id: "shared" };
+  renderer.update([first, second]);
+  const original = first.data.features[0];
+  const rendered = (index: number, id: string) => ({
+    ...map.addSource.mock.calls[index][1].data.features[0],
+    layer: { id },
+  });
+  map.queryRenderedFeatures.mockReturnValue([
+    rendered(1, "easy-ui-overlay-shared/points"),
+    rendered(0, "easy-ui-overlay-observations/points"),
+    rendered(0, "easy-ui-overlay-observations/points"),
+  ]);
+  const handler = (name: string) =>
+    map.on.mock.calls.find(([event]) => event === name)![1] as (
+      event: MapMouseEvent,
+    ) => void;
+  const event = {
+    point: { x: 10, y: 20 },
+    lngLat: { lng: 1, lat: 2 },
+  } as MapMouseEvent;
+  handler("mousemove")(event);
+  expect(inspect.mock.calls[0][0]).toEqual([
+    { overlayId: "shared", feature: original, coordinate: [1, 2] },
+    { overlayId: "observations", feature: original, coordinate: [1, 2] },
+  ]);
+  expect(select).not.toHaveBeenCalled();
+  handler("click")(event);
+  expect(select).toHaveBeenCalledExactlyOnceWith({
+    overlayId: "shared",
+    feature: original,
+    coordinate: [1, 2],
+  });
+  expect(inspect.mock.calls[1][4]).toBe(true);
+  map.queryRenderedFeatures.mockReturnValue([]);
+  handler("mousemove")(event);
+  expect(leave).toHaveBeenCalledOnce();
+  renderer.dispose();
+  expect(map.off).toHaveBeenCalledWith("mousemove", handler("mousemove"));
+  expect(map.off).toHaveBeenCalledWith("mouseout", handler("mouseout"));
+});
