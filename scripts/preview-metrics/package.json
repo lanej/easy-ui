@@ -7,6 +7,7 @@
     "build": "vite build",
     "capture": "node capture.mjs",
     "measure": "node measure-bundles.mjs",
+    "premeasure:modular": "node ../preview-tokens.mjs",
     "measure:modular": "node measure-modular.mjs",
     "capture:modular": "node capture-modular.mjs",
     "audit:browsers": "node audit/playwright.mjs",

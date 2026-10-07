@@ -143,6 +143,37 @@ it("lays out an accessible legend with engine colors and retains selection acros
   expect(current().legend[0].selected.Ground).toBe(true);
 });
 
+it("updates native title defaults on the existing engine while preserving authored colors", async () => {
+  const option: ChartOption = {
+    title: [
+      { text: "Default title", subtext: "Default subtitle" },
+      {
+        text: "Authored title",
+        textStyle: { color: "#aa0000", fontSize: 37 },
+      },
+    ],
+  };
+  const view = (scheme: "light" | "dark") => (
+    <ThemeProvider colorScheme={scheme}>
+      <ChartSurface option={option} layout="native" />
+    </ThemeProvider>
+  );
+  const { rerender } = render(view("light"));
+  const image = await screen.findByRole("img");
+  const plot = image.querySelector<HTMLElement>("[aria-hidden]")!;
+  plot.style.setProperty("--ezui-color-neutral-800", "#e0e6f0");
+  plot.style.setProperty("--ezui-color-neutral-600", "#a3b2ce");
+  rerender(view("dark"));
+  expect(engines).toHaveLength(1);
+  expect(engines[0].getOption().title).toMatchObject([
+    {
+      textStyle: { color: "#e0e6f0" },
+      subtextStyle: { color: "#a3b2ce" },
+    },
+    { textStyle: { color: "#aa0000", fontSize: 37 } },
+  ]);
+});
+
 it("keeps HTML legend toggles controlled, including single selection", async () => {
   const requested = vi.fn();
   const input: ChartOption = {

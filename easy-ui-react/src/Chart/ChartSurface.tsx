@@ -13,7 +13,7 @@ import {
   preserveInteractions,
 } from "./interactions";
 import { useChartConnection, useChartContext } from "./ChartProvider";
-import { themedOption } from "./theme";
+import { themedChartTheme, themedOption } from "./theme";
 import { automaticChartLayout } from "./autoLayout";
 import { ChartLegend, ChartLegendItem } from "./ChartLegend";
 import type {
@@ -173,6 +173,7 @@ function ChartEngine(props: EngineProps) {
     let failed = false;
     let failedOption: ChartOption | undefined;
     let observer: ResizeObserver | undefined;
+    let nativeTheme: ReturnType<typeof themedChartTheme> | undefined;
     const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     const scheme = window.matchMedia?.("(prefers-color-scheme: dark)");
     let layout: ReturnType<typeof automaticChartLayout> = null;
@@ -240,6 +241,11 @@ function ChartEngine(props: EngineProps) {
             })
           : option;
         applying.current = true;
+        const nextTheme = themedChartTheme(element, latest.current.typography);
+        if (!isEqual(nativeTheme, nextTheme)) {
+          instance.current.setTheme(nextTheme, { silent: true });
+          nativeTheme = nextTheme;
+        }
         instance.current.setOption(
           controlledInteractions(
             preserved,
@@ -298,7 +304,8 @@ function ChartEngine(props: EngineProps) {
     loadChartEngine()
       .then((engine) => {
         if (disposed) return;
-        instance.current = engine.init(element, undefined, {
+        nativeTheme = themedChartTheme(element, latest.current.typography);
+        instance.current = engine.init(element, nativeTheme, {
           renderer: props.renderer,
         });
         instance.current.on("click", (event) => {

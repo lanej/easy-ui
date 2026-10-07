@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import type { Feature } from "geojson";
 import { UnstyledButton } from "../UnstyledButton";
 import type {
   MapOverlayDetailsContext,
@@ -11,6 +12,34 @@ import { NetworkMapCellDetails } from "./NetworkMapCellDetails";
 import { defaultDeliverySurfaceColorScale } from "./surfaceRendering";
 import { visualizationTypographyStyle } from "../visualization/typography";
 import styles from "./NetworkMap.module.scss";
+
+const featureKeys = new WeakMap<Feature, number>();
+let nextFeatureKey = 0;
+
+function overlayFeatureEntries(features: readonly Feature[]) {
+  const identities = features.map((feature) =>
+    feature.id === undefined ? null : `id:${typeof feature.id}:${feature.id}`,
+  );
+  const counts = new Map<string, number>();
+  for (const identity of identities)
+    if (identity !== null)
+      counts.set(identity, (counts.get(identity) ?? 0) + 1);
+  const occurrences = new Map<string, number>();
+  return features.map((feature, index) => {
+    let key = identities[index];
+    if (key === null || counts.get(key) !== 1) {
+      let identity = featureKeys.get(feature);
+      if (identity === undefined) {
+        identity = nextFeatureKey++;
+        featureKeys.set(feature, identity);
+      }
+      key = `object:${identity}`;
+    }
+    const occurrence = occurrences.get(key) ?? 0;
+    occurrences.set(key, occurrence + 1);
+    return { feature, key: `${key}:${occurrence}` };
+  });
+}
 
 const percentage = (value: number | null) =>
   value === null ? "Unavailable" : `${Math.round(value * 100)}%`;
@@ -272,44 +301,46 @@ export function NetworkMapDataView({
               </tr>
             </thead>
             <tbody>
-              {overlay.data.features.map((feature, index) => {
-                const label = String(
-                  feature.properties?.label ?? feature.id ?? index + 1,
-                );
-                return (
-                  <tr key={index}>
-                    <th scope="row">
-                      {options.onOverlaySelect ? (
-                        <UnstyledButton
-                          type="button"
-                          className={styles.locationAction}
-                          aria-label={`Select overlay feature: ${label}`}
-                          onPress={() =>
-                            options.onOverlaySelect?.({
-                              overlayId: overlay.id,
-                              feature,
-                            })
-                          }
-                        >
-                          {label}
-                        </UnstyledButton>
-                      ) : (
-                        label
-                      )}
-                      {options.renderOverlayDetails && (
-                        <OverlayDataDetails
-                          overlayId={overlay.id}
-                          overlay={overlay}
-                          feature={feature}
-                          label={label}
-                        />
-                      )}
-                    </th>
-                    <td>{JSON.stringify(feature.geometry)}</td>
-                    <td>{JSON.stringify(feature.properties)}</td>
-                  </tr>
-                );
-              })}
+              {overlayFeatureEntries(overlay.data.features).map(
+                ({ feature, key }, index) => {
+                  const label = String(
+                    feature.properties?.label ?? feature.id ?? index + 1,
+                  );
+                  return (
+                    <tr key={key}>
+                      <th scope="row">
+                        {options.onOverlaySelect ? (
+                          <UnstyledButton
+                            type="button"
+                            className={styles.locationAction}
+                            aria-label={`Select overlay feature: ${label}`}
+                            onPress={() =>
+                              options.onOverlaySelect?.({
+                                overlayId: overlay.id,
+                                feature,
+                              })
+                            }
+                          >
+                            {label}
+                          </UnstyledButton>
+                        ) : (
+                          label
+                        )}
+                        {options.renderOverlayDetails && (
+                          <OverlayDataDetails
+                            overlayId={overlay.id}
+                            overlay={overlay}
+                            feature={feature}
+                            label={label}
+                          />
+                        )}
+                      </th>
+                      <td>{JSON.stringify(feature.geometry)}</td>
+                      <td>{JSON.stringify(feature.properties)}</td>
+                    </tr>
+                  );
+                },
+              )}
             </tbody>
           </table>
         </div>

@@ -20,6 +20,7 @@ const dispose = vi.fn();
 const dispatchAction = vi.fn();
 const init = vi.fn(() => ({
   setOption,
+  setTheme: vi.fn(),
   dispose,
   dispatchAction,
   resize: vi.fn(),

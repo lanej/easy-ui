@@ -11,6 +11,26 @@ import {
   VisualizationTypography,
 } from "../visualization/typography";
 
+export function themedChartTheme(
+  element: HTMLElement,
+  typography?: VisualizationTypography,
+) {
+  const css = getComputedStyle(element);
+  const sizes = resolveVisualizationTypography(typography);
+  return {
+    title: {
+      textStyle: {
+        color: resolveVisualizationColor(css, visualizationColors.text),
+        fontSize: sizes.title,
+      },
+      subtextStyle: {
+        color: resolveVisualizationColor(css, visualizationColors.muted),
+        fontSize: sizes.description,
+      },
+    },
+  };
+}
+
 /** Read resolved CSS values so nested Easy UI themes also style SVG/canvas. */
 export function themedOption(
   element: HTMLElement,
@@ -133,15 +153,6 @@ export function themedOption(
         {},
         inheritedDefaults(defaults.tooltip, inherited?.tooltip as object),
         input.tooltip,
-      );
-    if (input.title)
-      result.title = withDefaults(
-        input.title,
-        {
-          textStyle: { fontSize: sizes.title },
-          subtextStyle: { fontSize: sizes.description },
-        },
-        inherited?.title,
       );
     if (input.dataZoom)
       result.dataZoom = withDefaults(

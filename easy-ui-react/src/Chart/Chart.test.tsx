@@ -9,12 +9,14 @@ import { loadChartEngine } from "./engine";
 
 vi.mock("./engine", () => ({ loadChartEngine: vi.fn() }));
 const setOption = vi.fn();
+const setTheme = vi.fn();
 const resize = vi.fn();
 const dispose = vi.fn();
 const on = vi.fn();
 const dispatchAction = vi.fn();
 const init = vi.fn(() => ({
   setOption,
+  setTheme,
   resize,
   dispose,
   on,

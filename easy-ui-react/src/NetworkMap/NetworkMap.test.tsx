@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import type { Feature, Point } from "geojson";
 import {
   act,
   fireEvent,
@@ -801,6 +802,74 @@ it("binds arbitrary toolbar checkboxes to overlay visibility without re-uploadin
   );
   expect(constructor).toHaveBeenCalledTimes(1);
 });
+
+it.each([
+  ["string IDs", "A", "B"],
+  ["type-qualified IDs", 1, "1"],
+  ["anonymous features", undefined, undefined],
+  ["duplicate IDs", "same", "same"],
+] as const)(
+  "preserves expanded overlay content and child state when %s reorder",
+  (_name, firstId, secondId) => {
+    const first: Feature<Point> = {
+      type: "Feature" as const,
+      id: firstId,
+      properties: { label: "A" },
+      geometry: { type: "Point" as const, coordinates: [1, 2] },
+    };
+    const second = {
+      ...first,
+      id: secondId,
+      properties: { label: "B" },
+    };
+    function StatefulDetails({ label }: { label: string }) {
+      const [count, setCount] = useState(0);
+      return (
+        <button type="button" onClick={() => setCount(count + 1)}>
+          {label} count: {count}
+        </button>
+      );
+    }
+    const renderView = (features: Feature<Point>[]) => (
+      <NetworkMapProvider
+        {...props}
+        facilities={[]}
+        overlays={[
+          {
+            id: "scans",
+            data: { type: "FeatureCollection", features },
+            layers: [{ id: "points", type: "circle" }],
+          },
+        ]}
+        renderOverlayDetails={({ feature }) => (
+          <StatefulDetails label={String(feature.properties?.label)} />
+        )}
+      >
+        <NetworkMapDataView expanded />
+      </NetworkMapProvider>
+    );
+    const view = render(renderView([first, second]));
+    const details = screen.getByText("Inspect A").closest("details")!;
+    act(() => {
+      details.open = true;
+      fireEvent(details, new Event("toggle"));
+    });
+    fireEvent.click(screen.getByRole("button", { name: "A count: 0" }));
+    view.rerender(
+      renderView(
+        [second, first].map((feature) =>
+          feature.id === undefined || firstId === secondId
+            ? feature
+            : { ...feature },
+        ),
+      ),
+    );
+    expect(screen.getByText("Inspect A").closest("details")).toBe(details);
+    expect(details.open).toBe(true);
+    expect(screen.getByRole("button", { name: "A count: 1" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "B count: 1" })).toBeNull();
+  },
+);
 
 it("keeps externally controlled overlay toggles controlled and honors the master control opt-out", async () => {
   const overlay = {

@@ -172,6 +172,44 @@ it("does not collide with caller properties or select stale hits after data repl
   expect(onSelect).toHaveBeenCalledTimes(1);
 });
 
+it.each(["maplibregl-marker", "maplibregl-ctrl"])(
+  "does not select underlying overlays when a %s child is clicked",
+  (className) => {
+    const { map, renderer, onSelect } = fakeMap();
+    const overlay = investigationOverlays("light")[2];
+    renderer.update([overlay]);
+    const data = map.addSource.mock.calls[0][1].data;
+    map.queryRenderedFeatures.mockReturnValue([
+      {
+        ...data.features[0],
+        layer: { id: "easy-ui-overlay-observations/points" },
+      },
+    ]);
+    const wrapper = document.createElement("div");
+    wrapper.className = className;
+    const button = document.createElement("button");
+    const label = document.createElement("span");
+    button.append(label);
+    wrapper.append(button);
+    const onFacilitySelect = vi.fn();
+    button.addEventListener("click", onFacilitySelect);
+    const click = map.on.mock.calls[0][1] as unknown as (
+      event: MapMouseEvent,
+    ) => void;
+    wrapper.addEventListener("click", (originalEvent) =>
+      click({
+        originalEvent,
+        point: { x: 10, y: 20 },
+        lngLat: { lng: -87, lat: 41 },
+      } as MapMouseEvent),
+    );
+    label.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(onFacilitySelect).toHaveBeenCalledTimes(1);
+    expect(map.queryRenderedFeatures).not.toHaveBeenCalled();
+    expect(onSelect).not.toHaveBeenCalled();
+  },
+);
+
 it("never reuses retired caller keys when a stale hit could impersonate a surviving feature", () => {
   const { map, renderer, onSelect, sources } = fakeMap();
   const overlay = investigationOverlays("light")[2];

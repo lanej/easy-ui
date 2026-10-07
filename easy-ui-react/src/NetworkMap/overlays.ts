@@ -105,6 +105,12 @@ export function createOverlayRenderer(
   };
   let listening = false;
   const click = (event: MapMouseEvent) => {
+    const target = event.originalEvent?.target;
+    if (
+      target instanceof Element &&
+      target.closest(".maplibregl-marker, .maplibregl-ctrl")
+    )
+      return;
     const feature = map.queryRenderedFeatures(event.point, {
       layers: [...layerOwners.keys()],
     })[0];
