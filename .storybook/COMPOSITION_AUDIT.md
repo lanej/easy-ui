@@ -14,6 +14,10 @@
   data-backed Logistics Services screens have not been ported wholesale.
 - Forge's wordmark uses the active text color. Its optional navigation toggle
   supports either a panel icon or a hamburger.
+- `DrawerRow` adapts Logistics Services' stable summary and full-width vertical
+  detail pattern through `Disclosure`, `UnstyledButton`, and `Icon`. `DrawerTable`
+  composes these row molecules into a single-expansion worklist without
+  importing domain models, data fetching, URL state, or pagination policy.
 - Network chart labels, including heatmap legend endpoints and Sankey labels,
   resolve colors from the rendered theme rather than treating System as Light.
 

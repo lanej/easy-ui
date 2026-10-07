@@ -1,0 +1,93 @@
+@use "../styles/common" as *;
+
+.root {
+  min-width: 0;
+}
+
+.list {
+  display: grid;
+  gap: design-token("space.1");
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  min-width: 0;
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: design-token("shape.border_radius.md");
+  background: design-token("color.neutral.000");
+  color: design-token("color.neutral.800");
+
+  &:has(.trigger[aria-expanded="true"]) {
+    border-color: design-token("color.primary.600");
+  }
+}
+
+.header {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  border-radius: inherit;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  flex: 1 1 240px;
+  min-width: 0;
+  gap: design-token("space.1");
+  padding: design-token("space.2");
+  border-radius: inherit;
+  text-align: start;
+  color: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid design-token("color.primary.600");
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    color: design-token("color.neutral.600");
+    cursor: default;
+  }
+
+  &[aria-expanded="true"] {
+    background: design-token("color.primary.050");
+  }
+
+  &:hover:enabled:not([aria-expanded="true"]) {
+    background: design-token("color.neutral.050");
+  }
+}
+
+.summary {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.chevron {
+  display: inline-flex;
+  flex: none;
+
+  .trigger[aria-expanded="true"] & {
+    transform: rotate(90deg);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: design-token("space.1");
+  padding: design-token("space.1") design-token("space.2");
+}
+
+.detail {
+  min-width: 0;
+  border-top: 1px solid design-token("color.neutral.200");
+  padding: design-token("space.2");
+  overflow-wrap: anywhere;
+}

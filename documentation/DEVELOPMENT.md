@@ -18,6 +18,7 @@ Local worktree names are historical. Consult the workspace inventory before edit
 - **Chart data disclosures:** enrich the chart's existing folded data view through `dataTable.renderCell` and column options. Keep plot and table derived from the same records; preserve exact values and comparison baselines. Custom content mounts on first opening and remains mounted across collapse. Sorting is opt-in by column and uses original or supplied sort values; controlled requests do not change the plot. Sticky headings and measured leading-column pinning preserve context while reserving space for data on narrow screens.
 - **Mobile chart layout:** ordinary unpositioned Cartesian charts use a wrapping HTML `ChartLegend` outside the plot. Keep explicit engine layouts intact; `layout="native"` opts out. Preserve shared legend state, keyboard/touch selection, and caller typography. Use the existing bare variant inside application cards; keep concise axis labels and full exact-data labels derived from the same records.
 - **Mobile grids:** use existing column selection and `size="sm"` before inventing a second table model. Column `whiteSpace` keeps identifiers and units together; numeric body values default to no wrapping, with an explicit `"normal"` override. Rows and headers grow for rich content and larger text, and expanded details follow the measured body height. For dense comparisons, keep columns at readable minimum widths, allow headings to wrap, and retain the identifying column while scrolling within the table. The ten-column example defaults to the full report and fits on wide desktops. A focused metric and its supplied sample are an optional application view; explain comparison baselines once.
+- **Vertical drawer rows:** `DrawerTable` composes `DrawerRow` molecules adapted from Logistics Services. Summary facts stay visible above full-width inline details, with unrelated actions outside the disclosure button. This is a list, not a native table or replacement for DataGrid's column and selection semantics. Applications own row order, pagination, fetching, and URL state.
 - **State and accessibility:** respect controlled values, preserve camera/selection through ordinary data updates, and support keyboard and touch paths alongside pointer interactions. Exact values and missing-data states must survive engine failures and hidden layers.
 
 ## Bring application feedback back to the component
@@ -33,6 +34,14 @@ Local worktree names are historical. Consult the workspace inventory before edit
 Run focused tests while developing, then the relevant package tests, lint, and build before publication. Interactive map changes also need the existing real-browser map harness, including narrow layouts and large text. See [map verification](../scripts/preview-maps/README.md) and the [example index](examples/README.md).
 
 Package adoption must use an actual `npm pack` artifact. `scripts/check-style-package.mjs` verifies both packed layouts, legacy Node and modern bundler TypeScript resolution, component/declaration subpaths, CSS, and Sass. Preserve generated root compatibility entries and `dist/styles` assets. Record real consumer checks separately from isolated-package checks, with source SHA and remaining gaps.
+
+For drawer-row changes, run the focused `DrawerTable` and `Disclosure` tests.
+With Storybook running and the locked `scripts/preview-metrics` browser dependencies
+installed, run `STORYBOOK_URL=http://localhost:9013 node scripts/check-drawer-rows.mjs`.
+Set `BROWSER_CHANNEL=chrome` to use installed Chrome, or install Playwright's
+Chromium. `DRAWER_REPORT_DIR` selects the screenshot/report directory. The harness
+covers Light/Dark, narrow layouts, enlarged text, full-width panels, keyboard
+expansion, independent actions, lazy detail mounting, and component accessibility.
 
 The [acceptance matrix](specs/VisualizationAcceptance.md) is the shared review contract. Earlier successful checks establish their recorded snapshot; new application feedback remains part of ongoing development.
 

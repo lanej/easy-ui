@@ -27,6 +27,11 @@ The root adds no DOM wrapper. Place one `Disclosure.Trigger` and one `Disclosure
 
 The trigger is always a non-submitting button. It owns its ID, expanded state, controlled panel relationship, and press behavior. Use a separate link or button for navigation and unrelated actions.
 
+Use `Disclosure.UnstyledTrigger` when a composition needs its own trigger
+presentation, such as `DrawerRow`. It accepts the existing `UnstyledButton`
+props while retaining the same disclosure IDs, keyboard behavior, disabled
+state, and focus return. Use exactly one styled or unstyled trigger per disclosure.
+
 Panels have no landmark role by default. Use `role="region"` when a panel deserves its own named region; its label defaults to the trigger's accessible name. An explicit `aria-label` or `aria-labelledby` can provide a different panel name.
 
 <Canvas of={DisclosureStories.IndependentPanels} />

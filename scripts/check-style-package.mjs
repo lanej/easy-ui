@@ -79,6 +79,7 @@ import { NetworkMapCellDetails } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard, type MetricCardProps, type MetricContentProps } from "@easypost/easy-ui/MetricCard";
 import { Button } from "@easypost/easy-ui/Button";
 import { DataGrid } from "@easypost/easy-ui/DataGrid";
+import { DrawerTable, DrawerRow } from "@easypost/easy-ui/DrawerTable";
 import { Select } from "@easypost/easy-ui/Select";
 import { SelectField, type BaseSelectFieldProps, type SelectFieldSize } from "@easypost/easy-ui/Select/SelectField";
 import type { KeyedSortDescriptor, MenuRowAction } from "@easypost/easy-ui/DataGrid/types";
@@ -106,6 +107,8 @@ const metricContentWithoutTrend: "trend" extends keyof MetricContentProps ? fals
 void [metricCardWithoutTrend, metricContentWithoutTrend];
 
 export const example = <>
+  <DrawerTable aria-label="Packed drawers" rows={[{key: "one" as const, count: 1}]} expandedKey={null} onExpandedChange={(key) => { const next: "one" | null = key; void next; }} renderRow={(row) => <span>{row.count}</span>} renderExpandedRow={(row) => <span>{row.key}</span>} />
+  <DrawerRow summary={<span>Packed row</span>}>Packed details</DrawerRow>
   <ChartLegend items={[{name: "Ground", color: "#007f86", selected: true, symbol: "bar"}]} onItemToggle={(name: string) => { void name; }} />
   <NetworkMapCellDetails cell={{latMin: 0, latMax: 1, lonMin: 0, lonMax: 1, medianMinutes: 20, iqrMinutes: 4, n: 80}} surface={{cells: [], source: "Packed sample", asOf: "2026-09-22T00:00:00Z"}}>
     <strong>Application chart</strong>
@@ -201,6 +204,21 @@ for (const load of [require, (specifier) => import(specifier)]) {
   assert.match(inspector, /Application chart/);
   assert.match(inspector, /Packed sample/);
   assert.doesNotMatch(inspector, /Distribution not supplied/);
+  const { DrawerTable, DrawerRow } = await load("@easypost/easy-ui/DrawerTable");
+  const drawers = renderToString(React.createElement(ThemeProvider, null, React.createElement(DrawerTable, {
+    "aria-label": "Packed drawer rows",
+    rows: [{key: "one", label: "Packed row"}],
+    defaultExpandedKey: "one",
+    renderRow: (row) => React.createElement("span", null, row.label),
+    renderExpandedRow: () => React.createElement("strong", null, "Packed details"),
+  })));
+  assert.match(drawers, /aria-expanded="true"/);
+  assert.match(drawers, /Packed details/);
+  assert.match(drawers, /aria-label="Packed drawer rows"/);
+  const standalone = renderToString(React.createElement(ThemeProvider, null, React.createElement(DrawerRow, {
+    summary: "Standalone row", defaultExpanded: true,
+  }, "Standalone details")));
+  assert.match(standalone, /Standalone details/);
 }
 const expected = JSON.parse(readFileSync("expected-styles.json", "utf8"));
 for (const subpath of ["style.css", ...expected.map((name) => "styles/" + name)]) {

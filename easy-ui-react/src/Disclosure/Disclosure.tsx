@@ -10,6 +10,7 @@ import React, {
 import { useId } from "react-aria";
 import { DisclosureState, useDisclosureState } from "react-stately";
 import { Button, ButtonProps } from "../Button";
+import { UnstyledButton, UnstyledButtonProps } from "../UnstyledButton";
 import { classNames } from "../utilities/css";
 
 import styles from "./Disclosure.module.scss";
@@ -34,6 +35,11 @@ export type DisclosureProps = {
 
 export type DisclosureTriggerProps = Omit<
   ButtonProps,
+  "href" | "id" | "type" | "aria-expanded" | "aria-controls" | "onPress"
+>;
+
+export type DisclosureUnstyledTriggerProps = Omit<
+  UnstyledButtonProps,
   "href" | "id" | "type" | "aria-expanded" | "aria-controls" | "onPress"
 >;
 
@@ -101,22 +107,29 @@ export function Disclosure(props: DisclosureProps) {
   );
 }
 
-function DisclosureTrigger(props: DisclosureTriggerProps) {
+function useDisclosureTriggerProps(isDisabled?: boolean) {
   const { state, triggerId, contentId, triggerRef } = useDisclosureContext();
-  return (
-    <Button
-      {...props}
-      ref={triggerRef}
-      id={triggerId}
-      type="button"
-      href={undefined}
-      aria-expanded={state.isExpanded}
-      aria-controls={contentId}
-      onPress={() => {
-        if (!props.isDisabled) state.toggle();
-      }}
-    />
-  );
+  return {
+    ref: triggerRef,
+    id: triggerId,
+    type: "button" as const,
+    href: undefined,
+    "aria-expanded": state.isExpanded,
+    "aria-controls": contentId,
+    onPress: () => {
+      if (!isDisabled) state.toggle();
+    },
+  };
+}
+
+function DisclosureTrigger(props: DisclosureTriggerProps) {
+  const triggerProps = useDisclosureTriggerProps(props.isDisabled);
+  return <Button {...props} {...triggerProps} />;
+}
+
+function DisclosureUnstyledTrigger(props: DisclosureUnstyledTriggerProps) {
+  const triggerProps = useDisclosureTriggerProps(props.isDisabled);
+  return <UnstyledButton {...props} {...triggerProps} />;
 }
 
 function DisclosureContent({
@@ -193,6 +206,8 @@ function CaptureClosingFocus({
 
 /** A Button that owns the disclosure relationship and toggles its state. */
 Disclosure.Trigger = DisclosureTrigger;
+
+Disclosure.UnstyledTrigger = DisclosureUnstyledTrigger;
 
 /** A stable panel shell with explicit content mounting behavior. */
 Disclosure.Content = DisclosureContent;
