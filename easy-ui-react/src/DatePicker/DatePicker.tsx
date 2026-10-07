@@ -1,56 +1,25 @@
 import React, { ReactNode } from "react";
-import { useDatePicker, DateValue, MappedDateValue } from "react-aria";
+import { useDatePicker, DateValue, AriaDatePickerProps } from "react-aria";
 import { useDatePickerState } from "react-stately";
 import { DatePickerBase } from "./DatePickerBase";
 import { Calendar } from "../Calendar";
 
-export type DatePickerProps = {
-  /**
-   * Accessibility label for input field.
-   */
-  "aria-label"?: string;
+export type DatePickerProps = Omit<
+  AriaDatePickerProps<DateValue>,
+  "label" | "errorMessage"
+> & {
   /**
    * The content to display as the label.
    */
   label?: string;
   /**
-   * The default value (uncontrolled).
-   */
-  defaultValue?: DateValue | null;
-  /**
-   * The current value (controlled).
-   */
-  value?: DateValue | null;
-  /**
-   * Handler that is called when the value changes.
-   */
-  onChange?: (value: MappedDateValue<DateValue> | null) => void;
-  // onChange?: (value: DateValue | null) => void;
-  /**
-   * The minimum allowed date that a user may select.
-   */
-  minValue?: DateValue;
-  /**
-   * The maximum allowed date that a user may select.
-   */
-  maxValue?: DateValue;
-  /**
-   * Whether the input is disabled.
-   */
-  isDisabled?: boolean;
-  /**
-   * Whether the input value is invalid.
-   */
-  isInvalid?: boolean;
-  /**
    * An error message to display when the selected value is invalid.
    */
   errorMessage?: ReactNode;
-  /**
-   * Callback that is called for each date of the calendar. If
-   * it returns true, then the date is unavailable.
-   */
-  isDateUnavailable?: (date: DateValue) => boolean;
+  /** Show a separate button that requests an empty value. Defaults to false. */
+  isClearable?: boolean;
+  /** Accessible clear-button label. Defaults to "Clear date". */
+  clearLabel?: string;
   /**
    * The size of the DatePicker.
    * @default md
@@ -63,7 +32,7 @@ export type DatePickerProps = {
  * allow users to enter or select a date.
  *
  * @remarks
- * Use a DatePciker when you want to provide a view that allows
+ * Use a DatePicker when you want to provide a view that allows
  * the users to select a date.
  *
  * @example
@@ -95,11 +64,13 @@ export function DatePicker(props: DatePickerProps) {
     label,
     size = "md",
     isDisabled,
-    isInvalid,
     errorMessage,
+    description,
+    isClearable,
+    clearLabel = "Clear date",
     "aria-label": ariaLabel,
   } = props;
-  const datePickerRef = React.useRef(null);
+  const datePickerRef = React.useRef<HTMLDivElement>(null);
   const state = useDatePickerState(props);
   const {
     groupProps,
@@ -108,6 +79,9 @@ export function DatePicker(props: DatePickerProps) {
     buttonProps,
     dialogProps,
     calendarProps,
+    descriptionProps,
+    errorMessageProps,
+    isInvalid,
   } = useDatePicker(props, state, datePickerRef);
 
   const triggerProps = {
@@ -118,7 +92,9 @@ export function DatePicker(props: DatePickerProps) {
     isDisabled,
     size,
     isInvalid,
-    errorMessage: errorMessage || calendarProps.errorMessage,
+    isReadOnly: props.isReadOnly,
+    isClearable,
+    clearLabel,
   };
   const overlayProps = { dialogProps };
 
@@ -130,6 +106,10 @@ export function DatePicker(props: DatePickerProps) {
       state={state}
       label={label}
       aria-label={ariaLabel}
+      description={description}
+      descriptionProps={descriptionProps}
+      errorMessage={errorMessage ?? calendarProps.errorMessage}
+      errorMessageProps={errorMessageProps}
     >
       {/** When DatePicker is invalid, error message display under both DatePicker and Calendar. Set calendar to valid prevent error message displaying twice  */}
       <Calendar {...calendarProps} isInvalid={false} />

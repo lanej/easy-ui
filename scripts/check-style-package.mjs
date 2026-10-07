@@ -79,6 +79,8 @@ import { NetworkMapCellDetails } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard, type MetricCardProps, type MetricContentProps } from "@easypost/easy-ui/MetricCard";
 import { Button } from "@easypost/easy-ui/Button";
 import { DataGrid } from "@easypost/easy-ui/DataGrid";
+import { DatePicker } from "@easypost/easy-ui/DatePicker";
+import { DateRangePicker } from "@easypost/easy-ui/DateRangePicker";
 import { DrawerTable, DrawerRow } from "@easypost/easy-ui/DrawerTable";
 import { Select } from "@easypost/easy-ui/Select";
 import { SelectField, type BaseSelectFieldProps, type SelectFieldSize } from "@easypost/easy-ui/Select/SelectField";
@@ -126,6 +128,8 @@ export const example = <>
     renderColumnCell={(column) => column.label}
     renderRowCell={(value) => String(value)}
   />
+  <DatePicker label="Review date" name="reviewDate" isClearable clearLabel="Clear review date" description="Choose a date" isRequired validationBehavior="native" isReadOnly={false} value={null} onChange={(date) => { void date; }} />
+  <DateRangePicker label="Review period" startName="startDate" endName="endDate" isClearable isRequired validationBehavior="native" value={null} onChange={(range) => { void range; }} />
 </>;
 void [Select, SelectField, sort, invalidSort, menu, field, heading, icon, responsive, className];
 ${["Chart", "MetricCard", "Button", "DataGrid"]

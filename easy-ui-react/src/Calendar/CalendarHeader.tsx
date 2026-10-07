@@ -52,15 +52,15 @@ export function CalendarHeader({
       <VisuallyHidden>
         <h2>{calendarProps["aria-label"]}</h2>
       </VisuallyHidden>
-      <HorizontalStack align="space-between" blockAlign="center">
-        <UnstyledButton {...restPrevButtonProps}>
-          <Icon symbol={DoubleArrowLeftIcon} color="neutral.000" />
+      <HorizontalStack align="space-between" blockAlign="center" wrap={false}>
+        <UnstyledButton {...restPrevButtonProps} className={styles.navigation}>
+          <Icon symbol={DoubleArrowLeftIcon} color="primary.700" />
         </UnstyledButton>
-        <Text variant="subtitle2" color="neutral.000">
-          {title}
-        </Text>
-        <UnstyledButton {...restNextButtonProps}>
-          <Icon symbol={DoubleArrowRightIcon} color="neutral.000" />
+        <div className={styles.title}>
+          <Text variant="subtitle2">{title}</Text>
+        </div>
+        <UnstyledButton {...restNextButtonProps} className={styles.navigation}>
+          <Icon symbol={DoubleArrowRightIcon} color="primary.700" />
         </UnstyledButton>
       </HorizontalStack>
     </div>

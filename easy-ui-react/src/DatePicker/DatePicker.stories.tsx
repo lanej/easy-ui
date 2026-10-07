@@ -6,7 +6,12 @@ import {
   getLocalTimeZone,
   isWeekend,
   endOfWeek,
+  CalendarDate,
 } from "@internationalized/date";
+import { I18nProvider } from "react-aria";
+import { Button } from "../Button";
+import { Text } from "../Text";
+import { VerticalStack } from "../VerticalStack";
 import { InputDecorator } from "../utilities/storybook";
 import { TextField } from "../TextField";
 import { DatePicker, DatePickerProps } from "./DatePicker";
@@ -105,4 +110,63 @@ export const Disabled: Story = {
   args: {
     isDisabled: true,
   },
+};
+
+function ReviewDateForm() {
+  const [submitted, setSubmitted] = React.useState("");
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        setSubmitted(
+          String(new FormData(event.currentTarget).get("reviewDate")),
+        );
+      }}
+    >
+      <VerticalStack gap="2">
+        <DatePicker
+          label="Review date"
+          name="reviewDate"
+          description="Choose a date in October 2026."
+          defaultValue={new CalendarDate(2026, 10, 6)}
+          minValue={new CalendarDate(2026, 10, 1)}
+          maxValue={new CalendarDate(2026, 10, 31)}
+          isClearable
+          isRequired
+          validationBehavior="native"
+          errorMessage="Choose a date in October 2026."
+        />
+        <Button type="submit">Apply date</Button>
+        <Text aria-live="polite">
+          {submitted ? `Submitted: ${submitted}` : "No date submitted."}
+        </Text>
+      </VerticalStack>
+    </form>
+  );
+}
+
+export const Form: Story = {
+  render: () => <ReviewDateForm />,
+};
+
+export const ReadOnly: Story = {
+  args: {
+    label: "Review date",
+    defaultValue: new CalendarDate(2026, 10, 6),
+    isReadOnly: true,
+    isClearable: true,
+  },
+};
+
+export const Localized: Story = {
+  render: () => (
+    <I18nProvider locale="fr-FR">
+      <DatePicker
+        label="Date de révision"
+        defaultValue={new CalendarDate(2026, 10, 6)}
+        isClearable
+        clearLabel="Effacer la date"
+      />
+    </I18nProvider>
+  ),
 };

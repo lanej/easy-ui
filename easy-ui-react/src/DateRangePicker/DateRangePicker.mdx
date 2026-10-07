@@ -7,7 +7,7 @@ import * as DateRangePickerStories from "./DateRangePicker.stories";
 
 # DateRangePicker
 
-DateRangePicker combine DateFields and a Calendar popover to allow users to enter or select a range of dates.
+DateRangePicker combines keyboard-editable start and end dates with a separate calendar button.
 
 <Canvas of={DateRangePickerStories.Standalone} />
 
@@ -50,6 +50,30 @@ Use `isDisabled` to disabled the DateRangePicker entirely.
 <Canvas of={DateRangePickerStories.Disabled} />
 
 <Controls of={DateRangePickerStories.Disabled} include={["isDisabled"]} />
+
+## Forms and clearing
+
+Use `startName` and `endName` to submit the two selected dates through `FormData`.
+Calendar dates serialize as `YYYY-MM-DD`; use values from `@internationalized/date`.
+Callers own form submission and the controlled range.
+
+`isClearable` adds a separate clear button and defaults to `false`. Clearing requests
+`null` through `onChange`; controlled callers must accept that value to clear the
+range. `clearLabel` replaces the button's accessible label.
+
+Use `description` for linked help and `errorMessage` for linked validation feedback.
+`isRequired`, `minValue`, `maxValue`, and `isDateUnavailable` constrain the range.
+`validationBehavior="native"` blocks invalid form submission; the default `"aria"`
+reports invalid state without blocking submission.
+
+<Canvas of={DateRangePickerStories.Form} />
+
+## Read-only values
+
+`isReadOnly` prevents editing, opening the calendar, and clearing while retaining
+both form values. `isDisabled` omits both values from submission.
+
+<Canvas of={DateRangePickerStories.ReadOnly} />
 
 ## Controlled Selection
 

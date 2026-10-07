@@ -5,46 +5,25 @@
   background-color: design-token("color.primary.100");
   position: absolute;
   height: 100%;
-  width: 100%;
+  width: calc(100% + 4px);
   z-index: -1;
-  // Move by half of the container size.
-  // prettier-ignore
-  left: calc(
-    (
-      component-token("calendar-cell", "mobile-size") + design-token("space.0-5")
-    ) / 2
-  );
-  @include breakpoint-md-up {
-    left: calc(
-      (component-token("calendar-cell", "size") + design-token("space.1")) / 2
-    );
-  }
+  left: 50%;
 }
 
 .CellContainer {
-  padding: design-token("space.0-5");
+  padding: 2px;
   .rangeSelectionStart:before {
     @include rangeSelection;
-  }
-
-  @include breakpoint-md-up {
-    padding: 10px design-token("space.1");
   }
 }
 
 .CalendarCell {
-  @include component-token("calendar-cell", "size", design-token("space.4"));
-  @include component-token(
-    "calendar-cell",
-    "mobile-size",
-    design-token("space.3")
-  );
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: component-token("calendar-cell", "mobile-size");
-  height: component-token("calendar-cell", "mobile-size");
+  width: 100%;
+  min-height: max(40px, design-token("space.4"));
   cursor: pointer;
   border-radius: design-token("shape.border_radius.lg");
   span {
@@ -95,10 +74,5 @@
 
   &.roundedRight:before {
     content: none;
-  }
-
-  @include breakpoint-md-up {
-    width: component-token("calendar-cell", "size");
-    height: component-token("calendar-cell", "size");
   }
 }

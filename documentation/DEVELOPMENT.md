@@ -19,6 +19,7 @@ Local worktree names are historical. Consult the workspace inventory before edit
 - **Mobile chart layout:** ordinary unpositioned Cartesian charts use a wrapping HTML `ChartLegend` outside the plot. Keep explicit engine layouts intact; `layout="native"` opts out. Preserve shared legend state, keyboard/touch selection, and caller typography. Use the existing bare variant inside application cards; keep concise axis labels and full exact-data labels derived from the same records.
 - **Mobile grids:** use existing column selection and `size="sm"` before inventing a second table model. Column `whiteSpace` keeps identifiers and units together; numeric body values default to no wrapping, with an explicit `"normal"` override. Rows and headers grow for rich content and larger text, and expanded details follow the measured body height. For dense comparisons, keep columns at readable minimum widths, allow headings to wrap, and retain the identifying column while scrolling within the table. The ten-column example defaults to the full report and fits on wide desktops. A focused metric and its supplied sample are an optional application view; explain comparison baselines once.
 - **Vertical drawer rows:** `DrawerTable` composes `DrawerRow` molecules adapted from Logistics Services. Summary facts stay visible above full-width inline details, with unrelated actions outside the disclosure button. This is a list, not a native table or replacement for DataGrid's column and selection semantics. Its optional footer composes the shared Pagination molecule through `DrawerTable.Pagination` and `DrawerTable.RowsPerPage`. Applications own page rows, order, fetching, and URL state.
+- **Date inputs:** reuse `DatePicker` or `DateRangePicker` for editable dates and calendar selection. Use `@internationalized/date` values, linked descriptions/errors, and `name` or `startName`/`endName` for form submission. Clearing is opt-in. Read-only values remain submittable; disabled values do not. Applications own submission and controlled values.
 - **State and accessibility:** respect controlled values, preserve camera/selection through ordinary data updates, and support keyboard and touch paths alongside pointer interactions. Exact values and missing-data states must survive engine failures and hidden layers.
 
 ## Bring application feedback back to the component
@@ -45,6 +46,19 @@ expansion, independent actions, lazy detail mounting, controlled page navigation
 rows-per-page changes, and component accessibility.
 
 The [acceptance matrix](specs/VisualizationAcceptance.md) is the shared review contract. Earlier successful checks establish their recorded snapshot; new application feedback remains part of ongoing development.
+
+For date-picker changes, run the focused `DatePicker`, `DateRangePicker`, `Calendar`,
+and `RangeCalendar` tests. With Storybook running and the same locked browser
+dependencies installed, run:
+
+```sh
+BROWSER_CHANNEL=chrome STORYBOOK_URL=http://localhost:9013 node scripts/check-date-pickers.mjs
+```
+
+`DATE_REPORT_DIR` selects its output directory. The harness checks single/range
+forms, native required validation, independent clearing, keyboard focus, calendar
+selection, read-only controls, French localization, accessibility, Light/Dark,
+narrow layouts, and enlarged text.
 
 ### Browser CI
 
