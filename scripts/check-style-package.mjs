@@ -109,6 +109,8 @@ void [metricCardWithoutTrend, metricContentWithoutTrend];
 export const example = <>
   <DrawerTable aria-label="Packed drawers" rows={[{key: "one" as const, count: 1}]} expandedKey={null} onExpandedChange={(key) => { const next: "one" | null = key; void next; }} renderRow={(row) => <span>{row.count}</span>} renderExpandedRow={(row) => <span>{row.key}</span>} />
   <DrawerRow summary={<span>Packed row</span>}>Packed details</DrawerRow>
+  <DrawerTable rows={[{key: "paged", count: 2}]} renderRow={(row) => <span>{row.count}</span>} renderExpandedRow={() => null} renderFooter={() => <DrawerTable.Pagination page={1} count={2} onChange={(page) => { const requested: number = page; void requested; }} />} />
+  <DrawerTable.RowsPerPage rowsPerPage={3} options={[3, 6]} onChange={() => undefined} />
   <ChartLegend items={[{name: "Ground", color: "#007f86", selected: true, symbol: "bar"}]} onItemToggle={(name: string) => { void name; }} />
   <NetworkMapCellDetails cell={{latMin: 0, latMax: 1, lonMin: 0, lonMax: 1, medianMinutes: 20, iqrMinutes: 4, n: 80}} surface={{cells: [], source: "Packed sample", asOf: "2026-09-22T00:00:00Z"}}>
     <strong>Application chart</strong>
@@ -215,6 +217,15 @@ for (const load of [require, (specifier) => import(specifier)]) {
   assert.match(drawers, /aria-expanded="true"/);
   assert.match(drawers, /Packed details/);
   assert.match(drawers, /aria-label="Packed drawer rows"/);
+  const paged = renderToString(React.createElement(ThemeProvider, null, React.createElement(DrawerTable, {
+    rows: [],
+    renderRow: () => null,
+    renderExpandedRow: () => null,
+    renderFooter: () => React.createElement(DrawerTable.Pagination, { page: 1, count: 2, onChange: () => undefined }),
+  })));
+  assert.match(paged, /Page 1 of 2/);
+  assert.match(paged, /aria-label="Next"/);
+  assert.equal(typeof DrawerTable.RowsPerPage, "function");
   const standalone = renderToString(React.createElement(ThemeProvider, null, React.createElement(DrawerRow, {
     summary: "Standalone row", defaultExpanded: true,
   }, "Standalone details")));

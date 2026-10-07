@@ -16,6 +16,7 @@ const browser = await chromium.launch({
   channel: process.env.BROWSER_CHANNEL || undefined,
 });
 const results = [];
+const paginationResults = [];
 
 try {
   for (const scheme of ["light", "dark"]) {
@@ -106,6 +107,101 @@ try {
       );
       assert.ok(largeTextOverflow <= 1);
       results.push({ scheme, width, overflow, largeTextOverflow, screenshot });
+      await page.goto(
+        `${baseUrl}/iframe.html?id=components-drawertable--paginated&viewMode=story&globals=colorScheme:${scheme}`,
+      );
+      const navigation = page.getByRole("navigation", { name: "Parcel pages" });
+      await navigation.waitFor();
+      assert.equal(await list.locator(":scope > li").count(), 3);
+      await page.getByRole("button", { name: "Track EP1001" }).waitFor();
+      await page.getByRole("button", { name: "Next", exact: true }).focus();
+      await page.keyboard.press("Enter");
+      await page.getByRole("button", { name: "Track EP1004" }).waitFor();
+      assert.equal(
+        await page.getByRole("button", { name: "Track EP1001" }).count(),
+        0,
+      );
+      assert.equal(
+        await navigation
+          .getByRole("button", { name: "Page 2 of 8" })
+          .getAttribute("aria-current"),
+        "page",
+      );
+      await navigation
+        .getByRole("button", { name: "Last", exact: true })
+        .click();
+      await page.getByRole("button", { name: "Track EP1024" }).waitFor();
+      assert.equal(
+        await navigation
+          .getByRole("button", { name: "Next", exact: true })
+          .isDisabled(),
+        true,
+      );
+      await page.getByRole("button", { name: "Rows Per Page: 3" }).click();
+      await page.getByRole("menuitemradio", { name: "6", exact: true }).click();
+      assert.equal(await list.locator(":scope > li").count(), 6);
+      await page.getByRole("button", { name: "Track EP1001" }).waitFor();
+      assert.equal(
+        await navigation
+          .getByRole("button", { name: "Page 1 of 4" })
+          .getAttribute("aria-current"),
+        "page",
+      );
+      const paginationOverflow = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
+      );
+      assert.ok(
+        paginationOverflow <= 1,
+        `${scheme}/${width}: pagination overflow ${paginationOverflow}`,
+      );
+      const paginationScreenshot = `pagination-${scheme}-${width}.png`;
+      await list
+        .locator("..")
+        .screenshot({ path: resolve(output, paginationScreenshot) });
+      await page.addStyleTag({
+        content: "html { font-size: 200% !important; }",
+      });
+      const paginationLargeTextOverflow = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
+      );
+      assert.ok(
+        paginationLargeTextOverflow <= 1,
+        `${scheme}/${width}: enlarged pagination overflow ${paginationLargeTextOverflow}`,
+      );
+      await page.addScriptTag({ path: axe });
+      const paginationViolations = await page.evaluate(async () => {
+        const deadline = performance.now() + 10000;
+        while (true) {
+          try {
+            return (
+              await window.axe.run(document.querySelector("#storybook-root"), {
+                rules: { region: { enabled: false } },
+              })
+            ).violations;
+          } catch (error) {
+            if (
+              !String(error).includes("Axe is already running") ||
+              performance.now() >= deadline
+            ) {
+              throw error;
+            }
+            await new Promise((finish) => setTimeout(finish, 50));
+          }
+        }
+      });
+      assert.deepEqual(paginationViolations, []);
+      assert.deepEqual(errors, []);
+      paginationResults.push({
+        scheme,
+        width,
+        overflow: paginationOverflow,
+        largeTextOverflow: paginationLargeTextOverflow,
+        screenshot: paginationScreenshot,
+      });
       await page.close();
     }
   }
@@ -120,9 +216,15 @@ try {
   await page.close();
   await writeFile(
     resolve(output, "report.json"),
-    JSON.stringify({ results, disabled: "passed" }, null, 2) + "\n",
+    JSON.stringify(
+      { results, paginationResults, disabled: "passed" },
+      null,
+      2,
+    ) + "\n",
   );
-  console.log(JSON.stringify({ output, results, disabled: "passed" }));
+  console.log(
+    JSON.stringify({ output, results, paginationResults, disabled: "passed" }),
+  );
 } finally {
   await browser.close();
 }

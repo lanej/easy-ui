@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "../Button";
 import { HorizontalGrid } from "../HorizontalGrid";
+import { HorizontalStack } from "../HorizontalStack";
 import { MetricContent } from "../MetricCard";
 import { Pill } from "../Pill";
 import { Text } from "../Text";
 import { Textarea } from "../Textarea";
-import { DrawerTable } from "./DrawerTable";
+import { DrawerTable, DrawerTableProps } from "./DrawerTable";
 import styles from "./DrawerTable.examples.module.scss";
 
 const parcels = [
@@ -47,13 +48,18 @@ const meta: Meta<typeof DrawerTable> = {
 export default meta;
 type Story = StoryObj<typeof DrawerTable>;
 
-export const Default: Story = {
-  args: { mountPolicy: "unmount" },
-  render: (args) => (
+type Parcel = (typeof parcels)[number];
+
+function ParcelWorklist(
+  props: Pick<
+    DrawerTableProps<Parcel>,
+    "rows" | "mountPolicy" | "renderFooter"
+  >,
+) {
+  return (
     <DrawerTable
       aria-label="Parcel operations"
-      rows={parcels}
-      mountPolicy={args.mountPolicy}
+      {...props}
       renderRow={(parcel) => (
         <span className={styles.summary}>
           <span className={styles.identity}>
@@ -115,7 +121,58 @@ export const Default: Story = {
         </div>
       )}
     />
+  );
+}
+
+export const Default: Story = {
+  args: { mountPolicy: "unmount" },
+  render: (args) => (
+    <ParcelWorklist rows={parcels} mountPolicy={args.mountPolicy} />
   ),
+};
+
+const pagedParcels = Array.from({ length: 24 }, (_, index) => ({
+  ...parcels[index % parcels.length],
+  key: `ep-${1001 + index}`,
+  tracking: `EP${1001 + index}`,
+}));
+
+function PaginatedWorklist() {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(3);
+  const start = (page - 1) * pageSize;
+  return (
+    <ParcelWorklist
+      rows={pagedParcels.slice(start, start + pageSize)}
+      renderFooter={() => (
+        <HorizontalStack gap="2" align="space-between" blockAlign="center">
+          <Text variant="caption" fontVariantNumeric="tabular-nums">
+            {start + 1}–{Math.min(start + pageSize, pagedParcels.length)} of{" "}
+            {pagedParcels.length} parcels
+          </Text>
+          <DrawerTable.Pagination
+            label="Parcel pages"
+            page={page}
+            count={Math.ceil(pagedParcels.length / pageSize)}
+            onChange={setPage}
+          />
+          <DrawerTable.RowsPerPage
+            size="sm"
+            rowsPerPage={pageSize}
+            options={[3, 6, 12]}
+            onChange={(value) => {
+              setPageSize(value);
+              setPage(1);
+            }}
+          />
+        </HorizontalStack>
+      )}
+    />
+  );
+}
+
+export const Paginated: Story = {
+  render: () => <PaginatedWorklist />,
 };
 
 export const Expanded: Story = {

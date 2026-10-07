@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "../utilities/test";
 import { Button } from "../Button";
@@ -25,6 +25,112 @@ const panel = (name: string) => {
   const button = screen.getByRole("button", { name });
   return document.getElementById(button.getAttribute("aria-controls")!)!;
 };
+
+it("renders the optional footer outside the list and retains it for empty pages", () => {
+  const renderFooter = () => <span>Page controls</span>;
+  const { rerender } = render(
+    <DrawerTable {...fixture} renderFooter={renderFooter} />,
+  );
+  expect(
+    within(screen.getByRole("list")).queryByText("Page controls"),
+  ).toBeNull();
+  expect(screen.getByText("Page controls")).toBeVisible();
+  rerender(
+    <DrawerTable
+      {...fixture}
+      rows={[]}
+      emptyContent="No matching parcels"
+      renderFooter={renderFooter}
+    />,
+  );
+  expect(screen.queryByRole("list")).toBeNull();
+  expect(screen.getByText("Page controls")).toBeVisible();
+  expect(screen.getByText("No matching parcels")).toBeVisible();
+  rerender(<DrawerTable {...fixture} />);
+  expect(screen.queryByText("Page controls")).toBeNull();
+});
+
+it("requests pages without replacing rows until the caller accepts them", async () => {
+  const user = userEvent.setup();
+  const changed = vi.fn();
+  const footer = (page: number) =>
+    function PageFooter() {
+      return (
+        <DrawerTable.Pagination
+          label="Parcel pages"
+          page={page}
+          count={2}
+          onChange={changed}
+        />
+      );
+    };
+  const { rerender } = render(
+    <DrawerTable
+      {...fixture}
+      rows={[rows[0]]}
+      mountPolicy="preserve"
+      defaultExpandedKey="a"
+      renderFooter={footer(1)}
+    />,
+  );
+  expect(screen.getByRole("button", { name: "First" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
+  await user.click(screen.getByRole("button", { name: "Next" }));
+  expect(changed).toHaveBeenLastCalledWith(2);
+  expect(screen.getByRole("button", { name: "Parcel A" })).toBeVisible();
+  expect(screen.getByRole("textbox")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Page 1 of 2" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  rerender(
+    <DrawerTable
+      {...fixture}
+      rows={[rows[1]]}
+      mountPolicy="preserve"
+      defaultExpandedKey="a"
+      renderFooter={footer(2)}
+    />,
+  );
+  expect(screen.queryByRole("button", { name: "Parcel A" })).toBeNull();
+  expect(
+    screen.queryByRole("textbox", { name: "Note for Parcel A" }),
+  ).toBeNull();
+  expect(screen.getByRole("button", { name: "Next" })).toHaveFocus();
+  expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Last" })).toBeDisabled();
+  await user.click(screen.getByRole("button", { name: "Previous" }));
+  expect(changed).toHaveBeenLastCalledWith(1);
+});
+
+it("supports controlled first, last and numbered requests and disabled controls", async () => {
+  const user = userEvent.setup();
+  const changed = vi.fn();
+  const { rerender } = render(
+    <DrawerTable.Pagination page={3} count={5} onChange={changed} />,
+  );
+  await user.click(screen.getByRole("button", { name: "First" }));
+  await user.click(screen.getByRole("button", { name: "Last" }));
+  await user.click(screen.getByRole("button", { name: "Page 2 of 5" }));
+  expect(changed.mock.calls).toEqual([[1], [5], [2]]);
+  rerender(
+    <DrawerTable.Pagination page={3} count={5} onChange={changed} isDisabled />,
+  );
+  for (const button of screen.getAllByRole("button")) {
+    expect(button).toBeDisabled();
+    await user.click(button);
+  }
+  expect(changed).toHaveBeenCalledTimes(3);
+});
+
+it("disables boundary navigation for a single-page result", () => {
+  render(
+    <DrawerTable.Pagination page={1} count={1} onChange={() => undefined} />,
+  );
+  for (const name of ["First", "Previous", "Next", "Last"]) {
+    expect(screen.getByRole("button", { name })).toBeDisabled();
+  }
+});
 
 it("opens full-width details without replacing or duplicating the row summary", async () => {
   const user = userEvent.setup();

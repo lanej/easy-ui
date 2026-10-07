@@ -1,6 +1,8 @@
 import React, { ReactNode, useState } from "react";
 import { AriaLabelingProps, Key } from "@react-types/shared";
+import { Pagination } from "../Pagination";
 import { DrawerRow, DrawerRowProps } from "./DrawerRow";
+import { DrawerTablePagination } from "./DrawerTablePagination";
 import styles from "./DrawerTable.module.scss";
 
 export type DrawerTableProps<R extends { readonly key: Key }> =
@@ -27,6 +29,8 @@ export type DrawerTableProps<R extends { readonly key: Key }> =
     mountPolicy?: DrawerRowProps["mountPolicy"];
     /** Optional application-owned empty content. */
     emptyContent?: ReactNode;
+    /** Optional footer, outside the list, for pagination or other controls. */
+    renderFooter?: () => ReactNode;
   };
 
 export function DrawerTable<R extends { readonly key: Key }>({
@@ -41,6 +45,7 @@ export function DrawerTable<R extends { readonly key: Key }>({
   onExpandedChange,
   mountPolicy,
   emptyContent,
+  renderFooter,
   ...labeling
 }: DrawerTableProps<R>) {
   const [localKey, setLocalKey] = useState<R["key"] | null>(
@@ -77,6 +82,10 @@ export function DrawerTable<R extends { readonly key: Key }>({
       ) : (
         emptyContent
       )}
+      {renderFooter && <div className={styles.footer}>{renderFooter()}</div>}
     </div>
   );
 }
+
+DrawerTable.Pagination = DrawerTablePagination;
+DrawerTable.RowsPerPage = Pagination.RowsPerPage;

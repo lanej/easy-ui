@@ -18,7 +18,7 @@ Local worktree names are historical. Consult the workspace inventory before edit
 - **Chart data disclosures:** enrich the chart's existing folded data view through `dataTable.renderCell` and column options. Keep plot and table derived from the same records; preserve exact values and comparison baselines. Custom content mounts on first opening and remains mounted across collapse. Sorting is opt-in by column and uses original or supplied sort values; controlled requests do not change the plot. Sticky headings and measured leading-column pinning preserve context while reserving space for data on narrow screens.
 - **Mobile chart layout:** ordinary unpositioned Cartesian charts use a wrapping HTML `ChartLegend` outside the plot. Keep explicit engine layouts intact; `layout="native"` opts out. Preserve shared legend state, keyboard/touch selection, and caller typography. Use the existing bare variant inside application cards; keep concise axis labels and full exact-data labels derived from the same records.
 - **Mobile grids:** use existing column selection and `size="sm"` before inventing a second table model. Column `whiteSpace` keeps identifiers and units together; numeric body values default to no wrapping, with an explicit `"normal"` override. Rows and headers grow for rich content and larger text, and expanded details follow the measured body height. For dense comparisons, keep columns at readable minimum widths, allow headings to wrap, and retain the identifying column while scrolling within the table. The ten-column example defaults to the full report and fits on wide desktops. A focused metric and its supplied sample are an optional application view; explain comparison baselines once.
-- **Vertical drawer rows:** `DrawerTable` composes `DrawerRow` molecules adapted from Logistics Services. Summary facts stay visible above full-width inline details, with unrelated actions outside the disclosure button. This is a list, not a native table or replacement for DataGrid's column and selection semantics. Applications own row order, pagination, fetching, and URL state.
+- **Vertical drawer rows:** `DrawerTable` composes `DrawerRow` molecules adapted from Logistics Services. Summary facts stay visible above full-width inline details, with unrelated actions outside the disclosure button. This is a list, not a native table or replacement for DataGrid's column and selection semantics. Its optional footer composes the shared Pagination molecule through `DrawerTable.Pagination` and `DrawerTable.RowsPerPage`. Applications own page rows, order, fetching, and URL state.
 - **State and accessibility:** respect controlled values, preserve camera/selection through ordinary data updates, and support keyboard and touch paths alongside pointer interactions. Exact values and missing-data states must survive engine failures and hidden layers.
 
 ## Bring application feedback back to the component
@@ -41,7 +41,8 @@ installed, run `STORYBOOK_URL=http://localhost:9013 node scripts/check-drawer-ro
 Set `BROWSER_CHANNEL=chrome` to use installed Chrome, or install Playwright's
 Chromium. `DRAWER_REPORT_DIR` selects the screenshot/report directory. The harness
 covers Light/Dark, narrow layouts, enlarged text, full-width panels, keyboard
-expansion, independent actions, lazy detail mounting, and component accessibility.
+expansion, independent actions, lazy detail mounting, controlled page navigation,
+rows-per-page changes, and component accessibility.
 
 The [acceptance matrix](specs/VisualizationAcceptance.md) is the shared review contract. Earlier successful checks establish their recorded snapshot; new application feedback remains part of ongoing development.
 

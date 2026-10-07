@@ -13,6 +13,7 @@ import {
 } from "./PaginationPagedButtons";
 import { PaginationPages, PaginationPagesProps } from "./PaginationPages";
 import { PaginationRowsPerPage } from "./PaginationRowsPerPage";
+import { PaginationPageControls } from "./PaginationPageControls";
 import { getDisplayNameFromReactNode } from "../utilities/react";
 import { classNames, variationName } from "../utilities/css";
 import styles from "./Pagination.module.scss";
@@ -71,6 +72,8 @@ export type PaginationProps = {
    * @default md
    */
   size?: PaginationSize;
+  /** Allow numbered controls to wrap on narrow layouts. Defaults to false. */
+  wrap?: boolean;
   /**
    * Whether the Pagination component should be disabled.
    */
@@ -154,6 +157,7 @@ export function Pagination(props: PaginationProps) {
     onLast,
     label,
     size = "md",
+    wrap = false,
     isDisabled,
     children,
   } = props;
@@ -179,6 +183,7 @@ export function Pagination(props: PaginationProps) {
     styles.pagination,
     isPaged && styles.paged,
     isPaged && styles[variationName("size", size)],
+    isPaged && wrap && styles.wrap,
     isDisabled && styles.disabled,
   );
 
@@ -261,3 +266,4 @@ Pagination.Pages = PaginationPages;
  * which only accepts a scheme as its child.
  */
 Pagination.RowsPerPage = PaginationRowsPerPage;
+Pagination.PageControls = PaginationPageControls;

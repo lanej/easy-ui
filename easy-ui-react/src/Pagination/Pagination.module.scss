@@ -56,6 +56,15 @@
   gap: design-token("space.0.5");
 }
 
+.wrap {
+  flex-wrap: wrap;
+
+  .pageRow {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+}
+
 // Shared box and type for every cell in the scheme, including the ellipsis,
 // which isn't a control and so gets none of the behavior below
 .pagedButton {
