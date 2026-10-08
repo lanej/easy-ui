@@ -15,7 +15,7 @@ Give an observation a clear reading order: what was measured, its value and asse
   label="Elapsed duration"
   health={{ assessment: "healthy", label: "As expected" }}
   observation={{ value: 6, unit: "hours" }}
-  reference={<DurationReferenceExample value={6} />}
+  reference={<DurationReferenceExample value={6} regions={assessmentRanges} />}
   freshness={{
     state: "fresh",
     observedAt: "2026-01-15T12:00:00Z",
@@ -35,6 +35,8 @@ The value carries the most visual weight. Its adjacent small pill states the sup
 
 The application supplies each assessment, reference, and freshness state. The molecule does not compare durations, infer thresholds, or classify observations. These synthetic examples share a completed-duration histogram on a 0–30 hour scale. A blue elapsed marker shows the current observation; dashed markers locate P50 (9 hours) and P90 (18 hours). The completed observations are independent of the ongoing elapsed duration. Percentiles do not establish health or predict completion.
 
+Labeled background bands show illustrative assessment ranges supplied by the application: **As expected** below 10 hours, **Needs attention** from 10 to less than 20 hours, and **Outside expectations** at 20 hours or more. These boundaries are independent of the distribution's percentiles. The last range continues beyond the displayed 30-hour scale. The story's application policy supplies both the pill and the ranges, keeping them consistent when the observation changes.
+
 <Canvas of={Stories.Assessments} />
 
 ## Preserve distinct data states
@@ -47,7 +49,7 @@ The application supplies each assessment, reference, and freshness state. The mo
 
 <Canvas of={Stories.DataStates} />
 
-Omit `observation` entirely for an assessment that does not measure duration. `reference` remains an optional composition slot. `DurationReferenceExample` is a story-only example; its synthetic histogram and percentiles come from the same completed observations. Missing elapsed values omit the current marker while retaining the reference. The reusable distribution component is tracked separately in [#16](https://github.com/lanej/easy-ui/issues/16).
+Omit `observation` entirely for an assessment that does not measure duration. `reference` remains an optional composition slot. `DurationReferenceExample` is a story-only example; its synthetic histogram and percentiles come from the same completed observations. Missing elapsed values omit the current marker while retaining the reference. Missing or unassessed health omits the colored ranges. The reusable distribution component is tracked separately in [#16](https://github.com/lanej/easy-ui/issues/16).
 
 ## Fit the surrounding information
 

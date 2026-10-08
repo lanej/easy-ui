@@ -8,6 +8,7 @@
   min-inline-size: 0;
   color: design-token("color.neutral.700");
   font-variant-numeric: tabular-nums;
+  container-type: inline-size;
 }
 
 .plot {
@@ -15,9 +16,47 @@
   block-size: 56px;
   margin-block-start: design-token("space.1");
   border-block-end: 1px solid design-token("color.neutral.500");
+
+  &[data-has-regions="true"] {
+    margin-block-start: 0;
+  }
+}
+
+.regionLabels {
+  display: flex;
+  margin-block-start: design-token("space.1");
+}
+
+.regionLabel {
+  box-sizing: border-box;
+  padding: 2px;
+  text-align: center;
+}
+
+.compactRegions {
+  display: none;
+}
+
+.region {
+  position: absolute;
+  inset-block: 0;
+}
+
+@each $assessment,
+  $tone
+    in ("healthy": "positive", "degraded": "warning", "unhealthy": "negative")
+{
+  .region[data-assessment="#{$assessment}"] {
+    background: design-token("color.#{$tone}.050");
+  }
+  .regionLabel[data-assessment="#{$assessment}"] {
+    background: design-token("color.#{$tone}.100");
+    color: design-token("color.#{$tone}.900");
+  }
 }
 
 .bins {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(10, minmax(0, 1fr));
   gap: 2px;
@@ -61,9 +100,21 @@
 }
 
 .axis {
-  display: flex;
-  justify-content: space-between;
+  position: relative;
+  block-size: 1.5em;
   margin-block-start: design-token("space.0.5");
+
+  > span {
+    position: absolute;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  > span:first-child {
+    transform: none;
+  }
+  > span:last-child {
+    transform: translateX(-100%);
+  }
 }
 
 .caption {
@@ -93,7 +144,36 @@
   background: design-token("color.primary.600");
 }
 
+@container (max-width: 219px) {
+  .regionLabels {
+    display: none;
+  }
+  .plot[data-has-regions="true"] {
+    margin-block-start: design-token("space.1");
+  }
+  .compactRegions {
+    display: grid;
+    gap: 2px;
+    margin-block-start: design-token("space.0.5");
+
+    > span {
+      display: flex;
+      justify-content: space-between;
+      column-gap: design-token("space.0.5");
+      padding-inline: design-token("space.0.5");
+    }
+  }
+}
+
 @media (forced-colors: active) {
+  .region[data-assessment] {
+    background: Canvas;
+    border-inline-start: 1px dotted CanvasText;
+  }
+  .regionLabel[data-assessment] {
+    color: CanvasText;
+    background: Canvas;
+  }
   .bin {
     background: GrayText;
   }

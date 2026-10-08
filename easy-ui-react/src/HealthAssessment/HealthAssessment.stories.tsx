@@ -8,32 +8,127 @@ import {
   type HealthAssessmentProps,
 } from "./HealthAssessment";
 import styles from "./HealthAssessment.examples.module.scss";
-import { DurationReferenceExample } from "./DurationReference.example";
+import {
+  DurationReferenceExample,
+  type DurationHealthRegion,
+} from "./DurationReference.example";
 
 const meta: Meta<typeof HealthAssessment> = {
   title: "Molecules/Feedback/HealthAssessment",
   component: HealthAssessment,
   parameters: { layout: "padded" },
-  argTypes: { reference: { control: false } },
+  argTypes: { reference: { control: false }, health: { control: false } },
   render: (args) => renderExample(args),
 };
 export default meta;
 type Story = StoryObj<typeof HealthAssessment>;
 
+// Illustrative application policy, supplied independently of the distribution.
+// Last range is open-ended; the reference viewport still ends at 30 hours.
+const regionsByLocale: Record<"en" | "fr", readonly DurationHealthRegion[]> = {
+  en: [
+    {
+      from: 0,
+      to: 10,
+      assessment: "healthy",
+      label: "As expected",
+      shortLabel: "Expected",
+    },
+    {
+      from: 10,
+      to: 20,
+      assessment: "degraded",
+      label: "Needs attention",
+      shortLabel: "Attention",
+    },
+    {
+      from: 20,
+      to: Infinity,
+      assessment: "unhealthy",
+      label: "Outside expectations",
+      shortLabel: "Outside",
+    },
+  ],
+  fr: [
+    {
+      from: 0,
+      to: 10,
+      assessment: "healthy",
+      label: "Conforme aux attentes",
+      shortLabel: "Attendu",
+    },
+    {
+      from: 10,
+      to: 20,
+      assessment: "degraded",
+      label: "À surveiller",
+      shortLabel: "À suivre",
+    },
+    {
+      from: 20,
+      to: Infinity,
+      assessment: "unhealthy",
+      label: "Hors attentes",
+      shortLabel: "Hors plage",
+    },
+  ],
+};
+
+function referenceFor(
+  value: number | null,
+  assessed = true,
+  locale: "en" | "fr" = "en",
+) {
+  return (
+    <DurationReferenceExample
+      value={value}
+      locale={locale}
+      regions={
+        assessed &&
+        typeof value === "number" &&
+        Number.isFinite(value) &&
+        value >= 0
+          ? regionsByLocale[locale]
+          : undefined
+      }
+    />
+  );
+}
+
 function renderExample(
   args: HealthAssessmentProps,
   locale: "en" | "fr" = "en",
 ) {
+  const assessed =
+    args.health.assessment != null &&
+    args.health.availability !== "unavailable";
+  const value = args.observation?.value;
+  const usesHours =
+    args.observation?.unit === (locale === "fr" ? "heures" : "hours");
+  const region =
+    usesHours && typeof value === "number" && Number.isFinite(value)
+      ? regionsByLocale[locale].find(
+          ({ from, to }) => value >= from && value < to,
+        )
+      : undefined;
   return (
     <HealthAssessment
       {...args}
+      health={
+        args.observation && !usesHours
+          ? { ...args.health, assessment: null, label: undefined }
+          : assessed && region
+            ? {
+                ...args.health,
+                assessment: region.assessment,
+                label: region.label,
+              }
+            : args.health
+      }
       reference={
-        args.observation && (
-          <DurationReferenceExample
-            value={args.observation.value}
-            locale={locale}
-          />
-        )
+        usesHours && args.observation
+          ? referenceFor(args.observation.value, assessed, locale)
+          : undefined
       }
     />
   );
@@ -49,7 +144,7 @@ const formatObservedAt = (value: string | Date) =>
     timeZone: "UTC",
   }).format(new Date(value))} UTC`;
 
-const reference = <DurationReferenceExample value={6} />;
+const reference = referenceFor(6);
 
 const defaultProps: HealthAssessmentProps = {
   label: "Elapsed duration",
@@ -72,12 +167,16 @@ export const MissingObservation: Story = {
   args: {
     ...defaultProps,
     observation: { value: null, unit: "hours" },
-    reference: <DurationReferenceExample value={null} />,
+    reference: referenceFor(null),
     freshness: { state: "unavailable" },
   },
 };
 export const Unassessed: Story = {
-  args: { ...defaultProps, health: { assessment: null } },
+  args: {
+    ...defaultProps,
+    health: { assessment: null },
+    reference: referenceFor(6, false),
+  },
 };
 export const StaleObservation: Story = {
   args: {
@@ -119,7 +218,7 @@ export const LocalizedNarrow: Story = {
         }).format(new Date(value)),
       observedAtLabel: "Observé le",
     },
-    reference: <DurationReferenceExample value={6.25} locale="fr" />,
+    reference: referenceFor(6.25, true, "fr"),
     accessibilityLabel: "État de l’observation",
   },
   render: (args) => (
@@ -135,13 +234,13 @@ const assessmentExamples: HealthAssessmentProps[] = [
     ...defaultProps,
     health: { assessment: "degraded", label: "Needs attention" },
     observation: { value: 12, unit: "hours" },
-    reference: <DurationReferenceExample value={12} />,
+    reference: referenceFor(12),
   },
   {
     ...defaultProps,
     health: { assessment: "unhealthy", label: "Outside expectations" },
     observation: { value: 24, unit: "hours" },
-    reference: <DurationReferenceExample value={24} />,
+    reference: referenceFor(24),
   },
 ];
 
@@ -155,13 +254,17 @@ const stateExamples: { name: string; props: HealthAssessmentProps }[] = [
     props: {
       ...defaultProps,
       observation: { value: null, unit: "hours" },
-      reference: <DurationReferenceExample value={null} />,
+      reference: referenceFor(null),
       freshness: { state: "unavailable" },
     },
   },
   {
     name: "Without assessment",
-    props: { ...defaultProps, health: { assessment: null } },
+    props: {
+      ...defaultProps,
+      health: { assessment: null },
+      reference: referenceFor(6, false),
+    },
   },
   {
     name: "Older observation",
@@ -179,7 +282,7 @@ const stateExamples: { name: string; props: HealthAssessmentProps }[] = [
     props: {
       ...defaultProps,
       observation: { value: 0, unit: "hours" },
-      reference: <DurationReferenceExample value={0} />,
+      reference: referenceFor(0),
     },
   },
 ];
@@ -244,8 +347,8 @@ export const Overview: Story = {
             Compare assessments
           </Text>
           <Text as="p" variant="body2" color="subdued">
-            The same reference, with each assessment supplied by the
-            application.
+            Illustrative health ranges: expected below 10 h, attention from 10
+            h, outside expectations from 20 h.
           </Text>
         </div>
         <AssessmentExamples />
