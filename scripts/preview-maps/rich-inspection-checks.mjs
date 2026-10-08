@@ -118,6 +118,14 @@ export async function checkRichInspection({
           "Close facility details",
       );
       check(
+        `${theme}/${width}: Enter preserves the application's press action`,
+        await browser.evaluate(
+          () =>
+            document.querySelector("[data-inspection-presses]").textContent ===
+            "1",
+        ),
+      );
+      check(
         `${theme}/${width}: click pins and moves keyboard focus`,
         await browser.evaluate(
           () =>
@@ -185,6 +193,68 @@ export async function checkRichInspection({
       );
       check(
         `${theme}/${width}: Space pins press controls after dismissal`,
+        true,
+      );
+      check(
+        `${theme}/${width}: Space preserves the application's press action`,
+        await browser.evaluate(
+          () =>
+            document.querySelector("[data-inspection-presses]").textContent ===
+            "2",
+        ),
+      );
+      await browser.key(facility, "Escape");
+      await browser.wait(closed);
+      // A held activation survives unrelated key releases; focus/window loss
+      // must also recover pointer pinning if the matching keyup never arrives.
+      await browser.evaluate(() => {
+        const button = Array.from(document.querySelectorAll("button")).find(
+          (button) => button.textContent.trim() === "Inspect lifecycle",
+        );
+        button.focus();
+        button.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+        );
+        button.dispatchEvent(
+          new KeyboardEvent("keyup", { key: "Shift", bubbles: true }),
+        );
+        button.click();
+      });
+      await settle();
+      check(
+        `${theme}/${width}: unrelated release does not prematurely pin`,
+        await browser.evaluate(
+          () =>
+            document.activeElement.textContent.trim() === "Inspect lifecycle",
+        ),
+      );
+      await browser.evaluate(() => document.activeElement.blur());
+      await action("Inspect lifecycle");
+      await browser.wait(
+        () =>
+          document.activeElement?.getAttribute("aria-label") ===
+          "Close facility details",
+      );
+      check(
+        `${theme}/${width}: pointer pin recovers after lost focus keyup`,
+        true,
+      );
+      await browser.key(facility, "Escape");
+      await browser.wait(closed);
+      await browser.evaluate(() => {
+        document.activeElement.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+        );
+        window.dispatchEvent(new Event("blur"));
+      });
+      await action("Inspect lifecycle");
+      await browser.wait(
+        () =>
+          document.activeElement?.getAttribute("aria-label") ===
+          "Close facility details",
+      );
+      check(
+        `${theme}/${width}: pointer pin recovers after lost window keyup`,
         true,
       );
       await browser.key(facility, "Escape");

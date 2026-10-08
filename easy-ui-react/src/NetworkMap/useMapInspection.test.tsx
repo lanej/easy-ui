@@ -7,6 +7,7 @@ import {
   render,
   renderHook,
   screen,
+  waitFor,
 } from "@testing-library/react";
 import type { Map as MapInstance } from "maplibre-gl";
 import { useMapInspection } from "./useMapInspection";
@@ -253,7 +254,7 @@ function Fixture(props: NetworkMapProps) {
     </NetworkMapProvider>
   );
 }
-it("shares public focus, click pinning, Escape dismissal and focus restoration", () => {
+it("shares public focus, click pinning, Escape dismissal and focus restoration", async () => {
   const { rerender } = render(<Fixture {...options} />);
   const trigger = screen.getByRole("button", { name: "Inspect facility" });
   act(() => trigger.focus());
@@ -262,12 +263,16 @@ it("shares public focus, click pinning, Escape dismissal and focus restoration",
   ).toHaveTextContent("Facility A");
   expect(trigger.getAttribute("aria-describedby")).toBeTruthy();
   fireEvent.click(trigger);
-  expect(
-    screen.queryByRole("button", { name: "Keep open" }),
-  ).not.toBeInTheDocument();
-  expect(
-    screen.getByRole("button", { name: "Close cell details" }),
-  ).toHaveFocus();
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Keep open" }),
+    ).not.toBeInTheDocument(),
+  );
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Close cell details" }),
+    ).toHaveFocus(),
+  );
   fireEvent.keyDown(document.activeElement!, { key: "Escape" });
   expect(
     screen.queryByRole("region", { name: "Facility details" }),
@@ -282,9 +287,11 @@ it("shares public focus, click pinning, Escape dismissal and focus restoration",
     screen.getByRole("region", { name: "Facility details" }),
   ).toBeInTheDocument();
   fireEvent.click(trigger);
-  expect(
-    screen.getByRole("button", { name: "Close cell details" }),
-  ).toHaveFocus();
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Close cell details" }),
+    ).toHaveFocus(),
+  );
   rerender(<Fixture {...options} inspectionRevision="next" />);
   expect(
     screen.queryByRole("region", { name: "Facility details" }),
@@ -375,9 +382,11 @@ it.each(["{Enter}", "[Space]"])(
     expect(
       screen.queryByRole("button", { name: "Keep open" }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Close cell details" }),
-    ).toHaveFocus();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Close cell details" }),
+      ).toHaveFocus(),
+    );
   },
 );
 
@@ -433,4 +442,100 @@ it.each([
   expect(
     screen.getByRole("button", { name: "Close cell details" }),
   ).not.toHaveFocus();
+});
+
+it("waits for keyboard release when Enter emits an early native click", async () => {
+  render(<Fixture {...options} />);
+  const trigger = screen.getByRole("button", { name: "Inspect facility" });
+  act(() => trigger.focus());
+  fireEvent.keyDown(trigger, { key: "Enter" });
+  fireEvent.click(trigger, { detail: 0 });
+  await act(() => new Promise((resolve) => setTimeout(resolve, 5)));
+  expect(trigger).toHaveFocus();
+  expect(screen.getByRole("button", { name: "Keep open" })).toBeInTheDocument();
+  fireEvent.keyUp(trigger, { key: "Enter" });
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Close cell details" }),
+    ).toHaveFocus(),
+  );
+});
+
+it.each(["context", "target", "unmount", "Escape"])(
+  "cancels queued activation on %s",
+  async (condition) => {
+    const content = (id = "a", revision: string | undefined = undefined) => (
+      <NetworkMapProvider {...options} inspectionRevision={revision}>
+        <NetworkMapInspectionTrigger target={{ facilityId: id }}>
+          <button>Inspect facility</button>
+        </NetworkMapInspectionTrigger>
+        <Card />
+      </NetworkMapProvider>
+    );
+    const { rerender, unmount } = render(content());
+    const trigger = screen.getByRole("button", { name: "Inspect facility" });
+    act(() => trigger.focus());
+    fireEvent.click(trigger);
+    if (condition === "context") rerender(content("a", "next"));
+    if (condition === "target") rerender(content("new"));
+    if (condition === "unmount") unmount();
+    if (condition === "Escape") fireEvent.keyDown(trigger, { key: "Escape" });
+    await act(() => new Promise((resolve) => setTimeout(resolve, 5)));
+    if (condition === "target") {
+      expect(trigger).toHaveFocus();
+      expect(
+        screen.getByRole("button", { name: "Keep open" }),
+      ).toBeInTheDocument();
+    } else
+      expect(
+        screen.queryByRole("region", { name: "Facility details" }),
+      ).not.toBeInTheDocument();
+  },
+);
+
+it("does not release Enter inspection when another key is released", async () => {
+  render(<Fixture {...options} />);
+  const trigger = screen.getByRole("button", { name: "Inspect facility" });
+  act(() => trigger.focus());
+  fireEvent.keyDown(trigger, { key: "Enter" });
+  fireEvent.keyUp(trigger, { key: "Shift" });
+  fireEvent.click(trigger, { detail: 0 });
+  await act(() => new Promise((resolve) => setTimeout(resolve, 5)));
+  expect(trigger).toHaveFocus();
+  fireEvent.keyUp(trigger, { key: "Enter" });
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Close cell details" }),
+    ).toHaveFocus(),
+  );
+});
+
+it.each(["focus", "window"])(
+  "recovers pointer pinning after a lost keyup on %s blur",
+  async (kind) => {
+    render(<Fixture {...options} />);
+    const trigger = screen.getByRole("button", { name: "Inspect facility" });
+    act(() => trigger.focus());
+    fireEvent.keyDown(trigger, { key: "Enter" });
+    if (kind === "focus") act(() => trigger.blur());
+    else fireEvent(window, new Event("blur"));
+    fireEvent.click(trigger);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Close cell details" }),
+      ).toHaveFocus(),
+    );
+  },
+);
+
+it("does not pin a connected control moved outside its owning trigger", async () => {
+  render(<Fixture {...options} />);
+  const trigger = screen.getByRole("button", { name: "Inspect facility" });
+  const wrapper = trigger.parentElement!;
+  act(() => trigger.focus());
+  fireEvent.click(trigger);
+  document.body.appendChild(trigger);
+  await act(() => new Promise((resolve) => setTimeout(resolve, 5)));
+  expect(screen.getByRole("button", { name: "Keep open" })).toBeInTheDocument();
+  wrapper.appendChild(trigger);
 });

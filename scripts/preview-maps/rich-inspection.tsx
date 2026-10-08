@@ -14,6 +14,7 @@ import {
 } from "../../easy-ui-react/src/NetworkMap";
 import type { MapOverlay } from "../../easy-ui-react/src/NetworkMap";
 import { ThemeProvider } from "../../easy-ui-react/src/Theme";
+import { PillButton } from "../../easy-ui-react/src/Pill";
 import { Button } from "../../easy-ui-react/src/Button";
 import { Text } from "../../easy-ui-react/src/Text";
 const style: StyleSpecification = {
@@ -53,6 +54,7 @@ function Fixture() {
   const [colorScheme, setColorScheme] = useState<"light" | "dark">(
     dark ? "dark" : "light",
   );
+  const [presses, setPresses] = useState(0);
   const [revision, setRevision] = useState(0),
     [hidden, setHidden] = useState(false),
     [generation, setGeneration] = useState(0);
@@ -166,12 +168,18 @@ function Fixture() {
                 }}
               >
                 <NetworkMapInspectionTrigger target={{ facilityId: "hub" }}>
-                  <Button>Inspect shared facility</Button>
+                  <PillButton onPress={() => setPresses((n) => n + 1)}>
+                    Inspect shared facility
+                  </PillButton>
+                </NetworkMapInspectionTrigger>
+                <NetworkMapInspectionTrigger target={{ facilityId: "hub" }}>
+                  <button>Inspect lifecycle</button>
                 </NetworkMapInspectionTrigger>
                 <NetworkMapInspectionTrigger target={{ overlayId: "a" }}>
                   <Button>Inspect route A</Button>
                 </NetworkMapInspectionTrigger>
               </div>
+              <output data-inspection-presses>{presses}</output>
               <NetworkMapSurface />
             </NetworkMapProvider>
             <div
