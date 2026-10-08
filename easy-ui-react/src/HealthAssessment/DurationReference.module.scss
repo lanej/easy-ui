@@ -104,7 +104,7 @@
 
 .scale {
   position: relative;
-  block-size: 56px;
+  block-size: 40px;
 }
 
 .endpoint {
@@ -119,15 +119,31 @@
 
 .percentileLabel {
   position: absolute;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
   top: 15px;
   transform: translateX(-50%);
   text-align: center;
   white-space: nowrap;
 
   strong {
-    display: block;
     font-weight: 500;
     color: design-token("color.neutral.900");
+  }
+}
+
+@container (max-width: 219px) {
+  .scale {
+    block-size: 56px;
+  }
+
+  .percentileLabel {
+    display: block;
+
+    strong {
+      display: block;
+    }
   }
 }
 
