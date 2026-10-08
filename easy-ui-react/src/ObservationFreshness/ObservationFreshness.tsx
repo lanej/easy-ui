@@ -1,5 +1,4 @@
 import React from "react";
-import { Pill } from "../Pill";
 import { Text } from "../Text";
 import styles from "./ObservationFreshness.module.scss";
 
@@ -85,22 +84,11 @@ export function ObservationFreshness({
       role="group"
       aria-label={accessibilityLabel}
       aria-busy={isLoading}
+      data-size={size}
       data-state={isLoading ? "loading" : resolvedState}
     >
-      <span role={isLoading ? "status" : undefined}>
-        <Pill
-          size={size}
-          tone={available && resolvedState === "stale" ? "warning" : "neutral"}
-        >
-          {label}
-        </Pill>
-      </span>
       {timestampText !== undefined && (
-        <Text
-          variant={size === "sm" ? "caption" : "body2"}
-          color="subdued"
-          breakWord
-        >
+        <Text as="span" variant="caption" color="subdued" breakWord>
           {observedAtLabel}{" "}
           <time
             dateTime={
@@ -111,6 +99,16 @@ export function ObservationFreshness({
           </time>
         </Text>
       )}
+      <span className={styles.state} role={isLoading ? "status" : undefined}>
+        {timestampText !== undefined && (
+          <span className={styles.separator} aria-hidden="true">
+            ·
+          </span>
+        )}
+        <Text as="span" variant="caption">
+          {label}
+        </Text>
+      </span>
     </span>
   );
 }

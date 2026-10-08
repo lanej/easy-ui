@@ -15,7 +15,7 @@ describe("<HealthAssessment />", () => {
       );
       expect(screen.queryByText("As expected")).not.toBeInTheDocument();
       expect(screen.queryByText("Healthy")).not.toBeInTheDocument();
-      expect(screen.getAllByText("Unavailable")).toHaveLength(2);
+      expect(screen.getByText("Unavailable")).toBeVisible();
     },
   );
 
@@ -44,6 +44,7 @@ describe("<HealthAssessment />", () => {
     const props = {
       health: { assessment: "healthy" as const },
       observation: { value: 6, unit: "hours" },
+      freshness: { state: "fresh" as const },
       reference: "Typical: 9 hours",
     };
     const { rerender } = render(<HealthAssessment {...props} />);
@@ -55,5 +56,52 @@ describe("<HealthAssessment />", () => {
     expect(screen.queryByText("Healthy")).not.toBeInTheDocument();
     expect(screen.queryByText("6")).not.toBeInTheDocument();
     expect(screen.queryByText("Typical: 9 hours")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Loading…");
+    expect(screen.queryByText("Fresh")).not.toBeInTheDocument();
+  });
+
+  it("uses the visible observation label as the accessible group name", () => {
+    render(
+      <HealthAssessment
+        label="Elapsed duration"
+        health={{ assessment: "healthy" }}
+        observation={{ value: 6, unit: "hours" }}
+      />,
+    );
+    expect(
+      screen.getByRole("group", { name: "Elapsed duration" }),
+    ).toHaveTextContent("6");
+  });
+
+  it("consolidates unavailable states while retaining supplied reference context", () => {
+    render(
+      <HealthAssessment
+        health={{ assessment: "healthy" }}
+        observation={{
+          value: null,
+          unit: "hours",
+          emptyLabel: "No observation",
+        }}
+        freshness={{ state: "unavailable" }}
+        reference="Typical: 9 hours"
+      />,
+    );
+    expect(screen.getByText("No observation")).toBeVisible();
+    expect(screen.getByText("Typical: 9 hours")).toBeVisible();
+    expect(screen.queryByText("Unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Healthy")).not.toBeInTheDocument();
+  });
+
+  it("preserves explicit freshness context when a measurement is missing", () => {
+    render(
+      <HealthAssessment
+        health={{ assessment: "healthy" }}
+        observation={{ value: null, unit: "hours" }}
+        freshness={{ state: "stale", observedAt: "2026-01-15T12:00:00Z" }}
+      />,
+    );
+    expect(screen.getByText("Stale")).toBeVisible();
+    expect(screen.getByText("2026-01-15T12:00:00Z")).toBeVisible();
+    expect(screen.queryByText("Healthy")).not.toBeInTheDocument();
   });
 });

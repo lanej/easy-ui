@@ -12,14 +12,22 @@
 .summary {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: design-token("space.1");
+  align-items: baseline;
+  column-gap: design-token("space.2");
+  row-gap: design-token("space.0.5");
   min-inline-size: 0;
 }
 
-.reference {
+.label {
   min-inline-size: 0;
   overflow-wrap: anywhere;
+}
+
+.reference {
+  @include font-style("body2");
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  color: design-token("color.neutral.600");
 }
 
 .root[data-size="sm"] {

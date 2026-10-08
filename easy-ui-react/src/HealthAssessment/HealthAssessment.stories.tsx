@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import React from "react";
 import { Box } from "../Box";
-import { Card } from "../Card";
+import { DataGrid } from "../DataGrid";
 import { Text } from "../Text";
-import { VerticalStack } from "../VerticalStack";
 import {
   HealthAssessment,
   type HealthAssessmentProps,
 } from "./HealthAssessment";
+import styles from "./HealthAssessment.examples.module.scss";
 
 const meta: Meta<typeof HealthAssessment> = {
   title: "Molecules/Feedback/HealthAssessment",
@@ -17,41 +17,59 @@ const meta: Meta<typeof HealthAssessment> = {
 export default meta;
 type Story = StoryObj<typeof HealthAssessment>;
 
-export const Default: Story = {
-  args: {
-    health: { assessment: "healthy", label: "As expected" },
-    observation: { value: 6, unit: "hours" },
-    freshness: { state: "fresh", observedAt: "2026-01-15T12:00:00Z" },
-    reference: (
-      <Text as="span" variant="body2" color="neutral.600">
-        Typical duration: 9 hours
-      </Text>
-    ),
+const formatObservedAt = (value: string | Date) =>
+  `${new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "UTC",
+  }).format(new Date(value))} UTC`;
+
+const reference = <span>Typical duration: 9 hours</span>;
+
+const defaultProps: HealthAssessmentProps = {
+  label: "Elapsed duration",
+  health: { assessment: "healthy", label: "As expected" },
+  observation: { value: 6, unit: "hours" },
+  freshness: {
+    state: "fresh",
+    observedAt: "2026-01-15T12:00:00Z",
+    formatObservedAt,
   },
+  reference,
 };
-export const Compact: Story = { args: { ...Default.args, size: "sm" } };
+
+export const Default: Story = { args: defaultProps };
+export const Compact: Story = { args: { ...defaultProps, size: "sm" } };
 export const AssessmentOnly: Story = {
-  args: { health: { assessment: "degraded" } },
+  args: { label: "Observation health", health: { assessment: "degraded" } },
 };
 export const MissingObservation: Story = {
   args: {
-    ...Default.args,
+    ...defaultProps,
     observation: { value: null, unit: "hours" },
     freshness: { state: "unavailable" },
   },
 };
 export const Unassessed: Story = {
-  args: { ...Default.args, health: { assessment: null }, reference: undefined },
+  args: { ...defaultProps, health: { assessment: null } },
 };
 export const StaleObservation: Story = {
   args: {
-    ...Default.args,
-    freshness: { state: "stale", observedAt: "2026-01-14T12:00:00Z" },
+    ...defaultProps,
+    freshness: {
+      state: "stale",
+      observedAt: "2026-01-14T12:00:00Z",
+      formatObservedAt,
+    },
   },
 };
-export const Loading: Story = { args: { ...Default.args, isLoading: true } };
+export const Loading: Story = { args: { ...defaultProps, isLoading: true } };
 export const LocalizedNarrow: Story = {
   args: {
+    label: "Durée écoulée",
     health: {
       assessment: "healthy",
       label: "Conforme aux attentes",
@@ -78,11 +96,7 @@ export const LocalizedNarrow: Story = {
         }).format(new Date(value)),
       observedAtLabel: "Observé le",
     },
-    reference: (
-      <Text as="span" variant="body2">
-        Durée habituelle : 9 heures
-      </Text>
-    ),
+    reference: <span>Durée habituelle : 9 heures</span>,
     accessibilityLabel: "État de l’observation",
   },
   render: (args) => (
@@ -92,109 +106,177 @@ export const LocalizedNarrow: Story = {
   ),
 };
 
-const overviewExamples: { name: string; props: HealthAssessmentProps }[] = [
+const assessmentExamples: HealthAssessmentProps[] = [
+  defaultProps,
   {
-    name: "As expected",
-    props: {
-      health: { assessment: "healthy", label: "As expected" },
-      observation: { value: 6, unit: "hours" },
-      freshness: { state: "fresh" },
-    },
+    ...defaultProps,
+    health: { assessment: "degraded", label: "Needs attention" },
+    observation: { value: 12, unit: "hours" },
   },
   {
-    name: "Needs attention",
-    props: {
-      health: { assessment: "degraded" },
-      observation: { value: 12, unit: "hours" },
-      freshness: { state: "fresh" },
-    },
+    ...defaultProps,
+    health: { assessment: "unhealthy", label: "Outside expectations" },
+    observation: { value: 24, unit: "hours" },
+  },
+];
+
+const stateExamples: { name: string; props: HealthAssessmentProps }[] = [
+  {
+    name: "While fetching",
+    props: { ...defaultProps, isLoading: true },
   },
   {
-    name: "Outside expectations",
+    name: "Missing observation",
     props: {
-      health: { assessment: "unhealthy" },
-      observation: { value: 24, unit: "hours" },
-      freshness: { state: "fresh" },
-    },
-  },
-  {
-    name: "Stale observation",
-    props: {
-      health: { assessment: "healthy" },
-      observation: { value: 6, unit: "hours" },
-      freshness: { state: "stale" },
-    },
-  },
-  {
-    name: "Not assessed",
-    props: {
-      health: { assessment: null },
-      observation: { value: 9, unit: "hours" },
-      freshness: { state: "fresh" },
-    },
-  },
-  {
-    name: "Loading",
-    props: {
-      health: { assessment: "healthy" },
-      observation: { value: 6, unit: "hours" },
-      freshness: { state: "fresh" },
-      isLoading: true,
-    },
-  },
-  {
-    name: "Unavailable",
-    props: {
-      health: { assessment: "healthy" },
+      ...defaultProps,
       observation: { value: null, unit: "hours" },
       freshness: { state: "unavailable" },
     },
   },
   {
+    name: "Without assessment",
+    props: { ...defaultProps, health: { assessment: null } },
+  },
+  {
+    name: "Older observation",
+    props: {
+      ...defaultProps,
+      freshness: {
+        state: "stale",
+        observedAt: "2026-01-14T12:00:00Z",
+        formatObservedAt,
+      },
+    },
+  },
+  {
     name: "Observed zero",
     props: {
-      health: { assessment: "healthy" },
+      ...defaultProps,
       observation: { value: 0, unit: "hours" },
-      freshness: { state: "fresh" },
     },
   },
 ];
 
+function AssessmentExamples() {
+  return (
+    <div className={styles.comparisons}>
+      {assessmentExamples.map((props: HealthAssessmentProps) => (
+        <div className={styles.example} key={props.health.assessment}>
+          <HealthAssessment {...props} freshness={undefined} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StateExamples() {
+  return (
+    <div className={styles.states}>
+      {stateExamples.map(({ name, props }) => (
+        <div className={styles.state} key={name}>
+          <Text as="h3" variant="body2" weight="semibold">
+            {name}
+          </Text>
+          <HealthAssessment {...props} size="sm" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export const Assessments: Story = {
+  render: () => <AssessmentExamples />,
+  parameters: { controls: { disable: true } },
+};
+
+export const DataStates: Story = {
+  render: () => <StateExamples />,
+  parameters: { controls: { disable: true } },
+};
+
 export const Overview: Story = {
   render: () => (
-    <Box maxWidth={1000}>
-      <VerticalStack gap="3">
-        <Text variant="heading3">Observation and health foundations</Text>
-        <Text color="subdued">
-          Synthetic observations with assessments and freshness supplied by the
-          application.
-        </Text>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "16px",
-          }}
-        >
-          {overviewExamples.map(({ name, props }) => (
-            <Card.Container key={name}>
-              <Card.Area>
-                <VerticalStack gap="2" inlineAlign="start">
-                  <Text variant="subtitle1">{name}</Text>
-                  <HealthAssessment {...props} accessibilityLabel={name} />
-                </VerticalStack>
-              </Card.Area>
-            </Card.Container>
-          ))}
+    <div className={styles.overview}>
+      <section
+        className={styles.section}
+        aria-label="Health assessment example"
+      >
+        <div className={styles.intro}>
+          <Text as="h2" variant="subtitle1">
+            Health assessment
+          </Text>
+          <Text as="p" variant="body2" color="subdued">
+            A duration, its assessment, and the context needed to read it.
+          </Text>
         </div>
-      </VerticalStack>
+        <HealthAssessment {...defaultProps} />
+      </section>
+      <section className={styles.section} aria-label="Compare assessments">
+        <div className={styles.intro}>
+          <Text as="h2" variant="subtitle2">
+            Compare assessments
+          </Text>
+          <Text as="p" variant="body2" color="subdued">
+            The same reference, with each assessment supplied by the
+            application.
+          </Text>
+        </div>
+        <AssessmentExamples />
+      </section>
+      <section className={styles.section} aria-label="Observation data states">
+        <div className={styles.intro}>
+          <Text as="h2" variant="subtitle2">
+            Data states
+          </Text>
+          <Text as="p" variant="body2" color="subdued">
+            Missing data, freshness, and health carry different meanings.
+          </Text>
+        </div>
+        <StateExamples />
+      </section>
+    </div>
+  ),
+  parameters: { controls: { disable: true } },
+};
+
+export const CompactTable: Story = {
+  render: () => (
+    <Box maxWidth={640}>
+      <DataGrid
+        aria-label="Sample duration observations"
+        columns={[
+          { key: "name", name: "Observation" },
+          { key: "assessment", name: "Elapsed duration" },
+        ]}
+        rows={assessmentExamples.map((assessment, index) => ({
+          key: String(index),
+          name: `OBS-00${index + 1}`,
+          assessment,
+        }))}
+        size="sm"
+        selectionMode="none"
+        renderColumnCell={(column) => String(column.name)}
+        renderRowCell={(cell, columnKey, row) =>
+          columnKey === "assessment" ? (
+            <HealthAssessment
+              {...row.assessment}
+              label={undefined}
+              freshness={undefined}
+              size="sm"
+              accessibilityLabel={`Elapsed duration for ${row.name}`}
+            />
+          ) : (
+            String(cell)
+          )
+        }
+      />
     </Box>
   ),
   parameters: { controls: { disable: true } },
 };
 
 export const EnlargedText: Story = {
-  args: Default.args,
+  args: defaultProps,
   render: (args) => (
     <div style={{ maxWidth: 320, zoom: 2 }}>
       <HealthAssessment {...args} />

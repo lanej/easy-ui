@@ -5,7 +5,7 @@ import * as Stories from "./ObservationFreshness.stories";
 
 # ObservationFreshness
 
-Display caller-supplied freshness and the observation timestamp. Fresh describes data recency, not health: fresh observations can still describe an unhealthy condition. The component uses neutral styling for fresh data and unavailable data, with distinct visible labels; stale data receives a warning label.
+Display the observation timestamp followed by caller-supplied freshness as a quiet text line. Fresh describes data recency, not health: fresh observations can still describe an unhealthy condition. Fresh and unavailable labels use subdued text; stale data receives warning-colored text without adding another badge beside the health assessment.
 
 <Canvas of={Stories.Default} />
 <Controls of={Stories.Default} />

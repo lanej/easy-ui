@@ -1,4 +1,5 @@
-import React, { type ReactNode } from "react";
+import React, { useId, type ReactNode } from "react";
+import { Text } from "../Text";
 import { HealthIndicator, type HealthIndicatorProps } from "../HealthIndicator";
 import { DurationValue, type DurationValueProps } from "../DurationValue";
 import {
@@ -8,6 +9,8 @@ import {
 import styles from "./HealthAssessment.module.scss";
 
 export type HealthAssessmentProps = {
+  /** Visible name of the observation; also labels the assessment group. */
+  label?: ReactNode;
   /** Application-supplied assessment and localized labels. */
   health: Omit<HealthIndicatorProps, "size" | "isLoading">;
   /** Optional duration observation. Invalid or missing values suppress health. */
@@ -23,6 +26,7 @@ export type HealthAssessmentProps = {
 
 /** Composes supplied observation, assessment, and freshness without thresholds. */
 export function HealthAssessment({
+  label,
   health,
   observation,
   freshness,
@@ -31,6 +35,7 @@ export function HealthAssessment({
   isLoading = false,
   accessibilityLabel = "Health assessment",
 }: HealthAssessmentProps) {
+  const labelId = useId();
   const missingObservation =
     observation !== undefined &&
     (typeof observation.value !== "number" ||
@@ -41,32 +46,35 @@ export function HealthAssessment({
       className={styles.root}
       data-size={size}
       role="group"
-      aria-label={accessibilityLabel}
+      aria-label={label == null ? accessibilityLabel : undefined}
+      aria-labelledby={label != null ? labelId : undefined}
       aria-busy={isLoading}
     >
+      {label != null && (
+        <div id={labelId} className={styles.label}>
+          <Text as="span" variant="body2" color="neutral.700">
+            {label}
+          </Text>
+        </div>
+      )}
       <div className={styles.summary}>
         {observation !== undefined && (
           <DurationValue {...observation} size={size} isLoading={isLoading} />
         )}
-        <HealthIndicator
-          {...health}
-          size={size}
-          isLoading={isLoading}
-          availability={
-            missingObservation ? "unavailable" : health.availability
-          }
-        />
+        {observation === undefined || (!isLoading && !missingObservation) ? (
+          <HealthIndicator {...health} size={size} isLoading={isLoading} />
+        ) : null}
       </div>
       {!isLoading && reference != null && (
         <div className={styles.reference}>{reference}</div>
       )}
-      {freshness !== undefined && (
-        <ObservationFreshness
-          {...freshness}
-          size={size}
-          isLoading={isLoading}
-        />
-      )}
+      {!isLoading &&
+        freshness !== undefined &&
+        !(
+          missingObservation &&
+          freshness.state !== "fresh" &&
+          freshness.state !== "stale"
+        ) && <ObservationFreshness {...freshness} size={size} />}
     </div>
   );
 }

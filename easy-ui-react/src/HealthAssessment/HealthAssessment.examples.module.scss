@@ -1,0 +1,52 @@
+@use "../styles/common" as *;
+
+.overview {
+  display: grid;
+  max-inline-size: 960px;
+  gap: design-token("space.4");
+}
+
+.section {
+  display: grid;
+  justify-items: start;
+  gap: design-token("space.2");
+  min-inline-size: 0;
+
+  & + & {
+    padding-block-start: design-token("space.3");
+    border-block-start: 1px solid design-token("color.neutral.200");
+  }
+}
+
+.intro {
+  display: grid;
+  gap: design-token("space.0.5");
+}
+
+.comparisons {
+  display: grid;
+  inline-size: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  column-gap: design-token("space.3");
+  row-gap: design-token("space.2");
+}
+
+.example {
+  min-inline-size: 0;
+}
+
+.states {
+  display: grid;
+  inline-size: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  column-gap: design-token("space.3");
+  row-gap: design-token("space.3");
+}
+
+.state {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: design-token("space.1.5");
+  min-inline-size: 0;
+}

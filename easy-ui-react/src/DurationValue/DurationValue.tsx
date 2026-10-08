@@ -57,7 +57,7 @@ export function DurationValue({
           <span className={styles.value} aria-hidden="true">
             <Text
               as="span"
-              variant={size === "sm" ? "body2" : "subtitle1"}
+              variant={size === "sm" ? "subtitle2" : "heading3"}
               breakWord
             >
               {formattedValue}

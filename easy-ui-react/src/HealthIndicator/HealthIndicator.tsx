@@ -1,5 +1,5 @@
 import React from "react";
-import { Pill, type PillTone } from "../Pill";
+import { Text } from "../Text";
 import styles from "./HealthIndicator.module.scss";
 
 /** An assessment supplied by the application, never inferred by the indicator. */
@@ -25,12 +25,6 @@ const labels = {
   degraded: "Degraded",
   unhealthy: "Unhealthy",
   unassessed: "Not assessed",
-};
-const tones: Record<keyof typeof labels, PillTone> = {
-  healthy: "success",
-  degraded: "warning",
-  unhealthy: "danger",
-  unassessed: "neutral",
 };
 
 /** A compact, text-labeled health assessment with distinct neutral data states. */
@@ -60,9 +54,6 @@ export function HealthIndicator({
     : state === "unavailable"
       ? unavailableLabel
       : (label ?? labels[level]);
-  const tone =
-    state === "loading" || state === "unavailable" ? "neutral" : tones[level];
-
   return (
     <span
       className={styles.root}
@@ -72,11 +63,12 @@ export function HealthIndicator({
       aria-label={accessibilityLabel}
       aria-busy={isLoading || undefined}
     >
-      <Pill tone={tone} size={size}>
-        <span className={styles.label} role={isLoading ? "status" : undefined}>
+      <span className={styles.marker} aria-hidden="true" />
+      <span className={styles.label} role={isLoading ? "status" : undefined}>
+        <Text as="span" variant={size === "sm" ? "caption" : "body2"}>
           {text}
-        </span>
-      </Pill>
+        </Text>
+      </span>
     </span>
   );
 }
