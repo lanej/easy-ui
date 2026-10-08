@@ -19,6 +19,8 @@ export type HealthAssessmentProps = {
   freshness?: Omit<ObservationFreshnessProps, "size" | "isLoading">;
   /** Optional reference description or visualization supplied by the caller. */
   reference?: ReactNode;
+  /** Optional supporting content below the primary reference; does not affect observation alignment. */
+  referenceDetails?: ReactNode;
   size?: "sm" | "md";
   isLoading?: boolean;
   accessibilityLabel?: string;
@@ -31,6 +33,7 @@ export function HealthAssessment({
   observation,
   freshness,
   reference,
+  referenceDetails,
   size = "md",
   isLoading = false,
   accessibilityLabel = "Health assessment",
@@ -85,6 +88,9 @@ export function HealthAssessment({
         </div>
         {!isLoading && reference != null && (
           <div className={styles.reference}>{reference}</div>
+        )}
+        {!isLoading && reference != null && referenceDetails != null && (
+          <div className={styles.referenceDetails}>{referenceDetails}</div>
         )}
       </div>
     </div>

@@ -26,6 +26,7 @@ const meta: Meta<ExampleArgs> = {
   parameters: { layout: "padded" },
   argTypes: {
     reference: { control: false },
+    referenceDetails: { control: false },
     health: { control: false },
     referenceVisualization: {
       control: "select",
@@ -110,11 +111,20 @@ function referenceFor(
     ExampleArgs,
     "referenceVisualization" | "showHealthBands" | "showReferenceDistribution"
   > = {},
+  section: "primary" | "details" = "primary",
 ) {
   if (options.referenceVisualization === "none") return undefined;
+  if (
+    section === "details" &&
+    (options.referenceVisualization === "histogram" ||
+      ((options.referenceVisualization ?? "cumulative") === "cumulative" &&
+        options.showReferenceDistribution === false))
+  )
+    return undefined;
   return (
     <DurationReferenceExample
       value={value}
+      section={section}
       currentAssessment={
         assessed &&
         typeof value === "number" &&
@@ -139,6 +149,18 @@ function referenceFor(
       }
     />
   );
+}
+
+function referenceDetailsFor(
+  value: number | null,
+  assessed = true,
+  locale: "en" | "fr" = "en",
+  options: Pick<
+    ExampleArgs,
+    "referenceVisualization" | "showHealthBands" | "showReferenceDistribution"
+  > = {},
+) {
+  return referenceFor(value, assessed, locale, options, "details");
 }
 
 function renderExample(
@@ -185,6 +207,15 @@ function renderExample(
             })
           : undefined
       }
+      referenceDetails={
+        usesHours && args.observation
+          ? referenceDetailsFor(args.observation.value, assessed, locale, {
+              referenceVisualization,
+              showHealthBands,
+              showReferenceDistribution,
+            })
+          : undefined
+      }
     />
   );
 }
@@ -200,6 +231,7 @@ const formatObservedAt = (value: string | Date) =>
   }).format(new Date(value))} UTC`;
 
 const reference = referenceFor(6);
+const referenceDetails = referenceDetailsFor(6);
 
 const defaultProps: HealthAssessmentProps = {
   label: "Elapsed duration",
@@ -211,6 +243,7 @@ const defaultProps: HealthAssessmentProps = {
     formatObservedAt,
   },
   reference,
+  referenceDetails,
 };
 
 export const Default: Story = { args: defaultProps };
@@ -242,6 +275,7 @@ export const MissingObservation: Story = {
     ...defaultProps,
     observation: { value: null, unit: "hours" },
     reference: referenceFor(null),
+    referenceDetails: referenceDetailsFor(null),
     freshness: { state: "unavailable" },
   },
 };
@@ -250,6 +284,7 @@ export const Unassessed: Story = {
     ...defaultProps,
     health: { assessment: null },
     reference: referenceFor(6, false),
+    referenceDetails: referenceDetailsFor(6, false),
   },
 };
 export const StaleObservation: Story = {
@@ -292,6 +327,7 @@ export const LocalizedNarrow: Story = {
         }).format(new Date(value)),
     },
     reference: referenceFor(6.25, true, "fr"),
+    referenceDetails: referenceDetailsFor(6.25, true, "fr"),
     accessibilityLabel: "État de l’observation",
   },
   render: (args) => (
@@ -308,12 +344,14 @@ const assessmentExamples: HealthAssessmentProps[] = [
     health: { assessment: "degraded", label: "Needs attention" },
     observation: { value: 12, unit: "hours" },
     reference: referenceFor(12),
+    referenceDetails: referenceDetailsFor(12),
   },
   {
     ...defaultProps,
     health: { assessment: "unhealthy", label: "Outside expectations" },
     observation: { value: 24, unit: "hours" },
     reference: referenceFor(24),
+    referenceDetails: referenceDetailsFor(24),
   },
 ];
 
@@ -328,6 +366,7 @@ const stateExamples: { name: string; props: HealthAssessmentProps }[] = [
       ...defaultProps,
       observation: { value: null, unit: "hours" },
       reference: referenceFor(null),
+      referenceDetails: referenceDetailsFor(null),
       freshness: { state: "unavailable" },
     },
   },
@@ -337,6 +376,7 @@ const stateExamples: { name: string; props: HealthAssessmentProps }[] = [
       ...defaultProps,
       health: { assessment: null },
       reference: referenceFor(6, false),
+      referenceDetails: referenceDetailsFor(6, false),
     },
   },
   {
@@ -356,6 +396,7 @@ const stateExamples: { name: string; props: HealthAssessmentProps }[] = [
       ...defaultProps,
       observation: { value: 0, unit: "hours" },
       reference: referenceFor(0),
+      referenceDetails: referenceDetailsFor(0),
     },
   },
 ];

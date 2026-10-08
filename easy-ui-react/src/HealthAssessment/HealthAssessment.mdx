@@ -15,7 +15,22 @@ Keep an observation's name, value, assessment, and observation time together, wi
   label="Elapsed duration"
   health={{ assessment: "healthy", label: "As expected" }}
   observation={{ value: 6, unit: "hours" }}
-  reference={<DurationReferenceExample value={6} regions={assessmentRanges} />}
+  reference={
+    <DurationReferenceExample
+      value={6}
+      currentAssessment="healthy"
+      regions={assessmentRanges}
+      section="primary"
+    />
+  }
+  referenceDetails={
+    <DurationReferenceExample
+      value={6}
+      currentAssessment="healthy"
+      regions={assessmentRanges}
+      section="details"
+    />
+  }
   freshness={{
     state: "fresh",
     observedAt: "2026-01-15T12:00:00Z",
@@ -31,7 +46,7 @@ Keep an observation's name, value, assessment, and observation time together, wi
 
 ## Keep value and assessment together
 
-The value carries the most visual weight. Standard assessments with a reference use the larger headline duration; compact assessments retain their smaller scale. Its adjacent small pill states the supplied assessment without relying on color. A freshness status dot sits beside the supporting timestamp beneath it; the timestamp prefix is optional. At wider widths the reference sits beside this information; narrow and compact layouts stack it below.
+The value carries the most visual weight. Standard assessments with a reference use the larger headline duration; compact assessments retain their smaller scale. Its adjacent small pill states the supplied assessment without relying on color. A freshness status dot sits beside the supporting timestamp beneath it; the timestamp prefix is optional. At wider widths the observation is centered beside its primary reference, with the headline and assessment pill aligned to one another. Optional `referenceDetails` content sits beneath the primary reference in a separate row, so opening a histogram does not move the observation. Narrow and compact layouts stack the content in reading order.
 
 The application supplies each assessment, reference, and freshness state. The molecule does not compare durations, infer thresholds, or classify observations. These synthetic examples use a cumulative curve on a 0–30 hour scale. The vertical axis shows percentage completed. The curve interpolates between cumulative counts from the synthetic observations; it is a historical reference, not a completion forecast. An elapsed marker matches the supplied assessment color and uses a contrasting outline to show the current observation. P50 (9 hours) and P90 (18 hours) pair each percentile with its duration directly beneath the tick. The pairs share a line when space permits and stack in very narrow references. These landmarks describe completed durations independently of the ongoing elapsed duration; they do not establish health or predict completion.
 

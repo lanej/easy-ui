@@ -97,6 +97,7 @@ export function DurationReferenceExample({
   locale = "en",
   regions = [],
   currentAssessment,
+  section = "all",
   visualization = "cumulative",
   showDistribution = true,
 }: {
@@ -104,6 +105,7 @@ export function DurationReferenceExample({
   locale?: "en" | "fr";
   regions?: readonly DurationHealthRegion[];
   currentAssessment?: HealthIndicatorAssessment;
+  section?: "all" | "primary" | "details";
   visualization?: ReferenceVisualization;
   showDistribution?: boolean;
 }) {
@@ -143,7 +145,8 @@ export function DurationReferenceExample({
     .join("; ");
 
   if (visualization === "none") return null;
-  const showCurve = visualization === "cumulative" || visualization === "both";
+  const hasCurve = visualization === "cumulative" || visualization === "both";
+  const showCurve = hasCurve && section !== "details";
   const regionHeader = visibleRegions.length > 0 && (
     <div className={styles.regionLabels} aria-hidden="true">
       {visibleRegions.map((region) => (
@@ -175,7 +178,7 @@ export function DurationReferenceExample({
           {description}
         </Text>
       </figcaption>
-      {!showCurve && regionHeader}
+      {!hasCurve && regionHeader}
       <div
         className={styles.histogram}
         role="img"
@@ -213,7 +216,7 @@ export function DurationReferenceExample({
         ))}
       </div>
       <Scale format={format} />
-      {!showCurve && regionLegend}
+      {!hasCurve && regionLegend}
     </figure>
   );
 
@@ -301,17 +304,21 @@ export function DurationReferenceExample({
           )}
         </figure>
       )}
-      {(visualization === "histogram" || visualization === "both") && histogram}
-      {visualization === "cumulative" && showDistribution && (
-        <details className={styles.disclosure}>
-          <summary>
-            {locale === "fr"
-              ? "Distribution de référence"
-              : "Reference distribution"}
-          </summary>
-          {histogram}
-        </details>
-      )}
+      {((visualization === "histogram" && section !== "details") ||
+        (visualization === "both" && section !== "primary")) &&
+        histogram}
+      {visualization === "cumulative" &&
+        showDistribution &&
+        section !== "primary" && (
+          <details className={styles.disclosure}>
+            <summary>
+              {locale === "fr"
+                ? "Distribution de référence"
+                : "Reference distribution"}
+            </summary>
+            {histogram}
+          </details>
+        )}
     </div>
   );
 }

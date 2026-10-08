@@ -19,6 +19,33 @@ describe("<HealthAssessment />", () => {
     },
   );
 
+  it("suppresses supporting reference details while loading or without a primary reference", () => {
+    const { rerender } = render(
+      <HealthAssessment
+        health={{ assessment: "healthy" }}
+        reference={<span>Primary reference</span>}
+        referenceDetails={<span>Supporting details</span>}
+      />,
+    );
+    expect(screen.getByText("Supporting details")).toBeVisible();
+    rerender(
+      <HealthAssessment
+        health={{ assessment: "healthy" }}
+        reference={<span>Primary reference</span>}
+        referenceDetails={<span>Supporting details</span>}
+        isLoading
+      />,
+    );
+    expect(screen.queryByText("Supporting details")).not.toBeInTheDocument();
+    rerender(
+      <HealthAssessment
+        health={{ assessment: "healthy" }}
+        referenceDetails={<span>Supporting details</span>}
+      />,
+    );
+    expect(screen.queryByText("Supporting details")).not.toBeInTheDocument();
+  });
+
   it("retains zero and the caller assessment without deriving health from duration or freshness", () => {
     render(
       <HealthAssessment

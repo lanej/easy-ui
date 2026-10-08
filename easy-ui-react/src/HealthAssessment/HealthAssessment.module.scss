@@ -36,7 +36,8 @@
   overflow-wrap: anywhere;
 }
 
-.reference {
+.reference,
+.referenceDetails {
   @include font-style("body2");
   min-inline-size: 0;
   overflow-wrap: anywhere;
@@ -57,6 +58,14 @@
 @container (min-width: 560px) {
   .layout[data-has-reference="true"] {
     grid-template-columns: minmax(0, 268px) minmax(0, 1fr);
-    align-items: start;
+    align-items: center;
+    row-gap: design-token("space.1");
+
+    .summary {
+      align-items: center;
+    }
+    .referenceDetails {
+      grid-column: 2;
+    }
   }
 }
