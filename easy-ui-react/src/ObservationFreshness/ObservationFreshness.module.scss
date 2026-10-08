@@ -1,0 +1,12 @@
+@use "../styles/common" as *;
+
+.root {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: design-token("space.1");
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+}

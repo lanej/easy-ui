@@ -1,0 +1,46 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { HealthAssessment } from "./HealthAssessment";
+import * as Stories from "./HealthAssessment.stories";
+
+<Meta of={Stories} />
+
+# HealthAssessment
+
+Compose a supplied health assessment, optional duration observation, optional reference content, and optional freshness. The application owns health thresholds and freshness policy. This molecule does not compare durations against references or classify observations.
+
+<Canvas of={Stories.Default} />
+
+```tsx
+<HealthAssessment
+  health={{ assessment: "healthy", label: "As expected" }}
+  observation={{ value: 6, unit: "hours" }}
+  freshness={{ state: "fresh", observedAt: "2026-01-15T12:00:00Z" }}
+  reference={<span>Typical duration: 9 hours</span>}
+/>
+```
+
+## Preserve data states
+
+Omit `observation` for an assessment that does not measure duration. If you supply an observation, null, negative, or nonfinite values suppress the assessment and show unavailable states. Zero remains a real observation. An omitted assessment remains unassessed; it is never inferred from the duration.
+
+<Canvas of={Stories.MissingObservation} />
+<Canvas of={Stories.Unassessed} />
+
+Freshness is independent from health. A stale observation retains its caller-supplied assessment, clearly accompanied by stale labeling. If application policy requires suppressing a stale assessment, supply `health.availability="unavailable"`. Keep values, assessments, and reference content coherent in the application.
+
+<Canvas of={Stories.StaleObservation} />
+
+Loading suppresses previous observation, assessment, and reference content. Each atom displays its localized loading state. Reference content is an optional composition slot; it introduces no built-in chart or reference distribution.
+
+<Canvas of={Stories.Loading} />
+
+## Dense and localized layouts
+
+The compact size passes through to the atoms. Summary content wraps within its container. Localize each atom's labels, duration formatting, and accessible names; label the containing group with `accessibilityLabel`.
+
+<Canvas of={Stories.Compact} />
+<Canvas of={Stories.LocalizedNarrow} />
+
+## Properties
+
+<ArgTypes of={HealthAssessment} />

@@ -1,0 +1,38 @@
+import { ArgTypes, Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { HealthIndicator } from "./HealthIndicator";
+import * as Stories from "./HealthIndicator.stories";
+
+<Meta of={Stories} />
+
+# HealthIndicator
+
+A compact atom displaying an application-supplied health assessment using a Pill and visible text. It never calculates health, risk, thresholds, or recommended action.
+
+<Canvas of={Stories.Default} />
+<Controls of={Stories.Default} />
+
+```tsx
+import { HealthIndicator } from "@easypost/easy-ui/HealthIndicator";
+
+<HealthIndicator assessment="healthy" label="As expected" />;
+```
+
+## Supplied assessments and data states
+
+Choose `healthy`, `degraded`, or `unhealthy` in the application. Omitting the assessment, passing `null`, or supplying an unknown runtime value displays neutral “Not assessed”. Missing assessment must never imply healthy.
+
+Set `availability="unavailable"` when an observation cannot support an assessment. This suppresses the previous assessment and its label. Set `isLoading` while retrieving a result; it takes precedence over unavailable and suppresses any previous assessment with a neutral status label. The component does not infer freshness or availability from timestamps.
+
+<Canvas of={Stories.AllStates} />
+
+## Compact and localized layouts
+
+Use `size="sm"` in dense tables. Labels wrap within the available width rather than truncating information. Visible words identify each state independently of its color. `label` localizes the current assessment or unassessed wording; `unavailableLabel` and `loadingLabel` localize their distinct states. Set the surrounding language and optional `accessibilityLabel` to identify the subject. The atom is noninteractive and adds no keyboard stops.
+
+<Canvas of={Stories.Compact} />
+<Canvas of={Stories.LocalizedNarrow} />
+<Canvas of={Stories.LargeText} />
+
+## Properties
+
+<ArgTypes of={HealthIndicator} />

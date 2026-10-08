@@ -1,0 +1,38 @@
+import { ArgTypes, Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { DurationValue } from "./DurationValue";
+import * as Stories from "./DurationValue.stories";
+
+<Meta of={Stories} />
+
+# DurationValue
+
+Display a supplied duration and its explicit unit. This atom does not convert units, compare against a distribution, or decide whether a duration is healthy.
+
+<Canvas of={Stories.Default} />
+<Controls of={Stories.Default} />
+
+```tsx
+import { DurationValue } from "@easypost/easy-ui/DurationValue";
+
+<DurationValue value={6} unit="hours" />;
+```
+
+## States and precision
+
+Zero is a real duration. Use `null` for unavailable observations; negative and nonfinite values also display the unavailable label. Loading suppresses the previous number and unit. The default formatter preserves supplied precision; applications choose any rounding and the corresponding unit.
+
+<Canvas of={Stories.States} />
+<Canvas of={Stories.Compact} />
+
+## Localization and accessibility
+
+Supply localized `unit`, `formatValue`, `accessibilityLabel`, `loadingLabel`, and `emptyLabel`. The default accessible description combines the formatted number and unit. Supply `accessibilityValueText` for a full localized description, keeping it synchronized with the current value. Loading and unavailable states ignore that description. Set the surrounding language for pronunciation.
+
+The value has no keyboard interaction. Text wraps within its container; test long units and enlarged text in the composition where it is used.
+
+<Canvas of={Stories.LocalizedNarrow} />
+<Canvas of={Stories.LargeText} />
+
+## Properties
+
+<ArgTypes of={DurationValue} />

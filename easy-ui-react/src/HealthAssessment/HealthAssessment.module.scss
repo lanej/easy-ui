@@ -1,0 +1,27 @@
+@use "../styles/common" as *;
+
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  gap: design-token("space.1");
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  vertical-align: middle;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: design-token("space.1");
+  min-inline-size: 0;
+}
+
+.reference {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.root[data-size="sm"] {
+  gap: design-token("space.0.5");
+}
