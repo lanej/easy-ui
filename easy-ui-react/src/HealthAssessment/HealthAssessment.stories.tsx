@@ -266,6 +266,97 @@ export const WithoutReference: Story = {
     showReferenceDistribution: false,
   },
 };
+type ReferenceOption = {
+  name: string;
+  visualization: ReferenceVisualization;
+  bands: boolean;
+  distribution?: boolean;
+  expanded?: boolean;
+};
+
+const primaryOptions: ReferenceOption[] = [
+  { name: "Curve · bands on", visualization: "cumulative", bands: true },
+  { name: "Curve · bands off", visualization: "cumulative", bands: false },
+  { name: "Histogram · bands on", visualization: "histogram", bands: true },
+  { name: "Histogram · bands off", visualization: "histogram", bands: false },
+  { name: "Both · bands on", visualization: "both", bands: true },
+  { name: "Both · bands off", visualization: "both", bands: false },
+];
+const distributionOptions: ReferenceOption[] = [
+  {
+    name: "Distribution closed · bands on",
+    visualization: "cumulative",
+    bands: true,
+    distribution: true,
+  },
+  {
+    name: "Distribution open · bands on",
+    visualization: "cumulative",
+    bands: true,
+    distribution: true,
+    expanded: true,
+  },
+  {
+    name: "Distribution closed · bands off",
+    visualization: "cumulative",
+    bands: false,
+    distribution: true,
+  },
+  {
+    name: "Distribution open · bands off",
+    visualization: "cumulative",
+    bands: false,
+    distribution: true,
+    expanded: true,
+  },
+  { name: "Reference off", visualization: "none", bands: false },
+];
+
+function ReferenceOptionExample({ option }: { option: ReferenceOption }) {
+  const element = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const details = element.current?.querySelector("details");
+    if (details) details.open = option.expanded === true;
+  }, [option.expanded]);
+  return (
+    <section className={styles.option} data-reference-option={option.name}>
+      <Text as="h3" variant="body2" weight="semibold">
+        {option.name}
+      </Text>
+      <div ref={element}>
+        {renderExample({
+          ...defaultProps,
+          referenceVisualization: option.visualization,
+          showHealthBands: option.bands,
+          showReferenceDistribution: option.distribution === true,
+        })}
+      </div>
+    </section>
+  );
+}
+
+export const ReferenceOptions: Story = {
+  render: () => (
+    <div className={styles.options}>
+      {primaryOptions.map((option) => (
+        <ReferenceOptionExample key={option.name} option={option} />
+      ))}
+    </div>
+  ),
+  parameters: { controls: { disable: true } },
+};
+
+export const DistributionOptions: Story = {
+  render: () => (
+    <div className={styles.options}>
+      {distributionOptions.map((option) => (
+        <ReferenceOptionExample key={option.name} option={option} />
+      ))}
+    </div>
+  ),
+  parameters: { controls: { disable: true } },
+};
+
 export const Compact: Story = { args: { ...defaultProps, size: "sm" } };
 export const AssessmentOnly: Story = {
   args: { label: "Observation health", health: { assessment: "degraded" } },

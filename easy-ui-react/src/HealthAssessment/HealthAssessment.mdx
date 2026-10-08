@@ -68,6 +68,13 @@ In application code, omit the optional `reference` prop for value, assessment, a
 <Canvas of={Stories.WithoutHealthBands} />
 <Canvas of={Stories.WithoutReference} />
 
+## Compare reference options
+
+Each example uses the same observation and width. Column heights follow the selected graphics and health bands; opening the distribution extends both columns. Omitting the reference returns to a compact observation.
+
+<Canvas of={Stories.ReferenceOptions} />
+<Canvas of={Stories.DistributionOptions} />
+
 ## Preserve distinct data states
 
 - **Loading:** suppress the previous value, assessment, and reference while fetching.
