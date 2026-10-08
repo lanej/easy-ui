@@ -279,9 +279,9 @@ export async function checkRichInspection({
       p = await point([0, 0]);
       await browser.move(p.x, p.y);
       await browser.wait(openOverlay);
-      await browser.evaluate(() =>
-        window.__richInspectionMap.easeTo({ zoom: 5.2, duration: 0 }),
-      );
+      await browser.evaluate(() => {
+        window.__richInspectionMap.easeTo({ zoom: 5.2, duration: 0 });
+      });
       await browser.wait(closed);
       check(`${theme}/${width}: map movement dismisses hover`, true);
       if (clean) await clean(`rich-${theme}-${width}`);
