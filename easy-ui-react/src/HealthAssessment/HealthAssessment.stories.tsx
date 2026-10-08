@@ -292,7 +292,7 @@ function AssessmentExamples() {
     <div className={styles.comparisons}>
       {assessmentExamples.map((props: HealthAssessmentProps) => (
         <div className={styles.example} key={props.health.assessment}>
-          <HealthAssessment {...props} freshness={undefined} />
+          <HealthAssessment {...props} />
         </div>
       ))}
     </div>

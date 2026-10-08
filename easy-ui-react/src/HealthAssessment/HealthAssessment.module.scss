@@ -1,12 +1,25 @@
 @use "../styles/common" as *;
 
 .root {
-  display: inline-flex;
-  flex-direction: column;
+  display: inline-block;
+  inline-size: 100%;
+  max-inline-size: 640px;
+  container-type: inline-size;
+  min-inline-size: 0;
+  vertical-align: middle;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: design-token("space.3");
+}
+
+.information {
+  display: grid;
+  align-content: start;
   gap: design-token("space.1");
   min-inline-size: 0;
-  max-inline-size: 100%;
-  vertical-align: middle;
 }
 
 .summary {
@@ -31,5 +44,19 @@
 }
 
 .root[data-size="sm"] {
-  gap: design-token("space.0.5");
+  max-inline-size: 320px;
+
+  .information {
+    gap: design-token("space.0.5");
+  }
+  .layout {
+    gap: design-token("space.1.5");
+  }
+}
+
+@container (min-width: 560px) {
+  .layout[data-has-reference="true"] {
+    grid-template-columns: minmax(0, 268px) minmax(0, 1fr);
+    align-items: start;
+  }
 }

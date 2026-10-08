@@ -3,6 +3,7 @@
 .overview {
   display: grid;
   max-inline-size: 960px;
+  inline-size: 100%;
   gap: design-token("space.4");
 }
 
@@ -11,6 +12,7 @@
   justify-items: start;
   gap: design-token("space.2");
   min-inline-size: 0;
+  inline-size: 100%;
 
   & + & {
     padding-block-start: design-token("space.3");
@@ -26,13 +28,18 @@
 .comparisons {
   display: grid;
   inline-size: 100%;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-  column-gap: design-token("space.3");
+  max-inline-size: 640px;
+  grid-template-columns: minmax(0, 1fr);
   row-gap: design-token("space.2");
 }
 
 .example {
   min-inline-size: 0;
+
+  & + & {
+    padding-block-start: design-token("space.3");
+    border-block-start: 1px solid design-token("color.neutral.200");
+  }
 }
 
 .states {

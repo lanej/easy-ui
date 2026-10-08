@@ -2,39 +2,47 @@
 
 .root {
   @include font-style("caption");
-  margin: 0;
-  inline-size: 280px;
-  max-inline-size: 100%;
+  inline-size: 100%;
   min-inline-size: 0;
   color: design-token("color.neutral.700");
   font-variant-numeric: tabular-nums;
   container-type: inline-size;
 }
 
-.plot {
-  position: relative;
-  block-size: 56px;
-  margin-block-start: design-token("space.1");
-  border-block-end: 1px solid design-token("color.neutral.500");
-
-  &[data-has-regions="true"] {
-    margin-block-start: 0;
-  }
+.figure,
+.distribution {
+  margin: 0;
 }
 
 .regionLabels {
   display: flex;
-  margin-block-start: design-token("space.1");
+  margin-block-end: design-token("space.2");
 }
 
 .regionLabel {
-  box-sizing: border-box;
-  padding: 2px;
   text-align: center;
+  color: design-token("color.neutral.900");
+
+  small {
+    display: block;
+    font: inherit;
+    color: design-token("color.neutral.700");
+    margin-block-start: 2px;
+  }
 }
 
-.compactRegions {
-  display: none;
+.plot {
+  position: relative;
+  block-size: 12px;
+  margin-block-start: design-token("space.2");
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  background: design-token("color.neutral.500");
+  border-radius: 3px;
+  overflow: hidden;
 }
 
 .region {
@@ -47,16 +55,111 @@
     in ("healthy": "positive", "degraded": "warning", "unhealthy": "negative")
 {
   .region[data-assessment="#{$assessment}"] {
-    background: design-token("color.#{$tone}.050");
+    background: design-token("color.#{$tone}.700");
   }
-  .regionLabel[data-assessment="#{$assessment}"] {
+  .compactRegions > span[data-assessment="#{$assessment}"] {
     background: design-token("color.#{$tone}.100");
     color: design-token("color.#{$tone}.900");
   }
 }
 
-.bins {
+.percentile {
+  position: absolute;
+  inset-block: 0;
+  inline-size: 1px;
+  background: design-token("color.neutral.000");
+}
+
+.percentile::after,
+.histogramPercentile::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  inline-size: 1px;
+  block-size: 11px;
+  background: design-token("color.neutral.700");
+}
+
+.elapsed {
+  position: absolute;
+  top: -6px;
+  inline-size: 3px;
+  block-size: 24px;
+  transform: translateX(-50%);
+  background: design-token("color.primary.600");
+  box-shadow: 0 0 0 2px design-token("color.neutral.000");
+}
+
+.marker {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  inline-size: 9px;
+  block-size: 9px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: design-token("color.primary.600");
+  box-shadow: 0 0 0 2px design-token("color.neutral.000");
+}
+
+.scale {
   position: relative;
+  block-size: 56px;
+}
+
+.endpoint {
+  position: absolute;
+  top: 8px;
+  white-space: nowrap;
+
+  &:last-child {
+    right: 0;
+  }
+}
+
+.percentileLabel {
+  position: absolute;
+  top: 15px;
+  transform: translateX(-50%);
+  text-align: center;
+  white-space: nowrap;
+
+  strong {
+    display: block;
+    font-weight: 500;
+    color: design-token("color.neutral.900");
+  }
+}
+
+.compactRegions {
+  display: none;
+}
+
+.valueState {
+  margin-block-start: design-token("space.0.5");
+}
+
+.disclosure {
+  margin-block-start: design-token("space.1");
+
+  summary {
+    cursor: pointer;
+    padding-block: design-token("space.0.5");
+    overflow-wrap: anywhere;
+  }
+}
+
+.distribution {
+  padding-block-start: design-token("space.1.5");
+}
+
+.histogram {
+  position: relative;
+  block-size: 72px;
+  margin-block-start: design-token("space.2");
+}
+
+.bins {
   display: grid;
   grid-template-columns: repeat(10, minmax(0, 1fr));
   gap: 2px;
@@ -70,119 +173,55 @@
   border-start-end-radius: 2px;
 }
 
-.percentile,
-.elapsed {
+.histogramPercentile {
   position: absolute;
   inset-block: 0;
-  transform: translateX(-50%);
-  box-shadow: 0 0 0 1px design-token("color.neutral.000");
-}
-
-.percentile {
   border-inline-start: 1px dashed design-token("color.neutral.700");
-}
-
-.elapsed {
-  inline-size: 2px;
-  background: design-token("color.primary.600");
-}
-
-.marker {
-  position: absolute;
-  top: -3px;
-  left: 50%;
-  inline-size: 8px;
-  block-size: 8px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: design-token("color.primary.600");
   box-shadow: 0 0 0 1px design-token("color.neutral.000");
-}
-
-.axis {
-  position: relative;
-  block-size: 1.5em;
-  margin-block-start: design-token("space.0.5");
-
-  > span {
-    position: absolute;
-    transform: translateX(-50%);
-    white-space: nowrap;
-  }
-  > span:first-child {
-    transform: none;
-  }
-  > span:last-child {
-    transform: translateX(-100%);
-  }
-}
-
-.caption {
-  display: grid;
-  gap: design-token("space.0.5");
-  margin-block-start: design-token("space.0.5");
-}
-
-.landmarks {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: design-token("space.1.5");
-  row-gap: design-token("space.0.5");
-}
-
-.current {
-  display: inline-flex;
-  align-items: baseline;
-  gap: design-token("space.0.5");
-}
-
-.key {
-  flex: none;
-  inline-size: 6px;
-  block-size: 6px;
-  border-radius: 50%;
-  background: design-token("color.primary.600");
 }
 
 @container (max-width: 219px) {
   .regionLabels {
     display: none;
   }
-  .plot[data-has-regions="true"] {
-    margin-block-start: design-token("space.1");
-  }
   .compactRegions {
     display: grid;
     gap: 2px;
-    margin-block-start: design-token("space.0.5");
 
     > span {
       display: flex;
       justify-content: space-between;
-      column-gap: design-token("space.0.5");
+      gap: design-token("space.0.5");
       padding-inline: design-token("space.0.5");
     }
   }
 }
 
-@media (forced-colors: active) {
-  .region[data-assessment] {
-    background: Canvas;
-    border-inline-start: 1px dotted CanvasText;
+@media (pointer: coarse) {
+  .disclosure summary {
+    min-block-size: 44px;
   }
-  .regionLabel[data-assessment] {
-    color: CanvasText;
-    background: Canvas;
+}
+
+@media (forced-colors: active) {
+  .track,
+  .region[data-assessment] {
+    background: GrayText;
+  }
+  .region[data-assessment] {
+    border-inline-start: 1px solid CanvasText;
+  }
+  .elapsed,
+  .marker {
+    background: CanvasText;
   }
   .bin {
     background: GrayText;
   }
-  .elapsed,
-  .marker,
-  .key {
-    background: CanvasText;
-  }
-  .percentile {
+  .histogramPercentile {
     border-color: CanvasText;
+  }
+  .percentileLabel strong {
+    color: CanvasText;
   }
 }

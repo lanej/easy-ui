@@ -50,31 +50,43 @@ export function HealthAssessment({
       aria-labelledby={label != null ? labelId : undefined}
       aria-busy={isLoading}
     >
-      {label != null && (
-        <div id={labelId} className={styles.label}>
-          <Text as="span" variant="body2" color="neutral.700">
-            {label}
-          </Text>
+      <div
+        className={styles.layout}
+        data-has-reference={!isLoading && reference != null}
+      >
+        <div className={styles.information}>
+          {label != null && (
+            <div id={labelId} className={styles.label}>
+              <Text as="span" variant="body2" color="neutral.700">
+                {label}
+              </Text>
+            </div>
+          )}
+          <div className={styles.summary}>
+            {observation !== undefined && (
+              <DurationValue
+                {...observation}
+                size={size}
+                isLoading={isLoading}
+              />
+            )}
+            {observation === undefined ||
+            (!isLoading && !missingObservation) ? (
+              <HealthIndicator {...health} size="sm" isLoading={isLoading} />
+            ) : null}
+          </div>
+          {!isLoading &&
+            freshness !== undefined &&
+            !(
+              missingObservation &&
+              freshness.state !== "fresh" &&
+              freshness.state !== "stale"
+            ) && <ObservationFreshness {...freshness} size={size} />}
         </div>
-      )}
-      <div className={styles.summary}>
-        {observation !== undefined && (
-          <DurationValue {...observation} size={size} isLoading={isLoading} />
+        {!isLoading && reference != null && (
+          <div className={styles.reference}>{reference}</div>
         )}
-        {observation === undefined || (!isLoading && !missingObservation) ? (
-          <HealthIndicator {...health} size="sm" isLoading={isLoading} />
-        ) : null}
       </div>
-      {!isLoading && reference != null && (
-        <div className={styles.reference}>{reference}</div>
-      )}
-      {!isLoading &&
-        freshness !== undefined &&
-        !(
-          missingObservation &&
-          freshness.state !== "fresh" &&
-          freshness.state !== "stale"
-        ) && <ObservationFreshness {...freshness} size={size} />}
     </div>
   );
 }

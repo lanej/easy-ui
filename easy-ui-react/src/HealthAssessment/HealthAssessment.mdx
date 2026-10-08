@@ -6,7 +6,7 @@ import * as Stories from "./HealthAssessment.stories";
 
 # HealthAssessment
 
-Give an observation a clear reading order: what was measured, its value and assessment, a reference, then when it was observed. Use this molecule wherever an individual observation needs that context.
+Keep an observation's name, value, assessment, and observation time together, with a reference alongside them. Use this molecule wherever an individual observation needs that context.
 
 <Canvas of={Stories.Default} />
 
@@ -31,11 +31,13 @@ Give an observation a clear reading order: what was measured, its value and asse
 
 ## Keep value and assessment together
 
-The value carries the most visual weight. Its adjacent small pill states the supplied assessment without relying on color. The graphical reference supports the value; freshness stays quieter beneath it.
+The value carries the most visual weight. Its adjacent small pill states the supplied assessment without relying on color. Freshness stays quieter beneath it. At wider widths the reference sits beside this information; narrow and compact layouts stack it below.
 
-The application supplies each assessment, reference, and freshness state. The molecule does not compare durations, infer thresholds, or classify observations. These synthetic examples share a completed-duration histogram on a 0–30 hour scale. A blue elapsed marker shows the current observation; dashed markers locate P50 (9 hours) and P90 (18 hours). The completed observations are independent of the ongoing elapsed duration. Percentiles do not establish health or predict completion.
+The application supplies each assessment, reference, and freshness state. The molecule does not compare durations, infer thresholds, or classify observations. These synthetic examples use a threshold track on a 0–30 hour scale. A blue elapsed marker shows the current observation. P50 (9 hours) and P90 (18 hours) are labeled directly beneath their ticks. These landmarks describe completed durations independently of the ongoing elapsed duration; they do not establish health or predict completion.
 
-Labeled background bands show illustrative assessment ranges supplied by the application: **As expected** below 10 hours, **Needs attention** from 10 to less than 20 hours, and **Outside expectations** at 20 hours or more. These boundaries are independent of the distribution's percentiles. The last range continues beyond the displayed 30-hour scale. The story's application policy supplies both the pill and the ranges, keeping them consistent when the observation changes.
+Expand **Reference distribution** to inspect the completed-duration histogram. The disclosure uses native keyboard behavior, and its histogram uses the same scale and percentile positions as the track.
+
+Labeled track regions show illustrative assessment ranges supplied by the application: **As expected** below 10 hours, **Needs attention** from 10 to less than 20 hours, and **Outside expectations** at 20 hours or more. These boundaries are independent of the distribution's percentiles. The last range continues beyond the displayed 30-hour scale. The story's application policy supplies both the pill and the ranges, keeping them consistent when the observation changes.
 
 <Canvas of={Stories.Assessments} />
 
