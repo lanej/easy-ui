@@ -28,7 +28,8 @@ const replace = { replace: true } as unknown as RouterOptions;
 const Template = (args: ButtonProps) => <Button {...args} />;
 
 const meta: Meta<typeof Button> = {
-  title: "Components/Button/Button",
+  id: "components-button-button",
+  title: "Atoms/Actions/Button",
   argTypes: {
     iconAtStart: createLabelledOptionsControl({
       ArrowBack: ArrowBackIcon,

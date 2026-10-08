@@ -21,7 +21,8 @@ const Content = (props: PlaceholderBoxProps) => (
 const Template = (args: HorizontalStackProps) => <HorizontalStack {...args} />;
 
 const meta: Meta<typeof HorizontalStack> = {
-  title: "Primitives/HorizontalStack",
+  id: "primitives-horizontalstack",
+  title: "Atoms/Layout/HorizontalStack",
   component: HorizontalStack,
   args: {
     gap: "2",

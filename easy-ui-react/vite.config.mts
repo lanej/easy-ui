@@ -20,10 +20,22 @@ export default defineConfig({
     react({ jsxRuntime: "automatic" }),
     viteStaticCopy({
       targets: [
-        { src: "package.json", dest: ".", transform: cleanPkgJsonForDist },
+        {
+          src: "package.json",
+          dest: ".",
+          transform: (contents) =>
+            cleanPkgJsonForDist(contents, { preserveExports: true }),
+        },
         { src: "README.md", dest: "." },
         { src: "CHANGELOG.md", dest: "." },
         { src: "src/styles", dest: "." },
+        {
+          src: [
+            "src/NetworkMap/maplibre-gl.css",
+            "src/NetworkMap/maplibre-gl-worker.mjs",
+          ],
+          dest: "NetworkMap",
+        },
       ],
     }),
   ],
@@ -54,6 +66,8 @@ export default defineConfig({
       external: (id) =>
         [
           "react",
+          "echarts",
+          "maplibre-gl",
           "react-dom",
           "vitest",
           "@testing-library/react",
@@ -78,7 +92,7 @@ export default defineConfig({
     environment: "jsdom",
     css: true,
     setupFiles: "./vitest.setup.ts",
-    exclude: ["src/utilities/test.ts"],
+    exclude: ["**/node_modules/**", "src/utilities/test.ts"],
   },
 });
 

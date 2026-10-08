@@ -14,7 +14,8 @@ type Story = StoryObj<typeof DropdownButton>;
 const Template = (args: DropdownButtonProps) => <DropdownButton {...args} />;
 
 const meta: Meta<typeof DropdownButton> = {
-  title: "Components/Button/DropdownButton",
+  id: "components-button-dropdownbutton",
+  title: "Molecules/Actions/DropdownButton",
   argTypes: {
     children: {
       control: "text",

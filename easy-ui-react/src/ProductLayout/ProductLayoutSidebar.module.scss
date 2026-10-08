@@ -12,9 +12,9 @@
   order: 2;
   z-index: 2;
 
-  background: design-token("color.gray.000");
+  background: design-token("color.neutral.000");
   border: design-token("shape.border_width.1") solid
-    design-token("color.gray.300");
+    design-token("color.neutral.300");
   border-radius: design-token("space.0.5");
   box-shadow: design-token("shadow.overlay");
   opacity: 0;

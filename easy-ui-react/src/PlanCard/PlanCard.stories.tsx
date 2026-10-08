@@ -12,7 +12,8 @@ import { PlanCardIllustrationBuilding04 } from "./illustrations/Building04";
 type Story = StoryObj<typeof PlanCard>;
 
 const meta: Meta<typeof PlanCard> = {
-  title: "Components/Cards/PlanCard",
+  id: "components-cards-plancard",
+  title: "Molecules/Cards/PlanCard",
   component: PlanCard,
   decorators: [
     (Story) => (

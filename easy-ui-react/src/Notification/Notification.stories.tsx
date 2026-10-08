@@ -12,7 +12,8 @@ import { InlineStoryDecorator } from "../utilities/storybook";
 type Story = StoryObj;
 
 const meta: Meta<typeof Notification> = {
-  title: "Components/Notification",
+  id: "components-notification",
+  title: "Molecules/Feedback/Notification",
   argTypes: {},
 };
 

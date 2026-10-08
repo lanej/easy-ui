@@ -1,5 +1,7 @@
 {
   "theme.light": {
+    "color.text.on-status": { "value": "{color.blue.800}" },
+    "color.text.on-warning": { "value": "{color.gray.900}" },
     "color.primary.900": { "value": "{color.blue.900}" },
     "color.primary.800": { "value": "{color.blue.800}" },
     "color.primary.700": { "value": "{color.blue.700}" },

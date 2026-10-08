@@ -72,6 +72,7 @@ describe("<Modal />", () => {
   it("should be dismissable by close button", async () => {
     const [{ user }] = await renderAndOpenModal();
     const closeButton = screen.getByRole("button", { name: "Close modal" });
+    expect(closeButton).toHaveAttribute("type", "button");
     await userClick(user, closeButton);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });

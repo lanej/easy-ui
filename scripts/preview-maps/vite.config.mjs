@@ -1,0 +1,50 @@
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "vite";
+const local = (path) => fileURLToPath(new URL(path, import.meta.url));
+export default defineConfig({
+  base: process.env.EASY_UI_PREVIEW_BASE || "/",
+  publicDir: local("../../.storybook/public"),
+  esbuild: {
+    tsconfigRaw: JSON.stringify({ compilerOptions: { jsx: "react-jsx" } }),
+  },
+  resolve: {
+    alias: {
+      "@easypost/easy-ui-tokens/js/tokens": local(
+        "./.preview-tokens/dist/js/tokens.mjs",
+      ),
+      "@easypost/easy-ui-tokens": local("./.preview-tokens/dist"),
+      "overlayscrollbars/overlayscrollbars.css": local(
+        "./node_modules/overlayscrollbars/styles/overlayscrollbars.css",
+      ),
+      ...Object.fromEntries(
+        [
+          "react",
+          "react-dom",
+          "react-aria",
+          "react-aria-components",
+          "@react-aria/utils",
+          "react-stately",
+          "maplibre-gl",
+          "echarts",
+          "lodash",
+          "@easypost/easy-ui-icons",
+        ].map((name) => [name, local(`./node_modules/${name}`)]),
+      ),
+    },
+  },
+  css: {
+    preprocessorOptions: { scss: { silenceDeprecations: ["legacy-js-api"] } },
+  },
+  build: {
+    manifest: true,
+    rollupOptions: {
+      input: {
+        gallery: local("./index.html"),
+        lightweight: local("./lightweight.html"),
+        regressions: local("./regressions.html"),
+        composition: local("./composition.html"),
+        richInspection: local("./rich-inspection.html"),
+      },
+    },
+  },
+});

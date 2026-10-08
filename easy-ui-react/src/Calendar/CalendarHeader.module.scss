@@ -1,14 +1,30 @@
 @use "../styles/common" as *;
 
 .CalendarHeader {
-  @include component-token("calendar-header", "line-height", 19.5px);
   @include component-token("calendar-header", "border-radius", 7px);
   width: 100%;
-  background-color: design-token("color.primary.800");
+  background-color: design-token("color.neutral.050");
   border-top-left-radius: component-token("calendar-header", "border-radius");
   border-top-right-radius: component-token("calendar-header", "border-radius");
   padding: design-token("space.1");
-  span {
-    line-height: component-token("calendar-header", "line-height");
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: design-token("shape.border_radius.md");
+
+  &:hover:not(:disabled) {
+    background: design-token("color.neutral.100");
   }
 }

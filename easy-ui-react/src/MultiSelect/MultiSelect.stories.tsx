@@ -43,7 +43,8 @@ const fruits = [
 type Story = StoryObj<typeof MultiSelect>;
 
 const meta: Meta<typeof MultiSelect> = {
-  title: "Components/MultiSelect",
+  id: "components-multiselect",
+  title: "Molecules/Forms/MultiSelect",
   component: MultiSelect,
   args: {},
   argTypes: {

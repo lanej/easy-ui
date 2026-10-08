@@ -22,7 +22,8 @@ const sharedIconButtonProps = {
 const Template = (args: IconButtonProps) => <IconButton {...args} />;
 
 const meta: Meta<typeof IconButton> = {
-  title: "Components/Button/IconButton",
+  id: "components-button-iconbutton",
+  title: "Atoms/Actions/IconButton",
   argTypes: {
     icon: createLabelledOptionsControl({
       ArrowBack: ArrowBackIcon,

@@ -7,7 +7,8 @@ type Story = StoryObj<typeof Banner>;
 const Template = (args: BannerProps) => <Banner {...args} />;
 
 const meta: Meta<typeof Banner> = {
-  title: "Components/Banner",
+  id: "components-banner",
+  title: "Molecules/Feedback/Banner",
   argTypes: {
     emphasisText: {
       control: "text",

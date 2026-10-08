@@ -7,7 +7,7 @@ import * as DatePickerStories from "./DatePicker.stories";
 
 # DatePicker
 
-DatePicker combine a DateField and a Calendar popover to allow users to enter or select a date.
+DatePicker combines keyboard-editable date segments with a separate calendar button.
 
 <Canvas of={DatePickerStories.Standalone} />
 
@@ -50,6 +50,37 @@ Use `isDisabled` to disabled the DatePicker entirely.
 <Canvas of={DatePickerStories.Disabled} />
 
 <Controls of={DatePickerStories.Disabled} include={["isDisabled"]} />
+
+## Forms and clearing
+
+Use `name` to submit the selected value through `FormData`. Calendar dates serialize
+as `YYYY-MM-DD`; date-time and zoned values retain their corresponding date value
+format. Use values from `@internationalized/date`, not JavaScript `Date`.
+
+`isClearable` adds a separate clear button and defaults to `false`. Clearing requests
+`null` through `onChange`. Controlled callers must accept that value to clear the
+field. `clearLabel` replaces the clear button's accessible label.
+
+`description` and `errorMessage` are associated with the field. Use `isRequired`,
+`minValue`, `maxValue`, and `isDateUnavailable` for validation.
+`validationBehavior="native"` blocks invalid form submission; the default `"aria"`
+reports invalid state without blocking submission. Applications own submission.
+
+<Canvas of={DatePickerStories.Form} />
+
+## Read-only values
+
+`isReadOnly` prevents editing, opening the calendar, and clearing while retaining
+the value in form submission. `isDisabled` also omits the value from submission.
+
+<Canvas of={DatePickerStories.ReadOnly} />
+
+## Localization
+
+Date segments, month names, weekday names, and calendar navigation follow the
+React Aria locale. Wrap the picker in `I18nProvider` to override it.
+
+<Canvas of={DatePickerStories.Localized} />
 
 ## Controlled Selection
 

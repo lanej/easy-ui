@@ -1,0 +1,117 @@
+import type { ReactNode } from "react";
+import type { VisualizationTypography } from "../visualization/typography";
+
+/** An observed input. IDs are unique within the signals of one composition. */
+export type ScoreSignalData = {
+  id: string;
+  label: string;
+  /** null means unavailable; false and zero are real observations. */
+  value: string | number | boolean | null;
+  /** Application formatting for an available, valid observation. */
+  displayValue?: string;
+  /** Application-owned meaning; never inferred from the observation. Defaults to neutral. */
+  sentiment?: "neutral" | "positive" | "warning" | "negative";
+  /** Visible meaning alongside the value. Colored states have localizable defaults. */
+  statusLabel?: string;
+  /** Explicit rule state. false gives outgoing connectors a subdued dashed line.
+   * Never inferred from the value or sentiment; omitted means unspecified. */
+  triggered?: boolean;
+  /** Optional rich supporting detail, including charts, disclosed by the signal title. */
+  description?: ReactNode;
+};
+
+/** An application-calculated contribution, with an explicit cap and sources. */
+export type ScoreContributionData = {
+  /** Unique within the contributions of one composition. */
+  id: string;
+  label: string;
+  /** Signed exact value. null means unavailable. */
+  score: number | null;
+  /** A positive finite cap enables the zero-based meter. */
+  maxScore: number;
+  /** Application-owned meaning for an in-range contribution; neutral by default. */
+  sentiment?: "neutral" | "positive" | "warning" | "negative";
+  /** Signal IDs; several contributions may reference the same signal. */
+  signals: readonly string[];
+  /** Rich explanation (text, charts, or controls), mounted on demand by the title. */
+  explanation?: ReactNode;
+};
+
+/** The supplied result; Easy UI never sums contributions or infers a decision. */
+export type ScoreResultData = {
+  score: number | null;
+  /** Optional application-supplied maximum; never inferred from contributions. */
+  maxScore?: number;
+  /** Defaults to "Total score". */
+  label?: string;
+  /** Application-owned outcome, for example "Review required" or "Eligible". */
+  disposition?: string;
+  /** Business meaning is explicit and independent of the score's direction. */
+  sentiment?: "neutral" | "positive" | "negative";
+  /** Units, coverage, exposure, or other application-owned context. */
+  supportingText?: ReactNode;
+};
+
+/** Localizable interface text. Record labels and explanations belong to the caller. */
+export type ScoreCompositionLabels = {
+  signals?: string;
+  contributions?: string;
+  result?: string;
+  /** Accessible action labels for column disclosure controls. */
+  collapse?: string;
+  expand?: string;
+  noSignals?: string;
+  noContributions?: string;
+  missingValue?: string;
+  invalidValue?: string;
+  invalidScale?: string;
+  outsideScale?: string;
+  basedOn?: string;
+  noSources?: string;
+  unavailableSignal?: string;
+  explanation?: string;
+  yes?: string;
+  no?: string;
+  positiveSignal?: string;
+  warningSignal?: string;
+  negativeSignal?: string;
+  fullContribution?: string;
+  partialContribution?: string;
+  noContribution?: string;
+};
+
+/** Formatting and typography shared by the composition and its primitives. */
+export type ScorePresentationProps = {
+  /** Formats finite scores and caps. Defaults to two decimal places. */
+  formatScore?: (value: number) => string;
+  labels?: ScoreCompositionLabels;
+  typography?: VisualizationTypography;
+};
+
+/** The result stays visible while its supporting columns can be collapsed. */
+export type ScoreCompositionColumn = "signals" | "contributions";
+
+export type ScoreCompositionProps = ScorePresentationProps & {
+  signals: readonly ScoreSignalData[];
+  contributions: readonly ScoreContributionData[];
+  result: ScoreResultData;
+  /** Controlled collapsed columns. Nonempty supporting columns are collapsible. */
+  collapsedColumns?: readonly ScoreCompositionColumn[];
+  /** Initially collapsed columns (uncontrolled). Defaults to none. */
+  defaultCollapsedColumns?: readonly ScoreCompositionColumn[];
+  /** Requests the next collapsed columns; the result cannot be collapsed. */
+  onCollapsedColumnsChange?: (columns: ScoreCompositionColumn[]) => void;
+  /** Optional visible heading. Without a name, the region uses "Score composition". */
+  title?: string;
+  description?: ReactNode;
+  /** Version, timestamp, or coverage; rendered quietly below the heading. */
+  metadata?: ReactNode;
+  /** Scope or provenance displayed after the composition. */
+  footer?: ReactNode;
+  /** Use bare inside an application-owned card. Defaults to card. */
+  variant?: "card" | "bare";
+  /** Accessible name when the visible title is omitted or differs. */
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
+  "aria-describedby"?: string;
+};

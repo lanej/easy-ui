@@ -24,7 +24,8 @@ type Story = StoryObj<typeof Box>;
 const Template = (args: BoxProps) => <Box {...args} />;
 
 const meta: Meta<typeof Box> = {
-  title: "Primitives/Box",
+  id: "primitives-box",
+  title: "Atoms/Layout/Box",
   component: Box,
   args: {
     background: "primary.100",

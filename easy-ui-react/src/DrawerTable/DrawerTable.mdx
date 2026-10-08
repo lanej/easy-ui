@@ -1,0 +1,86 @@
+import React from "react";
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./DrawerTable.stories";
+
+<Meta of={Stories} />
+
+# DrawerTable
+
+Table-style summary rows with full-width vertical details, adapted from
+Logistics Services' parcel and lane worklists. Opening details does not repeat
+or replace the summary. This is an accessible **list of disclosures**, not an
+HTML table or modal side drawer. Use `DataGrid` when column headers, sorting,
+selection, or grid keyboard navigation are required.
+
+<Canvas of={Stories.Default} />
+<Controls />
+
+Import `DrawerTable` and the independently usable `DrawerRow` from
+`@easypost/easy-ui/DrawerTable`. The organism composes the row molecule;
+each row reuses `Disclosure`, its `UnstyledButton` trigger, and the `Icon` atom.
+Compose summary facts with `Text`, `Pill`, or other non-interactive phrasing
+content. Put links and buttons in `renderRowActions`, outside the summary button.
+Expanded content can contain forms, charts, maps, or other application components.
+
+```tsx
+<DrawerTable
+  aria-label="Shipments"
+  rows={shipments}
+  expandedKey={expandedKey}
+  onExpandedChange={setExpandedKey}
+  renderRow={(shipment) => <Text>{shipment.trackingCode}</Text>}
+  renderExpandedRow={(shipment) => <ShipmentDetails shipment={shipment} />}
+/>
+```
+
+The caller owns ordering, filtering, pagination, data fetching, and URL state.
+Use unique, stable string or numeric `key` values. One row opens at a time;
+clicking it again requests `null`. `expandedKey={null}` is controlled closed
+state, while omitting `expandedKey` enables local state. Use `defaultExpandedKey`
+only for the initial uncontrolled selection.
+
+## Pagination
+
+Use `renderFooter` to place `DrawerTable.Pagination` and optional
+`DrawerTable.RowsPerPage` outside the disclosure list. Pagination is controlled:
+`page` is one-based, `count` is the number of pages (at least one), and
+`onChange` requests a page without modifying the supplied rows. Supply either
+a locally sliced page or rows returned by your server. Disable the controls
+with `isDisabled` while a request is pending.
+
+<Canvas of={Stories.Paginated} />
+
+```tsx
+<DrawerTable
+  aria-label="Shipments"
+  rows={pageRows}
+  renderRow={(shipment) => <Text>{shipment.trackingCode}</Text>}
+  renderExpandedRow={(shipment) => <ShipmentDetails shipment={shipment} />}
+  renderFooter={() => (
+    <DrawerTable.Pagination
+      page={page}
+      count={pageCount}
+      onChange={requestPage}
+    />
+  )}
+/>
+```
+
+The footer also renders for an empty page. Update rows and page together when
+accepting a server response; the component does not fetch data or reject stale
+requests. Reset or clamp the page when filtering or changing page size. Controls
+wrap by default; use `wrap={false}` only when the container has adequate width.
+Rows removed from the supplied page unmount even with `mountPolicy="preserve"`.
+Persist drafts outside the row if they must survive page changes; the caller
+can clear a controlled `expandedKey` when navigating.
+
+Closed details unmount by default, matching Logistics Services' lazy evidence
+panels. `mountPolicy="preserve"` keeps every detail mounted, including before
+first opening, and retains form state on collapse. Do not use preservation for
+expensive panels without accounting for that initial work.
+
+`DrawerRow` can be composed independently with `summary`, `children`, optional
+`actions`, and the same expansion/mounting props as `Disclosure`. It also
+supports `isDisabled` and accessible labeling. A disabled trigger does not
+disable independent actions. Closing a panel whose contents hold focus returns
+focus to its trigger without stealing focus deliberately moved elsewhere.

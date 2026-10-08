@@ -1,50 +1,85 @@
 @use "../styles/common" as *;
 @use "../InputField/mixins" as Input;
-@use "../Menu/mixins" as Menu;
 
 .DatePicker {
   @include Input.root;
+  min-width: 0;
 }
 
 .datePickerTrigger {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: design-token("space.1");
   @include Input.input;
+  min-height: 48px;
+  padding: design-token("space.0.5") design-token("space.1.5");
 
-  &:hover {
+  &:hover:not(.disabled) {
     @include Input.hovered;
   }
-  @include Input.iconEndInput;
-}
 
-.datePickerTriggerContainer {
-  @include Input.inputIconContainer;
+  &:focus-within {
+    box-shadow: component-token("inputfield", "box_shadow");
+    border-color: component-token("inputfield", "color.border.engaged");
+  }
 }
 
 .datePickerSm .datePickerTrigger {
   @include Input.inputSm;
-  @include Input.iconEndInput;
+  min-height: 32px;
+  max-height: none;
+  padding-block: design-token("space.0.5");
 }
 
-.datePickerTrigger:not(.disabled) > :last-child {
-  color: design-token("color.neutral.700");
-  cursor: pointer;
-
-  &:hover {
-    color: design-token("color.neutral.800");
-  }
+.fields {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 1 1 12ch;
+  gap: design-token("space.1");
+  min-width: 0;
 }
 
-.datePickerTrigger > :last-child {
-  top: calc(design-token("space.1-5") - design-token("shape.border_width.1"));
+.dateField {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  max-width: 100%;
 }
 
-.datePickerSm .datePickerTrigger > :last-child {
-  top: calc(design-token("space.1") - design-token("shape.border_width.1"));
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: design-token("shape.border_radius.md");
+  color: design-token("color.neutral.600");
+  flex-shrink: 0;
+}
+
+.datePickerSm .iconButton {
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.iconButton:disabled {
+  color: design-token("color.neutral.300");
+}
+
+.iconButton:hover:not(:disabled) {
+  color: design-token("color.primary.700");
+  background: design-token("color.neutral.050");
 }
 
 .errorInput {
   @include Input.error;
+
+  &:focus-within {
+    border-color: component-token("inputfield", "color.border.danger");
+  }
 }
 
 .underlay {
@@ -60,15 +95,25 @@
   outline: none;
   position: relative;
   z-index: 1;
+  width: 22rem;
+  max-width: calc(100vw - 24px);
+}
+
+.popover {
+  max-width: calc(100vw - 24px);
+}
+
+.caption {
+  margin-top: design-token("space.0.5");
 }
 
 .DateSegment {
   @include font-style("body1");
-  padding: 0 design-token("space.0-5");
+  padding: 0;
   color: design-token("color.primary.800");
   &[data-placeholder="true"],
   &.literalSegment {
-    color: design-token("color.neutral.500");
+    color: design-token("color.neutral.600");
   }
   &:focus-visible {
     outline: none;
@@ -80,4 +125,12 @@
 
 .datePickerSm .DateSegment {
   @include font-style("body2");
+}
+
+.disabled {
+  background: component-token("inputfield", "color.background.disabled");
+
+  .DateSegment {
+    color: component-token("inputfield", "color.text.disabled");
+  }
 }

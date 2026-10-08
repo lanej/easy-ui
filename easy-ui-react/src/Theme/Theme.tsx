@@ -15,8 +15,8 @@ export type Theme = {
 };
 export type ColorScheme = "light" | "dark" | "system" | "inverted";
 
-export const defaultTheme = createTheme(() => {
-  return getThemeFromTokens("theme.light");
+export const defaultTheme = createTheme(({ colorScheme }) => {
+  return getThemeFromTokens(`theme.${colorScheme}`);
 });
 
 const invertedColorSchemes: Record<ColorScheme, ColorScheme> = {
@@ -130,7 +130,8 @@ export function createTheme(themeCreator: ThemeCreator) {
   return themeCreator;
 }
 
-function useTheme() {
+/** Read the active theme creator for JavaScript-rendered components. */
+export function useTheme() {
   const themeContext = useContext(ThemeContext);
   if (!themeContext) {
     throw new Error("useTheme() must be used within a ThemeProvier");
@@ -138,7 +139,8 @@ function useTheme() {
   return themeContext;
 }
 
-function useColorScheme() {
+/** Read the color scheme, including nested inversion, from ThemeProvider. */
+export function useColorScheme() {
   const colorSchemeContext = useContext(ColorSchemeContext);
   if (!colorSchemeContext) {
     throw new Error("useColorScheme() must be used within a ThemeProvider");
@@ -160,23 +162,28 @@ function Style({ isRoot }: { isRoot: boolean }) {
   const css = useMemo(() => {
     return resolvedColorScheme === "system"
       ? `${selector} {
+        color-scheme: light;
         ${renderThemeVariables(themeCreator({ colorScheme: "light" }))}
       }
       @media (prefers-color-scheme: dark) {
         ${selector} {
+          color-scheme: dark;
           ${renderThemeVariables(themeCreator({ colorScheme: "dark" }))}
         }
       }`
       : resolvedColorScheme === "inverted"
         ? `${selector} {
+        color-scheme: dark;
         ${renderThemeVariables(themeCreator({ colorScheme: "dark" }))}
       }
       @media (prefers-color-scheme: dark) {
         ${selector} {
+          color-scheme: light;
           ${renderThemeVariables(themeCreator({ colorScheme: "light" }))}
         }
       }`
         : `${selector} {
+        color-scheme: ${resolvedColorScheme};
         ${renderThemeVariables(
           themeCreator({ colorScheme: resolvedColorScheme }),
         )}

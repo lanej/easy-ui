@@ -65,7 +65,7 @@ describe("<PillGroup />", () => {
         <PillGroup.Pill label="Foobaz 456" icon={LocalShippingIcon} />
       </PillGroup>,
     );
-    expect(screen.getByRole("row", { name: "Foobaz 123" })).toHaveStyle(
+    expect(screen.getByText("Foobaz 123").parentElement).toHaveStyle(
       getComponentThemeToken("pill", "background", "color", "primary.800"),
     );
   });
@@ -76,7 +76,7 @@ describe("<PillGroup />", () => {
         <PillGroup.Pill label="Foobaz 123" />
       </PillGroup>,
     );
-    expect(screen.getByRole("row", { name: "Foobaz 123" })).toHaveAttribute(
+    expect(screen.getByText("Foobaz 123").parentElement).toHaveAttribute(
       "class",
       expect.stringContaining("sizeSm"),
     );
@@ -88,7 +88,7 @@ describe("<PillGroup />", () => {
         <PillGroup.Pill label="Foobaz 123" />
       </PillGroup>,
     );
-    expect(screen.getByRole("row", { name: "Foobaz 123" })).not.toHaveAttribute(
+    expect(screen.getByText("Foobaz 123").parentElement).not.toHaveAttribute(
       "class",
       expect.stringContaining("sizeSm"),
     );

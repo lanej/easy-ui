@@ -47,7 +47,7 @@
 // prettier-ignore
 .variantSuccess {
   @include component-token("alert-badge", "badge.color.background", design-token("color.positive.500"));
-  @include component-token("alert-badge", "badge.color.text", design-token("color.primary.800"));
+  @include component-token("alert-badge", "badge.color.text", design-token("color.text.on-status"));
 }
 
 // prettier-ignore

@@ -285,7 +285,7 @@ function Logo({ isGlyphOnly = false }: { isGlyphOnly?: boolean }) {
   if (isGlyphOnly) {
     return (
       <svg
-        className={styles.logoGlyph}
+        className={classNames(styles.logo, styles.logoGlyph)}
         viewBox={`${-MARK_CENTERING_OFFSET} 0 24 24`}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -300,6 +300,7 @@ function Logo({ isGlyphOnly = false }: { isGlyphOnly?: boolean }) {
   // lockup's own spacing, exactly where it was.
   return (
     <svg
+      className={styles.logo}
       width={WORDMARK_WIDTH + MARK_CENTERING_OFFSET}
       height="24"
       viewBox={`${-MARK_CENTERING_OFFSET} 0 ${
@@ -312,7 +313,7 @@ function Logo({ isGlyphOnly = false }: { isGlyphOnly?: boolean }) {
         {glyph}
         <path
           d="M33.126 8.058v2.762h3.907v1.788h-3.907v4.725H31V6.16h6.868v1.9h-4.742zm20.575 3.689c0 3.384-2.678 5.746-5.703 5.746-3.024 0-5.702-2.362-5.702-5.746C42.296 8.363 44.974 6 47.998 6c3.025 0 5.703 2.363 5.703 5.747zm-2.158 0c0-2.203-1.622-3.784-3.545-3.784-1.922 0-3.56 1.58-3.56 3.784 0 2.204 1.622 3.784 3.56 3.784 1.939 0 3.545-1.58 3.545-3.784zm13.642 5.586l-2.457-3.8h-1.827v3.8h-2.064V6.16h3.797c2.473 0 4.033 1.532 4.033 3.752 0 1.548-.757 2.698-2.048 3.257l2.757 4.167h-2.19l-.001-.002zm-4.286-5.604h1.622c1.245 0 2.08-.543 2.08-1.82 0-1.276-.835-1.82-2.08-1.82H60.9v3.64zm16.134 5.764c-3.089 0-5.702-2.362-5.702-5.746C71.33 8.363 74.008 6 77.033 6c1.434 0 2.725.48 3.685 1.324l-1.244 1.437c-.63-.48-1.465-.798-2.316-.798-2.064 0-3.687 1.58-3.687 3.784 0 2.204 1.544 3.784 3.592 3.784 1.528 0 2.71-.67 3.008-2.427h-2.756v-1.74h4.648c.457 3.816-1.986 6.13-4.932 6.13h.002zM94 15.402v1.932h-6.868V6.16h6.727v1.931h-4.664v2.682h3.545v1.883h-3.545v2.746H94z"
-          fill="#061340"
+          fill="currentColor"
         />
       </g>
       <defs>

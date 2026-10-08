@@ -28,7 +28,8 @@ function TreeTemplate(props: TreeVerticalNavProps) {
 }
 
 const meta: Meta<typeof VerticalNav> = {
-  title: "Components/VerticalNav",
+  id: "components-verticalnav",
+  title: "Organisms/Navigation/VerticalNav",
   component: VerticalNav,
   args: {
     ["aria-label"]: "Sidebar",

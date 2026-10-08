@@ -7,11 +7,34 @@ import { fileURLToPath } from "url";
  * file contents.
  *
  * @param {string} pkgFileContent package.json file contents
+ * @param {{ preserveExports?: boolean }} options Keep exports relative to the published dist root.
  */
-export function cleanPkgJsonForDist(pkgFileContent) {
-  // eslint-disable-next-line no-unused-vars
-  const { scripts, devDependencies, exports, publishConfig, ...restPkg } =
-    JSON.parse(pkgFileContent);
+export function cleanPkgJsonForDist(
+  pkgFileContent,
+  { preserveExports = false } = {},
+) {
+  const restPkg = JSON.parse(pkgFileContent);
+  const { exports } = restPkg;
+  for (const key of [
+    "scripts",
+    "devDependencies",
+    "exports",
+    "publishConfig",
+    "files",
+  ])
+    delete restPkg[key];
+  if (preserveExports && exports) {
+    const rebase = (value) => {
+      if (typeof value === "string") return value.replace(/^\.\/dist\//, "./");
+      if (Array.isArray(value)) return value.map(rebase);
+      if (value && typeof value === "object")
+        return Object.fromEntries(
+          Object.entries(value).map(([key, target]) => [key, rebase(target)]),
+        );
+      return value;
+    };
+    restPkg.exports = rebase(exports);
+  }
   return JSON.stringify(restPkg, null, 2);
 }
 

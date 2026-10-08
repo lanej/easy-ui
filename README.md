@@ -50,6 +50,8 @@ easy-ui/
 
 Pull requests are welcome. See the [contribution guidelines](https://github.com/EasyPost/easy-ui/blob/main/.github/CONTRIBUTING.md) for more information.
 
+The [visualization development guide](documentation/DEVELOPMENT.md) describes the current Lane J workstream, component boundaries, and application-adoption verification.
+
 ## Licenses
 
 Source code is under an [MIT license](https://github.com/EasyPost/.github/blob/main/LICENSE).

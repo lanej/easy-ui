@@ -57,6 +57,11 @@ Railed links hide their labels, so each one gets a tooltip. `ForgeLayout.NavLink
 
 `ForgeLayout.NavToggle` is a standalone control, so it can go wherever a product needs it—typically at the start of a `ForgeLayout.Controls`. It renders nothing when the nav is `collapsed`, since there is no nav to toggle.
 
+Omit the component when the application does not need a toggle. Use
+`<ForgeLayout.NavToggle icon="menu" />` for a hamburger instead of the panel
+icon; the caller still chooses its location, and the same expanded/rail state
+and accessible labels apply.
+
 Pass `navState` to control the state, or `defaultNavState` to leave it uncontrolled. `onNavStateChange` reports every change. Persisting a person's choice across sessions is up to the consuming application.
 
 ```tsx

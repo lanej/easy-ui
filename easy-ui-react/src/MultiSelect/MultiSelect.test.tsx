@@ -112,14 +112,14 @@ describe("<MultiSelect />", () => {
     const sm = render(
       getMultiSelect({ size: "sm", initialSelectedItems: [fruits[0]] }),
     );
-    expect(getSelectedItem("Apple")).toHaveAttribute(
+    expect(screen.getByText("Apple").parentElement).toHaveAttribute(
       "class",
       expect.stringContaining("sizeSm"),
     );
     sm.unmount();
 
     render(getMultiSelect({ size: "md", initialSelectedItems: [fruits[0]] }));
-    expect(getSelectedItem("Apple")).not.toHaveAttribute(
+    expect(screen.getByText("Apple").parentElement).not.toHaveAttribute(
       "class",
       expect.stringContaining("sizeSm"),
     );

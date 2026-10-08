@@ -49,7 +49,8 @@ const TRIGGER_MAX_WIDTH = 320;
 const CARRIER_MARK_SIZE = 32;
 
 const meta: Meta<typeof Popover> = {
-  title: "Components/Popover",
+  id: "components-popover",
+  title: "Molecules/Overlays/Popover",
   component: Popover,
   parameters: {
     controls: {

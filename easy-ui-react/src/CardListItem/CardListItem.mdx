@@ -1,0 +1,26 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as CardListItemStories from "./CardListItem.stories";
+
+<Meta of={CardListItemStories} />
+
+# CardListItem
+
+Adopted from logistics-services' shared facility and parcel card lists. This shell owns list semantics, selection treatment, and native button activation; callers own the contents.
+
+<Canvas of={CardListItemStories.Selectable} />
+
+Place items inside a `<ul>` or `<ol>`. Supply `onSelect` to make the card a button. `selected` marks the current item using `aria-current`, not a listbox option. Do not put links, buttons, or inputs inside an interactive card. Use `ariaExpanded` for a card that toggles supporting content; selection and expansion are independent.
+
+Without `onSelect`, contents remain noninteractive and do not add keyboard stops. This is a list-specific shell; use `Card` for general surfaces.
+
+<Canvas of={CardListItemStories.ReadOnly} />
+
+## Properties
+
+- `children: ReactNode` — caller-owned card contents.
+- `selected?: boolean` — highlights the current card; defaults to false.
+- `onSelect?: () => void` — enables native button activation when supplied.
+- `ariaExpanded?: boolean` — optional expansion state on the interactive card.
+- `testId?: string` — test identifier on the card surface.
+
+Import from `@easypost/easy-ui/CardListItem`.

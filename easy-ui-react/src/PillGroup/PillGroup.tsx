@@ -5,13 +5,12 @@ import { TagGroup, TagList, Tag, Label, Button } from "react-aria-components";
 import CloseIcon from "@easypost/easy-ui-icons/Close";
 import { Icon } from "../Icon";
 import { Text } from "../Text";
+import { Pill as PillLabel } from "../Pill";
 import { IconSymbol, ThemeTokenNamespace } from "../types";
 import {
   getComponentToken,
   getResponsiveDesignToken,
-  getComponentThemeToken,
   classNames,
-  variationName,
 } from "../utilities/css";
 import {
   InternalPillGroupContext,
@@ -190,20 +189,10 @@ function Pill(props: PillProps) {
   const { label, icon } = props;
   const { background, isBorderless, size } = useInternalPillGroupContext();
 
-  const style = {
-    ...getComponentThemeToken("pill", "background", "color", background),
-  } as React.CSSProperties;
-
-  const className = classNames(
-    styles.Pill,
-    isBorderless && styles.borderless,
-    styles[variationName("size", size)],
-  );
-
   return (
-    <Tag textValue={label} className={className} style={style} {...props}>
+    <Tag textValue={label} className={styles.tag} {...props}>
       {({ allowsRemoving }) => (
-        <>
+        <PillLabel size={size} background={background} bordered={!isBorderless}>
           {icon && <Icon size="xs" symbol={icon} color="primary.700" />}
           <Text
             color="primary.800"
@@ -216,7 +205,7 @@ function Pill(props: PillProps) {
               <Icon size="xs" symbol={CloseIcon} color="primary.600" />
             </Button>
           )}
-        </>
+        </PillLabel>
       )}
     </Tag>
   );

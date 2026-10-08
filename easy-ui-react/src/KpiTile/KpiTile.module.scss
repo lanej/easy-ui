@@ -1,0 +1,42 @@
+@use "../styles/common" as *;
+
+.tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.iconChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: component-token("kpi", "accent");
+  color: design-token("color.neutral.900");
+}
+
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+
+  > div {
+    min-width: 0;
+  }
+}
+
+.compact {
+  gap: 8px;
+
+  .iconChip {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+}

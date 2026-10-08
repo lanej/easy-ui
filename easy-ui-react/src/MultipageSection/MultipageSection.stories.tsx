@@ -17,7 +17,8 @@ import { MultipageSection } from "./MultipageSection";
 type Story = StoryObj<typeof MultipageSection>;
 
 const meta: Meta<typeof MultipageSection> = {
-  title: "Components/ProductLayout/MultipageSection",
+  id: "components-productlayout-multipagesection",
+  title: "Organisms/Layouts/MultipageSection",
   component: MultipageSection,
   decorators: [
     (Story) => (

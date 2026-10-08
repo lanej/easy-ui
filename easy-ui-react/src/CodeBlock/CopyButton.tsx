@@ -1,11 +1,12 @@
 import ContentCopyIcon from "@easypost/easy-ui-icons/ContentCopy";
 import React, { useCallback } from "react";
-import { mergeProps, useFocus, useHover } from "react-aria";
+import { useHover } from "react-aria";
 import { useTooltipTriggerState } from "react-stately";
 import { useClipboard } from "use-clipboard-copy";
 import { Icon } from "../Icon";
 import { Text } from "../Text";
 import { Tooltip } from "../Tooltip";
+import { UnstyledButton } from "../UnstyledButton";
 
 import styles from "./CopyButton.module.scss";
 
@@ -27,14 +28,14 @@ export function CopyButton({ text }: CopyButtonProps) {
       isOpen={tooltipState.isOpen || clipboard.copied}
       content={content}
     >
-      <button
+      <UnstyledButton
         className={styles.CopyButton}
-        onClick={handlePress}
+        onPress={handlePress}
         {...triggerProps}
       >
         <Text visuallyHidden>Copy code</Text>
         <Icon symbol={ContentCopyIcon} />
-      </button>
+      </UnstyledButton>
     </Tooltip>
   );
 }
@@ -48,10 +49,17 @@ function useCopyButtonTooltipState() {
       tooltipState[isHovering ? "open" : "close"]();
     },
   });
-  const { focusProps } = useFocus({
-    onFocusChange(isFocused) {
-      tooltipState[isFocused ? "open" : "close"]();
+  return {
+    triggerProps: {
+      onPointerEnter: hoverProps.onPointerEnter,
+      onPointerLeave: hoverProps.onPointerLeave,
+      onMouseEnter: hoverProps.onMouseEnter,
+      onMouseLeave: hoverProps.onMouseLeave,
+      onTouchStart: hoverProps.onTouchStart,
+      onFocusChange(isFocused: boolean) {
+        tooltipState[isFocused ? "open" : "close"]();
+      },
     },
-  });
-  return { triggerProps: mergeProps(hoverProps, focusProps), tooltipState };
+    tooltipState,
+  };
 }

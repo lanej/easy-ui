@@ -8,7 +8,8 @@ type Story = StoryObj<typeof Textarea>;
 const Template = (args: TextareaProps) => <Textarea {...args} />;
 
 const meta: Meta<typeof Textarea> = {
-  title: "Components/Textarea",
+  id: "components-textarea",
+  title: "Atoms/Inputs/Textarea",
   component: Textarea,
   decorators: [InputDecorator],
   parameters: {

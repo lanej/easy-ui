@@ -18,6 +18,7 @@ export const useDataGrid = () => {
 };
 
 type DataGridTableContextType = {
+  columnOptions: DataGridProps["columnOptions"];
   headerVariant: DataGridProps["headerVariant"];
   hasSelection: boolean;
   hasExpansion: boolean;
@@ -42,6 +43,7 @@ export const useDataGridTable = () => {
 
 type DataGridRowContextType = {
   isExpanded: boolean;
+  isSubtotal: boolean;
   isFocusVisible: boolean;
   removeHover: () => void;
   index?: number;

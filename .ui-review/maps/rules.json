@@ -1,0 +1,59 @@
+[
+  {
+    "id": "map-readable-annotations",
+    "type": "min-font-size",
+    "selector": "main",
+    "min": 12,
+    "severity": "error",
+    "reason": "Map labels, exact data, attribution and controls retain the declared dense-annotation floor.",
+    "designRules": ["DR-007"]
+  },
+  {
+    "id": "map-readable-prose",
+    "type": "min-font-size",
+    "selector": "main > p, main h1, main h2, main h3, #external-selection p",
+    "min": 14,
+    "severity": "error",
+    "reason": "Visible headings and selected-record prose remain readable independently of annotation density.",
+    "designRules": ["DR-007"]
+  },
+  {
+    "id": "map-label-bounds",
+    "type": "within-bounds",
+    "selector": "[data-map-label=\"true\"]",
+    "container": "[data-map-state]",
+    "tolerance": 1,
+    "optional": true,
+    "severity": "error",
+    "reason": "Measured visible map labels must stay within the viewport at default and larger text sizes.",
+    "designRules": ["DR-006", "DR-007"]
+  },
+  {
+    "id": "map-composed-parts",
+    "type": "required-elements",
+    "selector": ".composition-page",
+    "required": [
+      "[data-map-state]",
+      ".composition-controls",
+      "#external-map-data",
+      "#external-selection"
+    ],
+    "severity": "error",
+    "reason": "A composed investigation retains its surface, independent controls, selected record and equivalent data.",
+    "designRules": ["DR-006", "DR-007"]
+  },
+  {
+    "id": "map-selection-outside-surface",
+    "type": "relative-position",
+    "selector": ".composition-page",
+    "from": "[data-map-state]",
+    "to": "#external-selection",
+    "relation": "above",
+    "minGap": 0,
+    "maxGap": 32,
+    "tolerance": 1,
+    "severity": "error",
+    "reason": "Selected-record content follows the viewport without covering geography, navigation or attribution.",
+    "designRules": ["DR-006", "DR-015"]
+  }
+]

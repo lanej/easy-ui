@@ -15,7 +15,8 @@ type Story = StoryObj<typeof Tooltip>;
 const Template = (args: TooltipProps) => <Tooltip {...args} />;
 
 const meta: Meta<typeof Tooltip> = {
-  title: "Components/Tooltip",
+  id: "components-tooltip",
+  title: "Molecules/Overlays/Tooltip",
   component: Tooltip,
   args: {
     children: <a href="#">Hover or focus me</a>,

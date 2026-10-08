@@ -17,7 +17,8 @@ type DrawerStory = StoryObj<typeof Drawer>;
 type DrawerTriggerStory = StoryObj<typeof DrawerTrigger>;
 
 const meta: Meta<typeof Drawer> = {
-  title: "Components/Drawer",
+  id: "components-drawer",
+  title: "Organisms/Overlays/Drawer",
   component: Drawer,
   parameters: {
     controls: {

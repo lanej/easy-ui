@@ -1,9 +1,11 @@
 @use "../styles/common" as *;
 .CalendarGrid {
   border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
 }
 .CalendarGridHeader {
-  background-color: design-token("color.primary.700");
+  background-color: design-token("color.neutral.050");
   span {
     vertical-align: middle;
   }

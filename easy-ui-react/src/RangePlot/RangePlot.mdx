@@ -1,0 +1,29 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { RangePlot } from "./RangePlot";
+import * as Stories from "./RangePlot.stories";
+
+<Meta of={Stories} />
+
+# RangePlot
+
+Named points and one optional interval on an explicit shared scale. Native HTML/CSS; no chart engine. Import from `@easypost/easy-ui/RangePlot`.
+
+<Canvas of={Stories.Default} />
+<Canvas of={Stories.TransitWindow} />
+
+Each row uses the same supplied domain. Exact names and values remain visible in a semantic list; graphical marks are decorative equivalents. The interval has bounded ends, while comparison values use point markers. Separate rows keep close or coincident benchmarks readable.
+
+Domains must have finite increasing bounds. Null observations show `emptyLabel`; non-finite values show `invalidValueLabel`. Finite observations or interval bounds outside the domain retain their exact labels with `outOfDomainLabel`, while their marks are omitted by default. Choose `overflow="clamp"` to show them at the boundary with an explicit overflow treatment. Reversed/non-finite intervals show `invalidIntervalLabel`. Invalid scales show `invalidScaleLabel` without discarding exact observations. Valid siblings remain visible; zero and negative observations are supported.
+
+`formatAxisValue` can abbreviate axis endpoints independently of `formatValue`, which retains exact point and interval precision. `typography` configures title, description, label and detail sizes in CSS pixels.
+
+<Canvas of={Stories.OutsideDomain} />
+
+<Canvas of={Stories.EqualBounds} />
+<Canvas of={Stories.SignedAndMissing} />
+
+Equal interval bounds render as a single line and one exact value. The component never widens a zero-width interval to imply a range. Applications provide percentiles or other bounds and describe their meaning: allowed price ranges, arrival percentiles, and statistical uncertainty are different concepts. No calculation, animation, or interaction is implied.
+
+Use `BulletChart` for one zero-based measure and target; use `Chart` for many cohorts, distributions, or interactive inspection.
+
+<ArgTypes of={RangePlot} />

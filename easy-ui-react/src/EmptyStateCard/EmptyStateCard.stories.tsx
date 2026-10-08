@@ -12,7 +12,8 @@ const Template = (args: EmptyStateCardProps) => {
 };
 
 const meta: Meta<typeof EmptyStateCard> = {
-  title: "Components/Cards/EmptyStateCard",
+  id: "components-cards-emptystatecard",
+  title: "Molecules/Cards/EmptyStateCard",
   component: EmptyStateCard,
 };
 

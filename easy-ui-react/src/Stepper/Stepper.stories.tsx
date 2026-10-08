@@ -12,7 +12,8 @@ import {
 type Story = StoryObj<typeof Stepper>;
 
 const meta: Meta<typeof Stepper> = {
-  title: "Components/Stepper",
+  id: "components-stepper",
+  title: "Molecules/Navigation/Stepper",
   argTypes: {},
 };
 

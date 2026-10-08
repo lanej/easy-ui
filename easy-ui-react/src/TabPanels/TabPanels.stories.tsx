@@ -10,7 +10,8 @@ function Template(args: TabPanelsProps) {
 }
 
 const meta: Meta<typeof TabPanels> = {
-  title: "Components/Tabs/TabPanels",
+  id: "components-tabs-tabpanels",
+  title: "Organisms/Navigation/TabPanels",
   component: TabPanels,
   args: {
     children: (

@@ -26,7 +26,8 @@ const Template = (args: MenuProps) => {
 };
 
 const meta: Meta<typeof Menu> = {
-  title: "Components/Menu",
+  id: "components-menu",
+  title: "Molecules/Overlays/Menu",
   component: Menu,
   parameters: {
     controls: {

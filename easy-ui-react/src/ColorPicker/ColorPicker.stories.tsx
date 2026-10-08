@@ -8,7 +8,8 @@ import { ColorPicker, useColorPickerState } from "./ColorPicker";
 type Story = StoryObj<typeof ColorPicker>;
 
 const meta: Meta<typeof ColorPicker> = {
-  title: "Components/ColorPicker/ColorPicker",
+  id: "components-colorpicker-colorpicker",
+  title: "Molecules/Forms/ColorPicker/ColorPicker",
   component: ColorPicker,
   args: {},
   parameters: {

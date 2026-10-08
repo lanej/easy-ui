@@ -2,10 +2,28 @@ import { action } from "storybook/actions";
 import { Preview } from "@storybook/react-vite";
 import React from "react";
 import { Provider as EasyUIProvider } from "../easy-ui-react/src/Provider";
-import { backgrounds, gridCellSize, theme } from "./theme";
+import { backgrounds, gridCellSize } from "./theme";
+import { normalizeColorScheme, readColorScheme } from "./colorScheme";
+import { ThemedDocsContainer } from "./ThemedDocsContainer";
 import { viewports } from "./viewports";
 
 const preview: Preview = {
+  initialGlobals: { colorScheme: readColorScheme() },
+  globalTypes: {
+    colorScheme: {
+      description: "Color scheme for Easy UI, documentation, and Storybook",
+      toolbar: {
+        title: "Color scheme",
+        icon: "circlehollow",
+        dynamicTitle: true,
+        items: [
+          { value: "system", title: "System" },
+          { value: "light", title: "Light" },
+          { value: "dark", title: "Dark" },
+        ],
+      },
+    },
+  },
   parameters: {
     actions: { argTypesRegex: "^on[A-Z].*" },
     controls: {
@@ -17,7 +35,7 @@ const preview: Preview = {
       options: viewports,
     },
     docs: {
-      theme,
+      container: ThemedDocsContainer,
     },
     backgrounds: {
       grid: {
@@ -38,17 +56,21 @@ const preview: Preview = {
           "Browser Support",
           "Foundations",
           ["Design Tokens", "Typography", "Colors", "Icons"],
-          "Primitives",
-          "Components",
+          "Atoms",
+          "Molecules",
+          "Organisms",
         ],
       },
     },
   },
 
   decorators: [
-    (Story) => {
+    (Story, context) => {
       return (
-        <EasyUIProvider navigate={action("Navigation")}>
+        <EasyUIProvider
+          navigate={action("Navigation")}
+          colorScheme={normalizeColorScheme(context.globals.colorScheme)}
+        >
           <Story />
         </EasyUIProvider>
       );

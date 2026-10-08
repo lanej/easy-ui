@@ -23,7 +23,8 @@ type ModalStory = StoryObj<typeof Modal>;
 type ModalTriggerStory = StoryObj<typeof ModalTrigger>;
 
 const meta: Meta<typeof Modal> = {
-  title: "Components/Modal",
+  id: "components-modal",
+  title: "Organisms/Overlays/Modal",
   component: Modal,
   parameters: {
     controls: {

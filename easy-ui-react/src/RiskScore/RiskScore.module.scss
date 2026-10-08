@@ -1,0 +1,110 @@
+@use "../styles/common" as *;
+
+.root {
+  @include component-token(
+    "risk-score",
+    "color.fill",
+    design-token("color.neutral.600")
+  );
+  @include font-style("body2");
+  display: inline-flex;
+  flex-direction: column;
+  gap: design-token("space.1");
+  inline-size: max-content;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  vertical-align: middle;
+
+  &[data-assessment="low"] {
+    @include component-token(
+      "risk-score",
+      "color.fill",
+      design-token("color.positive.700")
+    );
+  }
+
+  &[data-assessment="medium"] {
+    @include component-token(
+      "risk-score",
+      "color.fill",
+      design-token("color.warning.700")
+    );
+  }
+
+  &[data-assessment="high"] {
+    @include component-token(
+      "risk-score",
+      "color.fill",
+      design-token("color.negative.700")
+    );
+  }
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: design-token("space.1");
+  min-inline-size: 0;
+}
+
+.score {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: design-token("space.0.5");
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.value {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.maximum {
+  overflow-wrap: anywhere;
+  min-inline-size: 0;
+}
+
+.assessment {
+  display: inline-flex;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+}
+
+.track {
+  display: flex;
+  block-size: design-token("space.0.5");
+  inline-size: 100%;
+  border-radius: design-token("shape.border_radius.lg");
+  overflow: hidden;
+  background: design-token("color.neutral.200");
+}
+
+.fill {
+  block-size: 100%;
+  background: component-token("risk-score", "color.fill");
+}
+
+.root[data-size="sm"] {
+  gap: design-token("space.0.5");
+}
+
+@media (forced-colors: active) {
+  .assessment {
+    outline: 1px solid CanvasText;
+  }
+
+  .track {
+    outline: 1px solid CanvasText;
+    background: Canvas;
+  }
+
+  .fill {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+}

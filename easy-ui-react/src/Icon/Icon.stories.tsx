@@ -19,7 +19,8 @@ type Story = StoryObj<typeof Icon>;
 const Template = (args: IconProps) => <Icon {...args} />;
 
 const meta: Meta<typeof Icon> = {
-  title: "Primitives/Icon",
+  id: "primitives-icon",
+  title: "Atoms/Typography/Icon",
   argTypes: {
     symbol: createLabelledOptionsControl({
       CheckCircle: CheckCircleIcon,

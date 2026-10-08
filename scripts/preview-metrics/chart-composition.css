@@ -1,0 +1,82 @@
+html,
+body {
+  margin: 0;
+}
+body {
+  font-family: Poppins, sans-serif;
+}
+.chart-composition-review {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--ezui-color-neutral-050, #f7f8fb);
+  color: var(--ezui-color-neutral-900, #172b4d);
+}
+.chart-composition-review h1 {
+  font-size: 28px;
+  line-height: 1.3;
+}
+.chart-composition-review > section > h2 {
+  font-size: 20px;
+}
+.chart-composition-review > header p,
+.chart-composition-review > section > p {
+  font-size: 14px;
+}
+.chart-composition-review > section {
+  margin-top: 24px;
+}
+.chart-review-card {
+  padding: 20px;
+  border: 1px solid var(--ezui-color-neutral-200, #dfe5ed);
+  border-radius: 12px;
+  background: var(--ezui-color-neutral-000, white);
+}
+.chart-review-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.chart-review-actions label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 32px;
+}
+.chart-review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.chart-composition-review > section > button {
+  font: inherit;
+  padding: 8px 12px;
+  border: 1px solid currentcolor;
+  border-radius: 6px;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .chart-composition-review {
+    padding: 12px;
+  }
+  .chart-review-card {
+    padding: 12px;
+  }
+  .chart-review-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.chart-composition-review[data-chart-review-stress="true"] {
+  box-sizing: border-box;
+  width: 320px;
+  max-width: 100%;
+  padding: 12px;
+}
+.chart-composition-review[data-chart-review-stress="true"] .chart-review-card {
+  padding: 12px;
+}
+.chart-composition-review[data-chart-review-stress="true"] .chart-review-grid {
+  grid-template-columns: minmax(0, 1fr);
+}

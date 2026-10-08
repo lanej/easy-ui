@@ -25,7 +25,8 @@ const Template = (args: SearchNavProps<object>) => {
 };
 
 const meta: Meta<typeof SearchNav> = {
-  title: "Components/SearchNav",
+  id: "components-searchnav",
+  title: "Organisms/Navigation/SearchNav",
   component: SearchNav,
   parameters: {
     controls: {

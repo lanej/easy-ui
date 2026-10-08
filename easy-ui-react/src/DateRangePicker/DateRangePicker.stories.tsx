@@ -1,15 +1,19 @@
 import React from "react";
 import { Meta, StoryObj } from "@storybook/react-vite";
-import { today, getLocalTimeZone } from "@internationalized/date";
+import { today, getLocalTimeZone, CalendarDate } from "@internationalized/date";
 import { DateRange } from "react-aria";
 import { InputDecorator } from "../utilities/storybook";
 import { TextField } from "../TextField";
 import { DateRangePicker, DateRangePickerProps } from "./DateRangePicker";
+import { Button } from "../Button";
+import { Text } from "../Text";
+import { VerticalStack } from "../VerticalStack";
 
 type Story = StoryObj<typeof DateRangePicker>;
 
 const meta: Meta<typeof DateRangePicker> = {
-  title: "Components/DatePicker/DateRangePicker",
+  id: "components-datepicker-daterangepicker",
+  title: "Molecules/Forms/DateRangePicker",
   component: DateRangePicker,
   args: { "aria-label": "Range date picker" },
   decorators: [InputDecorator],
@@ -103,5 +107,57 @@ export const Disabled: Story = {
   render: Template.bind({}),
   args: {
     isDisabled: true,
+  },
+};
+
+function ReviewPeriodForm() {
+  const [submitted, setSubmitted] = React.useState("");
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        setSubmitted(`${data.get("startDate")} – ${data.get("endDate")}`);
+      }}
+    >
+      <VerticalStack gap="2">
+        <DateRangePicker
+          label="Review period"
+          startName="startDate"
+          endName="endDate"
+          description="Choose a period in October 2026."
+          defaultValue={{
+            start: new CalendarDate(2026, 10, 6),
+            end: new CalendarDate(2026, 10, 13),
+          }}
+          minValue={new CalendarDate(2026, 10, 1)}
+          maxValue={new CalendarDate(2026, 10, 31)}
+          isClearable
+          isRequired
+          validationBehavior="native"
+          errorMessage="Choose a valid period in October 2026."
+        />
+        <Button type="submit">Apply period</Button>
+        <Text aria-live="polite">
+          {submitted ? `Submitted: ${submitted}` : "No period submitted."}
+        </Text>
+      </VerticalStack>
+    </form>
+  );
+}
+
+export const Form: Story = {
+  render: () => <ReviewPeriodForm />,
+};
+
+export const ReadOnly: Story = {
+  args: {
+    label: "Review period",
+    defaultValue: {
+      start: new CalendarDate(2026, 10, 6),
+      end: new CalendarDate(2026, 10, 13),
+    },
+    isReadOnly: true,
+    isClearable: true,
   },
 };

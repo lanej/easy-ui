@@ -1,0 +1,24 @@
+@use "../styles/common" as *;
+@use "../styles/unstyled";
+
+.content {
+  display: inline-flex;
+  align-items: center;
+  gap: design-token("space.1");
+  min-width: 0;
+}
+
+.button {
+  @include unstyled.button;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: component-token("data-grid", "expand-btn-size");
+  height: component-token("data-grid", "expand-btn-size");
+  cursor: pointer;
+}
+
+.expanded {
+  transform: rotate(90deg);
+}

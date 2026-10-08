@@ -52,6 +52,7 @@ describe("<Drawer />", () => {
   it("should be dismissable by close button", async () => {
     const [{ user }] = await renderAndOpenDrawer();
     const closeButton = screen.getByRole("button", { name: "Close drawer" });
+    expect(closeButton).toHaveAttribute("type", "button");
     await userClick(user, closeButton);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });

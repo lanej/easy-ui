@@ -1,5 +1,8 @@
 # Easy UI
 
+Node.js 22.12 or newer is required to install and build this package, including
+the default MapLibre dependency. MapLibre is loaded only when a map is rendered.
+
 [Easy UI](https://github.com/EasyPost/easy-ui) is a component library designed to help developers create the best experience for shippers who use EasyPost.
 
 ## Getting Started
@@ -45,6 +48,31 @@ function App() {
 ```
 
 See our [Storybook](https://main--63f50c7c86f6514d2e0ef4be.chromatic.com/) for detailed component documentation.
+
+Packages support TypeScript's legacy `moduleResolution: "node"` as well as modern export-aware resolution. The build generates package-root component entries, deep declarations such as `DataGrid/types` and `Select/SelectField`, flat utilities, and CSS/Sass compatibility files that forward to or copy the canonical `dist` outputs. These retain the original named exports; a default export is forwarded only when the target actually provides one. No application `tsconfig` changes are required.
+
+### Map components
+
+Map components use MapLibre GL JS `^6.9.0`, installed automatically as an Easy UI dependency. The renderer is fixed, not a pluggable engine. Map code remains lazy-loaded, so importing other components or server-rendering a map does not initialize MapLibre or WebGL.
+
+Applications using maps must still import CSS and emit the module worker, passing the worker URL and a basemap style to `NetworkMap` or `NetworkMapSurface`. Import `@easypost/easy-ui/NetworkMap/maplibre-gl.css` and bundle `@easypost/easy-ui/NetworkMap/maplibre-gl-worker.mjs` with your application's worker loader (in Vite, append `?worker&url`). These entries resolve Easy UI's installed MapLibre version, including in nested installs, without an application-level MapLibre dependency. The worker entry must be bundled rather than served directly. Basemap styles and tile sources are configurable without substituting another renderer; applications retain responsibility for provider attribution, access and availability.
+
+### Sass entry points
+
+Sass consumers can use the source styles shipped with the package. The `styles/common` entry forwards token, typography, responsive, media-query, and accessibility helpers; `styles/token-helpers` and `styles/unstyled` are also independently available. Extensionless Sass names and explicit partial filenames such as `styles/_common.scss` resolve to the same shipped files.
+
+```scss
+@use "@easypost/easy-ui/styles/common" as ui;
+
+.shipment-summary {
+  color: ui.design-token("color.neutral.900");
+  @include ui.breakpoint-md-up {
+    display: grid;
+  }
+}
+```
+
+For Sass-owned base styles, import `@easypost/easy-ui/styles/global.scss` through your application's Sass-aware bundler. This includes token CSS, Poppins fallback metrics, and scrollbar styles; the documented `style.css` import supplies the compiled component stylesheet. All eleven files under `styles/` ship together so relative Sass dependencies resolve. Dart Sass's `pkg:` importer also supports these entries; their existing bare dependency imports require the package-aware resolution supplied by bundlers such as Vite.
 
 ### Fonts
 
@@ -111,6 +139,8 @@ When server rendering an app that uses Easy UI and React <18, your app must be w
 ## Development
 
 We use Storybook to create a simple, hot-reloading playground for development on these components.
+
+After building, `node scripts/check-style-package.mjs` from the repository root packs both the workspace package and its release `dist` directory, installs each tarball in a separate temporary consumer, and checks legacy and modern TypeScript resolution, generated compatibility entries, public CommonJS/ESM imports, server rendering, all Sass dependencies, and emitted production CSS. Normal workspace tarballs include `dist` and generated compatibility files; release-directory metadata rebases the same public exports to that directory. Turbo caches the generated files together with `dist`, and `clean` removes only generated files whose recorded contents still match.
 
 ### Commands
 

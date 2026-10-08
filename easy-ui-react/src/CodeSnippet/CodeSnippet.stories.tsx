@@ -10,7 +10,8 @@ const Template = (args: CodeSnippetProps) => (
 );
 
 const meta: Meta<typeof CodeSnippet> = {
-  title: "Components/Code/CodeSnippet",
+  id: "components-code-codesnippet",
+  title: "Molecules/Content/CodeSnippet",
   component: CodeSnippet,
   args: {
     language: SnippetLanguages.JAVASCRIPT,

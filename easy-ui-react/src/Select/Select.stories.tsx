@@ -20,7 +20,8 @@ const Template = (args: SelectProps<object, Key>) => {
 };
 
 const meta: Meta<typeof Select> = {
-  title: "Components/Select",
+  id: "components-select",
+  title: "Molecules/Forms/Select",
   component: Select,
   decorators: [InputDecorator],
   args: {

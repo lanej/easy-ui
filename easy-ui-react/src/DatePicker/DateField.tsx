@@ -1,38 +1,39 @@
 import React from "react";
-import { useDateField, useDateSegment, useLocale, DateValue } from "react-aria";
+import {
+  useDateField,
+  useDateSegment,
+  useLocale,
+  DateValue,
+  AriaDateFieldProps,
+} from "react-aria";
 import {
   useDateFieldState,
   DateFieldState,
   DateSegment as DateSegmentType,
 } from "react-stately";
 import { createCalendar } from "@internationalized/date";
-import { HorizontalStack } from "../HorizontalStack";
 import { classNames } from "../utilities/css";
 
 import styles from "./DatePicker.module.scss";
 
-type DateFieldFieldProps = {
-  isDisabled?: boolean;
-  isReadOnly?: boolean;
-  isInvalid?: boolean;
-  isOpen?: boolean;
-  defaultOpen?: boolean;
-  value?: DateValue | null;
-  onChange?: (value: DateValue | null) => void;
-};
+type DateFieldFieldProps = AriaDateFieldProps<DateValue>;
 export function DateFieldField(props: DateFieldFieldProps) {
   const dateFieldRef = React.useRef(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const { locale } = useLocale();
   const state = useDateFieldState({ ...props, locale, createCalendar });
-  const { fieldProps } = useDateField(props, state, dateFieldRef);
+  const { fieldProps, inputProps } = useDateField(
+    { ...props, inputRef },
+    state,
+    dateFieldRef,
+  );
 
   return (
-    <div {...fieldProps} ref={dateFieldRef}>
-      <HorizontalStack blockAlign="center">
-        {state.segments.map((segment, i) => (
-          <DateSegment key={i} segment={segment} state={state} />
-        ))}
-      </HorizontalStack>
+    <div {...fieldProps} ref={dateFieldRef} className={styles.dateField}>
+      {state.segments.map((segment, i) => (
+        <DateSegment key={i} segment={segment} state={state} />
+      ))}
+      <input {...inputProps} readOnly={props.isReadOnly} ref={inputRef} />
     </div>
   );
 }

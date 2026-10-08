@@ -1,0 +1,19 @@
+@use "../styles/common" as *;
+.example {
+  width: 100%;
+  max-width: 440px;
+  color: design-token("color.neutral.900");
+  font-size: 14px;
+}
+.example h2 {
+  font-size: 20px;
+}
+.example p {
+  margin-bottom: 24px;
+  color: design-token("color.neutral.600");
+  line-height: 1.5;
+}
+.actions {
+  display: flex;
+  margin-top: 24px;
+}

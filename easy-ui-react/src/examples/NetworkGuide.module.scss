@@ -1,0 +1,126 @@
+@use "../styles/common" as *;
+
+.root {
+  max-width: 1520px;
+  margin: 0 auto;
+  padding: 24px;
+  color: design-token("color.neutral.900");
+  background: design-token("color.neutral.025");
+  font-size: 14px;
+  line-height: 1.55;
+
+  :global {
+    a {
+      color: design-token("color.primary.700");
+    }
+    .assumptions {
+      margin: 12px 0 20px;
+    }
+    summary {
+      cursor: pointer;
+      min-height: 28px;
+    }
+    .toolbar {
+      display: flex;
+      align-items: end;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .toolbar-field {
+      width: 260px;
+      max-width: 100%;
+      min-width: 0;
+    }
+    .consequence {
+      border-left: 3px solid design-token("color.primary.600");
+      padding: 10px 14px;
+      background: design-token("color.neutral.100");
+    }
+    .decision-summary {
+      display: grid;
+      grid-template-columns: 0.7fr 1.5fr 1.2fr 1.1fr;
+      gap: 16px;
+      border-block: 1px solid design-token("color.neutral.200");
+      padding: 14px 0;
+    }
+    .decision-summary > div {
+      min-width: 0;
+    }
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 22px;
+    }
+    .workspace > div {
+      min-width: 0;
+    }
+    .section-label {
+      font-size: 13px;
+      margin: 20px 0 10px;
+      font-weight: 600;
+      color: design-token("color.neutral.700");
+    }
+    .matrix-scroll {
+      overflow-x: auto;
+    }
+    .matrix-scroll > section {
+      min-width: 360px;
+    }
+    .status {
+      padding: 12px 0;
+      border-bottom: 1px solid design-token("color.neutral.200");
+    }
+    .methods {
+      max-width: 110ch;
+    }
+    .tabs {
+      margin: 16px 0 0;
+    }
+    .tabs > div {
+      @include component-token(
+        "tab-nav",
+        "background-color",
+        design-token("color.neutral.025")
+      );
+      @include component-token(
+        "tab-nav",
+        "border-color",
+        design-token("color.neutral.200")
+      );
+      @include component-token(
+        "tab-nav",
+        "current-page-color",
+        design-token("color.primary.600")
+      );
+    }
+    .tabs [role="tab"] {
+      color: design-token("color.neutral.900");
+    }
+    .tabs [role="tab"][aria-selected="true"] {
+      color: design-token("color.primary.700");
+    }
+    [data-mode="fragmented"] .workspace {
+      display: block;
+      max-width: 980px;
+    }
+    [hidden] {
+      display: none !important;
+    }
+    @media (max-width: 1050px) {
+      .workspace {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .decision-summary {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 650px) {
+      .toolbar-field {
+        width: 100%;
+      }
+      .decision-summary {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+}

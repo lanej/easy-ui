@@ -19,6 +19,21 @@ jobs:
         run: npm i
       - name: Build
         run: npm run build
+      - name: Verify chart package imports and server rendering
+        run: node scripts/check-chart-package.mjs
+      - name: Verify compatibility entry generation
+        run: node --test scripts/generateCompatibilityEntries.test.mjs
+      - name: Verify browser CI evidence selection
+        run: node --test scripts/browser-proof.test.mjs
+      - name: Verify isolated tarball imports and Sass assets
+        run: node scripts/check-style-package.mjs
+      - name: Retain packed-consumer logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: packed-consumer-logs
+          path: /tmp/easy-ui-style-package-*/**/*.log
+          if-no-files-found: ignore
       - name: Linting
         run: npm run lint
       - name: Unit tests

@@ -1,0 +1,202 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ScoreComposition } from "./ScoreComposition";
+import * as Stories from "./ScoreComposition.stories";
+
+<Meta of={Stories} />
+
+# ScoreComposition
+
+Explain why observed signals contribute to a supplied score and outcome. Use this native visualization when the question is “what produced this score?” Applications own weights, caps, aggregation, decisions, units, and provenance. Easy UI renders those facts without recalculating them.
+
+<Canvas of={Stories.Default} />
+
+## Supply the explanation
+
+Import the composition and its primitives from `@easypost/easy-ui/ScoreComposition`. The package uses its existing CSS entry, `@easypost/easy-ui/style.css`.
+
+```tsx
+<ScoreComposition
+  title="Application readiness"
+  signals={[
+    {
+      id: "coverage",
+      label: "Test coverage",
+      value: 0.92,
+      displayValue: "92%",
+      sentiment: "positive",
+      statusLabel: "Within target",
+    },
+  ]}
+  contributions={[
+    {
+      id: "quality",
+      label: "Quality",
+      score: 4,
+      maxScore: 5,
+      signals: ["coverage"],
+      explanation:
+        "The application evaluates coverage against its scoring rules.",
+    },
+  ]}
+  result={{ score: 4, disposition: "Ready for review" }}
+/>
+```
+
+Signal and contribution IDs must be unique within their respective arrays and stable across updates. IDs may overlap between the two arrays. Array order is preserved. A signal may support several contributions; repeated references within one contribution are displayed once. An unknown source is visibly labelled “Unavailable signal” with its ID, and has no connector. Contributions with no sources say so.
+
+The result is always supplied independently, including an optional maximum. It may include adjustments or rules beyond the displayed contributions. Never assume the result equals the sum of the cards. Outcome wording and sentiment are separate; neither is inferred from a numeric value. Put domain-specific values such as currency exposure in `supportingText`.
+
+<Canvas of={Stories.SharedSignals} />
+
+## Give signal values meaning
+
+Set a signal's `sentiment` to `positive`, `warning`, or `negative` to tint its value and status. The default is `neutral`. Applications choose these meanings explicitly: a true flag, a high number, or a negative value does not determine whether an observation is favorable.
+
+Use `statusLabel` for a short, visible explanation such as “Within target”, “Elevated”, or “Missing dimensions”. It appears beside the exact value, so the interpretation remains understandable without color. A neutral signal can also have a status label. When a nonneutral signal has no nonblank status label, it displays “Positive”, “Caution”, or “Negative”; localize these through `labels.positiveSignal`, `labels.warningSignal`, and `labels.negativeSignal`.
+
+```tsx
+<ScoreSignal
+  label="Missing package dimensions"
+  value={true}
+  sentiment="negative"
+  statusLabel="Needs attention"
+/>
+```
+
+Set `triggered={false}` on a signal in the composition when the application knows its rule did not trigger. Its outgoing connectors use a lighter dashed line; keep the meaning explicit in `statusLabel` (for example “Clear”) and the contribution explanation. `true` and omitted values keep the normal solid connector. Trigger state is never inferred from false, zero, sentiment, or a contribution's score.
+
+Missing and invalid observations suppress supplied sentiment and status labels and display their existing neutral “No data” or “Invalid value” text. Update the observation, sentiment, and status together when application rules change.
+
+<Canvas of={Stories.SignalSentiments} />
+
+## Unfold signal details
+
+Supply `signal.description` to add supporting details beneath the signal's title when expanded. The title row uses the same chevron and shared Disclosure as contribution explanations. Its exact value and status stay visible when closed and are included in the control's accessible description. Signals without a description remain plain rows.
+
+Descriptions can contain application-owned text, links, or controls. Each signal opens independently, retaining its state across record refreshes and reordering while its ID stays stable. The SVG connectors follow the resized boxes. This works for standalone `ScoreSignal` too.
+
+```tsx
+<ScoreSignal
+  label="Declared weight mismatch"
+  value={false}
+  sentiment="positive"
+  statusLabel="Clear"
+  description="The declared and observed weights agree in this sample."
+/>
+```
+
+## Put a chart inside the expanded card
+
+The compact card retains its exact observation or score and progress meter. Its title reveals richer content supplied through `signal.description` or `contribution.explanation`. These existing slots accept React content, including `Chart`, its independent `ChartSurface` / `ChartDataView` companions, or native plots such as `RangePlot` and `CompactTimeSeries`.
+
+<Canvas of={Stories.ChartDetails} />
+
+In this example, open **NDA / international label ratio** for its recent trend, or **NDA / International** for the ratio-to-contribution curve. The current observation appears as a point with dashed guides and a visible exact-value callout. Labeled shaded regions put it in context against application-supplied levels. The curve, callout, and exact-data table share the same supplied evaluations. Closing the title returns to the compact meter; the card never replaces exact values with a graph alone.
+
+```tsx
+<ScoreContribution
+  label="NDA / International"
+  score={1}
+  maxScore={2}
+  explanation={
+    <Chart
+      variant="bare"
+      aria-label="Ratio response"
+      height={200}
+      option={responseOption}
+      dataTable={responseData}
+    />
+  }
+/>
+```
+
+Use the existing `ChartOption` series `markPoint` for an observed coordinate, `markLine` for reference guides, and `markArea` for bounded regions. See the **ChartDetails** story's `ScoreComposition.charts.tsx` recipe for numeric axes, a highlighted point on supplied evaluations, vertical threshold bands, and horizontal bands on a recent trend. Keep labels and units adjacent to the chart and provide `dataTable` or a `ChartDataView` so exact values remain available by keyboard and if rendering fails. Pass the same `typography` to embedded charts when changing text sizes; use `variant="bare"` to avoid nested card frames.
+
+Bands describe application rules, not statistical confidence. The application supplies evaluations, thresholds, units, and interpretations. Lines join supplied points without fitting a new curve. Applications can compose other graph and chart types using the same slots; ScoreComposition has no chart-specific grammar or engine dependency. The optional Chart engine loads when a chart is mounted. Closing a node unmounts its details; collapsing an entire column keeps open chart content mounted and restores it on return. Use controlled chart state when it must survive a node's close/reopen cycle.
+
+## Read contribution fullness
+
+A contribution's fill is relative to its own maximum: `1 / 1` shows “Full · 100%”, while `1 / 2` shows “Partial · 50%”. Zero shows “None · 0%”. The meter and exact fraction remain visible alongside this status, so color is never the only way to distinguish these states. Localize the state words through `labels.fullContribution`, `labels.partialContribution`, and `labels.noContribution`.
+
+Contribution `sentiment` is independent of fullness and defaults to `neutral`. Set it explicitly to `positive`, `warning`, or `negative` to color the status and meter, with readable score text. For the risk example, the application marks the full underdeclaration contribution `negative` and the partial international contribution `warning`, which uses a golden fill. A fully earned quality score could instead be `positive`. Easy UI does not infer business meaning from a score, its maximum, or its source signals; update sentiment alongside changed contribution values.
+
+```tsx
+<ScoreContribution
+  label="Underdeclaration"
+  score={1}
+  maxScore={1}
+  sentiment="negative"
+  sourceLabels={["Missing package dimensions"]}
+/>
+```
+
+Fullness uses exact supplied values: only a score equal to its cap is full. Percentages use whole numbers, with `<1%` and `<100%` at the boundaries so a small positive or almost-full contribution never looks empty or full after rounding. Exact scores and meter widths are unchanged. Missing, invalid, and outside-scale contributions suppress fullness and sentiment while retaining their existing value and scale messages.
+
+<Canvas of={Stories.ContributionFullness} />
+
+## Lead with the decision
+
+When supplied, `result.disposition` leads the result card before the exact score. The card uses the application's explicit `result.sentiment`: `negative` emphasizes an adverse decision, `positive` a favorable decision, and the default `neutral` avoids implying either. A decorative icon reinforces the visual treatment; the disposition text carries the decision for everyone, including assistive technology.
+
+The score never determines the decision or its sentiment. The same score may be “Disable”, “Approved”, or “Pending review” under different application rules. A supplied decision also remains visible when its score is unavailable. Omit `disposition` when the application has no outcome to report; the result still displays its score or missing-data label without inventing a decision.
+
+<Canvas of={Stories.ResultDecisions} />
+
+## Layout and access
+
+Signals, contributions, and result are ordinary DOM content in reading order. CSS Grid places them in three columns when the component's content area is at least 48rem wide. Below that it stacks the columns, preserving exact values, source labels, and explanations. This responds to the container, including side panels on wide screens.
+
+Signals use compact, subtly bordered boxes. Internal padding separates their labels and values from connector endpoints. SVG curves attach to the outside of each node and stay within the connecting gutters; node backgrounds keep edges behind the content.
+
+SVG curves are decorative, hidden from assistive technology and pointer input. Their attachment points follow DOM resizing, font reflow, and disclosure expansion. The component has no graph engine, editor, dragging, panning, or zoom. With JavaScript disabled or before hydration, the complete explanation remains present except for explicitly collapsed columns and optional closed disclosure content. No measurement is needed for server rendering.
+
+Contribution meters expose their label, exact score, and maximum. Source labels accompany the stacked layout; in three columns those same labels remain available to assistive technology while the curves show the relationships visually. Independently placed contribution cards always show their source labels. Signal titles with a description and contribution titles with an explanation are Disclosure buttons with an expand/collapse chevron, supporting keyboard and touch input. Signal details open below their observation row; contribution explanations open below the meter, without separate link rows. `labels.explanation` supplies the accessible-name prefix; the node title stays visible. Titles without supporting detail remain plain text. Expanded content can contain application links and controls. Hovering a contribution card or focusing a control within it emphasizes its incoming and outgoing connections in a stronger neutral stroke. Keyboard focus takes precedence over pointer hover. Inactive connections retain their dashed pattern while emphasized. Connections alone never carry information.
+
+<Canvas of={Stories.Narrow} />
+<Canvas of={Stories.LargerText} />
+
+## Collapse a column
+
+Select the Signals or Contributions header to collapse that entire column. Its compact handle keeps the name and record count visible, and the remaining columns take the freed space. On narrow layouts, the same controls fold their sections vertically. The result always remains visible; empty columns keep their empty-state message without a collapse control.
+
+Open node details and application content keep their state while hidden. Hidden columns leave the tab order and accessibility tree. If a controlled update collapses a column containing focus, focus returns to its header. Connectors only join visible nodes: hiding signals keeps contribution → result paths and reveals source names on the contribution cards; hiding contributions removes all paths without inventing signal → result relationships.
+
+Use `defaultCollapsedColumns` to start focused on contributions or the result. For application-managed state, provide `collapsedColumns` and `onCollapsedColumnsChange`; a controlled value stays unchanged until the application supplies the next value. The `ScoreCompositionColumn` type is `"signals" | "contributions"`. Localize action names with `labels.collapse` and `labels.expand`, and column names with `labels.signals` and `labels.contributions`.
+
+```tsx
+const [collapsedColumns, setCollapsedColumns] = useState<
+  ScoreCompositionColumn[]
+>(["signals"]);
+
+<ScoreComposition
+  {...scoreData}
+  collapsedColumns={collapsedColumns}
+  onCollapsedColumnsChange={setCollapsedColumns}
+/>;
+```
+
+<Canvas of={Stories.FocusOnContributions} />
+<Canvas of={Stories.FocusOnResult} />
+
+## Values and scales
+
+`null` means unavailable. Zero and false remain real observations. Non-finite values are labelled invalid and never passed to `formatScore`. `displayValue` formats valid, available signal observations, including booleans. Interface text is localizable through `labels`; use `result.label` for “Total score”.
+
+A meter requires a positive finite maximum and a finite score within `[0, maxScore]`. Outside values, including negative adjustments, retain their exact signed text and “Outside scale” label without a filled meter. Invalid caps retain their supplied value and “Invalid scale” label. Values are never silently clamped, normalized, or changed to zero. Use a signed chart for richer negative-contribution comparisons.
+
+<Canvas of={Stories.ZeroAndMissing} />
+<Canvas of={Stories.OutsideScale} />
+<Canvas of={Stories.NoData} />
+
+## Compose in an application
+
+Visible `title`, `description`, `metadata`, and `footer` are optional. Use `variant="bare"` inside your own card, and standard `aria-label`, `aria-labelledby`, and `aria-describedby` to associate surrounding content. Without a supplied name or title, the region is named “Score composition”. `typography` follows the shared visualization text roles and propagates to the primitives.
+
+`ScoreSignal`, `ScoreContribution`, and `ScoreResult` can be used independently with the same formatting and value contracts. `ScoreContribution.sourceLabels` contains readable source names for this usage. `ScoreConnector` draws one decorative path from `from={{x, y}}` to `to={{x, y}}` inside a caller-owned SVG, with optional `isInactive` and `isHighlighted` states; custom layouts own their measurements and equivalent textual relationships. These are presentation primitives for explainable scores, not arbitrary graph nodes.
+
+<Canvas of={Stories.ExternalHeading} />
+<Canvas of={Stories.IndependentPrimitives} />
+
+## Properties
+
+<ArgTypes of={ScoreComposition} />

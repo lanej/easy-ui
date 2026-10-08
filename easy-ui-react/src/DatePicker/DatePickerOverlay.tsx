@@ -4,6 +4,8 @@ import {
   DismissButton,
   Overlay,
   usePopover,
+  useDialog,
+  FocusScope,
 } from "react-aria";
 import { DatePickerState, DateRangePickerState } from "react-stately";
 import {
@@ -33,6 +35,11 @@ function DatePickerContent(props: DatePickerOverlayProps) {
   const { children, triggerRef, dialogProps, state } = props;
 
   const popoverRef = React.useRef(null);
+  const dialogRef = React.useRef(null);
+  const { dialogProps: accessibleDialogProps } = useDialog(
+    dialogProps,
+    dialogRef,
+  );
 
   const { popoverProps, underlayProps } = usePopover(
     {
@@ -50,9 +57,15 @@ function DatePickerContent(props: DatePickerOverlayProps) {
       <div {...underlayProps} className={styles.underlay} />
       <div {...popoverProps} ref={popoverRef} className={styles.popover}>
         <DismissButton onDismiss={state.close} />
-        <div {...dialogProps} className={styles.dialog}>
-          {children}
-        </div>
+        <FocusScope contain restoreFocus autoFocus>
+          <div
+            {...accessibleDialogProps}
+            ref={dialogRef}
+            className={styles.dialog}
+          >
+            {children}
+          </div>
+        </FocusScope>
         <DismissButton onDismiss={state.close} />
       </div>
     </Overlay>

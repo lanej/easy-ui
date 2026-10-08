@@ -28,6 +28,16 @@ type CellProps<T = unknown> = {
 export function Cell({ cell, state }: CellProps) {
   const table = useDataGridTable();
   const row = useDataGridRow();
+  const options = cell.column
+    ? table.columnOptions?.[cell.column.key]
+    : undefined;
+  const style = options && {
+    width: options.width,
+    minWidth: options.minWidth,
+    textAlign: options.alignment ?? (options.isNumeric ? "end" : undefined),
+    whiteSpace:
+      options.whiteSpace ?? (options.isNumeric ? "nowrap" : undefined),
+  };
   const ref = useRef(null);
   const { gridCellProps } = useTableCell({ node: cell }, state, ref);
   const { isFocusVisible, focusProps } = useFocusRing();
@@ -44,6 +54,7 @@ export function Cell({ cell, state }: CellProps) {
 
   const className = classNames(
     styles.Cell,
+    row.isSubtotal && styles.subtotal,
     isFocusVisible && styles.focused,
     row.isExpanded && styles.expanded,
     row.isFocusVisible && styles.rowFocused,
@@ -72,9 +83,17 @@ export function Cell({ cell, state }: CellProps) {
       {...mergeProps(gridCellProps, focusProps)}
       ref={ref}
       className={className}
+      style={style}
     >
-      <div className={styles.content}>
-        <CellContentComponent cell={cell} state={state} />
+      <div
+        className={classNames(
+          styles.content,
+          options?.isNumeric && styles.numeric,
+        )}
+      >
+        {!(row.isSubtotal && cell.props.isSelectionCell) && (
+          <CellContentComponent cell={cell} state={state} />
+        )}
         <div data-ezui-data-grid-shadow />
       </div>
     </td>

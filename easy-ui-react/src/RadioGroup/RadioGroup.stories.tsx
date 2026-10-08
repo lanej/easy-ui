@@ -33,7 +33,8 @@ const ItemTemplate = (args: RadioGroupItemProps) => {
 };
 
 const meta: Meta<typeof RadioGroup> = {
-  title: "Components/RadioGroup",
+  id: "components-radiogroup",
+  title: "Molecules/Forms/RadioGroup",
   component: RadioGroup,
   args: {
     label: "Select an option:",

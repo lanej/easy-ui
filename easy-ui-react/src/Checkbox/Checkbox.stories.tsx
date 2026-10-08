@@ -8,7 +8,8 @@ type Story = StoryObj<typeof Checkbox>;
 const Template = (args: CheckboxProps) => <Checkbox {...args} />;
 
 const meta: Meta<typeof Checkbox> = {
-  title: "Components/Checkbox",
+  id: "components-checkbox",
+  title: "Atoms/Inputs/Checkbox",
   component: Checkbox,
   args: {
     children: "Checkbox item",

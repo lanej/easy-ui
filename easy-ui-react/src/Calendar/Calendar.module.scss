@@ -1,6 +1,10 @@
 @use "../styles/common" as *;
 
 .Calendar {
+  width: 22rem;
+  max-width: 100%;
+  background: design-token("color.neutral.000");
+  isolation: isolate;
   border: design-token("shape.border_width.1") solid
     design-token("color.neutral.200");
   border-radius: design-token("shape.border_radius.lg");

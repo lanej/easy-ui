@@ -1,0 +1,70 @@
+import { ArgTypes, Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { RiskScore } from "./RiskScore";
+import * as Stories from "./RiskScore.stories";
+
+<Meta of={Stories} />
+
+# RiskScore
+
+Display a supplied risk score with its scale, a visible assessment, and a thin proportional meter. Higher scores mean higher risk. Use the default size in summaries and the compact size in tracking tables.
+
+<Canvas of={Stories.Default} />
+<Controls of={Stories.Default} />
+
+```tsx
+import { RiskScore } from "@easypost/easy-ui/RiskScore";
+import "@easypost/easy-ui/style.css";
+
+<RiskScore value={87} assessment="high" />;
+```
+
+## Supply the score and assessment
+
+The application or scoring service owns scoring and assessment thresholds. Pass `assessment="low"`, `"medium"`, or `"high"` explicitly; the component never derives a category from the number. The visible label accompanies each color, so the assessment remains understandable without color.
+
+Keep `value`, `max`, and `assessment` from the same scoring result. A score is not a probability or percentage, and “High risk” is not an adjudication. Place explanations and application decisions in surrounding UI.
+
+<Canvas of={Stories.Assessments} />
+
+Omit `assessment` or pass `null` when a score exists without a category. The number and meter remain visible in neutral styling with “Not assessed”. A high number alone does not receive high-risk styling.
+
+<Canvas of={Stories.Unassessed} />
+
+## Compose in tracking tables
+
+Set `size="sm"` for dense layouts. Both sizes retain the value, maximum, visible assessment, and meter. This molecule composes the Text and Pill atoms without a click action or surrounding card; compose it with existing table, navigation, and detail components.
+
+Use `accessibilityLabel` to identify the measured risk. In a table, include the record identifier so each score has a distinct accessible name.
+
+<Canvas of={Stories.CompactTrackingTable} />
+
+## Distinguish loading, unavailable, and zero
+
+Pass `isLoading` while retrieving a score. It suppresses the previous value, assessment, and meter, displaying “Scoring…” with a busy state and a status label. Pass `value={null}` when a score is unavailable; it displays “Not scored” without a meter. Both states suppress a supplied assessment and its color.
+
+<Canvas of={Stories.Loading} />
+<Canvas of={Stories.Unavailable} />
+
+Zero is a valid score with an empty meter. Do not substitute zero for an unavailable result. Non-finite values, values outside `[0, max]`, and invalid maxima use the unavailable state; they are never clamped to a valid score. Applications handle errors and retries outside the molecule.
+
+## Choose the scale
+
+The scale starts at zero and defaults to a maximum of `100`. Supply a finite `max` greater than zero for a different scale, such as `max={1}`. The meter represents `value / max`; changing the maximum changes the scale, not the assessment. The exact score and maximum remain visible, without a percent sign.
+
+<Canvas of={Stories.ZeroAndCustomScale} />
+
+## Localize labels and number formatting
+
+`formatValue` formats both the score and maximum. It defaults to `String`, preserving the supplied precision. A formatter changes display text only; the original numeric values still determine the meter and its accessible range. Choose formatting precise enough to distinguish the scores your application presents.
+
+Use `assessmentLabel` for localized assessment text and `loadingLabel` / `emptyLabel` for unavailable states. The assessment label changes wording without changing the supplied category or color. When an uncategorized score is possible, also provide an appropriate localized `assessmentLabel` for that state.
+
+Localize `accessibilityLabel` and `accessibilityValueText` together. The default accessible value describes the score, maximum, assessment, and higher-is-riskier direction in English. A supplied translation should retain those facts and update with the score. It is ignored while loading or unavailable. Set the surrounding content's language for correct pronunciation.
+
+<Canvas of={Stories.LocalizedNarrow} />
+
+The score and label wrap within the available width. Valid scores expose meter semantics with a zero minimum, the supplied maximum, and the exact numeric value. Loading and unavailable states expose a named group without a numeric meter. No keyboard interaction is required to read the molecule.
+
+## Properties
+
+<ArgTypes of={RiskScore} />

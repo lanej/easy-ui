@@ -16,7 +16,8 @@ type Story = StoryObj<typeof Calendar>;
 const Template = (args: CalendarProps) => <Calendar {...args} />;
 
 const meta: Meta<typeof Calendar> = {
-  title: "Components/Calendar/Calendar",
+  id: "components-calendar-calendar",
+  title: "Molecules/Forms/Calendar",
   args: {
     isDisabled: false,
     isReadOnly: false,

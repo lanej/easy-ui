@@ -5,7 +5,7 @@ import {
   SelectionMode,
   SortDescriptor,
 } from "@react-types/shared";
-import { ReactNode } from "react";
+import { CSSProperties, ReactNode } from "react";
 import { IconSymbol } from "../types";
 
 /** Denote that an object must contain a key. */
@@ -56,6 +56,64 @@ export type KeyedSortDescriptor<K extends Key = Key> = Omit<
 
 export type RowAction = MenuRowAction | ActionRowAction;
 
+/** Presentation shared by a column's header, data cells, and subtotal cells. */
+export type DataGridColumnOptions = {
+  /** Horizontal alignment. Defaults to end for numeric columns, otherwise start. */
+  alignment?: "start" | "center" | "end";
+
+  /** Preferred width under the browser's automatic table layout; numbers are pixels. */
+  width?: CSSProperties["width"];
+
+  /** Minimum column width. Wider tables remain horizontally scrollable. */
+  minWidth?: CSSProperties["minWidth"];
+
+  /** Wrap text or keep labels and rich values together. Applies to headings and cells. */
+  whiteSpace?: "normal" | "nowrap";
+
+  /** Use tabular digits, end alignment, and unwrapped body values by default. Does not format values. */
+  isNumeric?: boolean;
+};
+
+/** The original data rows contributing to a subtotal. */
+export type DataGridGroup<R extends Row = Row> = {
+  readonly key: Key;
+  readonly rows: readonly R[];
+};
+
+export type DataGridGrouping<C extends Column = Column, R extends Row = Row> = {
+  /** Group by a string or numeric key. Groups appear in first-seen order. */
+  getGroupKey: (row: R) => Key;
+
+  /** Human-readable group name for default subtotals and disclosure labels. Defaults to String(group.key). */
+  getGroupLabel?: (group: DataGridGroup<R>) => string;
+
+  /** Compute a value for each configured column from the group's data rows. */
+  aggregators: Partial<Record<ColumnKey<C>, (rows: readonly R[]) => unknown>>;
+
+  /** Show a disclosure button beside each subtotal label. Defaults to false. */
+  isCollapsible?: boolean;
+
+  /** Currently collapsed group keys (controlled). Requires isCollapsible. */
+  collapsedKeys?: Iterable<Key>;
+
+  /** Initially collapsed group keys (uncontrolled). Groups start open by default. */
+  defaultCollapsedKeys?: Iterable<Key>;
+
+  /** Called with the next set of collapsed group keys when a group is toggled. */
+  onCollapsedChange?: (keys: Set<Key>) => void;
+
+  /**
+   * Render subtotal cells separately from data cells. By default, the first
+   * column reads "{group label} subtotal", aggregated values are stringified,
+   * and other columns are blank. An aggregator can override the first cell.
+   */
+  renderSubtotalCell?: (
+    cell: unknown,
+    columnKey: ColumnKey<C>,
+    group: DataGridGroup<R>,
+  ) => ReactNode;
+};
+
 export type DataGridProps<
   C extends Column = Column,
   R extends Row = Row,
@@ -65,6 +123,9 @@ export type DataGridProps<
 
   /** List of keys for columns to allow sort. */
   columnKeysAllowingSort?: ColumnKey<C>[];
+
+  /** Layout options keyed by column key, separate from arbitrary column metadata. */
+  columnOptions?: Partial<Record<ColumnKey<C>, DataGridColumnOptions>>;
 
   /** Columns for the table. */
   columns: C[];
@@ -78,8 +139,11 @@ export type DataGridProps<
   /** A list of row keys to disable from selection. */
   disabledKeys?: Iterable<RowKey<R>>;
 
-  /** The currently expanded key in the collection (controlled). */
-  expandedKey?: RowKey<R>;
+  /** The currently expanded key (controlled). Pass null to close all details. */
+  expandedKey?: RowKey<R> | null;
+
+  /** Group data rows and append a subtotal, with optional group collapse controls. */
+  grouping?: DataGridGrouping<C, R>;
 
   /**
    * Variant of the data grid header to use.
@@ -88,8 +152,9 @@ export type DataGridProps<
   headerVariant?: "primary" | "secondary" | "emphasized";
 
   /**
-   * Constrains the height of the data grid to a set number of rows, or to the
-   * height its container makes available with `auto`.
+   * Constrains height by body-row count, including subtotals. "all" removes the
+   * row limit; "auto" uses the height its container makes available. The
+   * existing default of 999 is retained for compatibility.
    *
    * @remarks
    * `auto` keeps the data grid within the space its container offers and
@@ -100,13 +165,19 @@ export type DataGridProps<
    * space to work from; with none, the data grid falls back to drawing every
    * row.
    */
-  maxRows?: number | "auto";
+  maxRows?: number | "all" | "auto";
+
+  /**
+   * Explicit height limit, e.g. 400 (pixels) or "60vh". Overrides maxRows when
+   * supplied. Content below this height does not stretch to fill it.
+   */
+  maxHeight?: CSSProperties["maxHeight"];
 
   /** Handler that is called when a user performs an action on the cell. */
   onCellAction?: (key: RowKey<R>) => void;
 
-  /** Handler that is called when the expansion changes. */
-  onExpandedChange?: (key: RowKey<R>) => void;
+  /** Called with the next expanded key, or null when the open row is closed. */
+  onExpandedChange?: (key: RowKey<R> | null) => void;
 
   /** Handler that is called when a user performs an action on the row. */
   onRowAction?: (key: RowKey<R>) => void;
@@ -166,6 +237,7 @@ export type DataGridProps<
 
   /**
    * Whether the table is currently loading.
+   * Expanded details are temporarily hidden; the expanded key is preserved.
    * @default false
    */
   isLoading?: boolean;

@@ -11,7 +11,8 @@ type Story = StoryObj<typeof Text>;
 const Template = (args: TextProps) => <Text {...args} />;
 
 const meta: Meta<typeof Text> = {
-  title: "Primitives/Text",
+  id: "primitives-text",
+  title: "Atoms/Typography/Text",
   argTypes: {
     variant: createFontStyleTokensControl(),
     color: {

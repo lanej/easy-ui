@@ -1,23 +1,13 @@
-## 📝 Changes
+<!--
+Explain the final change and why in one or two short paragraphs.
 
-Please provide a brief summary of the changes made and why they were made.
+Add only context the diff and checks do not supply, such as a stack parent,
+manual observation, external evidence, or known verification gap. Do not
+repeat automated test results, test inventories, or coverage figures.
 
-Include any notes, screenshots, or videos that may be helpful for developers reviewing this pull request.
+Include a screenshot when it helps reviewers assess a visual change; omit
+it otherwise. When included, show the actual current result through a durable
+image URL and verify that it renders inline on GitHub.
 
-## ✅ Checklist
-
-Easy UI has certain UX standards that must be met. In general, non-trivial changes should meet the following criteria:
-
-- [ ] Visuals match Design Specs in Figma
-- [ ] Stories accompany any component changes
-- [ ] Code is in accordance with our style guide
-- [ ] Design tokens are utilized
-- [ ] Unit tests accompany any component changes
-- [ ] TSDoc is written for any API surface area
-- [ ] Specs are up-to-date
-- [ ] Console is free from warnings
-- [ ] No accessibility violations are reported
-- [ ] Cross-browser check is performed (Chrome, Safari, Firefox)
-- [ ] Changeset is added
-
-~~Strikethrough~~ any items that are not applicable to this pull request.
+Omit unused sections, boilerplate checklists, and implementation history.
+-->

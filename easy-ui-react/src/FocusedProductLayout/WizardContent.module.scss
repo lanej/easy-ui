@@ -19,7 +19,7 @@
 
   @include Stepper.breakpoint-fold-up {
     border-bottom: design-token("shape.border_width.1") solid
-      design-token("color.gray.200");
+      design-token("color.neutral.200");
   }
 }
 
