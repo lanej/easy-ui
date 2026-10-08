@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,8 +17,6 @@ const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const source = join(repository, "easy-ui-react");
 const distribution = join(source, "dist");
 const scratch = await mkdtemp(join(tmpdir(), "easy-ui-style-package-"));
-const cache =
-  process.env.npm_config_cache ?? join(tmpdir(), "easy-ui-npm-cache");
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const run = (command, args, cwd) =>
   execFileSync(command, args, {
@@ -19,6 +24,10 @@ const run = (command, args, cwd) =>
     encoding: "utf8",
     maxBuffer: 20 * 1024 * 1024,
   });
+const cache =
+  process.env.npm_config_cache ??
+  process.env.NPM_CONFIG_CACHE ??
+  run(npm, ["config", "get", "cache"], repository).trim();
 const sassFiles = (await readdir(join(source, "src/styles")))
   .filter((file) => file.endsWith(".scss"))
   .sort();
@@ -507,6 +516,14 @@ try {
     await writeFile(join(folder, "result.log"), output);
     console.log(mode + ": " + output.trim());
   }
+  await Promise.all(
+    ["publish-directory", "source"].map((mode) =>
+      rm(join(scratch, mode, "consumer", "node_modules"), {
+        recursive: true,
+        force: true,
+      }),
+    ),
+  );
   console.log("Packed consumer evidence: " + scratch);
 } catch (error) {
   console.error("Packed consumer failed; evidence retained at " + scratch);
