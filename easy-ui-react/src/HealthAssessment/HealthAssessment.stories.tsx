@@ -11,10 +11,11 @@ import styles from "./HealthAssessment.examples.module.scss";
 import {
   DurationReferenceExample,
   type DurationHealthRegion,
+  type ReferenceVisualization,
 } from "./DurationReference.example";
 
 type ExampleArgs = HealthAssessmentProps & {
-  showReferenceTrack?: boolean;
+  referenceVisualization?: ReferenceVisualization;
   showHealthBands?: boolean;
   showReferenceDistribution?: boolean;
 };
@@ -26,13 +27,14 @@ const meta: Meta<ExampleArgs> = {
   argTypes: {
     reference: { control: false },
     health: { control: false },
-    showReferenceTrack: {
-      control: "boolean",
-      description: "Story-only: show the threshold track.",
+    referenceVisualization: {
+      control: "select",
+      options: ["cumulative", "histogram", "both", "none"],
+      description: "Story-only: choose reference graphics.",
     },
     showHealthBands: {
       control: "boolean",
-      description: "Story-only: color the track with assessment ranges.",
+      description: "Story-only: show background assessment ranges.",
     },
     showReferenceDistribution: {
       control: "boolean",
@@ -40,7 +42,7 @@ const meta: Meta<ExampleArgs> = {
     },
   },
   args: {
-    showReferenceTrack: true,
+    referenceVisualization: "cumulative",
     showHealthBands: true,
     showReferenceDistribution: true,
   },
@@ -106,19 +108,15 @@ function referenceFor(
   locale: "en" | "fr" = "en",
   options: Pick<
     ExampleArgs,
-    "showReferenceTrack" | "showHealthBands" | "showReferenceDistribution"
+    "referenceVisualization" | "showHealthBands" | "showReferenceDistribution"
   > = {},
 ) {
-  if (
-    options.showReferenceTrack === false &&
-    options.showReferenceDistribution === false
-  )
-    return undefined;
+  if (options.referenceVisualization === "none") return undefined;
   return (
     <DurationReferenceExample
       value={value}
       locale={locale}
-      showTrack={options.showReferenceTrack}
+      visualization={options.referenceVisualization}
       showDistribution={options.showReferenceDistribution}
       regions={
         options.showHealthBands !== false &&
@@ -135,7 +133,7 @@ function referenceFor(
 
 function renderExample(
   {
-    showReferenceTrack,
+    referenceVisualization,
     showHealthBands,
     showReferenceDistribution,
     ...args
@@ -171,7 +169,7 @@ function renderExample(
       reference={
         usesHours && args.observation
           ? referenceFor(args.observation.value, assessed, locale, {
-              showReferenceTrack,
+              referenceVisualization,
               showHealthBands,
               showReferenceDistribution,
             })
@@ -206,11 +204,14 @@ const defaultProps: HealthAssessmentProps = {
 };
 
 export const Default: Story = { args: defaultProps };
-export const TrackOnly: Story = {
+export const CumulativeOnly: Story = {
   args: { ...defaultProps, showReferenceDistribution: false },
 };
-export const DistributionOnly: Story = {
-  args: { ...defaultProps, showReferenceTrack: false },
+export const HistogramOnly: Story = {
+  args: { ...defaultProps, referenceVisualization: "histogram" },
+};
+export const BothReferences: Story = {
+  args: { ...defaultProps, referenceVisualization: "both" },
 };
 export const WithoutHealthBands: Story = {
   args: { ...defaultProps, showHealthBands: false },
@@ -218,7 +219,7 @@ export const WithoutHealthBands: Story = {
 export const WithoutReference: Story = {
   args: {
     ...defaultProps,
-    showReferenceTrack: false,
+    referenceVisualization: "none",
     showReferenceDistribution: false,
   },
 };

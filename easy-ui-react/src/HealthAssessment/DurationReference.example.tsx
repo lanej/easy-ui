@@ -34,6 +34,36 @@ const bins = Array.from({ length: 10 }, (_, index) => ({
 }));
 const peak = Math.max(...bins.map(({ count }) => count));
 
+const total = samples.reduce((sum, [, count]) => sum + count, 0);
+let runningCount = 0;
+const cumulative = [
+  { duration: 0, fraction: 0 },
+  ...samples.map(([duration, count]) => {
+    runningCount += count;
+    return { duration, fraction: runningCount / total };
+  }),
+  { duration: max, fraction: 1 },
+];
+const curvePath = cumulative
+  .map(
+    ({ duration, fraction }, index) =>
+      `${index ? "L" : "M"} ${(duration / max) * 300} ${100 - fraction * 100}`,
+  )
+  .join(" ");
+function fractionAt(duration: number) {
+  const nextIndex = cumulative.findIndex((point) => point.duration >= duration);
+  if (nextIndex <= 0) return nextIndex === 0 ? 0 : 1;
+  const previous = cumulative[nextIndex - 1],
+    next = cumulative[nextIndex];
+  return (
+    previous.fraction +
+    ((next.fraction - previous.fraction) * (duration - previous.duration)) /
+      (next.duration - previous.duration)
+  );
+}
+export type ReferenceVisualization =
+  "cumulative" | "histogram" | "both" | "none";
+
 export type DurationHealthRegion = {
   from: number;
   to: number;
@@ -66,13 +96,13 @@ export function DurationReferenceExample({
   value,
   locale = "en",
   regions = [],
-  showTrack = true,
+  visualization = "cumulative",
   showDistribution = true,
 }: {
   value: number | null;
   locale?: "en" | "fr";
   regions?: readonly DurationHealthRegion[];
-  showTrack?: boolean;
+  visualization?: ReferenceVisualization;
   showDistribution?: boolean;
 }) {
   const valid =
@@ -110,37 +140,105 @@ export function DurationReferenceExample({
     )
     .join("; ");
 
-  if (!showTrack && !showDistribution) return null;
+  if (visualization === "none") return null;
+  const showCurve = visualization === "cumulative" || visualization === "both";
+  const regionHeader = visibleRegions.length > 0 && (
+    <div className={styles.regionLabels} aria-hidden="true">
+      {visibleRegions.map((region) => (
+        <span
+          key={region.from}
+          className={styles.regionLabel}
+          style={{ width: regionWidth(region) }}
+        >
+          {region.shortLabel}
+          <small>{rangeLabel(region)}</small>
+        </span>
+      ))}
+    </div>
+  );
+  const regionLegend = visibleRegions.length > 0 && (
+    <div className={styles.compactRegions} aria-hidden="true">
+      {visibleRegions.map((region) => (
+        <span key={region.from} data-assessment={region.assessment}>
+          <span>{region.shortLabel}</span>
+          <span>{rangeLabel(region)}</span>
+        </span>
+      ))}
+    </div>
+  );
+  const histogram = (
+    <figure className={styles.distribution}>
+      <figcaption>
+        <Text as="span" variant="caption" color="subdued">
+          {description}
+        </Text>
+      </figcaption>
+      {!showCurve && regionHeader}
+      <div
+        className={styles.histogram}
+        role="img"
+        aria-label={`${description}. ${rangesLabel}P50: 9 h. P90: 18 h. ${distributionLabel}.`}
+      >
+        <div className={styles.track} aria-hidden="true">
+          {visibleRegions.map((region) => (
+            <span
+              key={region.from}
+              className={styles.region}
+              data-assessment={region.assessment}
+              style={{
+                left: `${(region.from / max) * 100}%`,
+                width: regionWidth(region),
+              }}
+            />
+          ))}
+        </div>
+        <div className={styles.bins} aria-hidden="true">
+          {bins.map(({ from, count }) => (
+            <span
+              key={from}
+              className={styles.bin}
+              style={{ height: `${(count / peak) * 100}%` }}
+            />
+          ))}
+        </div>
+        {landmarks.map(({ label, value: landmark }) => (
+          <span
+            key={label}
+            className={styles.histogramPercentile}
+            style={{ left: `${(landmark / max) * 100}%` }}
+            aria-hidden="true"
+          />
+        ))}
+      </div>
+      <Scale format={format} />
+      {!showCurve && regionLegend}
+    </figure>
+  );
 
   return (
     <div className={styles.root}>
-      {showTrack && (
+      {showCurve && (
         <figure
           className={styles.figure}
           aria-label={
             locale === "fr" ? "Référence de durée" : "Duration reference"
           }
         >
-          {visibleRegions.length > 0 && (
-            <div className={styles.regionLabels} aria-hidden="true">
-              {visibleRegions.map((region) => (
-                <span
-                  key={region.from}
-                  className={styles.regionLabel}
-                  style={{ width: regionWidth(region) }}
-                >
-                  {region.shortLabel}
-                  <small>{rangeLabel(region)}</small>
-                </span>
-              ))}
-            </div>
-          )}
+          {regionHeader}
           <div
             className={styles.plot}
             data-has-regions={visibleRegions.length > 0}
             role="img"
-            aria-label={`${valueLabel}. ${rangesLabel}${referenceLabel}: P50: 9 h. P90: 18 h. 0–30 h.`}
+            aria-label={`${valueLabel}. ${rangesLabel}${referenceLabel}: ${locale === "fr" ? "Pourcentage terminé" : "Percentage completed"}. P50: 9 h, 50%. P90: 18 h, 90%. 0–30 h. ${locale === "fr" ? "Interpolation entre les observations fictives" : "Interpolated between synthetic observations"}.`}
           >
+            <span className={styles.yTitle} aria-hidden="true">
+              {locale === "fr" ? "Historique (%)" : "Historical (%)"}
+            </span>
+            <div className={styles.yAxis} aria-hidden="true">
+              <span>100</span>
+              <span>50</span>
+              <span>0</span>
+            </div>
             <div className={styles.track} aria-hidden="true">
               {visibleRegions.map((region) => (
                 <span
@@ -154,6 +252,22 @@ export function DurationReferenceExample({
                 />
               ))}
             </div>
+            <svg
+              className={styles.curve}
+              viewBox="0 0 300 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path d={curvePath} />
+              {landmarks.map(({ label, value: landmark }) => (
+                <circle
+                  key={label}
+                  cx={(landmark / max) * 300}
+                  cy={100 - fractionAt(landmark) * 100}
+                  r="2"
+                />
+              ))}
+            </svg>
             {landmarks.map(({ label, value: landmark }) => (
               <span
                 key={label}
@@ -168,64 +282,31 @@ export function DurationReferenceExample({
                 style={{ left: `${(value / max) * 100}%` }}
                 aria-hidden="true"
               >
-                <span className={styles.marker} />
+                <span
+                  className={styles.marker}
+                  style={{
+                    top: `calc(${(1 - fractionAt(value)) * 100}% - 4px)`,
+                  }}
+                />
               </span>
             )}
           </div>
           <Scale format={format} />
-          {visibleRegions.length > 0 && (
-            <div className={styles.compactRegions} aria-hidden="true">
-              {visibleRegions.map((region) => (
-                <span key={region.from} data-assessment={region.assessment}>
-                  <span>{region.shortLabel}</span>
-                  <span>{rangeLabel(region)}</span>
-                </span>
-              ))}
-            </div>
-          )}
+          {regionLegend}
           {!inRange && (
             <figcaption className={styles.valueState}>{valueLabel}</figcaption>
           )}
         </figure>
       )}
-      {showDistribution && (
+      {(visualization === "histogram" || visualization === "both") && histogram}
+      {visualization === "cumulative" && showDistribution && (
         <details className={styles.disclosure}>
           <summary>
             {locale === "fr"
               ? "Distribution de référence"
               : "Reference distribution"}
           </summary>
-          <figure className={styles.distribution}>
-            <figcaption>
-              <Text as="span" variant="caption" color="subdued">
-                {description}
-              </Text>
-            </figcaption>
-            <div
-              className={styles.histogram}
-              role="img"
-              aria-label={`${description}. P50: 9 h. P90: 18 h. ${distributionLabel}.`}
-            >
-              <div className={styles.bins} aria-hidden="true">
-                {bins.map(({ from, count }) => (
-                  <span
-                    key={from}
-                    className={styles.bin}
-                    style={{ height: `${(count / peak) * 100}%` }}
-                  />
-                ))}
-              </div>
-              {landmarks.map(({ label, value: landmark }) => (
-                <span
-                  key={label}
-                  className={styles.histogramPercentile}
-                  style={{ left: `${(landmark / max) * 100}%` }}
-                  aria-hidden="true"
-                />
-              ))}
-            </div>
-            <Scale format={format} />
-          </figure>
+          {histogram}
         </details>
       )}
     </div>

@@ -33,22 +33,23 @@ Keep an observation's name, value, assessment, and observation time together, wi
 
 The value carries the most visual weight. Its adjacent small pill states the supplied assessment without relying on color. A freshness status dot sits beside the supporting timestamp beneath it; the timestamp prefix is optional. At wider widths the reference sits beside this information; narrow and compact layouts stack it below.
 
-The application supplies each assessment, reference, and freshness state. The molecule does not compare durations, infer thresholds, or classify observations. These synthetic examples use a threshold track on a 0–30 hour scale. A blue elapsed marker shows the current observation. P50 (9 hours) and P90 (18 hours) pair each percentile with its duration directly beneath the tick. The pairs share a line when space permits and stack in very narrow references. These landmarks describe completed durations independently of the ongoing elapsed duration; they do not establish health or predict completion.
+The application supplies each assessment, reference, and freshness state. The molecule does not compare durations, infer thresholds, or classify observations. These synthetic examples use a cumulative curve on a 0–30 hour scale. The vertical axis shows percentage completed. The curve interpolates between cumulative counts from the synthetic observations; it is a historical reference, not a completion forecast. A blue elapsed marker shows the current observation. P50 (9 hours) and P90 (18 hours) pair each percentile with its duration directly beneath the tick. The pairs share a line when space permits and stack in very narrow references. These landmarks describe completed durations independently of the ongoing elapsed duration; they do not establish health or predict completion.
 
-Expand **Reference distribution** to inspect the completed-duration histogram. The disclosure uses native keyboard behavior, and its histogram uses the same scale and percentile positions as the track.
+Expand **Reference distribution** to inspect the completed-duration histogram. The disclosure uses native keyboard behavior, and its histogram uses the same scale and percentile positions as the curve.
 
-Labeled track regions show illustrative assessment ranges supplied by the application: **As expected** below 10 hours, **Needs attention** from 10 to less than 20 hours, and **Outside expectations** at 20 hours or more. These boundaries are independent of the distribution's percentiles. The last range continues beyond the displayed 30-hour scale. The story's application policy supplies both the pill and the ranges, keeping them consistent when the observation changes.
+Labeled background regions show illustrative assessment ranges supplied by the application: **As expected** below 10 hours, **Needs attention** from 10 to less than 20 hours, and **Outside expectations** at 20 hours or more. These boundaries are independent of the distribution's percentiles. The last range continues beyond the displayed 30-hour scale. The story's application policy supplies both the pill and the ranges, keeping them consistent when the observation changes.
 
 <Canvas of={Stories.Assessments} />
 
 ## Optional reference context
 
-The threshold track, health bands, and histogram are independently optional. These story controls belong to the example composition: `showReferenceTrack`, `showHealthBands`, and `showReferenceDistribution`. Hiding health bands leaves a neutral track with elapsed and percentile markers. The histogram can appear without the track, or be omitted entirely. With both graphics omitted, the observation has no reference column.
+Choose `referenceVisualization="cumulative"`, `"histogram"`, `"both"`, or `"none"` in the story-only example. The cumulative curve is the default. `showReferenceDistribution` independently controls its optional histogram disclosure. Both mode shows aligned charts directly; histogram mode shows just the histogram. `showHealthBands` independently controls background assessment ranges. None mode removes the reference column.
 
 In application code, omit the optional `reference` prop for value, assessment, and freshness alone. Supply only the reference content that the application needs; the molecule never creates graphics automatically.
 
-<Canvas of={Stories.TrackOnly} />
-<Canvas of={Stories.DistributionOnly} />
+<Canvas of={Stories.CumulativeOnly} />
+<Canvas of={Stories.HistogramOnly} />
+<Canvas of={Stories.BothReferences} />
 <Canvas of={Stories.WithoutHealthBands} />
 <Canvas of={Stories.WithoutReference} />
 

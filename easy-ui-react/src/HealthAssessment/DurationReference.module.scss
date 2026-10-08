@@ -16,7 +16,7 @@
 
 .regionLabels {
   display: flex;
-  margin-block-end: design-token("space.2");
+  margin-block-end: 32px;
 }
 
 .regionLabel {
@@ -33,14 +33,14 @@
 
 .plot {
   position: relative;
-  block-size: 12px;
+  block-size: 100px;
   margin-block-start: design-token("space.2");
 }
 
 .track {
   position: absolute;
   inset: 0;
-  background: design-token("color.neutral.500");
+  opacity: 0.13;
   border-radius: 3px;
   overflow: hidden;
 }
@@ -67,7 +67,7 @@
   position: absolute;
   inset-block: 0;
   inline-size: 1px;
-  background: design-token("color.neutral.000");
+  border-inline-start: 1px dashed design-token("color.neutral.700");
 }
 
 .percentile::after,
@@ -82,9 +82,9 @@
 
 .elapsed {
   position: absolute;
-  top: -6px;
+  top: 0;
   inline-size: 3px;
-  block-size: 24px;
+  block-size: 100%;
   transform: translateX(-50%);
   background: design-token("color.primary.600");
   box-shadow: 0 0 0 2px design-token("color.neutral.000");
@@ -121,8 +121,8 @@
   position: absolute;
   display: inline-flex;
   align-items: baseline;
-  gap: 2px;
-  top: 15px;
+  gap: design-token("space.0.5");
+  top: 8px;
   transform: translateX(-50%);
   text-align: center;
   white-space: nowrap;
@@ -176,6 +176,7 @@
 }
 
 .bins {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(10, minmax(0, 1fr));
   gap: 2px;
@@ -184,7 +185,7 @@
 }
 
 .bin {
-  background: design-token("color.neutral.500");
+  background: design-token("color.neutral.600");
   border-start-start-radius: 2px;
   border-start-end-radius: 2px;
 }
@@ -239,5 +240,49 @@
   }
   .percentileLabel strong {
     color: CanvasText;
+  }
+}
+
+.plot,
+.histogram,
+.scale,
+.regionLabels {
+  margin-inline-start: 28px;
+}
+.curve {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  path {
+    fill: none;
+    stroke: design-token("color.neutral.900");
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+  }
+  circle {
+    fill: design-token("color.neutral.900");
+  }
+}
+.yTitle {
+  position: absolute;
+  top: -22px;
+  left: 0;
+}
+.yAxis {
+  position: absolute;
+  inset-block: 0;
+  left: -28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+@media (forced-colors: active) {
+  .curve path {
+    stroke: CanvasText;
+  }
+  .curve circle {
+    fill: CanvasText;
   }
 }
