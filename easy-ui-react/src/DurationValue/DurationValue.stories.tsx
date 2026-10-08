@@ -9,7 +9,7 @@ const meta: Meta<typeof DurationValue> = {
   component: DurationValue,
   parameters: { layout: "padded" },
   argTypes: {
-    size: { control: "inline-radio", options: ["sm", "md"] },
+    size: { control: "inline-radio", options: ["sm", "md", "lg"] },
     formatValue: { control: false },
   },
 };
@@ -17,6 +17,7 @@ export default meta;
 type Story = StoryObj<typeof DurationValue>;
 
 export const Default: Story = { args: { value: 6, unit: "hours" } };
+export const Headline: Story = { args: { ...Default.args, size: "lg" } };
 export const Compact: Story = { args: { ...Default.args, size: "sm" } };
 export const Zero: Story = { args: { value: 0, unit: "minutes" } };
 export const Loading: Story = { args: { ...Default.args, isLoading: true } };

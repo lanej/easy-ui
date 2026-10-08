@@ -24,6 +24,10 @@ Zero is a real duration. Use `null` for unavailable observations; negative and n
 <Canvas of={Stories.States} />
 <Canvas of={Stories.Compact} />
 
+Use `size="lg"` for a headline duration beside taller reference charts. Compact and standard sizes retain their existing emphasis.
+
+<Canvas of={Stories.Headline} />
+
 ## Localization and accessibility
 
 Supply localized `unit`, `formatValue`, `accessibilityLabel`, `loadingLabel`, and `emptyLabel`. The default accessible description combines the formatted number and unit. Supply `accessibilityValueText` for a full localized description, keeping it synchronized with the current value. Loading and unavailable states ignore that description. Set the surrounding language for pronunciation.

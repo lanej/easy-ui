@@ -81,13 +81,23 @@
 }
 
 .elapsed {
+  color: design-token("color.neutral.700");
   position: absolute;
   top: 0;
   inline-size: 3px;
   block-size: 100%;
   transform: translateX(-50%);
-  background: design-token("color.primary.600");
+  background: currentColor;
   box-shadow: 0 0 0 2px design-token("color.neutral.000");
+}
+
+@each $assessment,
+  $tone
+    in ("healthy": "positive", "degraded": "warning", "unhealthy": "negative")
+{
+  .elapsed[data-current-assessment="#{$assessment}"] {
+    color: design-token("color.#{$tone}.700");
+  }
 }
 
 .marker {
@@ -98,7 +108,7 @@
   block-size: 9px;
   transform: translateX(-50%);
   border-radius: 50%;
-  background: design-token("color.primary.600");
+  background: currentColor;
   box-shadow: 0 0 0 2px design-token("color.neutral.000");
 }
 

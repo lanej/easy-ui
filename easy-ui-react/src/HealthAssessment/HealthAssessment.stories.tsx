@@ -115,6 +115,16 @@ function referenceFor(
   return (
     <DurationReferenceExample
       value={value}
+      currentAssessment={
+        assessed &&
+        typeof value === "number" &&
+        Number.isFinite(value) &&
+        value >= 0
+          ? regionsByLocale[locale].find(
+              ({ from, to }) => value >= from && value < to,
+            )?.assessment
+          : undefined
+      }
       locale={locale}
       visualization={options.referenceVisualization}
       showDistribution={options.showReferenceDistribution}

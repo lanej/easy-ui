@@ -96,12 +96,14 @@ export function DurationReferenceExample({
   value,
   locale = "en",
   regions = [],
+  currentAssessment,
   visualization = "cumulative",
   showDistribution = true,
 }: {
   value: number | null;
   locale?: "en" | "fr";
   regions?: readonly DurationHealthRegion[];
+  currentAssessment?: HealthIndicatorAssessment;
   visualization?: ReferenceVisualization;
   showDistribution?: boolean;
 }) {
@@ -279,6 +281,7 @@ export function DurationReferenceExample({
             {inRange && (
               <span
                 className={styles.elapsed}
+                data-current-assessment={currentAssessment ?? "unassessed"}
                 style={{ left: `${(value / max) * 100}%` }}
                 aria-hidden="true"
               >

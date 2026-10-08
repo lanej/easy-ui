@@ -66,7 +66,7 @@ export function HealthAssessment({
             {observation !== undefined && (
               <DurationValue
                 {...observation}
-                size={size}
+                size={size === "md" && reference != null ? "lg" : size}
                 isLoading={isLoading}
               />
             )}

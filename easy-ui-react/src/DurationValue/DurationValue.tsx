@@ -8,7 +8,7 @@ export type DurationValueProps = {
   /** Visible localized unit. No conversion or unit inference is performed. */
   unit: string;
   /** @default md */
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   /** Formats the number only; defaults to String, preserving precision. */
   formatValue?: (value: number) => string;
   /** @default Duration */
@@ -57,7 +57,13 @@ export function DurationValue({
           <span className={styles.value} aria-hidden="true">
             <Text
               as="span"
-              variant={size === "sm" ? "subtitle2" : "heading3"}
+              variant={
+                size === "sm"
+                  ? "subtitle2"
+                  : size === "lg"
+                    ? "heading1"
+                    : "heading3"
+              }
               breakWord
             >
               {formattedValue}
