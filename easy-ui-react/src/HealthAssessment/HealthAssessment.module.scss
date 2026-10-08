@@ -58,14 +58,30 @@
 @container (min-width: 560px) {
   .layout[data-has-reference="true"] {
     grid-template-columns: minmax(0, 268px) minmax(0, 1fr);
-    align-items: center;
+    align-items: stretch;
     row-gap: design-token("space.1");
 
-    .summary {
-      align-items: center;
+    .information {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: design-token("space.2");
     }
+
     .referenceDetails {
       grid-column: 2;
     }
+  }
+}
+
+.summary[data-stacked="true"] {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: design-token("space.1");
+}
+
+@container (min-width: 560px) {
+  .layout[data-has-reference-details="true"] .information {
+    grid-row: 1 / span 2;
   }
 }

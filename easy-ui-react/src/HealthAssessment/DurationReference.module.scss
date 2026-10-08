@@ -34,7 +34,7 @@
 .plot {
   position: relative;
   block-size: 100px;
-  margin-block-start: design-token("space.2");
+  margin-block-start: calc(1lh + 8px);
 }
 
 .track {
@@ -114,7 +114,7 @@
 
 .scale {
   position: relative;
-  block-size: 40px;
+  block-size: calc(8px + 1lh);
 }
 
 .endpoint {
@@ -143,9 +143,9 @@
   }
 }
 
-@container (max-width: 219px) {
+@container (max-width: 18em) {
   .scale {
-    block-size: 56px;
+    block-size: calc(8px + 2lh);
   }
 
   .percentileLabel {
@@ -182,7 +182,7 @@
 .histogram {
   position: relative;
   block-size: 72px;
-  margin-block-start: design-token("space.2");
+  margin-block-start: calc(1lh + 8px);
 }
 
 .bins {
@@ -207,7 +207,7 @@
   box-shadow: 0 0 0 1px design-token("color.neutral.000");
 }
 
-@container (max-width: 219px) {
+@container (max-width: 18em) {
   .regionLabels {
     display: none;
   }
@@ -277,7 +277,7 @@
 }
 .yTitle {
   position: absolute;
-  top: -22px;
+  top: calc(-1lh - 8px);
   left: 0;
 }
 .yAxis {
@@ -294,5 +294,32 @@
   }
   .curve circle {
     fill: CanvasText;
+  }
+}
+
+.root[data-section="primary"] {
+  block-size: 100%;
+
+  .figure,
+  .distribution {
+    display: flex;
+    flex-direction: column;
+    block-size: 100%;
+  }
+  .regionLabels,
+  .scale,
+  .compactRegions,
+  figcaption {
+    flex-shrink: 0;
+  }
+  .plot {
+    flex: 1;
+    min-block-size: 100px;
+    block-size: auto;
+  }
+  .histogram {
+    flex: 1;
+    min-block-size: 72px;
+    block-size: auto;
   }
 }

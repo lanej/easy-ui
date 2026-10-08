@@ -19,7 +19,7 @@ export type HealthAssessmentProps = {
   freshness?: Omit<ObservationFreshnessProps, "size" | "isLoading">;
   /** Optional reference description or visualization supplied by the caller. */
   reference?: ReactNode;
-  /** Optional supporting content below the primary reference; does not affect observation alignment. */
+  /** Optional supporting content below the primary reference; included in the reference column height. */
   referenceDetails?: ReactNode;
   size?: "sm" | "md";
   isLoading?: boolean;
@@ -44,6 +44,18 @@ export function HealthAssessment({
     (typeof observation.value !== "number" ||
       !Number.isFinite(observation.value) ||
       observation.value < 0);
+  const stacked = size === "md" && !isLoading && reference != null;
+  const duration = observation !== undefined && (
+    <DurationValue
+      {...observation}
+      size={size === "md" && reference != null ? "lg" : size}
+      isLoading={isLoading}
+    />
+  );
+  const indicator =
+    observation === undefined || (!isLoading && !missingObservation) ? (
+      <HealthIndicator {...health} size="sm" isLoading={isLoading} />
+    ) : null;
   return (
     <div
       className={styles.root}
@@ -56,6 +68,9 @@ export function HealthAssessment({
       <div
         className={styles.layout}
         data-has-reference={!isLoading && reference != null}
+        data-has-reference-details={
+          !isLoading && reference != null && referenceDetails != null
+        }
       >
         <div className={styles.information}>
           {label != null && (
@@ -65,18 +80,18 @@ export function HealthAssessment({
               </Text>
             </div>
           )}
-          <div className={styles.summary}>
-            {observation !== undefined && (
-              <DurationValue
-                {...observation}
-                size={size === "md" && reference != null ? "lg" : size}
-                isLoading={isLoading}
-              />
+          <div className={styles.summary} data-stacked={stacked}>
+            {stacked ? (
+              <>
+                {indicator}
+                {duration}
+              </>
+            ) : (
+              <>
+                {duration}
+                {indicator}
+              </>
             )}
-            {observation === undefined ||
-            (!isLoading && !missingObservation) ? (
-              <HealthIndicator {...health} size="sm" isLoading={isLoading} />
-            ) : null}
           </div>
           {!isLoading &&
             freshness !== undefined &&
