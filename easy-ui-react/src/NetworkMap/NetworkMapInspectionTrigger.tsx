@@ -33,6 +33,32 @@ export function NetworkMapInspectionTrigger({
         events.target(target, anchor(event.currentTarget, event.target))
       }
       onBlurCapture={(event) => events.leave(event.relatedTarget)}
+      onKeyUpCapture={(event) => {
+        // Press primitives may consume the native click. Wait until key release
+        // so Space activation can run without an early focus transfer.
+        if (event.repeat || !(event.target instanceof HTMLElement)) return;
+        const control = event.target.closest<HTMLElement>(
+          "button, [role=button], a[href]",
+        );
+        const editable = event.target.closest(
+          "input, textarea, select, [contenteditable]",
+        );
+        if (
+          !control ||
+          control.matches(":disabled") ||
+          control.closest('[aria-disabled="true"]')
+        )
+          return;
+        if (editable && editable.getAttribute("contenteditable") !== "false")
+          return;
+        const button = control.matches("button, [role=button]");
+        if (event.key === "Enter" || (event.key === " " && button))
+          events.target(
+            target,
+            anchor(event.currentTarget, event.target),
+            true,
+          );
+      }}
       onClickCapture={(event) =>
         events.target(target, anchor(event.currentTarget, event.target), true)
       }

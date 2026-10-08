@@ -177,6 +177,18 @@ export async function checkRichInspection({
             "Inspect shared facility",
         ),
       );
+      await browser.key("button:focus", " ");
+      await browser.wait(
+        () =>
+          document.activeElement?.getAttribute("aria-label") ===
+          "Close facility details",
+      );
+      check(
+        `${theme}/${width}: Space pins press controls after dismissal`,
+        true,
+      );
+      await browser.key(facility, "Escape");
+      await browser.wait(closed);
       // Move focus away before testing route pointer overlap.
       await browser.evaluate(() => document.activeElement.blur());
       p = await point([0, 0]);

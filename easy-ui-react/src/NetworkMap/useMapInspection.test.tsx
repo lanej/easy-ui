@@ -1,4 +1,6 @@
 import React from "react";
+import userEvent from "@testing-library/user-event";
+import { Button } from "../Button";
 import {
   act,
   fireEvent,
@@ -350,4 +352,85 @@ it("inspects collection metadata without fabricating geographic features", () =>
     renderOverlayHoverDetails: renderDetails,
   });
   expect(result.current.inspection).toBeNull();
+});
+
+it.each(["{Enter}", "[Space]"])(
+  "pins a React Aria press control with %s while preserving its application action",
+  async (key) => {
+    const onPress = vi.fn();
+    render(
+      <NetworkMapProvider {...options}>
+        <NetworkMapInspectionTrigger target={{ facilityId: "a" }}>
+          <Button onPress={onPress}>Inspect press control</Button>
+        </NetworkMapInspectionTrigger>
+        <Card />
+      </NetworkMapProvider>,
+    );
+    const trigger = screen.getByRole("button", {
+      name: "Inspect press control",
+    });
+    act(() => trigger.focus());
+    await userEvent.setup().keyboard(key);
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByRole("button", { name: "Keep open" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Close cell details" }),
+    ).toHaveFocus();
+  },
+);
+
+it.each([
+  [
+    "ordinary link Space",
+    <a key="link" href="/details" data-testid="keyboard-target">
+      Reference link
+    </a>,
+    " ",
+  ],
+  [
+    "ARIA disabled control",
+    <button key="disabled" aria-disabled="true" data-testid="keyboard-target">
+      Disabled action
+    </button>,
+    "Enter",
+  ],
+  [
+    "fieldset disabled control",
+    <fieldset key="fieldset" disabled>
+      <button data-testid="keyboard-target">Disabled action</button>
+    </fieldset>,
+    "Enter",
+  ],
+  [
+    "editable input",
+    <div key="input" role="button" tabIndex={0}>
+      <input aria-label="Edit reference" data-testid="keyboard-target" />
+    </div>,
+    " ",
+  ],
+  [
+    "editable content",
+    <div key="editable" role="button" tabIndex={0}>
+      <span contentEditable tabIndex={0} data-testid="keyboard-target" />
+    </div>,
+    " ",
+  ],
+])("does not pin for %s", (_name, control, key) => {
+  render(
+    <NetworkMapProvider {...options}>
+      <NetworkMapInspectionTrigger target={{ facilityId: "a" }}>
+        {control}
+      </NetworkMapInspectionTrigger>
+      <Card />
+    </NetworkMapProvider>,
+  );
+  const target = screen.getByTestId("keyboard-target");
+  fireEvent.focus(target);
+  fireEvent.keyUp(target, { key });
+  expect(screen.getByRole("button", { name: "Keep open" })).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Close cell details" }),
+  ).not.toHaveFocus();
 });
