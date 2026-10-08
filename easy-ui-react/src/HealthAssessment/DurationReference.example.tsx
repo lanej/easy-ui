@@ -66,10 +66,14 @@ export function DurationReferenceExample({
   value,
   locale = "en",
   regions = [],
+  showTrack = true,
+  showDistribution = true,
 }: {
   value: number | null;
   locale?: "en" | "fr";
   regions?: readonly DurationHealthRegion[];
+  showTrack?: boolean;
+  showDistribution?: boolean;
 }) {
   const valid =
     typeof value === "number" && Number.isFinite(value) && value >= 0;
@@ -106,118 +110,124 @@ export function DurationReferenceExample({
     )
     .join("; ");
 
+  if (!showTrack && !showDistribution) return null;
+
   return (
     <div className={styles.root}>
-      <figure
-        className={styles.figure}
-        aria-label={
-          locale === "fr" ? "Référence de durée" : "Duration reference"
-        }
-      >
-        {visibleRegions.length > 0 && (
-          <div className={styles.regionLabels} aria-hidden="true">
-            {visibleRegions.map((region) => (
-              <span
-                key={region.from}
-                className={styles.regionLabel}
-                style={{ width: regionWidth(region) }}
-              >
-                {region.shortLabel}
-                <small>{rangeLabel(region)}</small>
-              </span>
-            ))}
-          </div>
-        )}
-        <div
-          className={styles.plot}
-          data-has-regions={visibleRegions.length > 0}
-          role="img"
-          aria-label={`${valueLabel}. ${rangesLabel}${referenceLabel}: P50: 9 h. P90: 18 h. 0–30 h.`}
+      {showTrack && (
+        <figure
+          className={styles.figure}
+          aria-label={
+            locale === "fr" ? "Référence de durée" : "Duration reference"
+          }
         >
-          <div className={styles.track} aria-hidden="true">
-            {visibleRegions.map((region) => (
-              <span
-                key={region.from}
-                className={styles.region}
-                data-assessment={region.assessment}
-                style={{
-                  left: `${(Math.max(0, region.from) / max) * 100}%`,
-                  width: regionWidth(region),
-                }}
-              />
-            ))}
-          </div>
-          {landmarks.map(({ label, value: landmark }) => (
-            <span
-              key={label}
-              className={styles.percentile}
-              style={{ left: `${(landmark / max) * 100}%` }}
-              aria-hidden="true"
-            />
-          ))}
-          {inRange && (
-            <span
-              className={styles.elapsed}
-              style={{ left: `${(value / max) * 100}%` }}
-              aria-hidden="true"
-            >
-              <span className={styles.marker} />
-            </span>
-          )}
-        </div>
-        <Scale format={format} />
-        {visibleRegions.length > 0 && (
-          <div className={styles.compactRegions} aria-hidden="true">
-            {visibleRegions.map((region) => (
-              <span key={region.from} data-assessment={region.assessment}>
-                <span>{region.shortLabel}</span>
-                <span>{rangeLabel(region)}</span>
-              </span>
-            ))}
-          </div>
-        )}
-        {!inRange && (
-          <figcaption className={styles.valueState}>{valueLabel}</figcaption>
-        )}
-      </figure>
-      <details className={styles.disclosure}>
-        <summary>
-          {locale === "fr"
-            ? "Distribution de référence"
-            : "Reference distribution"}
-        </summary>
-        <figure className={styles.distribution}>
-          <figcaption>
-            <Text as="span" variant="caption" color="subdued">
-              {description}
-            </Text>
-          </figcaption>
-          <div
-            className={styles.histogram}
-            role="img"
-            aria-label={`${description}. P50: 9 h. P90: 18 h. ${distributionLabel}.`}
-          >
-            <div className={styles.bins} aria-hidden="true">
-              {bins.map(({ from, count }) => (
+          {visibleRegions.length > 0 && (
+            <div className={styles.regionLabels} aria-hidden="true">
+              {visibleRegions.map((region) => (
                 <span
-                  key={from}
-                  className={styles.bin}
-                  style={{ height: `${(count / peak) * 100}%` }}
+                  key={region.from}
+                  className={styles.regionLabel}
+                  style={{ width: regionWidth(region) }}
+                >
+                  {region.shortLabel}
+                  <small>{rangeLabel(region)}</small>
+                </span>
+              ))}
+            </div>
+          )}
+          <div
+            className={styles.plot}
+            data-has-regions={visibleRegions.length > 0}
+            role="img"
+            aria-label={`${valueLabel}. ${rangesLabel}${referenceLabel}: P50: 9 h. P90: 18 h. 0–30 h.`}
+          >
+            <div className={styles.track} aria-hidden="true">
+              {visibleRegions.map((region) => (
+                <span
+                  key={region.from}
+                  className={styles.region}
+                  data-assessment={region.assessment}
+                  style={{
+                    left: `${(Math.max(0, region.from) / max) * 100}%`,
+                    width: regionWidth(region),
+                  }}
                 />
               ))}
             </div>
             {landmarks.map(({ label, value: landmark }) => (
               <span
                 key={label}
-                className={styles.histogramPercentile}
+                className={styles.percentile}
                 style={{ left: `${(landmark / max) * 100}%` }}
                 aria-hidden="true"
               />
             ))}
+            {inRange && (
+              <span
+                className={styles.elapsed}
+                style={{ left: `${(value / max) * 100}%` }}
+                aria-hidden="true"
+              >
+                <span className={styles.marker} />
+              </span>
+            )}
           </div>
           <Scale format={format} />
+          {visibleRegions.length > 0 && (
+            <div className={styles.compactRegions} aria-hidden="true">
+              {visibleRegions.map((region) => (
+                <span key={region.from} data-assessment={region.assessment}>
+                  <span>{region.shortLabel}</span>
+                  <span>{rangeLabel(region)}</span>
+                </span>
+              ))}
+            </div>
+          )}
+          {!inRange && (
+            <figcaption className={styles.valueState}>{valueLabel}</figcaption>
+          )}
         </figure>
-      </details>
+      )}
+      {showDistribution && (
+        <details className={styles.disclosure}>
+          <summary>
+            {locale === "fr"
+              ? "Distribution de référence"
+              : "Reference distribution"}
+          </summary>
+          <figure className={styles.distribution}>
+            <figcaption>
+              <Text as="span" variant="caption" color="subdued">
+                {description}
+              </Text>
+            </figcaption>
+            <div
+              className={styles.histogram}
+              role="img"
+              aria-label={`${description}. P50: 9 h. P90: 18 h. ${distributionLabel}.`}
+            >
+              <div className={styles.bins} aria-hidden="true">
+                {bins.map(({ from, count }) => (
+                  <span
+                    key={from}
+                    className={styles.bin}
+                    style={{ height: `${(count / peak) * 100}%` }}
+                  />
+                ))}
+              </div>
+              {landmarks.map(({ label, value: landmark }) => (
+                <span
+                  key={label}
+                  className={styles.histogramPercentile}
+                  style={{ left: `${(landmark / max) * 100}%` }}
+                  aria-hidden="true"
+                />
+              ))}
+            </div>
+            <Scale format={format} />
+          </figure>
+        </details>
+      )}
     </div>
   );
 }

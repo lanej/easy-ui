@@ -41,6 +41,17 @@ Labeled track regions show illustrative assessment ranges supplied by the applic
 
 <Canvas of={Stories.Assessments} />
 
+## Optional reference context
+
+The threshold track, health bands, and histogram are independently optional. These story controls belong to the example composition: `showReferenceTrack`, `showHealthBands`, and `showReferenceDistribution`. Hiding health bands leaves a neutral track with elapsed and percentile markers. The histogram can appear without the track, or be omitted entirely. With both graphics omitted, the observation has no reference column.
+
+In application code, omit the optional `reference` prop for value, assessment, and freshness alone. Supply only the reference content that the application needs; the molecule never creates graphics automatically.
+
+<Canvas of={Stories.TrackOnly} />
+<Canvas of={Stories.DistributionOnly} />
+<Canvas of={Stories.WithoutHealthBands} />
+<Canvas of={Stories.WithoutReference} />
+
 ## Preserve distinct data states
 
 - **Loading:** suppress the previous value, assessment, and reference while fetching.

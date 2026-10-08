@@ -13,15 +13,41 @@ import {
   type DurationHealthRegion,
 } from "./DurationReference.example";
 
-const meta: Meta<typeof HealthAssessment> = {
+type ExampleArgs = HealthAssessmentProps & {
+  showReferenceTrack?: boolean;
+  showHealthBands?: boolean;
+  showReferenceDistribution?: boolean;
+};
+
+const meta: Meta<ExampleArgs> = {
   title: "Molecules/Feedback/HealthAssessment",
   component: HealthAssessment,
   parameters: { layout: "padded" },
-  argTypes: { reference: { control: false }, health: { control: false } },
+  argTypes: {
+    reference: { control: false },
+    health: { control: false },
+    showReferenceTrack: {
+      control: "boolean",
+      description: "Story-only: show the threshold track.",
+    },
+    showHealthBands: {
+      control: "boolean",
+      description: "Story-only: color the track with assessment ranges.",
+    },
+    showReferenceDistribution: {
+      control: "boolean",
+      description: "Story-only: offer the reference histogram disclosure.",
+    },
+  },
+  args: {
+    showReferenceTrack: true,
+    showHealthBands: true,
+    showReferenceDistribution: true,
+  },
   render: (args) => renderExample(args),
 };
 export default meta;
-type Story = StoryObj<typeof HealthAssessment>;
+type Story = StoryObj<ExampleArgs>;
 
 // Illustrative application policy, supplied independently of the distribution.
 // Last range is open-ended; the reference viewport still ends at 30 hours.
@@ -78,12 +104,24 @@ function referenceFor(
   value: number | null,
   assessed = true,
   locale: "en" | "fr" = "en",
+  options: Pick<
+    ExampleArgs,
+    "showReferenceTrack" | "showHealthBands" | "showReferenceDistribution"
+  > = {},
 ) {
+  if (
+    options.showReferenceTrack === false &&
+    options.showReferenceDistribution === false
+  )
+    return undefined;
   return (
     <DurationReferenceExample
       value={value}
       locale={locale}
+      showTrack={options.showReferenceTrack}
+      showDistribution={options.showReferenceDistribution}
       regions={
+        options.showHealthBands !== false &&
         assessed &&
         typeof value === "number" &&
         Number.isFinite(value) &&
@@ -96,7 +134,12 @@ function referenceFor(
 }
 
 function renderExample(
-  args: HealthAssessmentProps,
+  {
+    showReferenceTrack,
+    showHealthBands,
+    showReferenceDistribution,
+    ...args
+  }: ExampleArgs,
   locale: "en" | "fr" = "en",
 ) {
   const assessed =
@@ -127,7 +170,11 @@ function renderExample(
       }
       reference={
         usesHours && args.observation
-          ? referenceFor(args.observation.value, assessed, locale)
+          ? referenceFor(args.observation.value, assessed, locale, {
+              showReferenceTrack,
+              showHealthBands,
+              showReferenceDistribution,
+            })
           : undefined
       }
     />
@@ -159,6 +206,22 @@ const defaultProps: HealthAssessmentProps = {
 };
 
 export const Default: Story = { args: defaultProps };
+export const TrackOnly: Story = {
+  args: { ...defaultProps, showReferenceDistribution: false },
+};
+export const DistributionOnly: Story = {
+  args: { ...defaultProps, showReferenceTrack: false },
+};
+export const WithoutHealthBands: Story = {
+  args: { ...defaultProps, showHealthBands: false },
+};
+export const WithoutReference: Story = {
+  args: {
+    ...defaultProps,
+    showReferenceTrack: false,
+    showReferenceDistribution: false,
+  },
+};
 export const Compact: Story = { args: { ...defaultProps, size: "sm" } };
 export const AssessmentOnly: Story = {
   args: { label: "Observation health", health: { assessment: "degraded" } },
