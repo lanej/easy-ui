@@ -174,7 +174,7 @@ export function DurationReferenceExample({
   const histogram = (
     <figure className={styles.distribution}>
       <figcaption>
-        <Text as="span" variant="caption" color="subdued">
+        <Text as="p" variant="caption" color="subdued">
           {description}
         </Text>
       </figcaption>

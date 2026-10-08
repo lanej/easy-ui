@@ -75,7 +75,11 @@ export function HealthAssessment({
         <div className={styles.information}>
           {label != null && (
             <div id={labelId} className={styles.label}>
-              <Text as="span" variant="body2" color="neutral.700">
+              <Text
+                as="p"
+                variant={stacked ? "caption" : "body2"}
+                color="neutral.700"
+              >
                 {label}
               </Text>
             </div>

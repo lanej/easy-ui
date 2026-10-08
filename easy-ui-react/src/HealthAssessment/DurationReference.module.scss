@@ -16,7 +16,7 @@
 
 .regionLabels {
   display: flex;
-  margin-block-end: 32px;
+  margin-block-end: 8px;
 }
 
 .regionLabel {
@@ -34,7 +34,7 @@
 .plot {
   position: relative;
   block-size: 100px;
-  margin-block-start: calc(1lh + 8px);
+  margin-block-start: calc(1.5lh + 8px);
 }
 
 .track {
@@ -170,7 +170,8 @@
 
   summary {
     cursor: pointer;
-    padding-block: design-token("space.0.5");
+    padding-block-start: design-token("space.0.5");
+    padding-block-end: 0;
     overflow-wrap: anywhere;
   }
 }
@@ -182,7 +183,7 @@
 .histogram {
   position: relative;
   block-size: 72px;
-  margin-block-start: calc(1lh + 8px);
+  margin-block-start: calc(0.5lh + 8px);
 }
 
 .bins {
@@ -227,6 +228,7 @@
 @media (pointer: coarse) {
   .disclosure summary {
     min-block-size: 44px;
+    padding-block-start: max(4px, calc(44px - 1lh));
   }
 }
 
@@ -256,8 +258,9 @@
 .plot,
 .histogram,
 .scale,
-.regionLabels {
-  margin-inline-start: 28px;
+.regionLabels,
+.distribution figcaption {
+  margin-inline-start: calc(3ch + 8px);
 }
 .curve {
   position: absolute;
@@ -277,16 +280,29 @@
 }
 .yTitle {
   position: absolute;
-  top: calc(-1lh - 8px);
+  top: calc(-1.5lh - 8px);
   left: 0;
 }
 .yAxis {
   position: absolute;
   inset-block: 0;
-  left: -28px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  left: calc(-3ch - 8px);
+  inline-size: 3ch;
+  text-align: end;
+
+  span {
+    position: absolute;
+    top: 0;
+    inset-inline: 0;
+    transform: translateY(-50%);
+
+    &:nth-child(2) {
+      top: 50%;
+    }
+    &:last-child {
+      top: 100%;
+    }
+  }
 }
 @media (forced-colors: active) {
   .curve path {
@@ -311,6 +327,13 @@
   .compactRegions,
   figcaption {
     flex-shrink: 0;
+  }
+  .distribution {
+    padding-block-start: 0;
+
+    .regionLabels {
+      order: -1;
+    }
   }
   .plot {
     flex: 1;
