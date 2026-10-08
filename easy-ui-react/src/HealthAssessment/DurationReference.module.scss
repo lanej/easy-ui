@@ -1,0 +1,108 @@
+@use "../styles/common" as *;
+
+.root {
+  @include font-style("caption");
+  margin: 0;
+  inline-size: 280px;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  color: design-token("color.neutral.700");
+  font-variant-numeric: tabular-nums;
+}
+
+.plot {
+  position: relative;
+  block-size: 56px;
+  margin-block-start: design-token("space.1");
+  border-block-end: 1px solid design-token("color.neutral.500");
+}
+
+.bins {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 2px;
+  align-items: end;
+  block-size: 100%;
+}
+
+.bin {
+  background: design-token("color.neutral.500");
+  border-start-start-radius: 2px;
+  border-start-end-radius: 2px;
+}
+
+.percentile,
+.elapsed {
+  position: absolute;
+  inset-block: 0;
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 1px design-token("color.neutral.000");
+}
+
+.percentile {
+  border-inline-start: 1px dashed design-token("color.neutral.700");
+}
+
+.elapsed {
+  inline-size: 2px;
+  background: design-token("color.primary.600");
+}
+
+.marker {
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  inline-size: 8px;
+  block-size: 8px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: design-token("color.primary.600");
+  box-shadow: 0 0 0 1px design-token("color.neutral.000");
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  margin-block-start: design-token("space.0.5");
+}
+
+.caption {
+  display: grid;
+  gap: design-token("space.0.5");
+  margin-block-start: design-token("space.0.5");
+}
+
+.landmarks {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: design-token("space.1.5");
+  row-gap: design-token("space.0.5");
+}
+
+.current {
+  display: inline-flex;
+  align-items: baseline;
+  gap: design-token("space.0.5");
+}
+
+.key {
+  flex: none;
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: 50%;
+  background: design-token("color.primary.600");
+}
+
+@media (forced-colors: active) {
+  .bin {
+    background: GrayText;
+  }
+  .elapsed,
+  .marker,
+  .key {
+    background: CanvasText;
+  }
+  .percentile {
+    border-color: CanvasText;
+  }
+}

@@ -62,7 +62,7 @@ export function HealthAssessment({
           <DurationValue {...observation} size={size} isLoading={isLoading} />
         )}
         {observation === undefined || (!isLoading && !missingObservation) ? (
-          <HealthIndicator {...health} size={size} isLoading={isLoading} />
+          <HealthIndicator {...health} size="sm" isLoading={isLoading} />
         ) : null}
       </div>
       {!isLoading && reference != null && (

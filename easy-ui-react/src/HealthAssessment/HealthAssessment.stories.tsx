@@ -8,14 +8,36 @@ import {
   type HealthAssessmentProps,
 } from "./HealthAssessment";
 import styles from "./HealthAssessment.examples.module.scss";
+import { DurationReferenceExample } from "./DurationReference.example";
 
 const meta: Meta<typeof HealthAssessment> = {
   title: "Molecules/Feedback/HealthAssessment",
   component: HealthAssessment,
   parameters: { layout: "padded" },
+  argTypes: { reference: { control: false } },
+  render: (args) => renderExample(args),
 };
 export default meta;
 type Story = StoryObj<typeof HealthAssessment>;
+
+function renderExample(
+  args: HealthAssessmentProps,
+  locale: "en" | "fr" = "en",
+) {
+  return (
+    <HealthAssessment
+      {...args}
+      reference={
+        args.observation && (
+          <DurationReferenceExample
+            value={args.observation.value}
+            locale={locale}
+          />
+        )
+      }
+    />
+  );
+}
 
 const formatObservedAt = (value: string | Date) =>
   `${new Intl.DateTimeFormat("en-US", {
@@ -27,7 +49,7 @@ const formatObservedAt = (value: string | Date) =>
     timeZone: "UTC",
   }).format(new Date(value))} UTC`;
 
-const reference = <span>Typical duration: 9 hours</span>;
+const reference = <DurationReferenceExample value={6} />;
 
 const defaultProps: HealthAssessmentProps = {
   label: "Elapsed duration",
@@ -50,6 +72,7 @@ export const MissingObservation: Story = {
   args: {
     ...defaultProps,
     observation: { value: null, unit: "hours" },
+    reference: <DurationReferenceExample value={null} />,
     freshness: { state: "unavailable" },
   },
 };
@@ -96,12 +119,12 @@ export const LocalizedNarrow: Story = {
         }).format(new Date(value)),
       observedAtLabel: "Observé le",
     },
-    reference: <span>Durée habituelle : 9 heures</span>,
+    reference: <DurationReferenceExample value={6.25} locale="fr" />,
     accessibilityLabel: "État de l’observation",
   },
   render: (args) => (
     <Box width={160} maxWidth="100%" lang="fr">
-      <HealthAssessment {...args} />
+      {renderExample(args, "fr")}
     </Box>
   ),
 };
@@ -112,11 +135,13 @@ const assessmentExamples: HealthAssessmentProps[] = [
     ...defaultProps,
     health: { assessment: "degraded", label: "Needs attention" },
     observation: { value: 12, unit: "hours" },
+    reference: <DurationReferenceExample value={12} />,
   },
   {
     ...defaultProps,
     health: { assessment: "unhealthy", label: "Outside expectations" },
     observation: { value: 24, unit: "hours" },
+    reference: <DurationReferenceExample value={24} />,
   },
 ];
 
@@ -130,6 +155,7 @@ const stateExamples: { name: string; props: HealthAssessmentProps }[] = [
     props: {
       ...defaultProps,
       observation: { value: null, unit: "hours" },
+      reference: <DurationReferenceExample value={null} />,
       freshness: { state: "unavailable" },
     },
   },
@@ -153,6 +179,7 @@ const stateExamples: { name: string; props: HealthAssessmentProps }[] = [
     props: {
       ...defaultProps,
       observation: { value: 0, unit: "hours" },
+      reference: <DurationReferenceExample value={0} />,
     },
   },
 ];
@@ -278,8 +305,6 @@ export const CompactTable: Story = {
 export const EnlargedText: Story = {
   args: defaultProps,
   render: (args) => (
-    <div style={{ maxWidth: 320, zoom: 2 }}>
-      <HealthAssessment {...args} />
-    </div>
+    <div style={{ maxWidth: 320, zoom: 2 }}>{renderExample(args)}</div>
   ),
 };

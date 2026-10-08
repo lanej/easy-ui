@@ -1,37 +1,13 @@
-@use "../styles/common" as *;
-
 .root {
   display: inline-flex;
-  align-items: baseline;
-  gap: design-token("space.1");
   max-inline-size: 100%;
   min-inline-size: 0;
-  color: design-token("color.neutral.800");
-  vertical-align: middle;
-}
 
-.marker {
-  flex: none;
-  inline-size: design-token("space.1");
-  block-size: design-token("space.1");
-  border: 1px solid design-token("color.neutral.500");
-  border-radius: 50%;
-  box-sizing: border-box;
-}
-
-.root[data-assessment="healthy"] .marker {
-  background: design-token("color.positive.700");
-  border-color: design-token("color.positive.700");
-}
-
-.root[data-assessment="degraded"] .marker {
-  background: design-token("color.warning.700");
-  border-color: design-token("color.warning.700");
-}
-
-.root[data-assessment="unhealthy"] .marker {
-  background: design-token("color.negative.700");
-  border-color: design-token("color.negative.700");
+  > span {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .label {
