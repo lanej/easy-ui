@@ -29,7 +29,7 @@ describe("<HealthAssessment />", () => {
     );
     expect(screen.getByText("0")).toBeVisible();
     expect(screen.getByText("Unhealthy")).toBeVisible();
-    expect(screen.getByText("Stale")).toBeVisible();
+    expect(screen.getByRole("img", { name: "Stale" })).toBeVisible();
   });
 
   it("supports an assessment without a duration observation", () => {
@@ -57,7 +57,9 @@ describe("<HealthAssessment />", () => {
     expect(screen.queryByText("6")).not.toBeInTheDocument();
     expect(screen.queryByText("Typical: 9 hours")).not.toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Loading…");
-    expect(screen.queryByText("Fresh")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: "Fresh" }),
+    ).not.toBeInTheDocument();
   });
 
   it("uses the visible observation label as the accessible group name", () => {
@@ -100,7 +102,7 @@ describe("<HealthAssessment />", () => {
         freshness={{ state: "stale", observedAt: "2026-01-15T12:00:00Z" }}
       />,
     );
-    expect(screen.getByText("Stale")).toBeVisible();
+    expect(screen.getByRole("img", { name: "Stale" })).toBeVisible();
     expect(screen.getByText("2026-01-15T12:00:00Z")).toBeVisible();
     expect(screen.queryByText("Healthy")).not.toBeInTheDocument();
   });

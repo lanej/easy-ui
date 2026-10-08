@@ -5,7 +5,7 @@ import * as Stories from "./ObservationFreshness.stories";
 
 # ObservationFreshness
 
-Display the observation timestamp followed by caller-supplied freshness as a quiet text line. Fresh describes data recency, not health: fresh observations can still describe an unhealthy condition. Fresh and unavailable labels use subdued text; stale data receives warning-colored text without adding another badge beside the health assessment.
+Display an optional timestamp followed by a StatusDot atom: success for fresh data and warning for stale data. Freshness describes data recency, independently of health. The dot’s accessible name and hover hint identify its state. Stale data also keeps a visible label, preserving the distinction without color. Loading and unavailable states retain concise text.
 
 <Canvas of={Stories.Default} />
 <Controls of={Stories.Default} />
@@ -24,7 +24,7 @@ The application supplies `state`; elapsed time, freshness thresholds, and health
 
 ## Localization and layout
 
-Supply translated labels and `formatObservedAt` to choose locale and timezone. The default preserves a string timestamp, or displays a Date as ISO text, avoiding machine-dependent formatting. The timestamp remains a semantic `time` element. Examples use synthetic observations.
+The timestamp has no prefix by default. Supply `observedAtLabel` to add an optional prefix such as “Observed”. Supply translated status labels and `formatObservedAt` to choose locale and timezone. The default preserves a string timestamp, or displays a Date as ISO text, avoiding machine-dependent formatting. The timestamp remains a semantic `time` element. Examples use synthetic observations.
 
 <Canvas of={Stories.Compact} />
 <Canvas of={Stories.Narrow} />

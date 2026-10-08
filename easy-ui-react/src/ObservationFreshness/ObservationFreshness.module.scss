@@ -3,8 +3,8 @@
 .root {
   display: inline-flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  column-gap: design-token("space.0.5");
+  align-items: center;
+  column-gap: design-token("space.1");
   max-inline-size: 100%;
   min-inline-size: 0;
   overflow-wrap: anywhere;
@@ -12,22 +12,16 @@
   color: design-token("color.neutral.600");
 }
 
-.state {
-  display: inline-flex;
-  align-items: baseline;
-  gap: design-token("space.0.5");
-  min-inline-size: 0;
-}
-
 .root[data-size="md"] {
   row-gap: design-token("space.0.5");
 }
 
-.root[data-state="stale"] .state {
-  color: design-token("color.warning.800");
-  font-weight: design-token("font.weight.medium");
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: design-token("space.1");
 }
 
-.separator {
-  color: design-token("color.neutral.500");
+.root[data-state="stale"] .state {
+  color: design-token("color.warning.800");
 }

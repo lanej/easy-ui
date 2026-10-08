@@ -1,0 +1,35 @@
+@use "../styles/common" as *;
+
+.root {
+  display: inline-block;
+  inline-size: 8px;
+  block-size: 8px;
+  flex: none;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: design-token("color.neutral.600");
+}
+
+.root[data-size="md"] {
+  inline-size: 10px;
+  block-size: 10px;
+}
+
+.root[data-tone="success"] {
+  background: design-token("color.positive.700");
+}
+.root[data-tone="warning"] {
+  background: design-token("color.warning.700");
+}
+.root[data-tone="danger"] {
+  background: design-token("color.negative.700");
+}
+.root[data-tone="primary"] {
+  background: design-token("color.primary.600");
+}
+
+@media (forced-colors: active) {
+  .root {
+    background: CanvasText;
+  }
+}

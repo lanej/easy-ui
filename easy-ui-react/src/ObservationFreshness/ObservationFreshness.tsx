@@ -1,4 +1,5 @@
 import React from "react";
+import { StatusDot } from "../StatusDot";
 import { Text } from "../Text";
 import styles from "./ObservationFreshness.module.scss";
 
@@ -14,8 +15,9 @@ export type ObservationFreshnessProps = {
   size?: "sm" | "md";
   isLoading?: boolean;
   accessibilityLabel?: string;
-  /** Localized label for fresh or stale data. */
+  /** Localized accessible name and hover hint for fresh or stale data. */
   stateLabel?: string;
+  /** Optional visible timestamp prefix; omitted by default. */
   observedAtLabel?: string;
   loadingLabel?: string;
   emptyLabel?: string;
@@ -54,7 +56,7 @@ export function ObservationFreshness({
   isLoading = false,
   accessibilityLabel = "Observation freshness",
   stateLabel,
-  observedAtLabel = "Observed",
+  observedAtLabel,
   loadingLabel = "Loading…",
   emptyLabel = "Unavailable",
 }: ObservationFreshnessProps) {
@@ -89,7 +91,7 @@ export function ObservationFreshness({
     >
       {timestampText !== undefined && (
         <Text as="span" variant="caption" color="subdued" breakWord>
-          {observedAtLabel}{" "}
+          {observedAtLabel && <>{observedAtLabel} </>}
           <time
             dateTime={
               timestamp instanceof Date ? timestamp.toISOString() : timestamp
@@ -99,16 +101,26 @@ export function ObservationFreshness({
           </time>
         </Text>
       )}
-      <span className={styles.state} role={isLoading ? "status" : undefined}>
-        {timestampText !== undefined && (
-          <span className={styles.separator} aria-hidden="true">
-            ·
-          </span>
-        )}
-        <Text as="span" variant="caption">
-          {label}
-        </Text>
-      </span>
+      {available ? (
+        <span className={styles.state}>
+          <StatusDot
+            tone={resolvedState === "fresh" ? "success" : "warning"}
+            label={label}
+            size="sm"
+          />
+          {resolvedState === "stale" && (
+            <Text as="span" variant="caption">
+              {label}
+            </Text>
+          )}
+        </span>
+      ) : (
+        <span role={isLoading ? "status" : undefined}>
+          <Text as="span" variant="caption">
+            {label}
+          </Text>
+        </span>
+      )}
     </span>
   );
 }

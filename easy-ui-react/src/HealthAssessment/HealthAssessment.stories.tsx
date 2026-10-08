@@ -216,7 +216,6 @@ export const LocalizedNarrow: Story = {
           timeStyle: "short",
           timeZone: "UTC",
         }).format(new Date(value)),
-      observedAtLabel: "Observé le",
     },
     reference: referenceFor(6.25, true, "fr"),
     accessibilityLabel: "État de l’observation",
