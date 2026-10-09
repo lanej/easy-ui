@@ -17,7 +17,7 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 4px;
+    gap: 2px;
     min-inline-size: 0;
     white-space: nowrap;
     margin: 0;
@@ -26,14 +26,14 @@
   dl > div {
     display: inline-flex;
     align-items: baseline;
-    gap: 2px;
+    gap: 1px;
     min-inline-size: 0;
   }
 
   dt,
   dd,
   dd span {
-    font-size: 10px;
+    font-size: 9px;
     line-height: 1.2;
   }
 
