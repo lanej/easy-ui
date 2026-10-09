@@ -234,3 +234,156 @@ function CoordinatedExample() {
 export const ControlledMapCoordination: Story = {
   render: () => <CoordinatedExample />,
 };
+
+/**
+ * One review surface for the optional duration presentations. Reuse the
+ * existing molecules and render callbacks; no status or quantile policy
+ * lives in the timeline.
+ */
+export const PresentationModes: Story = {
+  parameters: { layout: "padded" },
+  render: () => (
+    <div style={{ display: "grid", gap: 24, maxWidth: 1100 }}>
+      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>01 · Minimal</h3>
+        <p style={{ margin: "0 0 16px", fontSize: 13 }}>Current duration and assessment, without reference metrics</p>
+        <EventTimeline
+          events={events.slice(1, 4)}
+          selectedId="b1"
+          renderTrailing={(event) =>
+            target(event) ? (
+              <HealthAssessment
+                variant="compact"
+                observation={current}
+                health={assessment}
+              />
+            ) : null
+          }
+        />
+      </section>
+      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>02 · Inline quantiles</h3>
+        <p style={{ margin: "0 0 16px", fontSize: 13 }}>Current duration, semantic P50/P90, and the points-only reference</p>
+        <EventTimeline
+          events={events.slice(1, 4)}
+          selectedId="b1"
+          renderTrailing={(event) =>
+            target(event) ? (
+              <HealthAssessment
+                variant="default"
+                observation={current}
+                health={assessment}
+                observationDetails={
+                  <DurationQuantileMetrics
+                    quantiles={quantiles}
+                    unit="h"
+                    healthRegions={regions}
+                  />
+                }
+                reference={
+                  <DurationDistribution
+                    value={6}
+                    unit="h"
+                    domain={[0, 30]}
+                    quantiles={quantiles}
+                    healthRegions={regions}
+                    visualization="points"
+                    stretch={false}
+                  />
+                }
+              />
+            ) : null
+          }
+        />
+      </section>
+      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>03 · Expanded interval</h3>
+        <p style={{ margin: "0 0 16px", fontSize: 13 }}>The inline summary remains compact; the full distribution belongs to the interval</p>
+        <EventTimeline
+          events={events.slice(1, 4)}
+          selectedId="b1"
+          renderTrailing={(event) =>
+            target(event) ? (
+              <HealthAssessment
+                variant="compact"
+                observation={current}
+                health={assessment}
+              />
+            ) : null
+          }
+          renderInterval={(event) =>
+            target(event) ? (
+              <HealthAssessment
+                variant="wide"
+                label="Facility dwell"
+                observation={current}
+                health={assessment}
+                observationDetails={
+                  <DurationQuantileMetrics
+                    quantiles={quantiles}
+                    unit="h"
+                    healthRegions={regions}
+                  />
+                }
+                reference={
+                  <DurationDistribution
+                    value={6}
+                    unit="h"
+                    domain={[0, 30]}
+                    quantiles={quantiles}
+                    bins={[
+                      { from: 0, to: 6, count: 20 },
+                      { from: 6, to: 12, count: 50 },
+                      { from: 12, to: 20, count: 25 },
+                      { from: 20, to: 30, count: 5 },
+                    ]}
+                    healthRegions={regions}
+                    visualization="histogram"
+                  />
+                }
+              />
+            ) : null
+          }
+        />
+      </section>
+    </div>
+  ),
+};
+
+export const NarrowQuantiles: Story = {
+  render: () => (
+    <div style={{ width: 380, maxWidth: "100%" }}>
+      <EventTimeline
+        events={events.slice(1, 4)}
+        selectedId="b1"
+        renderTrailing={(event) =>
+          target(event) ? (
+            <HealthAssessment
+              variant="default"
+              observation={current}
+              health={assessment}
+              observationDetails={
+                <DurationQuantileMetrics
+                  quantiles={quantiles}
+                  unit="h"
+                  healthRegions={regions}
+                />
+              }
+              reference={
+                <DurationDistribution
+                  value={6}
+                  unit="h"
+                  domain={[0, 30]}
+                  quantiles={quantiles}
+                  healthRegions={regions}
+                  visualization="points"
+                  stretch={false}
+                />
+              }
+            />
+          ) : null
+        }
+      />
+    </div>
+  ),
+};
