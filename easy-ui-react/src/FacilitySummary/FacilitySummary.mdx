@@ -1,0 +1,48 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./FacilitySummary.stories";
+
+<Meta of={Stories} />
+
+# FacilitySummary
+
+An organism composing facility identity, caller-owned type and location labels, and independent `HealthAssessment` observations. It never aggregates a facility health score, calculates dwell time, or chooses a reference cohort.
+
+<Canvas of={Stories.Comparison} />
+
+```tsx
+import { FacilitySummary } from "@easypost/easy-ui/FacilitySummary";
+
+<FacilitySummary
+  name="North Harbor"
+  identifier="FAC-014"
+  facilityType="Distribution center"
+  location="Oakland, CA"
+  observations={[
+    {
+      id: "dwell",
+      label: "Current dwell",
+      health: suppliedAssessment,
+      observation: { value: elapsedHours, unit: "h" },
+      freshness: suppliedFreshness,
+      reference: <DurationDistribution {...suppliedReference} />,
+    },
+  ]}
+/>;
+```
+
+Each observation has a stable unique `id` and the existing HealthAssessment content contract. The application supplies timestamps, units, health assessments, policy, reference data and all labels. Missing or invalid duration observations suppress their assessment through HealthAssessment; identity and other observations remain usable. A health-only observation is supported when explicitly supplied without a duration. Missing observation arrays display `emptyLabel`, never healthy status. An empty reference remains optional.
+
+| Variant    | Presentation                                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| `compact`  | Identity and headline metrics; omits reference graphics, freshness and supporting details. Suitable for table cells. |
+| `default`  | Identity, observations, freshness and optional reference comparisons. Stacks at narrow widths.                       |
+| `detailed` | Wider references and supporting details; retains current values and identity.                                        |
+
+References reuse DurationDistribution, including quantiles-only bars, concentration, histograms and smooth curves. `observationDetails` supports DurationQuantileMetrics. There is no second graph implementation or facility-specific classification dictionary. A name can contain a caller-supplied link; the whole summary is not an implicit click target. Set `accessibilityLabel` for non-text names. Facility type and location accept caller-rendered labels. Loading keeps facility identity visible while suppressing prior observations and details; `loadingLabel` and `emptyLabel` are localizable.
+
+<Canvas of={Stories.Narrow} />
+<Canvas of={Stories.Table} />
+<Canvas of={Stories.MultipleObservations} />
+<Canvas of={Stories.MissingObservation} />
+<Canvas of={Stories.Loading} />
+<ArgTypes of={Stories} />
