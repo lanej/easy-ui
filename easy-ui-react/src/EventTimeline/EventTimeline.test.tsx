@@ -198,10 +198,13 @@ describe("EventTimeline", () => {
     );
     expect(screen.getByText("As expected")).toBeVisible();
     expect(screen.getByText("6")).toBeVisible();
-    expect(screen.getByRole("img", { name: /P50: 9 h.*P90: 18 h/ })).toBeVisible();
-    expect(container.querySelector('[data-concentration-style="smooth"]')).not.toBeNull();
+    expect(
+      screen.getByRole("img", { name: /P50: 9 h.*P90: 18 h/ }),
+    ).toBeVisible();
+    expect(
+      container.querySelector('[data-concentration-style="smooth"]'),
+    ).not.toBeNull();
     expect(screen.queryByText("P50")).not.toBeInTheDocument();
     expect(screen.getAllByRole("button")).toHaveLength(3);
   });
-
 });
