@@ -1,0 +1,190 @@
+@use "../styles/common" as *;
+
+.timeline {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  inline-size: 100%;
+  min-inline-size: 0;
+  container-type: inline-size;
+  container-name: event-timeline;
+}
+
+.entry {
+  // Reserve the selected dot's 30px highlight without obscuring event text.
+  // The connector and content use the same grid measurements as the button.
+  --time-column: 78px;
+  --dot-column: 24px;
+  --column-gap: 12px;
+  --row-inline-padding: 8px;
+  --connector-inset: 110px;
+  --content-inset: 134px;
+
+  position: relative;
+  min-inline-size: 0;
+}
+
+.entry:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: var(--connector-inset);
+  top: 24px;
+  bottom: -4px;
+  inline-size: 1px;
+  background: design-token("color.neutral.300");
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-inline-size: 0;
+}
+
+.select {
+  flex: 1 1 0%;
+  min-inline-size: 0;
+  font: inherit;
+  text-align: start;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  inline-size: 100%;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: var(--time-column) var(--dot-column) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--column-gap);
+  padding: 10px var(--row-inline-padding);
+}
+
+.select:hover {
+  background: design-token("color.primary.050");
+}
+
+.select:focus-visible {
+  outline: 2px solid design-token("color.primary.600");
+  outline-offset: 2px;
+}
+
+.item[data-current="true"] .select {
+  background: design-token("color.primary.050");
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+  color: design-token("color.neutral.700");
+  font-size: 12px;
+  white-space: nowrap;
+  padding-block-start: 2px;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dot {
+  display: flex;
+  justify-content: center;
+  padding-block-start: 4px;
+}
+
+.content {
+  display: grid;
+  min-inline-size: 0;
+  gap: 4px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.location,
+.received {
+  font-size: 12px;
+  color: design-token("color.neutral.700");
+  overflow-wrap: anywhere;
+}
+
+.mapLink {
+  background: transparent;
+  border: none;
+  color: design-token("color.primary.700");
+  font: inherit;
+  font-size: 12px;
+  margin: 0 0 6px var(--content-inset);
+  padding: 4px;
+  cursor: pointer;
+}
+
+.mapLink:focus-visible {
+  outline: 2px solid design-token("color.primary.600");
+}
+
+.interval,
+.details {
+  min-inline-size: 0;
+  margin-inline-start: var(--content-inset);
+  padding-block: 4px 8px;
+}
+
+.trailing {
+  flex: 0 1 auto;
+  max-inline-size: 60%;
+  min-inline-size: 0;
+  padding-inline-end: 4px;
+}
+
+.empty {
+  color: design-token("color.neutral.700");
+}
+
+// The timeline is normally a narrow column beside a map. Keep the summary
+// in the selected event's row; never wrap the entire trailing slot below it.
+@container (max-width: 680px) {
+  .item {
+    gap: 6px;
+  }
+
+  .trailing {
+    max-inline-size: 61%;
+    padding-inline-end: 2px;
+  }
+
+  .location,
+  .received {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@container (max-width: 500px) {
+  .entry {
+    --time-column: 42px;
+    --dot-column: 24px;
+    --column-gap: 8px;
+    --row-inline-padding: 2px;
+    --connector-inset: 64px;
+    --content-inset: 84px;
+  }
+
+  .time {
+    font-size: 11px;
+  }
+}
+
+@media (forced-colors: active) {
+  .item[data-current="true"] .select {
+    outline: 1px solid Highlight;
+  }
+  .entry:not(:last-child)::before {
+    background: CanvasText;
+  }
+}

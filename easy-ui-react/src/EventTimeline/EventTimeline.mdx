@@ -1,0 +1,52 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./EventTimeline.stories";
+
+<Meta of={Stories} />
+
+# EventTimeline
+
+A reusable selectable chronology. The caller owns ordering, interpretation, identifiers, and whether events belong to the same path. The timeline does not deduplicate events or infer physical histories.
+
+## Compact references beside a map
+
+The timeline frequently occupies **360–480px beside a map**, not a full-screen canvas. The **selected status dot has reserved clearance from the event label** so its 30px current-item ring cannot overlap the text.
+
+All compact options keep the status pill and observed duration **in the selected event row**. At readable widths the caller can additionally display:
+
+- **Quantiles-only:** a marker bar with P50/P90 positions, with the exact values preserved in the accessible chart name and native mark tooltips.
+- **Smooth curve:** a low-height histogram-density curve from caller-supplied completed-duration bins.
+- **Smooth concentration:** the existing color-gradient concentration strip, where intensity reflects how many completed observations fell in each duration range.
+
+Compact references deliberately **omit the 9px P50/P90 text**; it is not readable at these widths. At a timeline width below 400px the optional reference is hidden, leaving the status and current duration on the same line with a readable event label. Expanded interval content continues to provide full-size percentile metrics and distributions.
+
+<Canvas of={Stories.PresentationModes} />
+
+The **420px timeline column** below sits beside an application-owned map slot and uses the concentration gradient by default. Selection and map focus remain independent.
+
+<Canvas of={Stories.MapAdjacent} />
+
+The 360px example demonstrates the smaller presentation without squeezing a miniature graph or clipping the primary event title.
+
+<Canvas of={Stories.NarrowQuantiles} />
+
+## Individual states
+
+<Canvas of={Stories.Default} />
+<Canvas of={Stories.Compact} />
+<Canvas of={Stories.Detailed} />
+<Canvas of={Stories.MissingData} />
+<Canvas of={Stories.WithIntervalAssessment} />
+<Canvas of={Stories.InlineMinimal} />
+<Canvas of={Stories.InlineQuantiles} />
+<Canvas of={Stories.InlineSmoothCurve} />
+<Canvas of={Stories.InlineConcentration} />
+<Canvas of={Stories.WithDurationReference} />
+<Canvas of={Stories.ControlledMapCoordination} />
+
+Supply `selectedId` and `onSelectedIdChange` to coordinate selection with an external map or details panel. A separate `onLocationSelect` callback exposes the location and event IDs; map pan and zoom remain application-owned.
+
+Event time and received time are different fields; no implicit ordering or timestamp repair occurs. `renderTrailing` supplies an optional right-side inline summary without nesting it inside the selection button. It composes `HealthAssessment variant="inline"` with an optional `DurationDistribution` quantile bar, smooth density curve or smooth concentration gradient. Small inline references omit numeric percentile labels while retaining their exact values for assistive technology and tooltips; full reference details remain available in the interval. `renderInterval` and `renderDetails` accept caller-defined content. Interval stories reuse the existing `HealthAssessment` molecule in compact and chart-supported forms, with synthetic reference data. The interval is not fabricated as a tracking event; the consuming application supplies the duration, reference, and assessment policy. Without `renderInterval` the timeline remains compact and does not render any duration assessment. The timeline's status dots use `current` for the selected row independently of the supplied semantic tone.
+
+Keyboard navigation supports Up/Down and Home/End while retaining native button activation by Enter and Space.
+
+<ArgTypes of={Stories} />

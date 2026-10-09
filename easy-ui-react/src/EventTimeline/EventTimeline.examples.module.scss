@@ -1,0 +1,63 @@
+.inlineSummary {
+  inline-size: 300px;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.inlineSummary[data-kind="none"] {
+  inline-size: 146px;
+}
+
+.inlineReference {
+  min-inline-size: 0;
+  inline-size: 100%;
+
+  // Full smooth curves are a secondary option at larger widths.
+  :global([data-density-curve="true"]) {
+    block-size: 100%;
+  }
+
+  :global([data-visualization="histogram"][role="img"]) {
+    block-size: 30px;
+    min-block-size: 30px;
+  }
+}
+
+// A narrow map-side timeline cannot support legible percentile numbers.
+// Keep the pill and the observed value; hide optional plots rather than
+// squeezing event labels or displaying 9px text.
+@container event-timeline (max-width: 399px) {
+  .inlineSummary:not([data-kind="none"]) {
+    inline-size: 150px;
+  }
+
+  .inlineReference {
+    display: none;
+  }
+}
+
+.mapAdjacent {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  gap: 16px;
+  max-inline-size: 960px;
+}
+
+.mapColumn {
+  min-inline-size: 0;
+}
+
+.mapSurface {
+  min-block-size: 240px;
+  border: 1px solid #c6cfe0;
+  border-radius: 10px;
+  padding: 16px;
+  background: light-dark(#f4f6fa, #1d293b);
+  color: inherit;
+}
+
+@media (max-width: 720px) {
+  .mapAdjacent {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

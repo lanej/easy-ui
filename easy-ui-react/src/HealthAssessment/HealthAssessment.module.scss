@@ -145,6 +145,43 @@
   grid-column: 1;
 }
 
+// Inline form preserves the assessment, current observation, and supplied
+// reference on one line when composed into a dense timeline or table row.
+.root[data-variant="inline"] {
+  max-inline-size: none;
+
+  .layout {
+    display: flex;
+    align-items: center;
+    gap: design-token("space.1.5");
+    min-inline-size: 0;
+  }
+
+  .information {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    min-inline-size: 0;
+    gap: design-token("space.1");
+  }
+
+  .summary {
+    flex-wrap: nowrap;
+    align-items: center;
+    white-space: nowrap;
+    gap: design-token("space.1");
+  }
+
+  .observationDetails {
+    white-space: nowrap;
+  }
+
+  .reference {
+    flex: 1 1 0;
+    min-inline-size: 0;
+  }
+}
+
 // Reveal context by available component width, rather than the browser viewport.
 .root[data-variant="responsive"] {
   .freshness,

@@ -165,6 +165,22 @@ describe("<HealthAssessment />", () => {
     ).toBeVisible();
   });
 
+  it("keeps status, current value and a supplied reference in its inline variant", () => {
+    const { container } = render(
+      <HealthAssessment
+        variant="inline"
+        size="sm"
+        health={{ assessment: "healthy", label: "As expected" }}
+        observation={{ value: 6, unit: "h" }}
+        reference={<span>Reference distribution</span>}
+      />,
+    );
+    expect(container.querySelector('[data-variant="inline"]')).toBeVisible();
+    expect(screen.getByText("As expected")).toBeVisible();
+    expect(screen.getByText("6")).toBeVisible();
+    expect(screen.getByText("Reference distribution")).toBeVisible();
+  });
+
   it("renders only reference content in detailed form and retains a valid loading state", () => {
     const props = {
       variant: "detailed" as const,
