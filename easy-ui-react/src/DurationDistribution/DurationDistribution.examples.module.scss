@@ -1,0 +1,44 @@
+@use "../styles/common" as *;
+
+// Temporary Storybook proposal: recolor the existing quantile bar from actual bin counts.
+.concentration {
+  --concentration-base: #{design-token("color.neutral.000")};
+  --concentration-neutral: #{design-token("color.neutral.700")};
+  --concentration-healthy: light-dark(
+    #{design-token("color.positive.800")},
+    #{design-token("color.positive.500")}
+  );
+  --concentration-degraded: light-dark(
+    #{design-token("color.warning.800")},
+    #{design-token("color.warning.500")}
+  );
+  --concentration-unhealthy: light-dark(
+    #{design-token("color.negative.800")},
+    #{design-token("color.negative.500")}
+  );
+
+  [role="img"] > div:first-child {
+    background: var(--concentration);
+    opacity: 1;
+    > span {
+      display: none;
+    }
+  }
+}
+.key {
+  display: flex;
+  align-items: center;
+  gap: design-token("space.1");
+  margin-block-start: design-token("space.1");
+  @include font-style("caption");
+}
+.ramp {
+  inline-size: 64px;
+  block-size: 8px;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    var(--concentration-base),
+    var(--concentration-neutral)
+  );
+}

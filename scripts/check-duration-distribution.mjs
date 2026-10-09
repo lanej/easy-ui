@@ -120,6 +120,14 @@ try {
     for (const [id, file] of [
       ["default", `duration-distribution-${scheme}`],
       ["quantiles-only", `duration-distribution-quantiles-${scheme}`],
+      [
+        "quantiles-only-with-labels",
+        `duration-distribution-quantiles-labeled-${scheme}`,
+      ],
+      [
+        "histogram-concentration-preview",
+        `duration-distribution-concentration-${scheme}`,
+      ],
       ["reference-states", `duration-distribution-states-${scheme}`],
       ["minutes", `duration-distribution-minutes-${scheme}`],
       ["composed-assessment", `duration-distribution-composed-${scheme}`],
@@ -230,6 +238,7 @@ try {
       for (const id of [
         "default",
         "narrow",
+        "quantiles-only-with-labels",
         "endpoint-quantiles",
         "minutes",
         "with-count-axis",

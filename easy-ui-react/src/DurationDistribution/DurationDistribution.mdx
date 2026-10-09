@@ -42,6 +42,10 @@ import {
 Quantiles alone render a horizontal reference bar with percentile dots and the current-value marker. Supplied health bands color the bar; without bands it remains neutral. They do not establish a density, histogram, or cumulative curve. No endpoints, quartiles, counts, cohorts, sample sizes, or health classifications are inferred. Each supplied source is validated independently; an invalid source is identified and omitted while other valid sources remain usable. Reference arrays may be absent, null, or empty. An all-zero histogram explicitly reports no completed observations. Sample count is optional, separately supplied metadata; the application owns whether it covers the whole cohort or only the displayed window.
 
 <Canvas of={Stories.QuantilesOnly} />
+
+Set `showPercentileLabels` to show each percentile and its duration beneath the quantiles-only bar, for example **P50 9 h** and **P90 18 h**. Labels are off by default; the same control works for bar and curve presentations. Labels retain the percentile's semantic color and align with its dot. On narrow references each pair stacks.
+
+<Canvas of={Stories.QuantilesOnlyWithLabels} />
 <Canvas of={Stories.EmpiricalSteps} />
 
 `interpolation="linear"` joins supplied cumulative points with straight segments; this is an interpolated historical reference, not a completion forecast. Use `"step"` for a right-continuous empirical CDF. There is no extrapolation beyond the supplied cumulative coverage. Quantile points use their supplied fractions when a curve is visible and sit on the baseline otherwise. The elapsed vertical line remains distinct; it receives a curve dot only where a supplied cumulative value can be interpolated. Histogram height represents counts, while curve height represents cumulative fraction. They share a duration x-axis and independent vertical scales.
@@ -66,6 +70,12 @@ Bands, band names, percentile points, percentile labels/guides, right count axis
 <Canvas of={Stories.WithContext} />
 <Canvas of={Stories.WithExactData} />
 <Canvas of={Stories.Minutes} />
+
+## Concentration preview
+
+This Storybook-only proposal uses actual supplied bin counts to vary the intensity of the reference bar while preserving health hues. Stronger color means more completed observations in that interval. The example uses equal 3 h bins and includes exact source counts in the disclosure. Quantiles alone cannot produce this view. It is a design preview, not a public component option.
+
+<Canvas of={Stories.HistogramConcentrationPreview} />
 
 ## Missing, invalid, and outside values
 
