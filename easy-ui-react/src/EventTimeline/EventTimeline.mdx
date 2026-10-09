@@ -7,6 +7,18 @@ import * as Stories from "./EventTimeline.stories";
 
 A reusable selectable chronology. The caller owns ordering, interpretation, identifiers, and whether events belong to the same path. The timeline does not deduplicate events or infer physical histories.
 
+## Presentation modes
+
+All three duration compositions below use the same selected event. The optional trailing slot is independent of the event's selection button; the interval never becomes an invented event.
+
+<Canvas of={Stories.PresentationModes} />
+
+At a narrower container width, the inline quantiles wrap beneath the event rather than shrinking the chronology. No viewport-specific application logic is required.
+
+<Canvas of={Stories.NarrowQuantiles} />
+
+## Individual states
+
 <Canvas of={Stories.Default} />
 <Canvas of={Stories.Compact} />
 <Canvas of={Stories.Detailed} />
