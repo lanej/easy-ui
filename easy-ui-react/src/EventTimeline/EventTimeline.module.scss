@@ -88,7 +88,8 @@
   overflow-wrap: anywhere;
 }
 
-.location, .received {
+.location,
+.received {
   font-size: 12px;
   color: design-token("color.neutral.700");
   overflow-wrap: anywhere;
@@ -109,7 +110,8 @@
   outline: 2px solid design-token("color.primary.600");
 }
 
-.interval, .details {
+.interval,
+.details {
   min-inline-size: 0;
   margin-inline-start: 120px;
   padding-block: 4px 8px;
@@ -148,7 +150,8 @@
   .entry:not(:last-child)::before {
     left: 69px;
   }
-  .interval, .details {
+  .interval,
+  .details {
     margin-inline-start: 81px;
   }
   .mapLink {
