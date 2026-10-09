@@ -120,6 +120,16 @@ try {
     if (errors.length)
       throw new Error(`Storybook runtime errors: ${errors.join("; ")}`);
     if (inline) await assertInlineRows();
+    await page.evaluate(() => {
+      for (const time of document.querySelectorAll("li > div > button > span:first-child")) {
+        if (
+          time.scrollWidth > time.clientWidth + 2 &&
+          getComputedStyle(time).textOverflow !== "ellipsis"
+        ) {
+          throw new Error("Timeline timestamp overlaps the neighboring event text");
+        }
+      }
+    });
     const bounds = await scene.boundingBox();
     if (!bounds || bounds.width < 250 || bounds.height < 160) {
       throw new Error(
