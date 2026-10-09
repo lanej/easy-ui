@@ -296,7 +296,7 @@ export const PresentationModes: Story = {
           02 · Inline quantiles — one row
         </h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
-          Current 6h, status, P50/P90 and quantile bar beside the event.
+          Current 6h with P50/P90 marks on the bar; exact values remain accessible.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
@@ -312,11 +312,10 @@ export const PresentationModes: Story = {
         style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
       >
         <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
-          03 · Inline smooth density — one row
+          04 · Inline smooth density — one row
         </h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
-          The same current value and landmarks with a smoothed historical
-          histogram.
+          An optional compact density curve when the surrounding layout permits.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
@@ -328,10 +327,10 @@ export const PresentationModes: Story = {
       </section>
       <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
         <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
-          04 · Inline density concentration — one row
+          03 · Inline density concentration — one row
         </h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
-          Density is encoded as a smooth color gradient; the current value stays prominent.
+          The distribution is encoded by a smooth concentration gradient without tiny numbers.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
