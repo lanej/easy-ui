@@ -1,0 +1,77 @@
+.inlineSummary {
+  inline-size: 300px;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.inlineSummary[data-kind="minimal"] {
+  inline-size: 146px;
+}
+
+.inlineReference {
+  display: grid;
+  gap: 2px;
+  min-inline-size: 0;
+
+  dl {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px;
+    min-inline-size: 0;
+    white-space: nowrap;
+    margin: 0;
+  }
+
+  dl > div {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+    min-inline-size: 0;
+  }
+
+  dt,
+  dd,
+  dd span {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  dt {
+    gap: 2px;
+  }
+
+  dt > span {
+    display: none;
+  }
+
+  dd {
+    font-weight: 500;
+  }
+}
+
+.mapAdjacent {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  gap: 16px;
+  max-inline-size: 960px;
+}
+
+.mapColumn {
+  min-inline-size: 0;
+}
+
+.mapSurface {
+  min-block-size: 240px;
+  border: 1px solid #c6cfe0;
+  border-radius: 10px;
+  padding: 16px;
+  background: light-dark(#f4f6fa, #1d293b);
+  color: inherit;
+}
+
+@media (max-width: 720px) {
+  .mapAdjacent {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
