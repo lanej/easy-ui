@@ -87,6 +87,8 @@ export type DurationDistributionProps = {
   formatValue?: (value: number) => string;
   formatCount?: (count: number) => string;
   formatQuantileLabel?: (fraction: number) => string;
+  /** Hide the visual scale for compact inline references; domain and quantiles remain accessible. */
+  showScale?: boolean;
   showHealthBands?: boolean;
   showHealthBandLabels?: boolean;
   showPercentiles?: boolean;
@@ -123,6 +125,7 @@ export function DurationDistribution({
   formatValue = String,
   formatCount = String,
   formatQuantileLabel = (fraction) => `P${fraction * 100}`,
+  showScale = true,
   showHealthBands = true,
   showHealthBandLabels = false,
   showPercentiles = true,
@@ -533,67 +536,69 @@ export function DurationDistribution({
                 </div>
               )}
             </div>
-            <div className={styles.axisFrame} data-has-count-axis={countAxis}>
-              <div
-                className={styles.scale}
-                data-has-thresholds={thresholds.length > 0}
-                data-has-percentile-labels={
-                  showPercentiles && showPercentileLabels
-                }
-                aria-hidden="true"
-              >
-                {!(
-                  showPercentiles &&
-                  showPercentileLabels &&
-                  marks.some((q) => q.value === domain[0])
-                ) && (
-                  <span className={styles.endpoint}>{format(domain[0])}</span>
-                )}
-                {!(
-                  showPercentiles &&
-                  showPercentileLabels &&
-                  marks.some((q) => q.value === domain[1])
-                ) && (
-                  <span className={styles.endpoint} data-end="true">
-                    {format(domain[1])}
-                  </span>
-                )}
-                {showPercentiles &&
-                  showPercentileLabels &&
-                  marks
-                    .filter((q) => inDomain(q.value))
-                    .map((q) => (
-                      <span
-                        key={q.fraction}
-                        className={styles.percentileLabel}
-                        data-percentile={markLabel(q)}
-                        data-reference-assessment={
-                          regionAt(regions, q.value)?.assessment ?? "unassessed"
-                        }
-                        data-edge={
-                          q.value === domain[0]
-                            ? "start"
-                            : q.value === domain[1]
-                              ? "end"
-                              : undefined
-                        }
-                        style={{ left: offset(q.value) }}
-                      >
-                        {markLabel(q)}
-                        <strong>{format(q.value)}</strong>
-                      </span>
-                    ))}
-                {thresholds.map((n) => (
-                  <span
-                    key={n}
-                    className={styles.thresholdLabel}
-                    style={{ left: offset(n) }}
-                  >
-                    {format(n)}
-                  </span>
-                ))}
+            {showScale && (
+              <div className={styles.axisFrame} data-has-count-axis={countAxis}>
+                <div
+                  className={styles.scale}
+                  data-has-thresholds={thresholds.length > 0}
+                  data-has-percentile-labels={
+                    showPercentiles && showPercentileLabels
+                  }
+                  aria-hidden="true"
+                >
+                  {!(
+                    showPercentiles &&
+                    showPercentileLabels &&
+                    marks.some((q) => q.value === domain[0])
+                  ) && (
+                    <span className={styles.endpoint}>{format(domain[0])}</span>
+                  )}
+                  {!(
+                    showPercentiles &&
+                    showPercentileLabels &&
+                    marks.some((q) => q.value === domain[1])
+                  ) && (
+                    <span className={styles.endpoint} data-end="true">
+                      {format(domain[1])}
+                    </span>
+                  )}
+                  {showPercentiles &&
+                    showPercentileLabels &&
+                    marks
+                      .filter((q) => inDomain(q.value))
+                      .map((q) => (
+                        <span
+                          key={q.fraction}
+                          className={styles.percentileLabel}
+                          data-percentile={markLabel(q)}
+                          data-reference-assessment={
+                            regionAt(regions, q.value)?.assessment ?? "unassessed"
+                          }
+                          data-edge={
+                            q.value === domain[0]
+                              ? "start"
+                              : q.value === domain[1]
+                                ? "end"
+                                : undefined
+                          }
+                          style={{ left: offset(q.value) }}
+                        >
+                          {markLabel(q)}
+                          <strong>{format(q.value)}</strong>
+                        </span>
+                      ))}
+                  {thresholds.map((n) => (
+                    <span
+                      key={n}
+                      className={styles.thresholdLabel}
+                      style={{ left: offset(n) }}
+                    >
+                      {format(n)}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             {showHealthBandLabels && bands.length > 0 && (
               <div className={styles.compactRegions} aria-hidden="true">
                 {bands.map((r) => (
