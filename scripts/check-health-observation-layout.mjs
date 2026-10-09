@@ -34,6 +34,19 @@ export function checkHealthObservationLayout() {
       const plot = primary.querySelector('[class*="plot"][role="img"]');
       if (plot) {
         const bounds = plot.getBoundingClientRect();
+        const title = plot
+          .querySelector('[class*="yTitle"]')
+          .getBoundingClientRect();
+        const axis = plot
+          .querySelector('[class*="yAxis"]')
+          .getBoundingClientRect();
+        if (
+          title.right > axis.left ||
+          Math.abs(
+            (title.top + title.bottom) / 2 - (bounds.top + bounds.bottom) / 2,
+          ) > 1
+        )
+          throw new Error(`${name}: vertical axis title is misplaced`);
         const ticks = plot.querySelectorAll('[class*="yAxis"] span');
         ticks.forEach((tick, index) => {
           const label = tick.getBoundingClientRect();
