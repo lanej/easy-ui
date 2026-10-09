@@ -1,0 +1,84 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./DurationDistribution.stories";
+
+<Meta of={Stories} />
+
+# DurationDistribution
+
+Compare an ongoing elapsed duration with a caller-supplied reference of completed durations. This molecule renders a native SVG/CSS plot and composes with `HealthAssessment`; it does not require a chart engine. It reuses the visualization scale and value-state utilities. `RangePlot` remains useful for named ranges, but cannot express this shared histogram/CDF overlay.
+
+<Canvas of={Stories.Default} />
+
+```tsx
+import {
+  DurationDistribution,
+  DurationQuantileMetrics,
+} from "@easypost/easy-ui/DurationDistribution";
+
+<DurationDistribution
+  value={6}
+  unit="hours"
+  domain={[0, 30]}
+  quantiles={[
+    { fraction: 0.5, value: 9 },
+    { fraction: 0.9, value: 18 },
+  ]}
+  bins={completedDurationBins}
+  cumulative={completedDurationCDF}
+  healthRegions={applicationPolicy}
+  currentAssessment="healthy"
+/>;
+```
+
+## Supply the reference rather than infer it
+
+| Source          | Contract                                                                                | Rendering                                                                        |
+| --------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `quantiles`     | Fractions in [0,1], strictly increasing; durations nonnegative and nondecreasing        | Fixed-size percentile landmarks; tied durations are valid                        |
+| `bins`          | Ordered, disjoint half-open [from,to) intervals with integer nonnegative counts         | Count histogram; gaps retain their positions                                     |
+| `cumulative`    | At least two points ordered by nonnegative duration and nondecreasing fraction in [0,1] | Supplied cumulative percentage curve; repeated durations support empirical jumps |
+| `healthRegions` | Ordered disjoint [from,to) policy intervals; the final upper bound may be Infinity      | Semantic bands and landmark colors, independent of distribution                  |
+
+Quantiles alone do not establish a density, histogram, or cumulative curve. No endpoints, quartiles, counts, cohorts, sample sizes, or health classifications are inferred. Each supplied source is validated independently; an invalid source is identified and omitted while other valid sources remain usable. Reference arrays may be absent, null, or empty. An all-zero histogram explicitly reports no completed observations. Sample count is optional, separately supplied metadata; the application owns whether it covers the whole cohort or only the displayed window.
+
+<Canvas of={Stories.QuantilesOnly} />
+<Canvas of={Stories.EmpiricalSteps} />
+
+`interpolation="linear"` joins supplied cumulative points with straight segments; this is an interpolated historical reference, not a completion forecast. Use `"step"` for a right-continuous empirical CDF. There is no extrapolation beyond the supplied cumulative coverage. Quantile points use their supplied fractions when a curve is visible and sit on the baseline otherwise. The elapsed vertical line remains distinct; it receives a curve dot only where a supplied cumulative value can be interpolated. Histogram height represents counts, while curve height represents cumulative fraction. They share a duration x-axis and independent vertical scales.
+
+Use the same cohort, unit, and observation window for sources meant to be compared. The component does not aggregate raw observations, reconcile independently computed statistics, estimate density, or convert units. Default number formatting preserves the supplied numeric value with `String`; optional formatters are caller-owned. `formatValue` formats the number only, followed by the explicit `unit`.
+
+## Keep assessment and duration separate
+
+The current marker uses `currentAssessment`, never an assessment derived from its percentile. Historical landmarks use the supplied health interval containing their duration. Hiding bands preserves that color policy. Without policy, landmarks are neutral. Overlapping, reversed, or invalid policy intervals are explicitly identified and their historical marks become neutral. Values below the median do not automatically mean healthy. Ongoing elapsed duration is labeled separately from the completed-duration reference.
+
+<Canvas of={Stories.WithoutBands} />
+<Canvas of={Stories.WithoutPolicy} />
+
+## Optional context and exact data
+
+Bands, band names, percentile points, percentile labels/guides, right count axis, and visible sample count are independently optional. No percentage y-axis is shown. `description` and `cohort` provide visible application context when supplied. The sample count is included in the accessible description when supplied, and displayed only with `showSampleCount`. Synthetic data in these examples is fabricated demonstration data, not required product copy.
+
+`showDataTable` exposes exact supplied observations through a native keyboard-accessible disclosure. It is independent of the histogram, which never expands into a separate graph. Cumulative points, quantiles, and histogram bins retain exact values in this view even when clipped by the viewport. Keep labeled quantiles sparse on narrow plots; points plus `DurationQuantileMetrics` provide a more compact comparison for dense references.
+
+<Canvas of={Stories.WithContext} />
+<Canvas of={Stories.WithExactData} />
+<Canvas of={Stories.Minutes} />
+
+## Missing, invalid, and outside values
+
+`domain` is a finite increasing nonnegative viewport. Invalid scales suppress graphical geometry. Null elapsed values are unavailable; negative and nonfinite durations are invalid. Valid reference data remains visible when elapsed duration is missing. Outside elapsed and quantile values retain their exact value and state, with marks omitted by default. `overflow="clamp"` explicitly puts their marks at a boundary without changing the exact text. Curves and bins are clipped to the viewport; an explicit message identifies references extending outside it. Loading suppresses previous data, assessment, and metadata.
+
+<Canvas of={Stories.ReferenceStates} />
+<Canvas of={Stories.ClampedObservation} />
+<Canvas of={Stories.Loading} />
+
+## Compose with observation presentations
+
+`DurationQuantileMetrics` is an independently usable companion that shares unit formatting and supplied health policy. Put it in `HealthAssessment.observationDetails` and the graph in `reference`. HealthAssessment's compact, detailed, default, wide, and responsive forms control layout and progressive visibility; DurationDistribution's options control the graph's own content. `stretch` fills the reference column with a minimum plot height of 100px.
+
+<Canvas of={Stories.ComposedAssessment} />
+<Canvas of={Stories.IndependentMetrics} />
+<Canvas of={Stories.Narrow} />
+
+<ArgTypes of={Stories} />

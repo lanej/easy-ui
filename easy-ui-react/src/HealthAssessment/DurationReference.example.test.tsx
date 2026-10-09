@@ -48,7 +48,7 @@ describe("Story-only duration reference", () => {
     );
     expect(container.querySelector("[data-assessment]")).toBeNull();
     expect(screen.getByRole("img")).toHaveAccessibleName(
-      expect.stringContaining("P90: 18 h, Needs attention"),
+      expect.stringContaining("P90: 18 h · Needs attention"),
     );
   });
   it("honors half-open policy boundaries rather than assigning colors by percentile rank", () => {

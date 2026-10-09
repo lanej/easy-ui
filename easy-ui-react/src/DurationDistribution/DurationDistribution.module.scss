@@ -14,11 +14,13 @@
 }
 
 .regionLabels {
-  display: flex;
+  position: relative;
+  block-size: calc(2lh + 2px);
   margin-block-end: 8px;
 }
 
 .regionLabel {
+  position: absolute;
   text-align: center;
   color: design-token("color.neutral.900");
 
@@ -200,7 +202,9 @@
 }
 
 .valueState {
+  margin: 0;
   margin-block-start: design-token("space.0.5");
+  overflow-wrap: anywhere;
 }
 
 @container (max-width: 18em) {
@@ -248,7 +252,7 @@
   inset: 0;
   inline-size: 100%;
   block-size: 100%;
-  overflow: visible;
+  overflow: hidden;
   path {
     fill: none;
     stroke: design-token("color.neutral.900");
@@ -265,13 +269,16 @@
   }
 }
 
-.root[data-section="primary"] {
+.root[data-stretch="true"] {
+  display: flex;
+  flex-direction: column;
   block-size: 100%;
 
   .figure {
     display: flex;
     flex-direction: column;
-    block-size: 100%;
+    flex: 1;
+    block-size: auto;
   }
   .regionLabels,
   .scale,
@@ -284,13 +291,6 @@
     min-block-size: 100px;
     block-size: auto;
   }
-}
-
-.root[data-section="details"] {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  block-size: 100%;
 }
 
 .histogramPoint {
@@ -345,13 +345,13 @@
 }
 .plot[data-has-count-axis="true"],
 .axisFrame[data-has-count-axis="true"] {
-  margin-inline-end: 48px;
+  margin-inline-end: var(--count-gutter, 48px);
 }
 .countAxis {
   position: absolute;
   inset-block: 0;
   left: calc(100% + 6px);
-  inline-size: 42px;
+  inline-size: calc(var(--count-gutter, 48px) - 6px);
   font-size: 10px;
   line-height: 1;
 }
@@ -449,5 +449,47 @@
 }
 
 .figure[data-has-count-axis="true"] .regionLabels {
-  margin-inline-end: 48px;
+  margin-inline-end: var(--count-gutter, 48px);
+}
+
+.percentileLabel[data-edge="start"] {
+  transform: none;
+}
+.percentileLabel[data-edge="end"] {
+  transform: translateX(-100%);
+}
+.elapsed[data-overflow="true"] {
+  outline: 1px dashed currentColor;
+}
+.exactData {
+  flex-shrink: 0;
+  margin-block-start: design-token("space.1");
+  summary {
+    cursor: pointer;
+  }
+  dl {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: design-token("space.0.5");
+  }
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+.valueState p {
+  margin: 0;
+}
+
+// A quantile-only reference is a compact scale, not an empty distribution plot.
+.root[data-visualization="points"] .plot {
+  block-size: 16px;
+  min-block-size: 16px;
+}
+
+@media (forced-colors: active) {
+  .root {
+    color: CanvasText;
+    background: Canvas;
+  }
 }

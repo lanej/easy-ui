@@ -16,11 +16,15 @@ Keep an observation's name, value, assessment, and observation time together, wi
   health={{ assessment: "healthy", label: "As expected" }}
   observation={{ value: 6, unit: "hours" }}
   reference={
-    <DurationReferenceExample
+    <DurationDistribution
       value={6}
+      unit="h"
+      domain={[0, 30]}
+      quantiles={referenceQuantiles}
+      bins={referenceBins}
+      cumulative={referenceCumulative}
       currentAssessment="healthy"
-      regions={assessmentRanges}
-      section="primary"
+      healthRegions={assessmentRanges}
     />
   }
   freshness={{
@@ -100,7 +104,7 @@ Each example uses the same observation and width. Column heights follow optional
 
 <Canvas of={Stories.DataStates} />
 
-Omit `observation` entirely for an assessment that does not measure duration. `reference` remains an optional composition slot. `DurationReferenceExample` is a story-only example; its synthetic histogram and percentiles come from the same completed observations. Missing elapsed values omit the current marker while retaining the reference. Missing or unassessed health omits the colored ranges and uses neutral percentile marks and bars. The reusable distribution component is tracked separately in [#16](https://github.com/lanej/easy-ui/issues/16).
+Omit `observation` entirely for an assessment that does not measure duration. `reference` remains an optional composition slot. `DurationDistribution` is the reusable reference molecule; these story fixtures supply its histogram, cumulative points, and quantiles from the same synthetic completed observations. Missing elapsed values omit the current marker while retaining the reference. Missing or unassessed health omits the colored ranges and uses neutral percentile marks and bars. Use `DurationQuantileMetrics` in `observationDetails` for the independently reusable percentile comparison. See [DurationDistribution](../DurationDistribution/DurationDistribution.mdx) for its data contracts, validation, and optional exact-value disclosure.
 
 ## Fit the surrounding information
 

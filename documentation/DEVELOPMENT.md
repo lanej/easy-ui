@@ -69,3 +69,13 @@ Charts, maps, screenshots, and layout reviews reuse recent successful browser ev
 Evidence must come from a successful run of the same workflow and PR/ref, and expires after seven days. Failed, cancelled, missing, or inaccessible evidence causes fresh checks. Manual workflow dispatch and reruns always execute the checks. A reused job summary links to the original run; it does not present that run's screenshots as new captures. Preview builds, bundle assertions, and ordinary package checks continue to run. Browser installation, interaction/accessibility audits, screenshot comparisons, and View Rule execution can then be skipped independently for unchanged suites.
 
 Every documentation deployment checks its new source revision and published inspector/worker assets over HTTP. Its expensive hosted map audit is reused only when the deployed map build and test inputs match. Keep these deployment checks even when reusing browser results. Run `node --test scripts/browser-proof.test.mjs` when changing the shared evidence helper or workflow conditions.
+
+### Duration reference verification
+
+Run focused `DurationDistribution` and `HealthAssessment` tests. With Storybook running and the locked `scripts/preview-metrics` Playwright dependencies installed, run:
+
+```sh
+BROWSER_CHANNEL=chrome STORYBOOK_URL=http://localhost:9013 node scripts/check-duration-distribution.mjs
+```
+
+`DURATION_REPORT_DIR` selects its screenshots and report. The harness covers supplied CDF/bin overlays, quantiles without invented geometry, missing/invalid/outside states, optional exact-data keyboard disclosure, standalone and composed references, narrow layouts, enlarged text, forced colors, both themes, and the existing assessment option alignment. Browser executable/module overrides support managed test environments. Run `node scripts/check-style-package.mjs` after building to verify packed package exports and TypeScript consumers.
