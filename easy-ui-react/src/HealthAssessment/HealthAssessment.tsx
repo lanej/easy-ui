@@ -30,6 +30,8 @@ export type HealthAssessmentProps = {
   /** Presentation form; responsive progressively reveals supplied content by container width. */
   variant?:
     "compact" | "detailed" | "default" | "wide" | "responsive" | "inline";
+  /** Place the assessment beside the observation label rather than the value. */
+  healthPlacement?: "headline" | "label";
   size?: "sm" | "md";
   isLoading?: boolean;
   accessibilityLabel?: string;
