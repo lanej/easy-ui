@@ -27,7 +27,7 @@ Set `availability="unavailable"` when an observation cannot support an assessmen
 
 ## Compact and localized layouts
 
-Use `size="sm"` in dense tables. Labels wrap within the available width rather than truncating information. Visible words identify each state independently of its color. `label` localizes the current assessment or unassessed wording; `unavailableLabel` and `loadingLabel` localize their distinct states. Set the surrounding language and optional `accessibilityLabel` to identify the subject. The atom is noninteractive and adds no keyboard stops.
+Use `variant="dot"` for a status dot beside a label in dense layouts. The assessment remains available as an accessible name and tooltip. Use `size="sm"` in dense tables. Labels wrap within the available width rather than truncating information. Visible words identify each state independently of its color. `label` localizes the current assessment or unassessed wording; `unavailableLabel` and `loadingLabel` localize their distinct states. Set the surrounding language and optional `accessibilityLabel` to identify the subject. The atom is noninteractive and adds no keyboard stops.
 
 <Canvas of={Stories.Compact} />
 <Canvas of={Stories.LocalizedNarrow} />

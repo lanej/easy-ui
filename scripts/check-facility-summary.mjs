@@ -65,6 +65,23 @@ try {
           );
         }
         if (story === "compact") {
+          const dot = page.getByRole("img", {
+            name: "As expected",
+            exact: true,
+          });
+          const label = page.getByText("Current dwell", { exact: true });
+          assert.equal(await dot.count(), 1);
+          const dotBox = await dot.boundingBox();
+          const labelBox = await label.boundingBox();
+          assert.ok(
+            Math.abs(
+              dotBox.y + dotBox.height / 2 - labelBox.y - labelBox.height / 2,
+            ) < 2,
+          );
+          assert.equal(
+            await page.getByText("As expected", { exact: true }).count(),
+            0,
+          );
           assert.equal(
             await page
               .locator('[data-variant="compact"][data-size="sm"]')
@@ -124,12 +141,10 @@ try {
           `${theme}-${width}-${story}`,
         );
         checks.push(`${theme}-${width}-${story}`);
-        if (width === 1040 && story === "default")
-          await page
-            .locator('section[data-variant="default"]')
-            .screenshot({
-              path: resolve(output, `facility-summary-default-${theme}.png`),
-            });
+        if (width === 1040 && ["default", "compact"].includes(story))
+          await page.locator(`section[data-variant="${story}"]`).screenshot({
+            path: resolve(output, `facility-summary-${story}-${theme}.png`),
+          });
 
         if (
           (width === 1040 && ["comparison", "table"].includes(story)) ||

@@ -203,3 +203,9 @@
     }
   }
 }
+
+.label[data-health-placement="label"] {
+  display: flex;
+  align-items: center;
+  gap: design-token("space.1");
+}

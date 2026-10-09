@@ -7,6 +7,31 @@ import {
 } from "./HealthIndicator";
 
 describe("<HealthIndicator />", () => {
+  it("names dot states accessibly and suppresses stale assessments", () => {
+    const { rerender } = render(
+      <HealthIndicator
+        variant="dot"
+        assessment="healthy"
+        label="As expected"
+      />,
+    );
+    expect(screen.getByRole("img", { name: "As expected" })).toHaveAttribute(
+      "title",
+      "As expected",
+    );
+    expect(screen.queryByText("As expected")).not.toBeInTheDocument();
+    rerender(
+      <HealthIndicator
+        variant="dot"
+        assessment="healthy"
+        availability="unavailable"
+      />,
+    );
+    expect(screen.getByRole("img", { name: "Unavailable" })).toBeVisible();
+    rerender(<HealthIndicator variant="dot" assessment="healthy" isLoading />);
+    expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("img", { name: "Assessing…" })).toBeVisible();
+  });
   it.each([
     ["healthy", "Healthy"],
     ["degraded", "Degraded"],

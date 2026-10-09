@@ -27,6 +27,8 @@ export type HealthAssessmentProps = {
   referenceLayout?: "auto" | "compact";
   /** Presentation form; responsive progressively reveals supplied content by container width. */
   variant?: "compact" | "detailed" | "default" | "wide" | "responsive";
+  /** Place the assessment beside the observation label rather than the value. */
+  healthPlacement?: "headline" | "label";
   size?: "sm" | "md";
   isLoading?: boolean;
   accessibilityLabel?: string;
@@ -44,6 +46,7 @@ export function HealthAssessment({
   referenceLayout = "auto",
   variant = "default",
   size = "md",
+  healthPlacement = "headline",
   isLoading = false,
   accessibilityLabel = "Health assessment",
 }: HealthAssessmentProps) {
@@ -55,6 +58,8 @@ export function HealthAssessment({
       observation.value < 0);
   const showInformation = variant !== "detailed";
   const showContext = variant !== "compact";
+  const showLabel =
+    showInformation && (showContext || healthPlacement === "label");
   const showReference = variant !== "compact" && reference != null;
   const showMetrics = variant !== "compact" && observationDetails != null;
   const showReferenceDetails =
@@ -81,15 +86,13 @@ export function HealthAssessment({
       data-variant={variant}
       role="group"
       aria-label={
-        !showContext || !showInformation || label == null
+        !showLabel || label == null
           ? typeof label === "string"
             ? label
             : accessibilityLabel
           : undefined
       }
-      aria-labelledby={
-        showContext && showInformation && label != null ? labelId : undefined
-      }
+      aria-labelledby={showLabel && label != null ? labelId : undefined}
       aria-busy={isLoading}
     >
       <div
@@ -105,8 +108,13 @@ export function HealthAssessment({
         )}
         {showInformation && (
           <div className={styles.information}>
-            {showContext && label != null && (
-              <div id={labelId} className={styles.label}>
+            {showLabel && (label != null || healthPlacement === "label") && (
+              <div
+                id={labelId}
+                className={styles.label}
+                data-health-placement={healthPlacement}
+              >
+                {healthPlacement === "label" && indicator}
                 <Text
                   as="p"
                   variant={stacked ? "caption" : "body2"}
@@ -119,7 +127,7 @@ export function HealthAssessment({
             <div className={styles.summary} data-stacked={stacked}>
               {stacked ? (
                 <>
-                  {indicator}
+                  {healthPlacement === "headline" && indicator}
                   {showMetrics ? (
                     <div className={styles.headline}>
                       {duration}
@@ -134,7 +142,7 @@ export function HealthAssessment({
               ) : (
                 <>
                   {duration}
-                  {indicator}
+                  {healthPlacement === "headline" && indicator}
                 </>
               )}
             </div>

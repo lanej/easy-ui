@@ -73,6 +73,8 @@ describe("FacilitySummary", () => {
     );
     expect(screen.queryByText("Reference comparison")).not.toBeInTheDocument();
     expect(screen.getByText("Dwell")).toBeVisible();
+    expect(screen.getByRole("img", { name: "As expected" })).toBeVisible();
+    expect(screen.queryByText("As expected")).not.toBeInTheDocument();
     rerender(
       <FacilitySummary
         name="North Harbor"

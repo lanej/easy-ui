@@ -84,13 +84,14 @@ export function FacilitySummary({
         <div className={styles.observations}>
           {observations.map(({ id, ...observation }) => (
             <div key={id} className={styles.observation}>
-              {variant === "compact" && observation.label != null && (
-                <Text as="p" variant="caption" color="subdued">
-                  {observation.label}
-                </Text>
-              )}
               <HealthAssessment
                 {...observation}
+                health={
+                  variant === "compact"
+                    ? { ...observation.health, variant: "dot" }
+                    : observation.health
+                }
+                healthPlacement={variant === "compact" ? "label" : "headline"}
                 size={variant === "detailed" ? "md" : "sm"}
                 reference={
                   observation.reference != null ? (
