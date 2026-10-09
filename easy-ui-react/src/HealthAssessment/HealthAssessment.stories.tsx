@@ -28,7 +28,7 @@ type ExampleArgs = HealthAssessmentProps & {
 };
 
 const meta: Meta<ExampleArgs> = {
-  title: "Molecules/Feedback/HealthAssessment",
+  title: "Organisms/Feedback/HealthAssessment",
   component: HealthAssessment,
   parameters: { layout: "padded" },
   argTypes: {
