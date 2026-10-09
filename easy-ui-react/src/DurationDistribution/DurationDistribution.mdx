@@ -50,7 +50,7 @@ Set `showPercentileLabels` to show each percentile and its duration beneath the 
 
 `interpolation="linear"` joins supplied cumulative points with straight segments; this is an interpolated historical reference, not a completion forecast. Use `"step"` for a right-continuous empirical CDF. There is no extrapolation beyond the supplied cumulative coverage. Quantile points use their supplied fractions when a curve is visible and sit on the baseline otherwise. The elapsed vertical line remains distinct; it receives a curve dot only where a supplied cumulative value can be interpolated. Histogram height represents counts, while curve height represents cumulative fraction. They share a duration x-axis and independent vertical scales.
 
-Use the same cohort, unit, and observation window for sources meant to be compared. The component does not aggregate raw observations, reconcile independently computed statistics, estimate density, or convert units. Default number formatting preserves the supplied numeric value with `String`; optional formatters are caller-owned. `formatValue` formats the number only, followed by the explicit `unit`.
+Use the same cohort, unit, and observation window for sources meant to be compared. The component does not aggregate raw observations, reconcile independently computed statistics, choose a kernel-density bandwidth, or convert units. Default number formatting preserves the supplied numeric value with `String`; optional formatters are caller-owned. `formatValue` formats the number only, followed by the explicit `unit`.
 
 ## Keep assessment and duration separate
 
@@ -71,11 +71,24 @@ Bands, band names, percentile points, percentile labels/guides, right count axis
 <Canvas of={Stories.WithExactData} />
 <Canvas of={Stories.Minutes} />
 
-## Concentration preview
+## Binned or smooth, full plot or compact concentration
 
-This Storybook-only proposal uses actual supplied bin counts to vary the intensity of the reference bar while preserving health hues. Stronger color means more completed observations in that interval. The example uses equal 3 h bins and includes exact source counts in the disclosure. Quantiles alone cannot produce this view. It is a design preview, not a public component option.
+Choose the representation independently from the cumulative-percentile curve:
 
+| Option                                     | Behavior                                                            |
+| ------------------------------------------ | ------------------------------------------------------------------- |
+| `distributionStyle="binned"`               | Histogram bars, or stepped color intensity in the compact bar       |
+| `distributionStyle="smooth"`               | A smooth density curve, or blended concentration in the compact bar |
+| `distributionPresentation="plot"`          | Full-height distribution; the default                               |
+| `distributionPresentation="concentration"` | An 8px reference bar with gentle relative-density intensity         |
+
+Use `visualization="histogram"` to show the distribution without its cumulative curve; `"both"` or `"auto"` can overlay the separately supplied cumulative reference. Quantiles-only data still produces landmarks on a neutral or health-colored bar: it never invents a density.
+
+Smooth mode is explicitly a smoothed histogram, not a kernel density estimate or a completion forecast. It uses bounded cubic interpolation between bin-center densities (`count / interval width`), retaining the outer half-bin's density within each supplied interval. It neither extends beyond supplied coverage nor bridges missing intervals. The compact binned bar also uses count per duration unit so unequal widths remain comparable. Intensity is relative to the peak of the full supplied reference, capped for a soft appearance in both themes. Health hues change at their supplied thresholds; concentration blends within them. The count axis applies only to binned full-height bars. Exact original bin counts remain available through `showDataTable` in every form.
+
+<Canvas of={Stories.PresentationOptions} />
 <Canvas of={Stories.HistogramConcentrationPreview} />
+<Canvas of={Stories.SmoothWithCumulative} />
 
 ## Missing, invalid, and outside values
 

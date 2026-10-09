@@ -124,6 +124,12 @@ try {
         "quantiles-only-with-labels",
         `duration-distribution-quantiles-labeled-${scheme}`,
       ],
+      ["presentation-options", `duration-distribution-presentations-${scheme}`],
+      ["smooth-histogram", `duration-distribution-smooth-${scheme}`],
+      [
+        "binned-concentration",
+        `duration-distribution-concentration-binned-${scheme}`,
+      ],
       [
         "histogram-concentration-preview",
         `duration-distribution-concentration-${scheme}`,
@@ -138,6 +144,8 @@ try {
     }
     for (const id of [
       "quantiles-only",
+      "binned-concentration",
+      "smooth-with-cumulative",
       "cumulative-only",
       "histogram-only",
       "empirical-steps",
@@ -239,6 +247,9 @@ try {
         "default",
         "narrow",
         "quantiles-only-with-labels",
+        "histogram-concentration-preview",
+        "binned-concentration",
+        "smooth-histogram",
         "endpoint-quantiles",
         "minutes",
         "with-count-axis",
@@ -258,6 +269,14 @@ try {
     await goto("default", scheme);
     await page.emulateMedia({ forcedColors: "active" });
     await check(`${scheme}-forced-colors`);
+    for (const id of [
+      "smooth-histogram",
+      "histogram-concentration-preview",
+      "binned-concentration",
+    ]) {
+      await goto(id, scheme);
+      await check(`${scheme}-${id}-forced-colors`);
+    }
     await page.emulateMedia({ forcedColors: "none" });
     for (const id of ["reference-options", "distribution-options"]) {
       await page.setViewportSize({ width: 1800, height: 1200 });

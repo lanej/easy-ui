@@ -23,6 +23,7 @@ import {
   type DurationHealthRegion,
 } from "./model";
 import styles from "./DurationDistribution.module.scss";
+import { HistogramReference } from "./HistogramReference";
 
 const defaultLabels = {
   elapsed: "Elapsed",
@@ -43,6 +44,8 @@ const defaultLabels = {
   invalidSampleCount: "Invalid sample count",
   emptyDistribution: "No completed observations",
   count: "Count",
+  smoothedDensity: "Smoothed histogram density",
+  concentration: "Reference concentration",
   observations: "completed observations",
   referenceValues: "Reference values",
   cumulative: "Cumulative percentage completed",
@@ -72,6 +75,10 @@ export type DurationDistributionProps = {
   interpolation?: "linear" | "step";
   /** Auto shows supplied sources; points draws only quantile landmarks. */
   visualization?: "auto" | "cumulative" | "histogram" | "both" | "points";
+  /** Histogram bars or an explicitly smoothed count-per-unit density curve. */
+  distributionStyle?: "binned" | "smooth";
+  /** Full distribution plot or a compact bar whose intensity represents relative density. */
+  distributionPresentation?: "plot" | "concentration";
   /** Supplied policy, separate from percentile rank. Intervals are [from,to). */
   healthRegions?: readonly DurationHealthRegion[];
   currentAssessment?: HealthIndicatorAssessment;
@@ -108,6 +115,8 @@ export function DurationDistribution({
   cumulative = [],
   interpolation = "linear",
   visualization = "auto",
+  distributionStyle = "binned",
+  distributionPresentation = "plot",
   healthRegions = [],
   currentAssessment,
   overflow = "omit",
@@ -194,7 +203,11 @@ export function DurationDistribution({
     q.label ?? formatQuantileLabel(q.fraction);
   const markDescription = (q: DurationQuantile) =>
     `${markLabel(q)}: ${format(q.value)}${regionAt(regions, q.value) ? ` · ${regionAt(regions, q.value)?.label}` : ""}${validScale && !inDomain(q.value) ? ` · ${text.outsideScale}` : ""}`;
-  const countAxis = hasHistogram && showCountAxis;
+  const countAxis =
+    hasHistogram &&
+    showCountAxis &&
+    distributionStyle === "binned" &&
+    distributionPresentation === "plot";
   const curvePoints =
     validScale && hasCurve
       ? clippedCumulative(cumulativeData, domain, interpolation)
@@ -234,6 +247,10 @@ export function DurationDistribution({
     validScale && `${format(domain[0])}–${format(domain[1])}`,
     hasCurve &&
       `${text.cumulative}: ${cumulativeData.map((p) => `${format(p.value)}: ${formatCount(p.fraction * 100)}%`).join("; ")}`,
+    hasHistogram && distributionStyle === "smooth" && text.smoothedDensity,
+    hasHistogram &&
+      distributionPresentation === "concentration" &&
+      text.concentration,
     showPercentiles && marks.map(markDescription).join("; "),
     hasHistogram &&
       `${text.count}: ${binData.map((b) => `${formatValue(b.from)}–${format(b.to)}: ${formatCount(b.count)}`).join("; ")}`,
@@ -254,6 +271,10 @@ export function DurationDistribution({
     <div
       className={styles.root}
       data-stretch={stretch}
+      data-distribution-style={distributionStyle}
+      data-concentration={
+        hasHistogram && distributionPresentation === "concentration"
+      }
       data-percentiles={
         showPercentiles ? (showPercentileLabels ? "labeled" : "points") : "none"
       }
@@ -262,7 +283,7 @@ export function DurationDistribution({
           ? hasHistogram
             ? "overlay"
             : "cumulative"
-          : hasHistogram
+          : hasHistogram && distributionPresentation === "plot"
             ? "histogram"
             : "points"
       }
@@ -337,66 +358,79 @@ export function DurationDistribution({
                   />
                 ))}
               </div>
-              {hasHistogram && (
-                <svg
-                  className={styles.histogramBars}
-                  viewBox="0 0 300 100"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                >
-                  {binData
-                    .filter((b) => b.from < domain[1] && b.to > domain[0])
-                    .map((b) => {
-                      const from = Math.max(b.from, domain[0]),
-                        to = Math.min(b.to, domain[1]);
-                      const gap = Math.min(
-                        (to - from) / 4,
-                        (domain[1] - domain[0]) / 600,
-                      );
-                      const left = from + gap,
-                        right = to - gap;
-                      const edges = [
-                        ...new Set([
-                          left,
-                          right,
-                          ...regions
-                            .flatMap((r) => [r.from, r.to])
-                            .filter((n) => n > left && n < right),
-                        ]),
-                      ].sort((a, b) => a - b);
-                      return (
-                        <g
-                          key={b.from}
-                          data-bin-from={b.from}
-                          data-bin-to={b.to}
-                          data-bin-count={b.count}
-                        >
-                          <title>{`${formatValue(b.from)}–${format(b.to)}: ${formatCount(b.count)} ${text.observations}`}</title>
-                          {edges.slice(0, -1).map((start, i) => (
-                            <rect
-                              key={start}
-                              className={styles.bin}
-                              data-segment-from={start}
-                              data-segment-to={edges[i + 1]}
-                              data-reference-assessment={
-                                regionAt(regions, start)?.assessment ??
-                                "unassessed"
-                              }
-                              x={position(start, domain) * 300}
-                              y={100 - (b.count / peak) * 100}
-                              width={
-                                (position(edges[i + 1], domain) -
-                                  position(start, domain)) *
-                                300
-                              }
-                              height={(b.count / peak) * 100}
-                            />
-                          ))}
-                        </g>
-                      );
-                    })}
-                </svg>
-              )}
+              {hasHistogram &&
+                (distributionStyle === "smooth" ||
+                  distributionPresentation === "concentration") && (
+                  <HistogramReference
+                    bins={binData}
+                    domain={domain}
+                    regions={regions}
+                    style={distributionStyle}
+                    presentation={distributionPresentation}
+                  />
+                )}
+              {hasHistogram &&
+                distributionStyle === "binned" &&
+                distributionPresentation === "plot" && (
+                  <svg
+                    className={styles.histogramBars}
+                    viewBox="0 0 300 100"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    {binData
+                      .filter((b) => b.from < domain[1] && b.to > domain[0])
+                      .map((b) => {
+                        const from = Math.max(b.from, domain[0]),
+                          to = Math.min(b.to, domain[1]);
+                        const gap = Math.min(
+                          (to - from) / 4,
+                          (domain[1] - domain[0]) / 600,
+                        );
+                        const left = from + gap,
+                          right = to - gap;
+                        const edges = [
+                          ...new Set([
+                            left,
+                            right,
+                            ...regions
+                              .flatMap((r) => [r.from, r.to])
+                              .filter((n) => n > left && n < right),
+                          ]),
+                        ].sort((a, b) => a - b);
+                        return (
+                          <g
+                            key={b.from}
+                            data-bin-from={b.from}
+                            data-bin-to={b.to}
+                            data-bin-count={b.count}
+                          >
+                            <title>{`${formatValue(b.from)}–${format(b.to)}: ${formatCount(b.count)} ${text.observations}`}</title>
+                            {edges.slice(0, -1).map((start, i) => (
+                              <rect
+                                key={start}
+                                className={styles.bin}
+                                data-segment-from={start}
+                                data-segment-to={edges[i + 1]}
+                                data-reference-assessment={
+                                  regionAt(regions, start)?.assessment ??
+                                  "unassessed"
+                                }
+                                x={position(start, domain) * 300}
+                                y={100 - (b.count / peak) * 100}
+                                width={
+                                  (position(edges[i + 1], domain) -
+                                    position(start, domain)) *
+                                  300
+                                }
+                                height={(b.count / peak) * 100}
+                              />
+                            ))}
+                          </g>
+                        );
+                      })}
+                  </svg>
+                )}
               {hasCurve && (
                 <svg
                   className={styles.curve}

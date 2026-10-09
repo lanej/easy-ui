@@ -509,3 +509,72 @@
     opacity: 1;
   }
 }
+
+.densityCurve {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: hidden;
+}
+.densityLine {
+  fill: none;
+  stroke: design-token("color.neutral.600");
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.densityArea {
+  fill: color-mix(in srgb, design-token("color.neutral.600") 20%, transparent);
+}
+.concentrationStrip {
+  position: absolute;
+  top: calc(100% - 4px);
+  inline-size: 100%;
+  block-size: 8px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.concentrationBin {
+  fill: design-token("color.neutral.600");
+}
+.concentrationStop {
+  stop-color: design-token("color.neutral.600");
+}
+.root[data-concentration="true"] .track {
+  opacity: 0;
+}
+@each $assessment,
+  $tone
+    in ("healthy": "positive", "degraded": "warning", "unhealthy": "negative")
+{
+  .densityArea[data-reference-assessment="#{$assessment}"] {
+    fill: light-dark(
+      color-mix(in srgb, design-token("color.#{$tone}.700") 20%, transparent),
+      color-mix(in srgb, design-token("color.#{$tone}.400") 25%, transparent)
+    );
+  }
+  .concentrationBin[data-reference-assessment="#{$assessment}"] {
+    fill: light-dark(
+      design-token("color.#{$tone}.700"),
+      design-token("color.#{$tone}.500")
+    );
+  }
+  .concentrationStop[data-reference-assessment="#{$assessment}"] {
+    stop-color: light-dark(
+      design-token("color.#{$tone}.700"),
+      design-token("color.#{$tone}.500")
+    );
+  }
+}
+@media (forced-colors: active) {
+  .densityLine {
+    stroke: CanvasText;
+  }
+  .densityArea[data-reference-assessment],
+  .concentrationBin[data-reference-assessment] {
+    fill: GrayText;
+  }
+  .concentrationStop[data-reference-assessment] {
+    stop-color: GrayText;
+  }
+}

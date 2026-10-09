@@ -1,5 +1,4 @@
-import React, { type CSSProperties } from "react";
-import exampleStyles from "./DurationDistribution.examples.module.scss";
+import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   DurationDistribution,
@@ -67,6 +66,11 @@ const meta: Meta<typeof DurationDistribution> = {
       control: "select",
       options: ["auto", "cumulative", "histogram", "both", "points"],
     },
+    distributionStyle: { control: "select", options: ["binned", "smooth"] },
+    distributionPresentation: {
+      control: "select",
+      options: ["plot", "concentration"],
+    },
     interpolation: { control: "select", options: ["linear", "step"] },
     overflow: { control: "select", options: ["omit", "clamp"] },
     bins: { control: false },
@@ -95,57 +99,62 @@ export const QuantilesOnly: Story = {
 export const QuantilesOnlyWithLabels: Story = {
   args: { bins: undefined, cumulative: undefined, showPercentileLabels: true },
 };
-// Story-only concentration proposal; not a public rendering option.
 export const HistogramConcentrationPreview: Story = {
-  parameters: { controls: { disable: true } },
-  render: () => {
-    const peak = Math.max(...bins.map((bin) => bin.count));
-    const stops = bins.flatMap((bin) => {
-      const edges = [
-        bin.from,
-        bin.to,
-        ...healthRegions
-          .flatMap((r) => [r.from, r.to])
-          .filter((value) => value > bin.from && value < bin.to),
-      ].sort((a, b) => a - b);
-      return edges.slice(0, -1).map((from, i) => {
-        const assessment = healthRegions.find(
-          (r) => from >= r.from && from < r.to,
-        )?.assessment;
-        const intensity = (bin.count / peak) * 100;
-        const color = `color-mix(in srgb, var(--concentration-${assessment ?? "neutral"}) ${intensity}%, var(--concentration-base))`;
-        return `${color} ${(from / 30) * 100}% ${(edges[i + 1] / 30) * 100}%`;
-      });
-    });
-    return (
-      <div
-        className={exampleStyles.concentration}
-        style={
-          {
-            "--concentration": `linear-gradient(to right, ${stops.join(", ")})`,
-          } as CSSProperties
-        }
-      >
-        <DurationDistribution
-          {...defaults}
-          cumulative={undefined}
-          visualization="points"
-          showPercentileLabels
-          showDataTable
-          description={
-            <Text variant="caption" color="subdued">
-              Stronger color = more observations per 3 h bin.
-            </Text>
-          }
-        />
-        <div className={exampleStyles.key}>
-          <span>0 observations</span>
-          <span className={exampleStyles.ramp} aria-hidden="true" />
-          <span>{peak} per bin</span>
-        </div>
-      </div>
-    );
+  args: {
+    cumulative: undefined,
+    visualization: "histogram",
+    distributionStyle: "smooth",
+    distributionPresentation: "concentration",
+    showPercentileLabels: true,
   },
+};
+export const BinnedConcentration: Story = {
+  args: {
+    cumulative: undefined,
+    visualization: "histogram",
+    distributionPresentation: "concentration",
+    showPercentileLabels: true,
+  },
+};
+export const SmoothHistogram: Story = {
+  args: {
+    cumulative: undefined,
+    visualization: "histogram",
+    distributionStyle: "smooth",
+    showPercentileLabels: true,
+  },
+};
+export const SmoothWithCumulative: Story = {
+  args: { distributionStyle: "smooth" },
+};
+export const PresentationOptions: Story = {
+  render: () => (
+    <div style={{ display: "grid", gap: 24 }}>
+      {(
+        [
+          ["Binned histogram", "binned", "plot"],
+          ["Smooth density", "smooth", "plot"],
+          ["Binned concentration", "binned", "concentration"],
+          ["Smooth concentration", "smooth", "concentration"],
+        ] as const
+      ).map(([name, distributionStyle, distributionPresentation]) => (
+        <section key={name}>
+          <Text as="h3" variant="heading5">
+            {name}
+          </Text>
+          <DurationDistribution
+            {...defaults}
+                stretch={false}
+            cumulative={undefined}
+            visualization="histogram"
+            distributionStyle={distributionStyle}
+            distributionPresentation={distributionPresentation}
+            showPercentileLabels
+          />
+        </section>
+      ))}
+    </div>
+  ),
 };
 export const CumulativeOnly: Story = { args: { visualization: "cumulative" } };
 export const HistogramOnly: Story = { args: { visualization: "histogram" } };

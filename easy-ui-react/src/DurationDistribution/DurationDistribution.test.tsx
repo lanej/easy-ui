@@ -12,6 +12,13 @@ import {
   type DurationHealthRegion,
 } from "./model";
 
+import {
+  histogramDensity,
+  densityGroups,
+  densityAt,
+  densityCurve,
+} from "./densityGeometry";
+
 const quantiles = [
   { fraction: 0.5, value: 9 },
   { fraction: 0.9, value: 18 },
@@ -430,5 +437,90 @@ describe("DurationQuantileMetrics", () => {
       "degraded",
     );
     expect(screen.getByText("18")).toBeVisible();
+  });
+});
+
+describe("Histogram density representations", () => {
+  const bins = [
+    { from: 0, to: 10, count: 20 },
+    { from: 10, to: 15, count: 20 },
+    { from: 20, to: 30, count: 0 },
+  ];
+  it("normalizes concentration by interval width and preserves missing intervals", () => {
+    const density = histogramDensity(bins);
+    expect(density[0].level).toBeCloseTo(0.5);
+    expect(density[1].level).toBe(1);
+    expect(density[2].level).toBe(0);
+    const groups = densityGroups(density);
+    expect(groups).toHaveLength(2);
+    expect(densityCurve(groups[0], [0, 30])?.to).toBe(15);
+    expect(densityCurve(groups[1], [0, 30])?.from).toBe(20);
+  });
+  it("uses bounded cubic interpolation without inventing concentration outside coverage", () => {
+    const group = densityGroups(histogramDensity(bins))[0];
+    for (let value = 0; value <= 15; value += 0.1) {
+      const density = densityAt(group, value, [0, 30]);
+      expect(density.level).toBeGreaterThanOrEqual(0.5 - 1e-12);
+      expect(density.level).toBeLessThanOrEqual(1);
+    }
+    const curve = densityCurve(group, [7, 30]);
+    expect(curve?.from).toBe(7);
+    expect(curve?.path).toContain(" C ");
+    expect(curve?.path).not.toMatch(/NaN|Infinity/);
+    expect(densityCurve(group, [20, 30])).toBeNull();
+  });
+  it("normalizes extreme finite widths without overflowing density", () => {
+    const density = histogramDensity([
+      { from: 0, to: 1e-300, count: 1e15 },
+      { from: 1e-300, to: 1e308, count: 1 },
+    ]);
+    expect(density.every((b) => Number.isFinite(b.level))).toBe(true);
+    expect(density[0].level).toBe(1);
+    expect(densityCurve(density, [0, 30])?.path).not.toMatch(/NaN|Infinity/);
+  });
+  it.each(["binned", "smooth"] as const)(
+    "renders a compact %s concentration bar with exact original counts",
+    (distributionStyle) => {
+      const { container } = render(
+        <DurationDistribution
+          {...defaults}
+          bins={bins}
+          distributionStyle={distributionStyle}
+          distributionPresentation="concentration"
+          showCountAxis
+          showDataTable
+        />,
+      );
+      expect(
+        container.querySelector('[data-visualization="points"]'),
+      ).not.toBeNull();
+      expect(
+        container.querySelector("[data-concentration-style]"),
+      ).toHaveAttribute("data-concentration-style", distributionStyle);
+      expect(container.querySelector('[class*="countAxis_"]')).toBeNull();
+      expect(screen.getByRole("img")).toHaveAccessibleName(
+        expect.stringContaining("0–10 hours: 20"),
+      );
+      expect(screen.getAllByText("20 completed observations")).toHaveLength(2);
+    },
+  );
+  it("renders density independently of the cumulative curve and never infers it from quantiles", () => {
+    const { container, rerender } = render(
+      <DurationDistribution
+        {...defaults}
+        bins={bins}
+        distributionStyle="smooth"
+      />,
+    );
+    expect(container.querySelector("[data-density-curve]")).not.toBeNull();
+    expect(container.querySelector('[class*="curve_"]')).toBeNull();
+    rerender(
+      <DurationDistribution
+        {...defaults}
+        distributionStyle="smooth"
+        distributionPresentation="concentration"
+      />,
+    );
+    expect(container.querySelector("svg")).toBeNull();
   });
 });
