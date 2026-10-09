@@ -10,6 +10,13 @@
 }
 
 .entry {
+  // Reserve the selected dot's 30px highlight without obscuring event text.
+  // The connector and content use the same grid measurements as the button.
+  --time-column: 78px;
+  --dot-column: 24px;
+  --column-gap: 12px;
+  --row-inline-padding: 8px;
+
   position: relative;
   min-inline-size: 0;
 }
@@ -18,7 +25,7 @@
   content: "";
   position: absolute;
   z-index: 0;
-  left: 103px;
+  left: calc(var(--row-inline-padding) + var(--time-column) + var(--column-gap) + var(--dot-column) / 2);
   top: 24px;
   bottom: -4px;
   inline-size: 1px;
@@ -44,10 +51,10 @@
   inline-size: 100%;
   cursor: pointer;
   display: grid;
-  grid-template-columns: 78px 18px minmax(0, 1fr);
+  grid-template-columns: var(--time-column) var(--dot-column) minmax(0, 1fr);
   align-items: start;
-  gap: 16px;
-  padding: 10px 8px;
+  gap: var(--column-gap);
+  padding: 10px var(--row-inline-padding);
 }
 
 .select:hover {
@@ -89,7 +96,10 @@
 .title {
   font-size: 14px;
   font-weight: 600;
-  overflow-wrap: anywhere;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .location,
@@ -105,7 +115,7 @@
   color: design-token("color.primary.700");
   font: inherit;
   font-size: 12px;
-  margin: 0 0 6px 120px;
+  margin: 0 0 6px calc(var(--row-inline-padding) + var(--time-column) + var(--dot-column) + 2 * var(--column-gap));
   padding: 4px;
   cursor: pointer;
 }
@@ -117,7 +127,7 @@
 .interval,
 .details {
   min-inline-size: 0;
-  margin-inline-start: 120px;
+  margin-inline-start: calc(var(--row-inline-padding) + var(--time-column) + var(--dot-column) + 2 * var(--column-gap));
   padding-block: 4px 8px;
 }
 
@@ -153,27 +163,15 @@
 }
 
 @container (max-width: 500px) {
-  .select {
-    grid-template-columns: 42px 12px minmax(0, 1fr);
-    gap: 5px;
-    padding-inline: 2px;
+  .entry {
+    --time-column: 42px;
+    --dot-column: 24px;
+    --column-gap: 8px;
+    --row-inline-padding: 2px;
   }
 
   .time {
     font-size: 11px;
-  }
-
-  .entry:not(:last-child)::before {
-    left: 55px;
-  }
-
-  .interval,
-  .details {
-    margin-inline-start: 66px;
-  }
-
-  .mapLink {
-    margin-inline-start: 66px;
   }
 }
 
