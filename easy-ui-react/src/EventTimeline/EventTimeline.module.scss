@@ -28,12 +28,12 @@
 .item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   min-inline-size: 0;
 }
 
 .select {
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-inline-size: 0;
   font: inherit;
   text-align: start;
@@ -119,44 +119,58 @@
 }
 
 .trailing {
-  flex: 0 1 310px;
+  flex: 0 1 auto;
+  max-inline-size: 60%;
   min-inline-size: 0;
-  padding-inline-end: 8px;
+  padding-inline-end: 4px;
 }
 
 .empty {
   color: design-token("color.neutral.700");
 }
 
+// The timeline is normally a narrow column beside a map. Keep the summary
+// in the selected event's row; never wrap the entire trailing slot below it.
 @container (max-width: 680px) {
   .item {
-    flex-wrap: wrap;
+    gap: 6px;
   }
+
   .trailing {
-    flex-basis: auto;
-    inline-size: 100%;
-    margin-inline-start: 120px;
+    max-inline-size: 61%;
+    padding-inline-end: 2px;
+  }
+
+  .location,
+  .received {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
 @container (max-width: 500px) {
-  .trailing {
-    margin-inline-start: 81px;
-  }
   .select {
-    grid-template-columns: 57px 16px minmax(0, 1fr);
-    gap: 8px;
-    padding-inline: 4px;
+    grid-template-columns: 42px 12px minmax(0, 1fr);
+    gap: 5px;
+    padding-inline: 2px;
   }
+
+  .time {
+    font-size: 11px;
+  }
+
   .entry:not(:last-child)::before {
-    left: 69px;
+    left: 55px;
   }
+
   .interval,
   .details {
-    margin-inline-start: 81px;
+    margin-inline-start: 66px;
   }
+
   .mapLink {
-    margin-inline-start: 81px;
+    margin-inline-start: 66px;
   }
 }
 
