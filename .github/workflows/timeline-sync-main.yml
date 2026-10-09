@@ -1,0 +1,22 @@
+name: Sync timeline with main
+on:
+  push:
+    branches: [feat/reusable-event-timeline]
+    paths: [.github/workflows/timeline-sync-main.yml]
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/reusable-event-timeline
+          fetch-depth: 0
+      - name: Merge latest main, retaining timeline changes at conflicting hunks
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git merge -X ours --no-edit origin/main
+          git push origin HEAD:feat/reusable-event-timeline
