@@ -68,3 +68,10 @@ export const EqualBounds: Story = {
   args: { basePriceUsd: 10, range: { minRatio: 1, maxRatio: 1 } },
 };
 export const Unavailable: Story = { args: { basePriceUsd: 0 } };
+export const PercentRange: Story = {
+  args: {
+    unit: "percent",
+    basePriceUsd: 10,
+    range: { minRatio: 0.7, maxRatio: 0.9 },
+  },
+};

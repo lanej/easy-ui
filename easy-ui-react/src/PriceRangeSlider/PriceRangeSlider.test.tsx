@@ -56,6 +56,105 @@ function mockTrack() {
 }
 
 describe("PriceRangeSlider", () => {
+  it("reports uncommitted or invalid entry and releases the save gate on unmount", () => {
+    const valid = vi.fn();
+    const { unmount } = render(
+      <PriceRangeSlider
+        unit="percent"
+        basePriceUsd={10}
+        range={{ minRatio: 0.7, maxRatio: 0.9 }}
+        onRangeChange={vi.fn()}
+        onValidityChange={valid}
+      />,
+    );
+    expect(valid).toHaveBeenLastCalledWith(true);
+    const field = screen.getByRole("spinbutton", {
+      name: "Minimum price (% of standard)",
+    });
+    fireEvent.change(field, { target: { value: "95" } });
+    expect(valid).toHaveBeenLastCalledWith(false);
+    fireEvent.blur(field);
+    expect(valid).toHaveBeenLastCalledWith(false);
+    fireEvent.keyDown(field, { key: "Escape" });
+    expect(valid).toHaveBeenLastCalledWith(true);
+    fireEvent.change(field, { target: { value: "65" } });
+    expect(valid).toHaveBeenLastCalledWith(false);
+    unmount();
+    expect(valid).toHaveBeenLastCalledWith(true);
+  });
+  it("opens a collapsed percent range by a full keyboard step", () => {
+    const changed = vi.fn();
+    render(
+      <PriceRangeSlider
+        unit="percent"
+        basePriceUsd={10}
+        range={{ minRatio: 1, maxRatio: 1 }}
+        onRangeChange={changed}
+      />,
+    );
+    fireEvent.keyDown(
+      screen.getByRole("slider", { name: "Maximum price handle" }),
+      { key: "ArrowRight" },
+    );
+    expect(changed.mock.lastCall?.[0].maxRatio).toBeCloseTo(1.001);
+  });
+  it("edits percentages as ratios and uses percent keyboard and accessible units", () => {
+    const changed = vi.fn();
+    function Harness() {
+      const [range, setRange] = useState({ minRatio: 0.7, maxRatio: 0.9 });
+      return (
+        <PriceRangeSlider
+          unit="percent"
+          basePriceUsd={8}
+          range={range}
+          onRangeChange={(next) => {
+            changed(next);
+            setRange(next);
+          }}
+        />
+      );
+    }
+    render(<Harness />);
+    const minimum = screen.getByRole("spinbutton", {
+      name: "Minimum price (% of standard)",
+    });
+    expect(minimum).toHaveValue(70);
+    expect(
+      screen.getByTestId("price-range-min-standard-share"),
+    ).toHaveTextContent("$5.60");
+    fireEvent.change(minimum, { target: { value: "65.55" } });
+    fireEvent.blur(minimum);
+    expect(changed).toHaveBeenLastCalledWith({
+      minRatio: 0.6555,
+      maxRatio: 0.9,
+    });
+    expect((minimum as HTMLInputElement).validity.stepMismatch).toBe(false);
+    const maximum = screen.getByRole("slider", {
+      name: "Maximum price handle",
+    });
+    expect(maximum).toHaveAttribute("aria-valuenow", "90");
+    expect(maximum).toHaveAttribute("aria-valuetext", "90% of standard");
+    fireEvent.keyDown(maximum, { key: "ArrowRight" });
+    expect(changed.mock.lastCall?.[0].maxRatio).toBeCloseTo(0.901);
+  });
+
+  it.each([NaN, Infinity, -1, 1e308])(
+    "disables malformed ratio %s without nonfinite accessible values",
+    (maxRatio) => {
+      render(
+        <PriceRangeSlider
+          basePriceUsd={10}
+          range={{ minRatio: 0.6, maxRatio }}
+          onRangeChange={vi.fn()}
+        />,
+      );
+      for (const handle of screen.getAllByRole("slider")) {
+        expect(handle).toBeDisabled();
+        expect(handle).toHaveAttribute("aria-valuenow", "0");
+        expect(handle).toHaveAttribute("aria-valuetext", "Unavailable");
+      }
+    },
+  );
   it("cancels an active drag when the standard price becomes unavailable", () => {
     const onRangeChange = vi.fn();
     const range = { minRatio: 0.5, maxRatio: 1 };

@@ -21,6 +21,11 @@ export interface PriceRangeSliderProps {
   range: PriceRatioRange;
   onRangeChange: (range: PriceRatioRange) => void;
   resetKey?: number;
+  /** Currency entry for one cell; percent entry for a range shared across cells.
+   * The controlled value always remains a ratio of standard. */
+  unit?: "currency" | "percent";
+  /** False while a field has uncommitted text or the controlled range is unavailable. */
+  onValidityChange?: (valid: boolean) => void;
 }
 
 type Bound = "min" | "max";
@@ -29,13 +34,14 @@ type FieldState = Partial<Record<Bound, string>>;
 function fitTrackRange(
   range: PriceRatioRange,
   basePriceUsd: number,
+  minimumPadding = 0.02,
 ): PriceRatioRange {
   if (!Number.isFinite(basePriceUsd) || basePriceUsd <= 0) {
     return { minRatio: 0, maxRatio: 1 };
   }
   const minimum = range.minRatio * basePriceUsd;
   const maximum = range.maxRatio * basePriceUsd;
-  const padding = Math.max((maximum - minimum) / 2, 0.02);
+  const padding = Math.max((maximum - minimum) / 2, minimumPadding);
   const floor = Math.max(0, Math.floor((minimum - padding) * 100 + 1e-7) / 100);
   const ceiling = Math.ceil((maximum + padding) * 100 - 1e-7) / 100;
   return { minRatio: floor / basePriceUsd, maxRatio: ceiling / basePriceUsd };
@@ -46,6 +52,8 @@ export function PriceRangeSlider({
   range,
   onRangeChange,
   resetKey = 0,
+  unit = "currency",
+  onValidityChange,
 }: PriceRangeSliderProps) {
   const basePriceUsd =
     Number.isFinite(basePrice) && basePrice > 0 ? basePrice : 0;
@@ -60,6 +68,7 @@ export function PriceRangeSlider({
     ...range,
     basePriceUsd,
     resetKey,
+    unit,
   });
   const [drag, setDrag] = useState<{
     anchorRatio: number;
@@ -67,27 +76,57 @@ export function PriceRangeSlider({
     trackRange: PriceRatioRange;
   } | null>(null);
   if (
-    previousValue.minRatio !== range.minRatio ||
-    previousValue.maxRatio !== range.maxRatio ||
+    !Object.is(previousValue.minRatio, range.minRatio) ||
+    !Object.is(previousValue.maxRatio, range.maxRatio) ||
     previousValue.basePriceUsd !== basePriceUsd ||
-    previousValue.resetKey !== resetKey
+    previousValue.resetKey !== resetKey ||
+    previousValue.unit !== unit
   ) {
     if (
       previousValue.basePriceUsd !== basePriceUsd ||
-      previousValue.resetKey !== resetKey
+      previousValue.resetKey !== resetKey ||
+      previousValue.unit !== unit
     ) {
       setKeyboardRange(null);
     }
-    if (previousValue.basePriceUsd !== basePriceUsd) setDrag(null);
-    setPreviousValue({ ...range, basePriceUsd, resetKey });
+    if (
+      previousValue.basePriceUsd !== basePriceUsd ||
+      previousValue.unit !== unit
+    )
+      setDrag(null);
+    setPreviousValue({ ...range, basePriceUsd, resetKey, unit });
     setDrafts({});
     setErrors({});
   }
-  const priceAvailable = Number.isFinite(basePriceUsd) && basePriceUsd > 0;
+  const scale = unit === "percent" ? 100 : basePriceUsd;
+  const priceAvailable =
+    basePriceUsd > 0 &&
+    Number.isFinite(range.minRatio) &&
+    Number.isFinite(range.maxRatio) &&
+    range.minRatio >= 0 &&
+    range.maxRatio >= range.minRatio &&
+    Number.isFinite(range.maxRatio * Math.max(scale, basePriceUsd) * 200);
+  const fieldsCommitted = !Object.values(drafts).some(
+    (text) => text !== undefined,
+  );
+  useEffect(() => {
+    onValidityChange?.(priceAvailable && fieldsCommitted);
+  }, [onValidityChange, priceAvailable, fieldsCommitted]);
+  useEffect(() => () => onValidityChange?.(true), [onValidityChange]);
+  const display = (value: number) =>
+    unit === "percent"
+      ? `${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}%`
+      : formatCurrencyPrecise(value);
   const trackRange =
-    drag?.trackRange ?? keyboardRange ?? fitTrackRange(range, basePriceUsd);
-  const floorUsd = basePriceUsd * trackRange.minRatio;
-  const ceilingUsd = basePriceUsd * trackRange.maxRatio;
+    drag?.trackRange ??
+    keyboardRange ??
+    fitTrackRange(
+      priceAvailable ? range : { minRatio: 0, maxRatio: 1 },
+      scale,
+      unit === "percent" ? 0.2 : 0.02,
+    );
+  const floorUsd = scale * trackRange.minRatio;
+  const ceilingUsd = scale * trackRange.maxRatio;
   const ratioSpan = trackRange.maxRatio - trackRange.minRatio;
   const minPct = !priceAvailable
     ? 0
@@ -146,7 +185,7 @@ export function PriceRangeSlider({
     const text = drafts[bound];
     if (text === undefined) return;
     const price = Number(text);
-    const candidateRatio = price / basePriceUsd;
+    const candidateRatio = price / scale;
     if (
       !priceAvailable ||
       text.trim() === "" ||
@@ -156,7 +195,10 @@ export function PriceRangeSlider({
     ) {
       setErrors((previous) => ({
         ...previous,
-        [bound]: "Enter a valid price.",
+        [bound]:
+          unit === "percent"
+            ? "Enter a valid percentage."
+            : "Enter a valid price.",
       }));
       return;
     }
@@ -221,9 +263,9 @@ export function PriceRangeSlider({
     const currentRatio = bound === "min" ? range.minRatio : range.maxRatio;
     let candidateRatio: number;
     if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
-      candidateRatio = currentRatio - 0.01 / basePriceUsd;
+      candidateRatio = currentRatio - (unit === "percent" ? 0.1 : 0.01) / scale;
     } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
-      candidateRatio = currentRatio + 0.01 / basePriceUsd;
+      candidateRatio = currentRatio + (unit === "percent" ? 0.1 : 0.01) / scale;
     } else if (event.key === "Home") {
       candidateRatio = trackRange.minRatio;
     } else if (event.key === "End") {
@@ -256,14 +298,14 @@ export function PriceRangeSlider({
     <div className={styles.control} data-testid="price-range-control">
       <div className={styles.fields}>
         {(["min", "max"] as const).map((bound) => {
-          const label = bound === "min" ? "Minimum price" : "Maximum price";
+          const label = `${bound === "min" ? "Minimum price" : "Maximum price"}${unit === "percent" ? " (% of standard)" : ""}`;
           const ratio = bound === "min" ? range.minRatio : range.maxRatio;
           const draft = drafts[bound];
           const draftPrice =
             draft === undefined || draft.trim() === "" ? NaN : Number(draft);
           const displayedRatio =
             priceAvailable && Number.isFinite(draftPrice)
-              ? draftPrice / basePriceUsd
+              ? draftPrice / scale
               : ratio;
           const position =
             !priceAvailable || displayedRatio < 0 || errors[bound]
@@ -279,7 +321,7 @@ export function PriceRangeSlider({
                 {label}
               </label>
               <div className={styles.priceEntry} data-invalid={!!errors[bound]}>
-                <span aria-hidden="true">$</span>
+                {unit === "currency" && <span aria-hidden="true">$</span>}
                 <input
                   id={`${id}-${bound}`}
                   type="number"
@@ -289,7 +331,7 @@ export function PriceRangeSlider({
                   disabled={!priceAvailable}
                   value={
                     priceAvailable
-                      ? (drafts[bound] ?? (ratio * basePriceUsd).toFixed(2))
+                      ? (drafts[bound] ?? (ratio * scale).toFixed(2))
                       : ""
                   }
                   placeholder={priceAvailable ? undefined : "—"}
@@ -309,6 +351,7 @@ export function PriceRangeSlider({
                   onBlur={() => commitField(bound)}
                   onKeyDown={(event) => handleFieldKeyDown(event, bound)}
                 />
+                {unit === "percent" && <span aria-hidden="true">%</span>}
               </div>
               <span
                 id={`${id}-${bound}-share`}
@@ -320,9 +363,11 @@ export function PriceRangeSlider({
                 </span>
                 <span className={styles.shareText}>
                   {priceAvailable
-                    ? `${(displayedRatio * 100).toLocaleString("en-US", {
-                        maximumFractionDigits: 1,
-                      })}% of standard`
+                    ? unit === "percent"
+                      ? `${formatCurrencyPrecise(displayedRatio * basePriceUsd)} at this standard price`
+                      : `${(displayedRatio * 100).toLocaleString("en-US", {
+                          maximumFractionDigits: 1,
+                        })}% of standard`
                     : "Unavailable"}
                 </span>
               </span>
@@ -365,15 +410,23 @@ export function PriceRangeSlider({
                 aria-label={`${bound === "min" ? "Minimum" : "Maximum"} price handle`}
                 aria-orientation="horizontal"
                 aria-valuemin={
-                  bound === "min" ? floorUsd : range.minRatio * basePriceUsd
+                  !priceAvailable
+                    ? 0
+                    : bound === "min"
+                      ? floorUsd
+                      : range.minRatio * scale
                 }
                 aria-valuemax={
-                  bound === "min" ? range.maxRatio * basePriceUsd : ceilingUsd
+                  !priceAvailable
+                    ? 0
+                    : bound === "min"
+                      ? range.maxRatio * scale
+                      : ceilingUsd
                 }
-                aria-valuenow={ratio * basePriceUsd}
+                aria-valuenow={priceAvailable ? ratio * scale : 0}
                 aria-valuetext={
                   priceAvailable
-                    ? formatCurrencyPrecise(ratio * basePriceUsd)
+                    ? `${display(ratio * scale)}${unit === "percent" ? " of standard" : ""}`
                     : "Unavailable"
                 }
                 onPointerDown={(event) => startDrag(event, bound)}
@@ -384,10 +437,8 @@ export function PriceRangeSlider({
           })}
         </div>
         <div className={styles.endpoints} aria-hidden="true">
-          <span>{priceAvailable ? formatCurrencyPrecise(floorUsd) : "—"}</span>
-          <span>
-            {priceAvailable ? formatCurrencyPrecise(ceilingUsd) : "—"}
-          </span>
+          <span>{priceAvailable ? display(floorUsd) : "—"}</span>
+          <span>{priceAvailable ? display(ceilingUsd) : "—"}</span>
         </div>
       </div>
     </div>
