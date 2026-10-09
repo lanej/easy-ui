@@ -177,34 +177,13 @@ export function HealthAssessment({
                   </>
                 ) : (
                   <>
+                    {inline && healthPlacement === "headline" && indicator}
                     {duration}
-                    {healthPlacement === "headline" && indicator}
+                    {!inline && healthPlacement === "headline" && indicator}
                   </>
                 )}
               </div>
             )}
-            <div className={styles.summary} data-stacked={stacked}>
-              {stacked ? (
-                <>
-                  {indicator}
-                  {showMetrics ? (
-                    <div className={styles.headline}>
-                      {duration}
-                      <div className={styles.observationDetails}>
-                        {observationDetails}
-                      </div>
-                    </div>
-                  ) : (
-                    duration
-                  )}
-                </>
-              ) : (
-                <>
-                  {inline ? indicator : duration}
-                  {inline ? duration : indicator}
-                </>
-              )}
-            </div>
             {!isLoading && !stacked && showMetrics && (
               <div className={styles.observationDetails}>
                 {observationDetails}
