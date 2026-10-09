@@ -7,13 +7,17 @@ import * as Stories from "./EventTimeline.stories";
 
 A reusable selectable chronology. The caller owns ordering, interpretation, identifiers, and whether events belong to the same path. The timeline does not deduplicate events or infer physical histories.
 
-## Presentation modes
+## Inline assessment in map-adjacent columns
 
-All three duration compositions below use the same selected event. The optional trailing slot is independent of the event's selection button; the interval never becomes an invented event.
+The timeline is often used beside a map, so these examples render at **360–480px timeline widths** rather than filling the browser. Both the minimal assessment (status pill plus current value) and the quantiles-only reference (current value, P50/P90 and reference bar) stay **on the same row as the event label**. They do not unfurl below the row simply because the viewport is wide while the map column is narrow.
 
 <Canvas of={Stories.PresentationModes} />
 
-At a narrower container width, the inline quantiles wrap beneath the event rather than shrinking the chronology. No viewport-specific application logic is required.
+The 420px column below sits beside an application-owned map slot. Selection and map focus remain independent.
+
+<Canvas of={Stories.MapAdjacent} />
+
+The 360px variant keeps the selected event and the quantiles inline by truncating secondary location text when space is tight; its full location remains present in the event data.
 
 <Canvas of={Stories.NarrowQuantiles} />
 
@@ -31,7 +35,7 @@ At a narrower container width, the inline quantiles wrap beneath the event rathe
 
 Supply `selectedId` and `onSelectedIdChange` to coordinate selection with an external map or details panel. A separate `onLocationSelect` callback exposes the location and event IDs; map pan and zoom remain application-owned.
 
-Event time and received time are different fields; no implicit ordering or timestamp repair occurs. `renderTrailing` supplies an optional right-side inline summary without nesting it inside the selection button. It can compose the merged `DurationDistribution` in quantiles-only mode, alongside the current duration in `HealthAssessment`. `renderInterval` and `renderDetails` accept caller-defined content. Interval stories reuse the existing `HealthAssessment` molecule in compact and chart-supported forms, with synthetic reference data. The interval is not fabricated as a tracking event; the consuming application supplies the duration, reference, and assessment policy. Without `renderInterval` the timeline remains compact and does not render any duration assessment. The timeline's status dots use `current` for the selected row independently of the supplied semantic tone.
+Event time and received time are different fields; no implicit ordering or timestamp repair occurs. `renderTrailing` supplies an optional right-side inline summary without nesting it inside the selection button. It can compose `HealthAssessment variant="inline"` with an optional `DurationDistribution` quantiles-only reference. This composes the pill, current duration, percentile labels and bar without moving the entire trailing slot beneath the event. `renderInterval` and `renderDetails` accept caller-defined content. Interval stories reuse the existing `HealthAssessment` molecule in compact and chart-supported forms, with synthetic reference data. The interval is not fabricated as a tracking event; the consuming application supplies the duration, reference, and assessment policy. Without `renderInterval` the timeline remains compact and does not render any duration assessment. The timeline's status dots use `current` for the selected row independently of the supplied semantic tone.
 
 Keyboard navigation supports Up/Down and Home/End while retaining native button activation by Enter and Space.
 
