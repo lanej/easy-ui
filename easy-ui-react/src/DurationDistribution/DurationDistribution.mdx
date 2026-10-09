@@ -39,7 +39,7 @@ import {
 | `cumulative`    | At least two points ordered by nonnegative duration and nondecreasing fraction in [0,1] | Supplied cumulative percentage curve; repeated durations support empirical jumps |
 | `healthRegions` | Ordered disjoint [from,to) policy intervals; the final upper bound may be Infinity      | Semantic bands and landmark colors, independent of distribution                  |
 
-Quantiles alone do not establish a density, histogram, or cumulative curve. No endpoints, quartiles, counts, cohorts, sample sizes, or health classifications are inferred. Each supplied source is validated independently; an invalid source is identified and omitted while other valid sources remain usable. Reference arrays may be absent, null, or empty. An all-zero histogram explicitly reports no completed observations. Sample count is optional, separately supplied metadata; the application owns whether it covers the whole cohort or only the displayed window.
+Quantiles alone render a horizontal reference bar with percentile dots and the current-value marker. Supplied health bands color the bar; without bands it remains neutral. They do not establish a density, histogram, or cumulative curve. No endpoints, quartiles, counts, cohorts, sample sizes, or health classifications are inferred. Each supplied source is validated independently; an invalid source is identified and omitted while other valid sources remain usable. Reference arrays may be absent, null, or empty. An all-zero histogram explicitly reports no completed observations. Sample count is optional, separately supplied metadata; the application owns whether it covers the whole cohort or only the displayed window.
 
 <Canvas of={Stories.QuantilesOnly} />
 <Canvas of={Stories.EmpiricalSteps} />

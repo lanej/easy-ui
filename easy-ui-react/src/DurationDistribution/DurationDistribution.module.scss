@@ -493,3 +493,19 @@
     background: Canvas;
   }
 }
+
+// Quantiles use a visible reference bar, including when no health bands are supplied.
+.root[data-visualization="points"] .track {
+  top: calc(100% - 4px);
+  bottom: auto;
+  block-size: 8px;
+  background: design-token("color.neutral.600");
+  opacity: 0.35;
+}
+
+@media (forced-colors: active) {
+  .root[data-visualization="points"] .track {
+    background: GrayText;
+    opacity: 1;
+  }
+}

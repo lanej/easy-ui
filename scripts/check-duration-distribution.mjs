@@ -119,6 +119,7 @@ try {
     await page.setViewportSize({ width: 720, height: 900 });
     for (const [id, file] of [
       ["default", `duration-distribution-${scheme}`],
+      ["quantiles-only", `duration-distribution-quantiles-${scheme}`],
       ["reference-states", `duration-distribution-states-${scheme}`],
       ["minutes", `duration-distribution-minutes-${scheme}`],
       ["composed-assessment", `duration-distribution-composed-${scheme}`],
@@ -164,12 +165,23 @@ try {
           0,
           "Extrapolated current CDF",
         );
-      if (id === "quantiles-only")
+      if (id === "quantiles-only") {
+        const bar = page.locator('figure [class*="track_"]');
+        const geometry = await bar.boundingBox();
+        assert.equal(geometry.height, 8, "Quantile reference bar height");
+        assert.ok(geometry.width > 0, "Quantile reference bar width");
+        assert.ok(
+          await bar.evaluate(
+            (node) => Number(getComputedStyle(node).opacity) > 0,
+          ),
+          "Quantile bar is visible",
+        );
         assert.equal(
           await page.locator("figure svg").count(),
           0,
           "Quantiles imply geometry",
         );
+      }
       if (id === "without-bands")
         assert.equal(await page.locator("figure [data-assessment]").count(), 0);
       if (id === "without-policy")
