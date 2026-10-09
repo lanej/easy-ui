@@ -26,7 +26,7 @@ export type HealthAssessmentProps = {
   /** Compact keeps reference content beside the observation at narrower widths. */
   referenceLayout?: "auto" | "compact";
   /** Presentation form; responsive progressively reveals supplied content by container width. */
-  variant?: "compact" | "detailed" | "default" | "wide" | "responsive";
+  variant?: "compact" | "detailed" | "default" | "wide" | "responsive" | "inline";
   size?: "sm" | "md";
   isLoading?: boolean;
   accessibilityLabel?: string;
@@ -54,6 +54,7 @@ export function HealthAssessment({
       !Number.isFinite(observation.value) ||
       observation.value < 0);
   const showInformation = variant !== "detailed";
+  const inline = variant === "inline";
   const showContext = variant !== "compact";
   const showReference = variant !== "compact" && reference != null;
   const showMetrics = variant !== "compact" && observationDetails != null;
@@ -62,6 +63,7 @@ export function HealthAssessment({
   const stacked =
     size === "md" &&
     !isLoading &&
+    !inline &&
     (showReference || variant === "compact" || variant === "responsive");
   const duration = observation !== undefined && (
     <DurationValue
@@ -133,8 +135,8 @@ export function HealthAssessment({
                 </>
               ) : (
                 <>
-                  {duration}
-                  {indicator}
+                  {inline ? indicator : duration}
+                  {inline ? duration : indicator}
                 </>
               )}
             </div>
