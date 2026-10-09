@@ -3,6 +3,7 @@ import { fireEvent, screen } from "@testing-library/react";
 import { render } from "../utilities/test";
 import { EventTimeline } from "./EventTimeline";
 import { HealthAssessment } from "../HealthAssessment";
+import { DurationDistribution } from "../DurationDistribution";
 import type { EventTimelineEvent } from "./EventItem";
 
 const events: EventTimelineEvent[] = [
@@ -78,4 +79,17 @@ describe("EventTimeline", () => {
     expect(screen.queryByText("As expected")).not.toBeInTheDocument();
   });
 
+  it("renders inline quantiles and the current value without altering selection controls", () => {
+    render(<EventTimeline events={events} renderTrailing={(event) => event.id === "first" ? (
+      <HealthAssessment variant="default"
+        observation={{ value: 6, unit: "hours" }}
+        health={{ assessment: "healthy", label: "As expected" }}
+        reference={<DurationDistribution value={6} unit="h" domain={[0, 30]}
+          quantiles={[{ fraction: 0.5, value: 9 }, { fraction: 0.9, value: 18 }]}
+          visualization="points" />} />
+    ) : null} />);
+    expect(screen.getByRole("group", { name: "Duration" })).toBeVisible();
+    expect(screen.getAllByRole("button")).toHaveLength(3);
+    expect(screen.getByRole("img", { name: /P50/ })).toBeVisible();
+  });
 });
