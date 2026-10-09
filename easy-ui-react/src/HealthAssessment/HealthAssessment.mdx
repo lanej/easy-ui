@@ -36,6 +36,24 @@ Keep an observation's name, value, assessment, and observation time together, wi
 />
 ```
 
+## Presentation forms
+
+`variant` controls the amount and arrangement of supplied content, independently of `size` and the optional chart features.
+
+| Form         | Content                                                       | Maximum width |
+| ------------ | ------------------------------------------------------------- | ------------- |
+| `compact`    | Assessment pill and headline value                            | 320px         |
+| `detailed`   | Reference graph only                                          | 640px         |
+| `default`    | Headline, optional percentile metrics, and tighter graph      | 640px         |
+| `wide`       | Full observation context and a wider graph                    | 960px         |
+| `responsive` | Progressively reveals supplied content as its container grows | 960px         |
+
+<Canvas of={Stories.PresentationForms} />
+
+The responsive form always keeps the pill and value. At 320px it adds supplied percentile metrics, label, and freshness; at 560px it adds the graph alongside them; at 840px it includes any supplied reference details. Hidden supplemental metrics and graphs are also excluded from the accessibility tree; the observation label remains available to screen readers. These are container widths, so a narrow dashboard card remains compact even on a large screen. The application still decides whether to supply each optional slot or chart feature. No metrics or reference are synthesized when absent.
+
+<Canvas of={Stories.ResponsiveWidths} />
+
 ## Keep value and assessment together
 
 The value carries the most visual weight. Standard assessments with a reference use the larger headline duration; compact assessments retain their smaller scale. The small pill above the headline states the supplied assessment without relying on color. A freshness status dot sits beside the supporting timestamp beneath it; the timestamp prefix is optional. At wider widths both columns share the same content height. The observation label anchors the top, the pill sits above the headline in the middle, and freshness anchors the bottom. The observation spans optional `referenceDetails` content as well, so its height follows the complete reference column. Narrow layouts stack content in reading order. `referenceLayout="compact"` keeps a horizontal comparison when the container is at least 360px wide, and stacks below that width to keep labels readable.

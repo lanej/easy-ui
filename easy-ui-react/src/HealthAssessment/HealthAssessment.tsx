@@ -25,6 +25,8 @@ export type HealthAssessmentProps = {
   referenceDetails?: ReactNode;
   /** Compact keeps reference content beside the observation at narrower widths. */
   referenceLayout?: "auto" | "compact";
+  /** Presentation form; responsive progressively reveals supplied content by container width. */
+  variant?: "compact" | "detailed" | "default" | "wide" | "responsive";
   size?: "sm" | "md";
   isLoading?: boolean;
   accessibilityLabel?: string;
@@ -40,6 +42,7 @@ export function HealthAssessment({
   reference,
   referenceDetails,
   referenceLayout = "auto",
+  variant = "default",
   size = "md",
   isLoading = false,
   accessibilityLabel = "Health assessment",
@@ -50,11 +53,20 @@ export function HealthAssessment({
     (typeof observation.value !== "number" ||
       !Number.isFinite(observation.value) ||
       observation.value < 0);
-  const stacked = size === "md" && !isLoading && reference != null;
+  const showInformation = variant !== "detailed";
+  const showContext = variant !== "compact";
+  const showReference = variant !== "compact" && reference != null;
+  const showMetrics = variant !== "compact" && observationDetails != null;
+  const showReferenceDetails =
+    showReference && variant !== "detailed" && referenceDetails != null;
+  const stacked =
+    size === "md" &&
+    !isLoading &&
+    (showReference || variant === "compact" || variant === "responsive");
   const duration = observation !== undefined && (
     <DurationValue
       {...observation}
-      size={size === "md" && reference != null ? "lg" : size}
+      size={size === "md" && showReference ? "lg" : size}
       isLoading={isLoading}
     />
   );
@@ -66,70 +78,89 @@ export function HealthAssessment({
     <div
       className={styles.root}
       data-size={size}
+      data-variant={variant}
       role="group"
-      aria-label={label == null ? accessibilityLabel : undefined}
-      aria-labelledby={label != null ? labelId : undefined}
+      aria-label={
+        !showContext || !showInformation || label == null
+          ? typeof label === "string"
+            ? label
+            : accessibilityLabel
+          : undefined
+      }
+      aria-labelledby={
+        showContext && showInformation && label != null ? labelId : undefined
+      }
       aria-busy={isLoading}
     >
       <div
         className={styles.layout}
         data-reference-layout={referenceLayout}
-        data-has-reference={!isLoading && reference != null}
-        data-has-reference-details={
-          !isLoading && reference != null && referenceDetails != null
-        }
+        data-has-reference={!isLoading && showReference}
+        data-has-reference-details={!isLoading && showReferenceDetails}
       >
-        <div className={styles.information}>
-          {label != null && (
-            <div id={labelId} className={styles.label}>
-              <Text
-                as="p"
-                variant={stacked ? "caption" : "body2"}
-                color="neutral.700"
-              >
-                {label}
-              </Text>
-            </div>
-          )}
-          <div className={styles.summary} data-stacked={stacked}>
-            {stacked ? (
-              <>
-                {indicator}
-                {observationDetails != null ? (
-                  <div className={styles.headline}>
-                    {duration}
-                    <div className={styles.observationDetails}>
-                      {observationDetails}
-                    </div>
-                  </div>
-                ) : (
-                  duration
-                )}
-              </>
-            ) : (
-              <>
-                {duration}
-                {indicator}
-              </>
+        {!showInformation && isLoading && (
+          <span role="status">
+            <Text as="span">Loading…</Text>
+          </span>
+        )}
+        {showInformation && (
+          <div className={styles.information}>
+            {showContext && label != null && (
+              <div id={labelId} className={styles.label}>
+                <Text
+                  as="p"
+                  variant={stacked ? "caption" : "body2"}
+                  color="neutral.700"
+                >
+                  {label}
+                </Text>
+              </div>
             )}
-          </div>
-          {!isLoading && !stacked && observationDetails != null && (
-            <div className={styles.observationDetails}>
-              {observationDetails}
+            <div className={styles.summary} data-stacked={stacked}>
+              {stacked ? (
+                <>
+                  {indicator}
+                  {showMetrics ? (
+                    <div className={styles.headline}>
+                      {duration}
+                      <div className={styles.observationDetails}>
+                        {observationDetails}
+                      </div>
+                    </div>
+                  ) : (
+                    duration
+                  )}
+                </>
+              ) : (
+                <>
+                  {duration}
+                  {indicator}
+                </>
+              )}
             </div>
-          )}
-          {!isLoading &&
-            freshness !== undefined &&
-            !(
-              missingObservation &&
-              freshness.state !== "fresh" &&
-              freshness.state !== "stale"
-            ) && <ObservationFreshness {...freshness} size={size} />}
-        </div>
-        {!isLoading && reference != null && (
+            {!isLoading && !stacked && showMetrics && (
+              <div className={styles.observationDetails}>
+                {observationDetails}
+              </div>
+            )}
+            {!isLoading &&
+              showContext &&
+              freshness !== undefined &&
+              !(
+                missingObservation &&
+                freshness.state !== "fresh" &&
+                freshness.state !== "stale"
+              ) && (
+                <div className={styles.freshness}>
+                  <ObservationFreshness {...freshness} size={size} />
+                </div>
+              )}
+          </div>
+        )}
+        {!isLoading && showReference && (
           <div className={styles.reference}>{reference}</div>
         )}
-        {!isLoading && reference != null && referenceDetails != null && (
+        {!isLoading && showReferenceDetails && (
           <div className={styles.referenceDetails}>{referenceDetails}</div>
         )}
       </div>

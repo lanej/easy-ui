@@ -40,6 +40,10 @@ const meta: Meta<ExampleArgs> = {
       control: "boolean",
       description: "Story-only: show synthetic sample metadata.",
     },
+    variant: {
+      control: "select",
+      options: ["compact", "detailed", "default", "wide", "responsive"],
+    },
     referenceLayout: { control: "select", options: ["auto", "compact"] },
     reference: { control: false },
     referenceDetails: { control: false },
@@ -294,7 +298,7 @@ function renderExample(
       }
       referenceDetails={
         usesHours && args.observation
-          ? referenceDetailsFor(args.observation.value, assessed, locale, {
+          ? (referenceDetailsFor(args.observation.value, assessed, locale, {
               referenceVisualization,
               showHealthBands,
               showHealthBandLabels,
@@ -303,8 +307,8 @@ function renderExample(
               showReferenceDistribution,
               showCountAxis,
               showSampleCount,
-            })
-          : undefined
+            }) ?? args.referenceDetails)
+          : args.referenceDetails
       }
     />
   );
@@ -804,5 +808,82 @@ export const EnlargedText: Story = {
   args: defaultProps,
   render: (args) => (
     <div style={{ maxWidth: 320, zoom: 2 }}>{renderExample(args)}</div>
+  ),
+};
+
+export const CompactForm: Story = {
+  args: { ...defaultProps, variant: "compact", showPercentileMetrics: true },
+};
+export const DetailedForm: Story = {
+  args: { ...defaultProps, variant: "detailed", showPercentileMetrics: true },
+};
+export const DefaultForm: Story = {
+  args: { ...defaultProps, variant: "default", showPercentileMetrics: true },
+};
+export const WideForm: Story = {
+  args: {
+    ...defaultProps,
+    variant: "wide",
+    showPercentileMetrics: true,
+    showCountAxis: true,
+    referenceDetails: (
+      <Text variant="caption">1,000 synthetic completed durations</Text>
+    ),
+  },
+};
+export const ResponsiveForm: Story = {
+  args: {
+    ...defaultProps,
+    variant: "responsive",
+    showPercentileMetrics: true,
+    referenceDetails: (
+      <Text variant="caption">1,000 synthetic completed durations</Text>
+    ),
+  },
+};
+export const PresentationForms: Story = {
+  render: () => (
+    <div style={{ display: "grid", gap: 24 }}>
+      {(["compact", "detailed", "default", "wide"] as const).map((variant) => (
+        <section key={variant}>
+          <Text as="h3" variant="body2">
+            {variant}
+          </Text>
+          {renderExample({
+            ...defaultProps,
+            variant,
+            showPercentileMetrics: true,
+            showCountAxis: variant === "wide",
+            referenceDetails:
+              variant === "wide" ? (
+                <Text variant="caption">
+                  1,000 synthetic completed durations
+                </Text>
+              ) : undefined,
+          })}
+        </section>
+      ))}
+    </div>
+  ),
+};
+export const ResponsiveWidths: Story = {
+  render: () => (
+    <div style={{ display: "grid", gap: 24 }}>
+      {[280, 420, 640, 960].map((width) => (
+        <section key={width} style={{ width, maxWidth: "100%" }}>
+          <Text as="h3" variant="body2">
+            {width}px available width
+          </Text>
+          {renderExample({
+            ...defaultProps,
+            variant: "responsive",
+            showPercentileMetrics: true,
+            referenceDetails: (
+              <Text variant="caption">1,000 synthetic completed durations</Text>
+            ),
+          })}
+        </section>
+      ))}
+    </div>
   ),
 };

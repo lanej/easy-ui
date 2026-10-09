@@ -133,4 +133,59 @@ describe("<HealthAssessment />", () => {
     expect(screen.getByText("2026-01-15T12:00:00Z")).toBeVisible();
     expect(screen.queryByText("Healthy")).not.toBeInTheDocument();
   });
+
+  it("keeps compact content to the pill and value even when supporting slots are supplied", () => {
+    render(
+      <HealthAssessment
+        variant="compact"
+        label="Elapsed duration"
+        health={{ assessment: "healthy", label: "As expected" }}
+        observation={{ value: 6, unit: "hours" }}
+        observationDetails="Percentile metrics"
+        reference="Graph"
+        referenceDetails="Reference details"
+        freshness={{ state: "stale" }}
+      />,
+    );
+    expect(screen.getByText("As expected")).toBeVisible();
+    expect(screen.getByText("6")).toBeVisible();
+    for (const text of [
+      "Elapsed duration",
+      "Percentile metrics",
+      "Graph",
+      "Reference details",
+    ]) {
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+    }
+    expect(
+      screen.queryByRole("img", { name: "Stale" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Elapsed duration" }),
+    ).toBeVisible();
+  });
+
+  it("renders only reference content in detailed form and retains a valid loading state", () => {
+    const props = {
+      variant: "detailed" as const,
+      label: "Elapsed duration",
+      health: { assessment: "healthy" as const },
+      observation: { value: 6, unit: "hours" },
+      observationDetails: "Percentile metrics",
+      reference: "Graph",
+      referenceDetails: "Reference details",
+    };
+    const { rerender } = render(<HealthAssessment {...props} />);
+    expect(screen.getByText("Graph")).toBeVisible();
+    expect(screen.queryByText("Reference details")).not.toBeInTheDocument();
+    expect(screen.queryByText("6")).not.toBeInTheDocument();
+    expect(screen.queryByText("Elapsed duration")).not.toBeInTheDocument();
+    expect(screen.queryByText("Percentile metrics")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Elapsed duration" }),
+    ).not.toHaveAttribute("aria-labelledby");
+    rerender(<HealthAssessment {...props} isLoading />);
+    expect(screen.getByRole("status")).toHaveTextContent("Loading…");
+    expect(screen.queryByText("Graph")).not.toBeInTheDocument();
+  });
 });
