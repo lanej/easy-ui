@@ -11,6 +11,8 @@ const tasks = [
   ["node", ["--test", "scripts/browser-proof.test.mjs"]],
   ["npm", ["run", "lint"]],
   ["npm", ["run", "test"]],
+  ["npm", ["ci", "--prefix", "scripts/preview-metrics", "--no-audit", "--no-fund"]],
+  ["npm", ["ci", "--prefix", "scripts/preview-maps", "--no-audit", "--no-fund"]],
   ["npm", ["run", "build:docs"]],
   ["node", ["scripts/check-docs-site.mjs"]],
 ];
