@@ -112,30 +112,49 @@ const target = (event: EventTimelineEvent) => event.id === "b1";
 const current = { value: 6, unit: "hours" };
 const assessment = { assessment: "healthy" as const, label: "As expected" };
 
-/** A single-line assessment: pill and current duration stay alongside the event. */
-function InlineDurationSummary({ showQuantiles = false }: { showQuantiles?: boolean }) {
+/** Sample completed durations are supplied by the caller, not inferred from quantiles. */
+const sampleBins = [
+  { from: 0, to: 4, count: 8 },
+  { from: 4, to: 8, count: 24 },
+  { from: 8, to: 12, count: 38 },
+  { from: 12, to: 16, count: 23 },
+  { from: 16, to: 20, count: 11 },
+  { from: 20, to: 24, count: 5 },
+  { from: 24, to: 30, count: 2 },
+];
+
+type InlineReference = "none" | "quantiles" | "smooth";
+
+/** The status pill, observed duration, and optional reference share one row. */
+function InlineDurationSummary({ reference = "none" }: { reference?: InlineReference }) {
   return (
-    <div className={styles.inlineSummary} data-kind={showQuantiles ? "quantiles" : "minimal"}>
+    <div className={styles.inlineSummary} data-kind={reference}>
       <HealthAssessment
         variant="inline"
         size="sm"
         observation={{ value: current.value, unit: "h" }}
         health={assessment}
-        reference={showQuantiles ? (
+        reference={reference === "none" ? undefined : (
           <div className={styles.inlineReference}>
-            <DurationQuantileMetrics quantiles={quantiles} unit="h" healthRegions={regions} />
+            <DurationQuantileMetrics
+              quantiles={quantiles}
+              unit="h"
+              healthRegions={regions}
+            />
             <DurationDistribution
               value={current.value}
               unit="h"
               domain={[0, 30]}
               quantiles={quantiles}
+              bins={reference === "smooth" ? sampleBins : undefined}
               healthRegions={regions}
-              visualization="points"
+              visualization={reference === "smooth" ? "histogram" : "points"}
+              distributionStyle={reference === "smooth" ? "smooth" : "binned"}
               stretch={false}
               showScale={false}
             />
           </div>
-        ) : undefined}
+        )}
       />
     </div>
   );
@@ -149,7 +168,15 @@ export const InlineMinimal: Story = {
 
 export const InlineQuantiles: Story = {
   args: {
-    renderTrailing: (event) => target(event) ? <InlineDurationSummary showQuantiles /> : null,
+    renderTrailing: (event) =>
+      target(event) ? <InlineDurationSummary reference="quantiles" /> : null,
+  },
+};
+
+export const InlineSmoothCurve: Story = {
+  args: {
+    renderTrailing: (event) =>
+      target(event) ? <InlineDurationSummary reference="smooth" /> : null,
   },
 };
 
@@ -253,11 +280,24 @@ export const PresentationModes: Story = {
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
-          renderTrailing={(event) => target(event) ? <InlineDurationSummary showQuantiles /> : null}
+          renderTrailing={(event) => target(event) ? <InlineDurationSummary reference="quantiles" /> : null}
         />
       </section>
       <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
-        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>03 · Expanded interval</h3>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>03 · Inline smooth density — one row</h3>
+        <p style={{ margin: "0 0 12px", fontSize: 12 }}>
+          The same current value and landmarks with a smoothed historical histogram.
+        </p>
+        <EventTimeline
+          events={events.slice(1, 4)}
+          selectedId="b1"
+          renderTrailing={(event) =>
+            target(event) ? <InlineDurationSummary reference="smooth" /> : null
+          }
+        />
+      </section>
+      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>04 · Expanded interval</h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
           The headline remains inline; detailed reference content occupies the interval.
         </p>
@@ -304,7 +344,7 @@ export const NarrowQuantiles: Story = {
       <EventTimeline
         events={events.slice(1, 4)}
         selectedId="b1"
-        renderTrailing={(event) => target(event) ? <InlineDurationSummary showQuantiles /> : null}
+        renderTrailing={(event) => target(event) ? <InlineDurationSummary reference="quantiles" /> : null}
       />
     </div>
   ),
@@ -323,7 +363,7 @@ function MapAdjacentExample() {
           selectedId={selectedId}
           onSelectedIdChange={setSelectedId}
           onLocationSelect={(id) => setLocationId(id)}
-          renderTrailing={(event) => target(event) ? <InlineDurationSummary showQuantiles /> : null}
+          renderTrailing={(event) => target(event) ? <InlineDurationSummary reference="smooth" /> : null}
         />
       </section>
       <aside className={styles.mapSurface} aria-label="Adjacent application-owned map surface">
