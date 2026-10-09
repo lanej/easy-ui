@@ -26,10 +26,12 @@ export type EventItemProps = {
   onSelect?: () => void;
   onKeyDown?: (key: string) => boolean;
   registerButton?: (node: HTMLButtonElement | null) => void;
+  /** Caller-owned summary outside the selection button; never a nested button. */
+  trailing?: React.ReactNode;
 };
 
 /** Reusable event row; timing, locations, and status have no domain dictionary. */
-export function EventItem({event, current = false, size = "default", onSelect, onKeyDown, registerButton}: EventItemProps) {
+export function EventItem({event, current = false, size = "default", onSelect, onKeyDown, registerButton, trailing}: EventItemProps) {
   return (
     <div className={styles.item} data-size={size} data-current={current || undefined}>
       <button
@@ -55,6 +57,7 @@ export function EventItem({event, current = false, size = "default", onSelect, o
           {size === "detailed" && event.description && <span className={styles.received}>{event.description}</span>}
         </span>
       </button>
+      {trailing != null && <div className={styles.trailing}>{trailing}</div>}
     </div>
   );
 }
