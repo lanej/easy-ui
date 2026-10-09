@@ -1,0 +1,57 @@
+name: Timeline Storybook visual evidence
+
+on:
+  push:
+    branches: [feat/reusable-event-timeline]
+    paths:
+      - "easy-ui-react/src/EventTimeline/**"
+      - "scripts/capture-event-timeline-storybook.mjs"
+      - ".github/workflows/timeline-storybook-captures.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: timeline-storybook-preview
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    if: github.repository == 'lanej/easy-ui'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/reusable-event-timeline
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+      - name: Install repository dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Format changed timeline stories
+        run: npx prettier --write "easy-ui-react/src/EventTimeline/**/*.stories.tsx" "easy-ui-react/src/EventTimeline/**/*.mdx" scripts/capture-event-timeline-storybook.mjs
+      - name: Build Storybook
+        run: |
+          npm run build:tokens
+          npm run build:icons
+          npm run build:storybook -- --output-dir storybook-static
+      - name: Install screenshot runner
+        run: |
+          npm ci --prefix scripts/preview-maps --no-audit --no-fund
+          cd scripts/preview-maps
+          npx playwright install --with-deps chromium
+      - name: Capture actual Storybook components
+        run: node scripts/capture-event-timeline-storybook.mjs
+      - name: Commit current visual evidence
+        run: |
+          git add easy-ui-react/src/EventTimeline scripts/capture-event-timeline-storybook.mjs \
+            documentation/images/event-timeline-presentation-light.png \
+            documentation/images/event-timeline-presentation-dark.png \
+            documentation/images/event-timeline-quantiles-narrow.png
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs(timeline): embed rendered Storybook screenshot evidence"
+          git push origin HEAD:feat/reusable-event-timeline
