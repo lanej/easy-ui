@@ -108,6 +108,58 @@ describe("DurationDistribution", () => {
       container.querySelectorAll('[data-reference-assessment="unassessed"]'),
     ).toHaveLength(2);
   });
+  it("exposes the independently supplied current assessment in localized accessible and exact text", () => {
+    render(
+      <DurationDistribution
+        {...defaults}
+        currentAssessment="unhealthy"
+        healthRegions={regions}
+        showDataTable
+        labels={{
+          currentAssessment: "Évaluation actuelle",
+          unhealthy: "Critique",
+        }}
+      />,
+    );
+    expect(screen.getByRole("img")).toHaveAccessibleName(
+      expect.stringContaining("Évaluation actuelle: Critique"),
+    );
+    expect(screen.getByText("Évaluation actuelle")).toBeInTheDocument();
+    expect(screen.getByText("Critique")).toBeInTheDocument();
+  });
+  it.each([null, NaN, -1])(
+    "does not announce a stale current assessment for unavailable or invalid elapsed values",
+    (value) => {
+      render(
+        <DurationDistribution
+          {...defaults}
+          value={value}
+          currentAssessment="healthy"
+        />,
+      );
+      expect(screen.getByRole("img")).not.toHaveAccessibleName(
+        expect.stringContaining("Current assessment: Healthy"),
+      );
+    },
+  );
+  it("labels both ends of gapped policy ranges and deduplicates adjoining boundaries", () => {
+    const { container } = render(
+      <DurationDistribution
+        {...defaults}
+        healthRegions={[
+          { from: 0, to: 10, assessment: "healthy", label: "Expected" },
+          { from: 15, to: 20, assessment: "degraded", label: "Attention" },
+          { from: 20, to: Infinity, assessment: "unhealthy", label: "Outside" },
+        ]}
+      />,
+    );
+    const ticks = container.querySelectorAll('[class*="thresholdLabel_"]');
+    expect(Array.from(ticks, (tick) => tick.textContent)).toEqual([
+      "10 hours",
+      "15 hours",
+      "20 hours",
+    ]);
+  });
   it("splits supplied bins at exact policy thresholds without fabricating count geometry from quantiles", () => {
     const { container } = render(
       <DurationDistribution

@@ -52,6 +52,8 @@ Use the same cohort, unit, and observation window for sources meant to be compar
 
 The current marker uses `currentAssessment`, never an assessment derived from its percentile. Historical landmarks use the supplied health interval containing their duration. Hiding bands preserves that color policy. Without policy, landmarks are neutral. Overlapping, reversed, or invalid policy intervals are explicitly identified and their historical marks become neutral. Values below the median do not automatically mean healthy. Ongoing elapsed duration is labeled separately from the completed-duration reference.
 
+The axis labels both ends of supplied health ranges, including gaps, and shows shared boundaries once. The current assessment is supplied independently of those ranges; its text equivalent is included in the plot description, marker tooltip, and optional exact-data disclosure. Localize it with `labels.currentAssessment`, `labels.healthy`, `labels.degraded`, and `labels.unhealthy`. Unavailable or invalid elapsed values suppress that assessment text.
+
 <Canvas of={Stories.WithoutBands} />
 <Canvas of={Stories.WithoutPolicy} />
 

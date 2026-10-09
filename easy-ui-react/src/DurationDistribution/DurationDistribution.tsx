@@ -26,6 +26,10 @@ import styles from "./DurationDistribution.module.scss";
 
 const defaultLabels = {
   elapsed: "Elapsed",
+  currentAssessment: "Current assessment",
+  healthy: "Healthy",
+  degraded: "Degraded",
+  unhealthy: "Unhealthy",
   missingValue: "Elapsed unavailable",
   invalidValue: "Invalid elapsed duration",
   outsideScale: "Outside scale",
@@ -157,6 +161,16 @@ export function DurationDistribution({
     invalid: text.invalidValue,
     outside: text.outsideScale,
   });
+  const assessmentText =
+    (state === "valid" || state === "out-of-domain") && currentAssessment
+      ? text[currentAssessment]
+      : null;
+  const currentDescription = [
+    `${text.elapsed}: ${valueText}`,
+    assessmentText && `${text.currentAssessment}: ${assessmentText}`,
+  ]
+    .filter(Boolean)
+    .join(". ");
   const current = validScale
     ? plottedObservation(value, state, domain, overflow)
     : null;
@@ -168,7 +182,9 @@ export function DurationDistribution({
   const bands = showHealthBands ? visibleRegions : [];
   const thresholds =
     showHealthBands && !showHealthBandLabels
-      ? regions.map((r) => r.from).filter((n) => n > domain[0] && n < domain[1])
+      ? [...new Set(regions.flatMap((r) => [r.from, r.to]))]
+          .filter((n) => n > domain[0] && n < domain[1])
+          .sort((a, b) => a - b)
       : [];
   const range = (r: DurationHealthRegion) =>
     r.to === Infinity
@@ -212,7 +228,7 @@ export function DurationDistribution({
       text.emptyDistribution,
   ].filter(Boolean);
   const plotDescription = [
-    `${text.elapsed}: ${valueText}`,
+    currentDescription,
     label,
     cohort,
     validScale && `${format(domain[0])}–${format(domain[1])}`,
@@ -441,7 +457,7 @@ export function DurationDistribution({
                   data-current-assessment={currentAssessment ?? "unassessed"}
                   data-overflow={state === "out-of-domain"}
                   style={{ left: offset(current) }}
-                  title={`${text.elapsed}: ${valueText}`}
+                  title={currentDescription}
                   aria-hidden="true"
                 >
                   {(!hasCurve || currentFraction !== null) && (
@@ -583,6 +599,12 @@ export function DurationDistribution({
           <dl>
             <dt>{text.elapsed}</dt>
             <dd>{valueText}</dd>
+            {assessmentText && (
+              <>
+                <dt>{text.currentAssessment}</dt>
+                <dd>{assessmentText}</dd>
+              </>
+            )}
             {quantilesValid &&
               marks.map((q) => (
                 <React.Fragment key={q.fraction}>
