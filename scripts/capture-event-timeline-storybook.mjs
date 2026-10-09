@@ -77,7 +77,7 @@ try {
     await page.goto(
       `http://127.0.0.1:4179/iframe.html?id=organisms-data-display-eventtimeline--${story}&viewMode=story&globals=colorScheme:${theme}`,
     );
-    const scene = page.locator("#storybook-root > div").first();
+    const scene = page.locator("#storybook-root > *").first();
     await scene.waitFor({ state: "visible" });
     await page.waitForFunction((phrases) => {
       const text = document.querySelector("#storybook-root")?.textContent ?? "";
