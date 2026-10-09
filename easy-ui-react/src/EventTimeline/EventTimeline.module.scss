@@ -26,7 +26,9 @@
   content: "";
   position: absolute;
   z-index: 0;
-  left: calc(var(--row-inline-padding) + var(--time-column) + var(--column-gap) + 12px);
+  left: calc(
+    var(--row-inline-padding) + var(--time-column) + var(--column-gap) + 12px
+  );
   top: 24px;
   bottom: -4px;
   inline-size: 1px;
@@ -116,7 +118,11 @@
   color: design-token("color.primary.700");
   font: inherit;
   font-size: 12px;
-  margin: 0 0 6px calc(var(--row-inline-padding) + var(--time-column) + var(--dot-column) + var(--column-gap) + var(--column-gap));
+  margin: 0 0 6px
+    calc(
+      var(--row-inline-padding) + var(--time-column) + var(--dot-column) +
+        var(--column-gap) + var(--column-gap)
+    );
   padding: 4px;
   cursor: pointer;
 }
@@ -128,7 +134,10 @@
 .interval,
 .details {
   min-inline-size: 0;
-  margin-inline-start: calc(var(--row-inline-padding) + var(--time-column) + var(--dot-column) + var(--column-gap) + var(--column-gap));
+  margin-inline-start: calc(
+    var(--row-inline-padding) + var(--time-column) + var(--dot-column) +
+      var(--column-gap) + var(--column-gap)
+  );
   padding-block: 4px 8px;
 }
 

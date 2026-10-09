@@ -148,7 +148,9 @@ function InlineDurationSummary({
                 quantiles={quantiles}
                 bins={reference === "quantiles" ? undefined : sampleBins}
                 healthRegions={regions}
-                visualization={reference === "quantiles" ? "points" : "histogram"}
+                visualization={
+                  reference === "quantiles" ? "points" : "histogram"
+                }
                 distributionStyle="smooth"
                 distributionPresentation={
                   reference === "concentration" ? "concentration" : "plot"
@@ -296,7 +298,8 @@ export const PresentationModes: Story = {
           02 · Inline quantiles — one row
         </h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
-          Current 6h with P50/P90 marks on the bar; exact values remain accessible.
+          Current 6h with P50/P90 marks on the bar; exact values remain
+          accessible.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
@@ -308,18 +311,23 @@ export const PresentationModes: Story = {
           }
         />
       </section>
-      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
+      <section
+        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
+      >
         <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
           03 · Inline density concentration — one row
         </h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
-          The distribution is encoded by a smooth concentration gradient without tiny numbers.
+          The distribution is encoded by a smooth concentration gradient without
+          tiny numbers.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
           renderTrailing={(event) =>
-            target(event) ? <InlineDurationSummary reference="concentration" /> : null
+            target(event) ? (
+              <InlineDurationSummary reference="concentration" />
+            ) : null
           }
         />
       </section>
@@ -423,7 +431,9 @@ function MapAdjacentExample() {
           onSelectedIdChange={setSelectedId}
           onLocationSelect={(id) => setLocationId(id)}
           renderTrailing={(event) =>
-            target(event) ? <InlineDurationSummary reference="concentration" /> : null
+            target(event) ? (
+              <InlineDurationSummary reference="concentration" />
+            ) : null
           }
         />
       </section>
