@@ -107,6 +107,38 @@ try {
             0,
           );
         }
+        if (story === "default") {
+          const labelBox = await page
+            .getByText("Current dwell", { exact: true })
+            .boundingBox();
+          const freshnessBox = await page
+            .getByRole("img", { name: "Updated recently", exact: true })
+            .boundingBox();
+          assert.ok(
+            Math.abs(
+              labelBox.y +
+                labelBox.height / 2 -
+                freshnessBox.y -
+                freshnessBox.height / 2,
+            ) < 2,
+          );
+          const metricBox = await page
+            .locator('dl[aria-label="Reference percentiles"]')
+            .boundingBox();
+          const referenceBox = await page
+            .locator('[role="img"][class*="plot"]')
+            .boundingBox();
+          assert.ok(
+            metricBox.y + metricBox.height <= referenceBox.y,
+            "Percentile metrics belong above the bar",
+          );
+          assert.equal(
+            await page
+              .locator('dl[aria-label="Reference percentiles"]')
+              .count(),
+            1,
+          );
+        }
         if (story === "default" && width === 1040) {
           const plot = await page
             .locator('[role="img"][class*="plot"]')

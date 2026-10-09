@@ -18,29 +18,37 @@ const quantiles = [
   { fraction: 0.9, value: 18 },
 ];
 const reference = (smooth = false) => (
-  <DurationDistribution
-    value={6}
-    domain={[0, 30]}
-    unit="h"
-    quantiles={quantiles}
-    healthRegions={healthRegions}
-    currentAssessment="healthy"
-    showPercentileLabels={false}
-    stretch={false}
-    distributionStyle={smooth ? "smooth" : "binned"}
-    bins={
-      smooth
-        ? [
-            { from: 0, to: 5, count: 50 },
-            { from: 5, to: 10, count: 300 },
-            { from: 10, to: 15, count: 150 },
-            { from: 15, to: 20, count: 70 },
-            { from: 20, to: 25, count: 20 },
-            { from: 25, to: 30, count: 10 },
-          ]
-        : undefined
-    }
-  />
+  <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
+    <DurationQuantileMetrics
+      quantiles={quantiles}
+      unit="h"
+      healthRegions={healthRegions}
+      layout="inline"
+    />
+    <DurationDistribution
+      value={6}
+      domain={[0, 30]}
+      unit="h"
+      quantiles={quantiles}
+      healthRegions={healthRegions}
+      currentAssessment="healthy"
+      showPercentileLabels={false}
+      stretch={false}
+      distributionStyle={smooth ? "smooth" : "binned"}
+      bins={
+        smooth
+          ? [
+              { from: 0, to: 5, count: 50 },
+              { from: 5, to: 10, count: 300 },
+              { from: 10, to: 15, count: 150 },
+              { from: 15, to: 20, count: 70 },
+              { from: 20, to: 25, count: 20 },
+              { from: 25, to: 30, count: 10 },
+            ]
+          : undefined
+      }
+    />
+  </div>
 );
 const defaults: FacilitySummaryProps = {
   name: "North Harbor",
@@ -54,13 +62,6 @@ const defaults: FacilitySummaryProps = {
       health: { assessment: "healthy", label: "As expected" },
       observation: { value: 6, unit: "h" },
       freshness: { state: "fresh", stateLabel: "Updated recently" },
-      observationDetails: (
-        <DurationQuantileMetrics
-          quantiles={quantiles}
-          unit="h"
-          healthRegions={healthRegions}
-        />
-      ),
       reference: reference(),
     },
   ],

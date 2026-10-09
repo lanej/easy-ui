@@ -76,6 +76,17 @@ export function HealthAssessment({
       isLoading={isLoading}
     />
   );
+  const freshnessIndicator =
+    !isLoading &&
+    showContext &&
+    freshness !== undefined &&
+    !(
+      missingObservation &&
+      freshness.state !== "fresh" &&
+      freshness.state !== "stale"
+    ) ? (
+      <ObservationFreshness {...freshness} size={size} />
+    ) : null;
   const indicator =
     observation === undefined || (!isLoading && !missingObservation) ? (
       <HealthIndicator {...health} size="sm" isLoading={isLoading} />
@@ -109,25 +120,33 @@ export function HealthAssessment({
         )}
         {showInformation && (
           <div className={styles.information}>
-            {showLabel && (label != null || healthPlacement === "label") && (
-              <div
-                className={styles.label}
-                data-health-placement={healthPlacement}
-                data-inline={inlineLabel}
-              >
-                {!inlineLabel && healthPlacement === "label" && indicator}
-                <Text
-                  id={labelId}
-                  as="p"
-                  variant={stacked ? "caption" : "body2"}
-                  color="neutral.700"
+            {showLabel &&
+              (label != null ||
+                healthPlacement === "label" ||
+                freshnessIndicator != null) && (
+                <div
+                  className={styles.label}
+                  data-health-placement={healthPlacement}
+                  data-inline={inlineLabel}
                 >
-                  {label}
-                </Text>
-                {inlineLabel && indicator}
-                {inlineLabel && duration}
-              </div>
-            )}
+                  {!inlineLabel && healthPlacement === "label" && indicator}
+                  <Text
+                    id={labelId}
+                    as="p"
+                    variant={stacked ? "caption" : "body2"}
+                    color="neutral.700"
+                  >
+                    {label}
+                  </Text>
+                  {freshnessIndicator && (
+                    <span className={styles.freshness}>
+                      {freshnessIndicator}
+                    </span>
+                  )}
+                  {inlineLabel && indicator}
+                  {inlineLabel && duration}
+                </div>
+              )}
             {!inlineLabel && (
               <div className={styles.summary} data-stacked={stacked}>
                 {stacked ? (
@@ -157,18 +176,6 @@ export function HealthAssessment({
                 {observationDetails}
               </div>
             )}
-            {!isLoading &&
-              showContext &&
-              freshness !== undefined &&
-              !(
-                missingObservation &&
-                freshness.state !== "fresh" &&
-                freshness.state !== "stale"
-              ) && (
-                <div className={styles.freshness}>
-                  <ObservationFreshness {...freshness} size={size} />
-                </div>
-              )}
           </div>
         )}
         {!isLoading && showReference && (

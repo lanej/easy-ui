@@ -32,6 +32,10 @@
 }
 
 .label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: design-token("space.1");
   min-inline-size: 0;
   overflow-wrap: anywhere;
 }

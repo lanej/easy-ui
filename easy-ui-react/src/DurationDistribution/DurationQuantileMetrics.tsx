@@ -11,6 +11,8 @@ import styles from "./DurationDistribution.module.scss";
 export type DurationQuantileMetricsProps = {
   quantiles: readonly DurationQuantile[];
   unit: string;
+  /** Inline places comparisons in one wrapping row above a reference graphic. */
+  layout?: "stacked" | "inline";
   healthRegions?: readonly DurationHealthRegion[];
   formatValue?: (value: number) => string;
   formatQuantileLabel?: (fraction: number) => string;
@@ -22,6 +24,7 @@ export type DurationQuantileMetricsProps = {
 export function DurationQuantileMetrics({
   quantiles,
   unit,
+  layout = "stacked",
   healthRegions = [],
   formatValue = String,
   formatQuantileLabel = (fraction) => `P${fraction * 100}`,
@@ -35,7 +38,11 @@ export function DurationQuantileMetrics({
   return (
     <>
       {!regionsValid && <p>{invalidHealthRegionsLabel}</p>}
-      <dl className={styles.metrics} aria-label={accessibilityLabel}>
+      <dl
+        className={styles.metrics}
+        data-layout={layout}
+        aria-label={accessibilityLabel}
+      >
         {quantiles.map((q) => {
           const region = regionAt(regions, q.value);
           const label = q.label ?? formatQuantileLabel(q.fraction);
