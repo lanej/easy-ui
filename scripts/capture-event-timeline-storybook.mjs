@@ -52,6 +52,7 @@ try {
         overflow: Math.max(0, trailing.scrollWidth - trailing.clientWidth),
         width: Math.round(r.width),
         reference: plot?.getAttribute("data-visualization") ?? "none",
+        hasSmooth: !!trailing.querySelector('[data-density-curve="true"]'),
         hasStatus: !!summary,
         hasDuration: !!duration,
       };
@@ -61,6 +62,9 @@ try {
     for (const result of results) {
       if (result.centerDelta > 24 || result.overhang > 2 || result.overflow > 2) {
         throw new Error("Metrics are not actually inline with the selected event");
+      }
+      if (result.reference === "histogram" && !result.hasSmooth) {
+        throw new Error("Smooth inline example did not render its density curve");
       }
       if (!result.hasStatus || !result.hasDuration) {
         throw new Error("Inline state does not show both assessment and current duration");
