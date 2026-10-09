@@ -16,7 +16,7 @@
 
 .regionLabels {
   display: flex;
-  margin-block-end: 0;
+  margin-block-end: 8px;
 }
 
 .regionLabel {
@@ -34,7 +34,7 @@
 .plot {
   position: relative;
   block-size: 100px;
-  margin-block-start: 8px;
+  margin-block-start: 0;
 }
 
 .track {
@@ -123,13 +123,13 @@
   block-size: calc(8px + 1lh);
 }
 
-.scale[data-has-thresholds="true"] {
+.scale[data-has-thresholds="true"][data-has-percentile-labels="true"] {
   block-size: calc(16px + 2lh);
 }
 
 .thresholdLabel {
   position: absolute;
-  top: calc(8px + 1lh + 8px);
+  top: 8px;
   transform: translateX(-50%);
   white-space: nowrap;
 
@@ -143,6 +143,10 @@
     inline-size: 1px;
     background: currentColor;
   }
+}
+
+.scale[data-has-percentile-labels="true"] .thresholdLabel {
+  top: calc(16px + 1lh);
 }
 
 .endpoint {
@@ -172,16 +176,16 @@
 }
 
 @container (max-width: 18em) {
-  .scale {
+  .scale[data-has-percentile-labels="true"] {
     block-size: calc(8px + 2lh);
   }
 
-  .scale[data-has-thresholds="true"] {
+  .scale[data-has-thresholds="true"][data-has-percentile-labels="true"] {
     block-size: calc(16px + 3lh);
   }
 
-  .thresholdLabel {
-    top: calc(8px + 2lh + 8px);
+  .scale[data-has-percentile-labels="true"] .thresholdLabel {
+    top: calc(16px + 2lh);
   }
 
   .percentileLabel {
@@ -298,13 +302,6 @@
   }
 }
 
-.plot,
-.histogram,
-.scale,
-.regionLabels,
-.distribution figcaption {
-  margin-inline-start: calc(3ch + 1lh + 16px);
-}
 .curve {
   position: absolute;
   inset: 0;
@@ -319,35 +316,6 @@
   }
   circle {
     fill: design-token("color.neutral.900");
-  }
-}
-.yTitle {
-  position: absolute;
-  top: 50%;
-  left: calc(-3ch - 1lh - 16px);
-  writing-mode: vertical-rl;
-  white-space: nowrap;
-  transform: translateY(-50%) rotate(180deg);
-}
-.yAxis {
-  position: absolute;
-  inset-block: 0;
-  left: calc(-3ch - 8px);
-  inline-size: 3ch;
-  text-align: end;
-
-  span {
-    position: absolute;
-    top: 0;
-    inset-inline: 0;
-    transform: translateY(-50%);
-
-    &:nth-child(2) {
-      top: 50%;
-    }
-    &:last-child {
-      top: 100%;
-    }
   }
 }
 @media (forced-colors: active) {
@@ -398,4 +366,22 @@
   flex-direction: column;
   justify-content: flex-end;
   block-size: 100%;
+}
+
+.histogramPoint {
+  position: absolute;
+  top: 100%;
+  inline-size: 5px;
+  block-size: 5px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: design-token("color.neutral.900");
+  box-shadow: 0 0 0 1px design-token("color.neutral.000");
+}
+
+@media (forced-colors: active) {
+  .histogramPoint {
+    background: CanvasText;
+    outline: 1px solid Canvas;
+  }
 }

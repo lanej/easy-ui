@@ -32,39 +32,29 @@ export function checkHealthObservationLayout() {
       if (left.left === right.left)
         throw new Error("Use a viewport wide enough for two-column examples");
       const plot = primary.querySelector('[class*="plot"][role="img"]');
-      if (plot) {
-        const bounds = plot.getBoundingClientRect();
-        const title = plot
-          .querySelector('[class*="yTitle"]')
-          .getBoundingClientRect();
-        const axis = plot
-          .querySelector('[class*="yAxis"]')
-          .getBoundingClientRect();
-        if (
-          title.right > axis.left ||
-          Math.abs(
-            (title.top + title.bottom) / 2 - (bounds.top + bounds.bottom) / 2,
-          ) > 1
-        )
-          throw new Error(`${name}: vertical axis title is misplaced`);
-        const ticks = plot.querySelectorAll('[class*="yAxis"] span');
-        ticks.forEach((tick, index) => {
-          const label = tick.getBoundingClientRect();
-          const expected = bounds.top + (bounds.height * index) / 2;
-          if (
-            Math.abs((label.top + label.bottom) / 2 - expected) > 1 ||
-            label.right > bounds.left - 4
-          )
-            throw new Error(`${name}: vertical axis tick is misplaced`);
-        });
-      }
+      if (card.querySelector('[class*="yTitle"], [class*="yAxis"]'))
+        throw new Error(`${name}: unexpected vertical axis`);
       for (const chart of card.querySelectorAll('figure [role="img"]')) {
+        const mode = chart.closest("[data-percentiles]").dataset.percentiles;
+        const dots = chart.querySelectorAll(
+          'svg circle, [class*="histogramPoint"]',
+        );
+        const isCurve = !!chart.querySelector("svg");
+        const expectedDots =
+          mode === "none" ? 0 : isCurve || mode === "points" ? 2 : 0;
+        if (dots.length !== expectedDots)
+          throw new Error(`${name}: incorrect percentile points`);
         const guides = chart.querySelectorAll(
           '[class*="percentile_"], [class*="histogramPercentile_"]',
         );
         const labels = chart.parentElement.querySelectorAll(
           '[class*="percentileLabel"]',
         );
+        if (
+          labels.length !== (mode === "labeled" ? 2 : 0) ||
+          guides.length !== (mode === "labeled" ? 2 : 0)
+        )
+          throw new Error(`${name}: incorrect percentile labels or guides`);
         for (const label of chart.parentElement.querySelectorAll(
           '[class*="thresholdLabel"]',
         )) {
@@ -100,8 +90,12 @@ export function checkHealthObservationLayout() {
       }
       const footer = details || primary;
       const rightBottom = footer.getBoundingClientRect().bottom;
-      const topDelta =
-        textBounds(information.firstElementChild).top - textBounds(primary).top;
+      const header = primary.querySelector(
+        '[class*="regionLabels"], figcaption',
+      );
+      const topDelta = header
+        ? textBounds(information.firstElementChild).top - textBounds(header).top
+        : plot.getBoundingClientRect().top - right.top;
       const bottomDelta =
         textBounds(information.querySelector("time")).bottom -
         textBounds(

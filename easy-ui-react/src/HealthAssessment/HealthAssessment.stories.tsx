@@ -18,6 +18,8 @@ type ExampleArgs = HealthAssessmentProps & {
   referenceVisualization?: ReferenceVisualization;
   showHealthBands?: boolean;
   showHealthBandLabels?: boolean;
+  showPercentiles?: boolean;
+  showPercentileLabels?: boolean;
   showReferenceDistribution?: boolean;
 };
 
@@ -43,6 +45,14 @@ const meta: Meta<ExampleArgs> = {
       description:
         "Story-only: show names and ranges above the colored bands; otherwise show thresholds on the duration axis.",
     },
+    showPercentiles: {
+      control: "boolean",
+      description: "Story-only: show percentile reference points.",
+    },
+    showPercentileLabels: {
+      control: "boolean",
+      description: "Story-only: label percentile points and show their guides.",
+    },
     showReferenceDistribution: {
       control: "boolean",
       description: "Story-only: offer the reference histogram disclosure.",
@@ -52,6 +62,8 @@ const meta: Meta<ExampleArgs> = {
     referenceVisualization: "cumulative",
     showHealthBands: true,
     showHealthBandLabels: false,
+    showPercentiles: true,
+    showPercentileLabels: false,
     showReferenceDistribution: true,
   },
   render: (args) => renderExample(args),
@@ -119,6 +131,8 @@ function referenceFor(
     | "referenceVisualization"
     | "showHealthBands"
     | "showHealthBandLabels"
+    | "showPercentiles"
+    | "showPercentileLabels"
     | "showReferenceDistribution"
   > = {},
   section: "primary" | "details" = "primary",
@@ -149,6 +163,8 @@ function referenceFor(
       visualization={options.referenceVisualization}
       showDistribution={options.showReferenceDistribution}
       showHealthBandLabels={options.showHealthBandLabels}
+      showPercentiles={options.showPercentiles}
+      showPercentileLabels={options.showPercentileLabels}
       regions={
         options.showHealthBands !== false &&
         assessed &&
@@ -171,6 +187,8 @@ function referenceDetailsFor(
     | "referenceVisualization"
     | "showHealthBands"
     | "showHealthBandLabels"
+    | "showPercentiles"
+    | "showPercentileLabels"
     | "showReferenceDistribution"
   > = {},
 ) {
@@ -182,6 +200,8 @@ function renderExample(
     referenceVisualization,
     showHealthBands,
     showHealthBandLabels,
+    showPercentiles,
+    showPercentileLabels,
     showReferenceDistribution,
     ...args
   }: ExampleArgs,
@@ -219,6 +239,8 @@ function renderExample(
               referenceVisualization,
               showHealthBands,
               showHealthBandLabels,
+              showPercentiles,
+              showPercentileLabels,
               showReferenceDistribution,
             })
           : undefined
@@ -229,6 +251,8 @@ function renderExample(
               referenceVisualization,
               showHealthBands,
               showHealthBandLabels,
+              showPercentiles,
+              showPercentileLabels,
               showReferenceDistribution,
             })
           : undefined
@@ -273,6 +297,12 @@ export const HistogramOnly: Story = {
 export const BothReferences: Story = {
   args: { ...defaultProps, referenceVisualization: "both" },
 };
+export const LabeledPercentiles: Story = {
+  args: { ...defaultProps, showPercentileLabels: true },
+};
+export const WithoutPercentiles: Story = {
+  args: { ...defaultProps, showPercentiles: false },
+};
 export const WithHealthBandLabels: Story = {
   args: { ...defaultProps, showHealthBandLabels: true },
 };
@@ -291,11 +321,25 @@ type ReferenceOption = {
   visualization: ReferenceVisualization;
   bands: boolean;
   labels?: boolean;
+  percentiles?: boolean;
+  percentileLabels?: boolean;
   distribution?: boolean;
   expanded?: boolean;
 };
 
 const primaryOptions: ReferenceOption[] = [
+  {
+    name: "Curve · labeled percentiles",
+    visualization: "cumulative",
+    bands: true,
+    percentileLabels: true,
+  },
+  {
+    name: "Curve · percentiles off",
+    visualization: "cumulative",
+    bands: true,
+    percentiles: false,
+  },
   {
     name: "Curve · band labels on",
     visualization: "cumulative",
@@ -362,6 +406,8 @@ function ReferenceOptionExample({ option }: { option: ReferenceOption }) {
           referenceVisualization: option.visualization,
           showHealthBands: option.bands,
           showHealthBandLabels: option.labels === true,
+          showPercentiles: option.percentiles !== false,
+          showPercentileLabels: option.percentileLabels === true,
           showReferenceDistribution: option.distribution === true,
         })}
       </div>

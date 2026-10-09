@@ -76,10 +76,12 @@ function Scale({
   format,
   regions = [],
   showThresholds = false,
+  showPercentileLabels = false,
 }: {
   format: (value: number) => string;
   regions?: readonly DurationHealthRegion[];
   showThresholds?: boolean;
+  showPercentileLabels?: boolean;
 }) {
   const thresholds = showThresholds
     ? regions
@@ -90,19 +92,21 @@ function Scale({
     <div
       className={styles.scale}
       data-has-thresholds={thresholds.length > 0}
+      data-has-percentile-labels={showPercentileLabels}
       aria-hidden="true"
     >
       <span className={styles.endpoint}>0 h</span>
-      {landmarks.map(({ label, value }) => (
-        <span
-          key={label}
-          className={styles.percentileLabel}
-          style={{ left: `${(value / max) * 100}%` }}
-        >
-          {label}
-          <strong>{format(value)} h</strong>
-        </span>
-      ))}
+      {showPercentileLabels &&
+        landmarks.map(({ label, value }) => (
+          <span
+            key={label}
+            className={styles.percentileLabel}
+            style={{ left: `${(value / max) * 100}%` }}
+          >
+            {label}
+            <strong>{format(value)} h</strong>
+          </span>
+        ))}
       <span className={styles.endpoint} data-end="true">
         {max} h
       </span>
@@ -129,6 +133,8 @@ export function DurationReferenceExample({
   visualization = "cumulative",
   showDistribution = true,
   showHealthBandLabels = false,
+  showPercentiles = true,
+  showPercentileLabels = false,
 }: {
   value: number | null;
   locale?: "en" | "fr";
@@ -138,6 +144,8 @@ export function DurationReferenceExample({
   visualization?: ReferenceVisualization;
   showDistribution?: boolean;
   showHealthBandLabels?: boolean;
+  showPercentiles?: boolean;
+  showPercentileLabels?: boolean;
 }) {
   const valid =
     typeof value === "number" && Number.isFinite(value) && value >= 0;
@@ -163,6 +171,9 @@ export function DurationReferenceExample({
     locale === "fr"
       ? "1 000 durées terminées fictives"
       : "1,000 synthetic completed durations";
+  const percentileDescription = showPercentiles
+    ? "P50: 9 h, 50%. P90: 18 h, 90%. "
+    : "";
   const referenceLabel =
     locale === "fr"
       ? "Référence des durées terminées"
@@ -212,7 +223,7 @@ export function DurationReferenceExample({
       <div
         className={styles.histogram}
         role="img"
-        aria-label={`${description}. ${rangesLabel}P50: 9 h. P90: 18 h. ${distributionLabel}.`}
+        aria-label={`${description}. ${rangesLabel}${percentileDescription}${distributionLabel}.`}
       >
         <div className={styles.track} aria-hidden="true">
           {visibleRegions.map((region) => (
@@ -236,17 +247,24 @@ export function DurationReferenceExample({
             />
           ))}
         </div>
-        {landmarks.map(({ label, value: landmark }) => (
-          <span
-            key={label}
-            className={styles.histogramPercentile}
-            style={{ left: `${(landmark / max) * 100}%` }}
-            aria-hidden="true"
-          />
-        ))}
+        {showPercentiles &&
+          landmarks.map(({ label, value: landmark }) => (
+            <span
+              key={label}
+              className={
+                showPercentileLabels
+                  ? styles.histogramPercentile
+                  : styles.histogramPoint
+              }
+              style={{ left: `${(landmark / max) * 100}%` }}
+              aria-hidden="true"
+              title={`${label}: ${format(landmark)} h`}
+            />
+          ))}
       </div>
       <Scale
         format={format}
+        showPercentileLabels={showPercentiles && showPercentileLabels}
         regions={visibleRegions}
         showThresholds={!showHealthBandLabels && visualization !== "cumulative"}
       />
@@ -255,7 +273,13 @@ export function DurationReferenceExample({
   );
 
   return (
-    <div className={styles.root} data-section={section}>
+    <div
+      className={styles.root}
+      data-section={section}
+      data-percentiles={
+        showPercentiles ? (showPercentileLabels ? "labeled" : "points") : "none"
+      }
+    >
       {showCurve && (
         <figure
           className={styles.figure}
@@ -266,18 +290,11 @@ export function DurationReferenceExample({
           {regionHeader}
           <div
             className={styles.plot}
+            title={referenceLabel}
             data-has-regions={visibleRegions.length > 0}
             role="img"
-            aria-label={`${valueLabel}. ${rangesLabel}${referenceLabel}: ${locale === "fr" ? "Pourcentage terminé" : "Percentage completed"}. P50: 9 h, 50%. P90: 18 h, 90%. 0–30 h. ${locale === "fr" ? "Interpolation entre les observations fictives" : "Interpolated between synthetic observations"}.`}
+            aria-label={`${valueLabel}. ${rangesLabel}${referenceLabel}: ${locale === "fr" ? "Pourcentage terminé" : "Percentage completed"}. ${percentileDescription}0–30 h. ${locale === "fr" ? "Interpolation entre les observations fictives" : "Interpolated between synthetic observations"}.`}
           >
-            <span className={styles.yTitle} aria-hidden="true">
-              {locale === "fr" ? "Historique (%)" : "Historical (%)"}
-            </span>
-            <div className={styles.yAxis} aria-hidden="true">
-              <span>100</span>
-              <span>50</span>
-              <span>0</span>
-            </div>
             <div className={styles.track} aria-hidden="true">
               {visibleRegions.map((region) => (
                 <span
@@ -298,23 +315,28 @@ export function DurationReferenceExample({
               aria-hidden="true"
             >
               <path d={curvePath} />
-              {landmarks.map(({ label, value: landmark }) => (
-                <circle
+              {showPercentiles &&
+                landmarks.map(({ label, value: landmark }) => (
+                  <circle
+                    key={label}
+                    cx={(landmark / max) * 300}
+                    cy={100 - fractionAt(landmark) * 100}
+                    r="2"
+                  >
+                    <title>{`${label}: ${format(landmark)} h`}</title>
+                  </circle>
+                ))}
+            </svg>
+            {showPercentiles &&
+              showPercentileLabels &&
+              landmarks.map(({ label, value: landmark }) => (
+                <span
                   key={label}
-                  cx={(landmark / max) * 300}
-                  cy={100 - fractionAt(landmark) * 100}
-                  r="2"
+                  className={styles.percentile}
+                  style={{ left: `${(landmark / max) * 100}%` }}
+                  aria-hidden="true"
                 />
               ))}
-            </svg>
-            {landmarks.map(({ label, value: landmark }) => (
-              <span
-                key={label}
-                className={styles.percentile}
-                style={{ left: `${(landmark / max) * 100}%` }}
-                aria-hidden="true"
-              />
-            ))}
             {inRange && (
               <span
                 className={styles.elapsed}
@@ -333,6 +355,7 @@ export function DurationReferenceExample({
           </div>
           <Scale
             format={format}
+            showPercentileLabels={showPercentiles && showPercentileLabels}
             regions={visibleRegions}
             showThresholds={!showHealthBandLabels && visualization !== "both"}
           />
