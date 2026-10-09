@@ -218,8 +218,13 @@
 
 .label[data-inline="true"] {
   flex-wrap: wrap;
+  align-items: baseline;
   column-gap: design-token("space.1");
   row-gap: design-token("space.0.5");
+
+  > [data-assessment] {
+    align-self: center;
+  }
 }
 
 // Keep the measurement and its comparisons in one reading row above the graphic.
@@ -231,14 +236,14 @@
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: baseline;
     justify-content: flex-start;
     gap: design-token("space.1.5");
     grid-row: auto;
   }
 
   .summary {
-    align-items: center;
+    align-items: baseline;
   }
 
   .observationDetails {

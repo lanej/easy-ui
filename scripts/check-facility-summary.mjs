@@ -13,12 +13,50 @@ const browser = await chromium.launch({
   args: JSON.parse(process.env.BROWSER_LAUNCH_ARGS ?? "[]"),
 });
 const checks = [];
+const baselineChecks = [];
 const errors = [];
 const page = await browser.newPage({
   viewport: { width: 1040, height: 900 },
   deviceScaleFactor: 2,
 });
 page.on("pageerror", (e) => errors.push(e.message));
+// A zero-height inline marker sits on the text baseline. Box centers miss
+// misalignment between different font sizes and nested inline/flex elements.
+async function textBaseline(locator) {
+  return locator.evaluate((element) => {
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    let text;
+    while (walker.nextNode()) {
+      if (walker.currentNode.textContent.trim()) {
+        text = walker.currentNode;
+        break;
+      }
+    }
+    if (!text)
+      throw new Error("Expected visible text for baseline measurement");
+    const wrapper = document.createElement("span");
+    wrapper.style.display = "inline";
+    text.replaceWith(wrapper);
+    wrapper.append(text);
+    const marker = document.createElement("span");
+    marker.style.cssText =
+      "display:inline-block;width:0;height:0;margin:0;padding:0;vertical-align:baseline";
+    wrapper.append(marker);
+    const baseline = marker.getBoundingClientRect().top;
+    wrapper.replaceWith(text);
+    return baseline;
+  });
+}
+
+async function assertSharedBaseline(locators, name) {
+  const baselines = [];
+  // Measure sequentially so temporary markers never affect other measurements.
+  for (const locator of locators) baselines.push(await textBaseline(locator));
+  const spread = Math.max(...baselines) - Math.min(...baselines);
+  assert.ok(spread <= 0.25, `${name}: text baselines differ by ${spread}px`);
+  baselineChecks.push({ name, spread });
+}
+
 async function auditAccessibility(page, name) {
   await page.addScriptTag({
     path: require.resolve("axe-core/axe.min.js"),
@@ -97,6 +135,26 @@ try {
             0,
           );
         }
+        if (["compact", "default", "detailed", "narrow"].includes(story)) {
+          const aligned = [
+            page.getByText("Current dwell", { exact: true }),
+            page.getByRole("img", { name: "6 h", exact: true }),
+            page
+              .getByRole("img", { name: "6 h", exact: true })
+              .getByText("h", { exact: true }),
+          ];
+          if (["default", "detailed"].includes(story) && width === 1040) {
+            aligned.push(
+              page.getByText("As expected", { exact: true }),
+              page.getByText("Updated recently", { exact: true }),
+              page.locator('[data-percentile="P50"] dt'),
+              page.locator('[data-percentile="P50"] dd'),
+              page.locator('[data-percentile="P90"] dt'),
+              page.locator('[data-percentile="P90"] dd'),
+            );
+          }
+          await assertSharedBaseline(aligned, `${theme}-${width}-${story}`);
+        }
         if (story === "compact") {
           const dot = page.getByRole("img", {
             name: "As expected",
@@ -112,14 +170,6 @@ try {
           assert.ok(valueBox, "Compact duration must be visible");
           assert.ok(labelBox.x + labelBox.width <= dotBox.x);
           assert.ok(dotBox.x + dotBox.width <= valueBox.x);
-          assert.ok(
-            Math.abs(
-              valueBox.y +
-                valueBox.height / 2 -
-                labelBox.y -
-                labelBox.height / 2,
-            ) < 3,
-          );
           assert.ok(
             Math.abs(
               dotBox.y + dotBox.height / 2 - labelBox.y - labelBox.height / 2,
@@ -235,24 +285,9 @@ try {
             Math.abs(plot.x - assessment.x) < 2,
             "Reference must align with the observation row",
           );
-          const label = await page
-            .getByText("Current dwell", { exact: true })
-            .boundingBox();
-          const value = await page
-            .getByRole("img", { name: "6 h", exact: true })
-            .boundingBox();
-          const pill = await page
-            .getByText("As expected", { exact: true })
-            .boundingBox();
           const metrics = await page
             .locator('dl[aria-label="Reference percentiles"]')
             .boundingBox();
-          for (const item of [value, pill, metrics])
-            assert.ok(
-              Math.abs(label.y + label.height / 2 - item.y - item.height / 2) <
-                3,
-              "Observation and comparisons share one row",
-            );
           assert.ok(
             plot.y >= metrics.y + metrics.height,
             "Reference belongs below the observation row",
@@ -364,7 +399,12 @@ try {
   await writeFile(
     resolve(output, "report.json"),
     JSON.stringify(
-      { checks: checks.length, scenarios: checks, violations: 0 },
+      {
+        checks: checks.length,
+        scenarios: checks,
+        baselineChecks,
+        violations: 0,
+      },
       null,
       2,
     ),
