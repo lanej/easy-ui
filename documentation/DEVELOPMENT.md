@@ -81,3 +81,9 @@ BROWSER_CHANNEL=chrome STORYBOOK_URL=http://localhost:9013 node scripts/check-du
 ```
 
 `DURATION_REPORT_DIR` selects its screenshots and report. The harness covers supplied CDF/bin overlays, quantiles without invented geometry, missing/invalid/outside states, optional exact-data keyboard disclosure, standalone and composed references, narrow layouts, enlarged text, forced colors, both themes, and the existing assessment option alignment. Browser executable/module overrides support managed test environments. Run `node scripts/check-style-package.mjs` after building to verify packed package exports and TypeScript consumers.
+
+### Linked investigation verification
+
+`InvestigationWorkspace` owns the controlled event/location/path/connection selection and composes the existing timeline and map. Applications supply candidate membership and detail content; preserve ambiguous histories and unlocated events when coordinating the views.
+
+Run its focused tests and `NetworkMap` tests, then build Storybook and run `STORYBOOK_URL=http://localhost:9019 node scripts/check-investigation-workspace.mjs` using the locked `scripts/preview-metrics` Playwright dependencies. `INVESTIGATION_REPORT_DIR` selects its screenshots and report. The harness checks actual map clicks, keyboard selection, location stepping, shared connections, external selection, immutable refreshes, camera retention, responsive layouts, large text, and light/dark accessibility. The investigation workflow retains this browser evidence. Examples use a local schematic basemap with synthetic observations.

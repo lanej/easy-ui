@@ -1,0 +1,55 @@
+name: Investigation workspace
+on:
+  pull_request:
+    paths:
+      - "easy-ui-react/src/InvestigationWorkspace/**"
+      - "easy-ui-react/src/EventTimeline/**"
+      - "easy-ui-react/src/NetworkMap/**"
+      - "easy-ui-react/src/HealthAssessment/**"
+      - "easy-ui-react/src/DurationDistribution/**"
+      - "scripts/check-investigation-workspace.mjs"
+      - ".github/workflows/investigation-workspace.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: investigation-workspace-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build:storybook
+      - name: Install browser dependencies
+        working-directory: scripts/preview-metrics
+        run: npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: Verify linked interaction and responsive Storybook layouts
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9019
+          INVESTIGATION_REPORT_DIR: ${{ runner.temp }}/investigation-workspace
+        run: |
+          python3 -m http.server 9019 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/investigation-storybook.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
+          node scripts/check-investigation-workspace.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: investigation-workspace-browser
+          path: |
+            ${{ runner.temp }}/investigation-workspace
+            ${{ runner.temp }}/investigation-storybook.log
+          if-no-files-found: ignore

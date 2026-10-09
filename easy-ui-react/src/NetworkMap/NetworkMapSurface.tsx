@@ -187,6 +187,7 @@ function NetworkMapSurfaceView() {
     };
     let disposed = false,
       observer: ResizeObserver | undefined;
+    let resizeFrame = 0;
     let detachInspection: (() => void) | undefined;
     let overlayRenderer: ReturnType<typeof createOverlayRenderer> | undefined;
     let markers: {
@@ -262,6 +263,9 @@ function NetworkMapSurfaceView() {
           renderWorldCopies: true,
           canvasContextAttributes: { antialias: true },
           cooperativeGestures: true,
+          // The component's observer batches canvas writes after layout.
+          // Avoid a second synchronous resize from the engine's observer.
+          trackResize: false,
         });
         instance.current = map;
         detachInspection = overlayInspectionEvents.attach(map, element);
@@ -921,8 +925,14 @@ function NetworkMapSurfaceView() {
           element.dataset.mapIdle = "false";
         });
         observer = new ResizeObserver(() => {
-          map.resize();
-          position();
+          // MapLibre writes canvas dimensions. Defer those writes until the
+          // observation cycle completes when a surrounding grid resizes.
+          window.cancelAnimationFrame(resizeFrame);
+          resizeFrame = window.requestAnimationFrame(() => {
+            if (disposed) return;
+            map.resize();
+            position();
+          });
         });
         observer.observe(element);
       })
@@ -940,6 +950,7 @@ function NetworkMapSurfaceView() {
       refresh.current = null;
       refreshControls.current = null;
       observer?.disconnect();
+      window.cancelAnimationFrame(resizeFrame);
       if (positionLabels) {
         document.fonts?.removeEventListener("loadingdone", positionLabels);
         element.removeEventListener("toggle", positionLabels, true);

@@ -1,0 +1,117 @@
+@use "../styles/common" as *;
+
+.root {
+  container-type: inline-size;
+  container-name: investigation;
+  min-inline-size: 0;
+  color: design-token("color.neutral.900");
+}
+.paths,
+.heading,
+.memberships,
+.stepping {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: design-token("space.1");
+}
+.paths {
+  margin-block-end: design-token("space.2");
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.4fr);
+  grid-template-areas: "timeline map" "timeline detail";
+  gap: design-token("space.2");
+  align-items: start;
+}
+.timeline,
+.details {
+  min-inline-size: 0;
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 8px;
+  padding: design-token("space.2");
+}
+.timeline {
+  grid-area: timeline;
+}
+.map {
+  grid-area: map;
+  min-inline-size: 0;
+}
+.details {
+  grid-area: detail;
+  display: grid;
+  gap: design-token("space.1.5");
+  overflow-wrap: anywhere;
+}
+.heading {
+  justify-content: space-between;
+}
+.timeline .heading {
+  margin-block-end: design-token("space.1.5");
+}
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: design-token("space.1.5") design-token("space.3");
+  margin: 0;
+  font-size: 13px;
+  dt {
+    color: design-token("color.neutral.700");
+    font-size: 12px;
+    margin-block-end: 4px;
+  }
+  dd {
+    margin: 0;
+  }
+}
+.eventChoices,
+.indexItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.associated {
+  display: grid;
+  gap: 4px;
+}
+.content {
+  min-inline-size: 0;
+}
+.stepping {
+  justify-content: space-between;
+}
+.index {
+  font-size: 13px;
+  padding-block-start: design-token("space.1");
+}
+.index summary {
+  cursor: pointer;
+  color: design-token("color.neutral.700");
+}
+.indexItems {
+  padding-block-start: design-token("space.1");
+}
+.preview {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.announcement {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+@container investigation (max-width: 740px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "map" "detail" "timeline";
+  }
+  .timeline,
+  .details {
+    padding: design-token("space.1.5");
+  }
+}
