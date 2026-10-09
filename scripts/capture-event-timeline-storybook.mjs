@@ -121,12 +121,16 @@ try {
       throw new Error(`Storybook runtime errors: ${errors.join("; ")}`);
     if (inline) await assertInlineRows();
     await page.evaluate(() => {
-      for (const time of document.querySelectorAll("li > div > button > span:first-child")) {
+      for (const time of document.querySelectorAll(
+        "li > div > button > span:first-child",
+      )) {
         if (
           time.scrollWidth > time.clientWidth + 2 &&
           getComputedStyle(time).textOverflow !== "ellipsis"
         ) {
-          throw new Error("Timeline timestamp overlaps the neighboring event text");
+          throw new Error(
+            "Timeline timestamp overlaps the neighboring event text",
+          );
         }
       }
     });
