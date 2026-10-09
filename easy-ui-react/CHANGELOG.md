@@ -1,5 +1,70 @@
 # @easypost/easy-ui
 
+## 1.0.0-alpha.138
+
+### Minor Changes
+
+- 565058e: Add CardListItem and PriceRangeSlider, adopted from logistics-services with Easy UI styling, accessible interactions, and Storybook examples.
+- d4b2219: Improve compact DataGrid layouts with narrower horizontal padding, per-column wrapping control, and unwrapped numeric body values by default. Headers and rows grow for rich content and enlarged text; expanded details use the measured body height. Add a mobile benchmark composition with a focused metric, sample counts, and the full comparison available.
+- a0ceabe: Add a composable Disclosure with controlled or independent expansion, unique trigger and panel relationships, explicit content preservation or unmounting, and focus return when closing a focused panel.
+- 4903985: Add DurationDistribution and its DurationQuantileMetrics companion for caller-supplied completed-duration references. Support validated quantiles, histogram bins, and cumulative points with independent health policy, optional overlays and metadata, exact out-of-scale values, and composition with HealthAssessment. Quantiles alone never imply a curve or histogram.
+
+  Classify HealthAssessment as an organism and DurationDistribution as a molecule, with matching Storybook categories and composition documentation. Component import paths and props remain unchanged.
+
+  Offer binned or smooth histogram-derived references as full plots or compact concentration bars, preserving semantic health colors and exact source counts.
+
+- 565058e: Add a default dark palette that follows Provider's light, dark, system, and inverted color schemes.
+- 90aa503: Add FacilitySummary as an organism composing facility identity and independent HealthAssessment observations, with optional duration references, compact/table and detailed forms, localized absence/loading states, and no inferred facility health policy.
+
+  Support a HealthIndicator dot variant and HealthAssessment label placement so compact facility observations show the label, status dot, and duration on one row.
+
+  Keep optional freshness in separate context from health, and support inline percentile metrics above reference graphics. ObservationFreshness supports optional visible fresh-state labels; FacilitySummary shows them by default and honors an explicit `showStateLabel: false`. HealthAssessment supports context placement for freshness.
+
+  Use a consistent observation row above full-width references in facility summaries, with secondary identity metadata and inline percentile comparisons.
+
+  Keep label-placed assessments visible at narrow responsive widths, including dot assessments.
+
+- d988359: Support grouped DataGrid rows with caller-defined subtotal aggregators, human-readable group labels, and optional collapse controls. Add per-column alignment, width and numeric layout options, uncapped rows, and an explicit maximum height. Preserve subtotal state, keyboard focus, selection, and expansion through grouping changes and consumer-key collisions. Skip hidden cell/action renderers while retaining complete selection and subtotal semantics.
+
+  Treat expandedKey={null} as controlled closed state and report the next key or null from onExpandedChange. Consumers that treated its argument as the clicked row key should store the next state instead. Suspend expanded details safely during loading and restore them when loading finishes.
+
+- 68440f0: Add a reusable status-dot atom plus health, duration, freshness, and composed assessment components with a visible observation label, emphasized value with a larger headline option, compact assessment pill, and supporting timestamp with a freshness dot and optional prefix. Match observation and reference column heights on wide layouts, with the assessment pill above the headline and freshness at the bottom. Stack the reference below the observation in compact layouts. Include optional supporting-reference content in the shared column height. Keep loading and missing observations concise, with localized labels and caller-owned assessment policy.
+- 9f6c7f1: Add composable vertical DrawerRow and DrawerTable components adapted from Logistics Services, with inline details, independent actions, and controlled or uncontrolled expansion.
+- 014f37b: Give ordinary unpositioned Cartesian charts a wrapping, keyboard-accessible series legend outside the plot, with 44px touch targets and room for axis labels. Preserve explicit native layouts and controlled legend selection; expose `layout="native"` and the reusable `ChartLegend` for application composition.
+- 4d8647a: Add NetworkMap with an optional, lazy MapLibre peer, zoom-aware facilities, observed/planned connections, risk, weather, delivery surfaces, and accessible exact data. MapLibre CSS and the matching worker are supplied by map consumers.
+
+  Compose the map surface independently from optional headings, controls, legends, selection details, and equivalent data. Hide inapplicable controls; support caller labels, layer visibility, facility colors, and explicit camera requests. Retain initial fitting and camera commands across Strict Mode replay and reloads. Typography and measured labels adapt to the available space, with a 220px height floor and readable legend/scale defaults.
+
+  Preserve source values, missing observations, provenance and uncertainty for weather and surface data. Keep dateline routes short, consumer paint overrides intact, and selection visible across evidence types. Update marker callbacks without rebuilding the map, and avoid unchanged source uploads during interaction updates.
+
+  Inspect delivery cells on hover or click/tap, with a contained, dismissible detail card and equivalent keyboard-accessible details. Supplied quartiles and bounds render an engine-free range plot; missing distributions retain honest summaries. Reuse `NetworkMapCellDetails`, supply a custom chart, or hide the card while retaining original-record callbacks. Configure delivery color scales and switch named metrics without rebuilding the map.
+
+  Compose arbitrary charts inside `NetworkMapCellDetails` while retaining its summary and provenance. Embedded controls keep focus when pinning the inspector. Histogram, density and history recipes demonstrate application-owned data and optional chart engines without adding chart-specific map props.
+
+- 8cfb5f9: Add optional DrawerTable footers with controlled pagination and rows-per-page controls. Reuse the Pagination molecule for DataGrid and DrawerTable, with opt-in wrapping for numbered controls.
+- 2378b32: Improve DatePicker and DateRangePicker with independent editable fields and calendar controls, optional clearing, form submission, associated descriptions and validation, and read-only support. Make calendar popovers focus-contained, theme-aware, and responsive.
+- 67398af: Add a generic selectable event timeline and event-item composition with optional interval content, shared selection and location callbacks.
+- 5904fe3: Support shared rich facility and overlay inspection with public renderers and focusable triggers, including pinning, viewport placement, and live theme updates.
+- 7ef6f7d: Add RiskScore to display a bounded risk score with a caller-supplied assessment, a proportional meter, and compact or regular sizing. Support custom score scales, localized labels and formatting, and neutral loading and unavailable states without inferring assessment thresholds.
+- b0401c0: Add ScoreComposition and reusable score primitives for accessible explanations of signals, capped contributions, and supplied results. Includes responsive DOM layout, decorative SVG connectors, exact values, signal and contribution title disclosures, independently collapsible supporting columns, rich chart detail composition with highlighted observations and shaded-level examples, hover/focus connection emphasis, explicitly untriggered signal paths, explicit sentiment colors with visible status labels, contribution fullness states, and prominent application-owned result decisions without a graph engine.
+- bfea5d4: Add Chart with an optional, lazy ECharts peer, typed options, responsive SVG/canvas rendering, exact-value tables, and shipping examples. ChartSurface, ChartProvider, headings, zoom controls, and data views compose in application-owned layouts; Chart also supports bare framing and optional visible headings. Preserve zoom, legend, and graph camera state through updates while honoring explicit settings. Support coordinated controlled interactions, targeted keyboard zoom, and in-place engine retry.
+
+  Enrich the chart's existing folded data table with `dataTable.renderCell`, column layout options, and a configurable height limit. Render formatted values, comparison badges, links, and native plots from original row records. Keep plain/missing-value fallbacks and stable row selection; mount custom content on first opening and retain it across collapse.
+
+  Keep table headings visible during scrolling and optionally pin leading columns, adapting to narrow layouts and larger text. Enable numeric or locale-aware sorting per column, with controlled or initial sort state, original-value sorting, missing values last, and stable row/cell identity. The rich example separates cost and change and identifies each row by region and zone.
+
+  Add the engine-free MetricCard, BarList, BulletChart, CompactTimeSeries, and RangePlot components. Provide reusable metric/comparison content, explicit baselines and shared scales, gap-aware observations, elapsed-time placement, configurable typography, and exact data formatting independent of axis abbreviations. Compose compact trends with Chart instead of a standalone SVG Sparkline or a MetricCard trend prop. Distinguish missing, invalid, zero, and outside-domain measurements with explicit omit/clamp policies.
+
+### Patch Changes
+
+- ebce440: Include built components, declarations, CSS, and Sass in normal and release-directory npm tarballs. Preserve modern dist-based exports and generate package-root component, deep declaration, utility, and style entries for legacy TypeScript module resolution. Forward default exports only when they exist, copy authored declarations, and preserve CSS/Sass side effects. Cache and safely clean generated entries alongside the package build.
+- b007140: Avoid selecting overlays beneath facility markers or map controls, preserve overlay inspector identity through data reordering, and apply active theme colors to native chart titles.
+- 565058e: Make product template surfaces, help controls, logos, and shared tab navigation
+  follow the selected color scheme. Keep plain content readable on the focused
+  layout's dark branded side panel.
+- Updated dependencies [565058e]
+  - @easypost/easy-ui-tokens@1.0.0-alpha.18
+
 ## 1.0.0-alpha.137
 
 ### Minor Changes

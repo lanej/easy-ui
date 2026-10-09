@@ -1,5 +1,11 @@
 # @easypost/easy-ui-tokens
 
+## 1.0.0-alpha.18
+
+### Minor Changes
+
+- 565058e: Add a default dark palette that follows Provider's light, dark, system, and inverted color schemes.
+
 ## 1.0.0-alpha.17
 
 ### Patch Changes
