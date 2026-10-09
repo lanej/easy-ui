@@ -23,6 +23,8 @@ type ExampleArgs = HealthAssessmentProps & {
   showPercentileLabels?: boolean;
   showPercentileMetrics?: boolean;
   showReferenceDistribution?: boolean;
+  showCountAxis?: boolean;
+  showSampleCount?: boolean;
 };
 
 const meta: Meta<ExampleArgs> = {
@@ -30,6 +32,15 @@ const meta: Meta<ExampleArgs> = {
   component: HealthAssessment,
   parameters: { layout: "padded" },
   argTypes: {
+    showCountAxis: {
+      control: "boolean",
+      description: "Story-only: show the optional right count axis.",
+    },
+    showSampleCount: {
+      control: "boolean",
+      description: "Story-only: show synthetic sample metadata.",
+    },
+    referenceLayout: { control: "select", options: ["auto", "compact"] },
     reference: { control: false },
     referenceDetails: { control: false },
     observationDetails: { control: false },
@@ -63,7 +74,8 @@ const meta: Meta<ExampleArgs> = {
     },
     showReferenceDistribution: {
       control: "boolean",
-      description: "Story-only: offer the reference histogram disclosure.",
+      description:
+        "Story-only: overlay the reference histogram without changing chart height.",
     },
   },
   args: {
@@ -143,17 +155,13 @@ function referenceFor(
     | "showPercentiles"
     | "showPercentileLabels"
     | "showReferenceDistribution"
+    | "showCountAxis"
+    | "showSampleCount"
   > = {},
   section: "primary" | "details" = "primary",
 ) {
   if (options.referenceVisualization === "none") return undefined;
-  if (
-    section === "details" &&
-    (options.referenceVisualization === "histogram" ||
-      ((options.referenceVisualization ?? "cumulative") === "cumulative" &&
-        options.showReferenceDistribution === false))
-  )
-    return undefined;
+  if (section === "details") return undefined;
   return (
     <DurationReferenceExample
       value={value}
@@ -171,11 +179,13 @@ function referenceFor(
       locale={locale}
       visualization={options.referenceVisualization}
       showDistribution={options.showReferenceDistribution}
+      showHealthBands={options.showHealthBands}
+      showCountAxis={options.showCountAxis}
+      showSampleCount={options.showSampleCount}
       showHealthBandLabels={options.showHealthBandLabels}
       showPercentiles={options.showPercentiles}
       showPercentileLabels={options.showPercentileLabels}
       regions={
-        options.showHealthBands !== false &&
         assessed &&
         typeof value === "number" &&
         Number.isFinite(value) &&
@@ -199,6 +209,8 @@ function referenceDetailsFor(
     | "showPercentiles"
     | "showPercentileLabels"
     | "showReferenceDistribution"
+    | "showCountAxis"
+    | "showSampleCount"
   > = {},
 ) {
   return referenceFor(value, assessed, locale, options, "details");
@@ -213,6 +225,8 @@ function renderExample(
     showPercentileLabels,
     showPercentileMetrics,
     showReferenceDistribution,
+    showCountAxis,
+    showSampleCount,
     ...args
   }: ExampleArgs,
   locale: "en" | "fr" = "en",
@@ -238,7 +252,17 @@ function renderExample(
         referenceVisualization !== "none" &&
         showPercentiles !== false &&
         showPercentileMetrics ? (
-          <DurationPercentileMetrics locale={locale} />
+          <DurationPercentileMetrics
+            locale={locale}
+            regions={
+              assessed &&
+              typeof value === "number" &&
+              Number.isFinite(value) &&
+              value >= 0
+                ? regionsByLocale[locale]
+                : undefined
+            }
+          />
         ) : (
           args.observationDetails
         )
@@ -263,6 +287,8 @@ function renderExample(
               showPercentiles,
               showPercentileLabels,
               showReferenceDistribution,
+              showCountAxis,
+              showSampleCount,
             })
           : undefined
       }
@@ -275,6 +301,8 @@ function renderExample(
               showPercentiles,
               showPercentileLabels,
               showReferenceDistribution,
+              showCountAxis,
+              showSampleCount,
             })
           : undefined
       }
@@ -318,6 +346,39 @@ export const HistogramOnly: Story = {
 export const BothReferences: Story = {
   args: { ...defaultProps, referenceVisualization: "both" },
 };
+export const OverlayWithMetrics: Story = {
+  args: {
+    ...defaultProps,
+    referenceVisualization: "both",
+    showPercentileMetrics: true,
+  },
+};
+export const OverlayWithCountAxis: Story = {
+  args: {
+    ...defaultProps,
+    referenceVisualization: "both",
+    showPercentileMetrics: true,
+    showCountAxis: true,
+  },
+};
+export const CompactHorizontal: Story = {
+  args: {
+    ...defaultProps,
+    referenceVisualization: "both",
+    showPercentileMetrics: true,
+    referenceLayout: "compact",
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ maxWidth: 388 }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+export const WithSampleCount: Story = {
+  args: { ...defaultProps, showSampleCount: true },
+};
 export const LabeledPercentiles: Story = {
   args: { ...defaultProps, showPercentileLabels: true },
 };
@@ -353,7 +414,8 @@ type ReferenceOption = {
   percentileLabels?: boolean;
   metrics?: boolean;
   distribution?: boolean;
-  expanded?: boolean;
+  countAxis?: boolean;
+  sampleCount?: boolean;
 };
 
 const primaryOptions: ReferenceOption[] = [
@@ -402,46 +464,50 @@ const primaryOptions: ReferenceOption[] = [
 ];
 const distributionOptions: ReferenceOption[] = [
   {
-    name: "Distribution closed · bands on",
+    name: "Overlay on · bands on",
     visualization: "cumulative",
     bands: true,
     distribution: true,
+    metrics: true,
   },
   {
-    name: "Distribution open · bands on",
+    name: "Overlay off · bands on",
     visualization: "cumulative",
     bands: true,
-    distribution: true,
-    expanded: true,
+    distribution: false,
+    metrics: true,
   },
   {
-    name: "Distribution closed · bands off",
+    name: "Overlay on · bands off",
     visualization: "cumulative",
     bands: false,
     distribution: true,
+    metrics: true,
   },
   {
-    name: "Distribution open · bands off",
-    visualization: "cumulative",
-    bands: false,
-    distribution: true,
-    expanded: true,
+    name: "Overlay · count axis",
+    visualization: "both",
+    bands: true,
+    metrics: true,
+    countAxis: true,
+  },
+  {
+    name: "Overlay · sample metadata",
+    visualization: "both",
+    bands: true,
+    metrics: true,
+    sampleCount: true,
   },
   { name: "Reference off", visualization: "none", bands: false },
 ];
 
 function ReferenceOptionExample({ option }: { option: ReferenceOption }) {
-  const element = React.useRef<HTMLDivElement>(null);
-  React.useEffect(() => {
-    const details = element.current?.querySelector("details");
-    if (details) details.open = option.expanded === true;
-  }, [option.expanded]);
   return (
     <section className={styles.option} data-reference-option={option.name}>
       <Text as="h3" variant="body2" weight="semibold">
         {option.name}
       </Text>
-      <div ref={element}>
+      <div>
         {renderExample({
           ...defaultProps,
           referenceVisualization: option.visualization,
@@ -451,6 +517,8 @@ function ReferenceOptionExample({ option }: { option: ReferenceOption }) {
           showPercentileLabels: option.percentileLabels === true,
           showPercentileMetrics: option.metrics === true,
           showReferenceDistribution: option.distribution === true,
+          showCountAxis: option.countAxis === true,
+          showSampleCount: option.sampleCount === true,
         })}
       </div>
     </section>

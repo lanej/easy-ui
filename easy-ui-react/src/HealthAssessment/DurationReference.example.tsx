@@ -61,9 +61,9 @@ function fractionAt(duration: number) {
       (next.duration - previous.duration)
   );
 }
+
 export type ReferenceVisualization =
   "cumulative" | "histogram" | "both" | "none";
-
 export type DurationHealthRegion = {
   from: number;
   to: number;
@@ -72,16 +72,20 @@ export type DurationHealthRegion = {
   shortLabel: string;
 };
 
+function regionAt(regions: readonly DurationHealthRegion[], value: number) {
+  return regions.find(({ from, to }) => value >= from && value < to);
+}
+
 function Scale({
   format,
-  regions = [],
-  showThresholds = false,
-  showPercentileLabels = false,
+  regions,
+  showThresholds,
+  showPercentileLabels,
 }: {
   format: (value: number) => string;
-  regions?: readonly DurationHealthRegion[];
-  showThresholds?: boolean;
-  showPercentileLabels?: boolean;
+  regions: readonly DurationHealthRegion[];
+  showThresholds: boolean;
+  showPercentileLabels: boolean;
 }) {
   const thresholds = showThresholds
     ? regions
@@ -100,8 +104,11 @@ function Scale({
         landmarks.map(({ label, value }) => (
           <span
             key={label}
-            data-percentile={label}
             className={styles.percentileLabel}
+            data-percentile={label}
+            data-reference-assessment={
+              regionAt(regions, value)?.assessment ?? "unassessed"
+            }
             style={{ left: `${(value / max) * 100}%` }}
           >
             {label}
@@ -124,7 +131,68 @@ function Scale({
   );
 }
 
-/** Story-only composition of caller-supplied ranges and a reference disclosure. */
+/** Bars and the curve share duration coordinates; their vertical scales differ. */
+function HistogramBars({
+  regions,
+  format,
+}: {
+  regions: readonly DurationHealthRegion[];
+  format: (value: number) => string;
+}) {
+  return (
+    <svg
+      className={styles.histogramBars}
+      viewBox="0 0 300 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {bins.map(({ from, to, count }) => {
+        const left = from + 0.05,
+          right = to - 0.05;
+        const edges = [
+          ...new Set([
+            left,
+            right,
+            ...regions
+              .flatMap((region) => [region.from, region.to])
+              .filter((edge) => edge > left && edge < right),
+          ]),
+        ].sort((a, b) => a - b);
+        return (
+          <g
+            key={from}
+            data-bin-from={from}
+            data-bin-to={to}
+            data-bin-count={count}
+          >
+            <title>{`${format(from)}–${format(to)} h: ${format(count)} observations`}</title>
+            {edges.slice(0, -1).map((start, index) => {
+              const end = edges[index + 1];
+              return (
+                <rect
+                  key={start}
+                  className={styles.bin}
+                  data-reference-assessment={
+                    regionAt(regions, (start + end) / 2)?.assessment ??
+                    "unassessed"
+                  }
+                  data-segment-from={start}
+                  data-segment-to={end}
+                  x={(start / max) * 300}
+                  y={100 - (count / peak) * 100}
+                  width={((end - start) / max) * 300}
+                  height={(count / peak) * 100}
+                />
+              );
+            })}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** Story-only composition of caller-supplied assessment ranges and reference data. */
 export function DurationReferenceExample({
   value,
   locale = "en",
@@ -133,9 +201,12 @@ export function DurationReferenceExample({
   section = "all",
   visualization = "cumulative",
   showDistribution = true,
+  showHealthBands = true,
   showHealthBandLabels = false,
   showPercentiles = true,
   showPercentileLabels = false,
+  showCountAxis = false,
+  showSampleCount = false,
 }: {
   value: number | null;
   locale?: "en" | "fr";
@@ -144,16 +215,21 @@ export function DurationReferenceExample({
   section?: "all" | "primary" | "details";
   visualization?: ReferenceVisualization;
   showDistribution?: boolean;
+  showHealthBands?: boolean;
   showHealthBandLabels?: boolean;
   showPercentiles?: boolean;
   showPercentileLabels?: boolean;
+  showCountAxis?: boolean;
+  showSampleCount?: boolean;
 }) {
+  if (visualization === "none" || section === "details") return null;
   const valid =
     typeof value === "number" && Number.isFinite(value) && value >= 0;
   const inRange = valid && value <= max;
   const format = (number: number) =>
     new Intl.NumberFormat(locale).format(number);
   const visibleRegions = regions.filter(({ from, to }) => from < max && to > 0);
+  const bands = showHealthBands ? visibleRegions : [];
   const regionWidth = ({ from, to }: DurationHealthRegion) =>
     `${((Math.min(max, to) - Math.max(0, from)) / max) * 100}%`;
   const rangeLabel = ({ from, to }: DurationHealthRegion) =>
@@ -161,119 +237,37 @@ export function DurationReferenceExample({
       ? `${from > 0 ? `${format(from)}–` : ""}<${format(to)} h`
       : `≥${format(from)} h`;
   const rangesLabel = regions.length
-    ? `${locale === "fr" ? "Plages d’évaluation illustratives" : "Illustrative assessment ranges"}: ${regions.map((region) => `${region.label}: ${Number.isFinite(region.to) ? `${format(region.from)} ≤ h < ${format(region.to)}` : `h ≥ ${format(region.from)}`}`).join("; ")}. `
+    ? `${locale === "fr" ? "Plages d’évaluation illustratives" : "Illustrative assessment ranges"}: ${regions.map((region) => `${region.label}: ${rangeLabel(region)}`).join("; ")}. `
     : "";
   const valueLabel = valid
     ? `${locale === "fr" ? "Écoulé" : "Elapsed"}: ${format(value)} h${value > max ? (locale === "fr" ? " · Hors échelle" : " · Outside scale") : ""}`
     : locale === "fr"
       ? "Durée indisponible"
       : "Elapsed unavailable";
-  const description =
-    locale === "fr"
-      ? "1 000 durées terminées fictives"
-      : "1,000 synthetic completed durations";
   const percentileDescription = showPercentiles
-    ? "P50: 9 h, 50%. P90: 18 h, 90%. "
+    ? landmarks
+        .map(
+          ({ label, value }) =>
+            `${label}: ${format(value)} h${regionAt(regions, value) ? `, ${regionAt(regions, value)?.label}` : ""}`,
+        )
+        .join(". ") + ". "
     : "";
   const referenceLabel =
     locale === "fr"
       ? "Référence des durées terminées"
       : "Completed-duration reference";
-  const distributionLabel = bins
-    .map(
-      ({ from, to, count }) =>
-        `${format(from)}–${format(to)} h: ${format(count)}`,
-    )
-    .join("; ");
-
-  if (visualization === "none") return null;
-  const hasCurve = visualization === "cumulative" || visualization === "both";
-  const showCurve = hasCurve && section !== "details";
-  const regionHeader = showHealthBandLabels && visibleRegions.length > 0 && (
-    <div className={styles.regionLabels} aria-hidden="true">
-      {visibleRegions.map((region) => (
-        <span
-          key={region.from}
-          className={styles.regionLabel}
-          style={{ width: regionWidth(region) }}
-        >
-          {region.shortLabel}
-          <small>{rangeLabel(region)}</small>
-        </span>
-      ))}
-    </div>
-  );
-  const regionLegend = showHealthBandLabels && visibleRegions.length > 0 && (
-    <div className={styles.compactRegions} aria-hidden="true">
-      {visibleRegions.map((region) => (
-        <span key={region.from} data-assessment={region.assessment}>
-          <span>{region.shortLabel}</span>
-          <span>{rangeLabel(region)}</span>
-        </span>
-      ))}
-    </div>
-  );
-  const histogram = (
-    <figure className={styles.distribution}>
-      <figcaption>
-        <Text as="p" variant="caption" color="subdued">
-          {description}
-        </Text>
-      </figcaption>
-      {!hasCurve && regionHeader}
-      <div
-        className={styles.histogram}
-        role="img"
-        aria-label={`${description}. ${rangesLabel}${percentileDescription}${distributionLabel}.`}
-      >
-        <div className={styles.track} aria-hidden="true">
-          {visibleRegions.map((region) => (
-            <span
-              key={region.from}
-              className={styles.region}
-              data-assessment={region.assessment}
-              style={{
-                left: `${(region.from / max) * 100}%`,
-                width: regionWidth(region),
-              }}
-            />
-          ))}
-        </div>
-        <div className={styles.bins} aria-hidden="true">
-          {bins.map(({ from, count }) => (
-            <span
-              key={from}
-              className={styles.bin}
-              style={{ height: `${(count / peak) * 100}%` }}
-            />
-          ))}
-        </div>
-        {showPercentiles &&
-          landmarks.map(({ label, value: landmark }) => (
-            <span
-              key={label}
-              data-percentile={label}
-              className={
-                showPercentileLabels
-                  ? styles.histogramPercentile
-                  : styles.histogramPoint
-              }
-              style={{ left: `${(landmark / max) * 100}%` }}
-              aria-hidden="true"
-              title={`${label}: ${format(landmark)} h`}
-            />
-          ))}
-      </div>
-      <Scale
-        format={format}
-        showPercentileLabels={showPercentiles && showPercentileLabels}
-        regions={visibleRegions}
-        showThresholds={!showHealthBandLabels && visualization !== "cumulative"}
-      />
-      {!hasCurve && regionLegend}
-    </figure>
-  );
-
+  const hasCurve = visualization !== "histogram";
+  const hasHistogram =
+    visualization === "histogram" ||
+    visualization === "both" ||
+    showDistribution;
+  const distributionLabel = hasHistogram
+    ? `${locale === "fr" ? "Nombre par intervalle" : "Count per interval"}: ${bins.map(({ from, to, count }) => `${format(from)}–${format(to)} h: ${format(count)}`).join("; ")}. `
+    : "";
+  const description =
+    locale === "fr"
+      ? "1 000 durées terminées fictives"
+      : "1,000 synthetic completed durations";
   return (
     <div
       className={styles.root}
@@ -281,35 +275,58 @@ export function DurationReferenceExample({
       data-percentiles={
         showPercentiles ? (showPercentileLabels ? "labeled" : "points") : "none"
       }
+      data-visualization={
+        hasCurve ? (hasHistogram ? "overlay" : "cumulative") : "histogram"
+      }
     >
-      {showCurve && (
-        <figure
-          className={styles.figure}
-          aria-label={
-            locale === "fr" ? "Référence de durée" : "Duration reference"
-          }
+      <figure
+        className={styles.figure}
+        data-has-count-axis={hasHistogram && showCountAxis}
+        aria-label={referenceLabel}
+      >
+        {showSampleCount && (
+          <figcaption className={styles.sampleCount}>
+            <Text as="p" variant="caption" color="subdued">
+              {description}
+            </Text>
+          </figcaption>
+        )}
+        {showHealthBandLabels && bands.length > 0 && (
+          <div className={styles.regionLabels} aria-hidden="true">
+            {bands.map((region) => (
+              <span
+                key={region.from}
+                className={styles.regionLabel}
+                style={{ width: regionWidth(region) }}
+              >
+                {region.shortLabel}
+                <small>{rangeLabel(region)}</small>
+              </span>
+            ))}
+          </div>
+        )}
+        <div
+          className={styles.plot}
+          data-has-count-axis={hasHistogram && showCountAxis}
+          title={referenceLabel}
+          role="img"
+          aria-label={`${valueLabel}. ${rangesLabel}${referenceLabel}. ${hasCurve ? (locale === "fr" ? "Pourcentage cumulé terminé. " : "Cumulative percentage completed. ") : ""}${percentileDescription}${distributionLabel}0–30 h. ${description}.`}
         >
-          {regionHeader}
-          <div
-            className={styles.plot}
-            title={referenceLabel}
-            data-has-regions={visibleRegions.length > 0}
-            role="img"
-            aria-label={`${valueLabel}. ${rangesLabel}${referenceLabel}: ${locale === "fr" ? "Pourcentage terminé" : "Percentage completed"}. ${percentileDescription}0–30 h. ${locale === "fr" ? "Interpolation entre les observations fictives" : "Interpolated between synthetic observations"}.`}
-          >
-            <div className={styles.track} aria-hidden="true">
-              {visibleRegions.map((region) => (
-                <span
-                  key={region.from}
-                  className={styles.region}
-                  data-assessment={region.assessment}
-                  style={{
-                    left: `${(Math.max(0, region.from) / max) * 100}%`,
-                    width: regionWidth(region),
-                  }}
-                />
-              ))}
-            </div>
+          <div className={styles.track} aria-hidden="true">
+            {bands.map((region) => (
+              <span
+                key={region.from}
+                className={styles.region}
+                data-assessment={region.assessment}
+                style={{
+                  left: `${(Math.max(0, region.from) / max) * 100}%`,
+                  width: regionWidth(region),
+                }}
+              />
+            ))}
+          </div>
+          {hasHistogram && <HistogramBars regions={regions} format={format} />}
+          {hasCurve && (
             <svg
               className={styles.curve}
               viewBox="0 0 300 100"
@@ -318,83 +335,109 @@ export function DurationReferenceExample({
             >
               <path d={curvePath} />
             </svg>
-            {showPercentiles &&
-              landmarks.map(({ label, value: landmark }) => (
-                <span
-                  key={label}
-                  className={styles.curvePoint}
-                  data-percentile={label}
-                  style={{
-                    left: `${(landmark / max) * 100}%`,
-                    top: `${(1 - fractionAt(landmark)) * 100}%`,
-                  }}
-                  title={`${label}: ${format(landmark)} h`}
-                  aria-hidden="true"
-                />
-              ))}
-            {showPercentiles &&
-              showPercentileLabels &&
-              landmarks.map(({ label, value: landmark }) => (
-                <span
-                  key={label}
-                  data-percentile={label}
-                  className={styles.percentile}
-                  style={{ left: `${(landmark / max) * 100}%` }}
-                  aria-hidden="true"
-                />
-              ))}
-            {inRange && (
+          )}
+          {showPercentiles &&
+            landmarks.map(({ label, value: landmark }) => (
               <span
-                className={styles.elapsed}
-                data-current-assessment={currentAssessment ?? "unassessed"}
-                style={{ left: `${(value / max) * 100}%` }}
+                key={label}
+                className={hasCurve ? styles.curvePoint : styles.histogramPoint}
+                data-percentile={label}
+                data-reference-assessment={
+                  regionAt(regions, landmark)?.assessment ?? "unassessed"
+                }
+                style={{
+                  left: `${(landmark / max) * 100}%`,
+                  top: hasCurve
+                    ? `${100 - fractionAt(landmark) * 100}%`
+                    : undefined,
+                }}
+                title={`${label}: ${format(landmark)} h${regionAt(regions, landmark) ? ` · ${regionAt(regions, landmark)?.label}` : ""}`}
                 aria-hidden="true"
-              >
-                <span
-                  className={styles.marker}
-                  style={{
-                    top: `calc(${(1 - fractionAt(value)) * 100}% - 4px)`,
-                  }}
-                />
+              />
+            ))}
+          {showPercentiles &&
+            showPercentileLabels &&
+            landmarks.map(({ label, value: landmark }) => (
+              <span
+                key={label}
+                className={styles.percentile}
+                data-percentile={label}
+                data-reference-assessment={
+                  regionAt(regions, landmark)?.assessment ?? "unassessed"
+                }
+                style={{ left: `${(landmark / max) * 100}%` }}
+                aria-hidden="true"
+              />
+            ))}
+          {hasCurve && inRange && (
+            <span
+              className={styles.elapsed}
+              data-current-assessment={currentAssessment ?? "unassessed"}
+              style={{ left: `${(value / max) * 100}%` }}
+              aria-hidden="true"
+            >
+              <span
+                className={styles.marker}
+                style={{ top: `calc(${100 - fractionAt(value) * 100}% - 4px)` }}
+              />
+            </span>
+          )}
+          {hasHistogram && showCountAxis && (
+            <div className={styles.countAxis} aria-hidden="true">
+              <span className={styles.countTitle}>
+                {locale === "fr" ? "Nombre" : "Count"}
               </span>
-            )}
-          </div>
+              {[peak, (peak * 2) / 3, peak / 3, 0].map((count) => (
+                <span
+                  className={styles.countTick}
+                  key={count}
+                  data-end={
+                    count === 0 ? "bottom" : count === peak ? "top" : undefined
+                  }
+                  style={{ top: `${100 - (count / peak) * 100}%` }}
+                >
+                  {format(count)}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div
+          className={styles.axisFrame}
+          data-has-count-axis={hasHistogram && showCountAxis}
+        >
           <Scale
             format={format}
+            regions={regions}
+            showThresholds={showHealthBands && !showHealthBandLabels}
             showPercentileLabels={showPercentiles && showPercentileLabels}
-            regions={visibleRegions}
-            showThresholds={!showHealthBandLabels && visualization !== "both"}
           />
-          {regionLegend}
-          {!inRange && (
-            <figcaption className={styles.valueState}>{valueLabel}</figcaption>
-          )}
-        </figure>
-      )}
-      {((visualization === "histogram" && section !== "details") ||
-        (visualization === "both" && section !== "primary")) &&
-        histogram}
-      {visualization === "cumulative" &&
-        showDistribution &&
-        section !== "primary" && (
-          <details className={styles.disclosure}>
-            <summary>
-              {locale === "fr"
-                ? "Distribution de référence"
-                : "Reference distribution"}
-            </summary>
-            {histogram}
-          </details>
+        </div>
+        {showHealthBandLabels && bands.length > 0 && (
+          <div className={styles.compactRegions} aria-hidden="true">
+            {bands.map((region) => (
+              <span key={region.from} data-assessment={region.assessment}>
+                <span>{region.shortLabel}</span>
+                <span>{rangeLabel(region)}</span>
+              </span>
+            ))}
+          </div>
         )}
+        {!inRange && (
+          <figcaption className={styles.valueState}>{valueLabel}</figcaption>
+        )}
+      </figure>
     </div>
   );
 }
 
-/** Story-only legend; supplied through the molecule's observationDetails slot. */
+/** Story-only reference metrics supplied through the observationDetails slot. */
 export function DurationPercentileMetrics({
   locale = "en",
+  regions = [],
 }: {
   locale?: "en" | "fr";
+  regions?: readonly DurationHealthRegion[];
 }) {
   return (
     <dl
@@ -404,13 +447,26 @@ export function DurationPercentileMetrics({
       }
     >
       {landmarks.map(({ label, value }) => (
-        <div key={label} data-percentile={label}>
+        <div
+          key={label}
+          data-percentile={label}
+          data-reference-assessment={
+            regionAt(regions, value)?.assessment ?? "unassessed"
+          }
+          title={regionAt(regions, value)?.label}
+        >
           <dt>
             <span className={styles.legendDot} aria-hidden="true" />
             {label}
           </dt>
           <dd>
             {new Intl.NumberFormat(locale).format(value)} <span>h</span>
+            {regionAt(regions, value) && (
+              <span className={styles.srOnly}>
+                {" "}
+                · {regionAt(regions, value)?.label}
+              </span>
+            )}
           </dd>
         </div>
       ))}

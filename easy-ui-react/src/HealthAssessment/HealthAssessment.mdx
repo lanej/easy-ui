@@ -23,14 +23,6 @@ Keep an observation's name, value, assessment, and observation time together, wi
       section="primary"
     />
   }
-  referenceDetails={
-    <DurationReferenceExample
-      value={6}
-      currentAssessment="healthy"
-      regions={assessmentRanges}
-      section="details"
-    />
-  }
   freshness={{
     state: "fresh",
     observedAt: "2026-01-15T12:00:00Z",
@@ -46,11 +38,11 @@ Keep an observation's name, value, assessment, and observation time together, wi
 
 ## Keep value and assessment together
 
-The value carries the most visual weight. Standard assessments with a reference use the larger headline duration; compact assessments retain their smaller scale. The small pill above the headline states the supplied assessment without relying on color. A freshness status dot sits beside the supporting timestamp beneath it; the timestamp prefix is optional. At wider widths both columns share the same content height. The observation label anchors the top, the pill sits above the headline in the middle, and freshness anchors the bottom. The observation spans optional `referenceDetails` content as well, so its height follows the complete reference column. Narrow and compact layouts stack the content in reading order.
+The value carries the most visual weight. Standard assessments with a reference use the larger headline duration; compact assessments retain their smaller scale. The small pill above the headline states the supplied assessment without relying on color. A freshness status dot sits beside the supporting timestamp beneath it; the timestamp prefix is optional. At wider widths both columns share the same content height. The observation label anchors the top, the pill sits above the headline in the middle, and freshness anchors the bottom. The observation spans optional `referenceDetails` content as well, so its height follows the complete reference column. Narrow layouts stack content in reading order. `referenceLayout="compact"` keeps a horizontal comparison when the container is at least 360px wide, and stacks below that width to keep labels readable.
 
-The application supplies each assessment, reference, and freshness state. The molecule does not compare durations, infer thresholds, or classify observations. These synthetic examples use a cumulative curve on a 0–30 hour scale. The curve keeps its cumulative percentage geometry without a visible vertical axis. The curve interpolates between cumulative counts from the synthetic observations; it is a historical reference, not a completion forecast. An elapsed marker matches the supplied assessment color and uses a contrasting outline to show the current observation. Percentiles are optional. P50 uses blue and P90 purple consistently across points, guides, labels, and the optional legend; these colors identify reference landmarks independently of health. Enable the story-only `showPercentileMetrics` control to place a compact color key and duration submetrics immediately beside the headline, before the graphical comparison. Reference points and the current-value marker use equal, fixed-size dots; the vertical line distinguishes the current observation. This content is supplied through the optional `observationDetails` slot; callers can supply their own submetrics. The legend is omitted when percentile marks or the reference are hidden. The default shows P50 and P90 as points without guide lines or labels; hover identifies each duration. Enable `showPercentileLabels` in the story controls for labeled guides, or disable `showPercentiles` to remove all percentile marks. In labeled mode, P50 (9 hours) and P90 (18 hours) pair each percentile with its duration directly beneath the tick. The pairs share a line when space permits and stack in very narrow references. These landmarks describe completed durations independently of the ongoing elapsed duration; they do not establish health or predict completion.
+The application supplies each assessment, reference, and freshness state. The molecule does not compare durations, infer thresholds, or classify observations. These synthetic examples use a cumulative curve on a 0–30 hour scale. The curve keeps its cumulative percentage geometry without a visible vertical axis. The curve interpolates between cumulative counts from the synthetic observations; it is a historical reference, not a completion forecast. An elapsed marker matches the supplied assessment color and uses a contrasting outline to show the current observation. Percentiles are optional. Each percentile uses the assessment hue of the supplied range it falls in, consistently across points, guides, labels, and optional submetrics. In this example P50 at 9h is expected (green), while P90 at 18h needs attention (amber). Those colors describe historical landmarks relative to the application’s policy; percentile rank itself never determines health. Missing policy uses neutral marks. Hiding background bands does not remove the supplied policy. Dark themes use brighter tones for contrast. Enable the story-only `showPercentileMetrics` control to place a compact color key and duration submetrics immediately beside the headline, before the graphical comparison. Reference points and the current-value marker use equal, fixed-size dots; the vertical line distinguishes the current observation. This content is supplied through the optional `observationDetails` slot; callers can supply their own submetrics. The legend is omitted when percentile marks or the reference are hidden. The default shows P50 and P90 as points without guide lines or labels; hover identifies each duration. Enable `showPercentileLabels` in the story controls for labeled guides, or disable `showPercentiles` to remove all percentile marks. In labeled mode, P50 (9 hours) and P90 (18 hours) pair each percentile with its duration directly beneath the tick. The pairs share a line when space permits and stack in very narrow references. These landmarks describe completed durations independently of the ongoing elapsed duration; they do not establish health or predict completion.
 
-Expand **Reference distribution** to inspect the completed-duration histogram. The disclosure uses native keyboard behavior, and its histogram uses the same scale and percentile positions as the curve.
+The optional histogram overlays the curve on the same duration axis, with no disclosure or height expansion. Bars split color exactly where they cross supplied health thresholds. Their height represents counts per interval; the curve represents cumulative percentage. These are independent vertical scales. `showCountAxis` optionally exposes the histogram’s right count scale. The sample caption is optional through `showSampleCount` and hidden by default. “Synthetic” means these Storybook observations are fabricated; it is demo metadata, not required product copy.
 
 Labeled background regions show illustrative assessment ranges supplied by the application: **As expected** below 10 hours, **Needs attention** from 10 to less than 20 hours, and **Outside expectations** at 20 hours or more. These boundaries are independent of the distribution's percentiles. The last range continues beyond the displayed 30-hour scale. The story's application policy supplies both the pill and the ranges, keeping them consistent when the observation changes.
 
@@ -58,13 +50,16 @@ Labeled background regions show illustrative assessment ranges supplied by the a
 
 ## Optional reference context
 
-Choose `referenceVisualization="cumulative"`, `"histogram"`, `"both"`, or `"none"` in the story-only example. The cumulative curve is the default. `showReferenceDistribution` independently controls its optional histogram disclosure. Both mode shows aligned charts directly; histogram mode shows just the histogram. `showHealthBands` independently controls background assessment ranges. None mode removes the reference column.
+Choose `referenceVisualization="cumulative"`, `"histogram"`, `"both"`, or `"none"` in the story-only example. The cumulative curve is the default. `showReferenceDistribution` independently controls its histogram overlay. Both mode overlays histogram and curve directly; histogram mode shows just the histogram. `showHealthBands` independently controls background assessment ranges. None mode removes the reference column.
 
 In application code, omit the optional `reference` prop for value, assessment, and freshness alone. Supply only the reference content that the application needs; the molecule never creates graphics automatically.
 
 <Canvas of={Stories.CumulativeOnly} />
 <Canvas of={Stories.HistogramOnly} />
-<Canvas of={Stories.BothReferences} />
+<Canvas of={Stories.OverlayWithMetrics} />
+<Canvas of={Stories.OverlayWithCountAxis} />
+<Canvas of={Stories.CompactHorizontal} />
+<Canvas of={Stories.WithSampleCount} />
 <Canvas of={Stories.WithoutHealthBands} />
 <Canvas of={Stories.WithoutReference} />
 
@@ -72,7 +67,7 @@ In application code, omit the optional `reference` prop for value, assessment, a
 
 Health-band names and ranges are optional independently of the colored bands. By default, the supplied band thresholds share the duration-axis row; labeled percentiles place thresholds on a separate row to avoid overlap. Enable `showHealthBandLabels` in the story controls to restore the named header. The assessment pill continues to state health in text.
 
-Each example uses the same observation and width. Column heights follow the selected graphics and health bands; opening the distribution extends both columns. Omitting the reference returns to a compact observation.
+Each example uses the same observation and width. Column heights follow optional labels and metadata. Switching the histogram overlay on or off preserves the same column height. Omitting the reference returns to a compact observation.
 
 <Canvas of={Stories.ReferenceOptions} />
 <Canvas of={Stories.DistributionOptions} />
@@ -87,7 +82,7 @@ Each example uses the same observation and width. Column heights follow the sele
 
 <Canvas of={Stories.DataStates} />
 
-Omit `observation` entirely for an assessment that does not measure duration. `reference` remains an optional composition slot. `DurationReferenceExample` is a story-only example; its synthetic histogram and percentiles come from the same completed observations. Missing elapsed values omit the current marker while retaining the reference. Missing or unassessed health omits the colored ranges. The reusable distribution component is tracked separately in [#16](https://github.com/lanej/easy-ui/issues/16).
+Omit `observation` entirely for an assessment that does not measure duration. `reference` remains an optional composition slot. `DurationReferenceExample` is a story-only example; its synthetic histogram and percentiles come from the same completed observations. Missing elapsed values omit the current marker while retaining the reference. Missing or unassessed health omits the colored ranges and uses neutral percentile marks and bars. The reusable distribution component is tracked separately in [#16](https://github.com/lanej/easy-ui/issues/16).
 
 ## Fit the surrounding information
 

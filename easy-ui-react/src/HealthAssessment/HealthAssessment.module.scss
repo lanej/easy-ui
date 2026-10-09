@@ -100,3 +100,24 @@
   min-inline-size: 0;
   overflow-wrap: anywhere;
 }
+
+@container (min-width: 360px) {
+  .layout[data-has-reference="true"][data-reference-layout="compact"] {
+    grid-template-columns: fit-content(180px) minmax(0, 1fr);
+    align-items: stretch;
+    row-gap: design-token("space.1");
+    .information {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: design-token("space.0.5");
+    }
+    .referenceDetails {
+      grid-column: 2;
+    }
+  }
+  .layout[data-has-reference-details="true"][data-reference-layout="compact"]
+    .information {
+    grid-row: 1 / span 2;
+  }
+}

@@ -39,9 +39,7 @@ export function checkHealthObservationLayout() {
         const dots = chart.querySelectorAll(
           '[class*="curvePoint"], [class*="histogramPoint"]',
         );
-        const isCurve = !!chart.querySelector("svg");
-        const expectedDots =
-          mode === "none" ? 0 : isCurve || mode === "points" ? 2 : 0;
+        const expectedDots = mode === "none" ? 0 : 2;
         if (dots.length !== expectedDots)
           throw new Error(`${name}: incorrect percentile points`);
         const guides = chart.querySelectorAll(
@@ -116,6 +114,26 @@ export function checkHealthObservationLayout() {
         )
           throw new Error(`${name}: percentile metrics overlap headline`);
       }
+      const bars = primary.querySelector('svg[class*="histogramBars"]');
+      if (bars) {
+        for (const segment of bars.querySelectorAll(
+          "rect[data-segment-from]",
+        )) {
+          const from = Number(segment.dataset.segmentFrom),
+            to = Number(segment.dataset.segmentTo);
+          if (
+            !(to > from) ||
+            Math.abs(Number(segment.getAttribute("x")) - from * 10) > 0.01 ||
+            Math.abs(Number(segment.getAttribute("width")) - (to - from) * 10) >
+              0.01
+          )
+            throw new Error(
+              `${name}: histogram segment does not share duration coordinates`,
+            );
+        }
+      }
+      if (primary.querySelector("details"))
+        throw new Error(`${name}: reference unexpectedly expands`);
       const footer = details || primary;
       const rightBottom = footer.getBoundingClientRect().bottom;
       const header = primary.querySelector(

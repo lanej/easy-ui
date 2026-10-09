@@ -9,8 +9,7 @@
   container-type: inline-size;
 }
 
-.figure,
-.distribution {
+.figure {
   margin: 0;
 }
 
@@ -75,8 +74,7 @@
   );
 }
 
-.percentile::after,
-.histogramPercentile::after {
+.percentile::after {
   content: "";
   position: absolute;
   top: 100%;
@@ -205,55 +203,6 @@
   margin-block-start: design-token("space.0.5");
 }
 
-.disclosure {
-  margin-block-start: design-token("space.1");
-
-  summary {
-    cursor: pointer;
-    padding-block-start: design-token("space.0.5");
-    padding-block-end: 0;
-    overflow-wrap: anywhere;
-  }
-}
-
-.distribution {
-  padding-block-start: design-token("space.1.5");
-}
-
-.histogram {
-  position: relative;
-  block-size: 72px;
-  margin-block-start: 8px;
-}
-
-.bins {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 2px;
-  align-items: end;
-  block-size: 100%;
-}
-
-.bin {
-  background: design-token("color.neutral.600");
-  border-start-start-radius: 2px;
-  border-start-end-radius: 2px;
-}
-
-.histogramPercentile {
-  position: absolute;
-  inset-block: 0;
-  inline-size: 1px;
-  transform: translateX(-50%);
-  background: repeating-linear-gradient(
-    to bottom,
-    currentColor 0 4px,
-    transparent 4px 8px
-  );
-  box-shadow: 0 0 0 1px design-token("color.neutral.000");
-}
-
 @container (max-width: 18em) {
   .regionLabels {
     display: none;
@@ -271,13 +220,6 @@
   }
 }
 
-@media (pointer: coarse) {
-  .disclosure summary {
-    min-block-size: 44px;
-    padding-block-start: max(4px, calc(44px - 1lh));
-  }
-}
-
 @media (forced-colors: active) {
   .track,
   .region[data-assessment] {
@@ -291,10 +233,9 @@
     background: CanvasText;
   }
   .bin {
-    background: GrayText;
+    fill: GrayText;
   }
-  .percentile,
-  .histogramPercentile {
+  .percentile {
     background: CanvasText;
   }
   .percentileLabel strong {
@@ -327,8 +268,7 @@
 .root[data-section="primary"] {
   block-size: 100%;
 
-  .figure,
-  .distribution {
+  .figure {
     display: flex;
     flex-direction: column;
     block-size: 100%;
@@ -339,21 +279,9 @@
   figcaption {
     flex-shrink: 0;
   }
-  .distribution {
-    padding-block-start: 0;
-
-    .regionLabels {
-      order: -1;
-    }
-  }
   .plot {
     flex: 1;
     min-block-size: 100px;
-    block-size: auto;
-  }
-  .histogram {
-    flex: 1;
-    min-block-size: 72px;
     block-size: auto;
   }
 }
@@ -383,11 +311,75 @@
   }
 }
 
-[data-percentile="P50"] {
-  color: design-token("color.primary.700");
+[data-percentile] {
+  color: design-token("color.neutral.700");
 }
-[data-percentile="P90"] {
-  color: design-token("color.secondary.700");
+@each $assessment,
+  $tone
+    in ("healthy": "positive", "degraded": "warning", "unhealthy": "negative")
+{
+  [data-percentile][data-reference-assessment="#{$assessment}"] {
+    color: light-dark(
+      design-token("color.#{$tone}.800"),
+      design-token("color.#{$tone}.500")
+    );
+  }
+  .bin[data-reference-assessment="#{$assessment}"] {
+    fill: light-dark(
+      color-mix(in srgb, design-token("color.#{$tone}.700") 28%, transparent),
+      color-mix(in srgb, design-token("color.#{$tone}.400") 34%, transparent)
+    );
+  }
+}
+.histogramBars {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+.bin {
+  fill: color-mix(in srgb, design-token("color.neutral.600") 28%, transparent);
+}
+.sampleCount {
+  margin-block-end: design-token("space.1");
+}
+.plot[data-has-count-axis="true"],
+.axisFrame[data-has-count-axis="true"] {
+  margin-inline-end: 48px;
+}
+.countAxis {
+  position: absolute;
+  inset-block: 0;
+  left: calc(100% + 6px);
+  inline-size: 42px;
+  font-size: 10px;
+  line-height: 1;
+}
+.countTitle {
+  position: absolute;
+  right: 0;
+  inset-block: 0;
+  writing-mode: vertical-rl;
+  text-align: center;
+}
+.countTick {
+  position: absolute;
+  left: 0;
+  transform: translateY(-50%);
+}
+.countTick[data-end="top"] {
+  transform: none;
+}
+.countTick[data-end="bottom"] {
+  transform: translateY(-100%);
+}
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .metrics {
   margin: 0;
@@ -445,4 +437,17 @@
     background: CanvasText;
     outline: 1px solid Canvas;
   }
+}
+
+@media (forced-colors: active) {
+  [data-percentile][data-reference-assessment] {
+    color: CanvasText;
+  }
+  .bin[data-reference-assessment] {
+    fill: GrayText;
+  }
+}
+
+.figure[data-has-count-axis="true"] .regionLabels {
+  margin-inline-end: 48px;
 }

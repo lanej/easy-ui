@@ -23,6 +23,8 @@ export type HealthAssessmentProps = {
   reference?: ReactNode;
   /** Optional supporting content below the primary reference; included in the reference column height. */
   referenceDetails?: ReactNode;
+  /** Compact keeps reference content beside the observation at narrower widths. */
+  referenceLayout?: "auto" | "compact";
   size?: "sm" | "md";
   isLoading?: boolean;
   accessibilityLabel?: string;
@@ -37,6 +39,7 @@ export function HealthAssessment({
   observationDetails,
   reference,
   referenceDetails,
+  referenceLayout = "auto",
   size = "md",
   isLoading = false,
   accessibilityLabel = "Health assessment",
@@ -70,6 +73,7 @@ export function HealthAssessment({
     >
       <div
         className={styles.layout}
+        data-reference-layout={referenceLayout}
         data-has-reference={!isLoading && reference != null}
         data-has-reference-details={
           !isLoading && reference != null && referenceDetails != null
