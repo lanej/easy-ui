@@ -37,7 +37,7 @@ export function checkHealthObservationLayout() {
       for (const chart of card.querySelectorAll('figure [role="img"]')) {
         const mode = chart.closest("[data-percentiles]").dataset.percentiles;
         const dots = chart.querySelectorAll(
-          'svg circle, [class*="histogramPoint"]',
+          '[class*="curvePoint"], [class*="histogramPoint"]',
         );
         const isCurve = !!chart.querySelector("svg");
         const expectedDots =
@@ -87,6 +87,13 @@ export function checkHealthObservationLayout() {
               `${name}: percentile guide, tick, and label do not share a center`,
             );
         });
+      }
+      for (const dot of card.querySelectorAll(
+        '[class*="curvePoint"], [class*="histogramPoint"], [class*="marker_"], [class*="legendDot"]',
+      )) {
+        const { width, height } = dot.getBoundingClientRect();
+        if (Math.abs(width - 8) > 0.1 || Math.abs(height - 8) > 0.1)
+          throw new Error(`${name}: inconsistent reference dot size`);
       }
       const metrics = information.querySelector("dl");
       if (metrics) {

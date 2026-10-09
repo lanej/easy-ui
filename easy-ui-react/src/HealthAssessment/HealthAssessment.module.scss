@@ -12,7 +12,7 @@
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: design-token("space.3");
+  gap: design-token("space.1.5");
 }
 
 .information {
@@ -57,7 +57,7 @@
 
 @container (min-width: 560px) {
   .layout[data-has-reference="true"] {
-    grid-template-columns: minmax(0, 268px) minmax(0, 1fr);
+    grid-template-columns: fit-content(208px) minmax(0, 1fr);
     align-items: stretch;
     row-gap: design-token("space.1");
 
@@ -65,7 +65,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: design-token("space.2");
+      gap: design-token("space.1");
     }
 
     .referenceDetails {
@@ -89,10 +89,10 @@
 .headline {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   flex-wrap: wrap;
   inline-size: 100%;
-  gap: design-token("space.2");
+  gap: design-token("space.1.5");
   min-inline-size: 0;
 }
 .observationDetails {

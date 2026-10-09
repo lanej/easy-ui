@@ -317,19 +317,21 @@ export function DurationReferenceExample({
               aria-hidden="true"
             >
               <path d={curvePath} />
-              {showPercentiles &&
-                landmarks.map(({ label, value: landmark }) => (
-                  <circle
-                    key={label}
-                    data-percentile={label}
-                    cx={(landmark / max) * 300}
-                    cy={100 - fractionAt(landmark) * 100}
-                    r="2"
-                  >
-                    <title>{`${label}: ${format(landmark)} h`}</title>
-                  </circle>
-                ))}
             </svg>
+            {showPercentiles &&
+              landmarks.map(({ label, value: landmark }) => (
+                <span
+                  key={label}
+                  className={styles.curvePoint}
+                  data-percentile={label}
+                  style={{
+                    left: `${(landmark / max) * 100}%`,
+                    top: `${(1 - fractionAt(landmark)) * 100}%`,
+                  }}
+                  title={`${label}: ${format(landmark)} h`}
+                  aria-hidden="true"
+                />
+              ))}
             {showPercentiles &&
               showPercentileLabels &&
               landmarks.map(({ label, value: landmark }) => (

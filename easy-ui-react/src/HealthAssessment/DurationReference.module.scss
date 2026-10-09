@@ -108,14 +108,14 @@
 
 .marker {
   position: absolute;
-  top: -5px;
+  top: -4px;
   left: 50%;
-  inline-size: 9px;
-  block-size: 9px;
+  inline-size: 8px;
+  block-size: 8px;
   transform: translateX(-50%);
   border-radius: 50%;
   background: currentColor;
-  box-shadow: 0 0 0 2px design-token("color.neutral.000");
+  box-shadow: 0 0 0 1px design-token("color.neutral.000");
 }
 
 .scale {
@@ -314,19 +314,13 @@
     stroke-width: 2;
     vector-effect: non-scaling-stroke;
   }
-  circle {
-    fill: currentColor;
-    stroke: design-token("color.neutral.000");
-    stroke-width: 1;
-    vector-effect: non-scaling-stroke;
-  }
 }
 @media (forced-colors: active) {
   .curve path {
     stroke: CanvasText;
   }
-  .curve circle {
-    fill: CanvasText;
+  .curvePoint {
+    background: CanvasText;
   }
 }
 
@@ -374,8 +368,8 @@
 .histogramPoint {
   position: absolute;
   top: 100%;
-  inline-size: 5px;
-  block-size: 5px;
+  inline-size: 8px;
+  block-size: 8px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
   background: currentColor;
@@ -398,8 +392,13 @@
 .metrics {
   margin: 0;
   display: grid;
-  gap: design-token("space.1");
+  gap: design-token("space.0.5");
   font-variant-numeric: tabular-nums;
+  > div {
+    display: flex;
+    align-items: baseline;
+    gap: design-token("space.0.5");
+  }
   dt {
     display: flex;
     align-items: center;
@@ -407,7 +406,7 @@
   }
   dd {
     margin: 0;
-    padding-inline-start: 12px;
+    padding-inline-start: 0;
     font-size: 16px;
     font-weight: 500;
   }
@@ -417,8 +416,8 @@
   }
 }
 .legendDot {
-  inline-size: 6px;
-  block-size: 6px;
+  inline-size: 8px;
+  block-size: 8px;
   border-radius: 50%;
   background: currentColor;
   flex-shrink: 0;
@@ -429,5 +428,21 @@
   }
   .legendDot {
     background: CanvasText;
+  }
+}
+
+.curvePoint {
+  position: absolute;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: currentColor;
+  box-shadow: 0 0 0 1px design-token("color.neutral.000");
+}
+@media (forced-colors: active) {
+  .curvePoint {
+    background: CanvasText;
+    outline: 1px solid Canvas;
   }
 }
