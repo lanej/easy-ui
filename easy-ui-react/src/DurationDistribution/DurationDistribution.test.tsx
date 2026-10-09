@@ -390,14 +390,19 @@ describe("Inline references", () => {
         value={6}
         unit="h"
         domain={[0, 30]}
-        quantiles={[{ fraction: 0.5, value: 9 }, { fraction: 0.9, value: 18 }]}
+        quantiles={[
+          { fraction: 0.5, value: 9 },
+          { fraction: 0.9, value: 18 },
+        ]}
         visualization="points"
         showScale={false}
         stretch={false}
       />,
     );
     expect(container.querySelector('[class*="axisFrame_"]')).toBeNull();
-    expect(screen.getByRole("img")).toHaveAccessibleName(expect.stringContaining("P90: 18 h"));
+    expect(screen.getByRole("img")).toHaveAccessibleName(
+      expect.stringContaining("P90: 18 h"),
+    );
   });
 
   it("renders a smooth density from supplied bins, not inferred percentile landmarks", () => {
@@ -417,9 +422,13 @@ describe("Inline references", () => {
         showScale={false}
       />,
     );
-    expect(container.querySelector('[data-density-curve="true"]')).not.toBeNull();
+    expect(
+      container.querySelector('[data-density-curve="true"]'),
+    ).not.toBeNull();
     expect(container.querySelector('[class*="axisFrame_"]')).toBeNull();
-    expect(screen.getByRole("img")).toHaveAccessibleName(expect.stringContaining("0–10 h: 8"));
+    expect(screen.getByRole("img")).toHaveAccessibleName(
+      expect.stringContaining("0–10 h: 8"),
+    );
   });
 });
 

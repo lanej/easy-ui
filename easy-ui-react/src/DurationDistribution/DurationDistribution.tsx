@@ -572,7 +572,8 @@ export function DurationDistribution({
                           className={styles.percentileLabel}
                           data-percentile={markLabel(q)}
                           data-reference-assessment={
-                            regionAt(regions, q.value)?.assessment ?? "unassessed"
+                            regionAt(regions, q.value)?.assessment ??
+                            "unassessed"
                           }
                           data-edge={
                             q.value === domain[0]

@@ -26,7 +26,8 @@ export type HealthAssessmentProps = {
   /** Compact keeps reference content beside the observation at narrower widths. */
   referenceLayout?: "auto" | "compact";
   /** Presentation form; responsive progressively reveals supplied content by container width. */
-  variant?: "compact" | "detailed" | "default" | "wide" | "responsive" | "inline";
+  variant?:
+    "compact" | "detailed" | "default" | "wide" | "responsive" | "inline";
   size?: "sm" | "md";
   isLoading?: boolean;
   accessibilityLabel?: string;

@@ -126,7 +126,11 @@ const sampleBins = [
 type InlineReference = "none" | "quantiles" | "smooth";
 
 /** The status pill, observed duration, and optional reference share one row. */
-function InlineDurationSummary({ reference = "none" }: { reference?: InlineReference }) {
+function InlineDurationSummary({
+  reference = "none",
+}: {
+  reference?: InlineReference;
+}) {
   return (
     <div className={styles.inlineSummary} data-kind={reference}>
       <HealthAssessment
@@ -134,27 +138,29 @@ function InlineDurationSummary({ reference = "none" }: { reference?: InlineRefer
         size="sm"
         observation={{ value: current.value, unit: "h" }}
         health={assessment}
-        reference={reference === "none" ? undefined : (
-          <div className={styles.inlineReference}>
-            <DurationQuantileMetrics
-              quantiles={quantiles}
-              unit="h"
-              healthRegions={regions}
-            />
-            <DurationDistribution
-              value={current.value}
-              unit="h"
-              domain={[0, 30]}
-              quantiles={quantiles}
-              bins={reference === "smooth" ? sampleBins : undefined}
-              healthRegions={regions}
-              visualization={reference === "smooth" ? "histogram" : "points"}
-              distributionStyle={reference === "smooth" ? "smooth" : "binned"}
-              stretch={false}
-              showScale={false}
-            />
-          </div>
-        )}
+        reference={
+          reference === "none" ? undefined : (
+            <div className={styles.inlineReference}>
+              <DurationQuantileMetrics
+                quantiles={quantiles}
+                unit="h"
+                healthRegions={regions}
+              />
+              <DurationDistribution
+                value={current.value}
+                unit="h"
+                domain={[0, 30]}
+                quantiles={quantiles}
+                bins={reference === "smooth" ? sampleBins : undefined}
+                healthRegions={regions}
+                visualization={reference === "smooth" ? "histogram" : "points"}
+                distributionStyle={reference === "smooth" ? "smooth" : "binned"}
+                stretch={false}
+                showScale={false}
+              />
+            </div>
+          )
+        }
       />
     </div>
   );
@@ -162,7 +168,8 @@ function InlineDurationSummary({ reference = "none" }: { reference?: InlineRefer
 
 export const InlineMinimal: Story = {
   args: {
-    renderTrailing: (event) => target(event) ? <InlineDurationSummary /> : null,
+    renderTrailing: (event) =>
+      target(event) ? <InlineDurationSummary /> : null,
   },
 };
 
@@ -182,7 +189,8 @@ export const InlineSmoothCurve: Story = {
 
 export const WithDurationReference: Story = {
   args: {
-    renderTrailing: (event) => target(event) ? <InlineDurationSummary /> : null,
+    renderTrailing: (event) =>
+      target(event) ? <InlineDurationSummary /> : null,
     renderInterval: (event) =>
       target(event) ? (
         <HealthAssessment
@@ -261,32 +269,51 @@ export const PresentationModes: Story = {
   parameters: { layout: "padded" },
   render: () => (
     <div style={{ display: "grid", gap: 16, width: 480, maxWidth: "100%" }}>
-      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
-        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>01 · Minimal — one row</h3>
+      <section
+        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
+      >
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
+          01 · Minimal — one row
+        </h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
           Status and current duration share the event row.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
-          renderTrailing={(event) => target(event) ? <InlineDurationSummary /> : null}
+          renderTrailing={(event) =>
+            target(event) ? <InlineDurationSummary /> : null
+          }
         />
       </section>
-      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
-        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>02 · Inline quantiles — one row</h3>
+      <section
+        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
+      >
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
+          02 · Inline quantiles — one row
+        </h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
           Current 6h, status, P50/P90 and quantile bar beside the event.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
-          renderTrailing={(event) => target(event) ? <InlineDurationSummary reference="quantiles" /> : null}
+          renderTrailing={(event) =>
+            target(event) ? (
+              <InlineDurationSummary reference="quantiles" />
+            ) : null
+          }
         />
       </section>
-      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
-        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>03 · Inline smooth density — one row</h3>
+      <section
+        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
+      >
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
+          03 · Inline smooth density — one row
+        </h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
-          The same current value and landmarks with a smoothed historical histogram.
+          The same current value and landmarks with a smoothed historical
+          histogram.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
@@ -296,15 +323,22 @@ export const PresentationModes: Story = {
           }
         />
       </section>
-      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
-        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>04 · Expanded interval</h3>
+      <section
+        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
+      >
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
+          04 · Expanded interval
+        </h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
-          The headline remains inline; detailed reference content occupies the interval.
+          The headline remains inline; detailed reference content occupies the
+          interval.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
-          renderTrailing={(event) => target(event) ? <InlineDurationSummary /> : null}
+          renderTrailing={(event) =>
+            target(event) ? <InlineDurationSummary /> : null
+          }
           renderInterval={(event) =>
             target(event) ? (
               <HealthAssessment
@@ -312,7 +346,13 @@ export const PresentationModes: Story = {
                 label="Facility dwell"
                 observation={current}
                 health={assessment}
-                observationDetails={<DurationQuantileMetrics quantiles={quantiles} unit="h" healthRegions={regions} />}
+                observationDetails={
+                  <DurationQuantileMetrics
+                    quantiles={quantiles}
+                    unit="h"
+                    healthRegions={regions}
+                  />
+                }
                 reference={
                   <DurationDistribution
                     value={current.value}
@@ -344,7 +384,9 @@ export const NarrowQuantiles: Story = {
       <EventTimeline
         events={events.slice(1, 4)}
         selectedId="b1"
-        renderTrailing={(event) => target(event) ? <InlineDurationSummary reference="quantiles" /> : null}
+        renderTrailing={(event) =>
+          target(event) ? <InlineDurationSummary reference="quantiles" /> : null
+        }
       />
     </div>
   ),
@@ -363,14 +405,22 @@ function MapAdjacentExample() {
           selectedId={selectedId}
           onSelectedIdChange={setSelectedId}
           onLocationSelect={(id) => setLocationId(id)}
-          renderTrailing={(event) => target(event) ? <InlineDurationSummary reference="smooth" /> : null}
+          renderTrailing={(event) =>
+            target(event) ? <InlineDurationSummary reference="smooth" /> : null
+          }
         />
       </section>
-      <aside className={styles.mapSurface} aria-label="Adjacent application-owned map surface">
+      <aside
+        className={styles.mapSurface}
+        aria-label="Adjacent application-owned map surface"
+      >
         <h3 style={{ margin: "0 0 12px" }}>Map integration space</h3>
         <p>Selected event: {selectedId ?? "none"}</p>
         <p>Map focus: {locationId ?? "none"}</p>
-        <p>The map is supplied by the consuming application; the timeline does not render or control it.</p>
+        <p>
+          The map is supplied by the consuming application; the timeline does
+          not render or control it.
+        </p>
       </aside>
     </div>
   );
