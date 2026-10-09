@@ -67,7 +67,12 @@
   position: absolute;
   inset-block: 0;
   inline-size: 1px;
-  border-inline-start: 1px dashed design-token("color.neutral.700");
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(
+    to bottom,
+    design-token("color.neutral.700") 0 4px,
+    transparent 4px 8px
+  );
 }
 
 .percentile::after,
@@ -75,6 +80,7 @@
   content: "";
   position: absolute;
   top: 100%;
+  inset-inline-start: 0;
   inline-size: 1px;
   block-size: 11px;
   background: design-token("color.neutral.700");
@@ -117,12 +123,34 @@
   block-size: calc(8px + 1lh);
 }
 
+.scale[data-has-thresholds="true"] {
+  block-size: calc(16px + 2lh);
+}
+
+.thresholdLabel {
+  position: absolute;
+  top: calc(8px + 1lh + 8px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    top: -6px;
+    block-size: 4px;
+    inline-size: 1px;
+    background: currentColor;
+  }
+}
+
 .endpoint {
   position: absolute;
   top: 8px;
   white-space: nowrap;
 
-  &:last-child {
+  &[data-end="true"] {
     right: 0;
   }
 }
@@ -146,6 +174,14 @@
 @container (max-width: 18em) {
   .scale {
     block-size: calc(8px + 2lh);
+  }
+
+  .scale[data-has-thresholds="true"] {
+    block-size: calc(16px + 3lh);
+  }
+
+  .thresholdLabel {
+    top: calc(8px + 2lh + 8px);
   }
 
   .percentileLabel {
@@ -204,7 +240,13 @@
 .histogramPercentile {
   position: absolute;
   inset-block: 0;
-  border-inline-start: 1px dashed design-token("color.neutral.700");
+  inline-size: 1px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(
+    to bottom,
+    design-token("color.neutral.700") 0 4px,
+    transparent 4px 8px
+  );
   box-shadow: 0 0 0 1px design-token("color.neutral.000");
 }
 
@@ -247,8 +289,9 @@
   .bin {
     background: GrayText;
   }
+  .percentile,
   .histogramPercentile {
-    border-color: CanvasText;
+    background: CanvasText;
   }
   .percentileLabel strong {
     color: CanvasText;

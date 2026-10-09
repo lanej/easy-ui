@@ -72,9 +72,26 @@ export type DurationHealthRegion = {
   shortLabel: string;
 };
 
-function Scale({ format }: { format: (value: number) => string }) {
+function Scale({
+  format,
+  regions = [],
+  showThresholds = false,
+}: {
+  format: (value: number) => string;
+  regions?: readonly DurationHealthRegion[];
+  showThresholds?: boolean;
+}) {
+  const thresholds = showThresholds
+    ? regions
+        .map(({ from }) => from)
+        .filter((value) => value > 0 && value < max)
+    : [];
   return (
-    <div className={styles.scale} aria-hidden="true">
+    <div
+      className={styles.scale}
+      data-has-thresholds={thresholds.length > 0}
+      aria-hidden="true"
+    >
       <span className={styles.endpoint}>0 h</span>
       {landmarks.map(({ label, value }) => (
         <span
@@ -86,7 +103,18 @@ function Scale({ format }: { format: (value: number) => string }) {
           <strong>{format(value)} h</strong>
         </span>
       ))}
-      <span className={styles.endpoint}>{max} h</span>
+      <span className={styles.endpoint} data-end="true">
+        {max} h
+      </span>
+      {thresholds.map((value) => (
+        <span
+          key={value}
+          className={styles.thresholdLabel}
+          style={{ left: `${(value / max) * 100}%` }}
+        >
+          {format(value)} h
+        </span>
+      ))}
     </div>
   );
 }
@@ -100,6 +128,7 @@ export function DurationReferenceExample({
   section = "all",
   visualization = "cumulative",
   showDistribution = true,
+  showHealthBandLabels = false,
 }: {
   value: number | null;
   locale?: "en" | "fr";
@@ -108,6 +137,7 @@ export function DurationReferenceExample({
   section?: "all" | "primary" | "details";
   visualization?: ReferenceVisualization;
   showDistribution?: boolean;
+  showHealthBandLabels?: boolean;
 }) {
   const valid =
     typeof value === "number" && Number.isFinite(value) && value >= 0;
@@ -147,7 +177,7 @@ export function DurationReferenceExample({
   if (visualization === "none") return null;
   const hasCurve = visualization === "cumulative" || visualization === "both";
   const showCurve = hasCurve && section !== "details";
-  const regionHeader = visibleRegions.length > 0 && (
+  const regionHeader = showHealthBandLabels && visibleRegions.length > 0 && (
     <div className={styles.regionLabels} aria-hidden="true">
       {visibleRegions.map((region) => (
         <span
@@ -161,7 +191,7 @@ export function DurationReferenceExample({
       ))}
     </div>
   );
-  const regionLegend = visibleRegions.length > 0 && (
+  const regionLegend = showHealthBandLabels && visibleRegions.length > 0 && (
     <div className={styles.compactRegions} aria-hidden="true">
       {visibleRegions.map((region) => (
         <span key={region.from} data-assessment={region.assessment}>
@@ -215,7 +245,11 @@ export function DurationReferenceExample({
           />
         ))}
       </div>
-      <Scale format={format} />
+      <Scale
+        format={format}
+        regions={visibleRegions}
+        showThresholds={!showHealthBandLabels && visualization !== "cumulative"}
+      />
       {!hasCurve && regionLegend}
     </figure>
   );
@@ -297,7 +331,11 @@ export function DurationReferenceExample({
               </span>
             )}
           </div>
-          <Scale format={format} />
+          <Scale
+            format={format}
+            regions={visibleRegions}
+            showThresholds={!showHealthBandLabels && visualization !== "both"}
+          />
           {regionLegend}
           {!inRange && (
             <figcaption className={styles.valueState}>{valueLabel}</figcaption>

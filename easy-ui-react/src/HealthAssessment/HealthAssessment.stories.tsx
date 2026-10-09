@@ -17,6 +17,7 @@ import {
 type ExampleArgs = HealthAssessmentProps & {
   referenceVisualization?: ReferenceVisualization;
   showHealthBands?: boolean;
+  showHealthBandLabels?: boolean;
   showReferenceDistribution?: boolean;
 };
 
@@ -37,6 +38,11 @@ const meta: Meta<ExampleArgs> = {
       control: "boolean",
       description: "Story-only: show background assessment ranges.",
     },
+    showHealthBandLabels: {
+      control: "boolean",
+      description:
+        "Story-only: show names and ranges above the colored bands; otherwise show thresholds on the duration axis.",
+    },
     showReferenceDistribution: {
       control: "boolean",
       description: "Story-only: offer the reference histogram disclosure.",
@@ -45,6 +51,7 @@ const meta: Meta<ExampleArgs> = {
   args: {
     referenceVisualization: "cumulative",
     showHealthBands: true,
+    showHealthBandLabels: false,
     showReferenceDistribution: true,
   },
   render: (args) => renderExample(args),
@@ -109,7 +116,10 @@ function referenceFor(
   locale: "en" | "fr" = "en",
   options: Pick<
     ExampleArgs,
-    "referenceVisualization" | "showHealthBands" | "showReferenceDistribution"
+    | "referenceVisualization"
+    | "showHealthBands"
+    | "showHealthBandLabels"
+    | "showReferenceDistribution"
   > = {},
   section: "primary" | "details" = "primary",
 ) {
@@ -138,6 +148,7 @@ function referenceFor(
       locale={locale}
       visualization={options.referenceVisualization}
       showDistribution={options.showReferenceDistribution}
+      showHealthBandLabels={options.showHealthBandLabels}
       regions={
         options.showHealthBands !== false &&
         assessed &&
@@ -157,7 +168,10 @@ function referenceDetailsFor(
   locale: "en" | "fr" = "en",
   options: Pick<
     ExampleArgs,
-    "referenceVisualization" | "showHealthBands" | "showReferenceDistribution"
+    | "referenceVisualization"
+    | "showHealthBands"
+    | "showHealthBandLabels"
+    | "showReferenceDistribution"
   > = {},
 ) {
   return referenceFor(value, assessed, locale, options, "details");
@@ -167,6 +181,7 @@ function renderExample(
   {
     referenceVisualization,
     showHealthBands,
+    showHealthBandLabels,
     showReferenceDistribution,
     ...args
   }: ExampleArgs,
@@ -203,6 +218,7 @@ function renderExample(
           ? referenceFor(args.observation.value, assessed, locale, {
               referenceVisualization,
               showHealthBands,
+              showHealthBandLabels,
               showReferenceDistribution,
             })
           : undefined
@@ -212,6 +228,7 @@ function renderExample(
           ? referenceDetailsFor(args.observation.value, assessed, locale, {
               referenceVisualization,
               showHealthBands,
+              showHealthBandLabels,
               showReferenceDistribution,
             })
           : undefined
@@ -256,6 +273,9 @@ export const HistogramOnly: Story = {
 export const BothReferences: Story = {
   args: { ...defaultProps, referenceVisualization: "both" },
 };
+export const WithHealthBandLabels: Story = {
+  args: { ...defaultProps, showHealthBandLabels: true },
+};
 export const WithoutHealthBands: Story = {
   args: { ...defaultProps, showHealthBands: false },
 };
@@ -270,11 +290,24 @@ type ReferenceOption = {
   name: string;
   visualization: ReferenceVisualization;
   bands: boolean;
+  labels?: boolean;
   distribution?: boolean;
   expanded?: boolean;
 };
 
 const primaryOptions: ReferenceOption[] = [
+  {
+    name: "Curve · band labels on",
+    visualization: "cumulative",
+    bands: true,
+    labels: true,
+  },
+  {
+    name: "Both · band labels on",
+    visualization: "both",
+    bands: true,
+    labels: true,
+  },
   { name: "Curve · bands on", visualization: "cumulative", bands: true },
   { name: "Curve · bands off", visualization: "cumulative", bands: false },
   { name: "Histogram · bands on", visualization: "histogram", bands: true },
@@ -328,6 +361,7 @@ function ReferenceOptionExample({ option }: { option: ReferenceOption }) {
           ...defaultProps,
           referenceVisualization: option.visualization,
           showHealthBands: option.bands,
+          showHealthBandLabels: option.labels === true,
           showReferenceDistribution: option.distribution === true,
         })}
       </div>

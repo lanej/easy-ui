@@ -58,6 +58,46 @@ export function checkHealthObservationLayout() {
             throw new Error(`${name}: vertical axis tick is misplaced`);
         });
       }
+      for (const chart of card.querySelectorAll('figure [role="img"]')) {
+        const guides = chart.querySelectorAll(
+          '[class*="percentile_"], [class*="histogramPercentile_"]',
+        );
+        const labels = chart.parentElement.querySelectorAll(
+          '[class*="percentileLabel"]',
+        );
+        for (const label of chart.parentElement.querySelectorAll(
+          '[class*="thresholdLabel"]',
+        )) {
+          const bounds = label.getBoundingClientRect();
+          const tick = getComputedStyle(label, "::before");
+          const center =
+            bounds.left +
+            parseFloat(tick.left) +
+            new DOMMatrix(tick.transform).m41 +
+            parseFloat(tick.width) / 2;
+          if (Math.abs(center - (bounds.left + bounds.right) / 2) > 0.1)
+            throw new Error(`${name}: threshold tick is not centered`);
+        }
+        guides.forEach((guide, index) => {
+          const bounds = guide.getBoundingClientRect();
+          const tick = getComputedStyle(guide, "::after");
+          const guideCenter = bounds.left + bounds.width / 2;
+          const tickCenter =
+            bounds.left +
+            parseFloat(getComputedStyle(guide).borderLeftWidth) +
+            parseFloat(tick.left) +
+            parseFloat(tick.width) / 2;
+          const label = labels[index].getBoundingClientRect();
+          if (
+            !Number.isFinite(tickCenter) ||
+            Math.abs(guideCenter - tickCenter) > 0.1 ||
+            Math.abs(guideCenter - (label.left + label.right) / 2) > 0.1
+          )
+            throw new Error(
+              `${name}: percentile guide, tick, and label do not share a center`,
+            );
+        });
+      }
       const footer = details || primary;
       const rightBottom = footer.getBoundingClientRect().bottom;
       const topDelta =

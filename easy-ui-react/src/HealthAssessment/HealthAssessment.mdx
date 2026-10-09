@@ -70,6 +70,8 @@ In application code, omit the optional `reference` prop for value, assessment, a
 
 ## Compare reference options
 
+Health-band names and ranges are optional independently of the colored bands. By default, only the supplied band thresholds appear in a separate row of the duration axis; enable `showHealthBandLabels` in the story controls to restore the named header. The assessment pill continues to state health in text.
+
 Each example uses the same observation and width. Column heights follow the selected graphics and health bands; opening the distribution extends both columns. Omitting the reference returns to a compact observation.
 
 <Canvas of={Stories.ReferenceOptions} />
