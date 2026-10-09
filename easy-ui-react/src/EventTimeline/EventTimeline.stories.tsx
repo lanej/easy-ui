@@ -123,7 +123,7 @@ const sampleBins = [
   { from: 24, to: 30, count: 2 },
 ];
 
-type InlineReference = "none" | "quantiles" | "smooth";
+type InlineReference = "none" | "quantiles" | "smooth" | "concentration";
 
 /** The status pill, observed duration, and optional reference share one row. */
 function InlineDurationSummary({
@@ -141,22 +141,21 @@ function InlineDurationSummary({
         reference={
           reference === "none" ? undefined : (
             <div className={styles.inlineReference}>
-              <DurationQuantileMetrics
-                quantiles={quantiles}
-                unit="h"
-                healthRegions={regions}
-              />
               <DurationDistribution
                 value={current.value}
                 unit="h"
                 domain={[0, 30]}
                 quantiles={quantiles}
-                bins={reference === "smooth" ? sampleBins : undefined}
+                bins={reference === "quantiles" ? undefined : sampleBins}
                 healthRegions={regions}
-                visualization={reference === "smooth" ? "histogram" : "points"}
-                distributionStyle={reference === "smooth" ? "smooth" : "binned"}
+                visualization={reference === "quantiles" ? "points" : "histogram"}
+                distributionStyle="smooth"
+                distributionPresentation={
+                  reference === "concentration" ? "concentration" : "plot"
+                }
                 stretch={false}
                 showScale={false}
+                label="Completed dwell durations; P50 9h and P90 18h"
               />
             </div>
           )
@@ -184,6 +183,15 @@ export const InlineSmoothCurve: Story = {
   args: {
     renderTrailing: (event) =>
       target(event) ? <InlineDurationSummary reference="smooth" /> : null,
+  },
+};
+
+export const InlineConcentration: Story = {
+  args: {
+    renderTrailing: (event) =>
+      target(event) ? (
+        <InlineDurationSummary reference="concentration" />
+      ) : null,
   },
 };
 
@@ -259,12 +267,7 @@ export const ControlledMapCoordination: Story = {
   render: () => <CoordinatedExample />,
 };
 
-/**
- * One review surface for the optional duration presentations. Reuse the
- * existing molecules and render callbacks; no status or quantile policy
- * lives in the timeline.
- */
-/** Exact same layout under the map-adjacent column width, without widening the demo. */
+/** The narrow Storybook comparison reuses all available duration compositions. */
 export const PresentationModes: Story = {
   parameters: { layout: "padded" },
   render: () => (
@@ -323,11 +326,26 @@ export const PresentationModes: Story = {
           }
         />
       </section>
+      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
+          04 · Inline density concentration — one row
+        </h3>
+        <p style={{ margin: "0 0 12px", fontSize: 12 }}>
+          Density is encoded as a smooth color gradient; the current value stays prominent.
+        </p>
+        <EventTimeline
+          events={events.slice(1, 4)}
+          selectedId="b1"
+          renderTrailing={(event) =>
+            target(event) ? <InlineDurationSummary reference="concentration" /> : null
+          }
+        />
+      </section>
       <section
         style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
       >
         <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
-          04 · Expanded interval
+          05 · Expanded interval
         </h3>
         <p style={{ margin: "0 0 12px", fontSize: 12 }}>
           The headline remains inline; detailed reference content occupies the
@@ -406,7 +424,7 @@ function MapAdjacentExample() {
           onSelectedIdChange={setSelectedId}
           onLocationSelect={(id) => setLocationId(id)}
           renderTrailing={(event) =>
-            target(event) ? <InlineDurationSummary reference="smooth" /> : null
+            target(event) ? <InlineDurationSummary reference="concentration" /> : null
           }
         />
       </section>
