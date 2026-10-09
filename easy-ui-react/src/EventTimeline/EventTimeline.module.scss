@@ -17,6 +17,8 @@
   --dot-column: 24px;
   --column-gap: 12px;
   --row-inline-padding: 8px;
+  --connector-inset: 110px;
+  --content-inset: 134px;
 
   position: relative;
   min-inline-size: 0;
@@ -26,9 +28,7 @@
   content: "";
   position: absolute;
   z-index: 0;
-  left: calc(
-    var(--row-inline-padding) + var(--time-column) + var(--column-gap) + 12px
-  );
+  left: var(--connector-inset);
   top: 24px;
   bottom: -4px;
   inline-size: 1px;
@@ -118,11 +118,7 @@
   color: design-token("color.primary.700");
   font: inherit;
   font-size: 12px;
-  margin: 0 0 6px
-    calc(
-      var(--row-inline-padding) + var(--time-column) + var(--dot-column) +
-        var(--column-gap) + var(--column-gap)
-    );
+  margin: 0 0 6px var(--content-inset);
   padding: 4px;
   cursor: pointer;
 }
@@ -134,10 +130,7 @@
 .interval,
 .details {
   min-inline-size: 0;
-  margin-inline-start: calc(
-    var(--row-inline-padding) + var(--time-column) + var(--dot-column) +
-      var(--column-gap) + var(--column-gap)
-  );
+  margin-inline-start: var(--content-inset);
   padding-block: 4px 8px;
 }
 
@@ -178,6 +171,8 @@
     --dot-column: 24px;
     --column-gap: 8px;
     --row-inline-padding: 2px;
+    --connector-inset: 64px;
+    --content-inset: 84px;
   }
 
   .time {
