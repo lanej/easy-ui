@@ -1,5 +1,6 @@
 import React from "react";
 import { Pill, type PillTone } from "../Pill";
+import { StatusDot } from "../StatusDot";
 import styles from "./HealthIndicator.module.scss";
 
 /** An assessment supplied by the application, never inferred by the indicator. */
@@ -12,6 +13,8 @@ export type HealthIndicatorProps = {
   /** Loading suppresses previous assessments, including unavailable state. */
   isLoading?: boolean;
   size?: "sm" | "md";
+  /** Dot retains the assessment text as an accessible name and tooltip. */
+  variant?: "pill" | "dot";
   /** Visible localized assessment or unassessed label. */
   label?: string;
   loadingLabel?: string;
@@ -39,6 +42,7 @@ export function HealthIndicator({
   availability = "available",
   isLoading = false,
   size = "md",
+  variant = "pill",
   label,
   loadingLabel = "Assessing…",
   unavailableLabel = "Unavailable",
@@ -68,15 +72,40 @@ export function HealthIndicator({
       className={styles.root}
       data-assessment={state}
       data-size={size}
-      role={accessibilityLabel ? "group" : undefined}
+      role={
+        isLoading && variant === "dot"
+          ? "status"
+          : accessibilityLabel
+            ? "group"
+            : undefined
+      }
       aria-label={accessibilityLabel}
       aria-busy={isLoading || undefined}
     >
-      <Pill tone={tone} size={size}>
-        <span className={styles.label} role={isLoading ? "status" : undefined}>
-          {text}
-        </span>
-      </Pill>
+      {variant === "dot" ? (
+        <StatusDot
+          label={text}
+          tone={
+            tone === "neutral"
+              ? "neutral"
+              : tone === "success"
+                ? "success"
+                : tone === "warning"
+                  ? "warning"
+                  : "danger"
+          }
+          size={size}
+        />
+      ) : (
+        <Pill tone={tone} size={size}>
+          <span
+            className={styles.label}
+            role={isLoading ? "status" : undefined}
+          >
+            {text}
+          </span>
+        </Pill>
+      )}
     </span>
   );
 }

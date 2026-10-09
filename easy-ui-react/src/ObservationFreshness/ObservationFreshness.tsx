@@ -17,6 +17,8 @@ export type ObservationFreshnessProps = {
   accessibilityLabel?: string;
   /** Localized accessible name and hover hint for fresh or stale data. */
   stateLabel?: string;
+  /** Show the fresh state label as well as its dot; stale labels are always visible. */
+  showStateLabel?: boolean;
   /** Optional visible timestamp prefix; omitted by default. */
   observedAtLabel?: string;
   loadingLabel?: string;
@@ -56,6 +58,7 @@ export function ObservationFreshness({
   isLoading = false,
   accessibilityLabel = "Observation freshness",
   stateLabel,
+  showStateLabel = false,
   observedAtLabel,
   loadingLabel = "Loading…",
   emptyLabel = "Unavailable",
@@ -108,7 +111,7 @@ export function ObservationFreshness({
             label={label}
             size="sm"
           />
-          {resolvedState === "stale" && (
+          {(resolvedState === "stale" || showStateLabel) && (
             <Text as="span" variant="caption">
               {label}
             </Text>
