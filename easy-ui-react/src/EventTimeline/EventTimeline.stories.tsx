@@ -244,9 +244,13 @@ export const PresentationModes: Story = {
   parameters: { layout: "padded" },
   render: () => (
     <div style={{ display: "grid", gap: 24, maxWidth: 1100 }}>
-      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
+      <section
+        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
+      >
         <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>01 · Minimal</h3>
-        <p style={{ margin: "0 0 16px", fontSize: 13 }}>Current duration and assessment, without reference metrics</p>
+        <p style={{ margin: "0 0 16px", fontSize: 13 }}>
+          Current duration and assessment, without reference metrics
+        </p>
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
@@ -261,9 +265,15 @@ export const PresentationModes: Story = {
           }
         />
       </section>
-      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
-        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>02 · Inline quantiles</h3>
-        <p style={{ margin: "0 0 16px", fontSize: 13 }}>Current duration, semantic P50/P90, and the points-only reference</p>
+      <section
+        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
+      >
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
+          02 · Inline quantiles
+        </h3>
+        <p style={{ margin: "0 0 16px", fontSize: 13 }}>
+          Current duration, semantic P50/P90, and the points-only reference
+        </p>
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
@@ -296,9 +306,16 @@ export const PresentationModes: Story = {
           }
         />
       </section>
-      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
-        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>03 · Expanded interval</h3>
-        <p style={{ margin: "0 0 16px", fontSize: 13 }}>The inline summary remains compact; the full distribution belongs to the interval</p>
+      <section
+        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
+      >
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
+          03 · Expanded interval
+        </h3>
+        <p style={{ margin: "0 0 16px", fontSize: 13 }}>
+          The inline summary remains compact; the full distribution belongs to
+          the interval
+        </p>
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
