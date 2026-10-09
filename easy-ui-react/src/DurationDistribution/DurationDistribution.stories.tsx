@@ -144,7 +144,7 @@ export const PresentationOptions: Story = {
           </Text>
           <DurationDistribution
             {...defaults}
-                stretch={false}
+            stretch={false}
             cumulative={undefined}
             visualization="histogram"
             distributionStyle={distributionStyle}

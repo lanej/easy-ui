@@ -80,10 +80,22 @@ export function HistogramReference({
                 ...new Set([
                   from,
                   to,
-                  ...Array.from(
-                    { length: 127 },
-                    (_, n) => from + ((to - from) * (n + 1)) / 128,
-                  ),
+                  ...group
+                    .flatMap((bin, index) => {
+                      const next = group[index + 1];
+                      return [
+                        bin.center,
+                        ...(next
+                          ? Array.from(
+                              { length: 7 },
+                              (_, n) =>
+                                bin.center +
+                                ((next.center - bin.center) * (n + 1)) / 8,
+                            )
+                          : []),
+                      ];
+                    })
+                    .filter((value) => value > from && value < to),
                   ...regions
                     .flatMap((r) => [r.from, r.to])
                     .filter((v) => v > from && v < to),

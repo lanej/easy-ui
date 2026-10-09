@@ -441,6 +441,34 @@ describe("DurationQuantileMetrics", () => {
 });
 
 describe("Histogram density representations", () => {
+  it("retains narrow concentration peaks between viewport sampling positions", () => {
+    const { container } = render(
+      <DurationDistribution
+        {...defaults}
+        domain={[0, 1000]}
+        bins={[
+          { from: 0, to: 500.99, count: 0 },
+          { from: 500.99, to: 501, count: 0 },
+          { from: 501, to: 501.01, count: 1 },
+          { from: 501.01, to: 501.02, count: 0 },
+          { from: 501.02, to: 1000, count: 0 },
+        ]}
+        distributionStyle="smooth"
+        distributionPresentation="concentration"
+      />,
+    );
+    const stops = Array.from(container.querySelectorAll("stop"));
+    expect(
+      stops.some((stop) => Number(stop.getAttribute("stop-opacity")) === 0.45),
+    ).toBe(true);
+    expect(
+      stops.some(
+        (stop) =>
+          Math.abs(Number(stop.getAttribute("offset")) - 0.501005) < 1e-12,
+      ),
+    ).toBe(true);
+  });
+
   const bins = [
     { from: 0, to: 10, count: 20 },
     { from: 10, to: 15, count: 20 },
