@@ -48,6 +48,11 @@
   dd {
     font-weight: 500;
   }
+
+  :global([data-visualization="histogram"] [role="img"]) {
+    block-size: 30px;
+    min-block-size: 30px;
+  }
 }
 
 .mapAdjacent {
