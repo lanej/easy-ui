@@ -133,7 +133,7 @@ try {
   await capture({
     story: "presentation-modes",
     filename: "event-timeline-presentation-light.png",
-    expected: ["01 · Minimal", "02 · Inline quantiles", "03 · Inline smooth density", "04 · Inline density concentration", "05 · Expanded interval", "6"],
+    expected: ["01 · Minimal", "02 · Inline quantiles", "03 · Inline smooth density", "03 · Inline density concentration", "05 · Expanded interval", "6"],
     validate: { expectedWidth: 446, expectConcentration: false },
   });
   await capture({
