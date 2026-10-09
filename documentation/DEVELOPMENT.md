@@ -12,6 +12,8 @@ ScoreComposition is an explicitly separate feature review on `feat/score-composi
 
 ## Component boundaries
 
+- **Assessment composition:** `HealthAssessment` is an organism coordinating the pill, observed value, freshness, optional percentile metrics, and responsive reference layout. `DurationDistribution` is a molecule owning the supplied duration reference graph. Compose that same molecule into the organism rather than duplicating rendering or health policy. Classification follows responsibility, including when optional content is hidden.
+
 - **Rendering surfaces:** `ChartSurface` and `NetworkMapSurface` own engine rendering and lifecycle. Optional providers connect independently placed headings, controls, legends, selection details, and exact data. Do not require logistics placeholders or a title to render a map.
 - **Small visual components:** use `Chart` for trends and reuse native components such as `RangePlot` and `BarList` when they express the data. The standalone SVG Sparkline API and MetricCard trend prop have been removed. ECharts is an optional lazy peer; MapLibre is a required package dependency that loads lazily when a map mounts. A map detail chart should not force a second rendering engine into every map.
 - **Rich map inspectors:** `renderCellDetails` hosts arbitrary React content. Compose `NetworkMapCellDetails` with children to retain summary/provenance around a supplied chart. Keep chart recipes separate from map behavior; applications own histogram bins, density estimation and time-series data. Embedded controls pin the card while retaining focus, and the same renderer serves the keyboard-accessible table detail.

@@ -240,7 +240,7 @@ try {
     await page.emulateMedia({ forcedColors: "none" });
     for (const id of ["reference-options", "distribution-options"]) {
       await page.setViewportSize({ width: 1800, height: 1200 });
-      await goto(id, scheme, "molecules-feedback-healthassessment");
+      await goto(id, scheme, "organisms-feedback-healthassessment");
       const layouts = await page.evaluate(checkHealthObservationLayout);
       await check(`${scheme}-${id}`);
       results.push({ name: `${scheme}-${id}-alignment`, layouts });

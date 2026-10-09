@@ -5,7 +5,7 @@ import * as Stories from "./DurationDistribution.stories";
 
 # DurationDistribution
 
-Compare an ongoing elapsed duration with a caller-supplied reference of completed durations. This molecule renders a native SVG/CSS plot and composes with `HealthAssessment`; it does not require a chart engine. It reuses the visualization scale and value-state utilities. `RangePlot` remains useful for named ranges, but cannot express this shared histogram/CDF overlay.
+Compare an ongoing elapsed duration with a caller-supplied reference of completed durations. This molecule renders a native SVG/CSS plot and composes with the `HealthAssessment` organism; it does not require a chart engine. It reuses the visualization scale and value-state utilities. `RangePlot` remains useful for named ranges, but cannot express this shared histogram/CDF overlay.
 
 <Canvas of={Stories.Default} />
 
@@ -74,6 +74,8 @@ Bands, band names, percentile points, percentile labels/guides, right count axis
 <Canvas of={Stories.Loading} />
 
 ## Compose with observation presentations
+
+`DurationDistribution` owns the reference comparison: the shared scale, histogram, cumulative curve, reference bands, and percentile marks. `HealthAssessment` owns the overall assessment presentation and responsive visibility. Use the molecule independently for graph-only views or compose it into the organism; both paths use the same rendering implementation.
 
 `DurationQuantileMetrics` is an independently usable companion that shares unit formatting and supplied health policy. Put it in `HealthAssessment.observationDetails` and the graph in `reference`. HealthAssessment's compact, detailed, default, wide, and responsive forms control layout and progressive visibility; DurationDistribution's options control the graph's own content. `stretch` fills the reference column with a minimum plot height of 100px.
 
