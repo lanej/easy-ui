@@ -25,7 +25,8 @@ const reference = (smooth = false) => (
     quantiles={quantiles}
     healthRegions={healthRegions}
     currentAssessment="healthy"
-    showPercentileLabels
+    showPercentileLabels={false}
+    stretch={false}
     distributionStyle={smooth ? "smooth" : "binned"}
     bins={
       smooth

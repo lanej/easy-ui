@@ -47,3 +47,15 @@
   gap: design-token("space.0.5");
   min-inline-size: 0;
 }
+
+// The facility controls available width; small headline sizing must not cap the reference column.
+.root[data-variant="default"] .observation > [data-size="sm"] {
+  max-inline-size: none;
+}
+
+.reference {
+  block-size: 100%;
+  display: grid;
+  align-items: center;
+  min-inline-size: 0;
+}

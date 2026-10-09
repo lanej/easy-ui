@@ -76,18 +76,45 @@ try {
             0,
           );
         }
+        if (story === "default" && width === 1040) {
+          const plot = await page
+            .locator('[role="img"][class*="plot"]')
+            .boundingBox();
+          const assessment = await page
+            .locator('[data-size="sm"][data-variant="default"]')
+            .boundingBox();
+          assert.ok(
+            plot.x > assessment.x + 30,
+            "Default reference must remain beside headline metrics",
+          );
+          assert.equal(
+            await page.locator('[class*="percentileLabel"]').count(),
+            0,
+            "Percentile labels must not be repeated on the graph",
+          );
+        }
         await page.addScriptTag({
           path: require.resolve("axe-core/axe.min.js"),
         });
-        const audit = await page.evaluate(
-          async () =>
-            await axe.run(document.querySelector("#storybook-root"), {
-              runOnly: {
-                type: "tag",
-                values: ["wcag2a", "wcag2aa", "wcag21aa"],
-              },
-            }),
-        );
+        let audit;
+        for (let attempt = 0; attempt < 40; attempt++) {
+          try {
+            audit = await page.evaluate(
+              async () =>
+                await axe.run(document.querySelector("#storybook-root"), {
+                  runOnly: {
+                    type: "tag",
+                    values: ["wcag2a", "wcag2aa", "wcag21aa"],
+                  },
+                }),
+            );
+            break;
+          } catch (error) {
+            if (!String(error).includes("already running") || attempt === 39)
+              throw error;
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+        }
         assert.deepEqual(
           audit.violations.map((v) => ({
             id: v.id,
@@ -97,6 +124,13 @@ try {
           `${theme}-${width}-${story}`,
         );
         checks.push(`${theme}-${width}-${story}`);
+        if (width === 1040 && story === "default")
+          await page
+            .locator('section[data-variant="default"]')
+            .screenshot({
+              path: resolve(output, `facility-summary-default-${theme}.png`),
+            });
+
         if (
           (width === 1040 && ["comparison", "table"].includes(story)) ||
           (width === 320 && ["narrow", "missing-observation"].includes(story))

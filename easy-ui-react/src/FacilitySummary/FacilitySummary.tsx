@@ -91,7 +91,14 @@ export function FacilitySummary({
               )}
               <HealthAssessment
                 {...observation}
-                size={variant === "compact" ? "sm" : "md"}
+                size={variant === "detailed" ? "md" : "sm"}
+                reference={
+                  observation.reference != null ? (
+                    <div className={styles.reference}>
+                      {observation.reference}
+                    </div>
+                  ) : undefined
+                }
                 variant={
                   variant === "compact"
                     ? "compact"
