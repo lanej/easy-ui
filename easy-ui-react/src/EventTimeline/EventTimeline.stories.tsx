@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import React, { useState } from "react";
-import { EventTimeline, type EventTimelineProps } from "./EventTimeline";
+import { EventTimeline } from "./EventTimeline";
 import type { EventTimelineEvent } from "./EventItem";
 import { HealthAssessment } from "../HealthAssessment";
 import { DurationReferenceExample } from "../HealthAssessment/DurationReference.example";
