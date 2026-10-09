@@ -383,6 +383,46 @@ describe("DurationDistribution", () => {
   });
 });
 
+describe("Inline references", () => {
+  it("hides the scale labels but preserves an accessible quantiles-only reference", () => {
+    const { container } = render(
+      <DurationDistribution
+        value={6}
+        unit="h"
+        domain={[0, 30]}
+        quantiles={[{ fraction: 0.5, value: 9 }, { fraction: 0.9, value: 18 }]}
+        visualization="points"
+        showScale={false}
+        stretch={false}
+      />,
+    );
+    expect(container.querySelector('[class*="axisFrame_"]')).toBeNull();
+    expect(screen.getByRole("img")).toHaveAccessibleName(expect.stringContaining("P90: 18 h"));
+  });
+
+  it("renders a smooth density from supplied bins, not inferred percentile landmarks", () => {
+    const { container } = render(
+      <DurationDistribution
+        value={6}
+        unit="h"
+        domain={[0, 30]}
+        quantiles={[{ fraction: 0.5, value: 9 }]}
+        bins={[
+          { from: 0, to: 10, count: 8 },
+          { from: 10, to: 20, count: 16 },
+          { from: 20, to: 30, count: 4 },
+        ]}
+        visualization="histogram"
+        distributionStyle="smooth"
+        showScale={false}
+      />,
+    );
+    expect(container.querySelector('[data-density-curve="true"]')).not.toBeNull();
+    expect(container.querySelector('[class*="axisFrame_"]')).toBeNull();
+    expect(screen.getByRole("img")).toHaveAccessibleName(expect.stringContaining("0–10 h: 8"));
+  });
+});
+
 describe("CDF projection", () => {
   it("does not extrapolate or synthesize boundary probabilities", () => {
     const points = [
