@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, screen } from "@testing-library/react";
 import { render } from "../utilities/test";
 import { EventTimeline } from "./EventTimeline";
+import { HealthAssessment } from "../HealthAssessment";
 import type { EventTimelineEvent } from "./EventItem";
 
 const events: EventTimelineEvent[] = [
@@ -57,4 +58,24 @@ describe("EventTimeline", () => {
     expect(screen.getByText("After second")).toBeVisible();
     expect(screen.queryByText("After third")).not.toBeInTheDocument();
   });
+  it("composes an optional duration assessment between events without changing chronology", () => {
+    const { rerender } = render(
+      <EventTimeline
+        events={events}
+        renderInterval={(event) => event.id === "first" ? (
+          <HealthAssessment
+            variant="compact"
+            observation={{ value: 6, unit: "hours" }}
+            health={{ assessment: "healthy", label: "As expected" }}
+          />
+        ) : null}
+      />,
+    );
+    expect(screen.getByRole("group", { name: "Duration" })).toBeVisible();
+    expect(screen.getByText("As expected")).toBeVisible();
+    expect(screen.getAllByRole("button")).toHaveLength(3);
+    rerender(<EventTimeline events={events} />);
+    expect(screen.queryByText("As expected")).not.toBeInTheDocument();
+  });
+
 });
