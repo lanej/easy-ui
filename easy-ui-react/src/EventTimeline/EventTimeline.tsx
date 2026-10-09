@@ -14,7 +14,10 @@ export type EventTimelineProps = {
   /** Optional right-side summary, separate from the selected event button. */
   renderTrailing?: (event: EventTimelineEvent) => React.ReactNode;
   /** Content associated with the interval following an event. */
-  renderInterval?: (event: EventTimelineEvent, following: EventTimelineEvent | undefined) => React.ReactNode;
+  renderInterval?: (
+    event: EventTimelineEvent,
+    following: EventTimelineEvent | undefined,
+  ) => React.ReactNode;
   /** Rich context outside the event's selection button. */
   renderDetails?: (event: EventTimelineEvent) => React.ReactNode;
   emptyLabel?: string;
@@ -36,7 +39,9 @@ export function EventTimeline({
   ariaLabel = "Event timeline",
   size = "default",
 }: EventTimelineProps) {
-  const [internalId, setInternalId] = useState<string | null>(defaultSelectedId);
+  const [internalId, setInternalId] = useState<string | null>(
+    defaultSelectedId,
+  );
   const activeId = selectedId === undefined ? internalId : selectedId;
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const choose = (event: EventTimelineEvent) => {
@@ -45,7 +50,14 @@ export function EventTimeline({
   };
   const navigate = (event: EventTimelineEvent, key: string) => {
     const index = events.findIndex((candidate) => candidate.id === event.id);
-    const next = key === "ArrowDown" ? index + 1 : key === "ArrowUp" ? index - 1 : key === "Home" ? 0 : events.length - 1;
+    const next =
+      key === "ArrowDown"
+        ? index + 1
+        : key === "ArrowUp"
+          ? index - 1
+          : key === "Home"
+            ? 0
+            : events.length - 1;
     if (next < 0 || next >= events.length) return false;
     const target = events[next];
     choose(target);
@@ -70,13 +82,21 @@ export function EventTimeline({
             onKeyDown={(key) => navigate(event, key)}
           />
           {event.locationId && onLocationSelect && (
-            <button className={styles.mapLink} type="button" onClick={() => onLocationSelect(event.locationId!, event.id)}>
+            <button
+              className={styles.mapLink}
+              type="button"
+              onClick={() => onLocationSelect(event.locationId!, event.id)}
+            >
               Show location
             </button>
           )}
-          {renderDetails && <div className={styles.details}>{renderDetails(event)}</div>}
+          {renderDetails && (
+            <div className={styles.details}>{renderDetails(event)}</div>
+          )}
           {renderInterval && index < events.length - 1 && (
-            <div className={styles.interval}>{renderInterval(event, events[index + 1])}</div>
+            <div className={styles.interval}>
+              {renderInterval(event, events[index + 1])}
+            </div>
           )}
         </li>
       ))}

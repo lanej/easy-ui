@@ -31,9 +31,21 @@ export type EventItemProps = {
 };
 
 /** Reusable event row; timing, locations, and status have no domain dictionary. */
-export function EventItem({event, current = false, size = "default", onSelect, onKeyDown, registerButton, trailing}: EventItemProps) {
+export function EventItem({
+  event,
+  current = false,
+  size = "default",
+  onSelect,
+  onKeyDown,
+  registerButton,
+  trailing,
+}: EventItemProps) {
   return (
-    <div className={styles.item} data-size={size} data-current={current || undefined}>
+    <div
+      className={styles.item}
+      data-size={size}
+      data-current={current || undefined}
+    >
       <button
         ref={registerButton}
         type="button"
@@ -41,20 +53,39 @@ export function EventItem({event, current = false, size = "default", onSelect, o
         aria-current={current ? "true" : undefined}
         onClick={onSelect}
         onKeyDown={(e) => {
-          if (["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) && onKeyDown?.(e.key)) e.preventDefault();
+          if (
+            ["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) &&
+            onKeyDown?.(e.key)
+          )
+            e.preventDefault();
         }}
       >
         <span className={styles.time}>{event.timeLabel ?? "Time unknown"}</span>
-        <span className={styles.dot}><StatusDot label={event.statusLabel ?? event.label} tone={event.tone} current={current}/></span>
+        <span className={styles.dot}>
+          <StatusDot
+            label={event.statusLabel ?? event.label}
+            tone={event.tone}
+            current={current}
+          />
+        </span>
         <span className={styles.content}>
           <span className={styles.title}>{event.label}</span>
-          {size !== "compact" && (event.locationLabel || event.locationTypeLabel) && (
-            <span className={styles.location}>
-              {[event.locationTypeLabel, event.locationLabel].filter(Boolean).join(" · ")}
+          {size !== "compact" &&
+            (event.locationLabel || event.locationTypeLabel) && (
+              <span className={styles.location}>
+                {[event.locationTypeLabel, event.locationLabel]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            )}
+          {size === "detailed" && event.receivedTimeLabel && (
+            <span className={styles.received}>
+              Received: {event.receivedTimeLabel}
             </span>
           )}
-          {size === "detailed" && event.receivedTimeLabel && <span className={styles.received}>Received: {event.receivedTimeLabel}</span>}
-          {size === "detailed" && event.description && <span className={styles.received}>{event.description}</span>}
+          {size === "detailed" && event.description && (
+            <span className={styles.received}>{event.description}</span>
+          )}
         </span>
       </button>
       {trailing != null && <div className={styles.trailing}>{trailing}</div>}
