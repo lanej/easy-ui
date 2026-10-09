@@ -1,6 +1,12 @@
 name: Timeline Storybook visual evidence
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "easy-ui-react/src/EventTimeline/**"
+      - "scripts/capture-event-timeline-storybook.mjs"
+      - ".github/workflows/timeline-storybook-captures.yml"
   push:
     branches: [feat/reusable-event-timeline]
     paths:
@@ -17,7 +23,7 @@ concurrency:
 
 jobs:
   capture:
-    if: github.repository == 'lanej/easy-ui'
+    if: github.repository == 'lanej/easy-ui' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
