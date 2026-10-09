@@ -184,6 +184,9 @@ export function HealthAssessment({
                 )}
               </div>
             )}
+            {freshnessPlacement === "context" && freshnessIndicator && (
+              <span className={styles.freshness}>{freshnessIndicator}</span>
+            )}
             {!isLoading && !stacked && showMetrics && (
               <div className={styles.observationDetails}>
                 {observationDetails}
