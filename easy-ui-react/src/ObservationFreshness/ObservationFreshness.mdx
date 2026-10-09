@@ -1,0 +1,34 @@
+import { ArgTypes, Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./ObservationFreshness.stories";
+
+<Meta of={Stories} />
+
+# ObservationFreshness
+
+Display an optional timestamp followed by a StatusDot atom: success for fresh data and warning for stale data. Freshness describes data recency, independently of health. The dot’s accessible name and hover hint identify its state. Stale data also keeps a visible label, preserving the distinction without color. Loading and unavailable states retain concise text.
+
+<Canvas of={Stories.Default} />
+<Controls of={Stories.Default} />
+
+```tsx
+import { ObservationFreshness } from "@easypost/easy-ui/ObservationFreshness";
+
+<ObservationFreshness state="stale" observedAt="2026-01-15T10:30:00Z" />;
+```
+
+## Application boundary
+
+The application supplies `state`; elapsed time, freshness thresholds, and health assessments are never inferred. Supply an ISO date (`2026-01-15`), an ISO timestamp with timezone (`2026-01-15T10:30:00Z`), or a valid Date. A missing or invalid timestamp is omitted without changing the supplied freshness state. Unavailable and loading states suppress any prior timestamp. Loading exposes a status label and busy state.
+
+<Canvas of={Stories.States} />
+
+## Localization and layout
+
+The timestamp has no prefix by default. Supply `observedAtLabel` to add an optional prefix such as “Observed”. Supply translated status labels and `formatObservedAt` to choose locale and timezone. The default preserves a string timestamp, or displays a Date as ISO text, avoiding machine-dependent formatting. The timestamp remains a semantic `time` element. Examples use synthetic observations.
+
+<Canvas of={Stories.Compact} />
+<Canvas of={Stories.Narrow} />
+<Canvas of={Stories.LargeText} />
+<Canvas of={Stories.Localized} />
+
+<ArgTypes of={Stories} />

@@ -1,0 +1,453 @@
+@use "../styles/common" as *;
+
+.root {
+  @include font-style("caption");
+  inline-size: 100%;
+  min-inline-size: 0;
+  color: design-token("color.neutral.700");
+  font-variant-numeric: tabular-nums;
+  container-type: inline-size;
+}
+
+.figure {
+  margin: 0;
+}
+
+.regionLabels {
+  display: flex;
+  margin-block-end: 8px;
+}
+
+.regionLabel {
+  text-align: center;
+  color: design-token("color.neutral.900");
+
+  small {
+    display: block;
+    font: inherit;
+    color: design-token("color.neutral.700");
+    margin-block-start: 2px;
+  }
+}
+
+.plot {
+  position: relative;
+  block-size: 100px;
+  margin-block-start: 0;
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  opacity: 0.13;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.region {
+  position: absolute;
+  inset-block: 0;
+}
+
+@each $assessment,
+  $tone
+    in ("healthy": "positive", "degraded": "warning", "unhealthy": "negative")
+{
+  .region[data-assessment="#{$assessment}"] {
+    background: design-token("color.#{$tone}.700");
+  }
+  .compactRegions > span[data-assessment="#{$assessment}"] {
+    background: design-token("color.#{$tone}.100");
+    color: design-token("color.#{$tone}.900");
+  }
+}
+
+.percentile {
+  position: absolute;
+  inset-block: 0;
+  inline-size: 1px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(
+    to bottom,
+    currentColor 0 4px,
+    transparent 4px 8px
+  );
+}
+
+.percentile::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  inset-inline-start: 0;
+  inline-size: 1px;
+  block-size: 11px;
+  background: currentColor;
+}
+
+.elapsed {
+  color: design-token("color.neutral.700");
+  position: absolute;
+  top: 0;
+  inline-size: 3px;
+  block-size: 100%;
+  transform: translateX(-50%);
+  background: currentColor;
+  box-shadow: 0 0 0 2px design-token("color.neutral.000");
+}
+
+@each $assessment,
+  $tone
+    in ("healthy": "positive", "degraded": "warning", "unhealthy": "negative")
+{
+  .elapsed[data-current-assessment="#{$assessment}"] {
+    color: design-token("color.#{$tone}.700");
+  }
+}
+
+.marker {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  inline-size: 8px;
+  block-size: 8px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 1px design-token("color.neutral.000");
+}
+
+.scale {
+  position: relative;
+  block-size: calc(8px + 1lh);
+}
+
+.scale[data-has-thresholds="true"][data-has-percentile-labels="true"] {
+  block-size: calc(16px + 2lh);
+}
+
+.thresholdLabel {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    top: -6px;
+    block-size: 4px;
+    inline-size: 1px;
+    background: currentColor;
+  }
+}
+
+.scale[data-has-percentile-labels="true"] .thresholdLabel {
+  top: calc(16px + 1lh);
+}
+
+.endpoint {
+  position: absolute;
+  top: 8px;
+  white-space: nowrap;
+
+  &[data-end="true"] {
+    right: 0;
+  }
+}
+
+.percentileLabel {
+  position: absolute;
+  display: inline-flex;
+  align-items: baseline;
+  gap: design-token("space.0.5");
+  top: 8px;
+  transform: translateX(-50%);
+  text-align: center;
+  white-space: nowrap;
+
+  strong {
+    font-weight: 500;
+    color: inherit;
+  }
+}
+
+@container (max-width: 18em) {
+  .scale[data-has-percentile-labels="true"] {
+    block-size: calc(8px + 2lh);
+  }
+
+  .scale[data-has-thresholds="true"][data-has-percentile-labels="true"] {
+    block-size: calc(16px + 3lh);
+  }
+
+  .scale[data-has-percentile-labels="true"] .thresholdLabel {
+    top: calc(16px + 2lh);
+  }
+
+  .percentileLabel {
+    display: block;
+
+    strong {
+      display: block;
+    }
+  }
+}
+
+.compactRegions {
+  display: none;
+}
+
+.valueState {
+  margin-block-start: design-token("space.0.5");
+}
+
+@container (max-width: 18em) {
+  .regionLabels {
+    display: none;
+  }
+  .compactRegions {
+    display: grid;
+    gap: 2px;
+
+    > span {
+      display: flex;
+      justify-content: space-between;
+      gap: design-token("space.0.5");
+      padding-inline: design-token("space.0.5");
+    }
+  }
+}
+
+@media (forced-colors: active) {
+  .track,
+  .region[data-assessment] {
+    background: GrayText;
+  }
+  .region[data-assessment] {
+    border-inline-start: 1px solid CanvasText;
+  }
+  .elapsed,
+  .marker {
+    background: CanvasText;
+  }
+  .bin {
+    fill: GrayText;
+  }
+  .percentile {
+    background: CanvasText;
+  }
+  .percentileLabel strong {
+    color: CanvasText;
+  }
+}
+
+.curve {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  path {
+    fill: none;
+    stroke: design-token("color.neutral.900");
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+  }
+}
+@media (forced-colors: active) {
+  .curve path {
+    stroke: CanvasText;
+  }
+  .curvePoint {
+    background: CanvasText;
+  }
+}
+
+.root[data-section="primary"] {
+  block-size: 100%;
+
+  .figure {
+    display: flex;
+    flex-direction: column;
+    block-size: 100%;
+  }
+  .regionLabels,
+  .scale,
+  .compactRegions,
+  figcaption {
+    flex-shrink: 0;
+  }
+  .plot {
+    flex: 1;
+    min-block-size: 100px;
+    block-size: auto;
+  }
+}
+
+.root[data-section="details"] {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  block-size: 100%;
+}
+
+.histogramPoint {
+  position: absolute;
+  top: 100%;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: currentColor;
+  box-shadow: 0 0 0 1px design-token("color.neutral.000");
+}
+
+@media (forced-colors: active) {
+  .histogramPoint {
+    background: CanvasText;
+    outline: 1px solid Canvas;
+  }
+}
+
+[data-percentile] {
+  color: design-token("color.neutral.700");
+}
+@each $assessment,
+  $tone
+    in ("healthy": "positive", "degraded": "warning", "unhealthy": "negative")
+{
+  [data-percentile][data-reference-assessment="#{$assessment}"] {
+    color: light-dark(
+      design-token("color.#{$tone}.800"),
+      design-token("color.#{$tone}.500")
+    );
+  }
+  .bin[data-reference-assessment="#{$assessment}"] {
+    fill: light-dark(
+      color-mix(in srgb, design-token("color.#{$tone}.700") 28%, transparent),
+      color-mix(in srgb, design-token("color.#{$tone}.400") 34%, transparent)
+    );
+  }
+}
+.histogramBars {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+.bin {
+  fill: color-mix(in srgb, design-token("color.neutral.600") 28%, transparent);
+}
+.sampleCount {
+  margin-block-end: design-token("space.1");
+}
+.plot[data-has-count-axis="true"],
+.axisFrame[data-has-count-axis="true"] {
+  margin-inline-end: 48px;
+}
+.countAxis {
+  position: absolute;
+  inset-block: 0;
+  left: calc(100% + 6px);
+  inline-size: 42px;
+  font-size: 10px;
+  line-height: 1;
+}
+.countTitle {
+  position: absolute;
+  right: 0;
+  inset-block: 0;
+  writing-mode: vertical-rl;
+  text-align: center;
+}
+.countTick {
+  position: absolute;
+  left: 0;
+  transform: translateY(-50%);
+}
+.countTick[data-end="top"] {
+  transform: none;
+}
+.countTick[data-end="bottom"] {
+  transform: translateY(-100%);
+}
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.metrics {
+  margin: 0;
+  display: grid;
+  gap: design-token("space.0.5");
+  font-variant-numeric: tabular-nums;
+  > div {
+    display: flex;
+    align-items: baseline;
+    gap: design-token("space.0.5");
+  }
+  dt {
+    display: flex;
+    align-items: center;
+    gap: design-token("space.0.5");
+  }
+  dd {
+    margin: 0;
+    padding-inline-start: 0;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  dd span {
+    font-size: 12px;
+    font-weight: 400;
+  }
+}
+.legendDot {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+@media (forced-colors: active) {
+  [data-percentile] {
+    color: CanvasText;
+  }
+  .legendDot {
+    background: CanvasText;
+  }
+}
+
+.curvePoint {
+  position: absolute;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: currentColor;
+  box-shadow: 0 0 0 1px design-token("color.neutral.000");
+}
+@media (forced-colors: active) {
+  .curvePoint {
+    background: CanvasText;
+    outline: 1px solid Canvas;
+  }
+}
+
+@media (forced-colors: active) {
+  [data-percentile][data-reference-assessment] {
+    color: CanvasText;
+  }
+  .bin[data-reference-assessment] {
+    fill: GrayText;
+  }
+}
+
+.figure[data-has-count-axis="true"] .regionLabels {
+  margin-inline-end: 48px;
+}

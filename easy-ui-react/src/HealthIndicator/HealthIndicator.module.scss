@@ -1,0 +1,17 @@
+.root {
+  display: inline-flex;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+
+  > span {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    box-sizing: border-box;
+  }
+}
+
+.label {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}

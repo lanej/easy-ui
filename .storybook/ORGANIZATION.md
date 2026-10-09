@@ -89,10 +89,10 @@ recreating label/value/loading markup. `MetricContent` accepts `SignedValue`
 elements so numeric presentation composes without moving workflow meaning into
 the atom.
 
-Use Logistics Services' existing screen compositions as adoption references.
-`WorkspaceHeader` follows its compact Dynamic Pricing navigation/identity row,
-without a required subtitle. `KpiTile` adapts its shell metric tile without the
-application data-provider dependency. Both reuse Easy UI building blocks.
+Use existing screen compositions as adoption references. `WorkspaceHeader`
+provides a compact navigation and identity row without a required subtitle.
+`KpiTile` provides a shell metric tile without an application data-provider
+dependency. Both reuse Easy UI building blocks.
 Standalone `Pill` labels and `PillButton` actions are Atoms; `PillGroup` remains
 a Molecule that adds tag-list navigation and removal to the shared pill atom.
 

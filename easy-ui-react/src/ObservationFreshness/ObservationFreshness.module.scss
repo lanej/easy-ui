@@ -1,0 +1,28 @@
+@use "../styles/common" as *;
+
+.root {
+  @include font-style("caption");
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: design-token("space.1");
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+  color: design-token("color.neutral.600");
+}
+
+.root[data-size="md"] {
+  row-gap: design-token("space.0.5");
+}
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: design-token("space.1");
+}
+
+.root[data-state="stale"] .state {
+  color: design-token("color.warning.800");
+}

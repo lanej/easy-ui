@@ -1,0 +1,23 @@
+import { ArgTypes, Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./StatusDot.stories";
+
+<Meta of={Stories} />
+
+# StatusDot
+
+A reusable atom for a small, static status marker. The caller supplies its tone and required status label. The label provides an accessible name and native hover hint. The dot has no freshness, health, timing, or loading policy.
+
+<Canvas of={Stories.Default} />
+<Controls of={Stories.Default} />
+
+```tsx
+import { StatusDot } from "@easypost/easy-ui/StatusDot";
+
+<StatusDot tone="success" label="Fresh" size="sm" />;
+```
+
+Use a nearby visible label when users cannot infer the status from context. This is a static image, not an interactive control or live announcement. In forced-color mode it uses the system text color; its accessible name remains available.
+
+<Canvas of={Stories.Tones} />
+<Canvas of={Stories.Compact} />
+<ArgTypes of={Stories} />
