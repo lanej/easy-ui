@@ -70,7 +70,7 @@
   transform: translateX(-50%);
   background: repeating-linear-gradient(
     to bottom,
-    design-token("color.neutral.700") 0 4px,
+    currentColor 0 4px,
     transparent 4px 8px
   );
 }
@@ -83,7 +83,7 @@
   inset-inline-start: 0;
   inline-size: 1px;
   block-size: 11px;
-  background: design-token("color.neutral.700");
+  background: currentColor;
 }
 
 .elapsed {
@@ -171,7 +171,7 @@
 
   strong {
     font-weight: 500;
-    color: design-token("color.neutral.900");
+    color: inherit;
   }
 }
 
@@ -248,7 +248,7 @@
   transform: translateX(-50%);
   background: repeating-linear-gradient(
     to bottom,
-    design-token("color.neutral.700") 0 4px,
+    currentColor 0 4px,
     transparent 4px 8px
   );
   box-shadow: 0 0 0 1px design-token("color.neutral.000");
@@ -315,7 +315,10 @@
     vector-effect: non-scaling-stroke;
   }
   circle {
-    fill: design-token("color.neutral.900");
+    fill: currentColor;
+    stroke: design-token("color.neutral.000");
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
   }
 }
 @media (forced-colors: active) {
@@ -375,7 +378,7 @@
   block-size: 5px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  background: design-token("color.neutral.900");
+  background: currentColor;
   box-shadow: 0 0 0 1px design-token("color.neutral.000");
 }
 
@@ -383,5 +386,48 @@
   .histogramPoint {
     background: CanvasText;
     outline: 1px solid Canvas;
+  }
+}
+
+[data-percentile="P50"] {
+  color: design-token("color.primary.700");
+}
+[data-percentile="P90"] {
+  color: design-token("color.secondary.700");
+}
+.metrics {
+  margin: 0;
+  display: grid;
+  gap: design-token("space.1");
+  font-variant-numeric: tabular-nums;
+  dt {
+    display: flex;
+    align-items: center;
+    gap: design-token("space.0.5");
+  }
+  dd {
+    margin: 0;
+    padding-inline-start: 12px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  dd span {
+    font-size: 12px;
+    font-weight: 400;
+  }
+}
+.legendDot {
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+@media (forced-colors: active) {
+  [data-percentile] {
+    color: CanvasText;
+  }
+  .legendDot {
+    background: CanvasText;
   }
 }

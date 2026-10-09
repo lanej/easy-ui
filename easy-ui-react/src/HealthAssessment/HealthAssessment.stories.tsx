@@ -10,6 +10,7 @@ import {
 import styles from "./HealthAssessment.examples.module.scss";
 import {
   DurationReferenceExample,
+  DurationPercentileMetrics,
   type DurationHealthRegion,
   type ReferenceVisualization,
 } from "./DurationReference.example";
@@ -20,6 +21,7 @@ type ExampleArgs = HealthAssessmentProps & {
   showHealthBandLabels?: boolean;
   showPercentiles?: boolean;
   showPercentileLabels?: boolean;
+  showPercentileMetrics?: boolean;
   showReferenceDistribution?: boolean;
 };
 
@@ -30,6 +32,12 @@ const meta: Meta<ExampleArgs> = {
   argTypes: {
     reference: { control: false },
     referenceDetails: { control: false },
+    observationDetails: { control: false },
+    showPercentileMetrics: {
+      control: "boolean",
+      description:
+        "Story-only: show a colored percentile legend and duration submetrics beside the headline.",
+    },
     health: { control: false },
     referenceVisualization: {
       control: "select",
@@ -64,6 +72,7 @@ const meta: Meta<ExampleArgs> = {
     showHealthBandLabels: false,
     showPercentiles: true,
     showPercentileLabels: false,
+    showPercentileMetrics: false,
     showReferenceDistribution: true,
   },
   render: (args) => renderExample(args),
@@ -202,6 +211,7 @@ function renderExample(
     showHealthBandLabels,
     showPercentiles,
     showPercentileLabels,
+    showPercentileMetrics,
     showReferenceDistribution,
     ...args
   }: ExampleArgs,
@@ -222,6 +232,17 @@ function renderExample(
   return (
     <HealthAssessment
       {...args}
+      observationDetails={
+        usesHours &&
+        args.observation &&
+        referenceVisualization !== "none" &&
+        showPercentiles !== false &&
+        showPercentileMetrics ? (
+          <DurationPercentileMetrics locale={locale} />
+        ) : (
+          args.observationDetails
+        )
+      }
       health={
         args.observation && !usesHours
           ? { ...args.health, assessment: null, label: undefined }
@@ -300,6 +321,13 @@ export const BothReferences: Story = {
 export const LabeledPercentiles: Story = {
   args: { ...defaultProps, showPercentileLabels: true },
 };
+export const WithPercentileMetrics: Story = {
+  args: {
+    ...defaultProps,
+    showPercentileMetrics: true,
+    showReferenceDistribution: false,
+  },
+};
 export const WithoutPercentiles: Story = {
   args: { ...defaultProps, showPercentiles: false },
 };
@@ -323,11 +351,24 @@ type ReferenceOption = {
   labels?: boolean;
   percentiles?: boolean;
   percentileLabels?: boolean;
+  metrics?: boolean;
   distribution?: boolean;
   expanded?: boolean;
 };
 
 const primaryOptions: ReferenceOption[] = [
+  {
+    name: "Curve · percentile metrics",
+    visualization: "cumulative",
+    bands: true,
+    metrics: true,
+  },
+  {
+    name: "Both · percentile metrics",
+    visualization: "both",
+    bands: true,
+    metrics: true,
+  },
   {
     name: "Curve · labeled percentiles",
     visualization: "cumulative",
@@ -408,6 +449,7 @@ function ReferenceOptionExample({ option }: { option: ReferenceOption }) {
           showHealthBandLabels: option.labels === true,
           showPercentiles: option.percentiles !== false,
           showPercentileLabels: option.percentileLabels === true,
+          showPercentileMetrics: option.metrics === true,
           showReferenceDistribution: option.distribution === true,
         })}
       </div>

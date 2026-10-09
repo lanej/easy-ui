@@ -88,6 +88,27 @@ export function checkHealthObservationLayout() {
             );
         });
       }
+      const metrics = information.querySelector("dl");
+      if (metrics) {
+        for (const metric of metrics.querySelectorAll("[data-percentile]")) {
+          const point = primary.querySelector(
+            `[data-percentile="${metric.dataset.percentile}"]`,
+          );
+          if (
+            !point ||
+            getComputedStyle(metric).color !== getComputedStyle(point).color
+          )
+            throw new Error(
+              `${name}: percentile legend color differs from chart`,
+            );
+        }
+        const duration = information.querySelector('[role="img"]');
+        if (
+          metrics.getBoundingClientRect().left <
+          duration.getBoundingClientRect().right
+        )
+          throw new Error(`${name}: percentile metrics overlap headline`);
+      }
       const footer = details || primary;
       const rightBottom = footer.getBoundingClientRect().bottom;
       const header = primary.querySelector(

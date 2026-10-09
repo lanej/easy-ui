@@ -85,3 +85,18 @@
     grid-row: 1 / span 2;
   }
 }
+
+.headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  inline-size: 100%;
+  gap: design-token("space.2");
+  min-inline-size: 0;
+}
+.observationDetails {
+  @include font-style("caption");
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}

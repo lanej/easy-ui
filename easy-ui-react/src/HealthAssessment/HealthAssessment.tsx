@@ -15,6 +15,8 @@ export type HealthAssessmentProps = {
   health: Omit<HealthIndicatorProps, "size" | "isLoading">;
   /** Optional duration observation. Invalid or missing values suppress health. */
   observation?: Omit<DurationValueProps, "size" | "isLoading">;
+  /** Optional caller-supplied submetrics beside the headline duration. */
+  observationDetails?: ReactNode;
   /** Optional caller-classified freshness; no aging policy is inferred. */
   freshness?: Omit<ObservationFreshnessProps, "size" | "isLoading">;
   /** Optional reference description or visualization supplied by the caller. */
@@ -32,6 +34,7 @@ export function HealthAssessment({
   health,
   observation,
   freshness,
+  observationDetails,
   reference,
   referenceDetails,
   size = "md",
@@ -88,7 +91,16 @@ export function HealthAssessment({
             {stacked ? (
               <>
                 {indicator}
-                {duration}
+                {observationDetails != null ? (
+                  <div className={styles.headline}>
+                    {duration}
+                    <div className={styles.observationDetails}>
+                      {observationDetails}
+                    </div>
+                  </div>
+                ) : (
+                  duration
+                )}
               </>
             ) : (
               <>
@@ -97,6 +109,11 @@ export function HealthAssessment({
               </>
             )}
           </div>
+          {!isLoading && !stacked && observationDetails != null && (
+            <div className={styles.observationDetails}>
+              {observationDetails}
+            </div>
+          )}
           {!isLoading &&
             freshness !== undefined &&
             !(

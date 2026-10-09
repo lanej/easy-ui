@@ -100,6 +100,7 @@ function Scale({
         landmarks.map(({ label, value }) => (
           <span
             key={label}
+            data-percentile={label}
             className={styles.percentileLabel}
             style={{ left: `${(value / max) * 100}%` }}
           >
@@ -251,6 +252,7 @@ export function DurationReferenceExample({
           landmarks.map(({ label, value: landmark }) => (
             <span
               key={label}
+              data-percentile={label}
               className={
                 showPercentileLabels
                   ? styles.histogramPercentile
@@ -319,6 +321,7 @@ export function DurationReferenceExample({
                 landmarks.map(({ label, value: landmark }) => (
                   <circle
                     key={label}
+                    data-percentile={label}
                     cx={(landmark / max) * 300}
                     cy={100 - fractionAt(landmark) * 100}
                     r="2"
@@ -332,6 +335,7 @@ export function DurationReferenceExample({
               landmarks.map(({ label, value: landmark }) => (
                 <span
                   key={label}
+                  data-percentile={label}
                   className={styles.percentile}
                   style={{ left: `${(landmark / max) * 100}%` }}
                   aria-hidden="true"
@@ -381,5 +385,33 @@ export function DurationReferenceExample({
           </details>
         )}
     </div>
+  );
+}
+
+/** Story-only legend; supplied through the molecule's observationDetails slot. */
+export function DurationPercentileMetrics({
+  locale = "en",
+}: {
+  locale?: "en" | "fr";
+}) {
+  return (
+    <dl
+      className={styles.metrics}
+      aria-label={
+        locale === "fr" ? "Percentiles de référence" : "Reference percentiles"
+      }
+    >
+      {landmarks.map(({ label, value }) => (
+        <div key={label} data-percentile={label}>
+          <dt>
+            <span className={styles.legendDot} aria-hidden="true" />
+            {label}
+          </dt>
+          <dd>
+            {new Intl.NumberFormat(locale).format(value)} <span>h</span>
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
