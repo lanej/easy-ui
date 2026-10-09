@@ -23,8 +23,8 @@ export type HealthAssessmentProps = {
   reference?: ReactNode;
   /** Optional supporting content below the primary reference; included in the reference column height. */
   referenceDetails?: ReactNode;
-  /** Compact keeps reference content beside the observation at narrower widths. */
-  referenceLayout?: "auto" | "compact";
+  /** Compact keeps a side-by-side reference; below uses one observation row above the reference. */
+  referenceLayout?: "auto" | "compact" | "below";
   /** Presentation form; responsive progressively reveals supplied content by container width. */
   variant?: "compact" | "detailed" | "default" | "wide" | "responsive";
   /** Place the assessment beside the observation label rather than the value. */
@@ -66,13 +66,18 @@ export function HealthAssessment({
   const showReferenceDetails =
     showReference && variant !== "detailed" && referenceDetails != null;
   const stacked =
+    referenceLayout !== "below" &&
     size === "md" &&
     !isLoading &&
     (showReference || variant === "compact" || variant === "responsive");
   const duration = observation !== undefined && (
     <DurationValue
       {...observation}
-      size={size === "md" && showReference ? "lg" : size}
+      size={
+        size === "md" && showReference && referenceLayout !== "below"
+          ? "lg"
+          : size
+      }
       isLoading={isLoading}
     />
   );

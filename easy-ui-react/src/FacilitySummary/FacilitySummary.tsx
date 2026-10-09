@@ -1,5 +1,4 @@
 import React, { useId, type ReactNode } from "react";
-import { Badge } from "../Badge";
 import { Text } from "../Text";
 import {
   HealthAssessment,
@@ -9,7 +8,7 @@ import styles from "./FacilitySummary.module.scss";
 
 export type FacilitySummaryObservation = Omit<
   HealthAssessmentProps,
-  "variant" | "size" | "isLoading"
+  "variant" | "size" | "isLoading" | "referenceLayout" | "healthPlacement"
 > & {
   /** Stable identity for this independently supplied observation. */
   id: string;
@@ -59,13 +58,17 @@ export function FacilitySummary({
           <Text id={nameId} as="p" variant="body1" weight="semibold">
             {name}
           </Text>
-          {facilityType != null && <Badge variant="gray">{facilityType}</Badge>}
+          {identifier && (
+            <Text as="span" variant="caption" color="subdued">
+              {identifier}
+            </Text>
+          )}
         </div>
-        {(identifier || location != null) && (
+        {(facilityType != null || location != null) && (
           <div className={styles.metadata}>
-            {identifier && (
+            {facilityType != null && (
               <Text as="span" variant="caption" color="subdued">
-                {identifier}
+                {facilityType}
               </Text>
             )}
             {location != null && (
@@ -92,7 +95,8 @@ export function FacilitySummary({
                     : observation.health
                 }
                 healthPlacement={variant === "compact" ? "label" : "headline"}
-                size={variant === "detailed" ? "md" : "sm"}
+                size="sm"
+                referenceLayout="below"
                 reference={
                   observation.reference != null ? (
                     <div className={styles.reference}>

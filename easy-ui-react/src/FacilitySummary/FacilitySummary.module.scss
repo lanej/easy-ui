@@ -4,7 +4,7 @@
   min-inline-size: 0;
   max-inline-size: 640px;
   display: grid;
-  gap: design-token("space.2");
+  gap: design-token("space.1.5");
   overflow-wrap: anywhere;
 }
 .identity {
@@ -49,13 +49,10 @@
 }
 
 // The facility controls available width; small headline sizing must not cap the reference column.
-.root[data-variant="default"] .observation > [data-size="sm"] {
+.observation > [data-size="sm"] {
   max-inline-size: none;
 }
 
 .reference {
-  block-size: 100%;
-  display: grid;
-  align-items: center;
   min-inline-size: 0;
 }

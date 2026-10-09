@@ -121,3 +121,5 @@ Localize labels, value formatting, and timestamps through the individual atom pr
 <ArgTypes of={HealthAssessment} />
 
 Use `healthPlacement="label"` to place the assessment beside the observation label, including in compact form. Pair it with `health={{ ...assessment, variant: "dot" }}` for a compact status dot. In compact form, label placement puts the label, assessment, and duration on one row, wrapping only when space is limited. The default placement remains beside the headline.
+
+Use `referenceLayout="below"` for an inline observation row followed by a full-width reference. Optional `observationDetails` sit at the end of the row and wrap below the headline in narrow containers.

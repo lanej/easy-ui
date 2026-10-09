@@ -139,16 +139,38 @@ try {
             1,
           );
         }
-        if (story === "default" && width === 1040) {
+        if (["default", "detailed"].includes(story) && width === 1040) {
           const plot = await page
             .locator('[role="img"][class*="plot"]')
             .boundingBox();
           const assessment = await page
-            .locator('[data-size="sm"][data-variant="default"]')
+            .locator('[data-reference-layout="below"]')
             .boundingBox();
           assert.ok(
-            plot.x > assessment.x + 30,
-            "Default reference must remain beside headline metrics",
+            Math.abs(plot.x - assessment.x) < 2,
+            "Reference must align with the observation row",
+          );
+          const label = await page
+            .getByText("Current dwell", { exact: true })
+            .boundingBox();
+          const value = await page
+            .getByRole("img", { name: "6 h", exact: true })
+            .boundingBox();
+          const pill = await page
+            .getByText("As expected", { exact: true })
+            .boundingBox();
+          const metrics = await page
+            .locator('dl[aria-label="Reference percentiles"]')
+            .boundingBox();
+          for (const item of [value, pill, metrics])
+            assert.ok(
+              Math.abs(label.y + label.height / 2 - item.y - item.height / 2) <
+                3,
+              "Observation and comparisons share one row",
+            );
+          assert.ok(
+            plot.y >= metrics.y + metrics.height,
+            "Reference belongs below the observation row",
           );
           assert.equal(
             await page.locator('[class*="percentileLabel"]').count(),

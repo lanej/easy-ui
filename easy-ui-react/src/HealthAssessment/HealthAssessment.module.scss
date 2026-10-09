@@ -219,3 +219,38 @@
   column-gap: design-token("space.1");
   row-gap: design-token("space.0.5");
 }
+
+// Keep the measurement and its comparisons in one reading row above the graphic.
+.root .layout[data-reference-layout="below"] {
+  grid-template-columns: minmax(0, 1fr);
+  gap: design-token("space.1");
+
+  .information {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: design-token("space.1.5");
+    grid-row: auto;
+  }
+
+  .summary {
+    align-items: center;
+  }
+
+  .observationDetails {
+    margin-inline-start: auto;
+  }
+
+  .referenceDetails {
+    grid-column: 1;
+  }
+}
+
+@container (max-width: 480px) {
+  .root .layout[data-reference-layout="below"] .observationDetails {
+    flex-basis: 100%;
+    margin-inline-start: 0;
+  }
+}
