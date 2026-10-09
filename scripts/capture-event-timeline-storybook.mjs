@@ -41,7 +41,7 @@ try {
     await page.evaluate(() => document.fonts.ready);
     if (errors.length) throw new Error(`Storybook runtime errors: ${errors.join("; ")}`);
     const bounds = await scene.boundingBox();
-    if (!bounds || bounds.width < 600 || bounds.height < 300) {
+    if (!bounds || bounds.width < (story === "narrow-quantiles" ? 250 : 600) || bounds.height < 300) {
       throw new Error(`Invalid rendered Storybook dimensions for ${story}: ${JSON.stringify(bounds)}`);
     }
     await scene.screenshot({
