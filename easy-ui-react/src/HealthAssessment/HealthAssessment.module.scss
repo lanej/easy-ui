@@ -209,3 +209,9 @@
   align-items: center;
   gap: design-token("space.1");
 }
+
+.label[data-inline="true"] {
+  flex-wrap: wrap;
+  column-gap: design-token("space.1");
+  row-gap: design-token("space.0.5");
+}

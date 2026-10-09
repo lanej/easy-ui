@@ -32,11 +32,11 @@ import { FacilitySummary } from "@easypost/easy-ui/FacilitySummary";
 
 Each observation has a stable unique `id` and the existing HealthAssessment content contract. The application supplies timestamps, units, health assessments, policy, reference data and all labels. Missing or invalid duration observations suppress their assessment through HealthAssessment; identity and other observations remain usable. A health-only observation is supported when explicitly supplied without a duration. Missing observation arrays display `emptyLabel`, never healthy status. An empty reference remains optional.
 
-| Variant    | Presentation                                                                                                                                                          |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `compact`  | Identity and headline metrics, with a status dot beside each observation label; omits reference graphics, freshness and supporting details. Suitable for table cells. |
-| `default`  | Identity, observations, freshness and optional reference comparisons. Stacks at narrow widths.                                                                        |
-| `detailed` | Wider references and supporting details; retains current values and identity.                                                                                         |
+| Variant    | Presentation                                                                                                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `compact`  | Identity and headline metrics, with each observation label, status dot, and duration on one row; omits reference graphics, freshness and supporting details. Suitable for table cells. |
+| `default`  | Identity, observations, freshness and optional reference comparisons. Stacks at narrow widths.                                                                                         |
+| `detailed` | Wider references and supporting details; retains current values and identity.                                                                                                          |
 
 References reuse DurationDistribution, including quantiles-only bars, concentration, histograms and smooth curves. `observationDetails` supports DurationQuantileMetrics. There is no second graph implementation or facility-specific classification dictionary. A name can contain a caller-supplied link; the whole summary is not an implicit click target. Set `accessibilityLabel` for non-text names. Facility type and location accept caller-rendered labels. Loading keeps facility identity visible while suppressing prior observations and details; `loadingLabel` and `emptyLabel` are localizable.
 

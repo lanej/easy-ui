@@ -73,6 +73,20 @@ try {
           assert.equal(await dot.count(), 1);
           const dotBox = await dot.boundingBox();
           const labelBox = await label.boundingBox();
+          const valueBox = await page
+            .getByRole("img", { name: "6 h", exact: true })
+            .boundingBox();
+          assert.ok(valueBox, "Compact duration must be visible");
+          assert.ok(labelBox.x + labelBox.width <= dotBox.x);
+          assert.ok(dotBox.x + dotBox.width <= valueBox.x);
+          assert.ok(
+            Math.abs(
+              valueBox.y +
+                valueBox.height / 2 -
+                labelBox.y -
+                labelBox.height / 2,
+            ) < 3,
+          );
           assert.ok(
             Math.abs(
               dotBox.y + dotBox.height / 2 - labelBox.y - labelBox.height / 2,

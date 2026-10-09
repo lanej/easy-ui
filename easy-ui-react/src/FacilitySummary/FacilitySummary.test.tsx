@@ -73,6 +73,8 @@ describe("FacilitySummary", () => {
     );
     expect(screen.queryByText("Reference comparison")).not.toBeInTheDocument();
     expect(screen.getByText("Dwell")).toBeVisible();
+    expect(screen.getByRole("group", { name: /^Dwell$/ })).toBeVisible();
+    expect(screen.getByRole("img", { name: "6 hours" })).toBeVisible();
     expect(screen.getByRole("img", { name: "As expected" })).toBeVisible();
     expect(screen.queryByText("As expected")).not.toBeInTheDocument();
     rerender(
@@ -83,6 +85,21 @@ describe("FacilitySummary", () => {
       />,
     );
     expect(screen.getByText("Reference comparison")).toBeVisible();
+  });
+  it("does not show a compact health dot for a missing duration", () => {
+    render(
+      <FacilitySummary
+        name="North Harbor"
+        variant="compact"
+        observations={[
+          { ...observation, observation: { value: null, unit: "hours" } },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Dwell")).toBeVisible();
+    expect(
+      screen.queryByRole("img", { name: "As expected" }),
+    ).not.toBeInTheDocument();
   });
   it("shows localized absence without inventing an assessment", () => {
     render(

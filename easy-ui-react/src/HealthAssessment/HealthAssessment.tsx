@@ -60,6 +60,7 @@ export function HealthAssessment({
   const showContext = variant !== "compact";
   const showLabel =
     showInformation && (showContext || healthPlacement === "label");
+  const inlineLabel = variant === "compact" && healthPlacement === "label";
   const showReference = variant !== "compact" && reference != null;
   const showMetrics = variant !== "compact" && observationDetails != null;
   const showReferenceDetails =
@@ -110,42 +111,47 @@ export function HealthAssessment({
           <div className={styles.information}>
             {showLabel && (label != null || healthPlacement === "label") && (
               <div
-                id={labelId}
                 className={styles.label}
                 data-health-placement={healthPlacement}
+                data-inline={inlineLabel}
               >
-                {healthPlacement === "label" && indicator}
+                {!inlineLabel && healthPlacement === "label" && indicator}
                 <Text
+                  id={labelId}
                   as="p"
                   variant={stacked ? "caption" : "body2"}
                   color="neutral.700"
                 >
                   {label}
                 </Text>
+                {inlineLabel && indicator}
+                {inlineLabel && duration}
               </div>
             )}
-            <div className={styles.summary} data-stacked={stacked}>
-              {stacked ? (
-                <>
-                  {healthPlacement === "headline" && indicator}
-                  {showMetrics ? (
-                    <div className={styles.headline}>
-                      {duration}
-                      <div className={styles.observationDetails}>
-                        {observationDetails}
+            {!inlineLabel && (
+              <div className={styles.summary} data-stacked={stacked}>
+                {stacked ? (
+                  <>
+                    {healthPlacement === "headline" && indicator}
+                    {showMetrics ? (
+                      <div className={styles.headline}>
+                        {duration}
+                        <div className={styles.observationDetails}>
+                          {observationDetails}
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    duration
-                  )}
-                </>
-              ) : (
-                <>
-                  {duration}
-                  {healthPlacement === "headline" && indicator}
-                </>
-              )}
-            </div>
+                    ) : (
+                      duration
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {duration}
+                    {healthPlacement === "headline" && indicator}
+                  </>
+                )}
+              </div>
+            )}
             {!isLoading && !stacked && showMetrics && (
               <div className={styles.observationDetails}>
                 {observationDetails}
