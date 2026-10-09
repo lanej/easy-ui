@@ -14,12 +14,44 @@ const browser = await chromium.launch({
 });
 const checks = [];
 const errors = [];
-try {
-  const page = await browser.newPage({
-    viewport: { width: 1040, height: 900 },
-    deviceScaleFactor: 2,
+const page = await browser.newPage({
+  viewport: { width: 1040, height: 900 },
+  deviceScaleFactor: 2,
+});
+page.on("pageerror", (e) => errors.push(e.message));
+async function auditAccessibility(page, name) {
+  await page.addScriptTag({
+    path: require.resolve("axe-core/axe.min.js"),
   });
-  page.on("pageerror", (e) => errors.push(e.message));
+  let audit;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    try {
+      audit = await page.evaluate(
+        async () =>
+          await axe.run(document.querySelector("#storybook-root"), {
+            runOnly: {
+              type: "tag",
+              values: ["wcag2a", "wcag2aa", "wcag21aa"],
+            },
+          }),
+      );
+      break;
+    } catch (error) {
+      if (!String(error).includes("already running") || attempt === 39)
+        throw error;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+  assert.deepEqual(
+    audit.violations.map((v) => ({
+      id: v.id,
+      nodes: v.nodes.map((n) => n.target),
+    })),
+    [],
+    name,
+  );
+}
+try {
   for (const theme of ["light", "dark"]) {
     for (const width of [1040, 320]) {
       await page.setViewportSize({ width, height: 900 });
@@ -33,6 +65,7 @@ try {
         "narrow",
         "multiple-observations",
         "comparison",
+        "fresh-unhealthy",
         "table",
       ]) {
         await page.goto(
@@ -108,19 +141,20 @@ try {
           );
         }
         if (story === "default") {
-          const labelBox = await page
-            .getByText("Current dwell", { exact: true })
-            .boundingBox();
-          const freshnessBox = await page
-            .getByRole("img", { name: "Updated recently", exact: true })
-            .boundingBox();
-          assert.ok(
-            Math.abs(
-              labelBox.y +
-                labelBox.height / 2 -
-                freshnessBox.y -
-                freshnessBox.height / 2,
-            ) < 2,
+          const label = page.getByText("Current dwell", { exact: true });
+          const freshness = page.getByRole("group", {
+            name: "Observation freshness",
+          });
+          assert.equal(
+            await freshness
+              .getByText("Updated recently", { exact: true })
+              .isVisible(),
+            true,
+          );
+          assert.equal(
+            await label.locator("..").getByRole("img").count(),
+            0,
+            "A freshness dot must not occupy the compact health-dot position",
           );
           const metricBox = await page
             .locator('dl[aria-label="Reference percentiles"]')
@@ -138,6 +172,57 @@ try {
               .count(),
             1,
           );
+        }
+        if (story === "fresh-unhealthy") {
+          for (const variant of ["compact", "default", "detailed"]) {
+            const facility = page.locator(`section[data-variant="${variant}"]`);
+            assert.equal(
+              await facility
+                .locator('[data-assessment="unhealthy"][data-size]')
+                .count(),
+              1,
+            );
+            const label = facility.getByText("Current dwell", { exact: true });
+            if (variant === "compact") {
+              const dot = label.locator("..").getByRole("img", {
+                name: "Outside expectations",
+                exact: true,
+              });
+              assert.equal(await dot.getAttribute("data-tone"), "danger");
+              assert.equal(
+                await facility
+                  .getByRole("group", { name: "Observation freshness" })
+                  .count(),
+                0,
+              );
+            } else {
+              assert.equal(
+                await facility
+                  .getByText("Outside expectations", { exact: true })
+                  .isVisible(),
+                true,
+              );
+              assert.equal(
+                await label.locator("..").getByRole("img").count(),
+                0,
+              );
+              const freshness = facility.getByRole("group", {
+                name: "Observation freshness",
+              });
+              assert.equal(
+                await freshness
+                  .getByText("Updated recently", { exact: true })
+                  .isVisible(),
+                true,
+              );
+              assert.equal(
+                await freshness
+                  .getByRole("img", { name: "Updated recently" })
+                  .getAttribute("data-tone"),
+                "success",
+              );
+            }
+          }
         }
         if (["default", "detailed"].includes(story) && width === 1040) {
           const plot = await page
@@ -178,36 +263,7 @@ try {
             "Percentile labels must not be repeated on the graph",
           );
         }
-        await page.addScriptTag({
-          path: require.resolve("axe-core/axe.min.js"),
-        });
-        let audit;
-        for (let attempt = 0; attempt < 40; attempt++) {
-          try {
-            audit = await page.evaluate(
-              async () =>
-                await axe.run(document.querySelector("#storybook-root"), {
-                  runOnly: {
-                    type: "tag",
-                    values: ["wcag2a", "wcag2aa", "wcag21aa"],
-                  },
-                }),
-            );
-            break;
-          } catch (error) {
-            if (!String(error).includes("already running") || attempt === 39)
-              throw error;
-            await new Promise((resolve) => setTimeout(resolve, 50));
-          }
-        }
-        assert.deepEqual(
-          audit.violations.map((v) => ({
-            id: v.id,
-            nodes: v.nodes.map((n) => n.target),
-          })),
-          [],
-          `${theme}-${width}-${story}`,
-        );
+        await auditAccessibility(page, `${theme}-${width}-${story}`);
         checks.push(`${theme}-${width}-${story}`);
         if (width === 1040 && ["default", "compact"].includes(story))
           await page.locator(`section[data-variant="${story}"]`).screenshot({
@@ -215,7 +271,8 @@ try {
           });
 
         if (
-          (width === 1040 && ["comparison", "table"].includes(story)) ||
+          (width === 1040 &&
+            ["comparison", "table", "fresh-unhealthy"].includes(story)) ||
           (width === 320 && ["narrow", "missing-observation"].includes(story))
         )
           await page.locator("#storybook-root").screenshot({
@@ -224,12 +281,109 @@ try {
       }
     }
   }
+  // Real layout checks catch clipped indicators that DOM visibility assertions miss.
+  for (const theme of ["light", "dark"]) {
+    for (const width of [312, 452]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const story of [
+        "responsive-form",
+        "responsive-label-health",
+        "responsive-label-dot",
+      ]) {
+        const name = `${theme}-${width}-${story}`;
+        await page.goto(
+          `${process.env.STORYBOOK_URL ?? "http://localhost:9018"}/iframe.html?id=organisms-feedback-healthassessment--${story}&viewMode=story&globals=colorScheme:${theme}`,
+        );
+        await page.locator('[data-variant="responsive"]').waitFor();
+        await page.evaluate(() => document.fonts.ready);
+        const health = page.locator('[data-assessment="healthy"][data-size]');
+        assert.equal(await health.count(), 1, `${name}: one assessment`);
+        const geometry = await health.evaluate((element) => {
+          const box = element.getBoundingClientRect();
+          const hiddenAncestors = [];
+          for (
+            let ancestor = element;
+            ancestor;
+            ancestor = ancestor.parentElement
+          ) {
+            const style = getComputedStyle(ancestor);
+            const rect = ancestor.getBoundingClientRect();
+            if (
+              style.clipPath !== "none" ||
+              style.visibility === "hidden" ||
+              style.display === "none" ||
+              (style.overflow === "hidden" &&
+                (rect.width <= 1 || rect.height <= 1))
+            ) {
+              hiddenAncestors.push(ancestor.className);
+            }
+          }
+          return {
+            width: box.width,
+            height: box.height,
+            left: box.left,
+            right: box.right,
+            hiddenAncestors,
+            viewport: innerWidth,
+            overflow: document.documentElement.scrollWidth > innerWidth,
+          };
+        });
+        assert.deepEqual(
+          geometry.hiddenAncestors,
+          [],
+          `${name}: assessment must not be clipped`,
+        );
+        assert.ok(
+          geometry.width > 1 && geometry.height > 1,
+          `${name}: visible assessment size`,
+        );
+        assert.ok(
+          geometry.left >= 0 && geometry.right <= geometry.viewport,
+          `${name}: assessment in viewport`,
+        );
+        assert.equal(
+          geometry.overflow,
+          false,
+          `${name}: no horizontal overflow`,
+        );
+        assert.equal(
+          await page
+            .getByRole("img", { name: "6 hours", exact: true })
+            .isVisible(),
+          true,
+        );
+        await auditAccessibility(page, name);
+        await page.locator("#storybook-root").screenshot({
+          path: resolve(output, `health-assessment-${name}.png`),
+        });
+        checks.push(name);
+      }
+    }
+  }
   assert.deepEqual(errors, []);
   await writeFile(
     resolve(output, "report.json"),
-    JSON.stringify({ checks: checks.length, violations: 0 }, null, 2),
+    JSON.stringify(
+      { checks: checks.length, scenarios: checks, violations: 0 },
+      null,
+      2,
+    ),
   );
   console.log(JSON.stringify({ checks: checks.length, violations: 0 }));
+} catch (error) {
+  await page.screenshot({
+    path: resolve(output, "failure.png"),
+    fullPage: true,
+  });
+  await writeFile(
+    resolve(output, "failure.json"),
+    JSON.stringify(
+      { completed: checks, error: String(error), browserErrors: errors },
+      null,
+      2,
+    ),
+  );
+  throw error;
 } finally {
   await browser.close();
 }

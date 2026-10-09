@@ -44,7 +44,10 @@ const meta: Meta<ExampleArgs> = {
       control: "select",
       options: ["compact", "detailed", "default", "wide", "responsive"],
     },
-    referenceLayout: { control: "select", options: ["auto", "compact"] },
+    referenceLayout: {
+      control: "select",
+      options: ["auto", "compact", "below"],
+    },
     reference: { control: false },
     referenceDetails: { control: false },
     observationDetails: { control: false },
@@ -839,6 +842,18 @@ export const ResponsiveForm: Story = {
     referenceDetails: (
       <Text variant="caption">1,000 synthetic completed durations</Text>
     ),
+  },
+};
+export const ResponsiveLabelHealth: Story = {
+  args: {
+    ...ResponsiveForm.args,
+    healthPlacement: "label",
+  },
+};
+export const ResponsiveLabelDot: Story = {
+  args: {
+    ...ResponsiveLabelHealth.args,
+    health: { ...defaultProps.health, variant: "dot" },
   },
 };
 export const PresentationForms: Story = {

@@ -17,14 +17,16 @@ const quantiles = [
   { fraction: 0.5, value: 9 },
   { fraction: 0.9, value: 18 },
 ];
-const reference = (smooth = false) => (
+const reference = (smooth = false, value = 6) => (
   <DurationDistribution
-    value={6}
+    value={value}
     domain={[0, 30]}
     unit="h"
     quantiles={quantiles}
     healthRegions={healthRegions}
-    currentAssessment="healthy"
+    currentAssessment={
+      value < 10 ? "healthy" : value < 20 ? "degraded" : "unhealthy"
+    }
     showPercentileLabels={false}
     stretch={false}
     distributionStyle={smooth ? "smooth" : "binned"}
@@ -147,6 +149,34 @@ export const Comparison: Story = {
               {
                 ...defaults.observations![0],
                 reference: reference(variant === "detailed"),
+              },
+            ]}
+          />
+        </section>
+      ))}
+    </div>
+  ),
+};
+export const FreshUnhealthy: Story = {
+  render: () => (
+    <div style={{ display: "grid", gap: 32, maxWidth: 960 }}>
+      {(["compact", "default", "detailed"] as const).map((variant) => (
+        <section key={variant}>
+          <Text as="h3" variant="heading5">
+            {variant}
+          </Text>
+          <FacilitySummary
+            {...defaults}
+            variant={variant}
+            observations={[
+              {
+                ...defaults.observations![0],
+                observation: { value: 24, unit: "h" },
+                health: {
+                  assessment: "unhealthy",
+                  label: "Outside expectations",
+                },
+                reference: reference(variant === "detailed", 24),
               },
             ]}
           />

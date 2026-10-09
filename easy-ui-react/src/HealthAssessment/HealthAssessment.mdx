@@ -123,3 +123,5 @@ Localize labels, value formatting, and timestamps through the individual atom pr
 Use `healthPlacement="label"` to place the assessment beside the observation label, including in compact form. Pair it with `health={{ ...assessment, variant: "dot" }}` for a compact status dot. In compact form, label placement puts the label, assessment, and duration on one row, wrapping only when space is limited. The default placement remains beside the headline.
 
 Use `referenceLayout="below"` for an inline observation row followed by a full-width reference. Optional `observationDetails` sit at the end of the row and wrap below the headline in narrow containers.
+
+Label-placed assessments remain visible at every responsive width, even when the observation label is visually hidden. Use `freshnessPlacement="context"` to put freshness after the headline rather than beside the label. Pair it with `freshness.showStateLabel` when the freshness dot needs visible context distinct from health.

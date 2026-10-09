@@ -43,10 +43,11 @@ References reuse DurationDistribution, including quantiles-only bars, concentrat
 <Canvas of={Stories.Narrow} />
 <Canvas of={Stories.Table} />
 <Canvas of={Stories.MultipleObservations} />
+<Canvas of={Stories.FreshUnhealthy} />
 <Canvas of={Stories.MissingObservation} />
 <Canvas of={Stories.Loading} />
 <ArgTypes of={Stories} />
 
-Keep optional freshness beside the observation label. Supply `DurationQuantileMetrics layout="inline"` as `observationDetails` to place comparisons in the observation row above the reference.
+The compact dot represents the observation's health. Default and detailed forms use the supplied health presentation, with optional freshness in separate context after the value and assessment. Freshness always includes its localized state label here, so recently updated data cannot be mistaken for a healthy observation. Supply `DurationQuantileMetrics layout="inline"` as `observationDetails` to place comparisons in the observation row above the reference.
 
 Facility type and identifier are secondary identity text. Default and detailed forms share one observation row, with the full-width reference below; detailed expands the graphic without enlarging the headline. Narrow layouts wrap comparisons onto their own row.

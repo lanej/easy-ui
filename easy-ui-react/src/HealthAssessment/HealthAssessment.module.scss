@@ -156,7 +156,8 @@
   .layout .information {
     grid-row: auto;
   }
-  .label {
+  .label:not([data-health-placement="label"]),
+  .label > p {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
@@ -175,7 +176,8 @@
     .freshness {
       display: flex;
     }
-    .label {
+    .label:not([data-health-placement="label"]),
+    .label > p {
       position: static;
       inline-size: auto;
       block-size: auto;

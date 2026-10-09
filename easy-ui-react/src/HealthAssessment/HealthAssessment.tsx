@@ -19,6 +19,8 @@ export type HealthAssessmentProps = {
   observationDetails?: ReactNode;
   /** Optional caller-classified freshness; no aging policy is inferred. */
   freshness?: Omit<ObservationFreshnessProps, "size" | "isLoading">;
+  /** Keep freshness beside the label or in separate context after the headline. */
+  freshnessPlacement?: "label" | "context";
   /** Optional reference description or visualization supplied by the caller. */
   reference?: ReactNode;
   /** Optional supporting content below the primary reference; included in the reference column height. */
@@ -40,6 +42,7 @@ export function HealthAssessment({
   health,
   observation,
   freshness,
+  freshnessPlacement = "label",
   observationDetails,
   reference,
   referenceDetails,
@@ -128,7 +131,8 @@ export function HealthAssessment({
             {showLabel &&
               (label != null ||
                 healthPlacement === "label" ||
-                freshnessIndicator != null) && (
+                (freshnessPlacement === "label" &&
+                  freshnessIndicator != null)) && (
                 <div
                   className={styles.label}
                   data-health-placement={healthPlacement}
@@ -143,7 +147,7 @@ export function HealthAssessment({
                   >
                     {label}
                   </Text>
-                  {freshnessIndicator && (
+                  {freshnessPlacement === "label" && freshnessIndicator && (
                     <span className={styles.freshness}>
                       {freshnessIndicator}
                     </span>
@@ -175,6 +179,9 @@ export function HealthAssessment({
                   </>
                 )}
               </div>
+            )}
+            {freshnessPlacement === "context" && freshnessIndicator && (
+              <span className={styles.freshness}>{freshnessIndicator}</span>
             )}
             {!isLoading && !stacked && showMetrics && (
               <div className={styles.observationDetails}>

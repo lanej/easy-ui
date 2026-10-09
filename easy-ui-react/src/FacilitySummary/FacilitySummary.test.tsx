@@ -1,5 +1,5 @@
 import React from "react";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { render } from "../utilities/test";
 import { FacilitySummary } from "./FacilitySummary";
 const observation = {
@@ -10,6 +10,51 @@ const observation = {
   reference: <span>Reference comparison</span>,
 };
 describe("FacilitySummary", () => {
+  it.each(["compact", "default", "detailed"] as const)(
+    "keeps health distinct from freshness in %s form",
+    (variant) => {
+      render(
+        <FacilitySummary
+          name="North Harbor"
+          variant={variant}
+          observations={[
+            {
+              ...observation,
+              health: {
+                assessment: "unhealthy",
+                label: "Outside expectations",
+              },
+              freshness: { state: "fresh", stateLabel: "Updated recently" },
+            },
+          ]}
+        />,
+      );
+      const assessment = screen.getByRole("group", { name: "Dwell" });
+      const label = screen.getByText("Dwell");
+      if (variant === "compact") {
+        const dot = within(assessment).getByRole("img", {
+          name: "Outside expectations",
+        });
+        expect(dot).toHaveAttribute("data-tone", "danger");
+        expect(label.parentElement).toContainElement(dot);
+        expect(
+          screen.queryByRole("group", { name: "Observation freshness" }),
+        ).not.toBeInTheDocument();
+      } else {
+        expect(
+          within(assessment).getByText("Outside expectations"),
+        ).toBeVisible();
+        const freshness = screen.getByRole("group", {
+          name: "Observation freshness",
+        });
+        expect(within(freshness).getByText("Updated recently")).toBeVisible();
+        expect(
+          within(freshness).getByRole("img", { name: "Updated recently" }),
+        ).toHaveAttribute("data-tone", "success");
+        expect(label.parentElement).not.toContainElement(freshness);
+      }
+    },
+  );
   it.each([null, NaN, Infinity, -1])(
     "does not imply health for missing or invalid observations %s",
     (value) => {

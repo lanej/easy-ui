@@ -8,7 +8,12 @@ import styles from "./FacilitySummary.module.scss";
 
 export type FacilitySummaryObservation = Omit<
   HealthAssessmentProps,
-  "variant" | "size" | "isLoading" | "referenceLayout" | "healthPlacement"
+  | "variant"
+  | "size"
+  | "isLoading"
+  | "referenceLayout"
+  | "healthPlacement"
+  | "freshnessPlacement"
 > & {
   /** Stable identity for this independently supplied observation. */
   id: string;
@@ -95,6 +100,13 @@ export function FacilitySummary({
                     : observation.health
                 }
                 healthPlacement={variant === "compact" ? "label" : "headline"}
+                freshnessPlacement="context"
+                freshness={
+                  observation.freshness && {
+                    ...observation.freshness,
+                    showStateLabel: true,
+                  }
+                }
                 size="sm"
                 referenceLayout="below"
                 reference={

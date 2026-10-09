@@ -7,6 +7,8 @@ import * as Stories from "./ObservationFreshness.stories";
 
 Display an optional timestamp followed by a StatusDot atom: success for fresh data and warning for stale data. Freshness describes data recency, independently of health. The dot’s accessible name and hover hint identify its state. Stale data also keeps a visible label, preserving the distinction without color. Loading and unavailable states retain concise text.
 
+Set `showStateLabel` to also display the localized fresh-state label when the surrounding context needs to distinguish freshness from health. The default fresh presentation remains a dot.
+
 <Canvas of={Stories.Default} />
 <Controls of={Stories.Default} />
 

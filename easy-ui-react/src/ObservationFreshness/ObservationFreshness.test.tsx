@@ -116,4 +116,14 @@ describe("<ObservationFreshness />", () => {
     expect(screen.getByRole("img", { name: "Fresh" })).toBeVisible();
     expect(screen.queryByText(/Observed/)).not.toBeInTheDocument();
   });
+  it("can show a localized fresh label while retaining the dot", () => {
+    render(
+      <ObservationFreshness state="fresh" stateLabel="À jour" showStateLabel />,
+    );
+    expect(screen.getByText("À jour")).toBeVisible();
+    expect(screen.getByRole("img", { name: "À jour" })).toHaveAttribute(
+      "data-tone",
+      "success",
+    );
+  });
 });
