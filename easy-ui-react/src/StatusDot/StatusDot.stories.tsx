@@ -41,7 +41,10 @@ export const CurrentByTone: Story = {
     <div style={{ display: "flex", flexWrap: "wrap", gap: 36, padding: 24 }}>
       {(["neutral", "success", "warning", "danger", "primary"] as const).map(
         (tone) => (
-          <div key={tone} style={{ display: "grid", gap: 18, justifyItems: "center" }}>
+          <div
+            key={tone}
+            style={{ display: "grid", gap: 18, justifyItems: "center" }}
+          >
             <StatusDot label={tone} tone={tone} current animate={false} />
             <span>{tone}</span>
           </div>
