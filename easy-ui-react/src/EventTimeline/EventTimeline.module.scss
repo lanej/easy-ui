@@ -21,7 +21,15 @@
   inline-size: 1px;
   background: design-token("color.neutral.300");
 }
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-inline-size: 0;
+}
 .select {
+  flex: 1 1 auto;
+  min-inline-size: 0;
   font: inherit;
   text-align: start;
   border: 0;
@@ -47,8 +55,18 @@
 .mapLink { background: transparent; border: none; color: design-token("color.primary.700"); font: inherit; font-size: 12px; margin: 0 0 6px 120px; padding: 4px; cursor: pointer; }
 .mapLink:focus-visible { outline: 2px solid design-token("color.primary.600"); }
 .interval, .details { min-inline-size: 0; margin-inline-start: 120px; padding-block: 4px 8px; }
+.trailing {
+  flex: 0 1 310px;
+  min-inline-size: 0;
+  padding-inline-end: 8px;
+}
 .empty { color: design-token("color.neutral.700"); }
+@media (max-width: 680px) {
+  .item { flex-wrap: wrap; }
+  .trailing { flex-basis: auto; inline-size: 100%; margin-inline-start: 120px; }
+}
 @media (max-width: 500px) {
+  .trailing { margin-inline-start: 81px; }
   .select { grid-template-columns: 57px 16px minmax(0, 1fr); gap: 8px; padding-inline: 4px; }
   .entry:not(:last-child)::before { left: 69px; }
   .interval, .details { margin-inline-start: 81px; }
