@@ -6,6 +6,7 @@
   list-style: none;
   inline-size: 100%;
   min-inline-size: 0;
+  container-type: inline-size;
 }
 
 .entry {
@@ -127,7 +128,7 @@
   color: design-token("color.neutral.700");
 }
 
-@media (max-width: 680px) {
+@container (max-width: 680px) {
   .item {
     flex-wrap: wrap;
   }
@@ -138,7 +139,7 @@
   }
 }
 
-@media (max-width: 500px) {
+@container (max-width: 500px) {
   .trailing {
     margin-inline-start: 81px;
   }
