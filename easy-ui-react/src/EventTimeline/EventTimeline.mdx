@@ -1,0 +1,23 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./EventTimeline.stories";
+
+<Meta of={Stories} />
+
+# EventTimeline
+
+A reusable selectable chronology. The caller owns ordering, interpretation, identifiers, and whether events belong to the same path. The timeline does not deduplicate events or infer physical histories.
+
+<Canvas of={Stories.Default} />
+<Canvas of={Stories.Compact} />
+<Canvas of={Stories.Detailed} />
+<Canvas of={Stories.MissingData} />
+<Canvas of={Stories.WithIntervalAssessment} />
+<Canvas of={Stories.ControlledMapCoordination} />
+
+Supply `selectedId` and `onSelectedIdChange` to coordinate selection with an external map or details panel. A separate `onLocationSelect` callback exposes the location and event IDs; map pan and zoom remain application-owned.
+
+Event time and received time are different fields; no implicit ordering or timestamp repair occurs. `renderInterval` and `renderDetails` accept caller-defined content such as an existing health assessment. The timeline's status dots use `current` for the selected row independently of the supplied semantic tone.
+
+Keyboard navigation supports Up/Down and Home/End while retaining native button activation by Enter and Space.
+
+<ArgTypes of={Stories} />
