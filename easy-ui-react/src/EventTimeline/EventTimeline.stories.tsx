@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import React, { useState } from "react";
 import { EventTimeline, type EventTimelineProps } from "./EventTimeline";
 import type { EventTimelineEvent } from "./EventItem";
-import { HealthIndicator } from "../HealthIndicator";
-import { DurationValue } from "../DurationValue";
+import { HealthAssessment } from "../HealthAssessment";
+import { DurationReferenceExample } from "../HealthAssessment/DurationReference.example";
 
 const events: EventTimelineEvent[] = [
   { id: "a1", label: "Accepted", timeLabel: "09:42", locationLabel: "Oakland, CA", locationTypeLabel: "Origin facility", locationId: "oakland", tone: "neutral" },
@@ -26,15 +26,43 @@ export const Compact: Story = { args: { size: "compact" } };
 export const Detailed: Story = { args: { size: "detailed" } };
 export const MissingData: Story = { args: { events: [events[2], events[3], events[4]], selectedId: "b2" } };
 export const Empty: Story = { args: { events: [], selectedId: null } };
+/** Duration and assessment belong to the caller's interval, not an invented event. */
+const intervalAssessment = (event: EventTimelineEvent) =>
+  event.id === "b1" ? (
+    <HealthAssessment
+      variant="compact"
+      label="Facility dwell"
+      observation={{ value: 6, unit: "hours" }}
+      health={{ assessment: "healthy", label: "As expected" }}
+    />
+  ) : null;
+
 export const WithIntervalAssessment: Story = {
+  args: { renderInterval: intervalAssessment },
+};
+
+/** Optional graphical comparison reuses an existing molecule and reference fixture. */
+export const WithDurationReference: Story = {
   args: {
     renderInterval: (event) =>
       event.id === "b1" ? (
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: 12, border: "1px solid #c6cfe0", borderRadius: 8 }}>
-          <span>Facility dwell</span>
-          <DurationValue value={6} unit="hours" />
-          <HealthIndicator assessment="healthy" label="As expected" />
-        </div>
+        <HealthAssessment
+          label="Facility dwell"
+          variant="default"
+          observation={{ value: 6, unit: "hours" }}
+          health={{ assessment: "healthy", label: "As expected" }}
+          reference={
+            <DurationReferenceExample
+              value={6}
+              currentAssessment="healthy"
+              regions={[
+                { from: 0, to: 10, assessment: "healthy", label: "As expected", shortLabel: "Expected" },
+                { from: 10, to: 20, assessment: "degraded", label: "Needs attention", shortLabel: "Attention" },
+                { from: 20, to: Infinity, assessment: "unhealthy", label: "Outside expectations", shortLabel: "Outside" },
+              ]}
+            />
+          }
+        />
       ) : null,
   },
 };
