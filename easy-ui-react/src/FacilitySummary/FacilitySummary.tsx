@@ -103,8 +103,8 @@ export function FacilitySummary({
                 freshnessPlacement="context"
                 freshness={
                   observation.freshness && {
-                    ...observation.freshness,
                     showStateLabel: true,
+                    ...observation.freshness,
                   }
                 }
                 size="sm"

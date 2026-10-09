@@ -82,6 +82,36 @@ const meta: Meta<typeof FacilitySummary> = {
 export default meta;
 type Story = StoryObj<typeof FacilitySummary>;
 export const Default: Story = {};
+export const FreshnessOptions: Story = {
+  render: () => (
+    <div style={{ display: "grid", gap: 24, maxWidth: 640 }}>
+      {[
+        {
+          name: "Label and dot",
+          freshness: defaults.observations![0].freshness,
+        },
+        {
+          name: "Dot only",
+          freshness: {
+            ...defaults.observations![0].freshness,
+            showStateLabel: false,
+          },
+        },
+        { name: "No freshness", freshness: undefined },
+      ].map(({ name, freshness }) => (
+        <section key={name} aria-label={name}>
+          <Text as="h3" variant="heading5">
+            {name}
+          </Text>
+          <FacilitySummary
+            {...defaults}
+            observations={[{ ...defaults.observations![0], freshness }]}
+          />
+        </section>
+      ))}
+    </div>
+  ),
+};
 export const Compact: Story = { args: { variant: "compact" } };
 export const Detailed: Story = {
   args: {

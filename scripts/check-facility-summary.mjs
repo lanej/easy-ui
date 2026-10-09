@@ -104,6 +104,7 @@ try {
         "multiple-observations",
         "comparison",
         "fresh-unhealthy",
+        "freshness-options",
         "table",
       ]) {
         await page.goto(
@@ -274,6 +275,58 @@ try {
             }
           }
         }
+        if (story === "freshness-options") {
+          const labeled = page.getByRole("region", {
+            name: "Label and dot",
+            exact: true,
+          });
+          const dotOnly = page.getByRole("region", {
+            name: "Dot only",
+            exact: true,
+          });
+          const absent = page.getByRole("region", {
+            name: "No freshness",
+            exact: true,
+          });
+          assert.equal(
+            await labeled
+              .getByText("Updated recently", { exact: true })
+              .isVisible(),
+            true,
+          );
+          const dot = dotOnly.getByRole("img", {
+            name: "Updated recently",
+            exact: true,
+          });
+          assert.equal(await dot.isVisible(), true);
+          assert.equal(await dot.getAttribute("title"), "Updated recently");
+          assert.equal(
+            await dotOnly
+              .getByText("Updated recently", { exact: true })
+              .count(),
+            0,
+          );
+          assert.equal(
+            await absent
+              .getByRole("group", { name: "Observation freshness" })
+              .count(),
+            0,
+          );
+          for (const [name, region] of [
+            ["label", labeled],
+            ["dot", dotOnly],
+            ["none", absent],
+          ]) {
+            await assertSharedBaseline(
+              [
+                region.getByText("Current dwell", { exact: true }),
+                region.getByRole("img", { name: "6 h", exact: true }),
+                region.getByText("As expected", { exact: true }),
+              ],
+              `${theme}-${width}-freshness-${name}`,
+            );
+          }
+        }
         if (["default", "detailed"].includes(story) && width === 1040) {
           const plot = await page
             .locator('[role="img"][class*="plot"]')
@@ -307,10 +360,21 @@ try {
 
         if (
           (width === 1040 &&
-            ["comparison", "table", "fresh-unhealthy"].includes(story)) ||
+            [
+              "comparison",
+              "table",
+              "fresh-unhealthy",
+              "freshness-options",
+            ].includes(story)) ||
           (width === 320 && ["narrow", "missing-observation"].includes(story))
         )
-          await page.locator("#storybook-root").screenshot({
+          await (
+            story === "freshness-options"
+              ? page
+                  .getByRole("region", { name: "Label and dot", exact: true })
+                  .locator("..")
+              : page.locator("#storybook-root")
+          ).screenshot({
             path: resolve(output, `facility-summary-${story}-${theme}.png`),
           });
       }
