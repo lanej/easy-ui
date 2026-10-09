@@ -2,12 +2,14 @@
 
 .root {
   display: inline-block;
+  position: relative;
+  isolation: isolate;
   inline-size: 8px;
   block-size: 8px;
   flex: none;
   border-radius: 50%;
   vertical-align: middle;
-  background: design-token("color.neutral.600");
+  --status-dot-color: #{design-token("color.neutral.600")};
 }
 
 .root[data-size="md"] {
@@ -16,20 +18,75 @@
 }
 
 .root[data-tone="success"] {
-  background: design-token("color.positive.700");
+  --status-dot-color: #{design-token("color.positive.700")};
 }
 .root[data-tone="warning"] {
-  background: design-token("color.warning.700");
+  --status-dot-color: #{design-token("color.warning.700")};
 }
 .root[data-tone="danger"] {
-  background: design-token("color.negative.700");
+  --status-dot-color: #{design-token("color.negative.700")};
 }
 .root[data-tone="primary"] {
-  background: design-token("color.primary.600");
+  --status-dot-color: #{design-token("color.primary.600")};
+}
+
+.root::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--status-dot-color);
+}
+
+.root::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  inline-size: 30px;
+  block-size: 30px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: design-token("color.primary.100");
+  border: 1px solid design-token("color.primary.400");
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.55);
+  pointer-events: none;
+}
+
+.root[data-current="true"]::before {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.root[data-current="true"][data-animate="true"]::before {
+  animation: status-dot-become-current 260ms ease-out both;
+}
+
+@keyframes status-dot-become-current {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-current="true"][data-animate="true"]::before {
+    animation: none;
+  }
 }
 
 @media (forced-colors: active) {
-  .root {
+  .root::after {
     background: CanvasText;
+  }
+  .root[data-current="true"]::before {
+    background: Canvas;
+    border: 2px solid Highlight;
   }
 }
