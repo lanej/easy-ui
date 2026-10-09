@@ -11,6 +11,8 @@ export type EventTimelineProps = {
   onSelectedIdChange?: (id: string) => void;
   /** Optional map coordination. This does not navigate or zoom a map itself. */
   onLocationSelect?: (locationId: string, eventId: string) => void;
+  /** Optional right-side summary, separate from the selected event button. */
+  renderTrailing?: (event: EventTimelineEvent) => React.ReactNode;
   /** Content associated with the interval following an event. */
   renderInterval?: (event: EventTimelineEvent, following: EventTimelineEvent | undefined) => React.ReactNode;
   /** Rich context outside the event's selection button. */
@@ -29,6 +31,7 @@ export function EventTimeline({
   onLocationSelect,
   renderInterval,
   renderDetails,
+  renderTrailing,
   emptyLabel = "No observations",
   ariaLabel = "Event timeline",
   size = "default",
@@ -57,6 +60,7 @@ export function EventTimeline({
           <EventItem
             event={event}
             size={size}
+            trailing={renderTrailing?.(event)}
             current={event.id === activeId}
             registerButton={(node) => {
               if (node) buttons.current.set(event.id, node);
