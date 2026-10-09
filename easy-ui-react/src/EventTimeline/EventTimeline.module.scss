@@ -1,0 +1,60 @@
+@use "../styles/common" as *;
+
+.timeline {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+.entry {
+  position: relative;
+  min-inline-size: 0;
+}
+.entry:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 103px;
+  top: 24px;
+  bottom: -4px;
+  inline-size: 1px;
+  background: design-token("color.neutral.300");
+}
+.select {
+  font: inherit;
+  text-align: start;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  inline-size: 100%;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 78px 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+  padding: 10px 8px;
+}
+.select:hover { background: design-token("color.primary.050"); }
+.select:focus-visible { outline: 2px solid design-token("color.primary.600"); outline-offset: 2px; }
+.item[data-current="true"] .select { background: design-token("color.primary.050"); }
+.time { font-variant-numeric: tabular-nums; color: design-token("color.neutral.700"); font-size: 12px; white-space: nowrap; padding-block-start: 2px; }
+.dot { display: flex; justify-content: center; padding-block-start: 4px; }
+.content { display: grid; min-inline-size: 0; gap: 4px; }
+.title { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.location, .received { font-size: 12px; color: design-token("color.neutral.700"); overflow-wrap: anywhere; }
+.mapLink { background: transparent; border: none; color: design-token("color.primary.700"); font: inherit; font-size: 12px; margin: 0 0 6px 120px; padding: 4px; cursor: pointer; }
+.mapLink:focus-visible { outline: 2px solid design-token("color.primary.600"); }
+.interval, .details { min-inline-size: 0; margin-inline-start: 120px; padding-block: 4px 8px; }
+.empty { color: design-token("color.neutral.700"); }
+@media (max-width: 500px) {
+  .select { grid-template-columns: 57px 16px minmax(0, 1fr); gap: 8px; padding-inline: 4px; }
+  .entry:not(:last-child)::before { left: 69px; }
+  .interval, .details { margin-inline-start: 81px; }
+  .mapLink { margin-inline-start: 81px; }
+}
+@media (forced-colors: active) {
+  .item[data-current="true"] .select { outline: 1px solid Highlight; }
+  .entry:not(:last-child)::before { background: CanvasText; }
+}
