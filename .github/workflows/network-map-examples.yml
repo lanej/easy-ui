@@ -1,6 +1,22 @@
 name: Network map examples
 on:
-  pull_request: ~
+  pull_request:
+    paths:
+      - ".github/workflows/network-map-examples.yml"
+      - ".github/actions/browser-proof/**"
+      - ".ui-review/maps/**"
+      - "scripts/preview-maps/**"
+      - "scripts/preview-tokens.mjs"
+      - "scripts/browser-proof.mjs"
+      - "scripts/browser-proof.test.mjs"
+      - "easy-ui-react/src/NetworkMap/**"
+      - "easy-ui-react/src/Map*/**"
+      - "easy-ui-react/src/styles/**"
+      - "easy-ui-tokens/**"
+      - "easy-ui-icons/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".nvmrc"
   workflow_dispatch:
 
 permissions:
