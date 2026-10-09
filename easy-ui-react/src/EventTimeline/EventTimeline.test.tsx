@@ -159,4 +159,49 @@ describe("EventTimeline", () => {
     expect(screen.getAllByRole("button")).toHaveLength(3);
     expect(screen.getByRole("img", { name: /P50/ })).toBeVisible();
   });
+  it("keeps the current value readable while using a smooth concentration reference without tiny percentile text", () => {
+    const { container } = render(
+      <EventTimeline
+        events={events}
+        renderTrailing={(event) =>
+          event.id === "first" ? (
+            <HealthAssessment
+              variant="inline"
+              size="sm"
+              observation={{ value: 6, unit: "h" }}
+              health={{ assessment: "healthy", label: "As expected" }}
+              reference={
+                <DurationDistribution
+                  value={6}
+                  unit="h"
+                  domain={[0, 30]}
+                  quantiles={[
+                    { fraction: 0.5, value: 9 },
+                    { fraction: 0.9, value: 18 },
+                  ]}
+                  bins={[
+                    { from: 0, to: 10, count: 9 },
+                    { from: 10, to: 20, count: 18 },
+                    { from: 20, to: 30, count: 3 },
+                  ]}
+                  visualization="histogram"
+                  distributionStyle="smooth"
+                  distributionPresentation="concentration"
+                  showScale={false}
+                  stretch={false}
+                />
+              }
+            />
+          ) : null
+        }
+      />,
+    );
+    expect(screen.getByText("As expected")).toBeVisible();
+    expect(screen.getByText("6")).toBeVisible();
+    expect(screen.getByRole("img", { name: /P50: 9 h.*P90: 18 h/ })).toBeVisible();
+    expect(container.querySelector('[data-concentration-style="smooth"]')).not.toBeNull();
+    expect(screen.queryByText("P50")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button")).toHaveLength(3);
+  });
+
 });
