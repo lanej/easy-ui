@@ -5,6 +5,7 @@ import type { EventTimelineEvent } from "./EventItem";
 import { HealthAssessment } from "../HealthAssessment";
 import { DurationDistribution } from "../DurationDistribution";
 import { DurationQuantileMetrics } from "../DurationDistribution/DurationQuantileMetrics";
+import styles from "./EventTimeline.examples.module.scss";
 
 const events: EventTimelineEvent[] = [
   {
@@ -111,62 +112,50 @@ const target = (event: EventTimelineEvent) => event.id === "b1";
 const current = { value: 6, unit: "hours" };
 const assessment = { assessment: "healthy" as const, label: "As expected" };
 
+/** A single-line assessment: pill and current duration stay alongside the event. */
+function InlineDurationSummary({ showQuantiles = false }: { showQuantiles?: boolean }) {
+  return (
+    <div className={styles.inlineSummary} data-kind={showQuantiles ? "quantiles" : "minimal"}>
+      <HealthAssessment
+        variant="inline"
+        size="sm"
+        observation={{ value: current.value, unit: "h" }}
+        health={assessment}
+        reference={showQuantiles ? (
+          <div className={styles.inlineReference}>
+            <DurationQuantileMetrics quantiles={quantiles} unit="h" healthRegions={regions} />
+            <DurationDistribution
+              value={current.value}
+              unit="h"
+              domain={[0, 30]}
+              quantiles={quantiles}
+              healthRegions={regions}
+              visualization="points"
+              stretch={false}
+              showScale={false}
+            />
+          </div>
+        ) : undefined}
+      />
+    </div>
+  );
+}
+
 export const InlineMinimal: Story = {
   args: {
-    renderTrailing: (event) =>
-      target(event) ? (
-        <HealthAssessment
-          variant="compact"
-          observation={current}
-          health={assessment}
-        />
-      ) : null,
+    renderTrailing: (event) => target(event) ? <InlineDurationSummary /> : null,
   },
 };
 
 export const InlineQuantiles: Story = {
   args: {
-    renderTrailing: (event) =>
-      target(event) ? (
-        <div style={{ minWidth: 200 }}>
-          <HealthAssessment
-            variant="default"
-            observation={current}
-            health={assessment}
-            observationDetails={
-              <DurationQuantileMetrics
-                quantiles={quantiles}
-                unit="h"
-                healthRegions={regions}
-              />
-            }
-            reference={
-              <DurationDistribution
-                value={6}
-                unit="h"
-                domain={[0, 30]}
-                quantiles={quantiles}
-                healthRegions={regions}
-                visualization="points"
-                stretch={false}
-              />
-            }
-          />
-        </div>
-      ) : null,
+    renderTrailing: (event) => target(event) ? <InlineDurationSummary showQuantiles /> : null,
   },
 };
 
 export const WithDurationReference: Story = {
   args: {
-    renderTrailing: (event) =>
-      target(event) ? (
-        <HealthAssessment
-          variant="compact"
-          observation={current}
-          health={assessment}
-        />
-      ) : null,
+    renderTrailing: (event) => target(event) ? <InlineDurationSummary /> : null,
     renderInterval: (event) =>
       target(event) ? (
         <HealthAssessment
@@ -240,94 +229,42 @@ export const ControlledMapCoordination: Story = {
  * existing molecules and render callbacks; no status or quantile policy
  * lives in the timeline.
  */
+/** Exact same layout under the map-adjacent column width, without widening the demo. */
 export const PresentationModes: Story = {
   parameters: { layout: "padded" },
   render: () => (
-    <div style={{ display: "grid", gap: 24, maxWidth: 1100 }}>
-      <section
-        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
-      >
-        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>01 · Minimal</h3>
-        <p style={{ margin: "0 0 16px", fontSize: 13 }}>
-          Current duration and assessment, without reference metrics
+    <div style={{ display: "grid", gap: 16, width: 480, maxWidth: "100%" }}>
+      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>01 · Minimal — one row</h3>
+        <p style={{ margin: "0 0 12px", fontSize: 12 }}>
+          Status and current duration share the event row.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
-          renderTrailing={(event) =>
-            target(event) ? (
-              <HealthAssessment
-                variant="compact"
-                observation={current}
-                health={assessment}
-              />
-            ) : null
-          }
+          renderTrailing={(event) => target(event) ? <InlineDurationSummary /> : null}
         />
       </section>
-      <section
-        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
-      >
-        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
-          02 · Inline quantiles
-        </h3>
-        <p style={{ margin: "0 0 16px", fontSize: 13 }}>
-          Current duration, semantic P50/P90, and the points-only reference
+      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>02 · Inline quantiles — one row</h3>
+        <p style={{ margin: "0 0 12px", fontSize: 12 }}>
+          Current 6h, status, P50/P90 and quantile bar beside the event.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
-          renderTrailing={(event) =>
-            target(event) ? (
-              <HealthAssessment
-                variant="default"
-                observation={current}
-                health={assessment}
-                observationDetails={
-                  <DurationQuantileMetrics
-                    quantiles={quantiles}
-                    unit="h"
-                    healthRegions={regions}
-                  />
-                }
-                reference={
-                  <DurationDistribution
-                    value={6}
-                    unit="h"
-                    domain={[0, 30]}
-                    quantiles={quantiles}
-                    healthRegions={regions}
-                    visualization="points"
-                    stretch={false}
-                  />
-                }
-              />
-            ) : null
-          }
+          renderTrailing={(event) => target(event) ? <InlineDurationSummary showQuantiles /> : null}
         />
       </section>
-      <section
-        style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}
-      >
-        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>
-          03 · Expanded interval
-        </h3>
-        <p style={{ margin: "0 0 16px", fontSize: 13 }}>
-          The inline summary remains compact; the full distribution belongs to
-          the interval
+      <section style={{ border: "1px solid #c6cfe0", borderRadius: 12, padding: 16 }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>03 · Expanded interval</h3>
+        <p style={{ margin: "0 0 12px", fontSize: 12 }}>
+          The headline remains inline; detailed reference content occupies the interval.
         </p>
         <EventTimeline
           events={events.slice(1, 4)}
           selectedId="b1"
-          renderTrailing={(event) =>
-            target(event) ? (
-              <HealthAssessment
-                variant="compact"
-                observation={current}
-                health={assessment}
-              />
-            ) : null
-          }
+          renderTrailing={(event) => target(event) ? <InlineDurationSummary /> : null}
           renderInterval={(event) =>
             target(event) ? (
               <HealthAssessment
@@ -335,16 +272,10 @@ export const PresentationModes: Story = {
                 label="Facility dwell"
                 observation={current}
                 health={assessment}
-                observationDetails={
-                  <DurationQuantileMetrics
-                    quantiles={quantiles}
-                    unit="h"
-                    healthRegions={regions}
-                  />
-                }
+                observationDetails={<DurationQuantileMetrics quantiles={quantiles} unit="h" healthRegions={regions} />}
                 reference={
                   <DurationDistribution
-                    value={6}
+                    value={current.value}
                     unit="h"
                     domain={[0, 30]}
                     quantiles={quantiles}
@@ -369,38 +300,39 @@ export const PresentationModes: Story = {
 
 export const NarrowQuantiles: Story = {
   render: () => (
-    <div style={{ width: 380, maxWidth: "100%" }}>
+    <div style={{ width: 360, maxWidth: "100%" }}>
       <EventTimeline
         events={events.slice(1, 4)}
         selectedId="b1"
-        renderTrailing={(event) =>
-          target(event) ? (
-            <HealthAssessment
-              variant="default"
-              observation={current}
-              health={assessment}
-              observationDetails={
-                <DurationQuantileMetrics
-                  quantiles={quantiles}
-                  unit="h"
-                  healthRegions={regions}
-                />
-              }
-              reference={
-                <DurationDistribution
-                  value={6}
-                  unit="h"
-                  domain={[0, 30]}
-                  quantiles={quantiles}
-                  healthRegions={regions}
-                  visualization="points"
-                  stretch={false}
-                />
-              }
-            />
-          ) : null
-        }
+        renderTrailing={(event) => target(event) ? <InlineDurationSummary showQuantiles /> : null}
       />
     </div>
   ),
 };
+
+/** The map is application-owned. The timeline only occupies its allotted column. */
+function MapAdjacentExample() {
+  const [selectedId, setSelectedId] = useState<string | null>("b1");
+  const [locationId, setLocationId] = useState<string | null>("sacramento");
+  return (
+    <div className={styles.mapAdjacent}>
+      <section className={styles.mapColumn}>
+        <h3 style={{ margin: "0 0 12px" }}>Events · 420px column</h3>
+        <EventTimeline
+          events={events}
+          selectedId={selectedId}
+          onSelectedIdChange={setSelectedId}
+          onLocationSelect={(id) => setLocationId(id)}
+          renderTrailing={(event) => target(event) ? <InlineDurationSummary showQuantiles /> : null}
+        />
+      </section>
+      <aside className={styles.mapSurface} aria-label="Adjacent application-owned map surface">
+        <h3 style={{ margin: "0 0 12px" }}>Map integration space</h3>
+        <p>Selected event: {selectedId ?? "none"}</p>
+        <p>Map focus: {locationId ?? "none"}</p>
+        <p>The map is supplied by the consuming application; the timeline does not render or control it.</p>
+      </aside>
+    </div>
+  );
+}
+export const MapAdjacent: Story = { render: () => <MapAdjacentExample /> };
