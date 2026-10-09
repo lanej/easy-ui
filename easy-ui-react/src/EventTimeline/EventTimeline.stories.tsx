@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { EventTimeline } from "./EventTimeline";
 import type { EventTimelineEvent } from "./EventItem";
 import { HealthAssessment } from "../HealthAssessment";
-import { DurationReferenceExample } from "../HealthAssessment/DurationReference.example";
+import { DurationDistribution } from "../DurationDistribution";
+import { DurationQuantileMetrics } from "../DurationDistribution/DurationQuantileMetrics";
 
 const events: EventTimelineEvent[] = [
   { id: "a1", label: "Accepted", timeLabel: "09:42", locationLabel: "Oakland, CA", locationTypeLabel: "Origin facility", locationId: "oakland", tone: "neutral" },
@@ -42,28 +43,49 @@ export const WithIntervalAssessment: Story = {
 };
 
 /** Optional graphical comparison reuses an existing molecule and reference fixture. */
+const quantiles = [{ fraction: 0.5, value: 9, label: "P50" }, { fraction: 0.9, value: 18, label: "P90" }];
+const regions = [
+  { from: 0, to: 10, assessment: "healthy" as const, label: "As expected" },
+  { from: 10, to: 20, assessment: "degraded" as const, label: "Needs attention" },
+  { from: 20, to: Infinity, assessment: "unhealthy" as const, label: "Outside expectations" },
+];
+const target = (event: EventTimelineEvent) => event.id === "b1";
+const current = { value: 6, unit: "hours" };
+const assessment = { assessment: "healthy" as const, label: "As expected" };
+
+export const InlineMinimal: Story = {
+  args: {
+    renderTrailing: (event) => target(event) ? (
+      <HealthAssessment variant="compact" observation={current} health={assessment} />
+    ) : null,
+  },
+};
+
+export const InlineQuantiles: Story = {
+  args: {
+    renderTrailing: (event) => target(event) ? (
+      <div style={{ minWidth: 200 }}>
+        <HealthAssessment variant="default" observation={current} health={assessment}
+          observationDetails={<DurationQuantileMetrics quantiles={quantiles} unit="h" healthRegions={regions} />}
+          reference={<DurationDistribution value={6} unit="h" domain={[0, 30]} quantiles={quantiles}
+            healthRegions={regions} visualization="points" stretch={false} />} />
+      </div>
+    ) : null,
+  },
+};
+
 export const WithDurationReference: Story = {
   args: {
-    renderInterval: (event) =>
-      event.id === "b1" ? (
-        <HealthAssessment
-          label="Facility dwell"
-          variant="default"
-          observation={{ value: 6, unit: "hours" }}
-          health={{ assessment: "healthy", label: "As expected" }}
-          reference={
-            <DurationReferenceExample
-              value={6}
-              currentAssessment="healthy"
-              regions={[
-                { from: 0, to: 10, assessment: "healthy", label: "As expected", shortLabel: "Expected" },
-                { from: 10, to: 20, assessment: "degraded", label: "Needs attention", shortLabel: "Attention" },
-                { from: 20, to: Infinity, assessment: "unhealthy", label: "Outside expectations", shortLabel: "Outside" },
-              ]}
-            />
-          }
-        />
-      ) : null,
+    renderTrailing: (event) => target(event) ? (
+      <HealthAssessment variant="compact" observation={current} health={assessment} />
+    ) : null,
+    renderInterval: (event) => target(event) ? (
+      <HealthAssessment variant="wide" label="Facility dwell" observation={current} health={assessment}
+        observationDetails={<DurationQuantileMetrics quantiles={quantiles} unit="h" healthRegions={regions} />}
+        reference={<DurationDistribution value={6} unit="h" domain={[0, 30]} quantiles={quantiles}
+          bins={[{ from: 0, to: 6, count: 20 }, { from: 6, to: 12, count: 50 }, { from: 12, to: 20, count: 25 }, { from: 20, to: 30, count: 5 }]}
+          healthRegions={regions} visualization="histogram" />} />
+    ) : null,
   },
 };
 
