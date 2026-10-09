@@ -578,3 +578,10 @@
     stop-color: GrayText;
   }
 }
+
+.metrics[data-layout="inline"] {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: design-token("space.2");
+  row-gap: design-token("space.0.5");
+}

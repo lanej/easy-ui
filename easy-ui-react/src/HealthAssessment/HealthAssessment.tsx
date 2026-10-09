@@ -19,14 +19,18 @@ export type HealthAssessmentProps = {
   observationDetails?: ReactNode;
   /** Optional caller-classified freshness; no aging policy is inferred. */
   freshness?: Omit<ObservationFreshnessProps, "size" | "isLoading">;
+  /** Keep freshness beside the label or in separate context after the headline. */
+  freshnessPlacement?: "label" | "context";
   /** Optional reference description or visualization supplied by the caller. */
   reference?: ReactNode;
   /** Optional supporting content below the primary reference; included in the reference column height. */
   referenceDetails?: ReactNode;
-  /** Compact keeps reference content beside the observation at narrower widths. */
-  referenceLayout?: "auto" | "compact";
+  /** Compact keeps a side-by-side reference; below uses one observation row above the reference. */
+  referenceLayout?: "auto" | "compact" | "below";
   /** Presentation form; responsive progressively reveals supplied content by container width. */
   variant?: "compact" | "detailed" | "default" | "wide" | "responsive";
+  /** Place the assessment beside the observation label rather than the value. */
+  healthPlacement?: "headline" | "label";
   size?: "sm" | "md";
   isLoading?: boolean;
   accessibilityLabel?: string;
@@ -38,12 +42,14 @@ export function HealthAssessment({
   health,
   observation,
   freshness,
+  freshnessPlacement = "label",
   observationDetails,
   reference,
   referenceDetails,
   referenceLayout = "auto",
   variant = "default",
   size = "md",
+  healthPlacement = "headline",
   isLoading = false,
   accessibilityLabel = "Health assessment",
 }: HealthAssessmentProps) {
@@ -55,21 +61,40 @@ export function HealthAssessment({
       observation.value < 0);
   const showInformation = variant !== "detailed";
   const showContext = variant !== "compact";
+  const showLabel =
+    showInformation && (showContext || healthPlacement === "label");
+  const inlineLabel = variant === "compact" && healthPlacement === "label";
   const showReference = variant !== "compact" && reference != null;
   const showMetrics = variant !== "compact" && observationDetails != null;
   const showReferenceDetails =
     showReference && variant !== "detailed" && referenceDetails != null;
   const stacked =
+    referenceLayout !== "below" &&
     size === "md" &&
     !isLoading &&
     (showReference || variant === "compact" || variant === "responsive");
   const duration = observation !== undefined && (
     <DurationValue
       {...observation}
-      size={size === "md" && showReference ? "lg" : size}
+      size={
+        size === "md" && showReference && referenceLayout !== "below"
+          ? "lg"
+          : size
+      }
       isLoading={isLoading}
     />
   );
+  const freshnessIndicator =
+    !isLoading &&
+    showContext &&
+    freshness !== undefined &&
+    !(
+      missingObservation &&
+      freshness.state !== "fresh" &&
+      freshness.state !== "stale"
+    ) ? (
+      <ObservationFreshness {...freshness} size={size} />
+    ) : null;
   const indicator =
     observation === undefined || (!isLoading && !missingObservation) ? (
       <HealthIndicator {...health} size="sm" isLoading={isLoading} />
@@ -81,15 +106,13 @@ export function HealthAssessment({
       data-variant={variant}
       role="group"
       aria-label={
-        !showContext || !showInformation || label == null
+        !showLabel || label == null
           ? typeof label === "string"
             ? label
             : accessibilityLabel
           : undefined
       }
-      aria-labelledby={
-        showContext && showInformation && label != null ? labelId : undefined
-      }
+      aria-labelledby={showLabel && label != null ? labelId : undefined}
       aria-busy={isLoading}
     >
       <div
@@ -105,56 +128,66 @@ export function HealthAssessment({
         )}
         {showInformation && (
           <div className={styles.information}>
-            {showContext && label != null && (
-              <div id={labelId} className={styles.label}>
-                <Text
-                  as="p"
-                  variant={stacked ? "caption" : "body2"}
-                  color="neutral.700"
+            {showLabel &&
+              (label != null ||
+                healthPlacement === "label" ||
+                (freshnessPlacement === "label" &&
+                  freshnessIndicator != null)) && (
+                <div
+                  className={styles.label}
+                  data-health-placement={healthPlacement}
+                  data-inline={inlineLabel}
                 >
-                  {label}
-                </Text>
+                  {!inlineLabel && healthPlacement === "label" && indicator}
+                  <Text
+                    id={labelId}
+                    as="p"
+                    variant={stacked ? "caption" : "body2"}
+                    color="neutral.700"
+                  >
+                    {label}
+                  </Text>
+                  {freshnessPlacement === "label" && freshnessIndicator && (
+                    <span className={styles.freshness}>
+                      {freshnessIndicator}
+                    </span>
+                  )}
+                  {inlineLabel && indicator}
+                  {inlineLabel && duration}
+                </div>
+              )}
+            {!inlineLabel && (
+              <div className={styles.summary} data-stacked={stacked}>
+                {stacked ? (
+                  <>
+                    {healthPlacement === "headline" && indicator}
+                    {showMetrics ? (
+                      <div className={styles.headline}>
+                        {duration}
+                        <div className={styles.observationDetails}>
+                          {observationDetails}
+                        </div>
+                      </div>
+                    ) : (
+                      duration
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {duration}
+                    {healthPlacement === "headline" && indicator}
+                  </>
+                )}
               </div>
             )}
-            <div className={styles.summary} data-stacked={stacked}>
-              {stacked ? (
-                <>
-                  {indicator}
-                  {showMetrics ? (
-                    <div className={styles.headline}>
-                      {duration}
-                      <div className={styles.observationDetails}>
-                        {observationDetails}
-                      </div>
-                    </div>
-                  ) : (
-                    duration
-                  )}
-                </>
-              ) : (
-                <>
-                  {duration}
-                  {indicator}
-                </>
-              )}
-            </div>
+            {freshnessPlacement === "context" && freshnessIndicator && (
+              <span className={styles.freshness}>{freshnessIndicator}</span>
+            )}
             {!isLoading && !stacked && showMetrics && (
               <div className={styles.observationDetails}>
                 {observationDetails}
               </div>
             )}
-            {!isLoading &&
-              showContext &&
-              freshness !== undefined &&
-              !(
-                missingObservation &&
-                freshness.state !== "fresh" &&
-                freshness.state !== "stale"
-              ) && (
-                <div className={styles.freshness}>
-                  <ObservationFreshness {...freshness} size={size} />
-                </div>
-              )}
           </div>
         )}
         {!isLoading && showReference && (

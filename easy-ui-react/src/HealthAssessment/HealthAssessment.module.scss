@@ -32,6 +32,10 @@
 }
 
 .label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: design-token("space.1");
   min-inline-size: 0;
   overflow-wrap: anywhere;
 }
@@ -152,7 +156,8 @@
   .layout .information {
     grid-row: auto;
   }
-  .label {
+  .label:not([data-health-placement="label"]),
+  .label > p {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
@@ -171,7 +176,8 @@
     .freshness {
       display: flex;
     }
-    .label {
+    .label:not([data-health-placement="label"]),
+    .label > p {
       position: static;
       inline-size: auto;
       block-size: auto;
@@ -201,5 +207,57 @@
     .layout[data-has-reference-details="true"] .information {
       grid-row: 1 / span 2;
     }
+  }
+}
+
+.label[data-health-placement="label"] {
+  display: flex;
+  align-items: center;
+  gap: design-token("space.1");
+}
+
+.label[data-inline="true"] {
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: design-token("space.1");
+  row-gap: design-token("space.0.5");
+
+  > [data-assessment] {
+    align-self: center;
+  }
+}
+
+// Keep the measurement and its comparisons in one reading row above the graphic.
+.root .layout[data-reference-layout="below"] {
+  grid-template-columns: minmax(0, 1fr);
+  gap: design-token("space.1");
+
+  .information {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: design-token("space.1.5");
+    grid-row: auto;
+  }
+
+  .summary {
+    align-items: baseline;
+  }
+
+  .observationDetails {
+    margin-inline-start: auto;
+  }
+
+  .referenceDetails {
+    grid-column: 1;
+  }
+}
+
+@container (max-width: 480px) {
+  .root .layout[data-reference-layout="below"] .observationDetails {
+    flex-basis: 100%;
+    margin-inline-start: 0;
   }
 }

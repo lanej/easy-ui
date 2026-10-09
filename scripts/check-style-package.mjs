@@ -83,6 +83,7 @@ import { DataGrid } from "@easypost/easy-ui/DataGrid";
 import { DatePicker } from "@easypost/easy-ui/DatePicker";
 import { DateRangePicker } from "@easypost/easy-ui/DateRangePicker";
 import { DrawerTable, DrawerRow } from "@easypost/easy-ui/DrawerTable";
+import { FacilitySummary, type FacilitySummaryProps } from "@easypost/easy-ui/FacilitySummary";
 import { DurationDistribution, DurationQuantileMetrics, type DurationDistributionProps } from "@easypost/easy-ui/DurationDistribution";
 import { Select } from "@easypost/easy-ui/Select";
 import { SelectField, type BaseSelectFieldProps, type SelectFieldSize } from "@easypost/easy-ui/Select/SelectField";
@@ -112,7 +113,10 @@ void [metricCardWithoutTrend, metricContentWithoutTrend];
 
 const durationReference: DurationDistributionProps = { value: 6.125, unit: "hours", domain: [0, 30], quantiles: [{fraction: 0.5, value: 9}], bins: [{from: 0, to: 10, count: 3}], cumulative: [{value: 0, fraction: 0}, {value: 30, fraction: 1}] };
 
+const facility: FacilitySummaryProps = { name: "Packed facility", observations: [{ id: "dwell", health: { assessment: "healthy" }, observation: { value: 6, unit: "h" }, reference: <DurationDistribution {...durationReference} /> }] };
+
 export const example = <>
+  <FacilitySummary {...facility} />
   <DurationDistribution {...durationReference} />
   <DurationQuantileMetrics quantiles={[{fraction: 0.5, value: 9}]} unit="hours" />
   <DrawerTable aria-label="Packed drawers" rows={[{key: "one" as const, count: 1}]} expandedKey={null} onExpandedChange={(key) => { const next: "one" | null = key; void next; }} renderRow={(row) => <span>{row.count}</span>} renderExpandedRow={(row) => <span>{row.key}</span>} />

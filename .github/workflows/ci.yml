@@ -40,3 +40,35 @@ jobs:
         run: npm run test
       - name: Build storybook
         run: npm run build:storybook
+      - name: Install browser test dependencies
+        working-directory: scripts/preview-metrics
+        run: npm ci --no-audit --no-fund
+      - name: Install Chromium
+        working-directory: scripts/preview-metrics
+        run: npx playwright install --with-deps chromium
+      - name: Verify facility and responsive health layouts
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9018
+          FACILITY_REPORT_DIR: ${{ runner.temp }}/facility-summary-browser
+        run: |
+          python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/facility-storybook.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
+          node scripts/check-facility-summary.mjs
+      - name: Retain facility browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: facility-summary-browser
+          path: |
+            ${{ runner.temp }}/facility-summary-browser
+            ${{ runner.temp }}/facility-storybook.log
+          if-no-files-found: ignore
