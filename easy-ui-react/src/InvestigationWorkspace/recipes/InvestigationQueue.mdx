@@ -1,0 +1,29 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as Stories from "./InvestigationQueue.stories";
+
+<Meta of={Stories} />
+
+# Investigation queue recipe
+
+Choose the next case using an existing DataGrid, RiskScore, ObservationFreshness, TextField, Select, and pagination. This is application composition, not a new public package component. Copy `InvestigationQueue.tsx` and its stylesheet from this recipe directory into your application and replace the synthetic fixture data.
+
+<Canvas of={Stories.Worklist} />
+
+The recipe searches case IDs, tracking codes, and subjects; filters review status and supplied assessment; and sorts supplied risk scores or case IDs. Filtering and sorting return to page one. Pagination clamps to a valid page after the snapshot shrinks. Missing or invalid scores stay last in either sort direction. The table scrolls within its frame on narrow screens and case actions remain keyboard accessible.
+
+`onOpenCase(id)` hands a stable case ID to application navigation. The recipe does not turn scores into assessments or review outcomes. Loading suppresses stale actions, failures offer an optional retry, and empty filters can be cleared. For a remote queue, move filtering, ordering, and paging into the query layer while retaining these controlled DataGrid and form patterns.
+
+```tsx
+<InvestigationQueue
+  cases={snapshot.cases}
+  isLoading={loading}
+  error={loadError}
+  onRetry={reload}
+  onOpenCase={openCase}
+/>
+```
+
+See **Recipes → Investigation → Workflow** for queue-to-map-to-review composition with retained filters and focus restoration. These examples use synthetic data and local session state.
+
+<Canvas of={Stories.Empty} />
+<Canvas of={Stories.Retry} />

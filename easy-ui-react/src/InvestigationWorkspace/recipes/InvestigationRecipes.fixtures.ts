@@ -1,0 +1,95 @@
+import type { InvestigationCase } from "./InvestigationQueue";
+import type { ReviewRecord } from "./ReviewOutcome";
+
+export const cases: InvestigationCase[] = [
+  {
+    id: "CASE-1042",
+    subject: "Delivery review",
+    trackingCode: "9400111899223847261950",
+    risk: 82,
+    assessment: "high",
+    freshness: "fresh",
+    observedAt: "2026-10-10T14:18:00Z",
+    observedAtLabel: "14:18 UTC",
+    reviewStatus: "Unreviewed",
+  },
+  {
+    id: "CASE-1038",
+    subject: "Receipt confirmation",
+    trackingCode: "9400111899223847261951",
+    risk: 61,
+    assessment: "medium",
+    freshness: "fresh",
+    observedAt: "2026-10-10T13:42:00Z",
+    observedAtLabel: "13:42 UTC",
+    reviewStatus: "In review",
+  },
+  {
+    id: "CASE-1029",
+    subject: "Delivery review",
+    trackingCode: "9400111899223847261952",
+    risk: 34,
+    assessment: "low",
+    freshness: "stale",
+    observedAt: "2026-10-09T17:05:00Z",
+    observedAtLabel: "9 Oct, 17:05 UTC",
+    reviewStatus: "Unreviewed",
+  },
+  {
+    id: "CASE-1017",
+    subject: "Transit review",
+    trackingCode: "9400111899223847261953",
+    risk: 18,
+    assessment: "low",
+    freshness: "fresh",
+    observedAt: "2026-10-10T12:16:00Z",
+    observedAtLabel: "12:16 UTC",
+    reviewStatus: "Reviewed",
+  },
+  {
+    id: "CASE-1014",
+    subject: "Missing observations",
+    trackingCode: "9400111899223847261954",
+    risk: null,
+    freshness: "unavailable",
+    reviewStatus: "Unreviewed",
+  },
+  {
+    id: "CASE-1008",
+    subject: "Receipt confirmation",
+    trackingCode: "9400111899223847261955",
+    risk: 47,
+    assessment: "medium",
+    freshness: "stale",
+    observedAt: "2026-10-09T08:20:00Z",
+    observedAtLabel: "9 Oct, 08:20 UTC",
+    reviewStatus: "Reviewed",
+  },
+  {
+    id: "CASE-1003",
+    subject: "Delivery review",
+    trackingCode: "9400111899223847261956",
+    risk: 76,
+    assessment: "high",
+    freshness: "fresh",
+    observedAt: "2026-10-10T11:30:00Z",
+    observedAtLabel: "11:30 UTC",
+    reviewStatus: "In review",
+  },
+];
+export const outcomeOptions = [
+  { value: "confirmed", label: "Confirmed issue" },
+  { value: "clear", label: "No issue found" },
+  { value: "inconclusive", label: "Inconclusive" },
+];
+export const reviewHistory: ReviewRecord[] = [
+  {
+    id: "review-001",
+    outcomeLabel: "Inconclusive",
+    reviewer: "Alex Morgan",
+    recordedAt: "2026-10-10T12:00:00Z",
+    recordedAtLabel: "10 Oct 2026, 12:00 UTC",
+    notes:
+      "Requested an independent delivery confirmation before closing this review.",
+  },
+];

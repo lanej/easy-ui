@@ -1,0 +1,30 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as Stories from "./ReviewOutcome.stories";
+
+<Meta of={Stories} />
+
+# Review outcome recipe
+
+Record a human review independently of a supplied risk assessment. The recipe composes RadioGroup, Textarea, Button, and a semantic review history. Copy `ReviewOutcome.tsx` and its stylesheet into the consuming application; outcome vocabulary and persistence belong there.
+
+<Canvas of={Stories.RecordReview} />
+
+```tsx
+<ReviewOutcome
+  caseId={caseId}
+  options={allowedOutcomes}
+  records={confirmedReviews}
+  onSubmit={async (draft) => {
+    const record = await reviewService.create(draft);
+    addConfirmedRecord(record);
+  }}
+/>
+```
+
+No option starts selected. A submission requires a valid outcome and a nonblank note. The callback receives only `caseId`, `outcome`, and trimmed `notes`. The service supplies the authenticated reviewer, persisted ID, and timestamp, and the application supplies the resulting `records`. The recipe does not fabricate an audit entry after a successful callback or change the risk score.
+
+While saving, controls are disabled and duplicate submission is blocked. A rejected promise keeps the draft and provides a retry message; successful persistence clears the draft and announces completion. Changing the case resets its draft, and a late response from the previous case cannot clear the new case's input. Production applications can retain drafts by case outside this recipe if needed. History follows caller order and keeps prior entries visible.
+
+The failed-save story simulates one rejected request followed by a successful retry. The examples retain records only for the current session; connect the callback to your application service for durable history.
+
+<Canvas of={Stories.FailedSave} />
