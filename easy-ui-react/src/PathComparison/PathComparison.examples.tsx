@@ -7,8 +7,12 @@ import { EventDetails } from "../EventDetails";
 import { useColorScheme } from "../Theme";
 import { investigationRecords } from "../InvestigationWorkspace/InvestigationWorkspace.fixtures";
 import type { InvestigationSelection } from "../InvestigationWorkspace";
-import { resolveSelection } from "../InvestigationWorkspace/selection";
+import {
+  resolveSelection,
+  type InvestigationRecords,
+} from "../InvestigationWorkspace/selection";
 import { PathComparison } from "./PathComparison";
+import type { PathComparisonRow } from "./PathComparison";
 import { comparisonRows } from "./PathComparison.fixtures";
 import styles from "./PathComparison.examples.module.scss";
 
@@ -18,23 +22,34 @@ declare global {
   }
 }
 
+export type ComparisonExampleData = {
+  records: InvestigationRecords;
+  rows: readonly PathComparisonRow[];
+  initialSelection: InvestigationSelection;
+  sourceLabel?: string;
+};
+
+const exampleData: ComparisonExampleData = {
+  records: investigationRecords,
+  rows: comparisonRows,
+  initialSelection: { type: "path", pathId: "north", eventId: "north-scan" },
+  sourceLabel: "Tracking feed",
+};
+
 export function ComparisonExample({
   withMap = false,
   narrow = false,
+  data = exampleData,
 }: {
   withMap?: boolean;
   narrow?: boolean;
+  data?: ComparisonExampleData;
 }) {
-  const [selection, setSelection] = useState<InvestigationSelection>({
-    type: "path",
-    pathId: "north",
-    eventId: "north-scan",
-  });
+  const { records, rows, initialSelection, sourceLabel } = data;
+  const [selection, setSelection] =
+    useState<InvestigationSelection>(initialSelection);
   const { resolvedColorScheme } = useColorScheme();
-  const { event, location, path } = resolveSelection(
-    investigationRecords,
-    selection,
-  );
+  const { event, location, path } = resolveSelection(records, selection);
   const mapStyle = useMemo<StyleSpecification>(
     () => ({
       version: 8,
@@ -58,7 +73,7 @@ export function ComparisonExample({
     label: "Selected candidate",
     data: {
       type: "FeatureCollection",
-      features: investigationRecords.segments
+      features: records.segments
         .filter((segment) => selectedSegments.has(segment.id))
         .map((segment) => ({
           type: "Feature",
@@ -68,14 +83,12 @@ export function ComparisonExample({
             type: "LineString",
             coordinates: [
               [
-                ...investigationRecords.locations.find(
-                  (item) => item.id === segment.from,
-                )!.coordinates,
+                ...records.locations.find((item) => item.id === segment.from)!
+                  .coordinates,
               ],
               [
-                ...investigationRecords.locations.find(
-                  (item) => item.id === segment.to,
-                )!.coordinates,
+                ...records.locations.find((item) => item.id === segment.to)!
+                  .coordinates,
               ],
             ],
           },
@@ -100,9 +113,9 @@ export function ComparisonExample({
     >
       <div className={withMap ? styles.split : styles.single}>
         <PathComparison
-          paths={investigationRecords.paths}
-          events={investigationRecords.events}
-          rows={comparisonRows}
+          paths={records.paths}
+          events={records.events}
+          rows={rows}
           selection={selection}
           onSelectionChange={setSelection}
         />
@@ -110,8 +123,8 @@ export function ComparisonExample({
           {withMap && (
             <NetworkMap
               aria-label="Candidate locations"
-              facilities={investigationRecords.locations}
-              segments={investigationRecords.segments}
+              facilities={records.locations}
+              segments={records.segments}
               selectedFacilityId={location?.id}
               onFacilitySelect={(locationId) =>
                 setSelection({ type: "location", locationId })
@@ -143,7 +156,8 @@ export function ComparisonExample({
             {event ? (
               <EventDetails
                 event={event}
-                sourceLabel="Tracking feed"
+                sourceLabel={sourceLabel}
+                locationLabel={location?.label}
                 showEventId
                 layout="stacked"
               />

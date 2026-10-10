@@ -95,6 +95,15 @@ async function choose(label, option) {
 try {
   await open(`${comparison}--linked-map`);
   await mapReady();
+  assert.match(
+    await page
+      .getByRole("button", { name: /^Accepted/ })
+      .first()
+      .getAttribute("aria-label"),
+    /North Harbor/,
+    "Observation accessible names include their visible location",
+  );
+  checks.push("observation accessible names retain location context");
   await audit("comparison-linked-light", true);
   await page.evaluate(() => {
     window.toolkitCanvas = window.toolkitMap.getCanvas();
@@ -239,21 +248,37 @@ try {
   await page
     .getByRole("textbox", { name: "Review notes" })
     .fill("Independent confirmation received.");
-  await page.getByRole("button", { name: "Record review" }).click();
+  const submit = page.locator('form button[type="submit"]');
+  await submit.focus();
+  await submit.press("Enter");
+  await page.getByRole("button", { name: "Saving review…" }).waitFor();
+  assert.equal(await submit.getAttribute("aria-disabled"), "true");
+  assert(await submit.evaluate((node) => node === document.activeElement));
+  assert(
+    (await page
+      .getByRole("textbox", { name: "Review notes" })
+      .getAttribute("readonly")) !== null,
+  );
+  await submit.press("Enter");
   await page
     .getByRole("alert")
     .filter({ hasText: "Your draft is retained" })
     .waitFor();
+  assert(await submit.evaluate((node) => node === document.activeElement));
   assert.equal(
     await page.getByRole("textbox", { name: "Review notes" }).inputValue(),
     "Independent confirmation received.",
   );
   await audit("review-failed-narrow", true);
-  await page.getByRole("button", { name: "Record review" }).click();
+  await submit.press("Enter");
   await page
     .getByRole("status")
     .filter({ hasText: "Review recorded." })
     .waitFor();
+  assert(await submit.evaluate((node) => node === document.activeElement));
+  checks.push(
+    "submit focus survives pending, rejected, and successful review saves",
+  );
   await page
     .getByRole("list", { name: "Review history" })
     .getByText("No issue found", { exact: true })
@@ -280,13 +305,20 @@ try {
   await mapReady();
   assert(
     await page
+      .getByRole("table", { name: "Candidate path comparison" })
+      .evaluate((node) => node.getBoundingClientRect().width >= 300),
+    "The comparison fills its grid column rather than collapsing to its contained minimum width",
+  );
+  checks.push("workflow comparison retains a readable width in a grid layout");
+  assert(
+    await page
       .getByRole("heading", { name: "CASE-1042", exact: true })
       .evaluate((node) => node === document.activeElement),
   );
   await page.getByRole("button", { name: /Processed at South Gate/ }).click();
   await page
     .getByRole("region", { name: "Selected observation" })
-    .getByText("south-scan", { exact: true })
+    .getByText("CASE-1042:south-scan", { exact: true })
     .waitFor();
   await page.getByRole("radio", { name: "No issue found" }).check();
   await page
@@ -317,6 +349,125 @@ try {
   await audit("workflow-recorded-review", true);
   checks.push(
     "queue-to-review keeps filters, restores focus, and retains confirmed history per case",
+  );
+  await page.getByRole("button", { name: "Back to queue" }).click();
+  await page.getByRole("searchbox", { name: "Find a case" }).fill("CASE-1038");
+  await page.getByRole("button", { name: "Open case CASE-1038" }).click();
+  const inspector = page.getByRole("region", { name: "Selected observation" });
+  await inspector.getByText("CASE-1038:arrived", { exact: true }).waitFor();
+  assert.equal(await inspector.getByText("08:40", { exact: true }).count(), 1);
+  assert.equal(await inspector.getByText(/CASE-1042:/).count(), 0);
+  assert.equal(
+    await page.getByRole("button", { name: /Processed at South Gate/ }).count(),
+    0,
+  );
+  checks.push(
+    "opening another case replaces observations and selected event identity",
+  );
+  await open("recipes-investigation-workflow--queue-to-review", "dark", 390);
+  await page.getByRole("searchbox", { name: "Find a case" }).fill("CASE-1014");
+  await page.getByRole("button", { name: "Open case CASE-1014" }).click();
+  await page
+    .getByRole("heading", { name: "No observations available" })
+    .waitFor();
+  assert.equal(
+    await page
+      .getByRole("table", { name: "Candidate path comparison" })
+      .count(),
+    0,
+  );
+  assert.equal(
+    await page.getByRole("region", { name: "Selected observation" }).count(),
+    0,
+  );
+  await audit("workflow-missing-observations-dark", true);
+  checks.push(
+    "a missing-observations case never borrows another case's map or records",
+  );
+
+  await open("recipes-investigation-workflow--slow-save");
+  await page.getByRole("button", { name: "Open case CASE-1042" }).click();
+  await mapReady();
+  await page.getByRole("radio", { name: "No issue found" }).check();
+  await page
+    .getByRole("textbox", { name: "Review notes" })
+    .fill("One pending review across navigation.");
+  await page.getByRole("button", { name: "Record review" }).click();
+  await page.getByRole("button", { name: "Saving review…" }).waitFor();
+  await page.getByRole("button", { name: "Back to queue" }).click();
+  await page.getByRole("button", { name: "Open case CASE-1042" }).click();
+  const pendingSubmit = page.getByRole("button", { name: "Saving review…" });
+  await pendingSubmit.waitFor();
+  assert.equal(await pendingSubmit.getAttribute("aria-disabled"), "true");
+  assert.equal(
+    await page.getByRole("textbox", { name: "Review notes" }).inputValue(),
+    "One pending review across navigation.",
+  );
+  await pendingSubmit.press("Enter");
+  await page.setViewportSize({ width: 640, height: 1000 });
+  await audit("workflow-pending-review");
+  await page
+    .getByRole("region", { name: "Review outcome for CASE-1042" })
+    .screenshot({ path: `${output}/workflow-pending-review.png` });
+  await page
+    .getByRole("status")
+    .filter({ hasText: "Review recorded." })
+    .waitFor();
+  assert.equal(
+    await page
+      .getByRole("list", { name: "Review history" })
+      .getByText("One pending review across navigation.", { exact: true })
+      .count(),
+    1,
+  );
+  checks.push(
+    "a remounted form retains its pending draft and cannot create a duplicate review",
+  );
+
+  await open("recipes-investigation-workflow--failed-save-across-navigation");
+  await page.getByRole("button", { name: "Open case CASE-1042" }).click();
+  await page.getByRole("radio", { name: "Inconclusive" }).check();
+  await page
+    .getByRole("textbox", { name: "Review notes" })
+    .fill("Retain the original case after a hidden failure.");
+  await page.getByRole("button", { name: "Record review" }).click();
+  await page.getByRole("button", { name: "Back to queue" }).click();
+  await page.getByRole("button", { name: "Open case CASE-1038" }).click();
+  await page
+    .getByRole("textbox", { name: "Review notes" })
+    .fill("Independent draft for another case.");
+  // Let the explicitly delayed example service reject while its case is hidden.
+  await page.waitForTimeout(4100);
+  assert(
+    await page
+      .getByRole("textbox", { name: "Review notes" })
+      .evaluate((node) => node === document.activeElement),
+  );
+  assert.equal(await page.getByRole("alert").count(), 0);
+  await page.getByRole("button", { name: "Back to queue" }).click();
+  await page.getByRole("button", { name: "Open case CASE-1042" }).click();
+  await page
+    .getByRole("alert")
+    .filter({ hasText: "Your draft is retained" })
+    .waitFor();
+  assert.equal(
+    await page.getByRole("textbox", { name: "Review notes" }).inputValue(),
+    "Retain the original case after a hidden failure.",
+  );
+  assert(await page.getByRole("radio", { name: "Inconclusive" }).isChecked());
+  await page.getByRole("button", { name: "Record review" }).click();
+  await page
+    .getByRole("status")
+    .filter({ hasText: "Review recorded." })
+    .waitFor();
+  await page.getByRole("button", { name: "Back to queue" }).click();
+  await page.getByRole("button", { name: "Open case CASE-1038" }).click();
+  assert.equal(
+    await page.getByRole("textbox", { name: "Review notes" }).inputValue(),
+    "Independent draft for another case.",
+  );
+  checks.push(
+    "hidden failures retain the original draft without changing another case's input or focus",
   );
   assert.deepEqual(errors, [], "Browser runtime errors");
   await writeFile(

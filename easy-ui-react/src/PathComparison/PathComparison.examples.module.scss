@@ -1,6 +1,8 @@
 @use "../styles/common" as *;
 .example {
   container-type: inline-size;
+  inline-size: 100%;
+  max-inline-size: 100%;
   min-inline-size: 0;
   margin-inline: auto;
 }

@@ -11,4 +11,11 @@ This application recipe connects the investigation queue, path comparison, map, 
 
 The queue stays mounted while a case is open so search, filters, sorting, and pagination survive navigation. Opening a case moves keyboard focus to its heading. Returning restores focus to the case action; if a recorded review removes that case from the active filter, focus returns to search. A confirmed record updates that case's review status and remains in its history on reopening. Risk assessments remain unchanged.
 
-`InvestigationRecipes.examples.tsx` owns the synthetic case state, map selection, and simulated persistence. Replace those pieces with your router, query layer, and authenticated review service. The recipe source is an example rather than a public package export; `PathComparison` and `EventDetails` are the reusable public components.
+Each case opens its own observation snapshot with stable case-scoped event IDs, supplied timestamps, and candidate membership. The fictional network locations are shared. The missing-observations case displays an explicit empty state without another case's map or records.
+
+Review drafts and pending requests live above case navigation. Start a slow save, return to the queue, and reopen the same case: its draft remains read-only and another submission is blocked until that request finishes. Other cases keep independent drafts and outcomes. The failure example retains the original case's draft even when the failure occurs while another case is open.
+
+<Canvas of={Stories.SlowSave} />
+<Canvas of={Stories.FailedSaveAcrossNavigation} />
+
+`InvestigationRecipes.examples.tsx` owns the synthetic case state, `useReviewOutcomes` keeps review state by case, and `InvestigationCaseComparisons.fixtures.ts` supplies the independent observation snapshots. Replace those pieces with your router, query layer, and authenticated review service. The recipe source is an example rather than a public package export; `PathComparison` and `EventDetails` are the reusable public components.

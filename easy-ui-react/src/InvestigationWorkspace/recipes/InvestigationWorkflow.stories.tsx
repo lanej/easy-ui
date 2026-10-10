@@ -9,3 +9,9 @@ export default meta;
 export const QueueToReview: StoryObj = {
   render: () => <InvestigationWorkflow />,
 };
+export const SlowSave: StoryObj = {
+  render: () => <InvestigationWorkflow saveDelay={4000} />,
+};
+export const FailedSaveAcrossNavigation: StoryObj = {
+  render: () => <InvestigationWorkflow saveDelay={4000} failFirst />,
+};

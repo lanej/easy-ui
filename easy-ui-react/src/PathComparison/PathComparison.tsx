@@ -154,7 +154,7 @@ export function PathComparison({
                             type="button"
                             className={styles.event}
                             aria-current={current ? "true" : undefined}
-                            aria-label={`${event.label} · ${event.timeLabel || text.unknownTime} · ${path.label}${event.receivedTimeLabel ? ` · ${text.received} ${event.receivedTimeLabel}` : ""}`}
+                            aria-label={`${event.label} · ${event.timeLabel || text.unknownTime}${event.locationLabel ? ` · ${event.locationLabel}` : ""} · ${path.label}${event.receivedTimeLabel ? ` · ${text.received} ${event.receivedTimeLabel}` : ""}`}
                             onClick={() =>
                               onSelectionChange({
                                 type: "path",

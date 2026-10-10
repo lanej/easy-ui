@@ -111,4 +111,47 @@ describe("PathComparison", () => {
     rerender(<PathComparison {...props} rows={[]} />);
     expect(screen.getByText("No comparison rows supplied")).toBeInTheDocument();
   });
+  it("includes visible locations in accessible names for otherwise matching observations", () => {
+    render(
+      <PathComparison
+        {...props}
+        paths={[{ id: "candidate", label: "Candidate" }]}
+        events={[
+          {
+            id: "a",
+            label: "Processed",
+            timeLabel: "14:10",
+            locationLabel: "North Gate",
+          },
+          {
+            id: "b",
+            label: "Processed",
+            timeLabel: "14:10",
+            locationLabel: "South Gate",
+          },
+          { id: "unknown", label: "Processed", timeLabel: "14:10" },
+        ]}
+        rows={[
+          {
+            id: "processing",
+            label: "Processing",
+            cells: [{ pathId: "candidate", eventIds: ["a", "b", "unknown"] }],
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByRole("button", {
+        name: "Processed · 14:10 · North Gate · Candidate",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Processed · 14:10 · South Gate · Candidate",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Processed · 14:10 · Candidate" }),
+    ).toBeInTheDocument();
+  });
 });

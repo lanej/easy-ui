@@ -14,6 +14,8 @@ import {
   reviewHistory,
 } from "./InvestigationRecipes.fixtures";
 import styles from "./InvestigationRecipes.module.scss";
+import { useReviewOutcomes } from "./useReviewOutcomes";
+import { caseComparisons } from "./InvestigationCaseComparisons.fixtures";
 
 function exampleRecord(draft: ReviewDraft): ReviewRecord {
   // A real application returns an authenticated reviewer, server ID and timestamp.
@@ -40,6 +42,13 @@ export function ReviewExample({
     empty ? [] : reviewHistory,
   );
   const attempts = useRef(0);
+  const reviewFor = useReviewOutcomes(async (draft) => {
+    attempts.current += 1;
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    if (failFirst && attempts.current === 1)
+      throw new Error("Example service unavailable");
+    setRecords((previous) => [exampleRecord(draft), ...previous]);
+  });
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", display: "grid", gap: 16 }}>
       <div className={styles.saveRow}>
@@ -50,13 +59,7 @@ export function ReviewExample({
         caseId="CASE-1042"
         options={outcomeOptions}
         records={records}
-        onSubmit={async (draft) => {
-          attempts.current += 1;
-          await new Promise((resolve) => setTimeout(resolve, 300));
-          if (failFirst && attempts.current === 1)
-            throw new Error("Example service unavailable");
-          setRecords((previous) => [exampleRecord(draft), ...previous]);
-        }}
+        review={reviewFor("CASE-1042")}
       />
     </div>
   );
@@ -88,14 +91,34 @@ export function QueueExample({
 }
 
 /** A complete local example; no customer data is fetched or persisted. */
-export function InvestigationWorkflow() {
+export function InvestigationWorkflow({
+  saveDelay = 300,
+  failFirst = false,
+}: {
+  saveDelay?: number;
+  failFirst?: boolean;
+}) {
   const [caseId, setCaseId] = useState<string | null>(null);
   const [histories, setHistories] = useState<Record<string, ReviewRecord[]>>({
     "CASE-1042": reviewHistory,
   });
+  const attempts = useRef<Record<string, number>>({});
+  const reviewFor = useReviewOutcomes(async (draft) => {
+    const attempt = (attempts.current[draft.caseId] ?? 0) + 1;
+    attempts.current[draft.caseId] = attempt;
+    await new Promise((resolve) => setTimeout(resolve, saveDelay));
+    if (failFirst && attempt === 1)
+      throw new Error("Example service unavailable");
+    const record = exampleRecord(draft);
+    setHistories((previous) => ({
+      ...previous,
+      [draft.caseId]: [record, ...(previous[draft.caseId] ?? [])],
+    }));
+  });
   const queue = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const active = cases.find((item) => item.id === caseId);
+  const comparison = active ? caseComparisons[active.id] : undefined;
   const lastOpened = useRef<string | null>(null);
   const open = (id: string) => {
     lastOpened.current = id;
@@ -145,19 +168,20 @@ export function InvestigationWorkflow() {
               size="sm"
             />
           </div>
-          <ComparisonExample key={active.id} withMap />
+          <p className={styles.muted}>{active.trackingCode}</p>
+          {comparison ? (
+            <ComparisonExample key={active.id} data={comparison} withMap />
+          ) : (
+            <section className={styles.panel} aria-label="Case observations">
+              <h3 className={styles.subheading}>No observations available</h3>
+              <p>No tracking observations were supplied for this case.</p>
+            </section>
+          )}
           <ReviewOutcome
             caseId={active.id}
             options={outcomeOptions}
             records={histories[active.id] ?? []}
-            onSubmit={async (draft) => {
-              await new Promise((resolve) => setTimeout(resolve, 300));
-              const record = exampleRecord(draft);
-              setHistories((previous) => ({
-                ...previous,
-                [draft.caseId]: [record, ...(previous[draft.caseId] ?? [])],
-              }));
-            }}
+            review={reviewFor(active.id)}
           />
         </div>
       )}

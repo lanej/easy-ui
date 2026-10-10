@@ -1,7 +1,8 @@
-import React, { useId, useRef, useState } from "react";
+import React, { useId, useRef } from "react";
 import { RadioGroup } from "../../RadioGroup";
 import { Textarea } from "../../Textarea";
 import { Button } from "../../Button";
+import type { ReviewOutcomeController } from "./useReviewOutcomes";
 import styles from "./InvestigationRecipes.module.scss";
 
 export type ReviewDraft = { caseId: string; outcome: string; notes: string };
@@ -18,11 +19,11 @@ export type ReviewOutcomeProps = {
   options: readonly { value: string; label: string }[];
   /** Application-confirmed history, in display order. */
   records: readonly ReviewRecord[];
-  /** Resolve only after persistence succeeds. The application supplies identity and timestamps. */
-  onSubmit: (draft: ReviewDraft) => Promise<void>;
+  /** Case state owned above navigation, including drafts and pending requests. */
+  review: ReviewOutcomeController;
 };
 
-/** Application recipe; changing cases starts a separate draft. */
+/** Application recipe; each case uses its own application-owned review state. */
 export function ReviewOutcome(props: ReviewOutcomeProps) {
   return <ReviewOutcomeForm key={props.caseId} {...props} />;
 }
@@ -31,20 +32,11 @@ function ReviewOutcomeForm({
   caseId,
   options,
   records,
-  onSubmit,
+  review,
 }: ReviewOutcomeProps) {
-  const [outcome, setOutcome] = useState("");
-  const [notes, setNotes] = useState("");
-  const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const inFlight = useRef(false);
+  const { outcome, notes, error, saved, saving } = review;
   const form = useRef<HTMLFormElement>(null);
   const errorId = useId();
-  const clearMessage = () => {
-    setError("");
-    setSaved(false);
-  };
   return (
     <section
       className={styles.review}
@@ -57,13 +49,12 @@ function ReviewOutcomeForm({
         className={styles.panel}
         onSubmit={async (event) => {
           event.preventDefault();
-          if (inFlight.current) return;
-          setSaved(false);
+          if (saving) return;
           const validOutcome = options.some(
             (option) => option.value === outcome,
           );
           if (!validOutcome || !notes.trim()) {
-            setError(
+            review.showError(
               !validOutcome
                 ? "Choose a review outcome."
                 : "Add a note explaining this review.",
@@ -75,32 +66,14 @@ function ReviewOutcomeForm({
               ?.focus();
             return;
           }
-          inFlight.current = true;
-          setSaving(true);
-          setError("");
-          try {
-            await onSubmit({ caseId, outcome, notes: notes.trim() });
-            setOutcome("");
-            setNotes("");
-            setSaved(true);
-          } catch {
-            setError(
-              "Review could not be saved. Your draft is retained. Try again.",
-            );
-          } finally {
-            inFlight.current = false;
-            setSaving(false);
-          }
+          await review.submit();
         }}
       >
         <RadioGroup
           label="Review outcome"
           value={outcome}
-          onChange={(value) => {
-            setOutcome(value);
-            clearMessage();
-          }}
-          isDisabled={saving}
+          onChange={review.setOutcome}
+          isReadOnly={saving}
           aria-describedby={error ? errorId : undefined}
         >
           {options.map((option) => (
@@ -112,13 +85,10 @@ function ReviewOutcomeForm({
         <Textarea
           label="Review notes"
           value={notes}
-          onChange={(value) => {
-            setNotes(value);
-            clearMessage();
-          }}
+          onChange={review.setNotes}
           rows={3}
           isRequired
-          isDisabled={saving}
+          isReadOnly={saving}
           aria-describedby={error ? errorId : undefined}
         />
         {error && (
@@ -127,7 +97,14 @@ function ReviewOutcomeForm({
           </p>
         )}
         <div className={styles.saveRow}>
-          <Button type="submit" isDisabled={saving || !options.length}>
+          <Button
+            type="submit"
+            isDisabled={!options.length}
+            aria-disabled={saving || undefined}
+            onClick={(event) => {
+              if (saving) event.preventDefault();
+            }}
+          >
             {saving ? "Saving review…" : "Record review"}
           </Button>
           <span role="status">{saved ? "Review recorded." : ""}</span>
