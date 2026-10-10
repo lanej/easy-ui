@@ -43,7 +43,7 @@ export const MissingData: Story = {
         label: "Exception rate",
         valueLabel: "2%",
         assessment: "degraded",
-        statusLabel: "Elevated",
+        assessmentLabel: "Elevated exception rate",
         availability: "unavailable",
       },
     ],

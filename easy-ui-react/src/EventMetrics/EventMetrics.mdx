@@ -17,7 +17,7 @@ A molecule for independently assessed event or facility measurements. Every pill
 
 <Canvas of={Stories.Compact} />
 
-**Expanded** retains the same labeled pill, with a larger reference immediately below. All three variants display “Dwell time 6 h” and “Exception rate 2% · Elevated” consistently.
+**Expanded** retains the same labeled pill, with a larger reference immediately below. All three variants display “Dwell time 6 h” and “Exception rate 2%” consistently. Color conveys the assessment without a redundant status word.
 
 <Canvas of={Stories.Expanded} />
 
@@ -42,14 +42,13 @@ import { EventMetrics } from "@easypost/easy-ui/EventMetrics";
       label: "Exception rate",
       valueLabel: "2%",
       assessment: "degraded",
-      statusLabel: "Elevated",
       assessmentLabel: "Elevated exception rate",
     },
   ]}
 />;
 ```
 
-`valueLabel` is already formatted by the application, so durations, percentages, and counts use the same composition. `statusLabel` adds visible context when useful. `assessmentLabel` retains a full accessible assessment even when the visible pill omits a redundant status word. Each assessment applies to its own metric; a healthy dwell time does not suppress an elevated exception rate.
+`valueLabel` is already formatted by the application, so durations, percentages, and counts use the same composition. The visible pill contains the metric label and value; `assessmentLabel` retains the full accessible meaning of its color. Use the optional `statusLabel` only for extra context beyond the assessment already conveyed by color. Each assessment applies to its own metric; a healthy dwell time does not suppress an elevated exception rate.
 
 `reference` accepts an existing reference component. These examples use `DurationDistribution` with explicit units and labels: completed dwell durations for the first metric, and percentage rates measured across comparable facility windows for the second. The data and policies are synthetic examples, not carrier performance.
 

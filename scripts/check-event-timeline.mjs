@@ -205,6 +205,31 @@ async function audit(name) {
         readable(status, context);
         const metricLabel = status.getAttribute("aria-label")?.split(":")[0];
         const pillText = status.textContent.trim();
+        const assessment = status.dataset.assessment;
+        if (metric.dataset.metricId === "exception") {
+          if (pillText.includes("Elevated"))
+            failures.push(
+              `${context}: assessment word remains visible in the pill`,
+            );
+          if (!["loading", "unavailable"].includes(assessment)) {
+            if (pillText !== "Exception rate 2%")
+              failures.push(
+                `${context}: exception pill must show exactly Exception rate 2%`,
+              );
+            if (assessment !== "degraded")
+              failures.push(
+                `${context}: exception pill lost its amber assessment`,
+              );
+            if (
+              !/^Exception rate: 2%; Elevated/.test(
+                status.getAttribute("aria-label") ?? "",
+              )
+            )
+              failures.push(
+                `${context}: accessible elevated assessment is missing`,
+              );
+          }
+        }
         if (!metricLabel || !pillText.startsWith(`${metricLabel} `))
           failures.push(`${context}: pill omits its metric label`);
         if (header.textContent.trim() !== pillText)
@@ -276,7 +301,6 @@ async function audit(name) {
           failures.push(
             `${context}: expected exactly one current value marker`,
           );
-        const assessment = status.dataset.assessment;
         const colored = [
           ...reference.querySelectorAll("[data-reference-assessment]"),
         ]
@@ -491,7 +515,6 @@ try {
             .count(),
           1,
         );
-        assert.match(await outcomes.innerText(), /2%.*Elevated/);
         await audit(name);
         await capture(`event-timeline-${name}`);
         if (variant === "minimal" && theme === "light")

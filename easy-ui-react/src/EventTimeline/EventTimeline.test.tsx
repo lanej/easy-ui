@@ -187,7 +187,7 @@ describe("EventTimeline", () => {
                 label: "Exception rate",
                 valueLabel: "2%",
                 assessment: "degraded",
-                statusLabel: "Elevated",
+                assessmentLabel: "Elevated",
               },
             ]}
           />
@@ -205,9 +205,12 @@ describe("EventTimeline", () => {
       expect(slot?.parentElement).toBe(buttons[index].parentElement);
       expect(outcomes.closest("button")).toBeNull();
       expect(within(outcomes).getByText("Dwell time 6 h")).toBeVisible();
-      expect(
-        within(outcomes).getByText("Exception rate 2% · Elevated"),
-      ).toBeVisible();
+      const exception = within(outcomes).getByRole("group", {
+        name: "Exception rate: 2%; Elevated",
+      });
+      expect(exception).toHaveTextContent(/^Exception rate 2%$/);
+      expect(exception).toHaveAttribute("data-assessment", "degraded");
+      expect(exception).not.toHaveTextContent("Elevated");
       expect(
         within(buttons[index]).queryByText("Dwell time 6 h"),
       ).not.toBeInTheDocument();

@@ -81,7 +81,6 @@ export function createExampleEventMetrics(
       label: "Exception rate",
       valueLabel: "2%",
       assessment: "degraded",
-      statusLabel: "Elevated",
       assessmentLabel: "Elevated exception rate",
       reference:
         variant === "minimal" ? undefined : (
