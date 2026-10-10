@@ -1032,7 +1032,7 @@ function NetworkMapSurfaceView() {
 
   useEffect(() => {
     refreshControls.current?.();
-  }, [controls.navigation, controls.scale]);
+  }, [controls.navigation, controls.scale, options.controlPlacement]);
 
   useEffect(() => {
     refresh.current?.();

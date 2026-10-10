@@ -118,16 +118,21 @@ function Example({
   noDetails = false,
   external = false,
   empty = false,
+  placementControls = false,
 }: {
   initial?: InvestigationSelection;
   narrow?: boolean;
   noDetails?: boolean;
   external?: boolean;
   empty?: boolean;
+  placementControls?: boolean;
 }) {
   const { resolvedColorScheme } = useColorScheme();
   const [selection, setSelection] = useState<InvestigationSelection>(initial);
   const [snapshot, setSnapshot] = useState(0);
+  const [controlPlacement, setControlPlacement] = useState<"map" | "toolbar">(
+    "map",
+  );
   return (
     <div
       style={{
@@ -168,6 +173,17 @@ function Example({
           </Text>
         </div>
       )}
+      {placementControls && (
+        <Button
+          size="sm"
+          variant="outlined"
+          onPress={() =>
+            setControlPlacement(controlPlacement === "map" ? "toolbar" : "map")
+          }
+        >
+          Move controls to {controlPlacement === "map" ? "toolbar" : "map"}
+        </Button>
+      )}
       <InvestigationWorkspace
         {...investigationRecords}
         events={
@@ -179,6 +195,7 @@ function Example({
         onSelectionChange={setSelection}
         map={{
           ...mapOptions,
+          controlPlacement,
           mapStyle: resolvedColorScheme === "dark" ? darkMapStyle : mapStyle,
         }}
         renderDetails={noDetails ? undefined : Details}
@@ -235,4 +252,7 @@ export const SelectionWithoutCharts: Story = {
 export const ExternalSelection: Story = { render: () => <Example external /> };
 export const EmptyEvents: Story = {
   render: () => <Example empty initial={null} />,
+};
+export const ControlPlacement: Story = {
+  render: () => <Example placementControls />,
 };

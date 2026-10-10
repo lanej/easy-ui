@@ -22,19 +22,19 @@ export function NetworkMap(props: NetworkMapProps) {
         style={visualizationTypographyStyle(props.typography)}
       >
         <NetworkMapHeading />
-        {props.controlPlacement === "map" ? (
-          <div className={styles.mapFrame} data-map-frame>
-            <div className={styles.overMapControls} data-map-controls>
-              <NetworkMapControlPanel />
-            </div>
-            <NetworkMapSurface />
-          </div>
-        ) : (
-          <>
+        <div className={styles.mapFrame} data-map-frame>
+          <div
+            className={
+              props.controlPlacement === "map"
+                ? styles.overMapControls
+                : undefined
+            }
+            data-map-controls={props.controlPlacement === "map" || undefined}
+          >
             <NetworkMapControlPanel />
-            <NetworkMapSurface />
-          </>
-        )}
+          </div>
+          <NetworkMapSurface />
+        </div>
         {props.showSelectionDetails !== false && <NetworkMapSelectionDetails />}
         {props.showLegend !== false && <NetworkMapLegend />}
         {props.showDataTable !== false && <NetworkMapDataView />}

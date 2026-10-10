@@ -7,3 +7,5 @@ Add InvestigationWorkspace to coordinate event, location, and candidate-path ins
 Align workspace columns, let maps fill available height, and use consistent inline duration and percentile typography.
 
 Default duration references to highlighting only the current value’s policy region, leaving other distribution fills neutral. Allow all-region highlighting explicitly.
+
+Preserve the live map and camera when moving controls, and retain keyboard focus when switching between mobile and desktop layouts.

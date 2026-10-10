@@ -231,7 +231,7 @@ Paint overrides set through this callback or the retained instance survive data,
   </table>
 </div>
 
-Use `controlPlacement="map"` to place controls over the map; the default `"toolbar"` keeps a separate row. Native zoom and scale controls follow the active theme. A map mounted in a hidden panel fits its initial extent when first revealed, then preserves the camera on later visibility changes.
+Use `controlPlacement="map"` to place controls over the map; the default `"toolbar"` keeps a separate row. Changing placement preserves the live map, camera, and canvas. Native zoom and scale controls follow the active theme. A map mounted in a hidden panel fits its initial extent when first revealed, then preserves the camera on later visibility changes.
 
 Use `height="fill"` in a flex or grid slot to let the map occupy the available height, with a 220px minimum geographic surface. A numeric `height` retains the fixed-height layout. Initial fitting uses smaller vertical margins on short surfaces while keeping controls clear.
 

@@ -491,6 +491,39 @@ it("switches between fixed and filling height without replacing the map or refit
   expect(fitBounds).toHaveBeenCalledTimes(fits);
 });
 
+it("moves controls without replacing the map, canvas, or camera", async () => {
+  const onMapReady = vi.fn();
+  const view = render(
+    <NetworkMap
+      {...props}
+      onMapReady={onMapReady}
+      controlPlacement="toolbar"
+    />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  const instance = constructor.mock.calls[0][0];
+  const canvas = instance.getCanvas();
+  const fits = fitBounds.mock.calls.length;
+  for (const controlPlacement of ["map", "toolbar", "map"] as const) {
+    await act(async () => {
+      view.rerender(
+        <NetworkMap
+          {...props}
+          onMapReady={onMapReady}
+          controlPlacement={controlPlacement}
+        />,
+      );
+    });
+    expect(constructor).toHaveBeenCalledTimes(1);
+    expect(remove).not.toHaveBeenCalled();
+    expect(onMapReady).toHaveBeenCalledTimes(1);
+    expect(instance.getCanvas()).toBe(canvas);
+    expect(canvas).toBeInTheDocument();
+    expect(fitBounds).toHaveBeenCalledTimes(fits);
+  }
+});
+
 it("calls onMapReady exactly once, with the live map instance, only after the component's own layer setup", async () => {
   const onMapReady = vi.fn(() => callOrder.push("onMapReady"));
   const view = render(<NetworkMap {...props} onMapReady={onMapReady} />);

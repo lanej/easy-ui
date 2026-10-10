@@ -458,6 +458,115 @@ try {
   await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
   await page.setViewportSize({ width: 390, height: 1100 });
   await audit("external-selection-refresh-large-text");
+  await open("control-placement");
+  await page.evaluate(() => {
+    window.savedInvestigationMap = window.investigationMap;
+    window.savedInvestigationCanvas = window.investigationMap.getCanvas();
+    window.investigationMap.jumpTo({ center: [0.4, 0.3], zoom: 5 });
+  });
+  await waitForMap();
+  const chosenCamera = await page.evaluate(() => ({
+    center: window.investigationMap.getCenter().toArray(),
+    zoom: window.investigationMap.getZoom(),
+  }));
+  for (const placement of ["toolbar", "map"]) {
+    await page
+      .getByRole("button", {
+        name: `Move controls to ${placement}`,
+        exact: true,
+      })
+      .click();
+    await waitForMap();
+    assert(
+      await page.evaluate(
+        () =>
+          window.savedInvestigationMap === window.investigationMap &&
+          window.savedInvestigationCanvas ===
+            window.investigationMap.getCanvas(),
+      ),
+      "Control placement preserves the map and canvas",
+    );
+    assert.deepEqual(
+      await page.evaluate(() => ({
+        center: window.investigationMap.getCenter().toArray(),
+        zoom: window.investigationMap.getZoom(),
+      })),
+      chosenCamera,
+      "Control placement preserves the chosen camera",
+    );
+    await audit(`control-placement-${placement}`);
+  }
+
+  await open("linked-selection");
+  const marker = page.getByRole("button", {
+    name: "Select Central Exchange",
+    exact: true,
+  });
+  await marker.focus();
+  await page.setViewportSize({ width: 390, height: 1100 });
+  await waitForResponsiveLayout();
+  await waitForMap();
+  assert.equal(
+    await page
+      .getByRole("tab", { name: "Map", exact: true })
+      .getAttribute("aria-selected"),
+    "true",
+  );
+  assert(
+    await marker.evaluate((node) => node === document.activeElement),
+    "Narrowing keeps the focused map marker visible",
+  );
+  await page.getByRole("tab", { name: "Map", exact: true }).focus();
+  await page.setViewportSize({ width: 1200, height: 1100 });
+  await waitForResponsiveLayout();
+  assert(
+    await root()
+      .locator('[data-view-panel="map"]')
+      .evaluate((node) => node === document.activeElement),
+    "Widening moves map-tab focus to its panel",
+  );
+  const eventButton = timeline().getByRole("button", {
+    name: /08:00.*Accepted/,
+  });
+  await eventButton.focus();
+  await page.setViewportSize({ width: 390, height: 1100 });
+  await waitForResponsiveLayout();
+  assert.equal(
+    await page
+      .getByRole("tab", { name: "Events", exact: true })
+      .getAttribute("aria-selected"),
+    "true",
+  );
+  assert(
+    await eventButton.evaluate((node) => node === document.activeElement),
+    "Narrowing keeps the focused event visible",
+  );
+  await page.getByRole("tab", { name: "Events", exact: true }).focus();
+  await page.setViewportSize({ width: 1200, height: 1100 });
+  await waitForResponsiveLayout();
+  assert(
+    await root()
+      .locator('[data-view-panel="events"]')
+      .evaluate((node) => node === document.activeElement),
+    "Widening moves events-tab focus to its panel",
+  );
+  await audit("responsive-focus-preservation");
+
+  await open("external-selection");
+  const outsideButton = page.getByRole("button", {
+    name: "Refresh records",
+    exact: true,
+  });
+  await outsideButton.focus();
+  for (const width of [390, 1200]) {
+    await page.setViewportSize({ width, height: 1100 });
+    await waitForResponsiveLayout();
+    assert(
+      await outsideButton.evaluate((node) => node === document.activeElement),
+      "Responsive layout does not steal outside focus",
+    );
+  }
+  await audit("responsive-outside-focus");
   assert.deepEqual(errors, [], "Browser runtime errors");
   await writeFile(
     `${output}/report.json`,

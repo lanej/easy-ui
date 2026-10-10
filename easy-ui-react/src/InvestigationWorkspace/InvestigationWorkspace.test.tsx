@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { fireEvent, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import {
   render,
   mockGetComputedStyle,
@@ -61,6 +61,110 @@ const details = () => screen.getByRole("region", { name: "Selection details" });
 const timeline = () => screen.getByRole("list", { name: "Events" });
 
 describe("InvestigationWorkspace", () => {
+  it("preserves focus across responsive changes without taking focus from outside the workspace", () => {
+    let width = 1200;
+    let resize = () => {};
+    const rect = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(() => ({
+        width,
+        height: 800,
+        top: 0,
+        left: 0,
+        right: width,
+        bottom: 800,
+        x: 0,
+        y: 0,
+        toJSON() {},
+      }));
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(private callback: () => void) {}
+        observe(target: HTMLElement) {
+          if (target.getAttribute("aria-label") === "Event investigation")
+            resize = this.callback;
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const cleanups = [
+      mockGetComputedStyle(),
+      mockIntersectionObserver(),
+      installScrollToMock(),
+    ];
+    const setWidth = (next: number) =>
+      act(() => {
+        width = next;
+        resize();
+      });
+    try {
+      render(
+        <>
+          <button>Outside workspace</button>
+          <InvestigationWorkspace
+            {...records}
+            map={map}
+            selection={{ type: "event", eventId: "arrived" }}
+            onSelectionChange={vi.fn()}
+            renderDetails={() => <input aria-label="Investigation note" />}
+          />
+        </>,
+      );
+      const mapButton = screen.getByRole("button", {
+        name: "Map select Central Exchange",
+      });
+      mapButton.focus();
+      setWidth(390);
+      expect(screen.getByRole("tab", { name: "Map" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+      expect(mapButton).toHaveFocus();
+      screen.getByRole("tab", { name: "Map" }).focus();
+      setWidth(1200);
+      expect(
+        screen.getByRole("region", { name: "Locations and connections" }),
+      ).toHaveFocus();
+
+      const event = within(timeline()).getByRole("button", {
+        name: /08:00.*Accepted/,
+      });
+      event.focus();
+      setWidth(390);
+      expect(screen.getByRole("tab", { name: "Events" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+      expect(event).toHaveFocus();
+      screen.getByRole("tab", { name: "Events" }).focus();
+      setWidth(1200);
+      expect(screen.getByRole("region", { name: "Events" })).toHaveFocus();
+
+      screen.getByRole("textbox", { name: "Investigation note" }).focus();
+      setWidth(390);
+      expect(
+        screen.getByRole("button", { name: "Show details" }),
+      ).toHaveFocus();
+      fireEvent.click(screen.getByRole("button", { name: "Show details" }));
+      const note = screen.getByRole("textbox", { name: "Investigation note" });
+      note.focus();
+      setWidth(1200);
+      setWidth(390);
+      expect(note).toHaveFocus();
+
+      const outside = screen.getByRole("button", { name: "Outside workspace" });
+      outside.focus();
+      setWidth(1200);
+      setWidth(390);
+      expect(outside).toHaveFocus();
+    } finally {
+      cleanups.forEach((cleanup) => cleanup());
+      rect.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
   it("keeps scope visible and lets the timeline filter related records without a second event list", () => {
     render(
       <Controlled

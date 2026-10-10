@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -95,25 +96,54 @@ export function InvestigationWorkspace({
   const [isNarrow, setIsNarrow] = useState(false);
   const [view, setView] = useState<"events" | "map">("events");
   const [relatedOnly, setRelatedOnly] = useState(false);
+  const narrowMode = useRef(false);
+  const focusAfterResize = useRef<string | null>(null);
   useEffect(() => {
     const element = root.current;
     if (!element || typeof ResizeObserver === "undefined") return;
     const update = () => {
       const width = element.getBoundingClientRect().width;
-      if (width > 0) setIsNarrow(width <= 740);
+      if (width <= 0) return;
+      const narrow = width <= 740;
+      if (narrow === narrowMode.current) return;
+      // Capture focus before React hides a panel or removes the mobile tabs.
+      focusAfterResize.current = null;
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && element.contains(active)) {
+        const panel = active.closest<HTMLElement>("[data-view-panel]");
+        if (narrow && panel) {
+          setView(panel.dataset.viewPanel as "events" | "map");
+        } else if (!narrow && active.getAttribute("role") === "tab") {
+          focusAfterResize.current = active.getAttribute("aria-controls");
+        } else if (narrow) {
+          const body = active.closest<HTMLElement>(
+            "[data-investigation-details-body]",
+          );
+          focusAfterResize.current = body?.id ?? null;
+        }
+      }
+      narrowMode.current = narrow;
+      setIsNarrow(narrow);
     };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  useEffect(() => {
-    const inactive = root.current?.querySelector<HTMLElement>(
-      `[data-view-panel="${view === "map" ? "events" : "map"}"]`,
-    );
-    if (isNarrow && inactive?.contains(document.activeElement))
-      document.getElementById(`${id}-${view}-tab`)?.focus();
-  }, [isNarrow, view, id]);
+  useLayoutEffect(() => {
+    const targetId = focusAfterResize.current;
+    focusAfterResize.current = null;
+    if (!targetId) return;
+    const target = document.getElementById(targetId);
+    const fallback = target?.hidden
+      ? root.current?.querySelector<HTMLElement>(
+          `button[aria-controls="${targetId}"]`,
+        )
+      : target?.hasAttribute("data-view-panel")
+        ? target
+        : null;
+    fallback?.focus({ preventScroll: true });
+  }, [isNarrow]);
   const overlayId = `${id}-investigation-connections`;
   const context = resolveSelection(
     { events, locations, segments, paths },
@@ -357,7 +387,7 @@ export function InvestigationWorkspace({
           id={`${id}-events-panel`}
           data-view-panel="events"
           role={isNarrow ? "tabpanel" : undefined}
-          tabIndex={isNarrow ? 0 : undefined}
+          tabIndex={isNarrow ? 0 : -1}
           hidden={isNarrow && view !== "events"}
           aria-labelledby={isNarrow ? `${id}-events-tab` : `${id}-events`}
         >
@@ -411,7 +441,7 @@ export function InvestigationWorkspace({
           id={`${id}-map-panel`}
           data-view-panel="map"
           role={isNarrow ? "tabpanel" : undefined}
-          tabIndex={isNarrow ? 0 : undefined}
+          tabIndex={isNarrow ? 0 : -1}
           hidden={isNarrow && view !== "map"}
           aria-label={isNarrow ? undefined : text.map}
           aria-labelledby={isNarrow ? `${id}-map-tab` : undefined}

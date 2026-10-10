@@ -181,6 +181,7 @@ export function InvestigationDetails({
 
           <div
             id={bodyId}
+            data-investigation-details-body
             className={styles.detailBody}
             hidden={isNarrow && !expanded}
           >
