@@ -44,6 +44,15 @@ async function open(story, theme = "light", width = 1200) {
     timeout: 30000,
     state: "attached",
   });
+  await waitForResponsiveLayout();
+  if ((await root().getAttribute("data-narrow")) !== "true") await waitForMap();
+  await page.waitForFunction(
+    () =>
+      document.fonts.status === "loaded" &&
+      window.investigationMap?.isStyleLoaded(),
+  );
+}
+async function waitForResponsiveLayout() {
   await page.waitForFunction(() => {
     const workspace = document.querySelector(
       '[aria-label="Event investigation"]',
@@ -53,12 +62,6 @@ async function open(story, theme = "light", width = 1200) {
       String(workspace.getBoundingClientRect().width <= 740)
     );
   });
-  if ((await root().getAttribute("data-narrow")) !== "true") await waitForMap();
-  await page.waitForFunction(
-    () =>
-      document.fonts.status === "loaded" &&
-      window.investigationMap?.isStyleLoaded(),
-  );
 }
 async function waitForMap() {
   await page.waitForFunction(() => {
@@ -79,6 +82,8 @@ async function showMap() {
   await waitForMap();
 }
 async function audit(name) {
+  // setViewportSize can resolve before ResizeObserver commits the mobile view.
+  await waitForResponsiveLayout();
   assert(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth + 1,
@@ -425,6 +430,9 @@ try {
     JSON.stringify({ checks, errors, violations: 0 }, null, 2),
   );
   console.log(JSON.stringify({ checks: checks.length, violations: 0 }));
+} catch (error) {
+  await page.screenshot({ path: `${output}/failure.png`, fullPage: true });
+  throw error;
 } finally {
   await browser.close();
 }
