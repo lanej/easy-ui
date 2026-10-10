@@ -58,7 +58,7 @@ async function audit(name, capture = false) {
   for (let attempt = 0; attempt < 40; attempt++) {
     try {
       result = await page.evaluate(() =>
-        axe.run(document.querySelector("#storybook-root"), {
+        axe.run(document.body, {
           runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa"] },
         }),
       );
@@ -181,9 +181,42 @@ try {
   await open("molecules-investigation-eventdetails--stacked", "dark", 390);
   await audit("event-details-dark");
 
+  await open("components-select--with-separator", "light", 390);
+  const groupedSelect = page.getByRole("button", { name: /Label/ });
+  await groupedSelect.press("Enter");
+  await page.getByRole("listbox", { name: "Label" }).waitFor();
+  await page.getByRole("group", { name: "Primary options" }).waitFor();
+  await page.getByRole("group", { name: "Secondary options" }).waitFor();
+  await audit("select-grouped-narrow");
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  assert.match(await groupedSelect.textContent(), /Option 6/);
+  checks.push(
+    "grouped Selects retain accessible option ownership and keyboard selection",
+  );
+
   await open(`${queue}--worklist`);
   await page.getByRole("grid", { name: "Cases" }).waitFor();
   await audit("queue-light", true);
+  for (const heading of ["Category", "Review state", "Last observation"])
+    await page
+      .getByRole("columnheader", { name: heading, exact: true })
+      .waitFor();
+  assert.equal(
+    await page
+      .getByRole("meter", { name: "Risk score for CASE-1042" })
+      .locator('span[style*="inline-size:"]')
+      .count(),
+    0,
+    "Queue scores retain their accessible value without a visual bar",
+  );
+  const firstCase = page
+    .getByRole("row")
+    .filter({ has: page.getByRole("button", { name: "Open case CASE-1042" }) });
+  assert.match(await firstCase.textContent(), /Review state:Unreviewed/);
+  checks.push(
+    "wide queue separates categorical labels from last-observation freshness",
+  );
   await page
     .getByRole("navigation", { name: "Case pages" })
     .getByRole("button", { name: "Next", exact: true })
@@ -247,10 +280,94 @@ try {
   checks.push(
     "category filtering selects the supplied types and clears with the other filters",
   );
+  await open(`${queue}--worklist`, "dark");
+  await audit("queue-wide-dark", true);
   await open(`${queue}--worklist`, "dark", 390);
+  await page.getByRole("button", { name: "Filters", exact: true }).waitFor();
+  assert.equal(
+    await page
+      .getByRole("columnheader", { name: "Category", exact: true })
+      .count(),
+    0,
+  );
+  assert.equal(await page.getByRole("button", { name: /Category/ }).count(), 0);
   await audit("queue-narrow-dark", true);
+  const filterTrigger = page.getByRole("button", { name: /^Filters/ });
+  await filterTrigger.focus();
+  await filterTrigger.press("Enter");
+  const filterDialog = page.getByRole("dialog", { name: "Filter cases" });
+  await filterDialog.waitFor();
+  await choose("Category", "Delivery review");
+  await page.getByRole("button", { name: /Review status/ }).click();
+  await page.getByRole("listbox", { name: "Review status" }).waitFor();
+  await audit("queue-filter-menu-narrow");
+  await page.getByRole("option", { name: "Unreviewed", exact: true }).click();
+  await audit("queue-filter-panel-narrow");
+  await filterDialog.screenshot({
+    path: `${output}/queue-filter-panel-narrow.png`,
+  });
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  assert(
+    await filterTrigger.evaluate((node) => node === document.activeElement),
+  );
+  assert.equal(await filterTrigger.textContent(), "Filters (2)");
+  assert.deepEqual(
+    await page.getByRole("button", { name: /Open case/ }).allTextContents(),
+    ["CASE-1042", "CASE-1029"],
+  );
+  await page
+    .getByText("Delivery review · Unreviewed", { exact: true })
+    .waitFor();
+  await audit("queue-filtered-narrow-dark", true);
+  await filterTrigger.press("Enter");
+  await filterDialog.waitFor();
+  assert.match(
+    await page.getByRole("button", { name: /Category/ }).textContent(),
+    /Delivery review/,
+  );
+  await page.keyboard.press("Escape");
+  assert(
+    await filterTrigger.evaluate((node) => node === document.activeElement),
+  );
+  await filterTrigger.press("Enter");
+  await filterDialog
+    .getByRole("button", { name: "Clear filters", exact: true })
+    .click();
+  await filterDialog.getByRole("button", { name: "Done", exact: true }).click();
+  assert.equal(await filterTrigger.textContent(), "Filters");
+  assert.equal(
+    await page.getByRole("button", { name: /Open case/ }).count(),
+    5,
+  );
+  checks.push(
+    "narrow filter panel supports nested Selects, retained selections, reset, and keyboard focus restoration",
+  );
+  const queueSearch = page.getByRole("searchbox", { name: "Find a case" });
+  await filterTrigger.press("Enter");
+  await filterDialog.waitFor();
+  await page.setViewportSize({ width: 1200, height: 1000 });
+  await filterDialog.waitFor({ state: "hidden" });
+  await page.waitForFunction(() =>
+    document.activeElement?.matches('input[type="search"]'),
+  );
+  await page
+    .getByRole("columnheader", { name: "Category", exact: true })
+    .waitFor();
+  assert(await queueSearch.evaluate((node) => node === document.activeElement));
+  await page.setViewportSize({ width: 390, height: 1000 });
+  await page
+    .getByRole("columnheader", { name: "Category", exact: true })
+    .waitFor({ state: "hidden" });
+  assert(await queueSearch.evaluate((node) => node === document.activeElement));
+  checks.push(
+    "resizing closes the narrow filter panel and preserves search focus and category data",
+  );
   await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
   await audit("queue-narrow-large-text");
+  await filterTrigger.press("Enter");
+  await filterDialog.waitFor();
+  await audit("queue-filter-panel-large-text");
+  await page.keyboard.press("Escape");
   await open(`${queue}--retry`);
   await page.getByRole("alert").waitFor();
   assert.equal(

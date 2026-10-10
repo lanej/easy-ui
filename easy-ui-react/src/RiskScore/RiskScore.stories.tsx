@@ -28,6 +28,10 @@ export const Default: Story = {
   args: { value: 87, assessment: "high" },
 };
 
+export const WithoutBar: Story = {
+  args: { value: 87, assessment: "high", size: "sm", showBar: false },
+};
+
 export const Assessments: Story = {
   render: () => (
     <HorizontalStack gap="4" blockAlign="start">

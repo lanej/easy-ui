@@ -37,6 +37,7 @@ function SelectOverlayContent() {
 
   const popoverRef = React.useRef(null);
   const listBoxRef = React.useRef(null);
+  const scrollRef = React.useRef(null);
 
   const { popoverProps, underlayProps } = usePopover(
     {
@@ -48,7 +49,7 @@ function SelectOverlayContent() {
       offset: OVERLAY_OFFSET,
       placement: DEFAULT_PLACEMENT,
       popoverRef,
-      scrollRef: listBoxRef,
+      scrollRef,
       triggerRef,
     },
     selectState,
@@ -60,7 +61,7 @@ function SelectOverlayContent() {
     listBoxRef,
   );
 
-  useScrollbar(listBoxRef, "ezui-os-theme-overlay");
+  useScrollbar(scrollRef, "ezui-os-theme-overlay");
 
   const style = {
     ...popoverProps.style,
@@ -77,14 +78,13 @@ function SelectOverlayContent() {
       >
         <DismissButton onDismiss={selectState.close} />
         <div
-          {...listBoxProps}
-          ref={listBoxRef}
+          ref={scrollRef}
           className={styles.listbox}
           data-width={DEFAULT_WIDTH}
           data-max-items-until-scroll={DEFAULT_MAX_ITEMS_UNTIL_SCROLL}
           data-overlayscrollbars-initialize
         >
-          <ul className={styles.listboxList}>
+          <ul {...listBoxProps} ref={listBoxRef} className={styles.listboxList}>
             {[...selectState.collection].map((item) => {
               return item.type === "section" ? (
                 <SelectSectionContent

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useResizeObserver } from "@react-aria/utils";
 import { DataGrid } from "../../DataGrid";
 import { Pagination } from "../../Pagination";
 import type { KeyedSortDescriptor } from "../../DataGrid/types";
@@ -11,6 +12,7 @@ import { TextField } from "../../TextField";
 import { Select } from "../../Select";
 import { Button } from "../../Button";
 import { Badge } from "../../Badge";
+import { Popover } from "../../Popover";
 import styles from "./InvestigationRecipes.module.scss";
 
 export type InvestigationCaseCategory = { id: string; label: string };
@@ -43,6 +45,34 @@ export function InvestigationQueue({
   error,
   onRetry,
 }: InvestigationQueueProps) {
+  const queueRef = useRef<HTMLElement>(null);
+  const [compact, setCompact] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const restoreSearchFocus = useRef(false);
+  const measure = useCallback(() => {
+    const width = queueRef.current?.getBoundingClientRect().width;
+    // A queue retained behind case navigation has no measurable width.
+    if (width) {
+      setCompact(width < 900);
+      if (width > 720 && filtersOpen) {
+        restoreSearchFocus.current = true;
+        setFiltersOpen(false);
+      }
+    }
+  }, [filtersOpen]);
+  useResizeObserver({ ref: queueRef, onResize: measure });
+  useEffect(measure, [measure]);
+  useEffect(() => {
+    if (filtersOpen || !restoreSearchFocus.current) return;
+    restoreSearchFocus.current = false;
+    // Let the overlay finish restoring focus before replacing its hidden trigger.
+    const frame = requestAnimationFrame(() => {
+      queueRef.current
+        ?.querySelector<HTMLInputElement>('input[type="search"]')
+        ?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [filtersOpen]);
   const [query, setQuery] = useState("");
   const [review, setReview] = useState("all");
   const [assessment, setAssessment] = useState("all");
@@ -102,11 +132,89 @@ export function InvestigationQueue({
   const rows = sorted
     .slice((currentPage - 1) * 5, currentPage * 5)
     .map((item) => ({ ...item, key: item.id }));
+  const clearFilters = () => {
+    setQuery("");
+    setReview("all");
+    setAssessment("all");
+    setCategory(null);
+    setPage(1);
+  };
+  const activeFilters = [
+    category?.label,
+    review !== "all" ? review : null,
+    assessment !== "all"
+      ? {
+          high: "High risk",
+          medium: "Medium risk",
+          low: "Low risk",
+          unassessed: "Not assessed",
+        }[assessment]
+      : null,
+  ].filter(Boolean);
+  const filterFields = (
+    <>
+      <Select
+        size="sm"
+        label="Category"
+        selectedKey={category ? `category:${category.id}` : "all"}
+        onSelectionChange={(key) => {
+          setCategory(
+            categoryOptions.find((option) => `category:${option.id}` === key) ??
+              null,
+          );
+          setPage(1);
+        }}
+      >
+        {[
+          <Select.Option key="all">All categories</Select.Option>,
+          ...categoryOptions.map((option) => (
+            <Select.Option key={`category:${option.id}`}>
+              {option.label}
+            </Select.Option>
+          )),
+        ]}
+      </Select>
+      <Select
+        size="sm"
+        label="Review status"
+        selectedKey={review}
+        onSelectionChange={(key) => {
+          setReview(String(key));
+          setPage(1);
+        }}
+      >
+        <Select.Option key="all">All reviews</Select.Option>
+        <Select.Option key="Unreviewed">Unreviewed</Select.Option>
+        <Select.Option key="In review">In review</Select.Option>
+        <Select.Option key="Reviewed">Reviewed</Select.Option>
+      </Select>
+      <Select
+        size="sm"
+        label="Risk assessment"
+        selectedKey={assessment}
+        onSelectionChange={(key) => {
+          setAssessment(String(key));
+          setPage(1);
+        }}
+      >
+        <Select.Option key="all">All assessments</Select.Option>
+        <Select.Option key="high">High risk</Select.Option>
+        <Select.Option key="medium">Medium risk</Select.Option>
+        <Select.Option key="low">Low risk</Select.Option>
+        <Select.Option key="unassessed">Not assessed</Select.Option>
+      </Select>
+    </>
+  );
   return (
-    <section className={styles.queue} aria-label="Investigation queue">
+    <section
+      ref={queueRef}
+      className={styles.queue}
+      aria-label="Investigation queue"
+    >
       <div className={styles.filters}>
         <TextField
           label="Find a case"
+          size="sm"
           type="search"
           value={query}
           onChange={(value) => {
@@ -115,55 +223,40 @@ export function InvestigationQueue({
           }}
           placeholder="Search cases"
         />
-        <Select
-          label="Category"
-          selectedKey={category ? `category:${category.id}` : "all"}
-          onSelectionChange={(key) => {
-            setCategory(
-              categoryOptions.find(
-                (option) => `category:${option.id}` === key,
-              ) ?? null,
-            );
-            setPage(1);
-          }}
-        >
-          {[
-            <Select.Option key="all">All categories</Select.Option>,
-            ...categoryOptions.map((option) => (
-              <Select.Option key={`category:${option.id}`}>
-                {option.label}
-              </Select.Option>
-            )),
-          ]}
-        </Select>
-        <Select
-          label="Review status"
-          selectedKey={review}
-          onSelectionChange={(key) => {
-            setReview(String(key));
-            setPage(1);
-          }}
-        >
-          <Select.Option key="all">All reviews</Select.Option>
-          <Select.Option key="Unreviewed">Unreviewed</Select.Option>
-          <Select.Option key="In review">In review</Select.Option>
-          <Select.Option key="Reviewed">Reviewed</Select.Option>
-        </Select>
-        <Select
-          label="Risk assessment"
-          selectedKey={assessment}
-          onSelectionChange={(key) => {
-            setAssessment(String(key));
-            setPage(1);
-          }}
-        >
-          <Select.Option key="all">All assessments</Select.Option>
-          <Select.Option key="high">High risk</Select.Option>
-          <Select.Option key="medium">Medium risk</Select.Option>
-          <Select.Option key="low">Low risk</Select.Option>
-          <Select.Option key="unassessed">Not assessed</Select.Option>
-        </Select>
+        <div className={styles.inlineFilters}>{filterFields}</div>
+        <div className={styles.mobileFilters}>
+          <Popover isOpen={filtersOpen} onOpenChange={setFiltersOpen}>
+            <Popover.Trigger>
+              <Button variant="outlined" size="sm">
+                {activeFilters.length
+                  ? `Filters (${activeFilters.length})`
+                  : "Filters"}
+              </Button>
+            </Popover.Trigger>
+            <Popover.Overlay width="min(320px, calc(100vw - 24px))">
+              <Popover.Header>
+                <Popover.Title>Filter cases</Popover.Title>
+              </Popover.Header>
+              <Popover.Body>
+                <div className={styles.filterPanel}>{filterFields}</div>
+              </Popover.Body>
+              <Popover.Footer>
+                <div className={styles.saveRow}>
+                  <Button variant="text" size="sm" onPress={clearFilters}>
+                    Clear filters
+                  </Button>
+                  <Button size="sm" onPress={() => setFiltersOpen(false)}>
+                    Done
+                  </Button>
+                </div>
+              </Popover.Footer>
+            </Popover.Overlay>
+          </Popover>
+        </div>
       </div>
+      {activeFilters.length > 0 && (
+        <p className={styles.filterSummary}>{activeFilters.join(" · ")}</p>
+      )}
       {error ? (
         <div className={styles.panel}>
           <p role="alert">{error}</p>
@@ -185,8 +278,10 @@ export function InvestigationQueue({
           headerVariant="secondary"
           columns={[
             { key: "id", name: "Case" },
-            { key: "risk", name: "Risk assessment" },
-            { key: "reviewStatus", name: "Review" },
+            ...(!compact ? [{ key: "category", name: "Category" }] : []),
+            { key: "risk", name: "Risk" },
+            { key: "reviewStatus", name: "Review state" },
+            { key: "observedAt", name: "Last observation" },
           ]}
           rows={rows}
           columnKeysAllowingSort={["id", "risk"]}
@@ -196,9 +291,11 @@ export function InvestigationQueue({
             setPage(1);
           }}
           columnOptions={{
-            id: { minWidth: 180, whiteSpace: "normal" },
-            risk: { minWidth: 140 },
-            reviewStatus: { minWidth: 140 },
+            id: { minWidth: 200, width: "26%", whiteSpace: "normal" },
+            category: { minWidth: 160, whiteSpace: "nowrap" },
+            risk: { minWidth: 190, whiteSpace: "nowrap" },
+            reviewStatus: { minWidth: 110, whiteSpace: "nowrap" },
+            observedAt: { minWidth: 170, whiteSpace: "nowrap" },
           }}
           renderColumnCell={(column) => String(column.name)}
           renderRowCell={(_cell, key, row) =>
@@ -212,31 +309,40 @@ export function InvestigationQueue({
                 >
                   {row.id}
                 </Button>
-                <Badge variant="inverse" accessibilityLabel="Case category:">
-                  {row.category.label}
-                </Badge>
+                {compact && (
+                  <Badge variant="inverse" accessibilityLabel="Case category:">
+                    {row.category.label}
+                  </Badge>
+                )}
                 {row.subject && <span>{row.subject}</span>}
                 <span className={styles.muted}>{row.trackingCode}</span>
               </div>
+            ) : key === "category" ? (
+              <Badge variant="inverse" accessibilityLabel="Case category:">
+                {row.category.label}
+              </Badge>
             ) : key === "risk" ? (
               <RiskScore
                 value={row.risk}
                 assessment={row.assessment}
                 size="sm"
+                showBar={false}
+                accessibilityLabel={`Risk score for ${row.id}`}
               />
+            ) : key === "reviewStatus" ? (
+              <Badge variant="inverse" accessibilityLabel="Review state:">
+                {row.reviewStatus}
+              </Badge>
             ) : (
-              <div className={styles.caseIdentity}>
-                <span>{row.reviewStatus}</span>
-                <ObservationFreshness
-                  state={row.freshness}
-                  observedAt={row.observedAt}
-                  formatObservedAt={() =>
-                    row.observedAtLabel ?? row.observedAt ?? ""
-                  }
-                  size="sm"
-                  showStateLabel
-                />
-              </div>
+              <ObservationFreshness
+                state={row.freshness}
+                observedAt={row.observedAt}
+                formatObservedAt={() =>
+                  row.observedAtLabel ?? row.observedAt ?? ""
+                }
+                size="sm"
+                showStateLabel
+              />
             )
           }
           renderEmptyState={() => (
@@ -247,16 +353,7 @@ export function InvestigationQueue({
                   : "No cases to review."}
               </p>
               {cases.length > 0 && (
-                <Button
-                  variant="text"
-                  onPress={() => {
-                    setQuery("");
-                    setReview("all");
-                    setAssessment("all");
-                    setCategory(null);
-                    setPage(1);
-                  }}
-                >
+                <Button variant="text" onPress={clearFilters}>
                   Clear filters
                 </Button>
               )}
