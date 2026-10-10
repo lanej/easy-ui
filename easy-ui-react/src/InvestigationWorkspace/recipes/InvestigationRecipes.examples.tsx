@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { Button } from "../../Button";
 import { RiskScore } from "../../RiskScore";
+import { Badge } from "../../Badge";
 import { ComparisonExample } from "../../PathComparison/PathComparison.examples";
 import { InvestigationQueue } from "./InvestigationQueue";
 import {
@@ -10,6 +11,7 @@ import {
 } from "./ReviewOutcome";
 import {
   cases,
+  caseCategories,
   outcomeOptions,
   reviewHistory,
 } from "./InvestigationRecipes.fixtures";
@@ -53,6 +55,9 @@ export function ReviewExample({
     <div style={{ maxWidth: 640, margin: "0 auto", display: "grid", gap: 16 }}>
       <div className={styles.saveRow}>
         <strong>CASE-1042</strong>
+        <Badge variant="inverse" accessibilityLabel="Case category:">
+          {caseCategories.delivery.label}
+        </Badge>
         <RiskScore value={82} assessment="high" size="sm" />
       </div>
       <ReviewOutcome
@@ -162,6 +167,9 @@ export function InvestigationWorkflow({
             <h2 ref={heading} tabIndex={-1} style={{ margin: 0 }}>
               {active.id}
             </h2>
+            <Badge variant="inverse" accessibilityLabel="Case category:">
+              {active.category.label}
+            </Badge>
             <RiskScore
               value={active.risk}
               assessment={active.assessment}

@@ -212,6 +212,41 @@ try {
     1,
   );
   checks.push("queue filters combine without interpreting risk thresholds");
+  await choose("Category", "Receipt confirmation");
+  assert.equal(
+    await page.getByRole("button", { name: /Open case/ }).count(),
+    0,
+  );
+  await page
+    .getByText("No cases match these filters.", { exact: true })
+    .waitFor();
+  checks.push(
+    "category combines with review and assessment filters independently",
+  );
+  await page.getByRole("button", { name: "Clear filters" }).click();
+  await choose("Category", "Delivery review");
+  assert.deepEqual(
+    await page.getByRole("button", { name: /Open case/ }).allTextContents(),
+    ["CASE-1042", "CASE-1003", "CASE-1029"],
+  );
+  await choose("Category", "Receipt confirmation");
+  assert.deepEqual(
+    await page.getByRole("button", { name: /Open case/ }).allTextContents(),
+    ["CASE-1038", "CASE-1008"],
+  );
+  await page.getByRole("searchbox", { name: "Find a case" }).fill("no-matches");
+  await page.getByRole("button", { name: "Clear filters" }).click();
+  assert.match(
+    await page.getByRole("button", { name: /Category/ }).textContent(),
+    /All categories/,
+  );
+  assert.equal(
+    await page.getByRole("button", { name: /Open case/ }).count(),
+    5,
+  );
+  checks.push(
+    "category filtering selects the supplied types and clears with the other filters",
+  );
   await open(`${queue}--worklist`, "dark", 390);
   await audit("queue-narrow-dark", true);
   await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
@@ -313,8 +348,14 @@ try {
   await audit("review-narrow-large-text");
 
   await open("recipes-investigation-workflow--queue-to-review");
+  await choose("Category", "Delivery review");
   await choose("Review status", "Unreviewed");
   await page.getByRole("button", { name: "Open case CASE-1042" }).click();
+  await page
+    .getByRole("heading", { name: "CASE-1042", exact: true })
+    .locator("..")
+    .getByText("Delivery review", { exact: true })
+    .waitFor();
   await mapReady();
   assert(
     await page
@@ -345,7 +386,14 @@ try {
   await page.getByRole("button", { name: "Back to queue" }).click();
   assert.equal(
     await page.getByRole("button", { name: /Open case/ }).count(),
-    2,
+    1,
+  );
+  assert.match(
+    await page.getByRole("button", { name: /Category/ }).textContent(),
+    /Delivery review/,
+  );
+  checks.push(
+    "case categories remain visible in the header and survive queue navigation",
   );
   assert(
     await page
@@ -364,6 +412,7 @@ try {
     "queue-to-review keeps filters, restores focus, and retains confirmed history per case",
   );
   await page.getByRole("button", { name: "Back to queue" }).click();
+  await choose("Category", "All categories");
   await page.getByRole("searchbox", { name: "Find a case" }).fill("CASE-1038");
   await page.getByRole("button", { name: "Open case CASE-1038" }).click();
   const inspector = page.getByRole("region", { name: "Selected observation" });

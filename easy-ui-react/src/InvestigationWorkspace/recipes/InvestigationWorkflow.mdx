@@ -9,6 +9,8 @@ This application recipe connects the investigation queue, path comparison, map, 
 
 <Canvas of={Stories.QueueToReview} />
 
+The case header repeats the queue’s neutral category badge so the case type remains visible during investigation.
+
 The queue stays mounted while a case is open so search, filters, sorting, and pagination survive navigation. Opening a case moves keyboard focus to its heading. Returning restores focus to the case action; if a recorded review removes that case from the active filter, focus returns to search. A confirmed record updates that case's review status and remains in its history on reopening. Risk assessments remain unchanged.
 
 Each case opens its own observation snapshot with stable case-scoped event IDs, supplied timestamps, and candidate membership. The fictional network locations are shared. The missing-observations case displays an explicit empty state without another case's map or records.

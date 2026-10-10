@@ -1,10 +1,17 @@
 import type { InvestigationCase } from "./InvestigationQueue";
 import type { ReviewRecord } from "./ReviewOutcome";
 
+export const caseCategories = {
+  delivery: { id: "delivery", label: "Delivery review" },
+  receipt: { id: "receipt", label: "Receipt confirmation" },
+  transit: { id: "transit", label: "Transit review" },
+  observations: { id: "observations", label: "Observation review" },
+} as const;
+
 export const cases: InvestigationCase[] = [
   {
     id: "CASE-1042",
-    subject: "Delivery review",
+    category: caseCategories.delivery,
     trackingCode: "9400111899223847261950",
     risk: 82,
     assessment: "high",
@@ -15,7 +22,7 @@ export const cases: InvestigationCase[] = [
   },
   {
     id: "CASE-1038",
-    subject: "Receipt confirmation",
+    category: caseCategories.receipt,
     trackingCode: "9400111899223847261951",
     risk: 61,
     assessment: "medium",
@@ -26,7 +33,7 @@ export const cases: InvestigationCase[] = [
   },
   {
     id: "CASE-1029",
-    subject: "Delivery review",
+    category: caseCategories.delivery,
     trackingCode: "9400111899223847261952",
     risk: 34,
     assessment: "low",
@@ -37,7 +44,7 @@ export const cases: InvestigationCase[] = [
   },
   {
     id: "CASE-1017",
-    subject: "Transit review",
+    category: caseCategories.transit,
     trackingCode: "9400111899223847261953",
     risk: 18,
     assessment: "low",
@@ -48,7 +55,7 @@ export const cases: InvestigationCase[] = [
   },
   {
     id: "CASE-1014",
-    subject: "Missing observations",
+    category: caseCategories.observations,
     trackingCode: "9400111899223847261954",
     risk: null,
     freshness: "unavailable",
@@ -56,7 +63,7 @@ export const cases: InvestigationCase[] = [
   },
   {
     id: "CASE-1008",
-    subject: "Receipt confirmation",
+    category: caseCategories.receipt,
     trackingCode: "9400111899223847261955",
     risk: 47,
     assessment: "medium",
@@ -67,7 +74,7 @@ export const cases: InvestigationCase[] = [
   },
   {
     id: "CASE-1003",
-    subject: "Delivery review",
+    category: caseCategories.delivery,
     trackingCode: "9400111899223847261956",
     risk: 76,
     assessment: "high",

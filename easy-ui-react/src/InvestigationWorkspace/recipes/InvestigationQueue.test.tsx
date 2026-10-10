@@ -95,4 +95,73 @@ describe("InvestigationQueue recipe", () => {
       screen.getByRole("button", { name: "Open case CASE-1042" }),
     ).toBeInTheDocument();
   });
+  it("filters categories independently of review and assessment and clears all filters", async () => {
+    render(<InvestigationQueue cases={cases} onOpenCase={vi.fn()} />);
+    const choose = async (label: string, option: string) => {
+      await userEvent.click(
+        screen.getByRole("button", { name: new RegExp(label) }),
+      );
+      await userEvent.click(
+        await screen.findByRole("option", { name: option }),
+      );
+    };
+    await userEvent.click(
+      within(screen.getByRole("navigation", { name: "Case pages" })).getByRole(
+        "button",
+        { name: "Next" },
+      ),
+    );
+    await choose("Category", "Receipt confirmation");
+    expect(
+      screen
+        .getAllByRole("button", { name: /Open case/ })
+        .map((button) => button.textContent),
+    ).toEqual(["CASE-1038", "CASE-1008"]);
+    await choose("Review status", "Reviewed");
+    expect(
+      screen.getByRole("button", { name: "Open case CASE-1008" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Open case CASE-1038" }),
+    ).not.toBeInTheDocument();
+    await choose("Risk assessment", "High risk");
+    expect(
+      screen.getByText("No cases match these filters."),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Clear filters" }),
+    );
+    expect(screen.getByRole("button", { name: /Category/ })).toHaveTextContent(
+      "All categories",
+    );
+    expect(screen.getAllByRole("button", { name: /Open case/ })).toHaveLength(
+      5,
+    );
+  });
+  it("retains an active category when a new snapshot no longer includes it", async () => {
+    const { rerender } = render(
+      <InvestigationQueue cases={cases} onOpenCase={vi.fn()} />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Category/ }));
+    await userEvent.click(
+      await screen.findByRole("option", {
+        name: "Receipt confirmation",
+      }),
+    );
+    rerender(
+      <InvestigationQueue cases={cases.slice(0, 1)} onOpenCase={vi.fn()} />,
+    );
+    expect(screen.getByRole("button", { name: /Category/ })).toHaveTextContent(
+      "Receipt confirmation",
+    );
+    expect(
+      screen.getByText("No cases match these filters."),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Clear filters" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Open case CASE-1042" }),
+    ).toBeInTheDocument();
+  });
 });

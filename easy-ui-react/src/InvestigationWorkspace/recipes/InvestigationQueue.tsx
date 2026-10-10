@@ -10,12 +10,16 @@ import {
 import { TextField } from "../../TextField";
 import { Select } from "../../Select";
 import { Button } from "../../Button";
+import { Badge } from "../../Badge";
 import styles from "./InvestigationRecipes.module.scss";
 
+export type InvestigationCaseCategory = { id: string; label: string };
 export type InvestigationCase = {
   id: string;
   trackingCode: string;
-  subject: string;
+  /** Caller-owned category; independent of assessment and review status. */
+  category: InvestigationCaseCategory;
+  subject?: string;
   risk: number | null;
   assessment?: RiskScoreAssessment;
   freshness: ObservationFreshnessState;
@@ -42,6 +46,18 @@ export function InvestigationQueue({
   const [query, setQuery] = useState("");
   const [review, setReview] = useState("all");
   const [assessment, setAssessment] = useState("all");
+  const [category, setCategory] = useState<InvestigationCaseCategory | null>(
+    null,
+  );
+  const categories = new Map(
+    cases.map((item) => [item.category.id, item.category]),
+  );
+  // Keep an active filter visible if its category disappears from a new snapshot.
+  if (category && !categories.has(category.id))
+    categories.set(category.id, category);
+  const categoryOptions = [...categories.values()].sort((a, b) =>
+    a.label.localeCompare(b.label),
+  );
   const [sort, setSort] = useState<KeyedSortDescriptor<string>>({
     column: "risk",
     direction: "descending",
@@ -51,9 +67,10 @@ export function InvestigationQueue({
   const filtered = cases.filter(
     (item) =>
       (!search ||
-        `${item.id} ${item.trackingCode} ${item.subject}`
+        `${item.id} ${item.trackingCode} ${item.category.label} ${item.subject ?? ""}`
           .toLocaleLowerCase()
           .includes(search)) &&
+      (!category || item.category.id === category.id) &&
       (review === "all" || item.reviewStatus === review) &&
       (assessment === "all" ||
         (item.assessment ?? "unassessed") === assessment),
@@ -96,8 +113,29 @@ export function InvestigationQueue({
             setQuery(value);
             setPage(1);
           }}
-          placeholder="Case, tracking code, or subject"
+          placeholder="Search cases"
         />
+        <Select
+          label="Category"
+          selectedKey={category ? `category:${category.id}` : "all"}
+          onSelectionChange={(key) => {
+            setCategory(
+              categoryOptions.find(
+                (option) => `category:${option.id}` === key,
+              ) ?? null,
+            );
+            setPage(1);
+          }}
+        >
+          {[
+            <Select.Option key="all">All categories</Select.Option>,
+            ...categoryOptions.map((option) => (
+              <Select.Option key={`category:${option.id}`}>
+                {option.label}
+              </Select.Option>
+            )),
+          ]}
+        </Select>
         <Select
           label="Review status"
           selectedKey={review}
@@ -174,7 +212,10 @@ export function InvestigationQueue({
                 >
                   {row.id}
                 </Button>
-                <span>{row.subject}</span>
+                <Badge variant="inverse" accessibilityLabel="Case category:">
+                  {row.category.label}
+                </Badge>
+                {row.subject && <span>{row.subject}</span>}
                 <span className={styles.muted}>{row.trackingCode}</span>
               </div>
             ) : key === "risk" ? (
@@ -212,6 +253,7 @@ export function InvestigationQueue({
                     setQuery("");
                     setReview("all");
                     setAssessment("all");
+                    setCategory(null);
                     setPage(1);
                   }}
                 >
