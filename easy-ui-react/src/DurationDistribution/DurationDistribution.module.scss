@@ -59,8 +59,10 @@
     background: design-token("color.#{$tone}.700");
   }
   .compactRegions > span[data-assessment="#{$assessment}"] {
-    background: design-token("color.#{$tone}.100");
     color: design-token("color.#{$tone}.900");
+    &[data-highlighted="true"] {
+      background: design-token("color.#{$tone}.100");
+    }
   }
 }
 

@@ -67,7 +67,7 @@ The application supplies each assessment, reference, and freshness state. The or
 
 The optional histogram overlays the curve on the same duration axis, with no disclosure or height expansion. Bars split color exactly where they cross supplied health thresholds. Their height represents counts per interval; the curve represents cumulative percentage. These are independent vertical scales. `showCountAxis` optionally exposes the histogram’s right count scale. The sample caption is optional through `showSampleCount` and hidden by default. “Synthetic” means these Storybook observations are fabricated; it is demo metadata, not required product copy.
 
-Labeled background regions show illustrative assessment ranges supplied by the application: **As expected** below 10 hours, **Needs attention** from 10 to less than 20 hours, and **Outside expectations** at 20 hours or more. These boundaries are independent of the distribution's percentiles. The last range continues beyond the displayed 30-hour scale. The story's application policy supplies both the pill and the ranges, keeping them consistent when the observation changes.
+Region labels describe illustrative assessment ranges supplied by the application; only the region containing the current value is shaded by default: **As expected** below 10 hours, **Needs attention** from 10 to less than 20 hours, and **Outside expectations** at 20 hours or more. These boundaries are independent of the distribution's percentiles. The last range continues beyond the displayed 30-hour scale. The story's application policy supplies both the pill and the ranges, keeping them consistent when the observation changes.
 
 <Canvas of={Stories.Assessments} />
 

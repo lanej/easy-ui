@@ -107,7 +107,9 @@ export function checkHealthObservationLayout() {
               `${name}: percentile legend color differs from chart`,
             );
         }
-        const duration = information.querySelector('[role="img"]');
+        const duration = information.querySelector(
+          '[class*="headline"] > [role="group"]',
+        );
         if (
           metrics.getBoundingClientRect().left <
           duration.getBoundingClientRect().right
@@ -142,12 +144,17 @@ export function checkHealthObservationLayout() {
       const topDelta = header
         ? textBounds(information.firstElementChild).top - textBounds(header).top
         : plot.getBoundingClientRect().top - right.top;
-      const bottomDelta =
-        textBounds(information.querySelector("time")).bottom -
-        textBounds(
-          footer.querySelector("details:not([open]) summary") || footer,
-          true,
-        ).bottom;
+      const contextTimestamp = information.querySelector(
+        ':scope > [class*="freshness"] time',
+      );
+      // Context freshness anchors the bottom; label freshness belongs at the top.
+      const bottomDelta = contextTimestamp
+        ? textBounds(contextTimestamp).bottom -
+          textBounds(
+            footer.querySelector("details:not([open]) summary") || footer,
+            true,
+          ).bottom
+        : left.bottom - rightBottom;
       if (
         Math.abs(left.top - right.top) > 1 ||
         Math.abs(left.bottom - rightBottom) > 1 ||

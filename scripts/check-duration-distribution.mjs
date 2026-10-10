@@ -119,6 +119,8 @@ try {
     await page.setViewportSize({ width: 720, height: 900 });
     for (const [id, file] of [
       ["default", `duration-distribution-${scheme}`],
+      ["active-health-region", `duration-distribution-active-region-${scheme}`],
+      ["all-health-regions", `duration-distribution-all-regions-${scheme}`],
       ["quantiles-only", `duration-distribution-quantiles-${scheme}`],
       [
         "quantiles-only-with-labels",
@@ -140,6 +142,23 @@ try {
     ]) {
       await goto(id, scheme);
       await check(`${scheme}-${id}`);
+      if (
+        ["default", "active-health-region", "all-health-regions"].includes(id)
+      ) {
+        const expected =
+          id === "all-health-regions"
+            ? ["healthy", "degraded", "unhealthy"]
+            : [id === "active-health-region" ? "degraded" : "healthy"];
+        assert.deepEqual(
+          await page
+            .locator('figure [class*="track_"] > span')
+            .evaluateAll((bands) =>
+              bands.map((band) => band.dataset.assessment),
+            ),
+          expected,
+          `${scheme}-${id}: highlighted policy regions`,
+        );
+      }
       await capture(file);
     }
     for (const id of [
