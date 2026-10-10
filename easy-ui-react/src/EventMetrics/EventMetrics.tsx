@@ -48,6 +48,7 @@ export function EventMetrics({
   return (
     <ul
       className={styles.metrics}
+      role="list"
       data-event-metrics
       data-variant={variant}
       aria-label={ariaLabel}

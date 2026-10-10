@@ -39,17 +39,22 @@
 }
 
 .metrics[data-variant="minimal"] {
-  // Let an inline event slot measure the pills' content when sharing a row.
+  // Individual pills participate in the surrounding text flow and wrap naturally.
   container-type: normal;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 6px;
+  display: inline;
 
   .metric {
+    display: inline-flex;
     padding: 0;
     border: 0;
     max-inline-size: 100%;
+    margin-block: 3px;
+    margin-inline-end: 6px;
+    vertical-align: middle;
+  }
+
+  .metric:where(:last-child) {
+    margin-inline-end: 0;
   }
 }
 

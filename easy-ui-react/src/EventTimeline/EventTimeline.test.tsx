@@ -163,15 +163,16 @@ describe("EventTimeline", () => {
     expect(screen.queryByText("After third")).not.toBeInTheDocument();
   });
 
-  it("places minimal metric pills in the event row as a sibling of selection without changing keyboard navigation", () => {
+  it("keeps minimal metric pills in the shared event flow without changing keyboard navigation", () => {
     const onSelectedIdChange = vi.fn();
     const { container } = render(
       <EventTimeline
         events={events}
         size="compact"
+        metricsPlacement="inline"
         defaultSelectedId="first"
         onSelectedIdChange={onSelectedIdChange}
-        renderTrailing={(event) => (
+        renderMetrics={(event) => (
           <EventMetrics
             variant="minimal"
             ariaLabel={`${event.id} outcomes`}
@@ -225,39 +226,110 @@ describe("EventTimeline", () => {
     expect(onSelectedIdChange).toHaveBeenLastCalledWith("third");
   });
 
-  it("keeps metric controls outside event buttons and out of arrow-key selection", () => {
-    const onSelectedIdChange = vi.fn();
-    const onMetricClick = vi.fn();
-    const { container } = render(
+  it.each(["below", "inline"] as const)(
+    "keeps %s metric controls outside event buttons and out of arrow-key selection",
+    (metricsPlacement) => {
+      const onSelectedIdChange = vi.fn();
+      const onMetricClick = vi.fn();
+      const { container } = render(
+        <EventTimeline
+          events={events}
+          metricsPlacement={metricsPlacement}
+          defaultSelectedId="first"
+          onSelectedIdChange={onSelectedIdChange}
+          renderMetrics={(event) => (
+            <button onClick={onMetricClick}>Inspect {event.id} metric</button>
+          )}
+        />,
+      );
+      const entries = screen.getAllByRole("listitem");
+      const select = (index: number) =>
+        within(entries[index]).getAllByRole("button")[0];
+
+      expect(container.querySelector("button button")).toBeNull();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Inspect first metric" }),
+      );
+      expect(onMetricClick).toHaveBeenCalledOnce();
+      expect(onSelectedIdChange).not.toHaveBeenCalled();
+
+      fireEvent.keyDown(select(0), { key: "ArrowDown" });
+      expect(select(1)).toHaveFocus();
+      expect(onSelectedIdChange).toHaveBeenLastCalledWith("second");
+      fireEvent.keyDown(select(1), { key: "End" });
+      expect(select(2)).toHaveFocus();
+      expect(onSelectedIdChange).toHaveBeenLastCalledWith("third");
+      fireEvent.keyDown(select(2), { key: "Home" });
+      expect(select(0)).toHaveFocus();
+      expect(onSelectedIdChange).toHaveBeenLastCalledWith("first");
+    },
+  );
+
+  it("retains full inline event identity and visible facility type on rows with and without metrics", () => {
+    const located: EventTimelineEvent[] = [
+      {
+        id: "arrived",
+        label: "Arrived",
+        timeLabel: "17:06",
+        locationLabel: "Sacramento, CA",
+        locationTypeLabel: "Regional facility",
+        detailLabel: "Received at 17:14",
+        statusLabel: "Carrier observation",
+        locationIcon: <svg data-testid="inline-facility-icon" />,
+      },
+      {
+        id: "departed",
+        label: "Departed",
+        timeLabel: "18:00",
+        locationLabel: "Sacramento, CA",
+        locationTypeLabel: "Regional facility",
+      },
+    ];
+    render(
       <EventTimeline
-        events={events}
-        defaultSelectedId="first"
-        onSelectedIdChange={onSelectedIdChange}
-        renderMetrics={(event) => (
-          <button onClick={onMetricClick}>Inspect {event.id} metric</button>
-        )}
+        events={located}
+        size="compact"
+        metricsPlacement="inline"
+        renderMetrics={(event) =>
+          event.id === "arrived" ? (
+            <EventMetrics
+              variant="minimal"
+              metrics={[
+                {
+                  id: "dwell",
+                  label: "Dwell time",
+                  valueLabel: "6 h",
+                  assessment: "healthy",
+                },
+              ]}
+            />
+          ) : null
+        }
       />,
     );
-    const entries = screen.getAllByRole("listitem");
-    const select = (index: number) =>
-      within(entries[index]).getAllByRole("button")[0];
-
-    expect(container.querySelector("button button")).toBeNull();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Inspect first metric" }),
-    );
-    expect(onMetricClick).toHaveBeenCalledOnce();
-    expect(onSelectedIdChange).not.toHaveBeenCalled();
-
-    fireEvent.keyDown(select(0), { key: "ArrowDown" });
-    expect(select(1)).toHaveFocus();
-    expect(onSelectedIdChange).toHaveBeenLastCalledWith("second");
-    fireEvent.keyDown(select(1), { key: "End" });
-    expect(select(2)).toHaveFocus();
-    expect(onSelectedIdChange).toHaveBeenLastCalledWith("third");
-    fireEvent.keyDown(select(2), { key: "Home" });
-    expect(select(0)).toHaveFocus();
-    expect(onSelectedIdChange).toHaveBeenLastCalledWith("first");
+    const arrived = screen.getByRole("button", {
+      name: /17:06.*Arrived.*Regional facility.*Sacramento, CA/,
+    });
+    expect(arrived).toHaveAccessibleName(/Carrier observation/);
+    expect(arrived).toHaveAccessibleDescription("Received at 17:14");
+    expect(arrived).not.toHaveAccessibleName(/Dwell time/);
+    expect(
+      screen.getByRole("button", {
+        name: /18:00.*Departed.*Regional facility.*Sacramento, CA/,
+      }),
+    ).toBeVisible();
+    const locations = screen.getAllByText("Regional facility · Sacramento, CA");
+    expect(locations).toHaveLength(2);
+    for (const location of locations) {
+      expect(location).toBeVisible();
+      expect(location.closest("[data-event-headline]")).not.toBeNull();
+    }
+    expect(
+      screen.getByText("Dwell time 6 h").closest("[data-event-headline]"),
+    ).toBe(arrived.parentElement);
+    expect(
+      screen.getByTestId("inline-facility-icon").parentElement,
+    ).toHaveAttribute("aria-hidden", "true");
   });
   it("composes an optional duration assessment between events without changing chronology", () => {
     const { rerender } = render(
