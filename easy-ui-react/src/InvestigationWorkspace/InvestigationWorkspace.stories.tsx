@@ -107,7 +107,6 @@ const mapOptions = {
   workerUrl,
   controls: { fitAll: true, navigation: true },
   primaryFacilityIds: ["origin", "destination"],
-  height: 300,
   onMapReady: (instance: MapInstance) => {
     (window as Window & { investigationMap?: MapInstance }).investigationMap =
       instance;

@@ -458,6 +458,27 @@
 .mapFrame {
   position: relative;
 }
+.root[data-fill-height="true"] {
+  block-size: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-block-size: 222px;
+  .mapFrame {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-block-size: 220px;
+  }
+}
+.viewport[data-fill-height="true"] {
+  flex: 1 1 0;
+  min-block-size: 220px;
+  .canvas {
+    position: absolute;
+    inset: 0;
+  }
+}
 .overMapControls {
   position: absolute;
   inset-block-start: 10px;

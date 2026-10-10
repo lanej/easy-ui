@@ -475,6 +475,22 @@ it("clamps a height below the floor to 220px instead of the caller-supplied valu
   expect(canvas.style.height).toBe("220px");
 });
 
+it("switches between fixed and filling height without replacing the map or refitting its camera", async () => {
+  const view = render(<NetworkMap {...props} height={300} />);
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  const instance = constructor.mock.calls[0][0];
+  const fits = fitBounds.mock.calls.length;
+  view.rerender(<NetworkMap {...props} height="fill" />);
+  expect(instance.getContainer().style.height).toBe("100%");
+  expect(constructor).toHaveBeenCalledTimes(1);
+  expect(fitBounds).toHaveBeenCalledTimes(fits);
+  view.rerender(<NetworkMap {...props} height={260} />);
+  expect(instance.getContainer().style.height).toBe("260px");
+  expect(constructor).toHaveBeenCalledTimes(1);
+  expect(fitBounds).toHaveBeenCalledTimes(fits);
+});
+
 it("calls onMapReady exactly once, with the live map instance, only after the component's own layer setup", async () => {
   const onMapReady = vi.fn(() => callOrder.push("onMapReady"));
   const view = render(<NetworkMap {...props} onMapReady={onMapReady} />);

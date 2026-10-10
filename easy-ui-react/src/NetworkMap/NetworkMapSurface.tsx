@@ -115,8 +115,17 @@ function NetworkMapSurfaceView() {
     (bounds: [[number, number], [number, number]] | null, maxZoom = 12) => {
       const current = instance.current;
       if (!current || !bounds) return;
+      const availableHeight = current.getContainer().clientHeight;
       current.fitBounds(bounds, {
-        padding: { top: 70, bottom: 65, left: 65, right: 80 },
+        padding: {
+          top: Math.min(70, Math.max(56, Math.round(availableHeight * 0.2))),
+          bottom: Math.min(
+            65,
+            Math.max(40, Math.round(availableHeight * 0.17)),
+          ),
+          left: 65,
+          right: 80,
+        },
         maxZoom,
         duration: window.matchMedia?.("(prefers-reduced-motion: reduce)")
           .matches
@@ -1082,6 +1091,7 @@ function NetworkMapSurfaceView() {
   return (
     <div
       className={styles.viewport}
+      data-fill-height={height === "fill" || undefined}
       data-map-state={state}
       data-map-zoom={zoom.toFixed(2)}
       role="region"
@@ -1106,7 +1116,7 @@ function NetworkMapSurfaceView() {
       <div
         ref={container}
         className={styles.canvas}
-        style={{ height: Math.max(220, height) }}
+        style={{ height: height === "fill" ? "100%" : Math.max(220, height) }}
       />
       {featureInspection && hasOverlayContent && (
         <NetworkMapCellPopover

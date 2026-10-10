@@ -74,26 +74,15 @@ export function InvestigationDetails({
       aria-label={labels.details}
       data-expanded={!isNarrow || expanded}
     >
-      {selection && isAvailable && (
-        <div className={styles.scopeRow}>
-          <p className={styles.scope}>{scopeLabel}</p>{" "}
-          {isNarrow && hasMore && (
-            <Button
-              size="sm"
-              variant="text"
-              aria-expanded={expanded}
-              aria-controls={bodyId}
-              onPress={() => setExpanded(!expanded)}
-            >
-              {expanded ? labels.hideDetails : labels.showDetails}
-            </Button>
+      <div className={styles.detailHeader}>
+        <div className={styles.identity}>
+          {selection && isAvailable && (
+            <p className={styles.scope}>{scopeLabel}</p>
           )}
+          <Text as="h3" variant="heading5">
+            {title}
+          </Text>
         </div>
-      )}
-      <div className={styles.heading}>
-        <Text as="h3" variant="heading5">
-          {title}
-        </Text>
         <div className={styles.actions}>
           {selection && isAvailable && events.length > 0 && (
             <nav className={styles.stepping} aria-label="Event navigation">
@@ -146,26 +135,39 @@ export function InvestigationDetails({
               The selected event is not available in this context.
             </Text>
           )}
-          {event && (
-            <dl className={styles.facts}>
-              <div>
-                <dt>Event</dt>
-                <dd>{event.timeLabel ?? "Unknown"}</dd>
-              </div>
-              {event.receivedTimeLabel && (
+          <div className={styles.metadata}>
+            {event && (
+              <dl className={styles.facts}>
                 <div>
-                  <dt>Received</dt>
-                  <dd>{event.receivedTimeLabel}</dd>
+                  <dt>Event</dt>
+                  <dd>{event.timeLabel ?? "Unknown"}</dd>
                 </div>
-              )}
-              <div>
-                <dt>Location</dt>
-                <dd>
-                  {event.locationLabel ?? location?.label ?? "Not supplied"}
-                </dd>
-              </div>
-            </dl>
-          )}
+                {event.receivedTimeLabel && (
+                  <div>
+                    <dt>Received</dt>
+                    <dd>{event.receivedTimeLabel}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt>Location</dt>
+                  <dd>
+                    {event.locationLabel ?? location?.label ?? "Not supplied"}
+                  </dd>
+                </div>
+              </dl>
+            )}
+            {isNarrow && hasMore && (
+              <Button
+                size="sm"
+                variant="text"
+                aria-expanded={expanded}
+                aria-controls={bodyId}
+                onPress={() => setExpanded(!expanded)}
+              >
+                {expanded ? labels.hideDetails : labels.showDetails}
+              </Button>
+            )}
+          </div>
           {segment && (
             <p className={styles.relationship}>
               {paths.length > 1

@@ -140,9 +140,9 @@ export function InvestigationWorkspace({
     return new Set([...groups.values()].filter((ids) => ids.length > 1).flat());
   }, [events]);
   useEffect(() => {
-    if (!isNarrow || view !== "events") return;
+    if (isNarrow && view !== "events") return;
     const panel = root.current?.querySelector<HTMLElement>(
-      '[data-view-panel="events"]',
+      "[data-timeline-scroll]",
     );
     const active = panel?.querySelector<HTMLElement>('[aria-current="true"]');
     if (!panel || !active) return;
@@ -361,45 +361,50 @@ export function InvestigationWorkspace({
           hidden={isNarrow && view !== "events"}
           aria-labelledby={isNarrow ? `${id}-events-tab` : `${id}-events`}
         >
-          <div className={styles.heading}>
-            <Text as="h3" variant="heading5" id={`${id}-events`}>
-              {text.timeline}
-            </Text>
-            <Text as="span" variant="caption" color="subdued">
-              {scoped
-                ? `${context.events.length} of ${events.length}`
-                : `${events.length} events`}
-            </Text>
-          </div>
-          {scoped && (
-            <div className={styles.filter}>
-              <Checkbox isSelected={relatedOnly} onChange={setRelatedOnly}>
-                {text.relatedOnly}
-              </Checkbox>
-              <span>
-                {segment
-                  ? "Events in candidate paths"
-                  : path
-                    ? "Events in this path"
-                    : "Events at this location"}
-              </span>
+          <div className={styles.timelineContent} data-timeline-scroll>
+            <div className={styles.heading}>
+              <Text as="h3" variant="heading5" id={`${id}-events`}>
+                {text.timeline}
+              </Text>
+              <Text as="span" variant="caption" color="subdued">
+                {scoped
+                  ? `${context.events.length} of ${events.length}`
+                  : `${events.length} events`}
+              </Text>
             </div>
-          )}
-          <EventTimeline
-            {...timeline}
-            events={visibleEvents.map((item) =>
-              repeatedLabels.has(item.id) &&
-              item.receivedTimeLabel &&
-              !item.detailLabel &&
-              timeline?.size !== "detailed"
-                ? { ...item, detailLabel: `Received ${item.receivedTimeLabel}` }
-                : item,
+            {scoped && (
+              <div className={styles.filter}>
+                <Checkbox isSelected={relatedOnly} onChange={setRelatedOnly}>
+                  {text.relatedOnly}
+                </Checkbox>
+                <span>
+                  {segment
+                    ? "Events in candidate paths"
+                    : path
+                      ? "Events in this path"
+                      : "Events at this location"}
+                </span>
+              </div>
             )}
-            relatedIds={relatedIds}
-            selectedId={event?.id ?? null}
-            onSelectedIdChange={chooseEvent}
-            ariaLabel={text.timeline}
-          />
+            <EventTimeline
+              {...timeline}
+              events={visibleEvents.map((item) =>
+                repeatedLabels.has(item.id) &&
+                item.receivedTimeLabel &&
+                !item.detailLabel &&
+                timeline?.size !== "detailed"
+                  ? {
+                      ...item,
+                      detailLabel: `Received ${item.receivedTimeLabel}`,
+                    }
+                  : item,
+              )}
+              relatedIds={relatedIds}
+              selectedId={event?.id ?? null}
+              onSelectedIdChange={chooseEvent}
+              ariaLabel={text.timeline}
+            />
+          </div>
         </section>
         <section
           className={styles.map}
@@ -413,6 +418,14 @@ export function InvestigationWorkspace({
         >
           <NetworkMap
             {...map}
+            inspectionRevision={JSON.stringify([
+              map.inspectionRevision,
+              selection?.type,
+              event?.id,
+              location?.id,
+              path?.id,
+              segment?.id,
+            ])}
             aria-label={map["aria-label"] ?? text.map}
             facilities={locations}
             segments={segments}
@@ -449,7 +462,7 @@ export function InvestigationWorkspace({
             showSelectionDetails={false}
             showLegend={map.showLegend ?? false}
             showDataTable={map.showDataTable ?? false}
-            height={map.height ?? 300}
+            height={map.height ?? (isNarrow ? 260 : "fill")}
             controlPlacement={map.controlPlacement ?? "map"}
           />
           <details className={styles.index}>

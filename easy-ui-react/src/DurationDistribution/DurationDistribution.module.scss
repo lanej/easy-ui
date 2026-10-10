@@ -580,8 +580,15 @@
 }
 
 .metrics[data-layout="inline"] {
+  @include font-style("body2");
   display: flex;
   flex-wrap: wrap;
   column-gap: design-token("space.2");
   row-gap: design-token("space.0.5");
+  dd {
+    @include font-style("subtitle2");
+  }
+  dd span {
+    @include font-style("body2");
+  }
 }

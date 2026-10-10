@@ -72,7 +72,8 @@ async function waitForMap() {
       element.dataset.initialViewReady === "true" &&
       element.dataset.mapIdle === "true" &&
       !map.isMoving() &&
-      map.getCanvas().clientWidth === element.clientWidth
+      map.getCanvas().clientWidth === element.clientWidth &&
+      map.getCanvas().clientHeight === element.clientHeight
     );
   });
 }
@@ -114,11 +115,31 @@ async function audit(name) {
     [],
     `${name}: accessibility`,
   );
-  if ((await root().getAttribute("data-narrow")) !== "true") {
+  if ((await root().getAttribute("data-narrow")) === "true") {
+    assert.equal(
+      await root().locator("[data-view-panel]:visible").count(),
+      1,
+      `${name}: only the active tab panel is visible`,
+    );
+  } else {
     const map = await root().locator('[data-view-panel="map"]').boundingBox();
     const inspector = await details().boundingBox();
+    const rowGap = await root()
+      .locator('[data-view-panel="map"]')
+      .evaluate((panel) =>
+        parseFloat(getComputedStyle(panel.parentElement).rowGap),
+      );
+    const events = await root()
+      .locator('[data-view-panel="events"]')
+      .boundingBox();
     assert(
-      inspector.y - map.y - map.height <= 16,
+      Math.abs(events.y - map.y) <= 1 &&
+        Math.abs(events.y + events.height - inspector.y - inspector.height) <=
+          1,
+      `${name}: both columns share top and bottom boundaries`,
+    );
+    assert(
+      Math.abs(inspector.y - map.y - map.height - rowGap) <= 1,
       `${name}: short inspectors stay directly below the map`,
     );
   }
@@ -176,6 +197,7 @@ try {
             "shared-connection",
             "unlocated-event",
             "scoped-event",
+            "selection-without-charts",
           ].includes(story)
         )
           await screenshot(`${story}-${theme}-${width}`);
@@ -243,6 +265,12 @@ try {
       }
     }
   }
+  await open("linked-selection", "light", 820);
+  await audit("linked-selection-tablet");
+  await open("linked-selection");
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  await audit("linked-selection-desktop-large-text");
+  await screenshot("linked-selection-desktop-large-text");
   await open("linked-selection");
   const originalCamera = await page.evaluate(() => ({
     center: window.investigationMap.getCenter().toArray(),
@@ -277,6 +305,11 @@ try {
     .getByRole("button", { name: "Select Central Exchange", exact: true })
     .click();
   assert(await details().getByText("Location · 3 events").isVisible());
+  await page
+    .getByRole("region", { name: "Facility details", exact: true })
+    .waitFor({
+      state: "hidden",
+    });
   await details()
     .getByRole("button", { name: "Next event", exact: true })
     .click();
@@ -288,6 +321,7 @@ try {
   // Select the physical midpoint of the shared connection through the map hit layer.
   await page.keyboard.press("Escape");
   await page.locator(".maplibregl-canvas").scrollIntoViewIfNeeded();
+  await waitForMap();
   const point = await page.evaluate(() => {
     const map = window.investigationMap;
     const point = map.project([-1.9, 0]);

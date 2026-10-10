@@ -18,6 +18,7 @@ export function NetworkMap(props: NetworkMapProps) {
     <NetworkMapProvider {...props}>
       <div
         className={styles.root}
+        data-fill-height={props.height === "fill" || undefined}
         style={visualizationTypographyStyle(props.typography)}
       >
         <NetworkMapHeading />

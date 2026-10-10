@@ -24,7 +24,7 @@
 .layout {
   display: grid;
   grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.4fr);
-  grid-template-rows: auto 1fr;
+  grid-template-rows: minmax(220px, 1fr) auto;
   grid-template-areas: "timeline map" "timeline detail";
   gap: design-token("space.1.5");
   align-items: start;
@@ -39,10 +39,22 @@
 }
 .timeline {
   grid-area: timeline;
+  align-self: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+.timelineContent {
+  padding: design-token("space.1.5");
+  max-block-size: min(72dvh, 640px);
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 .map {
   grid-area: map;
   min-inline-size: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
 }
 .details {
   grid-area: detail;
@@ -108,6 +120,29 @@
 .content {
   min-inline-size: 0;
 }
+.detailHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+}
+.identity {
+  display: grid;
+  gap: 2px;
+  min-inline-size: 0;
+}
+.metadata {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  > button {
+    flex-shrink: 0;
+  }
+}
+.metadata:empty {
+  display: none;
+}
 .index {
   font-size: 12px;
   padding-block-start: design-token("space.1");
@@ -152,7 +187,14 @@
     overflow: auto;
   }
   .timeline {
-    overscroll-behavior: contain;
+    max-block-size: none;
+    overflow: hidden;
+  }
+  .timelineContent {
+    max-block-size: min(50dvh, 420px);
+  }
+  .map:not([hidden]) {
+    display: block;
   }
   .details {
     position: sticky;
@@ -171,14 +213,7 @@
   .actions {
     margin-inline-start: auto;
   }
-}
-
-.scopeRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  > button {
-    flex-shrink: 0;
+  .detailHeader {
+    flex-wrap: wrap;
   }
 }
