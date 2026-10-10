@@ -67,6 +67,7 @@ const meta: Meta<typeof DurationDistribution> = {
       options: ["auto", "cumulative", "histogram", "both", "points"],
     },
     distributionStyle: { control: "select", options: ["binned", "smooth"] },
+    healthRegionHighlight: { control: "select", options: ["current", "all"] },
     distributionPresentation: {
       control: "select",
       options: ["plot", "concentration"],
@@ -93,6 +94,12 @@ const meta: Meta<typeof DurationDistribution> = {
 export default meta;
 type Story = StoryObj<typeof DurationDistribution>;
 export const Default: Story = {};
+export const ActiveHealthRegion: Story = {
+  args: { value: 14, currentAssessment: "degraded" },
+};
+export const AllHealthRegions: Story = {
+  args: { healthRegionHighlight: "all" },
+};
 export const QuantilesOnly: Story = {
   args: { bins: undefined, cumulative: undefined },
 };

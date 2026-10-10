@@ -35,6 +35,12 @@
   background: design-token("color.neutral.300");
 }
 
+.entry[data-related="true"] {
+  border-radius: 6px;
+  background: design-token("color.neutral.050");
+  box-shadow: inset -2px 0 design-token("color.primary.500");
+}
+
 .item {
   display: flex;
   align-items: center;

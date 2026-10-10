@@ -392,8 +392,8 @@ export type NetworkMapProps = {
   focus?: MapFocus;
   /** Initial view only; omit to fit all facilities once on mount. */
   initialView?: { center: MapCoordinate; zoom: number };
-  /** Map height in CSS pixels; defaults to 560, minimum 220. */
-  height?: number;
+  /** Map height in CSS pixels, or fill the available parent height. Defaults to 560; minimum 220. */
+  height?: number | "fill";
   /**
    * Configure individual built-in controls, or false to hide all of them. Omitted/true toolbar
    * flags show only applicable controls; false hides them. Empty toolbars are omitted. This does
@@ -401,6 +401,8 @@ export type NetworkMapProps = {
    * recreating the map. Explicit flags take precedence over the legacy networkControls group.
    */
   controls?: false | NetworkMapControls;
+  /** Place controls over the map to avoid a separate toolbar row. Defaults to toolbar. */
+  controlPlacement?: "toolbar" | "map";
   toolbarControls?: readonly NetworkMapToolbarControl[];
   /** Override toolbar labels; fitAll defaults to "Fit all locations" for every map. */
   controlLabels?: Partial<NetworkMapControlLabels>;

@@ -64,9 +64,6 @@
 }
 .canvas {
   // Native controls contain 29px buttons, including under consumer box-sizing rules.
-  :global(.maplibregl-ctrl-group) {
-    min-width: 29px;
-  }
 
   // Keep marker z-indices inside the map, beneath the selected-facility card.
   isolation: isolate;
@@ -79,8 +76,45 @@
   // component's stated readable-text floor (see .legend below). Scoped to
   // this component's own canvas so it never leaks onto an unrelated
   // MapLibre instance elsewhere in a consuming app.
+
+  :global(.maplibregl-ctrl-group) {
+    min-width: 29px;
+    background: design-token("color.neutral.000");
+    color: design-token("color.neutral.900");
+    border: 1px solid design-token("color.neutral.300");
+  }
+  :global(.maplibregl-ctrl-group button) {
+    color: inherit;
+    border-color: design-token("color.neutral.300");
+  }
+  :global(.maplibregl-ctrl-group button:not(:disabled):hover) {
+    background: design-token("color.neutral.100");
+  }
+  :global(.maplibregl-ctrl-group button:disabled) {
+    opacity: 0.4;
+  }
+  :global(
+    .maplibregl-ctrl-group .maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon
+  ),
+  :global(
+    .maplibregl-ctrl-group .maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon
+  ) {
+    background-image: none;
+    display: grid;
+    place-items: center;
+    font: 22px/1 sans-serif;
+  }
+  :global(.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon)::after {
+    content: "+";
+  }
+  :global(.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon)::after {
+    content: "−";
+  }
   :global(.maplibregl-ctrl-scale) {
     font-size: var(--ezui-viz-label-size, 12px);
+    background: design-token("color.neutral.000");
+    color: design-token("color.neutral.900");
+    border-color: design-token("color.neutral.700");
   }
 }
 .message {
@@ -419,4 +453,50 @@
 }
 .canvas :global(.maplibregl-ctrl) {
   max-width: calc(100% - 20px);
+}
+
+.mapFrame {
+  position: relative;
+}
+.root[data-fill-height="true"] {
+  block-size: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-block-size: 222px;
+  .mapFrame {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-block-size: 220px;
+  }
+}
+.viewport[data-fill-height="true"] {
+  flex: 1 1 0;
+  min-block-size: 220px;
+  .canvas {
+    position: absolute;
+    inset: 0;
+  }
+}
+.overMapControls {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-start: 10px;
+  inset-inline-end: 50px;
+  z-index: 7;
+  pointer-events: none;
+  .toolbar {
+    padding: 0;
+    justify-content: flex-start;
+  }
+  .buttons {
+    gap: 4px;
+  }
+  button,
+  select,
+  label {
+    pointer-events: auto;
+    background: design-token("color.neutral.000");
+  }
 }

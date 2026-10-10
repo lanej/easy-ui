@@ -17,6 +17,8 @@ export type EventTimelineEvent = {
   tone?: StatusDotTone;
   statusLabel?: string;
   description?: string;
+  /** Short caller-supplied distinction, such as source or receipt time. */
+  detailLabel?: string;
 };
 
 export type EventItemProps = {
@@ -51,6 +53,7 @@ export function EventItem({
         type="button"
         className={styles.select}
         aria-current={current ? "true" : undefined}
+        aria-description={size === "compact" ? event.detailLabel : undefined}
         onClick={onSelect}
         onKeyDown={(e) => {
           if (
@@ -78,6 +81,9 @@ export function EventItem({
                   .join(" · ")}
               </span>
             )}
+          {size !== "compact" && event.detailLabel && (
+            <span className={styles.received}>{event.detailLabel}</span>
+          )}
           {size === "detailed" && event.receivedTimeLabel && (
             <span className={styles.received}>
               Received: {event.receivedTimeLabel}
