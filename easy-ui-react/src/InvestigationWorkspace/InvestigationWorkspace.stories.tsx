@@ -21,6 +21,7 @@ import {
 import { Button } from "../Button";
 import { Text } from "../Text";
 import { useColorScheme } from "../Theme";
+import styles from "./InvestigationWorkspace.stories.module.scss";
 
 // Local schematic basemap keeps the examples independent of tile credentials/network access.
 const mapStyle: StyleSpecification = {
@@ -56,40 +57,48 @@ const quantiles = [
 function Details({ event, location }: InvestigationDetailsContext) {
   if (!location || !event) return null;
   return (
-    <HealthAssessment
-      label="Current dwell"
-      size="sm"
-      variant="wide"
-      health={{ assessment: "healthy", label: "As expected" }}
-      observation={{ value: 6, unit: "h" }}
-      observationDetails={
+    <div className={styles.observation}>
+      <div className={styles.metricRow}>
+        <div className={styles.headline}>
+          <HealthAssessment
+            label="Current dwell"
+            size="sm"
+            variant="compact"
+            healthPlacement="label"
+            health={{
+              assessment: "healthy",
+              label: "As expected",
+              variant: "dot",
+            }}
+            observation={{ value: 6, unit: "h" }}
+          />
+        </div>
         <DurationQuantileMetrics
           quantiles={quantiles}
           unit="h"
           healthRegions={regions}
+          layout="inline"
         />
-      }
-      reference={
-        <DurationDistribution
-          value={6}
-          domain={[0, 30]}
-          unit="h"
-          quantiles={quantiles}
-          currentAssessment="healthy"
-          healthRegions={regions}
-          stretch={false}
-          distributionStyle="smooth"
-          bins={[
-            { from: 0, to: 5, count: 50 },
-            { from: 5, to: 10, count: 300 },
-            { from: 10, to: 15, count: 150 },
-            { from: 15, to: 20, count: 70 },
-            { from: 20, to: 25, count: 20 },
-            { from: 25, to: 30, count: 10 },
-          ]}
-        />
-      }
-    />
+      </div>
+      <DurationDistribution
+        value={6}
+        domain={[0, 30]}
+        unit="h"
+        quantiles={quantiles}
+        currentAssessment="healthy"
+        healthRegions={regions}
+        stretch={false}
+        distributionStyle="smooth"
+        bins={[
+          { from: 0, to: 5, count: 50 },
+          { from: 5, to: 10, count: 300 },
+          { from: 10, to: 15, count: 150 },
+          { from: 15, to: 20, count: 70 },
+          { from: 20, to: 25, count: 20 },
+          { from: 25, to: 30, count: 10 },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -97,6 +106,7 @@ const mapOptions = {
   mapStyle,
   workerUrl,
   controls: { fitAll: true, navigation: true },
+  primaryFacilityIds: ["origin", "destination"],
   height: 300,
   onMapReady: (instance: MapInstance) => {
     (window as Window & { investigationMap?: MapInstance }).investigationMap =
@@ -215,6 +225,11 @@ export const LocationWithoutEvents: Story = {
   ),
 };
 export const Narrow: Story = { render: () => <Example narrow /> };
+export const ScopedEvent: Story = {
+  render: () => (
+    <Example initial={{ type: "path", pathId: "north", eventId: "arrived" }} />
+  ),
+};
 export const SelectionWithoutCharts: Story = {
   render: () => <Example noDetails />,
 };

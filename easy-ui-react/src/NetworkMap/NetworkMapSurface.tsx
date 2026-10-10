@@ -231,6 +231,7 @@ function NetworkMapSurfaceView() {
     let positionLabels: (() => void) | undefined;
     const observedControls = new Set<Element>();
     const element = container.current!;
+    delete element.dataset.initialViewReady;
     setState("loading");
     setBasemapError(false);
     const fail = (error: unknown) => {
@@ -268,6 +269,27 @@ function NetworkMapSurfaceView() {
           trackResize: false,
         });
         instance.current = map;
+        let loaded = false;
+        let initialFitPending = !initial;
+        const fitInitialView = () => {
+          if (!loaded || !initialFitPending || element.clientWidth === 0)
+            return;
+          map.resize();
+          initialFitPending = false;
+          const requested = latest.current.focus;
+          if (requested?.bounds) {
+            const { minLon, minLat, maxLon, maxLat } = requested.bounds;
+            flyToBounds(
+              [
+                [minLon, minLat],
+                [maxLon, maxLat],
+              ],
+              requested.maxZoom,
+            );
+          } else if (requested) fit(requested.facilityIds, requested.maxZoom);
+          else commands.current.fitAll();
+          element.dataset.initialViewReady = "true";
+        };
         detachInspection = overlayInspectionEvents.attach(map, element);
         overlayRenderer = createOverlayRenderer(
           map,
@@ -365,6 +387,10 @@ function NetworkMapSurfaceView() {
           const controls = Array.from(
             element.querySelectorAll(".maplibregl-ctrl"),
           );
+          const floating = element
+            .closest("[data-map-frame]")
+            ?.querySelector("[data-map-controls]");
+          if (floating) controls.push(floating);
           for (const previous of observedControls) {
             if (!controls.includes(previous)) {
               observer?.unobserve?.(previous);
@@ -386,6 +412,20 @@ function NetworkMapSurfaceView() {
               w: rect.width,
               h: rect.height,
             }));
+          // Labels must not hide other geographic markers, even when those
+          // markers have no label at the current zoom level.
+          for (const { facility } of markers) {
+            const longitude =
+              facility.coordinates[0] +
+              Math.round(
+                ((map.getCenter?.().lng ?? facility.coordinates[0]) -
+                  facility.coordinates[0]) /
+                  360,
+              ) *
+                360;
+            const point = map.project([longitude, facility.coordinates[1]]);
+            reserved.push({ x: point.x - 8, y: point.y - 8, w: 16, h: 16 });
+          }
           const placements = placeLabels(
             candidates,
             size.width,
@@ -885,7 +925,9 @@ function NetworkMapSurfaceView() {
           latest.current.onMapReady?.(map);
           window.clearTimeout(deadline);
           setState("ready");
-          if (!initial) commands.current.fitAll();
+          loaded = true;
+          if (initial) element.dataset.initialViewReady = "true";
+          fitInitialView();
           setZoom(map.getZoom());
         });
         map.on("move", () => {
@@ -929,8 +971,9 @@ function NetworkMapSurfaceView() {
           // observation cycle completes when a surrounding grid resizes.
           window.cancelAnimationFrame(resizeFrame);
           resizeFrame = window.requestAnimationFrame(() => {
-            if (disposed) return;
+            if (disposed || element.clientWidth === 0) return;
             map.resize();
+            fitInitialView();
             position();
           });
         });
@@ -940,6 +983,7 @@ function NetworkMapSurfaceView() {
     return () => {
       disposed = true;
       surfaceOwner.current = null;
+      delete element.dataset.initialViewReady;
       setState("loading");
       commands.current = {
         fitAll() {},

@@ -231,6 +231,8 @@ Paint overrides set through this callback or the retained instance survive data,
   </table>
 </div>
 
+Use `controlPlacement="map"` to place controls over the map; the default `"toolbar"` keeps a separate row. Native zoom and scale controls follow the active theme. A map mounted in a hidden panel fits its initial extent when first revealed, then preserves the camera on later visibility changes.
+
 Use `controlLabels` to replace any toolbar label: `fitAll`, `selectedSegment`, `latestEvent`, `risk`, `weather`, or `deliverySurface`. The default fit label is "Fit all locations"; the parcel journey examples explicitly use `controlLabels={{ fitAll: "Entire journey" }}`.
 
 ### Caller-defined toolbar controls
@@ -551,7 +553,6 @@ Marker buttons have full accessible names and controlled pressed state. Table ro
 
 The `NetworkMap` entry uses Easy UI's required MapLibre dependency and loads it dynamically on mount. Automatic installation does not mean eager loading: importing and server-rendering the entry does not initialize WebGL; its HTML data view and loading state render on the server. Native charts and ECharts do not import this entry. Import `@easypost/easy-ui/NetworkMap/maplibre-gl.css` only in the application's map route. The published Easy UI stylesheet includes the small component wrapper styles, consistent with other components. See `scripts/preview-maps` for production bundle measurements, an independent native SVG control, browser interaction checks and actual Chrome, Firefox and Safari captures.
 
-
 ## Facility and overlay inspection
 
 `renderFacilityDetails({ facility })` supplies rich facility content for pointer hover, keyboard focus and click/tap pinning. `renderOverlayHoverDetails({ overlays, selections, coordinate })` supplies content for **all** overlapping original overlay features, ordered from topmost to bottommost and deduplicated across layers, tiles and world copies. The `overlays` field also identifies whole collections inspected through DOM controls when they contain no drawable features. Single-location paths and missing coordinates retain their domain details without invented geometry. The application can group those selections into domain paths; it never needs generated engine layer IDs or marker DOM attributes. `renderOverlayDetails` remains a compatible click-only fallback for the first selected feature, and `onOverlaySelect` retains its single topmost-feature callback.
@@ -564,8 +565,12 @@ Under `NetworkMapProvider`, wrap a named, focusable control in `NetworkMapInspec
 <NetworkMapProvider
   {...mapProps}
   inspectionRevision={checkpointId}
-  renderFacilityDetails={({ facility }) => <FacilityEvidence facility={facility} />}
-  renderOverlayHoverDetails={({ selections }) => <PathEvidence features={selections} />}
+  renderFacilityDetails={({ facility }) => (
+    <FacilityEvidence facility={facility} />
+  )}
+  renderOverlayHoverDetails={({ selections }) => (
+    <PathEvidence features={selections} />
+  )}
 >
   <NetworkMapInspectionTrigger target={{ overlayId: "candidate-1" }}>
     <Button onPress={focusCandidate}>Candidate 1</Button>

@@ -196,6 +196,7 @@ const props = {
 } satisfies NetworkMapProps;
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(800);
   queryRenderedFeatures.mockReturnValue([]);
   sources.clear();
   sourceDefs.clear();
@@ -215,7 +216,10 @@ beforeEach(() => {
     },
   );
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 it("can hide and restore raw layer records independently of the map", async () => {
   const { container, rerender } = render(

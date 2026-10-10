@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { fireEvent, screen, within } from "@testing-library/react";
-import { render } from "../utilities/test";
+import {
+  render,
+  mockGetComputedStyle,
+  mockIntersectionObserver,
+  installScrollToMock,
+} from "../utilities/test";
 import { InvestigationWorkspace } from "./InvestigationWorkspace";
 import { investigationRecords as records } from "./InvestigationWorkspace.fixtures";
 import {
@@ -56,6 +61,128 @@ const details = () => screen.getByRole("region", { name: "Selection details" });
 const timeline = () => screen.getByRole("list", { name: "Events" });
 
 describe("InvestigationWorkspace", () => {
+  it("keeps scope visible and lets the timeline filter related records without a second event list", () => {
+    render(
+      <Controlled
+        initial={{ type: "path", pathId: "north", eventId: "arrived" }}
+      />,
+    );
+    expect(
+      within(details()).getByText("Via North Gate · Event 2 of 4"),
+    ).toBeVisible();
+    expect(timeline().querySelectorAll('[data-related="true"]')).toHaveLength(
+      4,
+    );
+    expect(
+      within(details()).queryByRole("button", { name: /10:30.*Arrived/ }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Related only" }));
+    expect(within(timeline()).getAllByRole("button")).toHaveLength(4);
+    expect(
+      within(timeline()).queryByRole("button", {
+        name: /Processed at South Gate/,
+      }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      within(details()).getByRole("button", { name: "Next event" }),
+    );
+    expect(
+      within(details()).getByText("Via North Gate · Event 3 of 4"),
+    ).toBeVisible();
+    fireEvent.click(
+      within(details()).getByRole("button", { name: "Clear selection" }),
+    );
+    expect(within(timeline()).getAllByRole("button")).toHaveLength(7);
+  });
+  it("distinguishes equal occurrence labels by the supplied receipt time", () => {
+    render(<Controlled initial={null} />);
+    const arrivals = within(timeline()).getAllByRole("button", {
+      name: /10:30.*Arrived at exchange/,
+    });
+    expect(arrivals[0]).toHaveAccessibleName(/Received 10:34/);
+    expect(arrivals[1]).toHaveAccessibleName(/Received 11:05/);
+    fireEvent.click(screen.getByText("Map select shared connection"));
+    expect(
+      within(details()).getByText("Shared by 2 candidate paths · transfer"),
+    ).toBeVisible();
+    expect(
+      within(details()).getByText(
+        "Connection · 5 events across candidate paths",
+      ),
+    ).toBeVisible();
+  });
+  it("switches narrow views by keyboard while preserving map and expanded detail content", () => {
+    const rect = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({
+        width: 390,
+        height: 800,
+        top: 0,
+        left: 0,
+        right: 390,
+        bottom: 800,
+        x: 0,
+        y: 0,
+        toJSON() {},
+      });
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const cleanups = [
+      mockGetComputedStyle(),
+      mockIntersectionObserver(),
+      installScrollToMock(),
+    ];
+    const detail = (
+      <input aria-label="Investigation note" defaultValue="Retained note" />
+    );
+    try {
+      render(
+        <InvestigationWorkspace
+          {...records}
+          map={map}
+          selection={{ type: "event", eventId: "arrived" }}
+          onSelectionChange={vi.fn()}
+          renderDetails={() => detail}
+        />,
+      );
+      const mountedMap = screen.getByTestId("map");
+      expect(screen.getByRole("tab", { name: "Events" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+      expect(mountedMap).not.toBeVisible();
+      fireEvent.click(screen.getByRole("button", { name: "Show details" }));
+      fireEvent.change(
+        screen.getByRole("textbox", { name: "Investigation note" }),
+        { target: { value: "Edited note" } },
+      );
+      fireEvent.keyDown(screen.getByRole("tab", { name: "Events" }), {
+        key: "ArrowRight",
+      });
+      expect(screen.getByRole("tab", { name: "Map" })).toHaveFocus();
+      expect(screen.getByTestId("map")).toBe(mountedMap);
+      expect(mountedMap).toBeVisible();
+      expect(
+        within(details()).getByRole("heading", { name: "Arrived at exchange" }),
+      ).toBeVisible();
+      fireEvent.click(screen.getByRole("button", { name: "Hide details" }));
+      fireEvent.click(screen.getByRole("button", { name: "Show details" }));
+      expect(
+        screen.getByRole("textbox", { name: "Investigation note" }),
+      ).toHaveValue("Edited note");
+    } finally {
+      for (const cleanup of cleanups) cleanup();
+      rect.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("requests selection without mutating a controlled value", () => {
     const change = vi.fn();
     const { rerender } = render(
@@ -94,7 +221,11 @@ describe("InvestigationWorkspace", () => {
   it("retains duplicate and untimed events while stepping within a selected location", () => {
     render(<Controlled initial={null} />);
     fireEvent.click(screen.getByText("Map select Central Exchange"));
-    expect(within(details()).getByText("3 associated events")).toBeVisible();
+    expect(
+      within(details()).getByText(
+        /(?:Location · 3 events|Central Exchange · Event 3 of 3)/,
+      ),
+    ).toBeVisible();
     fireEvent.click(
       within(details()).getByRole("button", { name: "Next event" }),
     );
@@ -110,21 +241,23 @@ describe("InvestigationWorkspace", () => {
     expect(
       within(details()).getByRole("button", { name: "Next event" }),
     ).toBeDisabled();
-    expect(within(details()).getByText("3 associated events")).toBeVisible();
+    expect(
+      within(details()).getByText(
+        /(?:Location · 3 events|Central Exchange · Event 3 of 3)/,
+      ),
+    ).toBeVisible();
   });
   it("preserves all candidate memberships on a shared connection", () => {
     render(<Controlled initial={null} />);
     fireEvent.click(screen.getByText("Map select shared connection"));
     expect(
-      within(details()).getByRole("button", { name: "Via North Gate" }),
+      screen.getByRole("button", { name: "Via North Gate" }),
     ).toBeVisible();
     expect(
-      within(details()).getByRole("button", { name: "Via South Gate" }),
+      screen.getByRole("button", { name: "Via South Gate" }),
     ).toBeVisible();
     expect(mapProps.selectedSegmentId).toBe("shared-leg");
-    fireEvent.click(
-      within(details()).getByRole("button", { name: "Via South Gate" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Via South Gate" }));
     const highlighted = mapProps.overlays![0].data.features.filter(
       (item) => item.properties?.selected,
     );
@@ -207,7 +340,7 @@ describe("InvestigationWorkspace", () => {
     render(
       <Controlled initial={{ type: "location", locationId: "unobserved" }} />,
     );
-    expect(within(details()).getByText("0 associated events")).toBeVisible();
+    expect(within(details()).getByText("Location · 0 events")).toBeVisible();
     expect(within(details()).queryByRole("navigation")).not.toBeInTheDocument();
   });
   it("keeps hover previews independent of persistent details and exposes the supplied context to charts", () => {
@@ -281,6 +414,10 @@ describe("InvestigationWorkspace", () => {
         "The selected event is not available in this context.",
       ),
     ).toBeVisible();
-    expect(within(details()).getByText("3 associated events")).toBeVisible();
+    expect(
+      within(details()).getByText(
+        /(?:Location · 3 events|Central Exchange · Event 3 of 3)/,
+      ),
+    ).toBeVisible();
   });
 });

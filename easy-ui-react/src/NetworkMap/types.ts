@@ -401,6 +401,8 @@ export type NetworkMapProps = {
    * recreating the map. Explicit flags take precedence over the legacy networkControls group.
    */
   controls?: false | NetworkMapControls;
+  /** Place controls over the map to avoid a separate toolbar row. Defaults to toolbar. */
+  controlPlacement?: "toolbar" | "map";
   toolbarControls?: readonly NetworkMapToolbarControl[];
   /** Override toolbar labels; fitAll defaults to "Fit all locations" for every map. */
   controlLabels?: Partial<NetworkMapControlLabels>;

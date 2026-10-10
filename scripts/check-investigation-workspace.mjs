@@ -42,13 +42,41 @@ async function open(story, theme = "light", width = 1200) {
   await root().waitFor();
   await page.waitForSelector('[data-map-state="ready"]', {
     timeout: 30000,
+    state: "attached",
   });
-  await page.waitForSelector('[data-map-idle="true"]');
+  await page.waitForFunction(() => {
+    const workspace = document.querySelector(
+      '[aria-label="Event investigation"]',
+    );
+    return (
+      workspace?.getAttribute("data-narrow") ===
+      String(workspace.getBoundingClientRect().width <= 740)
+    );
+  });
+  if ((await root().getAttribute("data-narrow")) !== "true") await waitForMap();
   await page.waitForFunction(
     () =>
       document.fonts.status === "loaded" &&
       window.investigationMap?.isStyleLoaded(),
   );
+}
+async function waitForMap() {
+  await page.waitForFunction(() => {
+    const map = window.investigationMap;
+    const element = map?.getContainer();
+    return (
+      element?.clientWidth > 0 &&
+      element.dataset.initialViewReady === "true" &&
+      element.dataset.mapIdle === "true" &&
+      !map.isMoving() &&
+      map.getCanvas().clientWidth === element.clientWidth
+    );
+  });
+}
+async function showMap() {
+  const tab = page.getByRole("tab", { name: "Map", exact: true });
+  if (await tab.count()) await tab.click();
+  await waitForMap();
 }
 async function audit(name) {
   assert(
@@ -81,12 +109,40 @@ async function audit(name) {
     [],
     `${name}: accessibility`,
   );
+  if ((await root().getAttribute("data-narrow")) !== "true") {
+    const map = await root().locator('[data-view-panel="map"]').boundingBox();
+    const inspector = await details().boundingBox();
+    assert(
+      inspector.y - map.y - map.height <= 16,
+      `${name}: short inspectors stay directly below the map`,
+    );
+  }
+  const headline = details().getByRole("group", {
+    name: "Current dwell",
+    exact: true,
+  });
+  if (await headline.isVisible()) {
+    const label = await headline
+      .getByText("Current dwell", { exact: true })
+      .boundingBox();
+    const value = await headline
+      .getByRole("img", { name: "6 h", exact: true })
+      .boundingBox();
+    assert(
+      Math.abs(label.y + label.height / 2 - value.y - value.height / 2) < 8,
+      `${name}: label, status and value share one row`,
+    );
+    assert(label.width > 70, `${name}: headline has readable width`);
+  }
   checks.push(name);
 }
 async function screenshot(name) {
   await page.mouse.move(0, 0);
   await page.keyboard.press("Escape");
-  await page.screenshot({ path: `${output}/${name}.png`, fullPage: true });
+  await page.evaluate(() => document.activeElement?.blur());
+  await page
+    .locator("#storybook-root")
+    .screenshot({ path: `${output}/${name}.png` });
 }
 try {
   const stories = [
@@ -100,6 +156,7 @@ try {
     "selection-without-charts",
     "external-selection",
     "empty-events",
+    "scoped-event",
   ];
   for (const theme of process.env.INVESTIGATION_INTERACTIONS_ONLY
     ? []
@@ -109,11 +166,75 @@ try {
         await open(story, theme, width);
         await audit(`${story}-${theme}-${width}`);
         if (
-          ["linked-selection", "shared-connection", "unlocated-event"].includes(
-            story,
-          )
+          [
+            "linked-selection",
+            "shared-connection",
+            "unlocated-event",
+            "scoped-event",
+          ].includes(story)
         )
           await screenshot(`${story}-${theme}-${width}`);
+        if ((await root().getAttribute("data-narrow")) === "true") {
+          await showMap();
+          await audit(`${story}-${theme}-${width}-map`);
+          assert(
+            await page.evaluate(() => {
+              const map = window.investigationMap;
+              const box = map.getCanvas();
+              return [
+                [-3, 0],
+                [-0.8, 0],
+                [1, 1],
+                [1, -1],
+                [3, 0],
+                [-2, 1.3],
+              ].every((coordinate) => {
+                const point = map.project(coordinate);
+                return (
+                  point.x >= 12 &&
+                  point.x <= box.clientWidth - 12 &&
+                  point.y >= 12 &&
+                  point.y <= box.clientHeight - 12
+                );
+              });
+            }),
+            `${story}: initial map frame contains every location`,
+          );
+          assert(
+            await page.evaluate(() => {
+              const markers = [
+                ...document.querySelectorAll(".maplibregl-marker"),
+              ];
+              const labels = markers
+                .map((marker) => marker.lastElementChild)
+                .filter(
+                  (label) => getComputedStyle(label).visibility === "visible",
+                );
+              return labels.every((label) => {
+                const box = label.getBoundingClientRect();
+                return markers.every((marker) => {
+                  if (marker === label.parentElement) return true;
+                  const pin = marker.firstElementChild.getBoundingClientRect();
+                  return (
+                    box.right <= pin.left ||
+                    box.left >= pin.right ||
+                    box.bottom <= pin.top ||
+                    box.top >= pin.bottom
+                  );
+                });
+              });
+            }),
+            `${story}: map labels do not cover location markers`,
+          );
+          if (story === "linked-selection") {
+            await screenshot(`${story}-${theme}-${width}-map`);
+            await details()
+              .getByRole("button", { name: "Show details", exact: true })
+              .click();
+            await audit(`${story}-${theme}-${width}-expanded`);
+            await screenshot(`${story}-${theme}-${width}-expanded`);
+          }
+        }
       }
     }
   }
@@ -150,7 +271,7 @@ try {
   await page
     .getByRole("button", { name: "Select Central Exchange", exact: true })
     .click();
-  assert(await details().getByText("3 associated events").isVisible());
+  assert(await details().getByText("Location · 3 events").isVisible());
   await details()
     .getByRole("button", { name: "Next event", exact: true })
     .click();
@@ -184,16 +305,16 @@ try {
       .isVisible(),
   );
   assert(
-    await details()
+    await root()
       .getByRole("button", { name: "Via North Gate", exact: true })
       .isVisible(),
   );
   assert(
-    await details()
+    await root()
       .getByRole("button", { name: "Via South Gate", exact: true })
       .isVisible(),
   );
-  await details()
+  await root()
     .getByRole("button", { name: "Via South Gate", exact: true })
     .click();
   await page.keyboard.press("Escape");
@@ -222,11 +343,15 @@ try {
     window.savedInvestigationMap = window.investigationMap;
   });
   await page.setViewportSize({ width: 390, height: 1100 });
-  await page.waitForFunction(
-    () =>
-      window.investigationMap.getCanvas().clientWidth ===
-      window.investigationMap.getContainer().clientWidth,
+  await page.getByRole("tab", { name: "Events", exact: true }).waitFor();
+  await page.getByRole("tab", { name: "Events", exact: true }).focus();
+  await page.keyboard.press("ArrowRight");
+  assert(
+    await page
+      .getByRole("tab", { name: "Map", exact: true })
+      .evaluate((tab) => tab === document.activeElement),
   );
+  await waitForMap();
   assert(
     await details()
       .getByRole("heading", { name: "Location not reported" })
@@ -242,8 +367,45 @@ try {
     .click();
   await page.getByRole("button", { name: "West Annex", exact: true }).focus();
   await page.keyboard.press("Enter");
-  assert(await details().getByText("0 associated events").isVisible());
+  assert(await details().getByText("Location · 0 events").isVisible());
+  const retainedCamera = await page.evaluate(() => ({
+    center: window.investigationMap.getCenter().toArray(),
+    zoom: window.investigationMap.getZoom(),
+  }));
+  await page.getByRole("tab", { name: "Events", exact: true }).click();
+  await page.getByRole("tab", { name: "Map", exact: true }).click();
+  await waitForMap();
+  assert.deepEqual(
+    await page.evaluate(() => ({
+      center: window.investigationMap.getCenter().toArray(),
+      zoom: window.investigationMap.getZoom(),
+    })),
+    retainedCamera,
+    "Tab switching preserves camera",
+  );
   await audit("linked-keyboard-pointer-and-resize");
+  await open("scoped-event");
+  assert(
+    await details()
+      .getByText("Via North Gate · Event 2 of 4", { exact: true })
+      .isVisible(),
+  );
+  assert.equal(await timeline().locator('[data-related="true"]').count(), 4);
+  await page.getByRole("checkbox", { name: "Related only" }).check();
+  assert.equal(await timeline().getByRole("button").count(), 4);
+  await details()
+    .getByRole("button", { name: "Next event", exact: true })
+    .click();
+  assert(
+    await details()
+      .getByText("Via North Gate · Event 3 of 4", { exact: true })
+      .isVisible(),
+  );
+  await details()
+    .getByRole("button", { name: "Clear selection", exact: true })
+    .click();
+  assert.equal(await timeline().getByRole("button").count(), 7);
+  await audit("scoped-timeline-filter-and-stepping");
   await open("external-selection");
   await page
     .getByRole("button", { name: "Select unlocated event externally" })

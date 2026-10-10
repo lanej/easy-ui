@@ -1,4 +1,14 @@
-import React, { useId, useMemo, type ReactNode } from "react";
+import React, {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { Tabs } from "../Tabs";
+import { Checkbox } from "../Checkbox";
+import { InvestigationDetails } from "./InvestigationDetails";
 import { Button } from "../Button";
 import { Text } from "../Text";
 import { EventTimeline, type EventTimelineProps } from "../EventTimeline";
@@ -55,7 +65,12 @@ export type InvestigationWorkspaceProps = InvestigationRecords & {
       | "clear"
       | "previous"
       | "next"
-      | "empty",
+      | "empty"
+      | "allPaths"
+      | "relatedOnly"
+      | "mapTab"
+      | "showDetails"
+      | "hideDetails",
       string
     >
   >;
@@ -76,12 +91,67 @@ export function InvestigationWorkspace({
   labels,
 }: InvestigationWorkspaceProps) {
   const id = useId();
+  const root = useRef<HTMLElement>(null);
+  const [isNarrow, setIsNarrow] = useState(false);
+  const [view, setView] = useState<"events" | "map">("events");
+  const [relatedOnly, setRelatedOnly] = useState(false);
+  useEffect(() => {
+    const element = root.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const update = () => {
+      const width = element.getBoundingClientRect().width;
+      if (width > 0) setIsNarrow(width <= 740);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    const inactive = root.current?.querySelector<HTMLElement>(
+      `[data-view-panel="${view === "map" ? "events" : "map"}"]`,
+    );
+    if (isNarrow && inactive?.contains(document.activeElement))
+      document.getElementById(`${id}-${view}-tab`)?.focus();
+  }, [isNarrow, view, id]);
   const overlayId = `${id}-investigation-connections`;
   const context = resolveSelection(
     { events, locations, segments, paths },
     selection,
   );
   const { event, location, path, segment, isAvailable } = context;
+  const scoped = Boolean(
+    selection && selection.type !== "event" && isAvailable,
+  );
+  const visibleEvents = scoped && relatedOnly ? context.events : events;
+  const relatedIds = scoped ? context.events.map((item) => item.id) : undefined;
+  // Reveal receipt time when occurrence labels alone cannot distinguish records.
+  const repeatedLabels = useMemo(() => {
+    const groups = new Map<string, string[]>();
+    for (const item of events) {
+      const key = JSON.stringify([
+        item.label,
+        item.timeLabel,
+        item.locationId,
+        item.locationLabel,
+      ]);
+      groups.set(key, [...(groups.get(key) ?? []), item.id]);
+    }
+    return new Set([...groups.values()].filter((ids) => ids.length > 1).flat());
+  }, [events]);
+  useEffect(() => {
+    if (!isNarrow || view !== "events") return;
+    const panel = root.current?.querySelector<HTMLElement>(
+      '[data-view-panel="events"]',
+    );
+    const active = panel?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (!panel || !active) return;
+    const bounds = panel.getBoundingClientRect();
+    const row = active.getBoundingClientRect();
+    if (row.top < bounds.top) panel.scrollTop += row.top - bounds.top - 8;
+    else if (row.bottom > bounds.bottom)
+      panel.scrollTop += row.bottom - bounds.bottom + 8;
+  }, [event?.id, isNarrow, view, relatedOnly]);
   const text = {
     timeline: "Events",
     map: "Locations and connections",
@@ -91,6 +161,11 @@ export function InvestigationWorkspace({
     previous: "Previous event",
     next: "Next event",
     empty: "Select an event, location, or candidate path.",
+    allPaths: "All paths",
+    relatedOnly: "Related only",
+    mapTab: "Map",
+    showDetails: "Show details",
+    hideDetails: "Hide details",
     ...labels,
   };
   const selectedSegments = new Set(
@@ -137,16 +212,6 @@ export function InvestigationWorkspace({
   };
   const chooseEvent = (eventId: string) =>
     onSelectionChange(selectEvent(context, eventId));
-  const index = context.events.findIndex((item) => item.id === event?.id);
-  const title = !isAvailable
-    ? "Selection unavailable"
-    : (event?.label ??
-      location?.label ??
-      path?.label ??
-      segment?.label ??
-      text.details);
-  const description =
-    event?.description ?? path?.description ?? location?.detail;
   const inspectConnections = (hover: MapOverlayHoverDetailsContext) => {
     const hits = hover.selections.filter(
       (item) => item.overlayId === overlayId,
@@ -200,12 +265,29 @@ export function InvestigationWorkspace({
     );
   };
   return (
-    <section className={styles.root} aria-label={ariaLabel}>
+    <section
+      ref={root}
+      className={styles.root}
+      aria-label={ariaLabel}
+      data-narrow={isNarrow}
+    >
       {paths.length > 0 && (
         <div className={styles.paths} role="group" aria-label={text.paths}>
           <Text as="span" variant="caption" color="subdued">
             {text.paths}
           </Text>
+          <Button
+            size="sm"
+            variant={!path ? "filled" : "outlined"}
+            aria-pressed={!path}
+            onPress={() =>
+              onSelectionChange(
+                event ? { type: "event", eventId: event.id } : null,
+              )
+            }
+          >
+            {text.allPaths}
+          </Button>
           {paths.map((item) => (
             <Button
               key={item.id}
@@ -222,24 +304,113 @@ export function InvestigationWorkspace({
         </div>
       )}
       <div className={styles.layout}>
-        <section className={styles.timeline} aria-labelledby={`${id}-events`}>
+        {isNarrow && (
+          <div className={styles.views}>
+            <Tabs
+              containerComponent="div"
+              containerProps={{}}
+              listComponent="div"
+              listProps={{
+                role: "tablist",
+                "aria-label": "Investigation views",
+              }}
+            >
+              {(["events", "map"] as const).map((item) => (
+                <Tabs.Item
+                  key={item}
+                  containerComponent="div"
+                  tabComponent="button"
+                  type="button"
+                  role="tab"
+                  id={`${id}-${item}-tab`}
+                  aria-controls={`${id}-${item}-panel`}
+                  aria-selected={view === item}
+                  tabIndex={view === item ? 0 : -1}
+                  isSelected={view === item}
+                  onClick={() => setView(item)}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    const next =
+                      e.key === "Home"
+                        ? "events"
+                        : e.key === "End"
+                          ? "map"
+                          : ["ArrowLeft", "ArrowRight"].includes(e.key)
+                            ? item === "events"
+                              ? "map"
+                              : "events"
+                            : null;
+                    if (next) {
+                      e.preventDefault();
+                      setView(next);
+                      document.getElementById(`${id}-${next}-tab`)?.focus();
+                    }
+                  }}
+                >
+                  {item === "events" ? text.timeline : text.mapTab}
+                </Tabs.Item>
+              ))}
+            </Tabs>
+          </div>
+        )}
+        <section
+          className={styles.timeline}
+          id={`${id}-events-panel`}
+          data-view-panel="events"
+          role={isNarrow ? "tabpanel" : undefined}
+          tabIndex={isNarrow ? 0 : undefined}
+          hidden={isNarrow && view !== "events"}
+          aria-labelledby={isNarrow ? `${id}-events-tab` : `${id}-events`}
+        >
           <div className={styles.heading}>
             <Text as="h3" variant="heading5" id={`${id}-events`}>
               {text.timeline}
             </Text>
             <Text as="span" variant="caption" color="subdued">
-              {events.length}
+              {scoped
+                ? `${context.events.length} of ${events.length}`
+                : `${events.length} events`}
             </Text>
           </div>
+          {scoped && (
+            <div className={styles.filter}>
+              <Checkbox isSelected={relatedOnly} onChange={setRelatedOnly}>
+                {text.relatedOnly}
+              </Checkbox>
+              <span>
+                {segment
+                  ? "Events in candidate paths"
+                  : path
+                    ? "Events in this path"
+                    : "Events at this location"}
+              </span>
+            </div>
+          )}
           <EventTimeline
             {...timeline}
-            events={events}
+            events={visibleEvents.map((item) =>
+              repeatedLabels.has(item.id) &&
+              item.receivedTimeLabel &&
+              !item.detailLabel &&
+              timeline?.size !== "detailed"
+                ? { ...item, detailLabel: `Received ${item.receivedTimeLabel}` }
+                : item,
+            )}
+            relatedIds={relatedIds}
             selectedId={event?.id ?? null}
             onSelectedIdChange={chooseEvent}
             ariaLabel={text.timeline}
           />
         </section>
-        <section className={styles.map} aria-label={text.map}>
+        <section
+          className={styles.map}
+          id={`${id}-map-panel`}
+          data-view-panel="map"
+          role={isNarrow ? "tabpanel" : undefined}
+          tabIndex={isNarrow ? 0 : undefined}
+          hidden={isNarrow && view !== "map"}
+          aria-label={isNarrow ? undefined : text.map}
+          aria-labelledby={isNarrow ? `${id}-map-tab` : undefined}
+        >
           <NetworkMap
             {...map}
             aria-label={map["aria-label"] ?? text.map}
@@ -278,7 +449,8 @@ export function InvestigationWorkspace({
             showSelectionDetails={false}
             showLegend={map.showLegend ?? false}
             showDataTable={map.showDataTable ?? false}
-            height={map.height ?? 340}
+            height={map.height ?? 300}
+            controlPlacement={map.controlPlacement ?? "map"}
           />
           <details className={styles.index}>
             <summary>Browse locations and connections</summary>
@@ -312,156 +484,14 @@ export function InvestigationWorkspace({
             </div>
           </details>
         </section>
-        <section className={styles.details} aria-label={text.details}>
-          <div className={styles.heading}>
-            <Text as="h3" variant="heading5">
-              {title}
-            </Text>
-            {selection && (
-              <Button
-                size="sm"
-                variant="text"
-                onPress={() => onSelectionChange(null)}
-              >
-                {text.clear}
-              </Button>
-            )}
-          </div>
-          <span className={styles.announcement} role="status">
-            {selection ? title : "Selection cleared"}
-          </span>
-          {!selection ? (
-            <Text as="p" color="subdued">
-              {text.empty}
-            </Text>
-          ) : !isAvailable ? (
-            <Text as="p" color="subdued">
-              The selected record is no longer in this view.
-            </Text>
-          ) : (
-            <>
-              {selection.eventId !== undefined && !event && (
-                <Text as="p" variant="body2" color="subdued">
-                  The selected event is not available in this context.
-                </Text>
-              )}
-              {segment && (
-                <dl className={styles.facts}>
-                  <div>
-                    <dt>From</dt>
-                    <dd>
-                      {locations.find((item) => item.id === segment.from)
-                        ?.label ?? segment.from}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>To</dt>
-                    <dd>
-                      {locations.find((item) => item.id === segment.to)
-                        ?.label ?? segment.to}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Evidence</dt>
-                    <dd>{segment.evidence}</dd>
-                  </div>
-                </dl>
-              )}
-              {event && (
-                <dl className={styles.facts}>
-                  <div>
-                    <dt>Event time</dt>
-                    <dd>{event.timeLabel ?? "Unknown"}</dd>
-                  </div>
-                  {event.receivedTimeLabel && (
-                    <div>
-                      <dt>Received</dt>
-                      <dd>{event.receivedTimeLabel}</dd>
-                    </div>
-                  )}
-                  <div>
-                    <dt>Location</dt>
-                    <dd>
-                      {event.locationLabel ?? location?.label ?? "Not supplied"}
-                    </dd>
-                  </div>
-                </dl>
-              )}
-              {description && (
-                <Text as="p" variant="body2" color="subdued">
-                  {description}
-                </Text>
-              )}
-              {context.paths.length > 0 && selection.type !== "path" && (
-                <div className={styles.memberships}>
-                  <Text as="span" variant="caption" color="subdued">
-                    {text.paths}
-                  </Text>
-                  {context.paths.map((item) => (
-                    <Button
-                      key={item.id}
-                      size="sm"
-                      variant="text"
-                      onPress={() =>
-                        onSelectionChange({ type: "path", pathId: item.id })
-                      }
-                    >
-                      {item.label}
-                    </Button>
-                  ))}
-                </div>
-              )}
-              {selection.type !== "event" && (
-                <div className={styles.associated}>
-                  <Text as="p" variant="caption" color="subdued">
-                    {context.events.length} associated events
-                  </Text>
-                  <div className={styles.eventChoices}>
-                    {context.events.map((item) => (
-                      <Button
-                        key={item.id}
-                        variant="text"
-                        size="sm"
-                        aria-pressed={item.id === event?.id}
-                        onPress={() => chooseEvent(item.id)}
-                      >
-                        {item.timeLabel ?? "Time unknown"} · {item.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {context.events.length > 0 && (
-                <nav className={styles.stepping} aria-label="Event navigation">
-                  <Button
-                    size="sm"
-                    variant="outlined"
-                    isDisabled={index <= 0}
-                    onPress={() => chooseEvent(context.events[index - 1].id)}
-                  >
-                    {text.previous}
-                  </Button>
-                  <Text as="span" variant="caption" color="subdued">
-                    {index < 0
-                      ? `${context.events.length} events`
-                      : `${index + 1} / ${context.events.length}`}
-                  </Text>
-                  <Button
-                    size="sm"
-                    variant="outlined"
-                    isDisabled={index === context.events.length - 1}
-                    onPress={() => chooseEvent(context.events[index + 1].id)}
-                  >
-                    {text.next}
-                  </Button>
-                </nav>
-              )}
-              {renderDetails && (
-                <div className={styles.content}>{renderDetails(context)}</div>
-              )}
-            </>
-          )}
-        </section>
+        <InvestigationDetails
+          context={context}
+          isNarrow={isNarrow}
+          chooseEvent={chooseEvent}
+          clear={() => onSelectionChange(null)}
+          renderDetails={renderDetails}
+          labels={text}
+        />
       </div>
     </section>
   );

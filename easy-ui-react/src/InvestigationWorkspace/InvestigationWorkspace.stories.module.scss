@@ -1,0 +1,15 @@
+@use "../styles/common" as *;
+.observation {
+  display: grid;
+  gap: design-token("space.1");
+}
+.metricRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+}
+.headline {
+  flex: 0 0 184px;
+  max-inline-size: 100%;
+}
