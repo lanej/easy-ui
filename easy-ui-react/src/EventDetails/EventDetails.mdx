@@ -1,0 +1,30 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as Stories from "./EventDetails.stories";
+
+<Meta of={Stories} />
+
+# EventDetails
+
+A molecule for exact observation metadata in inspectors, previews, and drawers. The investigation workspace uses the same inline description list. Occurrence time and receipt time remain separate; the component does not parse, sort, or reinterpret caller-formatted values.
+
+<Canvas of={Stories.Inline} />
+
+```tsx
+import { EventDetails } from "@easypost/easy-ui/EventDetails";
+
+<EventDetails
+  event={selectedEvent}
+  sourceLabel="Tracking feed"
+  identifiers={[{ label: "Source record", value: "00042" }]}
+  showEventId
+  layout="stacked"
+/>;
+```
+
+`event` accepts the `id`, `timeLabel`, `receivedTimeLabel`, and `locationLabel` fields from an `EventTimelineEvent`. Occurrence time and location display explicit fallback text when missing. Receipt time, source, and additional identifiers appear only when supplied. `locationLabel` is a fallback from an application location record; the event's own location label takes precedence. Event ID is opt-in. Identifier values remain strings so leading zeros survive. `labels` customizes the field headings and fallback text.
+
+Inline facts wrap with their container. Stacked facts suit a narrow inspector; long identifiers wrap without truncation. Provenance and identifiers are presentation only, and do not establish that an observation or inferred path is true.
+
+<Canvas of={Stories.Stacked} />
+<Canvas of={Stories.Unknown} />
+<Canvas of={Stories.LongIdentifiers} />
