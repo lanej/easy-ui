@@ -11,7 +11,7 @@ import {
 import { TextField } from "../../TextField";
 import { Select } from "../../Select";
 import { Button } from "../../Button";
-import { Badge } from "../../Badge";
+import { Badge, type BadgeVariant } from "../../Badge";
 import { Popover } from "../../Popover";
 import styles from "./InvestigationRecipes.module.scss";
 
@@ -35,6 +35,16 @@ export type InvestigationQueueProps = {
   isLoading?: boolean;
   error?: string;
   onRetry?: () => void;
+};
+
+// Review completion is workflow progress, independent of the recorded outcome.
+const reviewStageVariants: Record<
+  InvestigationCase["reviewStatus"],
+  BadgeVariant
+> = {
+  Unreviewed: "warning",
+  "In review": "primary",
+  Reviewed: "success",
 };
 
 /** Application recipe: replace the local filters/paging with your query layer as needed. */
@@ -330,7 +340,10 @@ export function InvestigationQueue({
                 accessibilityLabel={`Risk score for ${row.id}`}
               />
             ) : key === "reviewStatus" ? (
-              <Badge variant="inverse" accessibilityLabel="Review state:">
+              <Badge
+                variant={reviewStageVariants[row.reviewStatus]}
+                accessibilityLabel="Review state:"
+              >
                 {row.reviewStatus}
               </Badge>
             ) : (

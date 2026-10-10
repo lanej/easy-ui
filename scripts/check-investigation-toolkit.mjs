@@ -98,6 +98,42 @@ async function choose(label, option) {
   await page.getByRole("button", { name: new RegExp(label) }).click();
   await page.getByRole("option", { name: option, exact: true }).click();
 }
+async function reviewStageColors(theme) {
+  const colors = [];
+  for (const [id, stage] of [
+    ["CASE-1042", "Unreviewed"],
+    ["CASE-1003", "In review"],
+    ["CASE-1008", "Reviewed"],
+  ]) {
+    const row = page.getByRole("row").filter({
+      has: page.getByRole("button", { name: `Open case ${id}` }),
+    });
+    colors.push(
+      await row
+        .getByText(stage, { exact: true })
+        .evaluate(
+          (node) => getComputedStyle(node.parentElement).backgroundColor,
+        ),
+    );
+  }
+  const categoryColor = await page
+    .getByText("Delivery review", { exact: true })
+    .first()
+    .evaluate((node) => getComputedStyle(node.parentElement).backgroundColor);
+  assert.equal(
+    new Set([...colors, categoryColor]).size,
+    4,
+    "Review stages are visibly distinct from each other and neutral categories",
+  );
+  const channels = colors.map((color) => color.match(/[\d.]+/g).map(Number));
+  const [amber, blue, green] = channels;
+  assert(amber[0] >= amber[1] && amber[1] > amber[2], "Unreviewed is amber");
+  assert(blue[2] > blue[0] && blue[2] > blue[1], "In review is blue");
+  assert(green[1] > green[0] && green[1] > green[2], "Reviewed is green");
+  checks.push(
+    `review stage colors convey waiting, active, and completed work in ${theme} mode`,
+  );
+}
 try {
   await open(`${comparison}--linked-map`);
   await mapReady();
@@ -203,6 +239,7 @@ try {
 
   await open(`${queue}--worklist`);
   await page.getByRole("grid", { name: "Cases" }).waitFor();
+  await reviewStageColors("light");
   await audit("queue-light", true);
   for (const heading of ["Category", "Review state", "Last observation"])
     await page
@@ -287,6 +324,7 @@ try {
     "category filtering selects the supplied types and clears with the other filters",
   );
   await open(`${queue}--worklist`, "dark");
+  await reviewStageColors("dark");
   await audit("queue-wide-dark", true);
   await open(`${queue}--worklist`, "dark", 390);
   await page.getByRole("button", { name: "Filters", exact: true }).waitFor();
@@ -298,6 +336,24 @@ try {
   );
   assert.equal(await page.getByRole("button", { name: /Category/ }).count(), 0);
   await audit("queue-narrow-dark", true);
+  await page
+    .getByRole("columnheader", { name: "Review state", exact: true })
+    .evaluate((header) => {
+      const grid = header.closest('[role="grid"]');
+      const scroller = grid.parentElement.parentElement;
+      const caseHeader = grid.querySelector('[role="columnheader"]');
+      // Keep the review column clear of the sticky case column.
+      scroller.scrollLeft +=
+        header.getBoundingClientRect().left -
+        caseHeader.getBoundingClientRect().right;
+    });
+  await audit("queue-review-stages-narrow-dark", true);
+  await page
+    .getByRole("columnheader", { name: "Case", exact: true })
+    .evaluate((header) => {
+      header.closest('[role="grid"]').parentElement.parentElement.scrollLeft =
+        0;
+    });
   const filterTrigger = page.getByRole("button", { name: /^Filters/ });
   await filterTrigger.focus();
   await filterTrigger.press("Enter");
