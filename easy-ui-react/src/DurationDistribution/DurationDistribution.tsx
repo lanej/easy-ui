@@ -516,7 +516,7 @@ export function DurationDistribution({
                     <span
                       className={styles.marker}
                       style={{
-                        top: `calc(${hasCurve ? 100 - (currentFraction ?? 0) * 100 : 100}% - 4px)`,
+                        top: `calc(${hasCurve ? 100 - (currentFraction ?? 0) * 100 : hasHistogram && distributionPresentation === "concentration" ? 50 : 100}% - 4px)`,
                       }}
                     />
                   )}

@@ -1,7 +1,8 @@
 import React from "react";
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { render } from "../utilities/test";
 import { EventTimeline } from "./EventTimeline";
+import { EventMetrics } from "../EventMetrics";
 import { HealthAssessment } from "../HealthAssessment";
 import { DurationDistribution } from "../DurationDistribution";
 import type { EventTimelineEvent } from "./EventItem";
@@ -95,6 +96,38 @@ describe("EventTimeline", () => {
     ).toHaveLength(2);
   });
 
+  it("retains compact location identity and names an icon-only facility type accessibly", () => {
+    const located: EventTimelineEvent[] = [
+      {
+        id: "arrived",
+        label: "Arrived",
+        timeLabel: "17:06",
+        locationLabel: "Sacramento, CA",
+        locationTypeLabel: "Regional hub",
+        detailLabel: "Received at 17:14",
+        locationIcon: <svg data-testid="facility-icon" />,
+      },
+    ];
+    const { rerender } = render(
+      <EventTimeline events={located} size="compact" />,
+    );
+    const button = screen.getByRole("button", {
+      name: /Arrived.*Sacramento, CA/,
+    });
+    expect(button).toHaveAccessibleDescription(
+      "Regional hub. Received at 17:14",
+    );
+    expect(screen.getByText("Sacramento, CA")).toBeVisible();
+    expect(screen.getByTestId("facility-icon").parentElement).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+
+    rerender(<EventTimeline events={located} />);
+    expect(screen.getByText("Regional hub · Sacramento, CA")).toBeVisible();
+    expect(screen.getByText("Received at 17:14")).toBeVisible();
+  });
+
   it("renders caller-owned content between events without inventing intervals", () => {
     render(
       <EventTimeline
@@ -105,6 +138,198 @@ describe("EventTimeline", () => {
     expect(screen.getByText("After first")).toBeVisible();
     expect(screen.getByText("After second")).toBeVisible();
     expect(screen.queryByText("After third")).not.toBeInTheDocument();
+  });
+
+  it("retains metrics on every event, including the final observation, independently of intervals", () => {
+    render(
+      <EventTimeline
+        events={events}
+        renderMetrics={(event) => <span>Metrics for {event.id}</span>}
+        renderInterval={(event) => <span>After {event.id}</span>}
+      />,
+    );
+
+    const entries = screen.getAllByRole("listitem");
+    for (const [index, event] of events.entries()) {
+      const metric = within(entries[index]).getByText(
+        `Metrics for ${event.id}`,
+      );
+      expect(metric).toBeVisible();
+      expect(metric.closest("button")).toBeNull();
+    }
+    expect(screen.getAllByRole("button")).toHaveLength(events.length);
+    expect(screen.getByText("After first")).toBeVisible();
+    expect(screen.getByText("After second")).toBeVisible();
+    expect(screen.queryByText("After third")).not.toBeInTheDocument();
+  });
+
+  it("keeps minimal metric pills in the shared event flow without changing keyboard navigation", () => {
+    const onSelectedIdChange = vi.fn();
+    const { container } = render(
+      <EventTimeline
+        events={events}
+        size="compact"
+        metricsPlacement="inline"
+        defaultSelectedId="first"
+        onSelectedIdChange={onSelectedIdChange}
+        renderMetrics={(event) => (
+          <EventMetrics
+            variant="minimal"
+            ariaLabel={`${event.id} outcomes`}
+            metrics={[
+              {
+                id: "dwell",
+                label: "Dwell time",
+                valueLabel: "6 h",
+                assessment: "healthy",
+              },
+              {
+                id: "exception",
+                label: "Exception rate",
+                valueLabel: "2%",
+                assessment: "degraded",
+                assessmentLabel: "Elevated",
+              },
+            ]}
+          />
+        )}
+      />,
+    );
+    const timeline = screen.getByRole("list", { name: "Event timeline" });
+    const entries = Array.from(timeline.children) as HTMLElement[];
+    const buttons = entries.map((entry) => within(entry).getByRole("button"));
+    for (const [index, event] of events.entries()) {
+      const outcomes = screen.getByRole("list", {
+        name: `${event.id} outcomes`,
+      });
+      const slot = outcomes.parentElement;
+      expect(slot?.parentElement).toBe(buttons[index].parentElement);
+      expect(outcomes.closest("button")).toBeNull();
+      expect(within(outcomes).getByText("Dwell time 6 h")).toBeVisible();
+      const exception = within(outcomes).getByRole("group", {
+        name: "Exception rate: 2%; Elevated",
+      });
+      expect(exception).toHaveTextContent(/^Exception rate 2%$/);
+      expect(exception).toHaveAttribute("data-assessment", "degraded");
+      expect(exception).not.toHaveTextContent("Elevated");
+      expect(
+        within(buttons[index]).queryByText("Dwell time 6 h"),
+      ).not.toBeInTheDocument();
+    }
+    expect(container.querySelector("button button")).toBeNull();
+    expect(buttons).toHaveLength(events.length);
+    fireEvent.keyDown(buttons[0], { key: "ArrowDown" });
+    expect(buttons[1]).toHaveFocus();
+    expect(onSelectedIdChange).toHaveBeenLastCalledWith("second");
+    fireEvent.keyDown(buttons[1], { key: "End" });
+    expect(buttons[2]).toHaveFocus();
+    expect(onSelectedIdChange).toHaveBeenLastCalledWith("third");
+  });
+
+  it.each(["below", "inline"] as const)(
+    "keeps %s metric controls outside event buttons and out of arrow-key selection",
+    (metricsPlacement) => {
+      const onSelectedIdChange = vi.fn();
+      const onMetricClick = vi.fn();
+      const { container } = render(
+        <EventTimeline
+          events={events}
+          metricsPlacement={metricsPlacement}
+          defaultSelectedId="first"
+          onSelectedIdChange={onSelectedIdChange}
+          renderMetrics={(event) => (
+            <button onClick={onMetricClick}>Inspect {event.id} metric</button>
+          )}
+        />,
+      );
+      const entries = screen.getAllByRole("listitem");
+      const select = (index: number) =>
+        within(entries[index]).getAllByRole("button")[0];
+
+      expect(container.querySelector("button button")).toBeNull();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Inspect first metric" }),
+      );
+      expect(onMetricClick).toHaveBeenCalledOnce();
+      expect(onSelectedIdChange).not.toHaveBeenCalled();
+
+      fireEvent.keyDown(select(0), { key: "ArrowDown" });
+      expect(select(1)).toHaveFocus();
+      expect(onSelectedIdChange).toHaveBeenLastCalledWith("second");
+      fireEvent.keyDown(select(1), { key: "End" });
+      expect(select(2)).toHaveFocus();
+      expect(onSelectedIdChange).toHaveBeenLastCalledWith("third");
+      fireEvent.keyDown(select(2), { key: "Home" });
+      expect(select(0)).toHaveFocus();
+      expect(onSelectedIdChange).toHaveBeenLastCalledWith("first");
+    },
+  );
+
+  it("retains full inline event identity and visible facility type on rows with and without metrics", () => {
+    const located: EventTimelineEvent[] = [
+      {
+        id: "arrived",
+        label: "Arrived",
+        timeLabel: "17:06",
+        locationLabel: "Sacramento, CA",
+        locationTypeLabel: "Regional facility",
+        detailLabel: "Received at 17:14",
+        statusLabel: "Carrier observation",
+        locationIcon: <svg data-testid="inline-facility-icon" />,
+      },
+      {
+        id: "departed",
+        label: "Departed",
+        timeLabel: "18:00",
+        locationLabel: "Sacramento, CA",
+        locationTypeLabel: "Regional facility",
+      },
+    ];
+    render(
+      <EventTimeline
+        events={located}
+        size="compact"
+        metricsPlacement="inline"
+        renderMetrics={(event) =>
+          event.id === "arrived" ? (
+            <EventMetrics
+              variant="minimal"
+              metrics={[
+                {
+                  id: "dwell",
+                  label: "Dwell time",
+                  valueLabel: "6 h",
+                  assessment: "healthy",
+                },
+              ]}
+            />
+          ) : null
+        }
+      />,
+    );
+    const arrived = screen.getByRole("button", {
+      name: /17:06.*Arrived.*Regional facility.*Sacramento, CA/,
+    });
+    expect(arrived).toHaveAccessibleName(/Carrier observation/);
+    expect(arrived).toHaveAccessibleDescription("Received at 17:14");
+    expect(arrived).not.toHaveAccessibleName(/Dwell time/);
+    expect(
+      screen.getByRole("button", {
+        name: /18:00.*Departed.*Regional facility.*Sacramento, CA/,
+      }),
+    ).toBeVisible();
+    const locations = screen.getAllByText("Regional facility · Sacramento, CA");
+    expect(locations).toHaveLength(2);
+    for (const location of locations) {
+      expect(location).toBeVisible();
+      expect(location.closest("[data-event-headline]")).not.toBeNull();
+    }
+    expect(
+      screen.getByText("Dwell time 6 h").closest("[data-event-headline]"),
+    ).toBe(arrived.parentElement);
+    expect(
+      screen.getByTestId("inline-facility-icon").parentElement,
+    ).toHaveAttribute("aria-hidden", "true");
   });
   it("composes an optional duration assessment between events without changing chronology", () => {
     const { rerender } = render(

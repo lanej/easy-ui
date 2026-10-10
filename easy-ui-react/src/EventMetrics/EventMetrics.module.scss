@@ -1,0 +1,101 @@
+@use "../styles/common" as *;
+
+.metrics {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+  container-type: inline-size;
+  container-name: event-metrics;
+}
+
+.metric {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-inline-size: 0;
+  padding-block: 8px;
+}
+
+.metric + .metric {
+  border-block-start: 1px solid design-token("color.neutral.200");
+}
+
+.headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.reference {
+  flex: 1 1 96px;
+  min-inline-size: min(96px, 100%);
+  max-inline-size: 100%;
+}
+
+.metrics[data-variant="minimal"] {
+  // Individual pills participate in the surrounding text flow and wrap naturally.
+  container-type: normal;
+  display: inline;
+
+  .metric {
+    display: inline-flex;
+    padding: 0;
+    border: 0;
+    max-inline-size: 100%;
+    margin-block: 3px;
+    margin-inline-end: 6px;
+    vertical-align: middle;
+  }
+
+  .metric:where(:last-child) {
+    margin-inline-end: 0;
+  }
+}
+
+// Keep the labeled pills at the start and give their references a shared column.
+.metrics[data-variant="compact"] {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(96px, 1fr);
+  column-gap: 12px;
+
+  .metric {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+  }
+}
+
+.metrics[data-variant="expanded"] {
+  .metric {
+    display: grid;
+    gap: 12px;
+    padding-block: 12px;
+  }
+
+  .reference {
+    inline-size: 100%;
+  }
+}
+
+// A reference can wrap; the metric name and its value retain readable sizes.
+@container event-metrics (max-width: 310px) {
+  .metrics[data-variant="compact"] .metric {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reference {
+    flex-basis: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .metric + .metric {
+    border-color: CanvasText;
+  }
+}
