@@ -88,6 +88,12 @@ async function audit(name, capture = false) {
       .screenshot({ path: `${output}/${name}.png` });
   checks.push(name);
 }
+async function waitForFocus(locator) {
+  await page.waitForFunction(
+    (element) => element === document.activeElement,
+    await locator.elementHandle(),
+  );
+}
 async function choose(label, option) {
   await page.getByRole("button", { name: new RegExp(label) }).click();
   await page.getByRole("option", { name: option, exact: true }).click();
@@ -307,6 +313,7 @@ try {
     path: `${output}/queue-filter-panel-narrow.png`,
   });
   await page.getByRole("button", { name: "Done", exact: true }).click();
+  await waitForFocus(filterTrigger);
   assert(
     await filterTrigger.evaluate((node) => node === document.activeElement),
   );
@@ -326,6 +333,7 @@ try {
     /Delivery review/,
   );
   await page.keyboard.press("Escape");
+  await waitForFocus(filterTrigger);
   assert(
     await filterTrigger.evaluate((node) => node === document.activeElement),
   );
@@ -334,6 +342,7 @@ try {
     .getByRole("button", { name: "Clear filters", exact: true })
     .click();
   await filterDialog.getByRole("button", { name: "Done", exact: true }).click();
+  await waitForFocus(filterTrigger);
   assert.equal(await filterTrigger.textContent(), "Filters");
   assert.equal(
     await page.getByRole("button", { name: /Open case/ }).count(),
