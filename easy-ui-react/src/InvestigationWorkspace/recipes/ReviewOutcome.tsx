@@ -1,5 +1,5 @@
 import React, { useId, useRef } from "react";
-import { RadioGroup } from "../../RadioGroup";
+import { Select } from "../../Select";
 import { Textarea } from "../../Textarea";
 import { Button } from "../../Button";
 import type { ReviewOutcomeController } from "./useReviewOutcomes";
@@ -61,7 +61,7 @@ function ReviewOutcomeForm({
             );
             form.current
               ?.querySelector<HTMLElement>(
-                !validOutcome ? 'input[type="radio"]' : "textarea",
+                !validOutcome ? 'button[aria-haspopup="listbox"]' : "textarea",
               )
               ?.focus();
             return;
@@ -69,19 +69,18 @@ function ReviewOutcomeForm({
           await review.submit();
         }}
       >
-        <RadioGroup
+        <Select
           label="Review outcome"
-          value={outcome}
-          onChange={review.setOutcome}
-          isReadOnly={saving}
+          placeholder="Choose a review outcome"
+          selectedKey={outcome || null}
+          onSelectionChange={(key) => review.setOutcome(String(key))}
+          isDisabled={saving || !options.length}
           aria-describedby={error ? errorId : undefined}
         >
           {options.map((option) => (
-            <RadioGroup.Item key={option.value} value={option.value}>
-              {option.label}
-            </RadioGroup.Item>
+            <Select.Option key={option.value}>{option.label}</Select.Option>
           ))}
-        </RadioGroup>
+        </Select>
         <Textarea
           label="Review notes"
           value={notes}

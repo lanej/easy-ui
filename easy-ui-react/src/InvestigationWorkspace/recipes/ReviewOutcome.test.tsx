@@ -24,6 +24,11 @@ function ReviewHarness({
   ) : null;
 }
 
+async function chooseOutcome(label: string) {
+  await userEvent.click(screen.getByRole("button", { name: /Review outcome/ }));
+  await userEvent.click(await screen.findByRole("option", { name: label }));
+}
+
 describe("ReviewOutcome recipe", () => {
   const props = {
     caseId: "A",
@@ -35,8 +40,8 @@ describe("ReviewOutcome recipe", () => {
     const submit = vi.fn();
     render(<ReviewHarness {...props} onSubmit={submit} />);
     expect(
-      screen.queryByRole("radio", { checked: true }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", { name: /Review outcome/ }),
+    ).toHaveTextContent("Choose a review outcome");
     await userEvent.click(
       screen.getByRole("button", { name: "Record review" }),
     );
@@ -44,11 +49,9 @@ describe("ReviewOutcome recipe", () => {
       "Choose a review outcome",
     );
     expect(
-      screen.getByRole("radio", { name: "Confirmed issue" }),
+      screen.getByRole("button", { name: /Review outcome/ }),
     ).toHaveFocus();
-    await userEvent.click(
-      screen.getByRole("radio", { name: "No issue found" }),
-    );
+    await chooseOutcome("No issue found");
     await userEvent.type(screen.getByLabelText("Review notes"), "   ");
     await userEvent.click(
       screen.getByRole("button", { name: "Record review" }),
@@ -62,9 +65,7 @@ describe("ReviewOutcome recipe", () => {
       .mockRejectedValueOnce(new Error("offline"))
       .mockResolvedValueOnce(undefined);
     render(<ReviewHarness {...props} onSubmit={submit} />);
-    await userEvent.click(
-      screen.getByRole("radio", { name: "No issue found" }),
-    );
+    await chooseOutcome("No issue found");
     await userEvent.type(
       screen.getByLabelText("Review notes"),
       "  Independently confirmed.  ",
@@ -90,6 +91,9 @@ describe("ReviewOutcome recipe", () => {
       notes: "Independently confirmed.",
     });
     expect(screen.getByLabelText("Review notes")).toHaveValue("");
+    expect(
+      screen.getByRole("button", { name: /Review outcome/ }),
+    ).toHaveTextContent("Choose a review outcome");
     // The recipe never invents a reviewer, timestamp, or persisted history entry.
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
@@ -102,7 +106,7 @@ describe("ReviewOutcome recipe", () => {
         }),
     );
     const { rerender } = render(<ReviewHarness {...props} onSubmit={submit} />);
-    await userEvent.click(screen.getByRole("radio", { name: "Inconclusive" }));
+    await chooseOutcome("Inconclusive");
     await userEvent.type(
       screen.getByLabelText("Review notes"),
       "Needs more evidence.",
@@ -117,9 +121,7 @@ describe("ReviewOutcome recipe", () => {
     rerender(
       <ReviewHarness {...props} caseId="B" records={[]} onSubmit={submit} />,
     );
-    await userEvent.click(
-      screen.getByRole("radio", { name: "No issue found" }),
-    );
+    await chooseOutcome("No issue found");
     await userEvent.type(
       screen.getByLabelText("Review notes"),
       "Separate case.",
@@ -142,9 +144,7 @@ describe("ReviewOutcome recipe", () => {
         }),
     );
     const { rerender } = render(<ReviewHarness {...props} onSubmit={submit} />);
-    await userEvent.click(
-      screen.getByRole("radio", { name: "No issue found" }),
-    );
+    await chooseOutcome("No issue found");
     await userEvent.type(screen.getByLabelText("Review notes"), "Same case.");
     await userEvent.click(
       screen.getByRole("button", { name: "Record review" }),
@@ -153,6 +153,9 @@ describe("ReviewOutcome recipe", () => {
     rerender(<ReviewHarness {...props} onSubmit={submit} />);
     expect(screen.getByLabelText("Review notes")).toHaveValue("Same case.");
     expect(screen.getByLabelText("Review notes")).toHaveAttribute("readonly");
+    expect(
+      screen.getByRole("button", { name: /Review outcome/ }),
+    ).toBeDisabled();
     expect(
       screen.getByRole("button", { name: "Saving review…" }),
     ).toHaveAttribute("aria-disabled", "true");
@@ -172,7 +175,7 @@ describe("ReviewOutcome recipe", () => {
         }),
     );
     const { rerender } = render(<ReviewHarness {...props} onSubmit={submit} />);
-    await userEvent.click(screen.getByRole("radio", { name: "Inconclusive" }));
+    await chooseOutcome("Inconclusive");
     await userEvent.type(
       screen.getByLabelText("Review notes"),
       "Original case.",
@@ -196,7 +199,9 @@ describe("ReviewOutcome recipe", () => {
       "Your draft is retained",
     );
     expect(screen.getByLabelText("Review notes")).toHaveValue("Original case.");
-    expect(screen.getByRole("radio", { name: "Inconclusive" })).toBeChecked();
+    expect(
+      screen.getByRole("button", { name: /Review outcome/ }),
+    ).toHaveTextContent("Inconclusive");
   });
   it("keeps keyboard focus on the submit button through a rejected save and successful retry", async () => {
     const submit = vi
@@ -204,9 +209,7 @@ describe("ReviewOutcome recipe", () => {
       .mockRejectedValueOnce(new Error("offline"))
       .mockResolvedValueOnce(undefined);
     render(<ReviewHarness {...props} onSubmit={submit} />);
-    await userEvent.click(
-      screen.getByRole("radio", { name: "No issue found" }),
-    );
+    await chooseOutcome("No issue found");
     await userEvent.type(screen.getByLabelText("Review notes"), "Retained.");
     const button = screen.getByRole("button", { name: "Record review" });
     button.focus();

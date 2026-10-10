@@ -239,12 +239,22 @@ try {
     .waitFor();
   assert(
     await page
-      .getByRole("radio", { name: "Confirmed issue" })
+      .getByRole("button", { name: /Review outcome/ })
       .evaluate((node) => node === document.activeElement),
   );
   await audit("review-validation");
   await open(`${review}--failed-save`, "light", 390);
-  await page.getByRole("radio", { name: "No issue found" }).check();
+  const outcomeSelect = page.getByRole("button", { name: /Review outcome/ });
+  await outcomeSelect.focus();
+  await outcomeSelect.press("Enter");
+  const outcomeMenu = page.getByRole("listbox", { name: "Review outcome" });
+  await outcomeMenu.waitFor();
+  await audit("review-select-menu-narrow");
+  await page.keyboard.press("Home");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  assert.match(await outcomeSelect.textContent(), /No issue found/);
+  checks.push("review outcome supports an explicit keyboard selection");
   await page
     .getByRole("textbox", { name: "Review notes" })
     .fill("Independent confirmation received.");
@@ -253,6 +263,7 @@ try {
   await submit.press("Enter");
   await page.getByRole("button", { name: "Saving review…" }).waitFor();
   assert.equal(await submit.getAttribute("aria-disabled"), "true");
+  assert(await outcomeSelect.isDisabled());
   assert(await submit.evaluate((node) => node === document.activeElement));
   assert(
     (await page
@@ -269,6 +280,7 @@ try {
     await page.getByRole("textbox", { name: "Review notes" }).inputValue(),
     "Independent confirmation received.",
   );
+  assert.match(await outcomeSelect.textContent(), /No issue found/);
   await audit("review-failed-narrow", true);
   await submit.press("Enter");
   await page
@@ -276,6 +288,7 @@ try {
     .filter({ hasText: "Review recorded." })
     .waitFor();
   assert(await submit.evaluate((node) => node === document.activeElement));
+  assert.match(await outcomeSelect.textContent(), /Choose a review outcome/);
   checks.push(
     "submit focus survives pending, rejected, and successful review saves",
   );
@@ -320,7 +333,7 @@ try {
     .getByRole("region", { name: "Selected observation" })
     .getByText("CASE-1042:south-scan", { exact: true })
     .waitFor();
-  await page.getByRole("radio", { name: "No issue found" }).check();
+  await choose("Review outcome", "No issue found");
   await page
     .getByRole("textbox", { name: "Review notes" })
     .fill("Confirmed independently for this case.");
@@ -388,7 +401,7 @@ try {
   await open("recipes-investigation-workflow--slow-save");
   await page.getByRole("button", { name: "Open case CASE-1042" }).click();
   await mapReady();
-  await page.getByRole("radio", { name: "No issue found" }).check();
+  await choose("Review outcome", "No issue found");
   await page
     .getByRole("textbox", { name: "Review notes" })
     .fill("One pending review across navigation.");
@@ -426,7 +439,7 @@ try {
 
   await open("recipes-investigation-workflow--failed-save-across-navigation");
   await page.getByRole("button", { name: "Open case CASE-1042" }).click();
-  await page.getByRole("radio", { name: "Inconclusive" }).check();
+  await choose("Review outcome", "Inconclusive");
   await page
     .getByRole("textbox", { name: "Review notes" })
     .fill("Retain the original case after a hidden failure.");
@@ -454,7 +467,10 @@ try {
     await page.getByRole("textbox", { name: "Review notes" }).inputValue(),
     "Retain the original case after a hidden failure.",
   );
-  assert(await page.getByRole("radio", { name: "Inconclusive" }).isChecked());
+  assert.match(
+    await page.getByRole("button", { name: /Review outcome/ }).textContent(),
+    /Inconclusive/,
+  );
   await page.getByRole("button", { name: "Record review" }).click();
   await page
     .getByRole("status")
