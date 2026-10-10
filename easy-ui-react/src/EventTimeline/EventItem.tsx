@@ -49,6 +49,7 @@ export function EventItem({
       className={styles.item}
       data-size={size}
       data-current={current || undefined}
+      data-has-trailing={trailing != null || undefined}
     >
       <button
         ref={registerButton}

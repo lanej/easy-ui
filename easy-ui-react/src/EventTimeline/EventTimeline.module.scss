@@ -202,6 +202,24 @@
   }
 }
 
+// Compact row summaries share space with a readable event identity. Their
+// contents can wrap within the trailing slot without moving below the event.
+.item[data-size="compact"][data-has-trailing="true"] {
+  align-items: flex-start;
+  gap: 8px;
+
+  .select {
+    flex: 1 1 calc(var(--content-inset) + 108px);
+  }
+
+  .trailing {
+    flex: 0 1 auto;
+    max-inline-size: calc(100% - var(--content-inset) - 108px - 8px);
+    padding-block: 10px;
+    padding-inline-end: var(--row-inline-padding);
+  }
+}
+
 @media (forced-colors: active) {
   .item[data-current="true"] .select {
     outline: 1px solid Highlight;

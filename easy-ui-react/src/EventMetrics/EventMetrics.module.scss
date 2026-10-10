@@ -27,17 +27,9 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
-  gap: 6px;
   min-inline-size: 0;
   max-inline-size: 100%;
   font-variant-numeric: tabular-nums;
-}
-
-.label {
-  font-size: 12px;
-  font-weight: 500;
-  color: design-token("color.neutral.800");
-  overflow-wrap: anywhere;
 }
 
 .reference {
@@ -47,6 +39,8 @@
 }
 
 .metrics[data-variant="minimal"] {
+  // Let an inline event slot measure the pills' content when sharing a row.
+  container-type: normal;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -59,7 +53,7 @@
   }
 }
 
-// Share the reference column without making values a separate, right-aligned column.
+// Keep the labeled pills at the start and give their references a shared column.
 .metrics[data-variant="compact"] {
   display: grid;
   grid-template-columns: minmax(0, max-content) minmax(96px, 1fr);

@@ -12,7 +12,7 @@ export type EventMetric = {
   /** Formatted value and unit, such as "6 h" or "2%". Null or blank is unavailable. */
   valueLabel: string | null;
   assessment?: HealthIndicatorAssessment | null;
-  /** Optional visible context, such as "Elevated"; omitted for a value-only pill. */
+  /** Optional visible context, such as "Elevated", after the metric's value. */
   statusLabel?: string;
   /** Localized assessment meaning retained for assistive technology and hover. */
   assessmentLabel?: string;
@@ -37,7 +37,7 @@ const assessmentLabels = {
   unhealthy: "Unhealthy",
 };
 
-/** Independent event outcomes with adjacent labels and values at every density. */
+/** Independent event outcomes with consistent label-and-value pills at every density. */
 export function EventMetrics({
   metrics,
   variant = "compact",
@@ -74,8 +74,7 @@ export function EventMetrics({
         const outcomeLabel = [valueLabel, statusLabel]
           .filter(Boolean)
           .join(" · ");
-        const visibleLabel =
-          variant === "minimal" ? `${label} ${outcomeLabel}` : outcomeLabel;
+        const visibleLabel = `${label} ${outcomeLabel}`;
         const accessibleLabel = isLoading
           ? `${label}: ${loadingLabel}`
           : !available
@@ -96,11 +95,6 @@ export function EventMetrics({
               title={accessibleLabel}
               data-metric-header
             >
-              {variant !== "minimal" && (
-                <span className={styles.label} data-metric-label>
-                  {label}
-                </span>
-              )}
               <HealthIndicator
                 assessment={assessment}
                 availability={resolvedAvailability}
@@ -108,16 +102,8 @@ export function EventMetrics({
                 size="sm"
                 label={visibleLabel}
                 accessibilityLabel={accessibleLabel}
-                unavailableLabel={
-                  variant === "minimal"
-                    ? `${label} ${unavailableLabel}`
-                    : unavailableLabel
-                }
-                loadingLabel={
-                  variant === "minimal"
-                    ? `${label} ${loadingLabel}`
-                    : loadingLabel
-                }
+                unavailableLabel={`${label} ${unavailableLabel}`}
+                loadingLabel={`${label} ${loadingLabel}`}
               />
             </div>
             {showReference && (
