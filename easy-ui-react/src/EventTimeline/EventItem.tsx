@@ -12,6 +12,8 @@ export type EventTimelineEvent = {
   receivedTimeLabel?: string;
   locationLabel?: string;
   locationTypeLabel?: string;
+  /** Decorative facility category icon; locationTypeLabel supplies its meaning. */
+  locationIcon?: React.ReactNode;
   locationId?: string;
   pathIds?: readonly string[];
   tone?: StatusDotTone;
@@ -53,7 +55,13 @@ export function EventItem({
         type="button"
         className={styles.select}
         aria-current={current ? "true" : undefined}
-        aria-description={size === "compact" ? event.detailLabel : undefined}
+        aria-description={
+          size === "compact"
+            ? [event.locationTypeLabel, event.detailLabel]
+                .filter(Boolean)
+                .join(". ") || undefined
+            : undefined
+        }
         onClick={onSelect}
         onKeyDown={(e) => {
           if (
@@ -73,14 +81,22 @@ export function EventItem({
         </span>
         <span className={styles.content}>
           <span className={styles.title}>{event.label}</span>
-          {size !== "compact" &&
-            (event.locationLabel || event.locationTypeLabel) && (
-              <span className={styles.location}>
-                {[event.locationTypeLabel, event.locationLabel]
-                  .filter(Boolean)
-                  .join(" · ")}
+          {(event.locationLabel || event.locationTypeLabel) && (
+            <span className={styles.location}>
+              {event.locationIcon && (
+                <span className={styles.locationIcon} aria-hidden="true">
+                  {event.locationIcon}
+                </span>
+              )}
+              <span>
+                {size === "compact"
+                  ? event.locationLabel || event.locationTypeLabel
+                  : [event.locationTypeLabel, event.locationLabel]
+                      .filter(Boolean)
+                      .join(" · ")}
               </span>
-            )}
+            </span>
+          )}
           {size !== "compact" && event.detailLabel && (
             <span className={styles.received}>{event.detailLabel}</span>
           )}

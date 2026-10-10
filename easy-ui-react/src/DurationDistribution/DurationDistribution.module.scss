@@ -545,6 +545,18 @@
 .root[data-concentration="true"] .track {
   opacity: 0;
 }
+
+// A concentration-only strip is centered in its compact frame, so its visible
+// baseline and current dot align with neighboring labels and status pills.
+.root[data-concentration="true"][data-visualization="points"] {
+  .concentrationStrip {
+    top: calc(50% - 4px);
+  }
+
+  .histogramPoint {
+    top: 50%;
+  }
+}
 @each $assessment,
   $tone
     in ("healthy": "positive", "degraded": "warning", "unhealthy": "negative")

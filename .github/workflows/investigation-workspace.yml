@@ -4,14 +4,20 @@ on:
     paths:
       - "easy-ui-react/src/InvestigationWorkspace/**"
       - "easy-ui-react/src/EventTimeline/**"
+      - "easy-ui-react/src/EventMetrics/**"
       - "easy-ui-react/src/NetworkMap/**"
       - "easy-ui-react/src/HealthAssessment/**"
+      - "easy-ui-react/src/HealthIndicator/**"
       - "easy-ui-react/src/DurationDistribution/**"
       - "scripts/check-investigation-workspace.mjs"
+      - "scripts/check-event-timeline.mjs"
+      - "scripts/browser-proof.mjs"
+      - ".github/actions/browser-proof/**"
       - ".github/workflows/investigation-workspace.yml"
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: investigation-workspace-${{ github.ref }}
   cancel-in-progress: true
@@ -30,11 +36,18 @@ jobs:
       - name: Install browser dependencies
         working-directory: scripts/preview-metrics
         run: npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+      - id: timeline-proof
+        uses: ./.github/actions/browser-proof
+        with:
+          suite: event-timeline
+          built: storybook-static
       - name: Verify linked interaction and responsive Storybook layouts
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
           STORYBOOK_URL: http://127.0.0.1:9019
           INVESTIGATION_REPORT_DIR: ${{ runner.temp }}/investigation-workspace
+          EVENT_TIMELINE_REPORT_DIR: ${{ runner.temp }}/event-timeline
+          EVENT_TIMELINE_REUSE: ${{ steps.timeline-proof.outputs.reuse }}
         run: |
           python3 -m http.server 9019 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/investigation-storybook.log" 2>&1 &
           server_pid=$!
@@ -45,11 +58,21 @@ jobs:
           done
           curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
           node scripts/check-investigation-workspace.mjs
+          if [ "$EVENT_TIMELINE_REUSE" != "true" ]; then
+            node scripts/check-event-timeline.mjs
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: investigation-workspace-browser
           path: |
             ${{ runner.temp }}/investigation-workspace
+            ${{ runner.temp }}/event-timeline
             ${{ runner.temp }}/investigation-storybook.log
           if-no-files-found: ignore
+      - uses: ./.github/actions/browser-proof
+        if: success() && steps.timeline-proof.outputs.reuse != 'true'
+        with:
+          mode: record
+          suite: event-timeline
+          digest: ${{ steps.timeline-proof.outputs.digest }}
