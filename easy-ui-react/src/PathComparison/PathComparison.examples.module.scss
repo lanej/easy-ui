@@ -1,0 +1,47 @@
+@use "../styles/common" as *;
+.example {
+  container-type: inline-size;
+  min-inline-size: 0;
+  margin-inline: auto;
+}
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.single {
+  display: grid;
+  gap: 16px;
+}
+.context {
+  display: grid;
+  min-inline-size: 0;
+  gap: 12px;
+}
+.inspector {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 8px;
+  background: design-token("color.neutral.000");
+  color: design-token("color.neutral.900");
+  overflow-wrap: anywhere;
+}
+.inspector h3,
+.inspector p {
+  margin: 0;
+}
+.inspector h3 {
+  font-size: 1rem;
+}
+.scope {
+  color: design-token("color.neutral.700");
+  font-size: 0.75rem;
+}
+@container (max-width: 860px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

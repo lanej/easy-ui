@@ -1,0 +1,40 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as Stories from "./PathComparison.stories";
+
+<Meta of={Stories} />
+
+# PathComparison
+
+Compare caller-aligned candidate histories while preserving separate observations, conflicting locations, and missing data. This organism shares `InvestigationSelection` with `InvestigationWorkspace`. Only the selected candidate receives a tinted background; candidate selection is not a likelihood or a finding.
+
+<Canvas of={Stories.LinkedMap} />
+
+## Data and selection
+
+```tsx
+import { PathComparison } from "@easypost/easy-ui/PathComparison";
+import type { InvestigationSelection } from "@easypost/easy-ui/InvestigationWorkspace";
+
+const [selection, setSelection] = useState<InvestigationSelection>(null);
+
+<PathComparison
+  paths={candidatePaths}
+  events={observations}
+  rows={alignedGroups}
+  selection={selection}
+  onSelectionChange={setSelection}
+/>;
+```
+
+`paths` have stable `id`, `label`, and optional `description`. Existing `InvestigationPath` objects are compatible. Each aligned row has a stable `id`, a `label`, optional `description`, and `cells` containing a `pathId`, ordered `eventIds`, and optional `note`.
+
+The application supplies alignment, membership, group descriptions, and any confidence labels. Keep cell membership consistent with the events' `pathIds` when coordinating with the workspace. IDs must be unique within each collection and an event must appear at most once within a cell. The component never sorts timestamps, merges matching descriptions, computes probabilities, or chooses a preferred candidate. Observations without candidate membership can remain in the workspace's event timeline.
+
+A candidate button requests `{type: "path", pathId}`. An observation requests `{type: "path", pathId, eventId}`. An external event selection highlights every displayed occurrence of that record; scoped selection highlights only the chosen candidate's occurrence. Pass the same controlled selection to the workspace, or derive a map selection in the application as the example does. Selection never changes implicitly after a callback.
+
+## Missing data and small containers
+
+An empty cell says “No observation supplied”; this does not claim that an event did not happen. An ID missing from the event snapshot remains visible as unavailable and cannot be selected. All paths and rows retain caller order. At small container widths each group stacks its candidate cells, keeping the path name beside the observations without horizontal page scrolling. Native buttons support Tab, Enter, and Space; table headers preserve group and candidate context. `labels` customizes the built-in text and `ariaLabel` names the comparison.
+
+<Canvas of={Stories.MissingRecords} />
+<Canvas of={Stories.Narrow} />
