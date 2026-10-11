@@ -9,7 +9,7 @@ A molecule for independently assessed event or facility measurements. Every pill
 
 ## Three presentations
 
-**Minimal** groups the labeled metric pills inline, without references. In a timeline, use the event's trailing slot to keep them in the same row as the event.
+**Minimal** places the labeled metric pills in an inline flow, without references. Individual pills can wrap. In a timeline, use `renderMetrics` with `metricsPlacement="inline"` to include them in the event's shared identity flow.
 
 <Canvas of={Stories.Minimal} />
 
@@ -63,6 +63,6 @@ Set `availability="unavailable"` on an unavailable metric or `isLoading` while i
 
 ## Timeline composition
 
-For **minimal**, pass `EventMetrics` through `EventTimeline.renderTrailing` to keep the pills beside the event in the same row. The pill group can wrap within its slot at narrow widths while the facility remains readable. For **compact** and **expanded**, use `EventTimeline.renderMetrics` below event identity. Both slots are available on the final event and render outside the event-selection button. Use `renderInterval` only for content that belongs to an actual interval following an event.
+Pass `EventMetrics` through `EventTimeline.renderMetrics`. For **minimal**, set `metricsPlacement="inline"` and `size="compact"`: the event label, facility icon and type, location, and individual pills share one wrapping flow within the selected event surface. For **compact** and **expanded**, retain the default `metricsPlacement="below"`. Metrics are available on the final event and remain outside the native event-selection button in both placements. Use `renderInterval` only for content that belongs to an actual interval following an event.
 
 <ArgTypes of={Stories} />

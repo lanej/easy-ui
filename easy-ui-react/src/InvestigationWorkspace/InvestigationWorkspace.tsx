@@ -52,6 +52,7 @@ export type InvestigationWorkspaceProps = InvestigationRecords & {
     EventTimelineProps,
     | "renderTrailing"
     | "renderMetrics"
+    | "metricsPlacement"
     | "renderInterval"
     | "renderDetails"
     | "size"

@@ -15,8 +15,10 @@ export type EventTimelineProps = {
   onLocationSelect?: (locationId: string, eventId: string) => void;
   /** Optional right-side summary, separate from the selected event button. */
   renderTrailing?: (event: EventTimelineEvent) => React.ReactNode;
-  /** Independent metric outcomes below event identity, including the final event. */
+  /** Independent metric outcomes on every event, including the final event. */
   renderMetrics?: (event: EventTimelineEvent) => React.ReactNode;
+  /** Flow metrics with event identity, or place them beneath it. */
+  metricsPlacement?: "inline" | "below";
   /** Content associated with the interval following an event. */
   renderInterval?: (
     event: EventTimelineEvent,
@@ -41,6 +43,7 @@ export function EventTimeline({
   renderDetails,
   renderTrailing,
   renderMetrics,
+  metricsPlacement = "below",
   emptyLabel = "No observations",
   ariaLabel = "Event timeline",
   size = "default",
@@ -90,6 +93,10 @@ export function EventTimeline({
               event={event}
               size={size}
               trailing={renderTrailing?.(event)}
+              inline={metricsPlacement === "inline"}
+              inlineMetrics={
+                metricsPlacement === "inline" ? metrics : undefined
+              }
               current={event.id === activeId}
               registerButton={(node) => {
                 if (node) buttons.current.set(event.id, node);
@@ -98,7 +105,9 @@ export function EventTimeline({
               onSelect={() => choose(event)}
               onKeyDown={(key) => navigate(event, key)}
             />
-            {metrics != null && <div className={styles.metrics}>{metrics}</div>}
+            {metricsPlacement === "below" && metrics != null && (
+              <div className={styles.metrics}>{metrics}</div>
+            )}
             {event.locationId && onLocationSelect && (
               <button
                 className={styles.mapLink}

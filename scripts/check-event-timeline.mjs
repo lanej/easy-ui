@@ -30,13 +30,19 @@ const checks = [],
   errors = [];
 page.on("pageerror", (error) => errors.push(error.message));
 
-async function open(story, theme, width, component = "eventtimeline") {
+async function open(
+  story,
+  theme,
+  width,
+  component = "eventtimeline",
+  readySelector = "[data-event-metrics]",
+) {
   await page.setViewportSize({ width, height: 1000 });
   const prefix = component === "eventtimeline" ? "organisms" : "molecules";
   await page.goto(
     `${base}/iframe.html?id=${prefix}-data-display-${component}--${story}&viewMode=story&globals=colorScheme:${theme}`,
   );
-  await page.locator("[data-event-metrics]").first().waitFor();
+  await page.locator(readySelector).first().waitFor();
   await page.evaluate(() => document.fonts.ready);
   assert.equal(await page.locator(".sb-errordisplay").isVisible(), false);
 }
@@ -132,16 +138,17 @@ async function audit(name) {
       for (const button of timeline.querySelectorAll(
         "button[class*='select_']",
       )) {
+        const identity =
+          button.closest('[data-metrics-placement="inline"]') ?? button;
         const title = button.querySelector("[class*='title_']");
-        const time = button.querySelector("[class*='time_']");
-        if (time && time.scrollWidth > time.clientWidth + 1)
-          failures.push("event timestamp is truncated");
+        const time = identity.querySelector("[class*='time_']");
+        readable(time, "event timestamp");
         readable(title, "event label");
         readable(
-          button.querySelector("[class*='location_'] > span:last-child"),
+          identity.querySelector("[class*='location_'] > span:last-child"),
           "facility location",
         );
-        const dot = button.querySelector("[data-tone][data-current='true']");
+        const dot = identity.querySelector("[data-tone][data-current='true']");
         if (dot && title) {
           const dotBox = box(dot);
           const ring = parseFloat(getComputedStyle(dot, "::before").width);
@@ -160,36 +167,91 @@ async function audit(name) {
       const variant = root.dataset.variant;
       const inlineReferences = [];
       if (variant === "minimal" && root.closest("ol[aria-label]")) {
-        const slot = root.parentElement;
-        const row = slot?.parentElement;
-        const selection = row?.querySelector(
-          ":scope > button[class*='select_']",
-        );
-        const entry = root.closest("li[class*='entry_']");
+        const row = root.closest('[data-metrics-placement="inline"]');
+        const content = row?.querySelector("[data-event-content]");
+        const headline = row?.querySelector("[data-event-headline]");
+        const selection = headline?.querySelector("button[class*='select_']");
+        const title = selection?.querySelector("[class*='title_']");
+        const location = headline?.querySelector("[class*='location_']");
+        const wrapper = root.closest("[data-inline-metrics]");
         if (
+          !row ||
+          !content ||
+          !headline ||
           !selection ||
-          row !== entry?.firstElementChild ||
+          !title ||
+          wrapper?.parentElement !== headline ||
           root.closest("button")
         ) {
           failures.push(
-            "minimal metrics must occupy a sibling slot in the event selection row",
+            "minimal metrics and event identity must share one headline outside the title button",
           );
         } else {
           const rowBox = box(row),
-            selectionBox = box(selection),
-            metricsBox = box(root);
-          if (
-            !sameLine(selectionBox, metricsBox) ||
-            metricsBox.left < selectionBox.right - 1
-          )
+            headlineBox = box(headline);
+          const identityRange = document.createRange();
+          identityRange.selectNodeContents(
+            location?.querySelector(":scope > span:last-child") ?? title,
+          );
+          const identityFragments = [...identityRange.getClientRects()].filter(
+            (rect) => rect.width && rect.height,
+          );
+          let previous = identityFragments.at(-1) ?? box(title);
+          for (const metric of root.querySelectorAll("[data-metric-id]")) {
+            const pill = box(metric);
+            if (sameLine(previous, pill)) {
+              const gap = pill.left - previous.right;
+              if (gap < -1 || gap > 24)
+                failures.push(
+                  "minimal pills are separated from the preceding headline content",
+                );
+            } else {
+              if (Math.abs(pill.left - headlineBox.left) > 1)
+                failures.push(
+                  "a wrapped minimal pill starts in a separate right column",
+                );
+              if (previous.right + pill.width + 24 < headlineBox.right)
+                failures.push(
+                  "a minimal pill wraps despite fitting after the preceding content",
+                );
+            }
+            if (
+              pill.left < headlineBox.left - 1 ||
+              pill.right > headlineBox.right + 1 ||
+              pill.top < rowBox.top - 1 ||
+              pill.bottom > rowBox.bottom + 1
+            )
+              failures.push("minimal pills escape the shared event surface");
+            previous = pill;
+          }
+          if (location && location.parentElement !== headline)
             failures.push(
-              "minimal metrics must remain beside the event identity, allowing pills to wrap within their slot",
+              "facility identity is detached from the headline flow",
             );
-          if (
-            metricsBox.right > rowBox.right + 1 ||
-            metricsBox.bottom > rowBox.bottom + 1
-          )
-            failures.push("minimal metrics escape their event row");
+          if (row.dataset.current === "true") {
+            const background = getComputedStyle(row).backgroundColor;
+            if (
+              background === "transparent" ||
+              /rgba\([^)]*,\s*0\)/.test(background)
+            )
+              failures.push(
+                "selected event identity and metrics lack a common highlighted surface",
+              );
+            for (const element of [selection, location, content].filter(
+              Boolean,
+            )) {
+              const bounds = box(element);
+              if (
+                bounds.left < rowBox.left - 1 ||
+                bounds.right > rowBox.right + 1 ||
+                bounds.top < rowBox.top - 1 ||
+                bounds.bottom > rowBox.bottom + 1
+              )
+                failures.push(
+                  "event identity escapes the common selected surface",
+                );
+            }
+          }
         }
       }
       for (const metric of root.querySelectorAll("[data-metric-id]")) {
@@ -371,12 +433,16 @@ async function capture(name) {
 }
 
 async function verifyShortTrailing(width) {
+  await open(
+    "trailing-summary",
+    "light",
+    width,
+    "eventtimeline",
+    "[data-has-trailing='true']",
+  );
   const sizes = await page.evaluate(() => {
-    const metrics = document.querySelector(
-      '[data-event-metrics][data-variant="minimal"]',
-    );
-    const trailing = metrics?.parentElement;
-    const row = trailing?.parentElement;
+    const row = document.querySelector('[data-has-trailing="true"]');
+    const trailing = row?.querySelector(":scope > [class*='trailing_']");
     const selection = row?.querySelector(":scope > button[class*='select_']");
     if (!trailing || !row || !selection)
       throw new Error("Missing compact event row for trailing summary probe");
@@ -405,6 +471,179 @@ async function verifyShortTrailing(width) {
   console.log(`Pass ${name}`);
   // Restore the React-rendered story before text enlargement or other audits.
   await open("minimal-metrics", "light", width);
+}
+
+async function verifyInlineSelection(name) {
+  const metrics = page
+    .locator('[data-event-metrics][data-variant="minimal"]')
+    .first();
+  const row = page
+    .locator('[data-metrics-placement="inline"]')
+    .filter({ has: metrics });
+  const selection = row.locator("button[class*='select_']");
+  const other = page.locator("ol[aria-label] button[class*='select_']").first();
+  for (const target of ["time", "dot", "location", "surface"]) {
+    await other.click();
+    assert.notEqual(await selection.getAttribute("aria-current"), "true");
+    await row.scrollIntoViewIfNeeded();
+    const point = await row.evaluate((element, target) => {
+      if (target === "surface") {
+        const bounds = element.getBoundingClientRect();
+        return { x: bounds.right - 3, y: bounds.bottom - 3 };
+      }
+      const node = element.querySelector(`[class*='${target}_']`);
+      if (!node) throw new Error(`Missing inline ${target}`);
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const bounds =
+        [...range.getClientRects()].find((rect) => rect.width && rect.height) ??
+        node.getBoundingClientRect();
+      return {
+        x: bounds.left + bounds.width / 2,
+        y: bounds.top + bounds.height / 2,
+      };
+    }, target);
+    await page.mouse.click(point.x, point.y);
+    try {
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector('[data-event-metrics][data-variant="minimal"]')
+            ?.closest('[data-metrics-placement="inline"]')
+            ?.querySelector("button[class*='select_']")
+            ?.getAttribute("aria-current") === "true",
+        undefined,
+        { timeout: 5000 },
+      );
+    } catch (cause) {
+      const hit = await page.evaluate(({ x, y }) => {
+        const element = document.elementFromPoint(x, y);
+        const row = document
+          .querySelector('[data-event-metrics][data-variant="minimal"]')
+          ?.closest('[data-metrics-placement="inline"]');
+        const button = row?.querySelector("button[class*='select_']");
+        const properties = (node, pseudo) => {
+          if (!node) return null;
+          const style = getComputedStyle(node, pseudo);
+          return Object.fromEntries(
+            [
+              "position",
+              "width",
+              "height",
+              "top",
+              "right",
+              "bottom",
+              "left",
+              "zIndex",
+              "overflow",
+              "transform",
+              "contain",
+              "isolation",
+              "pointerEvents",
+            ].map((key) => [key, style[key]]),
+          );
+        };
+        return {
+          tag: element?.tagName,
+          className: element?.getAttribute("class"),
+          text: element?.textContent,
+          row: properties(row),
+          button: properties(button),
+          buttonAfter: properties(button, "::after"),
+          hitAncestors: [
+            ...(function* () {
+              for (
+                let node = element;
+                node && node !== row?.parentElement;
+                node = node.parentElement
+              )
+                yield node;
+            })(),
+          ].map((node) => ({
+            tag: node.tagName,
+            className: node.getAttribute("class"),
+            style: properties(node),
+          })),
+        };
+      }, point);
+      throw new Error(
+        `${name}: clicking ${target} did not select its event; ${JSON.stringify({ point, hit })}`,
+        { cause },
+      );
+    }
+  }
+  await other.click();
+  await metrics.evaluate((element) => {
+    const control = document.createElement("button");
+    control.type = "button";
+    control.textContent = "Inspect metric";
+    control.dataset.metricControlProbe = "true";
+    control.addEventListener("click", () => {
+      control.dataset.clicked = "true";
+    });
+    element.parentElement.append(control);
+  });
+  const control = page.locator("[data-metric-control-probe]");
+  await control.click();
+  assert.equal(
+    await control.getAttribute("data-clicked"),
+    "true",
+    `${name}: metric control receives the pointer`,
+  );
+  assert.notEqual(
+    await selection.getAttribute("aria-current"),
+    "true",
+    `${name}: metric control does not select its event`,
+  );
+  await page.keyboard.press("ArrowDown");
+  assert.notEqual(
+    await selection.getAttribute("aria-current"),
+    "true",
+    `${name}: metric control does not trigger event keyboard navigation`,
+  );
+  await control.evaluate((element) => element.remove());
+  await selection.click();
+  checks.push({
+    name,
+    targets: [
+      "time",
+      "dot",
+      "location",
+      "surface",
+      "independent metric control",
+    ],
+  });
+  console.log(`Pass ${name}`);
+}
+
+async function verifyWideInlineFlow() {
+  await open("minimal-metrics", "light", 900);
+  await page.locator("[class*='singleExample_']").evaluate((element) => {
+    element.style.width = "780px";
+    element.style.maxWidth = "none";
+  });
+  const inline = await page.evaluate(() => {
+    const metrics = document.querySelector(
+      '[data-event-metrics][data-variant="minimal"]',
+    );
+    const headline = metrics.closest("[data-event-headline]");
+    const nodes = [
+      headline.querySelector("[class*='title_']"),
+      headline.querySelector("[class*='location_']"),
+      ...metrics.querySelectorAll("[data-metric-id]"),
+    ];
+    const boxes = nodes.map((node) => node.getBoundingClientRect());
+    return (
+      Math.max(...boxes.map((box) => box.top)) <
+      Math.min(...boxes.map((box) => box.bottom))
+    );
+  });
+  assert(
+    inline,
+    "780px timeline keeps title, facility identity, and both pills on one line when they fit",
+  );
+  await audit("minimal-light-wide-780");
+  await capture("event-timeline-minimal-wide-780");
 }
 
 async function verifyWorkspace(theme, width) {
@@ -517,13 +756,25 @@ try {
         );
         await audit(name);
         await capture(`event-timeline-${name}`);
+        if (variant === "minimal" && theme === "light" && width === 420)
+          await page
+            .locator('[data-metrics-placement="inline"][data-current="true"]')
+            .screenshot({
+              path: resolve(output, "event-timeline-minimal-content-flow.png"),
+            });
         if (variant === "minimal" && theme === "light")
           await verifyShortTrailing(width);
+        if (variant === "minimal" && theme === "light")
+          await verifyInlineSelection(`inline-pointer-selection-${width}`);
         if (width === 360 || width === 480) {
           await enlargeText();
           await audit(`${name}-200-percent-text`);
           if (width === 360)
             await capture(`event-timeline-${name}-200-percent-text`);
+          if (variant === "minimal" && theme === "light")
+            await verifyInlineSelection(
+              `inline-pointer-selection-${width}-200-percent-text`,
+            );
         }
       }
     }
@@ -547,6 +798,7 @@ try {
     }
     for (const width of [1200, 390]) await verifyWorkspace(theme, width);
   }
+  await verifyWideInlineFlow();
   await open("map-adjacent", "light", 1200);
   const timeline = page.locator("ol[aria-label]").first();
   const selections = timeline.locator("button[class*='select_']");

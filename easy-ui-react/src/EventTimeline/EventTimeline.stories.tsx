@@ -127,12 +127,8 @@ function MetricsExample({
         events={singleEvent ? [events[2]] : events.slice(1, 4)}
         defaultSelectedId="b1"
         size={variant === "minimal" ? "compact" : "default"}
-        renderTrailing={
-          variant === "minimal" ? renderMetrics(variant) : undefined
-        }
-        renderMetrics={
-          variant === "minimal" ? undefined : renderMetrics(variant)
-        }
+        metricsPlacement={variant === "minimal" ? "inline" : "below"}
+        renderMetrics={renderMetrics(variant)}
       />
     </div>
   );
@@ -140,6 +136,10 @@ function MetricsExample({
 
 export const MinimalMetrics: Story = {
   render: () => <MetricsExample variant="minimal" />,
+};
+
+export const TrailingSummary: Story = {
+  args: { size: "compact", renderTrailing: () => <span>6 h</span> },
 };
 
 export const CompactMetrics: Story = {
@@ -164,7 +164,8 @@ export const PresentationModes: Story = {
         {
           variant: "minimal" as const,
           title: "Minimal",
-          description: "Both labeled metric pills stay in the event row.",
+          description:
+            "Event, facility, and metric pills share one wrapping flow.",
         },
         {
           variant: "compact" as const,
