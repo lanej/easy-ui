@@ -23,7 +23,10 @@ it("shows one unframed proportion with its exact denominator and accessible mete
   expect(container.querySelector("section, article")).toBeNull();
   expect(screen.queryByRole("progressbar")).toBeNull();
   const fill = container.querySelector<HTMLElement>("[data-proportion-fill]");
-  expect(parseFloat(fill!.style.inlineSize)).toBeCloseTo((1184 / 1659) * 100, 8);
+  expect(parseFloat(fill!.style.inlineSize)).toBeCloseTo(
+    (1184 / 1659) * 100,
+    8,
+  );
 });
 
 it.each(["compact", "expanded", "bar"] as const)(
@@ -50,10 +53,18 @@ it.each([
   [0.5, 2, "25%", "25%"],
   [1, 10000, "0%", "0.01%"],
 ])("uses the unrounded fraction for %s / %s", (value, total, text, width) => {
-  const { container } = render(<ProportionBar label="Share" value={value} total={total} />);
+  const { container } = render(
+    <ProportionBar label="Share" value={value} total={total} />,
+  );
   expect(screen.getByText(text)).toBeInTheDocument();
-  expect(container.querySelector<HTMLElement>("[data-proportion-fill]")?.style.inlineSize).toBe(width);
-  expect(screen.getByRole("meter")).toHaveAttribute("data-value-state", "valid");
+  expect(
+    container.querySelector<HTMLElement>("[data-proportion-fill]")?.style
+      .inlineSize,
+  ).toBe(width);
+  expect(screen.getByRole("meter")).toHaveAttribute(
+    "data-value-state",
+    "valid",
+  );
 });
 
 it.each([
@@ -70,22 +81,40 @@ it.each([
   [Infinity, 100, "invalid", "Invalid proportion", "— / 100"],
   [1, NaN, "invalid", "Invalid proportion", "1 / —"],
   [null, -1, "invalid", "Invalid proportion", "— / -1"],
-] as const)("does not draw a misleading proportion for %s / %s", (value, total, state, label, counts) => {
-  const { container } = render(<ProportionBar label="Share" value={value} total={total} presentation="bar" />);
-  expect(screen.queryByRole("meter")).toBeNull();
-  expect(container.querySelector("[data-proportion-track]")).toBeNull();
-  expect(container.querySelector("[data-proportion-bar]")).toHaveAttribute("data-value-state", state);
-  expect(screen.getByText(label)).toBeInTheDocument();
-  expect(screen.getByText(counts)).toBeInTheDocument();
-});
+] as const)(
+  "does not draw a misleading proportion for %s / %s",
+  (value, total, state, label, counts) => {
+    const { container } = render(
+      <ProportionBar
+        label="Share"
+        value={value}
+        total={total}
+        presentation="bar"
+      />,
+    );
+    expect(screen.queryByRole("meter")).toBeNull();
+    expect(container.querySelector("[data-proportion-track]")).toBeNull();
+    expect(container.querySelector("[data-proportion-bar]")).toHaveAttribute(
+      "data-value-state",
+      state,
+    );
+    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.getByText(counts)).toBeInTheDocument();
+  },
+);
 
 it("suppresses stale observations and formatter calls while loading, then recovers", () => {
   const formatValue = vi.fn((value: number) => String(value));
   const formatPercentage = vi.fn((fraction: number) => `${fraction * 100}%`);
   const props = { ...example, formatValue, formatPercentage };
-  const { rerender, container } = render(<ProportionBar {...props} isLoading />);
+  const { rerender, container } = render(
+    <ProportionBar {...props} isLoading />,
+  );
   expect(screen.getByRole("status")).toHaveTextContent("Loading…");
-  expect(container.querySelector("[data-proportion-bar]")).toHaveAttribute("aria-busy", "true");
+  expect(container.querySelector("[data-proportion-bar]")).toHaveAttribute(
+    "aria-busy",
+    "true",
+  );
   expect(screen.queryByRole("meter")).toBeNull();
   expect(screen.queryByText(/1184/)).toBeNull();
   expect(formatValue).not.toHaveBeenCalled();
@@ -98,14 +127,34 @@ it("suppresses stale observations and formatter calls while loading, then recove
 
 it("uses caller formatting in both visible and accessible values", () => {
   const formatValue = new Intl.NumberFormat("de-DE").format;
-  const formatPercentage = new Intl.NumberFormat("de-DE", { style: "percent", maximumFractionDigits: 2 }).format;
-  render(<ProportionBar {...example} formatValue={formatValue} formatPercentage={formatPercentage} />);
+  const formatPercentage = new Intl.NumberFormat("de-DE", {
+    style: "percent",
+    maximumFractionDigits: 2,
+  }).format;
+  render(
+    <ProportionBar
+      {...example}
+      formatValue={formatValue}
+      formatPercentage={formatPercentage}
+    />,
+  );
   expect(screen.getByText("1.184 / 1.659")).toBeInTheDocument();
-  expect(screen.getByRole("meter")).toHaveAttribute("aria-valuetext", `${formatPercentage(1184 / 1659)} (1.184 / 1.659)`);
+  expect(screen.getByRole("meter")).toHaveAttribute(
+    "aria-valuetext",
+    `${formatPercentage(1184 / 1659)} (1.184 / 1.659)`,
+  );
 });
 
 it("localizes missing, empty, invalid, and loading states", () => {
-  const props = { label: "Share", value: null, total: 0, emptyLabel: "Unavailable", emptyTotalLabel: "Empty population", invalidValueLabel: "Invalid input", loadingLabel: "Fetching" };
+  const props = {
+    label: "Share",
+    value: null,
+    total: 0,
+    emptyLabel: "Unavailable",
+    emptyTotalLabel: "Empty population",
+    invalidValueLabel: "Invalid input",
+    loadingLabel: "Fetching",
+  };
   const { rerender } = render(<ProportionBar {...props} />);
   expect(screen.getByText("Unavailable")).toBeInTheDocument();
   rerender(<ProportionBar {...props} value={0} />);
@@ -117,9 +166,16 @@ it("localizes missing, empty, invalid, and loading states", () => {
 });
 
 it("keeps generated label IDs unique and uses safe typography defaults", () => {
-  const { rerender } = render(<><ProportionBar {...example} valueSize={NaN} /><ProportionBar {...example} presentation="expanded" valueSize={-1} /></>);
+  const { rerender } = render(
+    <>
+      <ProportionBar {...example} valueSize={NaN} />
+      <ProportionBar {...example} presentation="expanded" valueSize={-1} />
+    </>,
+  );
   const meters = screen.getAllByRole("meter");
-  expect(meters[0].getAttribute("aria-labelledby")).not.toBe(meters[1].getAttribute("aria-labelledby"));
+  expect(meters[0].getAttribute("aria-labelledby")).not.toBe(
+    meters[1].getAttribute("aria-labelledby"),
+  );
   expect(screen.getAllByText("71.4%")[0]).toHaveStyle({ fontSize: "18px" });
   expect(screen.getAllByText("71.4%")[1]).toHaveStyle({ fontSize: "32px" });
   rerender(<ProportionBar {...example} valueSize={48} />);

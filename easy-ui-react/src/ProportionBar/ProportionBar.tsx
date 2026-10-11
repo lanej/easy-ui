@@ -79,13 +79,17 @@ export function ProportionBar({
   const id = useId();
   const state = valueState(value, total, isLoading);
   const fraction =
-    state === "valid" && value !== null && total !== null ? value / total : null;
+    state === "valid" && value !== null && total !== null
+      ? value / total
+      : null;
   const valid = fraction !== null;
   const summary = presentation !== "bar" || !valid;
   const formatCount = (count: number | null) =>
     count !== null && Number.isFinite(count) ? formatValue(count) : "—";
   // Loading never calls formatters with stale observations.
-  const ratioText = isLoading ? "" : `${formatCount(value)} / ${formatCount(total)}`;
+  const ratioText = isLoading
+    ? ""
+    : `${formatCount(value)} / ${formatCount(total)}`;
   const valueText = valid
     ? formatPercentage(fraction)
     : state === "loading"
@@ -136,7 +140,11 @@ export function ProportionBar({
         </div>
       )}
       {valid && (
-        <div className={styles.track} data-proportion-track="" aria-hidden="true">
+        <div
+          className={styles.track}
+          data-proportion-track=""
+          aria-hidden="true"
+        >
           <div
             className={styles.fill}
             data-proportion-fill=""
