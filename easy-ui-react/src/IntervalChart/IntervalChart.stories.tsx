@@ -48,6 +48,7 @@ export const ZoomedSpan: Story = {
     ],
     intervalSeries: undefined,
     dataTable: undefined,
+    notice: undefined,
     option: {
       xAxis: { name: "Hour", nameLocation: "middle", nameGap: 32 },
       yAxis: { axisLabel: { fontSize: 14 } },
