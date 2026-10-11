@@ -204,6 +204,39 @@ import { LineChart } from "@easypost/easy-ui/LineChart";
 
 Applications own aggregation, units, binning, statistical calculations, model outputs, and provenance. Use [Chart](?path=/docs/components-chart--docs) directly for mixed series or custom engine compositions; use ChartSurface and its companions for independently placed controls and data.
 
+## Shared presentation options
+
+All 17 analytical components inherit the same Chart presentation contract.
+
+| Option | Behavior |
+| --- | --- |
+| `showDataTable={false}` | Hide the built-in disclosure, whether the table is supplied or generated. Keep an application-owned equivalent data view available where needed. |
+| `variant="bare"` | Omit the surrounding Card when the application owns the frame. The default is `"card"`. |
+| `title`, `description` | Independently optional. Use an accessible label or linked external heading when omitting them. |
+| `height`, `renderer`, `typography` | Configure plot height, SVG/canvas rendering, and text roles. |
+| `status`, `loadingLabel`, `emptyLabel`, `errorLabel` | Use the same loading, empty, and error presentation. |
+| `option.color` | Supply the automatic categorical palette. Explicit native item/line colors take precedence. |
+
+Native series wrappers show a table only when `dataTable` is supplied. Interval,
+prediction-band, and waterfall charts can generate exact rows from their structured
+records. `showDataTable={false}` is the common opt-out in every component; omitting
+`dataTable` alone does not disable a generated table. Each component documents a
+Without Data Table story alongside its bare, loading, and empty states.
+
+Default categorical palettes and native labels follow the nearest Easy UI theme.
+Graph links use the neutral theme color; flow links inherit their source color.
+Heatmap magnitudes use an application-owned `visualMap.inRange.color` scale rather
+than the categorical palette. The bundled examples use fixed EasyPost sequential
+or diverging ramps with contrasting cell labels.
+
+Prediction charts use the first palette color for observations and the second
+for predictions and their band. An explicitly colored predicted line also colors
+the band; `bandItemStyle` can override its color or opacity. Waterfall charts use
+the first three palette colors for increases, decreases, and the total, including
+when one direction is absent. Palette changes in base, media, and timeline options
+follow the same native engine behavior as other charts. No good/bad meaning is
+inferred from the sign of a change.
+
 ## Native plots and geographical views
 
 `BarList`, `BulletChart`, `CompactTimeSeries`, `RangePlot`, `QuantileStrip`, and `DurationDistribution` already have separate components and Storybook documentation. Reuse these native plots for compact comparisons and references. `DurationDistribution` supports supplied unequal-width histogram bins, smooth density, cumulative points, percentile landmarks, and concentration bars. `NetworkMap` provides geographical layers and its independently exported surface and companions.

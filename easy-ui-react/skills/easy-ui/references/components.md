@@ -53,6 +53,13 @@ exact-data disclosure. Install the optional `echarts` peer when using them.
 Native-series components accept `series` without an engine `type`, and `option`
 for native configuration. Applications own aggregation and statistical inputs.
 
+Use `showDataTable={false}` on any analytical chart to hide exact-data disclosure.
+Interval, prediction-band, and waterfall charts generate rows when `dataTable`
+is omitted. Use `option.color` for automatic categorical palettes; prediction
+shading follows the predicted line unless `bandItemStyle` overrides it, and
+waterfall increase, decrease, and total series use palette slots 0, 1, and 2.
+For HeatmapChart, supply the quantitative ramp through `visualMap.inRange.color`.
+
 | Public entry                  | Choose it for                            | Supplied input                                                                 |
 | ----------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------ |
 | `LineChart`                   | Trends and numeric response curves       | Line series; null observations retain gaps                                     |

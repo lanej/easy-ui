@@ -17,7 +17,17 @@ Import `{ WaterfallChart }` from `@easypost/easy-ui/WaterfallChart` with the opt
 
 Selection, keyboard data access, controlled zoom, rendering states, themes, typography, and `variant="bare"` follow the shared [Chart contract](?path=/docs/components-chart--docs).
 
+`option.color` supplies the first three automatic colors for increases, decreases,
+and the total. Explicit item styles take precedence. These slots remain stable
+when a direction has no steps, including in native media and timeline options.
+The native selection identifies the role through `seriesId`; the selected datum
+retains the original step `id`, label, and signed value. Its `dataIndex` is within
+that role's series rather than the full ledger.
+
+<Canvas of={Stories.CustomPalette} />
+
 <Canvas of={Stories.NarrowLayout} />
+<Canvas of={Stories.WithoutDataTable} />
 <Canvas of={Stories.CrossingZero} />
 
 Partial axis styling retains the generated step labels. Supplied zoom components default to `filterMode="weakFilter"` to retain overlapping balance spans; explicit filter modes remain authoritative.

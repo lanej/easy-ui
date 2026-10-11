@@ -17,7 +17,17 @@ Import `{ PredictionBandChart }` from `@easypost/easy-ui/PredictionBandChart` wi
 
 Selection, keyboard data access, controlled zoom, rendering states, themes, typography, and `variant="bare"` follow the shared [Chart contract](?path=/docs/components-chart--docs).
 
+`option.color` supplies the automatic palette: observations use its first color;
+predictions and shading share its second color. An explicit predicted line color
+also colors the band. Use `bandItemStyle` to override shading color, opacity, or
+other native item styling. Explicit styling takes precedence over the palette.
+The band is drawn behind the lines, and selecting the predicted legend entry
+toggles its line and band together.
+
+<Canvas of={Stories.CustomPalette} />
+
 <Canvas of={Stories.NarrowLayout} />
+<Canvas of={Stories.WithoutDataTable} />
 <Canvas of={Stories.NegativeBounds} />
 
 Supplied zoom components default to `filterMode="weakFilter"` so prediction segments overlapping the visible window remain shaded; an explicit filter mode overrides this default.

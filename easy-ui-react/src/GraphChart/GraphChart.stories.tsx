@@ -1,4 +1,5 @@
 import React from "react";
+import { nativeStyleExample } from "../Chart/chartCatalog.fixtures";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { GraphChart, type GraphChartProps } from "./GraphChart";
 
@@ -50,6 +51,7 @@ export default meta;
 type Story = StoryObj<typeof GraphChart>;
 
 export const Default: Story = {};
+export const ThemeDefaults: Story = { args: nativeStyleExample(defaults) };
 export const NarrowLayout: Story = {
   decorators: [
     (Story) => (
@@ -60,5 +62,6 @@ export const NarrowLayout: Story = {
   ],
 };
 export const Bare: Story = { args: { variant: "bare" } };
+export const WithoutDataTable: Story = { args: { showDataTable: false } };
 export const Loading: Story = { args: { status: "loading" } };
 export const Empty: Story = { args: { series: [], status: "empty" } };

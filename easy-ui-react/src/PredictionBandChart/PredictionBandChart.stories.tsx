@@ -2,6 +2,7 @@ import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { PredictionBandChart } from "./PredictionBandChart";
 import { predictionBandProps } from "../Chart/patternChart.fixtures";
+import { visualizationColors } from "../visualization/colors";
 
 const meta: Meta<typeof PredictionBandChart> = {
   id: "components-predictionbandchart",
@@ -21,6 +22,39 @@ const meta: Meta<typeof PredictionBandChart> = {
 export default meta;
 type Story = StoryObj<typeof PredictionBandChart>;
 export const Default: Story = {};
+export const CustomPalette: Story = {
+  args: {
+    observedSeries: {
+      ...predictionBandProps.observedSeries,
+      itemStyle: undefined,
+    },
+    predictedSeries: {
+      ...predictionBandProps.predictedSeries,
+      itemStyle: undefined,
+      lineStyle: { type: "dashed" },
+    },
+    option: {
+      ...predictionBandProps.option,
+      color: [visualizationColors.secondary, visualizationColors.primary],
+      media: [
+        {
+          query: { maxWidth: 600 },
+          option: {
+            color: [
+              visualizationColors.tertiary,
+              visualizationColors.secondary,
+            ],
+          },
+        },
+        {
+          option: {
+            color: [visualizationColors.secondary, visualizationColors.primary],
+          },
+        },
+      ],
+    },
+  },
+};
 export const ZoomedSpan: Story = {
   args: {
     title: "Supplied bounds across zoom boundaries",
@@ -50,6 +84,7 @@ export const NarrowLayout: Story = {
   ],
 };
 export const Bare: Story = { args: { variant: "bare" } };
+export const WithoutDataTable: Story = { args: { showDataTable: false } };
 export const Loading: Story = { args: { status: "loading" } };
 export const Empty: Story = {
   args: { points: [], status: "empty", dataTable: undefined },

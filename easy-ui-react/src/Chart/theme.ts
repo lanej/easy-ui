@@ -17,6 +17,14 @@ export function themedChartTheme(
 ) {
   const css = getComputedStyle(element);
   const sizes = resolveVisualizationTypography(typography);
+  const text = resolveVisualizationColor(css, visualizationColors.text);
+  const muted = resolveVisualizationColor(css, visualizationColors.muted);
+  const background = resolveVisualizationColor(
+    css,
+    visualizationColors.background,
+  );
+  const border = resolveVisualizationColor(css, visualizationColors.border);
+  const label = { color: text, fontSize: sizes.label, textBorderWidth: 0 };
   return {
     title: {
       textStyle: {
@@ -28,6 +36,26 @@ export function themedChartTheme(
         fontSize: sizes.description,
       },
     },
+    // Native series defaults can otherwise retain vendor colors even when the
+    // global text and palette are themed. Authored series/level styles still win.
+    graph: {
+      label,
+      edgeLabel: label,
+      lineStyle: { color: muted, opacity: 1 },
+    },
+    sankey: { label, edgeLabel: label, lineStyle: { color: "source" } },
+    treemap: {
+      label: { color: background, fontSize: sizes.label },
+      upperLabel: { color: text, fontSize: sizes.label },
+      itemStyle: { borderColor: border },
+      breadcrumb: {
+        itemStyle: { color: background, textStyle: { color: text } },
+        emphasis: { itemStyle: { color: border } },
+      },
+    },
+    // Box plots use palette-colored outlines; keep their interior transparent
+    // instead of retaining the engine's fixed white fill on dark backgrounds.
+    boxplot: { itemStyle: { color: null } },
   };
 }
 
