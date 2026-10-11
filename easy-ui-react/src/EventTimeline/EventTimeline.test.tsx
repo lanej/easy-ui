@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { render } from "../utilities/test";
 import { EventTimeline } from "./EventTimeline";
+import { EventMetrics } from "../EventMetrics";
 import { HealthAssessment } from "../HealthAssessment";
 import { DurationDistribution } from "../DurationDistribution";
 import type { EventTimelineEvent } from "./EventItem";
@@ -160,6 +161,65 @@ describe("EventTimeline", () => {
     expect(screen.getByText("After first")).toBeVisible();
     expect(screen.getByText("After second")).toBeVisible();
     expect(screen.queryByText("After third")).not.toBeInTheDocument();
+  });
+
+  it("places minimal metric pills in the event row as a sibling of selection without changing keyboard navigation", () => {
+    const onSelectedIdChange = vi.fn();
+    const { container } = render(
+      <EventTimeline
+        events={events}
+        size="compact"
+        defaultSelectedId="first"
+        onSelectedIdChange={onSelectedIdChange}
+        renderTrailing={(event) => (
+          <EventMetrics
+            variant="minimal"
+            ariaLabel={`${event.id} outcomes`}
+            metrics={[
+              {
+                id: "dwell",
+                label: "Dwell time",
+                valueLabel: "6 h",
+                assessment: "healthy",
+              },
+              {
+                id: "exception",
+                label: "Exception rate",
+                valueLabel: "2%",
+                assessment: "degraded",
+                statusLabel: "Elevated",
+              },
+            ]}
+          />
+        )}
+      />,
+    );
+    const timeline = screen.getByRole("list", { name: "Event timeline" });
+    const entries = Array.from(timeline.children) as HTMLElement[];
+    const buttons = entries.map((entry) => within(entry).getByRole("button"));
+    for (const [index, event] of events.entries()) {
+      const outcomes = screen.getByRole("list", {
+        name: `${event.id} outcomes`,
+      });
+      const slot = outcomes.parentElement;
+      expect(slot?.parentElement).toBe(buttons[index].parentElement);
+      expect(outcomes.closest("button")).toBeNull();
+      expect(within(outcomes).getByText("Dwell time 6 h")).toBeVisible();
+      expect(
+        within(outcomes).getByText("Exception rate 2% · Elevated"),
+      ).toBeVisible();
+      expect(
+        within(buttons[index]).queryByText("Dwell time 6 h"),
+      ).not.toBeInTheDocument();
+    }
+    expect(container.querySelector("button button")).toBeNull();
+    expect(buttons).toHaveLength(events.length);
+    fireEvent.keyDown(buttons[0], { key: "ArrowDown" });
+    expect(buttons[1]).toHaveFocus();
+    expect(onSelectedIdChange).toHaveBeenLastCalledWith("second");
+    fireEvent.keyDown(buttons[1], { key: "End" });
+    expect(buttons[2]).toHaveFocus();
+    expect(onSelectedIdChange).toHaveBeenLastCalledWith("third");
   });
 
   it("keeps metric controls outside event buttons and out of arrow-key selection", () => {

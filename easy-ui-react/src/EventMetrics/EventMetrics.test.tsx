@@ -23,23 +23,29 @@ const metrics: EventMetric[] = [
 ];
 
 describe("EventMetrics", () => {
-  it("keeps each outcome and assessment independent without repeating healthy status text", () => {
-    render(<EventMetrics metrics={metrics} />);
+  it.each(["minimal", "compact", "expanded"] as const)(
+    "keeps the metric label and independent assessment inside each %s pill without an outside duplicate",
+    (variant) => {
+      render(<EventMetrics metrics={metrics} variant={variant} />);
 
-    const dwell = screen.getByRole("group", {
-      name: "Dwell time: 6 h; Within expected dwell",
-    });
-    const exception = screen.getByRole("group", {
-      name: "Exception rate: 2%; Elevated",
-    });
-    expect(dwell).toHaveAttribute("data-assessment", "healthy");
-    expect(dwell).toHaveTextContent(/^6 h$/);
-    expect(exception).toHaveAttribute("data-assessment", "degraded");
-    expect(exception).toHaveTextContent(/^2% · Elevated$/);
-    expect(screen.queryByText("Within expected dwell")).not.toBeInTheDocument();
-    expect(screen.getByText("Dwell time")).toBeVisible();
-    expect(screen.getByText("Exception rate")).toBeVisible();
-  });
+      const dwell = screen.getByRole("group", {
+        name: "Dwell time: 6 h; Within expected dwell",
+      });
+      const exception = screen.getByRole("group", {
+        name: "Exception rate: 2%; Elevated",
+      });
+      expect(dwell).toHaveAttribute("data-assessment", "healthy");
+      expect(dwell).toHaveTextContent(/^Dwell time 6 h$/);
+      expect(exception).toHaveAttribute("data-assessment", "degraded");
+      expect(exception).toHaveTextContent(/^Exception rate 2% · Elevated$/);
+      expect(
+        screen.queryByText("Within expected dwell"),
+      ).not.toBeInTheDocument();
+      const entries = screen.getAllByRole("listitem");
+      expect(entries[0].textContent?.match(/Dwell time/g)).toHaveLength(1);
+      expect(entries[1].textContent?.match(/Exception rate/g)).toHaveLength(1);
+    },
+  );
 
   it("retains both metrics and elevated status in minimal pills, omitting references", () => {
     render(<EventMetrics metrics={metrics} variant="minimal" />);
@@ -69,12 +75,11 @@ describe("EventMetrics", () => {
           name: "Exception distribution",
         }),
       ).not.toBeInTheDocument();
-      expect(screen.getAllByText("Dwell time", { exact: true })).toHaveLength(
-        1,
-      );
-      expect(screen.getAllByText("6 h", { exact: true })).toHaveLength(1);
       expect(
-        screen.getAllByText("2% · Elevated", { exact: true }),
+        screen.getAllByText("Dwell time 6 h", { exact: true }),
+      ).toHaveLength(1);
+      expect(
+        screen.getAllByText("Exception rate 2% · Elevated", { exact: true }),
       ).toHaveLength(1);
     },
   );
@@ -97,6 +102,7 @@ describe("EventMetrics", () => {
         name: "Dwell time: Unavailable",
       });
       expect(unavailable).toHaveAttribute("data-assessment", "unavailable");
+      expect(unavailable).toHaveTextContent(/^Dwell time Unavailable$/);
       expect(unavailable).not.toHaveTextContent("6 h");
       expect(
         screen.queryByRole("img", { name: "Dwell distribution" }),
@@ -108,7 +114,9 @@ describe("EventMetrics", () => {
       });
       expect(loading).toHaveAttribute("data-assessment", "loading");
       expect(loading).toHaveAttribute("aria-busy", "true");
-      expect(screen.getByRole("status")).toHaveTextContent("Assessing…");
+      expect(screen.getByRole("status")).toHaveTextContent(
+        /^Dwell time Assessing…$/,
+      );
       expect(loading).not.toHaveTextContent("6 h");
       expect(screen.queryByText(/Unavailable/)).not.toBeInTheDocument();
       expect(
@@ -146,7 +154,7 @@ describe("EventMetrics", () => {
       name: "Dwell time: 6 h; Not assessed",
     });
     expect(value).toHaveAttribute("data-assessment", "unassessed");
-    expect(value).toHaveTextContent("6 h");
+    expect(value).toHaveTextContent(/^Dwell time 6 h$/);
   });
 
   it.each([null, "", "   "])(
@@ -179,7 +187,7 @@ describe("EventMetrics", () => {
     );
     expect(
       screen.getByRole("group", { name: "Dwell time: No observation" }),
-    ).toBeVisible();
+    ).toHaveTextContent(/^Dwell time No observation$/);
     rerender(<EventMetrics metrics={[]} />);
     expect(
       screen.queryByRole("list", { name: "Event metrics" }),

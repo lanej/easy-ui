@@ -9,15 +9,15 @@ A reusable selectable chronology. The caller owns ordering, interpretation, iden
 
 ## Event identity and independent metrics
 
-The event's time, label, facility type, and location form its identity. Measurements belong below that identity, with each label, current-value pill, and reference kept together. The event-selection dot is independent of metric health: an arrival can have a healthy dwell time and an elevated exception rate at the same time.
+The event's time, label, facility type, and location form its identity. Minimal measurements sit beside that identity in the same event row; compact and expanded measurements sit beneath it. Every pill contains both the metric label and its current value. The event-selection dot is independent of metric health: an arrival can have a healthy dwell time and an elevated exception rate at the same time.
 
-The timeline frequently occupies **360–480px beside a map**. Facility text can wrap rather than being truncated to make room for statistics. The selected status dot retains clearance from the event text. Pills stay beside their labels instead of aligning at the right edge.
+The timeline frequently occupies **360–480px beside a map**. Facility text can wrap rather than being truncated to make room for statistics. The selected status dot retains clearance from the event text. Pills consistently display “Dwell time 6 h” and “Exception rate 2% · Elevated”, with no repeated label outside the pill.
 
 The three presentations below use identical synthetic observations at a **420px timeline width**:
 
-- **Minimal:** compact event identity, facility icon, and both assessed metric pills. No distributions.
-- **Compact:** visible facility type and location, followed by one row per metric. Each current-value pill stays next to its label, with a concentration reference alongside when it fits.
-- **Expanded:** the same event identity and metric headlines, with a larger distribution beneath each headline. The current value is not repeated in a second summary.
+- **Minimal:** compact event identity, facility icon, and both labeled metric pills in the same event row. Pills wrap within their trailing slot when needed; the group stays beside the event. No distributions.
+- **Compact:** visible facility type and location, followed by one row per metric. Each pill contains its label and current value, with a concentration reference alongside when it fits.
+- **Expanded:** the same event identity and labeled metric pills, with a larger distribution beneath each headline. The current value is not repeated in a second summary.
 
 <Canvas of={Stories.PresentationModes} />
 
@@ -45,6 +45,8 @@ import { EventMetrics } from "@easypost/easy-ui/EventMetrics";
 />;
 ```
 
+For **minimal**, use `size="compact"` and pass the same renderer through `renderTrailing` with `<EventMetrics variant="minimal" />`. This keeps both pills in the event row, outside its selection button.
+
 `renderMetrics` is available on every event, including the final observation. It places caller-owned content beneath the event identity and outside the event-selection button. `EventMetrics` accepts already formatted values and references, so durations, percentages, counts, and other measurements can share this composition without a domain dictionary in the timeline.
 
 `locationIcon` accepts a caller-supplied icon. Compact event size keeps the icon and location while retaining the facility type for assistive technology; default and detailed sizes also display the facility type. Keep the metric presentation independent of the event's size.
@@ -65,7 +67,7 @@ Supply `selectedId` and `onSelectedIdChange` to coordinate selection with an ext
 
 Supply `relatedIds` to highlight events within a selected location, connection, or candidate path while keeping the complete timeline available. Selection and context highlighting are independent. An event's optional `detailLabel` adds concise caller-supplied context, such as a receipt time that distinguishes otherwise identical observations. It appears below the location in default and detailed rows; compact rows expose it as an accessible description.
 
-Event time and received time are different fields; no implicit ordering or timestamp repair occurs. `renderTrailing` remains available for existing caller-owned row summaries, while `renderMetrics` provides the dedicated layout for measurements. `renderDetails` supplies other content associated with an event. `renderInterval` supplies content associated with the interval following an event and is not rendered after the final event.
+Event time and received time are different fields; no implicit ordering or timestamp repair occurs. `renderTrailing` places minimal metric pills or other caller-owned summaries beside event identity, while `renderMetrics` places compact or expanded measurements below it. `renderDetails` supplies other content associated with an event. `renderInterval` supplies content associated with the interval following an event and is not rendered after the final event.
 
 Keyboard navigation supports Up/Down and Home/End while retaining native button activation by Enter and Space.
 

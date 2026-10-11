@@ -2,7 +2,8 @@
 "@easypost/easy-ui": minor
 ---
 
-Add EventMetrics for independently assessed values with minimal, compact, and
-expanded references. EventTimeline exposes a metrics slot below event identity,
-preserves readable facility text and optional category icons, and supports the
-same composition in InvestigationWorkspace.
+Add EventMetrics with consistent metric labels and values inside independently
+assessed pills. Minimal pills share the event row; compact and expanded variants
+add references below event identity. EventTimeline preserves readable facility
+text and optional category icons, with the same composition in
+InvestigationWorkspace.

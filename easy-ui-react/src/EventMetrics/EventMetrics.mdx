@@ -5,19 +5,19 @@ import * as Stories from "./EventMetrics.stories";
 
 # EventMetrics
 
-A molecule for independently assessed event or facility measurements. Each metric keeps its label, current-value pill, and optional reference together. The caller supplies the values, labels, assessments, and reference content; the component does not infer thresholds or an overall event status.
+A molecule for independently assessed event or facility measurements. Every pill contains its metric's label and current value, with an optional status suffix and reference. The caller supplies the values, labels, assessments, and reference content; the component does not infer thresholds or an overall event status.
 
 ## Three presentations
 
-**Minimal** puts each metric's label and value inside a compact status pill. The exception pill retains its supplied “Elevated” label. References are omitted.
+**Minimal** groups the labeled metric pills inline, without references. In a timeline, use the event's trailing slot to keep them in the same row as the event.
 
 <Canvas of={Stories.Minimal} />
 
-**Compact** places the metric label beside its current-value pill, followed by the reference. Pills remain next to their labels. When width is limited, the reference can move below its own metric without shrinking the label or value.
+**Compact** keeps the complete metric label and value inside the pill, followed by its reference. When width is limited, the reference can move below its pill without shrinking the text.
 
 <Canvas of={Stories.Compact} />
 
-**Expanded** retains the same label and pill, with a larger reference immediately below. It does not repeat the current value in a second headline.
+**Expanded** retains the same labeled pill, with a larger reference immediately below. All three variants display “Dwell time 6 h” and “Exception rate 2% · Elevated” consistently.
 
 <Canvas of={Stories.Expanded} />
 
@@ -49,7 +49,7 @@ import { EventMetrics } from "@easypost/easy-ui/EventMetrics";
 />;
 ```
 
-`valueLabel` is already formatted by the application, so durations, percentages, and counts use the same composition. `statusLabel` adds visible context when useful. `assessmentLabel` retains a full accessible assessment even when the visible pill contains only the value. Each assessment applies to its own metric; a healthy dwell time does not suppress an elevated exception rate.
+`valueLabel` is already formatted by the application, so durations, percentages, and counts use the same composition. `statusLabel` adds visible context when useful. `assessmentLabel` retains a full accessible assessment even when the visible pill omits a redundant status word. Each assessment applies to its own metric; a healthy dwell time does not suppress an elevated exception rate.
 
 `reference` accepts an existing reference component. These examples use `DurationDistribution` with explicit units and labels: completed dwell durations for the first metric, and percentage rates measured across comparable facility windows for the second. The data and policies are synthetic examples, not carrier performance.
 
@@ -64,6 +64,6 @@ Set `availability="unavailable"` on an unavailable metric or `isLoading` while i
 
 ## Timeline composition
 
-Pass `EventMetrics` through `EventTimeline.renderMetrics`. This slot sits below event identity and is available on the final event as well. Keep the event's time, facility, location, and selection dot separate from its metric assessments. Use `renderInterval` only for content that belongs to an actual interval following an event.
+For **minimal**, pass `EventMetrics` through `EventTimeline.renderTrailing` to keep the pills beside the event in the same row. The pill group can wrap within its slot at narrow widths while the facility remains readable. For **compact** and **expanded**, use `EventTimeline.renderMetrics` below event identity. Both slots are available on the final event and render outside the event-selection button. Use `renderInterval` only for content that belongs to an actual interval following an event.
 
 <ArgTypes of={Stories} />

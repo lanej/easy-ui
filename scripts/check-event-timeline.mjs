@@ -159,36 +159,67 @@ async function audit(name) {
       if (!box(root).width) continue;
       const variant = root.dataset.variant;
       const inlineReferences = [];
+      if (variant === "minimal" && root.closest("ol[aria-label]")) {
+        const slot = root.parentElement;
+        const row = slot?.parentElement;
+        const selection = row?.querySelector(
+          ":scope > button[class*='select_']",
+        );
+        const entry = root.closest("li[class*='entry_']");
+        if (
+          !selection ||
+          row !== entry?.firstElementChild ||
+          root.closest("button")
+        ) {
+          failures.push(
+            "minimal metrics must occupy a sibling slot in the event selection row",
+          );
+        } else {
+          const rowBox = box(row),
+            selectionBox = box(selection),
+            metricsBox = box(root);
+          if (
+            !sameLine(selectionBox, metricsBox) ||
+            metricsBox.left < selectionBox.right - 1
+          )
+            failures.push(
+              "minimal metrics must remain beside the event identity, allowing pills to wrap within their slot",
+            );
+          if (
+            metricsBox.right > rowBox.right + 1 ||
+            metricsBox.bottom > rowBox.bottom + 1
+          )
+            failures.push("minimal metrics escape their event row");
+        }
+      }
       for (const metric of root.querySelectorAll("[data-metric-id]")) {
         metricCount++;
         const context = `${variant}/${metric.dataset.metricId}`;
         const header = metric.querySelector("[data-metric-header]");
-        const label = metric.querySelector("[data-metric-label]");
         const status = metric.querySelector("[data-assessment][data-size]");
         const reference = metric.querySelector("[data-metric-reference]");
         if (!header || !status) {
           failures.push(`${context}: missing metric headline`);
           continue;
         }
-        readable(label, context);
         readable(status, context);
+        const metricLabel = status.getAttribute("aria-label")?.split(":")[0];
+        const pillText = status.textContent.trim();
+        if (!metricLabel || !pillText.startsWith(`${metricLabel} `))
+          failures.push(`${context}: pill omits its metric label`);
+        if (header.textContent.trim() !== pillText)
+          failures.push(
+            `${context}: metric label is duplicated outside its pill`,
+          );
         const headerBox = box(header),
           statusBox = box(status),
           metricBox = box(metric);
         if (Math.abs(headerBox.x - metricBox.x) > 1)
           failures.push(`${context}: headline does not start at the left`);
-        if (label) {
-          const labelBox = box(label);
-          const gap = statusBox.left - labelBox.right;
-          if (sameLine(labelBox, statusBox)) {
-            if (gap < -1 || gap > 12)
-              failures.push(
-                `${context}: status is separated from the label by ${gap}px`,
-              );
-          } else if (Math.abs(statusBox.left - headerBox.left) > 1) {
-            failures.push(`${context}: wrapped pill is aligned to the right`);
-          }
-        }
+        if (Math.abs(statusBox.left - headerBox.left) > 1)
+          failures.push(
+            `${context}: pill is aligned to the right of its headline`,
+          );
         if (statusBox.right > metricBox.right + 1)
           failures.push(`${context}: pill escapes its available width`);
         if (variant === "minimal" && reference)
@@ -213,17 +244,24 @@ async function audit(name) {
           if (variant === "compact") {
             inlineReferences.push(referenceBox);
             const strip = reference.querySelector("[data-concentration-style]");
-            const dot = reference.querySelector("[data-current-assessment] [class*='marker_']");
+            const dot = reference.querySelector(
+              "[data-current-assessment] [class*='marker_']",
+            );
             if (strip && dot) {
               const stripBox = box(strip),
                 dotBox = box(dot),
                 stripCenter = stripBox.y + stripBox.height / 2,
                 dotCenter = dotBox.y + dotBox.height / 2;
               if (Math.abs(stripCenter - dotCenter) > 1)
-                failures.push(`${context}: current dot is detached from the concentration strip`);
-              if ((!label || sameLine(box(label), statusBox)) &&
-                Math.abs(stripCenter - statusBox.y - statusBox.height / 2) > 1)
-                failures.push(`${context}: visible reference and pill centers do not align`);
+                failures.push(
+                  `${context}: current dot is detached from the concentration strip`,
+                );
+              if (
+                Math.abs(stripCenter - statusBox.y - statusBox.height / 2) > 1
+              )
+                failures.push(
+                  `${context}: visible reference and pill centers do not align`,
+                );
             }
           }
         } else if (Math.abs(referenceBox.left - metricBox.left) > 1) {
@@ -275,9 +313,13 @@ async function audit(name) {
       if (inlineReferences.length > 1) {
         const lefts = inlineReferences.map((reference) => reference.x);
         const widths = inlineReferences.map((reference) => reference.width);
-        if (Math.max(...lefts) - Math.min(...lefts) > 1 ||
-          Math.max(...widths) - Math.min(...widths) > 1)
-          failures.push("compact references do not share the same left edge and width");
+        if (
+          Math.max(...lefts) - Math.min(...lefts) > 1 ||
+          Math.max(...widths) - Math.min(...widths) > 1
+        )
+          failures.push(
+            "compact references do not share the same left edge and width",
+          );
       }
     }
     return { failures, metricCount, referenceCount };
@@ -302,6 +344,43 @@ async function capture(name) {
   ).screenshot({
     path: resolve(output, `${name}.png`),
   });
+}
+
+async function verifyShortTrailing(width) {
+  const sizes = await page.evaluate(() => {
+    const metrics = document.querySelector(
+      '[data-event-metrics][data-variant="minimal"]',
+    );
+    const trailing = metrics?.parentElement;
+    const row = trailing?.parentElement;
+    const selection = row?.querySelector(":scope > button[class*='select_']");
+    if (!trailing || !row || !selection)
+      throw new Error("Missing compact event row for trailing summary probe");
+    return [
+      { state: "short", text: "6 h" },
+      { state: "empty", text: "" },
+    ].map(({ state, text }) => {
+      trailing.replaceChildren(document.createTextNode(text));
+      return {
+        state,
+        row: row.getBoundingClientRect().width,
+        identity: selection.getBoundingClientRect().width,
+        trailing: trailing.getBoundingClientRect().width,
+      };
+    });
+  });
+  const name = `short-and-empty-trailing-${width}`;
+  for (const size of sizes) {
+    const minimumIdentityShare = size.state === "empty" ? 0.9 : 0.75;
+    assert(
+      size.identity >= size.row * minimumIdentityShare,
+      `${name}: ${size.state} summary reserves unnecessary width: ${JSON.stringify(size)}`,
+    );
+  }
+  checks.push({ name, sizes });
+  console.log(`Pass ${name}`);
+  // Restore the React-rendered story before text enlargement or other audits.
+  await open("minimal-metrics", "light", width);
 }
 
 async function verifyWorkspace(theme, width) {
@@ -415,6 +494,8 @@ try {
         assert.match(await outcomes.innerText(), /2%.*Elevated/);
         await audit(name);
         await capture(`event-timeline-${name}`);
+        if (variant === "minimal" && theme === "light")
+          await verifyShortTrailing(width);
         if (width === 360 || width === 480) {
           await enlargeText();
           await audit(`${name}-200-percent-text`);

@@ -127,7 +127,12 @@ function MetricsExample({
         events={singleEvent ? [events[2]] : events.slice(1, 4)}
         defaultSelectedId="b1"
         size={variant === "minimal" ? "compact" : "default"}
-        renderMetrics={renderMetrics(variant)}
+        renderTrailing={
+          variant === "minimal" ? renderMetrics(variant) : undefined
+        }
+        renderMetrics={
+          variant === "minimal" ? undefined : renderMetrics(variant)
+        }
       />
     </div>
   );
@@ -159,17 +164,18 @@ export const PresentationModes: Story = {
         {
           variant: "minimal" as const,
           title: "Minimal",
-          description: "Both current values, with their own assessment pills.",
+          description: "Both labeled metric pills stay in the event row.",
         },
         {
           variant: "compact" as const,
           title: "Compact",
-          description: "Each metric stays beside its concentration reference.",
+          description:
+            "Each labeled pill stays beside its concentration reference.",
         },
         {
           variant: "expanded" as const,
           title: "Expanded",
-          description: "The same metric headlines, with larger distributions.",
+          description: "The same labeled pills, with larger distributions.",
         },
       ].map(({ variant, title, description }) => (
         <section className={styles.presentation} key={variant}>
