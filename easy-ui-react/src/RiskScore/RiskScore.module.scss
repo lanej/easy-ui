@@ -48,10 +48,47 @@
 
 .root[data-size="sm"] {
   gap: design-token("space.0.5");
+
+  .value {
+    color: design-token("color.neutral.900");
+  }
+
+  // Use readable, visibly distinct text colors in the inherited color scheme.
+  &[data-assessment="low"] .value {
+    color: light-dark(
+      #{design-token("color.positive.700")},
+      #{design-token("color.positive.500")}
+    );
+  }
+  &[data-assessment="medium"] .value {
+    color: light-dark(
+      #{design-token("color.warning.800")},
+      #{design-token("color.warning.500")}
+    );
+  }
+  &[data-assessment="high"] .value {
+    color: light-dark(
+      #{design-token("color.negative.600")},
+      #{design-token("color.negative.500")}
+    );
+  }
 }
 
 @media (forced-colors: active) {
   .assessment {
     outline: 1px solid CanvasText;
+  }
+}
+
+.compactAssessment {
+  display: none;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+// Retain a visible assessment when color is removed by the display or printing.
+@media (forced-colors: active), print {
+  .compactAssessment {
+    display: inline;
   }
 }

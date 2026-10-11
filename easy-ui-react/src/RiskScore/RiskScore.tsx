@@ -29,7 +29,8 @@ export type RiskScoreProps = {
   max?: number;
 
   /**
-   * Visual size. Use sm in tables and other dense layouts.
+   * Visual size. sm colors the score by assessment and omits the pill.
+   * The assessment remains in the accessible value and native hover hint.
    * @default md
    */
   size?: "sm" | "md";
@@ -53,8 +54,9 @@ export type RiskScoreProps = {
   accessibilityValueText?: string;
 
   /**
-   * Localized visible assessment label. Defaults to Low risk, Medium risk,
-   * High risk, or Not assessed. Does not change the assessment or its color.
+   * Localized assessment label: visible in md, accessible and a hover hint
+   * in sm. Defaults to Low risk, Medium risk, High risk, or Not assessed.
+   * Does not change the assessment or its color.
    * Ignored while loading or unavailable.
    */
   assessmentLabel?: string;
@@ -92,7 +94,7 @@ const assessmentTones: Record<
 };
 
 /**
- * A bounded risk score with a visible assessment and a proportional meter.
+ * A bounded risk score with a supplied assessment and a proportional meter.
  * Applications own scoring, assessment thresholds, confidence, and decisions.
  *
  * @example
@@ -150,7 +152,13 @@ export function RiskScore({
             className={styles.assessment}
             role={isLoading ? "status" : undefined}
           >
-            <Pill size={size}>{isLoading ? loadingLabel : emptyLabel}</Pill>
+            {size === "sm" ? (
+              <Text as="span" color="neutral.600" breakWord>
+                {isLoading ? loadingLabel : emptyLabel}
+              </Text>
+            ) : (
+              <Pill size={size}>{isLoading ? loadingLabel : emptyLabel}</Pill>
+            )}
           </span>
         </span>
       </span>
@@ -170,6 +178,7 @@ export function RiskScore({
       className={styles.root}
       data-size={size}
       data-assessment={level}
+      title={size === "sm" ? label : undefined}
       role="meter"
       aria-label={accessibilityLabel}
       aria-valuemin={0}
@@ -181,12 +190,12 @@ export function RiskScore({
       }
     >
       <span className={styles.summary} aria-hidden="true">
-        <span className={styles.score}>
-          <span className={styles.value}>
+        <span className={styles.score} dir="ltr" data-risk-score-expression="">
+          <span className={styles.value} data-risk-score-value="">
             <Text
               as="span"
               variant={size === "sm" ? "subtitle1" : "heading4"}
-              color="neutral.900"
+              color={size === "sm" ? undefined : "neutral.900"}
               breakWord
             >
               {formattedValue}
@@ -198,11 +207,20 @@ export function RiskScore({
             </Text>
           </span>
         </span>
-        <span className={styles.assessment}>
-          <Pill tone={assessmentTones[level]} size={size}>
+        {size === "sm" ? (
+          <span
+            className={styles.compactAssessment}
+            data-risk-score-compact-label=""
+          >
             {label}
-          </Pill>
-        </span>
+          </span>
+        ) : (
+          <span className={styles.assessment}>
+            <Pill tone={assessmentTones[level]} size={size}>
+              {label}
+            </Pill>
+          </span>
+        )}
       </span>
       {showBar && (
         <MeterBar

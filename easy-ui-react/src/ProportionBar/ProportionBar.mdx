@@ -41,7 +41,7 @@ Tone defaults to neutral. Applications decide whether an observed share merits `
 
 <Canvas of={Stories.Tones} />
 
-Default count formatting groups English numbers. `formatValue` changes both counts; `formatPercentage` receives the fraction from 0 to 1, suitable for `Intl.NumberFormat` with `style: "percent"`. The default percentage rounds to one decimal place; the fill always uses the unrounded fraction, so small nonzero shares may round to 0% in text. Use a more precise formatter when needed. No minimum visible fill invents magnitude. `typography` configures label/detail text sizes; `valueSize` controls the emphasized value independently.
+Default count formatting groups English numbers. `formatValue` changes both counts; `formatPercentage` receives the fraction from 0 to 1, suitable for `Intl.NumberFormat` with `style: "percent"`. Numeric count expressions and their individual operands are directionally isolated so the numerator stays before the denominator in RTL layouts, including Arabic-Indic digits. Labels and the bar keep the surrounding direction. The default percentage rounds to one decimal place; the fill always uses the unrounded fraction, so small nonzero shares may round to 0% in text. Use a more precise formatter when needed. No minimum visible fill invents magnitude. `typography` configures label/detail text sizes; `valueSize` controls the emphasized value independently.
 
 <Canvas of={Stories.LargeText} />
 
