@@ -1,0 +1,114 @@
+@use "../styles/common" as *;
+
+.root {
+  @include component-token(
+    "proportion-bar",
+    "color.fill",
+    design-token("color.neutral.600")
+  );
+  display: flex;
+  flex-direction: column;
+  gap: design-token("space.1");
+  inline-size: 100%;
+  min-inline-size: 0;
+  color: design-token("color.neutral.900");
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+
+  &[data-tone="success"] {
+    @include component-token(
+      "proportion-bar",
+      "color.fill",
+      design-token("color.positive.700")
+    );
+  }
+  &[data-tone="warning"] {
+    @include component-token(
+      "proportion-bar",
+      "color.fill",
+      design-token("color.warning.700")
+    );
+  }
+  &[data-tone="danger"] {
+    @include component-token(
+      "proportion-bar",
+      "color.fill",
+      design-token("color.negative.700")
+    );
+  }
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  min-inline-size: 0;
+}
+.details {
+  display: contents;
+}
+.label {
+  order: 1;
+  flex: 1 1 12em;
+  min-inline-size: 0;
+  font-size: var(--ezui-viz-label-size, 14px);
+  color: design-token("color.neutral.700");
+}
+.percentage {
+  order: 2;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.counts {
+  order: 3;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  font-size: var(--ezui-viz-detail-size, 14px);
+  font-variant-numeric: tabular-nums;
+  color: design-token("color.neutral.600");
+}
+.track {
+  display: flex;
+  block-size: 8px;
+  inline-size: 100%;
+  border-radius: 999px;
+  overflow: hidden;
+  background: design-token("color.neutral.200");
+}
+.fill {
+  block-size: 100%;
+  flex: none;
+  background: component-token("proportion-bar", "color.fill");
+}
+.root[data-presentation="expanded"] {
+  .summary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .percentage {
+    order: 0;
+  }
+  .details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+  }
+  .track {
+    block-size: 12px;
+  }
+}
+
+@media (forced-colors: active) {
+  .track {
+    outline: 1px solid CanvasText;
+    background: Canvas;
+  }
+  .fill {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+}
