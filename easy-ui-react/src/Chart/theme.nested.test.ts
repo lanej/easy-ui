@@ -70,6 +70,9 @@ it.each(["light", "dark"] as const)(
         },
       });
       expect(chart.getVisual({ seriesIndex: 3 }, "color")).not.toBe("#fff");
+      expect((chart.getOption().series as object[])[3]).toMatchObject({
+        itemStyle: { color: null },
+      });
       chart.setOption(
         themedOption(
           element,

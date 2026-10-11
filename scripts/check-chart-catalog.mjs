@@ -300,8 +300,17 @@ try {
             `${story}: group headings contrast with their neutral background`,
           );
         }
-        if (name === "BoxPlotChart")
+        if (name === "BoxPlotChart") {
           await hasColor("path", "stroke", tokens["primary-600"]);
+          assert.ok(
+            await svg
+              .locator(`path[stroke=${JSON.stringify(tokens["primary-600"])}]`)
+              .evaluateAll((paths) =>
+                paths.every((path) => path.getAttribute("fill") === "none"),
+              ),
+            `${story}: transparent interiors preserve the themed background`,
+          );
+        }
         if (name === "PredictionBandChart") {
           const predicted =
             tokens[width < 600 ? "secondary-600" : "primary-600"];
