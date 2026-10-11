@@ -1,0 +1,33 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as Stories from "./InvestigationQueue.stories";
+
+<Meta of={Stories} />
+
+# Investigation queue recipe
+
+Choose the next case using an existing DataGrid, Badge, RiskScore, ObservationFreshness, TextField, Select, and pagination. This is application composition, not a new public package component. Copy `InvestigationQueue.tsx` and its stylesheet from this recipe directory into your application and replace the synthetic fixture data.
+
+<Canvas of={Stories.Worklist} />
+
+The recipe searches case IDs, tracking codes, category labels, and optional subjects; filters category, review status, and supplied assessment; and sorts supplied risk scores or case IDs. Filtering and sorting return to page one. Pagination clamps to a valid page after the snapshot shrinks. Missing or invalid scores stay last in either sort direction. On wide containers, Category, Review state, and Last observation have separate columns. Narrow containers move the category beneath the case ID and keep table scrolling inside the grid frame. Review stages use semantic Badge variants: amber for Unreviewed (work waiting), blue for In review (work underway), and green for Reviewed (work completed). Green indicates review completion, independently of its recorded outcome. The visible stage label conveys the same information without relying on color. Observation freshness describes the last tracking observation, independently of the review. Case actions remain keyboard accessible.
+
+`category` supplies a stable ID and display label for the case type. Categories appear as neutral badges and populate the Category filter; optional `subject` text describes the individual case. The application owns the taxonomy. Category is independent of risk and review status, and is retained when opening a case. If a selected category disappears from a refreshed snapshot, its filter remains visible until cleared.
+
+The compact toolbar gives search extra room and uses small Selects. At narrow widths, a Filters button opens the existing Selects in a Popover, shows the number of active categorical filters, and keeps their selected labels visible after dismissal. Filters apply immediately; Done or Escape closes the panel, and Clear filters resets search and all three categorical filters. The queue and case headers display the exact risk score and assessment without a proportional bar (`showBar={false}`), retaining the accessible value and range. RiskScore continues to show the bar by default when used elsewhere.
+
+`onOpenCase(id)` hands a stable case ID to application navigation. The recipe does not turn scores into assessments or review outcomes. Loading suppresses stale actions, failures offer an optional retry, and empty filters can be cleared. For a remote queue, move filtering, ordering, and paging into the query layer while retaining these controlled DataGrid and form patterns.
+
+```tsx
+<InvestigationQueue
+  cases={snapshot.cases}
+  isLoading={loading}
+  error={loadError}
+  onRetry={reload}
+  onOpenCase={openCase}
+/>
+```
+
+See **Recipes → Investigation → Workflow** for queue-to-map-to-review composition with retained filters and focus restoration. These examples use synthetic data and local session state.
+
+<Canvas of={Stories.Empty} />
+<Canvas of={Stories.Retry} />

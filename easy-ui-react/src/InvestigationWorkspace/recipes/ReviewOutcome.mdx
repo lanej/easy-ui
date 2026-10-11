@@ -1,0 +1,39 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as Stories from "./ReviewOutcome.stories";
+
+<Meta of={Stories} />
+
+# Review outcome recipe
+
+Record a human review independently of a supplied risk assessment. The recipe composes Select, Textarea, Button, and a semantic review history. Copy `ReviewOutcome.tsx`, `useReviewOutcomes.ts`, and the stylesheet into the consuming application; outcome vocabulary and persistence belong there.
+
+<Canvas of={Stories.RecordReview} />
+
+The example header keeps the case ID, neutral category badge, and compact risk score aligned in one row when space permits. It uses `RiskScore` with `showBar={false}` to display the exact score and assessment without a second visual line. The header wraps at narrow widths while preserving the accessible score and range.
+
+Small Select and Button controls and compact panel spacing match the investigation workbench. The notes field retains three editable lines and vertical resizing; history text wraps and preserves the full supplied notes.
+
+```tsx
+// Keep this owner mounted above case navigation, alongside confirmed history.
+const reviewFor = useReviewOutcomes(async (draft) => {
+  const record = await reviewService.create(draft);
+  addConfirmedRecord(record);
+});
+
+<ReviewOutcome
+  caseId={caseId}
+  options={allowedOutcomes}
+  records={confirmedReviews}
+  review={reviewFor(caseId)}
+/>;
+```
+
+No option starts selected. A submission requires a valid outcome and a nonblank note. The callback receives only `caseId`, `outcome`, and trimmed `notes`. The service supplies the authenticated reviewer, persisted ID, and timestamp, and the application supplies the resulting `records`. The recipe does not fabricate an audit entry after a successful callback or change the risk score.
+
+`useReviewOutcomes` owns drafts, errors, completion status, and pending requests by case ID. It must stay mounted above navigation; a remounted form receives the same pending state and draft. The synchronous per-case guard blocks concurrent submissions even before a render updates. Switching cases keeps separate drafts, and a late response updates only its original case. A rejected promise retains that case's draft for retry; successful persistence clears it and announces completion. History follows caller order and keeps prior entries visible.
+
+While saving, the outcome Select is disabled and notes are read-only. The submit button uses `aria-disabled` and ignores further submissions while remaining focusable, so keyboard focus survives both success and failure. Completing a request for a hidden case does not move focus away from the visible case. The application service owns durable persistence and request idempotency across page reloads or separate sessions.
+
+The failed-save story simulates one rejected request followed by a successful retry. The examples retain records only for the current session; connect the callback to your application service for durable history.
+
+<Canvas of={Stories.FailedSave} />

@@ -1,0 +1,37 @@
+@use "../styles/common" as *;
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  margin: 0;
+  min-inline-size: 0;
+  color: design-token("color.neutral.900");
+  font-size: 0.75rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-inline-size: 0;
+  }
+  dt {
+    color: design-token("color.neutral.700");
+  }
+  dd {
+    margin: 0;
+  }
+  &[data-layout="stacked"] {
+    display: grid;
+    gap: 6px;
+    font-size: 0.875rem;
+    > div {
+      display: grid;
+      grid-template-columns: minmax(0, min(8rem, 33%)) minmax(0, 1fr);
+      align-items: baseline;
+      gap: 8px;
+    }
+  }
+}

@@ -32,11 +32,12 @@ Omit `assessment` or pass `null` when a score exists without a category. The num
 
 ## Compose in tracking tables
 
-Set `size="sm"` for dense layouts. Both sizes retain the value, maximum, visible assessment, and meter. This molecule composes the Text and Pill atoms without a click action or surrounding card; compose it with existing table, navigation, and detail components.
+Set `size="sm"` for dense layouts. Both sizes retain the value, maximum, and visible assessment. Set `showBar={false}` to omit the visual bar when the number and assessment are enough, such as in a worklist. Accessible meter semantics, including the exact value and range, are retained. This molecule composes the Text and Pill atoms without a click action or surrounding card; compose it with existing table, navigation, and detail components.
 
 Use `accessibilityLabel` to identify the measured risk. In a table, include the record identifier so each score has a distinct accessible name.
 
 <Canvas of={Stories.CompactTrackingTable} />
+<Canvas of={Stories.WithoutBar} />
 
 ## Distinguish loading, unavailable, and zero
 

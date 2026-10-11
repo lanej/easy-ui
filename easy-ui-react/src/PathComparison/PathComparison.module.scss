@@ -1,0 +1,142 @@
+@use "../styles/common" as *;
+
+.root {
+  container-type: inline-size;
+  min-inline-size: 0;
+}
+.comparison {
+  inline-size: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 8px;
+  color: design-token("color.neutral.900");
+  background: design-token("color.neutral.000");
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  th,
+  td {
+    text-align: start;
+    vertical-align: top;
+    padding: 8px;
+  }
+  th {
+    font-weight: 600;
+  }
+  tbody th,
+  tbody td {
+    border-block-start: 1px solid design-token("color.neutral.200");
+  }
+  [data-selected="true"] {
+    background: design-token("color.primary.050");
+  }
+}
+.event {
+  display: grid;
+  gap: 2px;
+}
+.path,
+.event {
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 6px;
+  background: design-token("color.neutral.000");
+  padding: 6px 8px;
+  min-block-size: 32px;
+  inline-size: 100%;
+  overflow-wrap: anywhere;
+  &:hover {
+    border-color: design-token("color.neutral.600");
+  }
+  &:focus-visible {
+    outline: 2px solid design-token("color.primary.500");
+    outline-offset: 2px;
+  }
+}
+.path[aria-pressed="true"],
+.event[aria-current="true"] {
+  border-color: design-token("color.primary.500");
+  box-shadow: inset 3px 0 design-token("color.primary.500");
+}
+.observations {
+  display: grid;
+  gap: 6px;
+}
+.eventMetadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  font-size: 0.8125rem;
+}
+.description,
+.received,
+.missing,
+.note,
+.empty {
+  color: design-token("color.neutral.700");
+}
+.description {
+  display: block;
+  font-weight: 400;
+  font-size: 0.75rem;
+  margin-block-start: 4px;
+}
+.received,
+.note {
+  font-size: 0.75rem;
+}
+.empty {
+  margin: 0;
+}
+
+@container (max-width: 640px) {
+  .comparison {
+    display: block;
+    thead,
+    tbody,
+    tr,
+    th,
+    td {
+      display: block;
+    }
+    thead tr {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    thead th {
+      flex: 1 1 140px;
+    }
+    tbody th {
+      background: design-token("color.neutral.050");
+    }
+    td {
+      border-block-start: none;
+    }
+    td::before {
+      content: attr(data-path-label);
+      display: block;
+      font-weight: 600;
+      margin-block-end: 6px;
+    }
+  }
+}
+
+.comparison thead th:first-child {
+  inline-size: 22%;
+}
+@container (max-width: 640px) {
+  .comparison thead th:first-child {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}

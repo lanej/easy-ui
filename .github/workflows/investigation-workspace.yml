@@ -3,11 +3,14 @@ on:
   pull_request:
     paths:
       - "easy-ui-react/src/InvestigationWorkspace/**"
+      - "easy-ui-react/src/PathComparison/**"
+      - "easy-ui-react/src/EventDetails/**"
       - "easy-ui-react/src/EventTimeline/**"
       - "easy-ui-react/src/NetworkMap/**"
       - "easy-ui-react/src/HealthAssessment/**"
       - "easy-ui-react/src/DurationDistribution/**"
       - "scripts/check-investigation-workspace.mjs"
+      - "scripts/check-investigation-toolkit.mjs"
       - ".github/workflows/investigation-workspace.yml"
   workflow_dispatch:
 permissions:
@@ -45,6 +48,7 @@ jobs:
           done
           curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
           node scripts/check-investigation-workspace.mjs
+          node scripts/check-investigation-toolkit.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

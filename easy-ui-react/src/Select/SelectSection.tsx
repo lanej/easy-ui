@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { useListBoxSection, useSeparator } from "react-aria";
+import { useListBoxSection } from "react-aria";
 import { Node, Section, SelectState } from "react-stately";
 import { SelectOptionContent } from "./SelectOption";
 import styles from "./Select.module.scss";
@@ -33,13 +33,16 @@ export function SelectSectionContent<T>({
   state,
 }: SelectSectionContentProps<T>) {
   const { itemProps, groupProps } = useListBoxSection({
-    "aria-label": section["aria-label"],
+    "aria-label": section.props["aria-label"],
   });
-  const { separatorProps } = useSeparator({ elementType: "li" });
   return (
     <>
       {section.key !== state.collection.getFirstKey() && (
-        <li {...separatorProps} className={styles.separator} />
+        <li
+          role="presentation"
+          aria-hidden="true"
+          className={styles.separator}
+        />
       )}
       <li {...itemProps}>
         {section.hasChildNodes && (
