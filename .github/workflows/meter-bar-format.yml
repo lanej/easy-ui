@@ -17,7 +17,9 @@ jobs:
         with:
           node-version-file: source/.nvmrc
       - name: Apply the reviewed changes
-        run: python3 .review/apply-risk.py source
+        run: |
+          python3 .review/apply-risk.py source
+          python3 .review/refine-colors.py source
       - name: Install and build the source packages
         working-directory: source
         run: npm ci --no-audit --no-fund
