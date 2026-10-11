@@ -46,7 +46,7 @@ jobs:
       - name: Install Chromium
         working-directory: scripts/preview-metrics
         run: npx playwright install --with-deps chromium
-      - name: Verify facility and responsive health layouts
+      - name: Verify facility, health, and proportion layouts
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
           STORYBOOK_URL: http://127.0.0.1:9018
@@ -63,7 +63,8 @@ jobs:
           done
           curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
           node scripts/check-facility-summary.mjs
-      - name: Retain facility browser evidence
+          node scripts/check-proportion-bar.mjs
+      - name: Retain facility and proportion browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
