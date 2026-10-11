@@ -12,7 +12,7 @@ jobs:
       EXPECTED_REVISION: 375f9f1582e0c96c4f79cdcd587b813aeb27b9c3
       REVISION_URL: https://lanej.io/previews/easy-ui/pr-30/revision.txt
       STORYBOOK_URL: https://lanej.io/previews/easy-ui/pr-30/storybook
-      FACILITY_REPORT_DIR: ${{ runner.temp }}/compact-risk-live
+      FACILITY_REPORT_DIR: /tmp/compact-risk-live
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,5 +60,5 @@ jobs:
         if: always()
         with:
           name: compact-risk-live
-          path: ${{ runner.temp }}/compact-risk-live
+          path: /tmp/compact-risk-live
           retention-days: 14
