@@ -153,3 +153,59 @@ export const LocalizedNarrow: Story = {
     </Box>
   ),
 };
+
+export const CompactAssessments: Story = {
+  render: () => (
+    <Box maxWidth={720}>
+      <VerticalStack gap="3">
+        <VerticalStack gap="1">
+          <Text as="h3" variant="heading4">
+            Compact scores
+          </Text>
+          <HorizontalStack gap="4" blockAlign="start">
+            <RiskScore value={19} assessment="low" size="sm" />
+            <RiskScore value={52} assessment="medium" size="sm" />
+            <RiskScore value={87} assessment="high" size="sm" />
+            <RiskScore value={72} size="sm" />
+          </HorizontalStack>
+        </VerticalStack>
+        <VerticalStack gap="1">
+          <Text as="h3" variant="heading4">
+            Without bars
+          </Text>
+          <HorizontalStack gap="4" blockAlign="start">
+            <RiskScore value={19} assessment="low" size="sm" showBar={false} />
+            <RiskScore
+              value={52}
+              assessment="medium"
+              size="sm"
+              showBar={false}
+            />
+            <RiskScore value={87} assessment="high" size="sm" showBar={false} />
+            <RiskScore value={72} size="sm" showBar={false} />
+          </HorizontalStack>
+        </VerticalStack>
+        <VerticalStack gap="1">
+          <Text as="h3" variant="heading4">
+            Loading and unavailable
+          </Text>
+          <HorizontalStack gap="4" blockAlign="start">
+            <RiskScore value={87} assessment="high" size="sm" isLoading />
+            <RiskScore value={null} size="sm" />
+          </HorizontalStack>
+        </VerticalStack>
+        <VerticalStack gap="1">
+          <Text as="h3" variant="heading4">
+            Default size keeps the assessment pill
+          </Text>
+          <HorizontalStack gap="4" blockAlign="start">
+            <RiskScore value={19} assessment="low" />
+            <RiskScore value={52} assessment="medium" />
+            <RiskScore value={87} assessment="high" />
+          </HorizontalStack>
+        </VerticalStack>
+      </VerticalStack>
+    </Box>
+  ),
+  parameters: { controls: { disable: true } },
+};

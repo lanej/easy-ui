@@ -55,3 +55,16 @@
     outline: 1px solid CanvasText;
   }
 }
+
+.compactAssessment {
+  display: none;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+// Retain a visible assessment when color is removed by the display or printing.
+@media (forced-colors: active), print {
+  .compactAssessment {
+    display: inline;
+  }
+}

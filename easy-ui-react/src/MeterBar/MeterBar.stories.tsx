@@ -127,3 +127,46 @@ export const States: Story = {
     </VerticalStack>
   ),
 };
+
+export const LocalizedRightToLeft: Story = {
+  render: () => {
+    const formatValue = new Intl.NumberFormat("ar-EG").format;
+    return (
+      <div dir="rtl" lang="ar">
+        <VerticalStack gap="3">
+          <ProportionBar
+            label="نقاط الفحص المتأثرة"
+            value={1184}
+            total={1659}
+            formatValue={formatValue}
+          />
+          <ProportionBar
+            label="نقاط الفحص المتأثرة"
+            value={1184}
+            total={1659}
+            formatValue={formatValue}
+            presentation="expanded"
+          />
+          <RiskScore
+            value={72}
+            assessment="high"
+            assessmentLabel="مخاطر عالية"
+            accessibilityLabel="درجة المخاطر"
+            accessibilityValueText="٧٢ من ١٠٠؛ مخاطر عالية"
+            formatValue={formatValue}
+          />
+          <RiskScore
+            value={0.18}
+            max={1}
+            assessment="low"
+            assessmentLabel="مخاطر منخفضة"
+            accessibilityLabel="درجة المخاطر"
+            accessibilityValueText="٠٫١٨ من ١؛ مخاطر منخفضة"
+            formatValue={formatValue}
+            size="sm"
+          />
+        </VerticalStack>
+      </div>
+    );
+  },
+};
