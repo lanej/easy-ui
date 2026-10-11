@@ -30,6 +30,7 @@ export default defineConfig({
         { src: "CHANGELOG.md", dest: "." },
         { src: "src/styles", dest: "." },
         { src: "skills", dest: "." },
+        { src: "install-skill.mjs", dest: "." },
         {
           src: [
             "src/NetworkMap/maplibre-gl.css",

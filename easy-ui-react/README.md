@@ -54,25 +54,29 @@ Packages support TypeScript's legacy `moduleResolution: "node"` as well as moder
 ### Agent skill
 
 The package includes an `easy-ui` skill for component usage and library
-contributions. Install it explicitly in your application project after installing
-the package; npm installation does not modify agent configuration.
+contributions. Its npm `postinstall` links the bundled skill into the application's
+`.agents/skills/easy-ui` (Codex) and `.claude/skills/easy-ui` (Claude Code).
+The links follow package upgrades. Existing skills at either path are preserved.
 
-For Codex:
-
-```bash
-mkdir -p .agents/skills
-cp -R node_modules/@easypost/easy-ui/skills/easy-ui .agents/skills/
-```
-
-For Claude Code:
+If lifecycle scripts are disabled, run the installer from your application root:
 
 ```bash
-mkdir -p .claude/skills
-cp -R node_modules/@easypost/easy-ui/skills/easy-ui .claude/skills/
+node node_modules/@easypost/easy-ui/install-skill.mjs
 ```
 
-Repeat the copy after upgrading Easy UI to update the installed guidance. From a
-repository checkout, use `easy-ui-react/skills/easy-ui` as the copy source instead.
+For user-wide installation, install the package globally:
+
+```bash
+npm install -g @easypost/easy-ui
+```
+
+The global postinstall links the skill into `~/.agents/skills/easy-ui` and
+`~/.claude/skills/easy-ui`, backed by the global package so its updates refresh the
+guidance. The installer also accepts `--global`; when running it from a local
+package, keep that package installed so the user-wide links remain valid.
+
+Set `EASY_UI_SKIP_SKILL_INSTALL=1` to skip automatic setup. From a repository checkout, run
+`node easy-ui-react/install-skill.mjs` from your project root.
 The [skill source](skills/easy-ui/SKILL.md) is maintained with the component library.
 It delegates visual review to Viewrule and component validation to the library's
 existing tests and CI.

@@ -176,8 +176,9 @@ ${["Chart", "MetricCard", "Button", "DataGrid"]
 // static imports or createRequire from the repository's dependencies.
 const runner = String.raw`
 import assert from "node:assert/strict";
-import { readFileSync, realpathSync, readdirSync, mkdirSync, copyFileSync } from "node:fs";
+import { readFileSync, realpathSync, readdirSync, lstatSync } from "node:fs";
 import { createRequire } from "node:module";
+import { execFileSync } from "node:child_process";
 import { dirname, join, resolve, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import React from "react";
@@ -289,15 +290,25 @@ for (const subpath of ["style.css", ...expected.map((name) => "styles/" + name)]
 const skill = require.resolve("@easypost/easy-ui/skills/easy-ui/SKILL.md");
 assert.equal(insideConsumer(skill), insideConsumer(fileURLToPath(import.meta.resolve("@easypost/easy-ui/skills/easy-ui/SKILL.md"))));
 const installedSkill = join(".agents", "skills", "easy-ui", "SKILL.md");
-mkdirSync(dirname(installedSkill), { recursive: true });
-copyFileSync(skill, installedSkill);
+assert.ok(lstatSync(dirname(installedSkill)).isSymbolicLink());
 assert.equal(readFileSync(installedSkill, "utf8"), readFileSync("expected-skill.md", "utf8"));
+assert.equal(readFileSync(".claude/skills/easy-ui/SKILL.md", "utf8"), "Application-owned skill\n");
 const manifest = require("@easypost/easy-ui/package.json");
 assert.ok(manifest.sideEffects.includes("**/*.scss"));
 assert.ok(manifest.sideEffects.includes("**/*.css"));
 
 const typeExpected = JSON.parse(readFileSync("expected-types.json", "utf8"));
 const packageDirectory = dirname(insideConsumer(require.resolve("@easypost/easy-ui/package.json")));
+const userDirectory = resolve("skill-user");
+// Isolate the user-directory boundary while running the installed CLI unchanged.
+execFileSync(process.execPath, ["--input-type=module", "-e",
+  "import os from 'node:os'; import {syncBuiltinESMExports} from 'node:module'; " +
+  "os.homedir = () => " + JSON.stringify(userDirectory) + "; syncBuiltinESMExports(); " +
+  "process.argv.push('--global'); await import(" +
+  JSON.stringify(pathToFileURL(join(packageDirectory, "install-skill.mjs")).href) + ");",
+]);
+assert.equal(realpathSync(join(userDirectory, ".agents/skills/easy-ui/SKILL.md")), realpathSync(skill));
+assert.equal(realpathSync(join(userDirectory, ".claude/skills/easy-ui/SKILL.md")), realpathSync(skill));
 const canonicalDirectory = typeExpected.mode === "source" ? join(packageDirectory, "dist") : packageDirectory;
 const publicDeclarations = typeExpected.declarations.map((file) => insideConsumer(join(packageDirectory, file)));
 assert.ok(publicDeclarations.length >= typeExpected.components.length, "Published declaration entry points are missing");
@@ -410,6 +421,11 @@ try {
     const folder = join(scratch, mode);
     const consumer = join(folder, "consumer");
     await mkdir(consumer, { recursive: true });
+    await mkdir(join(consumer, ".claude/skills/easy-ui"), { recursive: true });
+    await writeFile(
+      join(consumer, ".claude/skills/easy-ui/SKILL.md"),
+      "Application-owned skill\n",
+    );
     await writeFile(
       join(consumer, "expected-skill.md"),
       await readFile(join(source, "skills/easy-ui/SKILL.md")),
@@ -525,14 +541,7 @@ try {
       join(folder, "install.log"),
       run(
         npm,
-        [
-          "install",
-          "--ignore-scripts",
-          "--no-audit",
-          "--no-fund",
-          "--cache",
-          cache,
-        ],
+        ["install", "--no-audit", "--no-fund", "--cache", cache],
         consumer,
       ),
     );
