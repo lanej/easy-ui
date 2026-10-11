@@ -347,6 +347,97 @@ try {
     .first()
     .waitFor();
   checks.push({ docs: "LineChart API table" });
+  // The same docs theme provider hosts standalone MDX galleries. Exercise
+  // system preferences as well as explicit overrides, rather than only charts.
+  for (const { scheme, system, resolved } of [
+    { scheme: "light", system: "dark", resolved: "light" },
+    { scheme: "dark", system: "light", resolved: "dark" },
+    { scheme: "system", system: "light", resolved: "light" },
+    { scheme: "system", system: "dark", resolved: "dark" },
+  ]) {
+    const context = await browser.newContext({ colorScheme: system });
+    await context.addInitScript((scheme) => {
+      localStorage.setItem("easy-ui-storybook-color-scheme", scheme);
+    }, scheme);
+    const docsPage = await context.newPage();
+    docsPage.on("pageerror", (error) => errors.push(error.message));
+    try {
+      for (const width of [1440, 390]) {
+        await docsPage.setViewportSize({ width, height: 900 });
+        for (const [name, searchLabel, buttonName, minimum] of [
+          ["Colors", "Filter colors", /^Copy #/, 50],
+          ["Icons", "Filter icons", /^Copy import/, 100],
+        ]) {
+          await docsPage.goto(
+            `${baseUrl}/?path=/docs/foundations-${name.toLowerCase()}--docs&globals=colorScheme:${scheme}`,
+          );
+          const frame = docsPage.frameLocator("#storybook-preview-iframe");
+          const search = frame.getByRole("searchbox", { name: searchLabel });
+          await search.waitFor();
+          assert.equal(
+            await frame.locator(".sb-errordisplay").isVisible(),
+            false,
+          );
+          assert.ok(
+            (await frame.getByRole("button", { name: buttonName }).count()) >
+              minimum,
+            `${name}: the gallery renders inside the shared docs provider`,
+          );
+          const background = (scheme) =>
+            scheme === "dark" ? "rgb(19, 27, 42)" : "rgb(255, 255, 255)";
+          const iframe = await (
+            await docsPage.locator("#storybook-preview-iframe").elementHandle()
+          ).contentFrame();
+          const checkTheme = async (expected) => {
+            await iframe.waitForFunction(
+              (expected) =>
+                getComputedStyle(document.querySelector(".sbdocs-wrapper"))
+                  .backgroundColor === expected,
+              background(expected),
+            );
+            assert.equal(
+              await search.evaluate((element) =>
+                getComputedStyle(element)
+                  .getPropertyValue("--ezui-color-neutral-000")
+                  .trim()
+                  .toLowerCase(),
+              ),
+              expected === "dark" ? "#131b2a" : "#ffffff",
+              `${name}: gallery theme matches the docs theme`,
+            );
+          };
+          await checkTheme(resolved);
+          const overflow = await iframe.evaluate(
+            () => document.documentElement.scrollWidth > innerWidth,
+          );
+          assert.equal(
+            overflow,
+            false,
+            `${name} ${scheme} ${width}: page overflow`,
+          );
+          await docsPage.screenshot({
+            path: `${output}/${name}-${scheme}-${system}-${width}.png`,
+          });
+          checks.push({ docs: name, scheme, system, width });
+          if (scheme === "system") {
+            const changed = system === "dark" ? "light" : "dark";
+            await docsPage.emulateMedia({ colorScheme: changed });
+            await checkTheme(changed);
+            checks.push({
+              docs: name,
+              scheme,
+              system: changed,
+              width,
+              preferenceChange: true,
+            });
+            await docsPage.emulateMedia({ colorScheme: system });
+          }
+        }
+      }
+    } finally {
+      await context.close();
+    }
+  }
   assert.deepEqual(errors, []);
   console.log(`${checks.length} chart catalog browser checks passed.`);
 } finally {
