@@ -1,54 +1,64 @@
-name: Compact risk focused review
+name: Compact risk live review
 on:
   push:
     branches: [review/meter-bar-30]
 permissions:
   contents: write
 jobs:
-  prepare:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_REVISION: 375f9f1582e0c96c4f79cdcd587b813aeb27b9c3
+      REVISION_URL: https://lanej.io/previews/easy-ui/pr-30/revision.txt
+      STORYBOOK_URL: https://lanej.io/previews/easy-ui/pr-30/storybook
+      FACILITY_REPORT_DIR: ${{ runner.temp }}/compact-risk-live
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
         with:
-          ref: ace89de1a909734245d0cb1c9175e214e0ad5693
-          path: source
+          ref: 375f9f1582e0c96c4f79cdcd587b813aeb27b9c3
       - uses: actions/setup-node@v4
         with:
-          node-version-file: source/.nvmrc
-      - name: Apply the reviewed changes
+          node-version-file: .nvmrc
+      - name: Install browser tools
+        working-directory: scripts/preview-metrics
         run: |
-          python3 .review/apply-risk.py source
-          python3 .review/refine-colors.py source
-      - name: Install and build the source packages
-        working-directory: source
-        run: npm ci --no-audit --no-fund
-      - name: Format only changed source
-        working-directory: source
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Wait for the matching live preview
         run: |
-          git add .changeset/compact-risk-and-bidi.md easy-ui-react/skills/easy-ui/references/components.md easy-ui-react/src/MeterBar easy-ui-react/src/ProportionBar easy-ui-react/src/RiskScore scripts/check-meter-bar.mjs
-          git diff --cached --name-only -z | xargs -0 ./node_modules/.bin/prettier --write
-      - name: Focused unit and source checks
-        working-directory: source
+          mkdir -p "$FACILITY_REPORT_DIR"
+          for attempt in {1..45}; do
+            revision=$(curl --fail --silent "$REVISION_URL?review=$GITHUB_RUN_ID" || true)
+            if [ "$revision" = "$EXPECTED_REVISION" ]; then
+              printf '%s\n' "$revision" > "$FACILITY_REPORT_DIR/revision-before.txt"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo 'The hosted revision did not match the reviewed source.' >&2
+          exit 1
+      - name: Verify and capture the live components
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
         run: |
-          npm run test --workspace=@easypost/easy-ui -- src/RiskScore src/ProportionBar src/MeterBar | tee "$RUNNER_TEMP/compact-risk-tests.log"
-          npx eslint easy-ui-react/src/RiskScore easy-ui-react/src/ProportionBar easy-ui-react/src/MeterBar --ext .ts,.tsx
-          npx stylelint easy-ui-react/src/RiskScore/RiskScore.module.scss
-          node --check scripts/check-meter-bar.mjs
-      - name: Retain the prepared source on a review branch
-        working-directory: source
+          node scripts/check-proportion-bar.mjs
+          revision=$(curl --fail --silent "$REVISION_URL?review=$GITHUB_RUN_ID-after")
+          test "$revision" = "$EXPECTED_REVISION"
+          printf '%s\n' "$revision" > "$FACILITY_REPORT_DIR/revision-after.txt"
+      - name: Retain representative images on a review-only branch
         run: |
-          git add .changeset/compact-risk-and-bidi.md easy-ui-react/skills/easy-ui/references/components.md easy-ui-react/src/MeterBar easy-ui-react/src/ProportionBar easy-ui-react/src/RiskScore scripts/check-meter-bar.mjs
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix: isolate RTL ratios and simplify compact risk scores'
-          branch="review/compact-risk-ready-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cp "$FACILITY_REPORT_DIR/proportion-bar/risk-compact-dark-1040.png" documentation/images/risk-score-compact-dark.png
+          cp "$FACILITY_REPORT_DIR/proportion-bar/risk-compact-dark-320.png" documentation/images/risk-score-compact-mobile.png
+          cp "$FACILITY_REPORT_DIR/proportion-bar/meter-localized-right-to-left-dark-1040.png" documentation/images/meter-rtl-localized.png
+          git add documentation/images/risk-score-compact-dark.png documentation/images/risk-score-compact-mobile.png documentation/images/meter-rtl-localized.png
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'review: retain compact risk and RTL live captures'
+          branch="review/compact-risk-preview-30-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           git push origin "HEAD:refs/heads/$branch"
-          printf '{"branch":"%s","commit":"%s","tree":"%s"}\n' "$branch" "$(git rev-parse HEAD)" "$(git rev-parse HEAD^{tree})" | tee "$RUNNER_TEMP/compact-risk-prepared.json"
-          git diff ace89de1a909734245d0cb1c9175e214e0ad5693 HEAD > "$RUNNER_TEMP/compact-risk-prepared.patch"
+          printf '{"branch":"%s","capture_commit":"%s","source":"%s"}\n' "$branch" "$(git rev-parse HEAD)" "$EXPECTED_REVISION" > "$FACILITY_REPORT_DIR/captures.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: compact-risk-focused-review
-          path: |
-            ${{ runner.temp }}/compact-risk-tests.log
-            ${{ runner.temp }}/compact-risk-prepared.json
-            ${{ runner.temp }}/compact-risk-prepared.patch
+          name: compact-risk-live
+          path: ${{ runner.temp }}/compact-risk-live
+          retention-days: 14
