@@ -217,6 +217,18 @@ try {
   await open(`${comparison}--linked-map`, "dark");
   await mapReady();
   await audit("comparison-linked-dark", true);
+  await open(`${comparison}--linked-map`, "light", 900);
+  await mapReady();
+  assert.equal(
+    await page
+      .getByRole("table", { name: "Candidate path comparison" })
+      .getByRole("cell")
+      .first()
+      .evaluate((cell) => getComputedStyle(cell).display),
+    "table-cell",
+    "Intermediate widths retain side-by-side candidates rather than squeezing them beside the map",
+  );
+  await audit("comparison-medium", true);
   await page
     .getByRole("button", { name: "Select North Gate", exact: true })
     .click();
@@ -244,8 +256,18 @@ try {
     390,
   );
   await audit("event-details-long-identifiers", true);
+  await open("molecules-investigation-eventdetails--stacked", "light", 390);
+  await audit("event-details-stacked", true);
+  await open(
+    "molecules-investigation-eventdetails--stacked-long-identifiers",
+    "light",
+    390,
+  );
+  await audit("event-details-stacked-long-identifiers", true);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  await audit("event-details-stacked-large-text");
   await open("molecules-investigation-eventdetails--stacked", "dark", 390);
-  await audit("event-details-dark");
+  await audit("event-details-dark", true);
 
   await open("components-select--with-separator", "light", 390);
   const groupedSelect = page.getByRole("button", { name: /Label/ });

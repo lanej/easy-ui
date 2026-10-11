@@ -119,7 +119,7 @@ export function ComparisonExample({
           selection={selection}
           onSelectionChange={setSelection}
         />
-        <div className={styles.context}>
+        <div className={styles.context} data-with-map={withMap || undefined}>
           {withMap && (
             <NetworkMap
               aria-label="Candidate locations"
@@ -132,7 +132,7 @@ export function ComparisonExample({
               overlays={[overlay]}
               mapStyle={mapStyle}
               workerUrl={workerUrl}
-              height={320}
+              height={280}
               controlPlacement="map"
               showDataTable={false}
               showLegend={false}

@@ -23,7 +23,7 @@ import { EventDetails } from "@easypost/easy-ui/EventDetails";
 
 `event` accepts the `id`, `timeLabel`, `receivedTimeLabel`, and `locationLabel` fields from an `EventTimelineEvent`. Occurrence time and location display explicit fallback text when missing. Receipt time, source, and additional identifiers appear only when supplied. `locationLabel` is a fallback from an application location record; the event's own location label takes precedence. Event ID is opt-in. Identifier values remain strings so leading zeros survive. `labels` customizes the field headings and fallback text.
 
-Inline facts wrap with their container. Stacked facts suit a narrow inspector; long identifiers wrap without truncation. Provenance and identifiers are presentation only, and do not establish that an observation or inferred path is true.
+Inline facts wrap with their container. Stacked facts use aligned label/value rows with a bounded label column; labels and long identifiers wrap without truncation, including at enlarged text sizes. Provenance and identifiers are presentation only, and do not establish that an observation or inferred path is true.
 
 <Canvas of={Stories.Stacked} />
 <Canvas of={Stories.Unknown} />

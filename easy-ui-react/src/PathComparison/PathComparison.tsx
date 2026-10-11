@@ -164,16 +164,18 @@ export function PathComparison({
                             }
                           >
                             <strong>{event.label}</strong>
-                            <span>
-                              {event.timeLabel || text.unknownTime}
-                              {event.locationLabel &&
-                                ` · ${event.locationLabel}`}
-                            </span>
-                            {event.receivedTimeLabel && (
-                              <span className={styles.received}>
-                                {text.received} {event.receivedTimeLabel}
+                            <span className={styles.eventMetadata}>
+                              <span>
+                                {event.timeLabel || text.unknownTime}
+                                {event.locationLabel &&
+                                  ` · ${event.locationLabel}`}
                               </span>
-                            )}
+                              {event.receivedTimeLabel && (
+                                <span className={styles.received}>
+                                  {text.received} {event.receivedTimeLabel}
+                                </span>
+                              )}
+                            </span>
                           </button>
                         );
                       })}

@@ -23,6 +23,13 @@ export const Stacked: Story = {
     layout: "stacked",
     identifiers: [{ label: "Source record", value: "scan-48290" }],
   },
+  decorators: [
+    (Story) => (
+      <div style={{ maxWidth: 360 }}>
+        <Story />
+      </div>
+    ),
+  ],
 };
 export const Unknown: Story = {
   args: {
@@ -47,4 +54,8 @@ export const LongIdentifiers: Story = {
       </div>
     ),
   ],
+};
+export const StackedLongIdentifiers: Story = {
+  ...LongIdentifiers,
+  args: { ...LongIdentifiers.args, layout: "stacked" },
 };

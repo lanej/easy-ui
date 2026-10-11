@@ -60,7 +60,7 @@
 }
 .panel {
   color: design-token("color.neutral.900");
-  padding: 16px;
+  padding: 12px;
   background: design-token("color.neutral.000");
   border: 1px solid design-token("color.neutral.200");
   border-radius: 8px;
@@ -69,15 +69,19 @@
 .panel p {
   margin: 0;
 }
+.review,
+.panel {
+  gap: 8px;
+}
 .subheading {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.875rem;
 }
 .saveRow {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 .message {
   color: design-token("color.neutral.900");
@@ -88,7 +92,7 @@
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 .history li {
   display: grid;

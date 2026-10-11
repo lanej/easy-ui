@@ -20,7 +20,7 @@
   td {
     text-align: start;
     vertical-align: top;
-    padding: 12px;
+    padding: 8px;
   }
   th {
     font-weight: 600;
@@ -46,7 +46,8 @@
   border: 1px solid design-token("color.neutral.200");
   border-radius: 6px;
   background: design-token("color.neutral.000");
-  padding: 8px;
+  padding: 6px 8px;
+  min-block-size: 32px;
   inline-size: 100%;
   overflow-wrap: anywhere;
   &:hover {
@@ -64,7 +65,14 @@
 }
 .observations {
   display: grid;
-  gap: 8px;
+  gap: 6px;
+}
+.eventMetadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  font-size: 0.8125rem;
 }
 .description,
 .received,

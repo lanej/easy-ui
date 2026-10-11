@@ -52,7 +52,7 @@ export function ReviewExample({
     setRecords((previous) => [exampleRecord(draft), ...previous]);
   });
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", display: "grid", gap: 16 }}>
+    <div style={{ maxWidth: 640, margin: "0 auto", display: "grid", gap: 12 }}>
       <div className={styles.saveRow}>
         <strong>CASE-1042</strong>
         <Badge variant="inverse" accessibilityLabel="Case category:">
@@ -149,7 +149,7 @@ export function InvestigationWorkflow({
     }
   }, [caseId]);
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gap: 20 }}>
+    <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gap: 16 }}>
       <div ref={queue} hidden={caseId !== null}>
         <h2>Investigation queue</h2>
         <InvestigationQueue
@@ -165,9 +165,9 @@ export function InvestigationWorkflow({
         />
       </div>
       {active && (
-        <div style={{ display: "grid", gap: 20 }}>
+        <div style={{ display: "grid", gap: 12 }}>
           <div className={styles.saveRow}>
-            <Button variant="outlined" onPress={close}>
+            <Button size="sm" variant="outlined" onPress={close}>
               Back to queue
             </Button>
             <h2 ref={heading} tabIndex={-1} style={{ margin: 0 }}>

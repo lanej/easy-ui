@@ -25,11 +25,13 @@
   }
   &[data-layout="stacked"] {
     display: grid;
-    gap: 12px;
+    gap: 6px;
     font-size: 0.875rem;
     > div {
       display: grid;
-      gap: 2px;
+      grid-template-columns: minmax(0, min(8rem, 33%)) minmax(0, 1fr);
+      align-items: baseline;
+      gap: 8px;
     }
   }
 }

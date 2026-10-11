@@ -70,6 +70,7 @@ function ReviewOutcomeForm({
         }}
       >
         <Select
+          size="sm"
           label="Review outcome"
           placeholder="Choose a review outcome"
           selectedKey={outcome || null}
@@ -97,6 +98,7 @@ function ReviewOutcomeForm({
         )}
         <div className={styles.saveRow}>
           <Button
+            size="sm"
             type="submit"
             isDisabled={!options.length}
             aria-disabled={saving || undefined}
