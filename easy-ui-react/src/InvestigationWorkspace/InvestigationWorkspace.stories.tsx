@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import ApartmentIcon from "@easypost/easy-ui-icons/Apartment";
 import type { Map as MapInstance, StyleSpecification } from "maplibre-gl";
 import "../NetworkMap/maplibre-gl.css";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
@@ -13,6 +14,9 @@ import type {
 } from "./selection";
 import { investigationRecords } from "./InvestigationWorkspace.fixtures";
 import { HealthAssessment } from "../HealthAssessment";
+import { EventMetrics } from "../EventMetrics";
+import { createExampleEventMetrics } from "../EventMetrics/EventMetrics.examples";
+import { Icon } from "../Icon";
 import {
   DurationDistribution,
   DurationQuantileMetrics,
@@ -102,6 +106,17 @@ function Details({ event, location }: InvestigationDetailsContext) {
   );
 }
 
+function MetricDetails({ event, location }: InvestigationDetailsContext) {
+  if (!location || event?.id !== "arrived") return null;
+  return (
+    <EventMetrics
+      variant="expanded"
+      metrics={createExampleEventMetrics("expanded")}
+      ariaLabel="Selected facility observations"
+    />
+  );
+}
+
 const mapOptions = {
   mapStyle,
   workerUrl,
@@ -119,6 +134,7 @@ function Example({
   external = false,
   empty = false,
   placementControls = false,
+  withMetrics = false,
 }: {
   initial?: InvestigationSelection;
   narrow?: boolean;
@@ -126,6 +142,7 @@ function Example({
   external?: boolean;
   empty?: boolean;
   placementControls?: boolean;
+  withMetrics?: boolean;
 }) {
   const { resolvedColorScheme } = useColorScheme();
   const [selection, setSelection] = useState<InvestigationSelection>(initial);
@@ -189,7 +206,20 @@ function Example({
         events={
           empty
             ? []
-            : investigationRecords.events.map((event) => ({ ...event }))
+            : investigationRecords.events.map((event) => ({
+                ...event,
+                ...(withMetrics && {
+                  tone: "neutral" as const,
+                  locationTypeLabel: event.locationId
+                    ? event.locationId === "origin"
+                      ? "Origin facility"
+                      : "Regional hub"
+                    : undefined,
+                  locationIcon: event.locationId ? (
+                    <Icon symbol={ApartmentIcon} size="sm" />
+                  ) : undefined,
+                }),
+              }))
         }
         selection={selection}
         onSelectionChange={setSelection}
@@ -198,7 +228,23 @@ function Example({
           controlPlacement,
           mapStyle: resolvedColorScheme === "dark" ? darkMapStyle : mapStyle,
         }}
-        renderDetails={noDetails ? undefined : Details}
+        timeline={
+          withMetrics
+            ? {
+                renderMetrics: (event) =>
+                  event.id === "arrived" ? (
+                    <EventMetrics
+                      variant="compact"
+                      metrics={createExampleEventMetrics("compact")}
+                      ariaLabel="Central Exchange facility observations"
+                    />
+                  ) : null,
+              }
+            : undefined
+        }
+        renderDetails={
+          noDetails ? undefined : withMetrics ? MetricDetails : Details
+        }
       />
     </div>
   );
@@ -219,6 +265,9 @@ const meta: Meta<typeof InvestigationWorkspace> = {
 export default meta;
 type Story = StoryObj<InvestigationWorkspaceProps>;
 export const LinkedSelection: Story = { render: () => <Example /> };
+export const WithEventMetrics: Story = {
+  render: () => <Example withMetrics />,
+};
 export const SharedConnection: Story = {
   render: () => (
     <Example initial={{ type: "segment", segmentId: "shared-leg" }} />
