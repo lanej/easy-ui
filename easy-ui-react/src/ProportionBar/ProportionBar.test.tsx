@@ -18,7 +18,9 @@ it("shows one unframed proportion with its exact denominator and accessible mete
   expect(meter).toHaveAttribute("aria-valuenow", "1184");
   expect(meter).toHaveAttribute("aria-valuetext", "71.4% (1,184 / 1,659)");
   expect(screen.getByText("71.4%")).toBeInTheDocument();
-  expect(screen.getByText("1,184 / 1,659")).toBeInTheDocument();
+  expect(container.querySelector("[data-proportion-counts]")).toHaveTextContent(
+    "1,184 / 1,659",
+  );
   expect(meter).toHaveAttribute("data-tone", "warning");
   expect(container.querySelector("section, article")).toBeNull();
   expect(screen.queryByRole("progressbar")).toBeNull();
@@ -98,7 +100,9 @@ it.each([
       state,
     );
     expect(screen.getByText(label)).toBeInTheDocument();
-    expect(screen.getByText(counts)).toBeInTheDocument();
+    expect(
+      container.querySelector("[data-proportion-counts]"),
+    ).toHaveTextContent(counts);
   },
 );
 
@@ -137,7 +141,9 @@ it("uses caller formatting in both visible and accessible values", () => {
       formatPercentage={formatPercentage}
     />,
   );
-  expect(screen.getByText("1.184 / 1.659")).toBeInTheDocument();
+  expect(
+    screen.getByRole("meter").querySelector("[data-proportion-counts]"),
+  ).toHaveTextContent("1.184 / 1.659");
   expect(screen.getByRole("meter")).toHaveAttribute(
     "aria-valuetext",
     `${formatPercentage(1184 / 1659)} (1.184 / 1.659)`,
@@ -180,3 +186,26 @@ it("keeps generated label IDs unique and uses safe typography defaults", () => {
   rerender(<ProportionBar {...example} valueSize={48} />);
   expect(screen.getByText("71.4%")).toHaveStyle({ fontSize: "48px" });
 });
+
+// Rendered operand order is covered by the real-browser meter harness.
+it.each(["compact", "expanded"] as const)(
+  "isolates localized ratio operands in %s RTL layouts",
+  (presentation) => {
+    const formatValue = new Intl.NumberFormat("ar-EG").format;
+    const { container } = render(
+      <div dir="rtl">
+        <ProportionBar
+          {...example}
+          presentation={presentation}
+          formatValue={formatValue}
+        />
+      </div>,
+    );
+    const ratio = container.querySelector("[data-proportion-counts]");
+    expect(ratio).toHaveAttribute("dir", "ltr");
+    expect(
+      [...ratio!.querySelectorAll("bdi")].map((part) => part.textContent),
+    ).toEqual([formatValue(example.value), formatValue(example.total)]);
+    expect(screen.getByRole("meter")).not.toHaveAttribute("dir");
+  },
+);
