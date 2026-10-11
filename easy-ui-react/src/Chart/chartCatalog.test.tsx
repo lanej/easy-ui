@@ -206,10 +206,7 @@ it("retains generated categories under partial axis styling without mutating ove
   expect(captured.props!.option.xAxis).toEqual([
     { type: "category", data: ["Credit", "Total"], name: "Step" },
   ]);
-  expect(captured.props!.option.grid).toMatchObject({
-    top: 60,
-    containLabel: true,
-  });
+  expect(captured.props!.option.grid).toEqual({ top: 60 });
   const replaced = chartDefaults(
     { xAxis: { type: "category", data: ["a", "b", "c"] } },
     { xAxis: { data: ["replacement"] } },
