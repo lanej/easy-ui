@@ -34,7 +34,7 @@ ScoreComposition is an explicitly separate feature review on `feat/score-composi
 2. Check whether the active API already solves the issue; older hand-patched packages can be several iterations behind. Document migration instead of copying old props into the current design.
 3. Add a focused regression case for consequential behavior. Reuse component-local setup, and keep generated screenshots/reports in validation artifacts rather than source.
 4. Follow existing React Aria, Sass-token, TypeScript, Vite, and Vitest patterns. Avoid unrelated upstream refactors or a parallel design system.
-5. Update component API documentation and a realistic synthetic example. PR descriptions should explain the final behavior, review paths, and material limits. Include a clickable [Storybook link](https://lanej.io/easy-ui/storybook/) and direct links to the affected stories. Prefer a PR-specific preview when available; otherwise label the published `main` link and state that changed stories appear after merge and deployment.
+5. Update component API documentation and a realistic synthetic example. PR descriptions should explain the final behavior, review paths, and material limits. Include this PR's Storybook preview at `https://lanej.io/previews/easy-ui/pr-<number>/storybook/`, with direct links to affected stories. Publish or refresh it through the `lanej/lanej.github.com` Pages workflow and confirm `../revision.txt` matches the PR head SHA before sharing the link.
 
 ## Verification
 
