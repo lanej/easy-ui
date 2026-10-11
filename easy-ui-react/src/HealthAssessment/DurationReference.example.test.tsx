@@ -69,7 +69,7 @@ describe("Story-only duration reference", () => {
       "unhealthy",
     );
   });
-  it("splits crossing bars exactly at the supplied thresholds", () => {
+  it("highlights only the active portion of a bar crossing a policy threshold", () => {
     const { container } = render(
       <DurationReferenceExample value={6} regions={regions} />,
     );
@@ -84,7 +84,7 @@ describe("Story-only duration reference", () => {
     expect(segments?.[1]).toHaveAttribute("data-segment-from", "10");
     expect(segments?.[1]).toHaveAttribute(
       "data-reference-assessment",
-      "degraded",
+      "unassessed",
     );
   });
   it("keeps landmarks neutral without a policy and omits histogram and sample metadata independently", () => {

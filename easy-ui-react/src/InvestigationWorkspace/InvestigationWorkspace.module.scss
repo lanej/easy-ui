@@ -1,0 +1,219 @@
+@use "../styles/common" as *;
+
+.root {
+  container-type: inline-size;
+  min-inline-size: 0;
+  color: design-token("color.neutral.900");
+  [hidden] {
+    display: none;
+  }
+}
+.paths,
+.heading,
+.actions,
+.stepping,
+.filter {
+  display: flex;
+  align-items: center;
+  gap: design-token("space.1");
+}
+.paths {
+  flex-wrap: wrap;
+  margin-block-end: design-token("space.1.5");
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.4fr);
+  grid-template-rows: minmax(220px, 1fr) auto;
+  grid-template-areas: "timeline map" "timeline detail";
+  gap: design-token("space.1.5");
+  align-items: start;
+}
+.timeline,
+.details {
+  min-inline-size: 0;
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 8px;
+  padding: design-token("space.1.5");
+  background: design-token("color.neutral.000");
+}
+.timeline {
+  grid-area: timeline;
+  align-self: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+.timelineContent {
+  padding: design-token("space.1.5");
+  max-block-size: min(72dvh, 640px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.map {
+  grid-area: map;
+  min-inline-size: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+.details {
+  grid-area: detail;
+  display: grid;
+  gap: design-token("space.1");
+  overflow-wrap: anywhere;
+}
+.heading {
+  justify-content: space-between;
+}
+.heading h3 {
+  min-inline-size: 0;
+}
+.actions,
+.stepping {
+  flex-shrink: 0;
+  gap: 4px;
+}
+.scope,
+.relationship {
+  margin: 0;
+  color: design-token("color.neutral.700");
+  font-size: 12px;
+  line-height: 1.5;
+}
+.timeline .heading {
+  margin-block-end: design-token("space.1");
+}
+.filter {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-block-end: design-token("space.1");
+  font-size: 12px;
+  color: design-token("color.neutral.700");
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  margin: 0;
+  font-size: 12px;
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  dt {
+    color: design-token("color.neutral.700");
+  }
+  dd {
+    margin: 0;
+  }
+}
+.detailBody {
+  display: grid;
+  gap: design-token("space.1");
+}
+.detailBody:empty {
+  display: none;
+}
+.content {
+  min-inline-size: 0;
+}
+.detailHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+}
+.identity {
+  display: grid;
+  gap: 2px;
+  min-inline-size: 0;
+}
+.metadata {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  > button {
+    flex-shrink: 0;
+  }
+}
+.metadata:empty {
+  display: none;
+}
+.index {
+  font-size: 12px;
+  padding-block-start: design-token("space.1");
+}
+.index summary {
+  cursor: pointer;
+  color: design-token("color.neutral.700");
+}
+.indexItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-block-start: design-token("space.1");
+}
+.preview {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.announcement {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.views {
+  grid-area: views;
+  min-inline-size: 0;
+}
+.root[data-narrow="true"] {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas: "views" "active" "detail";
+    gap: design-token("space.1");
+  }
+  .timeline,
+  .map {
+    grid-area: active;
+    max-block-size: min(50dvh, 420px);
+    overflow: auto;
+  }
+  .timeline {
+    max-block-size: none;
+    overflow: hidden;
+  }
+  .timelineContent {
+    max-block-size: min(50dvh, 420px);
+  }
+  .map:not([hidden]) {
+    display: block;
+  }
+  .details {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 6;
+    box-shadow: 0 -4px 16px #0000000d;
+  }
+  .detailBody {
+    max-block-size: 36dvh;
+    overflow: auto;
+  }
+  .heading {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .actions {
+    margin-inline-start: auto;
+  }
+  .detailHeader {
+    flex-wrap: wrap;
+  }
+}

@@ -39,7 +39,7 @@ import {
 | `cumulative`    | At least two points ordered by nonnegative duration and nondecreasing fraction in [0,1] | Supplied cumulative percentage curve; repeated durations support empirical jumps |
 | `healthRegions` | Ordered disjoint [from,to) policy intervals; the final upper bound may be Infinity      | Semantic bands and landmark colors, independent of distribution                  |
 
-Quantiles alone render a horizontal reference bar with percentile dots and the current-value marker. Supplied health bands color the bar; without bands it remains neutral. They do not establish a density, histogram, or cumulative curve. No endpoints, quartiles, counts, cohorts, sample sizes, or health classifications are inferred. Each supplied source is validated independently; an invalid source is identified and omitted while other valid sources remain usable. Reference arrays may be absent, null, or empty. An all-zero histogram explicitly reports no completed observations. Sample count is optional, separately supplied metadata; the application owns whether it covers the whole cohort or only the displayed window.
+Quantiles alone render a horizontal reference bar with percentile dots and the current-value marker. By default, only the policy region containing the current value is highlighted; the remaining reference stays neutral. Without bands the bar remains neutral. They do not establish a density, histogram, or cumulative curve. No endpoints, quartiles, counts, cohorts, sample sizes, or health classifications are inferred. Each supplied source is validated independently; an invalid source is identified and omitted while other valid sources remain usable. Reference arrays may be absent, null, or empty. An all-zero histogram explicitly reports no completed observations. Sample count is optional, separately supplied metadata; the application owns whether it covers the whole cohort or only the displayed window.
 
 <Canvas of={Stories.QuantilesOnly} />
 
@@ -54,10 +54,12 @@ Use the same cohort, unit, and observation window for sources meant to be compar
 
 ## Keep assessment and duration separate
 
-The current marker uses `currentAssessment`, never an assessment derived from its percentile. Historical landmarks use the supplied health interval containing their duration. Hiding bands preserves that color policy. Without policy, landmarks are neutral. Overlapping, reversed, or invalid policy intervals are explicitly identified and their historical marks become neutral. Values below the median do not automatically mean healthy. Ongoing elapsed duration is labeled separately from the completed-duration reference.
+The current marker uses `currentAssessment`, never an assessment derived from its percentile. Historical landmarks use the supplied health interval containing their duration. Hiding bands preserves landmark colors. Background bands and distribution fills highlight only the region containing the actual current value by default. Set `healthRegionHighlight="all"` to color every supplied region. Missing or invalid values and gaps in the policy leave all regions neutral; clamping a marker does not change which region contains the actual value. Threshold labels and accessible policy descriptions remain available in either mode. Without policy, landmarks are neutral. Overlapping, reversed, or invalid policy intervals are explicitly identified and their historical marks become neutral. Values below the median do not automatically mean healthy. Ongoing elapsed duration is labeled separately from the completed-duration reference.
 
 The axis labels both ends of supplied health ranges, including gaps, and shows shared boundaries once. The current assessment is supplied independently of those ranges; its text equivalent is included in the plot description, marker tooltip, and optional exact-data disclosure. Localize it with `labels.currentAssessment`, `labels.healthy`, `labels.degraded`, and `labels.unhealthy`. Unavailable or invalid elapsed values suppress that assessment text.
 
+<Canvas of={Stories.ActiveHealthRegion} />
+<Canvas of={Stories.AllHealthRegions} />
 <Canvas of={Stories.WithoutBands} />
 <Canvas of={Stories.WithoutPolicy} />
 
@@ -84,7 +86,7 @@ Choose the representation independently from the cumulative-percentile curve:
 
 Use `visualization="histogram"` to show the distribution without its cumulative curve; `"both"` or `"auto"` can overlay the separately supplied cumulative reference. Quantiles-only data still produces landmarks on a neutral or health-colored bar: it never invents a density.
 
-Smooth mode is explicitly a smoothed histogram, not a kernel density estimate or a completion forecast. It uses bounded cubic interpolation between bin-center densities (`count / interval width`), retaining the outer half-bin's density within each supplied interval. It neither extends beyond supplied coverage nor bridges missing intervals. The compact binned bar also uses count per duration unit so unequal widths remain comparable. Intensity is relative to the peak of the full supplied reference, capped for a soft appearance in both themes. Health hues change at their supplied thresholds; concentration blends within them. The count axis applies only to binned full-height bars. Exact original bin counts remain available through `showDataTable` in every form.
+Smooth mode is explicitly a smoothed histogram, not a kernel density estimate or a completion forecast. It uses bounded cubic interpolation between bin-center densities (`count / interval width`), retaining the outer half-bin's density within each supplied interval. It neither extends beyond supplied coverage nor bridges missing intervals. The compact binned bar also uses count per duration unit so unequal widths remain comparable. Intensity is relative to the peak of the full supplied reference, capped for a soft appearance in both themes. The active region uses its supplied health hue; the rest uses neutral density shading. With `healthRegionHighlight="all"`, health hues change at every supplied threshold. Concentration blends within each region. The count axis applies only to binned full-height bars. Exact original bin counts remain available through `showDataTable` in every form.
 
 <Canvas of={Stories.PresentationOptions} />
 <Canvas of={Stories.HistogramConcentrationPreview} />

@@ -7,6 +7,8 @@ export type EventTimelineProps = {
   events: readonly EventTimelineEvent[];
   /** Controlled event selection, including selection driven by another view. */
   selectedId?: string | null;
+  /** Emphasize observations belonging to an externally selected context without filtering. */
+  relatedIds?: readonly string[];
   defaultSelectedId?: string | null;
   onSelectedIdChange?: (id: string) => void;
   /** Optional map coordination. This does not navigate or zoom a map itself. */
@@ -29,6 +31,7 @@ export type EventTimelineProps = {
 export function EventTimeline({
   events,
   selectedId,
+  relatedIds,
   defaultSelectedId = null,
   onSelectedIdChange,
   onLocationSelect,
@@ -43,6 +46,7 @@ export function EventTimeline({
     defaultSelectedId,
   );
   const activeId = selectedId === undefined ? internalId : selectedId;
+  const related = relatedIds && new Set(relatedIds);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const choose = (event: EventTimelineEvent) => {
     if (selectedId === undefined) setInternalId(event.id);
@@ -67,39 +71,47 @@ export function EventTimeline({
   if (!events.length) return <div className={styles.empty}>{emptyLabel}</div>;
   return (
     <ol className={styles.timeline} aria-label={ariaLabel} data-size={size}>
-      {events.map((event, index) => (
-        <li className={styles.entry} key={event.id}>
-          <EventItem
-            event={event}
-            size={size}
-            trailing={renderTrailing?.(event)}
-            current={event.id === activeId}
-            registerButton={(node) => {
-              if (node) buttons.current.set(event.id, node);
-              else buttons.current.delete(event.id);
-            }}
-            onSelect={() => choose(event)}
-            onKeyDown={(key) => navigate(event, key)}
-          />
-          {event.locationId && onLocationSelect && (
-            <button
-              className={styles.mapLink}
-              type="button"
-              onClick={() => onLocationSelect(event.locationId!, event.id)}
-            >
-              Show location
-            </button>
-          )}
-          {renderDetails && (
-            <div className={styles.details}>{renderDetails(event)}</div>
-          )}
-          {renderInterval && index < events.length - 1 && (
-            <div className={styles.interval}>
-              {renderInterval(event, events[index + 1])}
-            </div>
-          )}
-        </li>
-      ))}
+      {events.map((event, index) => {
+        const details = renderDetails?.(event);
+        return (
+          <li
+            className={styles.entry}
+            key={event.id}
+            data-related={related?.has(event.id) || undefined}
+            aria-description={
+              related?.has(event.id) ? "In selected context" : undefined
+            }
+          >
+            <EventItem
+              event={event}
+              size={size}
+              trailing={renderTrailing?.(event)}
+              current={event.id === activeId}
+              registerButton={(node) => {
+                if (node) buttons.current.set(event.id, node);
+                else buttons.current.delete(event.id);
+              }}
+              onSelect={() => choose(event)}
+              onKeyDown={(key) => navigate(event, key)}
+            />
+            {event.locationId && onLocationSelect && (
+              <button
+                className={styles.mapLink}
+                type="button"
+                onClick={() => onLocationSelect(event.locationId!, event.id)}
+              >
+                Show location
+              </button>
+            )}
+            {details != null && <div className={styles.details}>{details}</div>}
+            {renderInterval && index < events.length - 1 && (
+              <div className={styles.interval}>
+                {renderInterval(event, events[index + 1])}
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ol>
   );
 }

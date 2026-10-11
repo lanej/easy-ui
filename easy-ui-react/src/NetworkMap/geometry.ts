@@ -298,6 +298,8 @@ export function placeLabels(
       [-c.width / 2, -labelHeight - 17],
       [centeredLeft, -labelHeight - 12],
       [centeredLeft, 18],
+      [24 - c.width, -labelHeight - 17],
+      [24 - c.width, 18],
     ]) {
       const box = { x: c.x + dx, y: c.y + dy, w: c.width, h: labelHeight };
       if (

@@ -196,6 +196,7 @@ const props = {
 } satisfies NetworkMapProps;
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(800);
   queryRenderedFeatures.mockReturnValue([]);
   sources.clear();
   sourceDefs.clear();
@@ -215,7 +216,10 @@ beforeEach(() => {
     },
   );
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 it("can hide and restore raw layer records independently of the map", async () => {
   const { container, rerender } = render(
@@ -469,6 +473,55 @@ it("clamps a height below the floor to 220px instead of the caller-supplied valu
     "[data-map-state] > div",
   ) as HTMLElement;
   expect(canvas.style.height).toBe("220px");
+});
+
+it("switches between fixed and filling height without replacing the map or refitting its camera", async () => {
+  const view = render(<NetworkMap {...props} height={300} />);
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  const instance = constructor.mock.calls[0][0];
+  const fits = fitBounds.mock.calls.length;
+  view.rerender(<NetworkMap {...props} height="fill" />);
+  expect(instance.getContainer().style.height).toBe("100%");
+  expect(constructor).toHaveBeenCalledTimes(1);
+  expect(fitBounds).toHaveBeenCalledTimes(fits);
+  view.rerender(<NetworkMap {...props} height={260} />);
+  expect(instance.getContainer().style.height).toBe("260px");
+  expect(constructor).toHaveBeenCalledTimes(1);
+  expect(fitBounds).toHaveBeenCalledTimes(fits);
+});
+
+it("moves controls without replacing the map, canvas, or camera", async () => {
+  const onMapReady = vi.fn();
+  const view = render(
+    <NetworkMap
+      {...props}
+      onMapReady={onMapReady}
+      controlPlacement="toolbar"
+    />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  const instance = constructor.mock.calls[0][0];
+  const canvas = instance.getCanvas();
+  const fits = fitBounds.mock.calls.length;
+  for (const controlPlacement of ["map", "toolbar", "map"] as const) {
+    await act(async () => {
+      view.rerender(
+        <NetworkMap
+          {...props}
+          onMapReady={onMapReady}
+          controlPlacement={controlPlacement}
+        />,
+      );
+    });
+    expect(constructor).toHaveBeenCalledTimes(1);
+    expect(remove).not.toHaveBeenCalled();
+    expect(onMapReady).toHaveBeenCalledTimes(1);
+    expect(instance.getCanvas()).toBe(canvas);
+    expect(canvas).toBeInTheDocument();
+    expect(fitBounds).toHaveBeenCalledTimes(fits);
+  }
 });
 
 it("calls onMapReady exactly once, with the live map instance, only after the component's own layer setup", async () => {

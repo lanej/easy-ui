@@ -18,11 +18,23 @@ export function NetworkMap(props: NetworkMapProps) {
     <NetworkMapProvider {...props}>
       <div
         className={styles.root}
+        data-fill-height={props.height === "fill" || undefined}
         style={visualizationTypographyStyle(props.typography)}
       >
         <NetworkMapHeading />
-        <NetworkMapControlPanel />
-        <NetworkMapSurface />
+        <div className={styles.mapFrame} data-map-frame>
+          <div
+            className={
+              props.controlPlacement === "map"
+                ? styles.overMapControls
+                : undefined
+            }
+            data-map-controls={props.controlPlacement === "map" || undefined}
+          >
+            <NetworkMapControlPanel />
+          </div>
+          <NetworkMapSurface />
+        </div>
         {props.showSelectionDetails !== false && <NetworkMapSelectionDetails />}
         {props.showLegend !== false && <NetworkMapLegend />}
         {props.showDataTable !== false && <NetworkMapDataView />}

@@ -42,6 +42,122 @@ const defaults: DurationDistributionProps = {
 };
 
 describe("DurationDistribution", () => {
+  it.each([
+    [6, "healthy"],
+    [10, "degraded"],
+    [20, "unhealthy"],
+    [40, "unhealthy"],
+    [null, null],
+    [NaN, null],
+    [-1, null],
+  ] as const)(
+    "highlights only the policy region containing %s",
+    (value, expected) => {
+      const { container } = render(
+        <DurationDistribution
+          {...defaults}
+          value={value}
+          healthRegions={regions}
+          currentAssessment="unhealthy"
+        />,
+      );
+      const bands = container.querySelectorAll('[class*="track_"] > span');
+      expect(bands).toHaveLength(expected ? 1 : 0);
+      if (expected)
+        expect(bands[0]).toHaveAttribute("data-assessment", expected);
+      expect(
+        container.querySelector('[data-percentile="P90"]'),
+      ).toHaveAttribute("data-reference-assessment", "degraded");
+    },
+  );
+  it("does not highlight a policy gap or select a different region when a marker is clamped", () => {
+    const { container, rerender } = render(
+      <DurationDistribution
+        {...defaults}
+        value={12}
+        healthRegions={[regions[0], regions[2]]}
+      />,
+    );
+    expect(container.querySelector('[class*="track_"] > span')).toBeNull();
+    rerender(
+      <DurationDistribution
+        {...defaults}
+        value={25}
+        domain={[0, 15]}
+        overflow="clamp"
+        healthRegions={regions}
+      />,
+    );
+    expect(container.querySelector("[data-current-assessment]")).not.toBeNull();
+    expect(container.querySelector('[class*="track_"] > span')).toBeNull();
+  });
+  it("highlights the containing interval rather than every interval with the same assessment", () => {
+    const { container, rerender } = render(
+      <DurationDistribution
+        {...defaults}
+        value={25}
+        healthRegions={[
+          ...regions.slice(0, 2),
+          { ...regions[2], assessment: "healthy" },
+        ]}
+      />,
+    );
+    const band = container.querySelector(
+      '[class*="track_"] > span',
+    ) as HTMLElement;
+    expect(container.querySelectorAll('[class*="track_"] > span')).toHaveLength(
+      1,
+    );
+    expect(parseFloat(band.style.left)).toBeCloseTo(200 / 3);
+    rerender(
+      <DurationDistribution
+        {...defaults}
+        healthRegions={regions}
+        healthRegionHighlight="all"
+      />,
+    );
+    expect(container.querySelectorAll('[class*="track_"] > span')).toHaveLength(
+      3,
+    );
+  });
+  it.each([
+    ["binned", "plot"],
+    ["smooth", "plot"],
+    ["binned", "concentration"],
+    ["smooth", "concentration"],
+  ] as const)(
+    "keeps inactive %s %s fills neutral as the current value changes",
+    (distributionStyle, distributionPresentation) => {
+      const props = {
+        ...defaults,
+        healthRegions: regions,
+        bins: [{ from: 0, to: 30, count: 12 }],
+        distributionStyle,
+        distributionPresentation,
+      };
+      const { container, rerender } = render(
+        <DurationDistribution {...props} />,
+      );
+      const colors = () => [
+        ...new Set(
+          Array.from(
+            container.querySelectorAll(
+              'svg [data-reference-assessment]:not([data-reference-assessment="unassessed"])',
+            ),
+            (node) => node.getAttribute("data-reference-assessment"),
+          ),
+        ),
+      ];
+      expect(colors()).toEqual(["healthy"]);
+      rerender(<DurationDistribution {...props} value={14} />);
+      expect(colors()).toEqual(["degraded"]);
+      rerender(<DurationDistribution {...props} value={null} />);
+      expect(colors()).toEqual([]);
+      expect(container.querySelector("svg")).not.toBeNull();
+      rerender(<DurationDistribution {...props} healthRegionHighlight="all" />);
+      expect(colors()).toEqual(["healthy", "degraded", "unhealthy"]);
+    },
+  );
   it("does not fabricate a curve, histogram, or sample count from quantiles", () => {
     const { container } = render(<DurationDistribution {...defaults} />);
     expect(container.querySelector("svg")).toBeNull();
@@ -172,6 +288,7 @@ describe("DurationDistribution", () => {
       <DurationDistribution
         {...defaults}
         healthRegions={regions}
+        healthRegionHighlight="all"
         bins={[{ from: 9, to: 12, count: 7 }]}
       />,
     );

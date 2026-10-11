@@ -81,6 +81,8 @@ export type DurationDistributionProps = {
   distributionPresentation?: "plot" | "concentration";
   /** Supplied policy, separate from percentile rank. Intervals are [from,to). */
   healthRegions?: readonly DurationHealthRegion[];
+  /** Shade only the current value's policy region by default; "all" colors every region. */
+  healthRegionHighlight?: "current" | "all";
   currentAssessment?: HealthIndicatorAssessment;
   /** Outside values retain exact text; their markers are omitted unless clamp is explicit. */
   overflow?: OverflowPolicy;
@@ -120,6 +122,7 @@ export function DurationDistribution({
   distributionStyle = "binned",
   distributionPresentation = "plot",
   healthRegions = [],
+  healthRegionHighlight = "current",
   currentAssessment,
   overflow = "omit",
   formatValue = String,
@@ -168,6 +171,16 @@ export function DurationDistribution({
     sampleCount == null ||
     (Number.isSafeInteger(sampleCount) && sampleCount >= 0);
   const state = observationState(value, validScale ? domain : undefined, 0);
+  const currentRegion =
+    value !== null && (state === "valid" || state === "out-of-domain")
+      ? regionAt(regions, value)
+      : undefined;
+  const highlightedRegions =
+    healthRegionHighlight === "all"
+      ? regions
+      : currentRegion
+        ? [currentRegion]
+        : [];
   const valueText = observationLabel(value, state, format, {
     missing: text.missingValue,
     invalid: text.invalidValue,
@@ -349,17 +362,19 @@ export function DurationDistribution({
               data-has-count-axis={countAxis}
             >
               <div className={styles.track} aria-hidden="true">
-                {bands.map((r) => (
-                  <span
-                    key={r.from}
-                    className={styles.region}
-                    data-assessment={r.assessment}
-                    style={{
-                      left: offset(Math.max(domain[0], r.from)),
-                      width: `${(position(Math.min(domain[1], r.to), domain) - position(Math.max(domain[0], r.from), domain)) * 100}%`,
-                    }}
-                  />
-                ))}
+                {bands
+                  .filter((r) => highlightedRegions.includes(r))
+                  .map((r) => (
+                    <span
+                      key={r.from}
+                      className={styles.region}
+                      data-assessment={r.assessment}
+                      style={{
+                        left: offset(Math.max(domain[0], r.from)),
+                        width: `${(position(Math.min(domain[1], r.to), domain) - position(Math.max(domain[0], r.from), domain)) * 100}%`,
+                      }}
+                    />
+                  ))}
               </div>
               {hasHistogram &&
                 (distributionStyle === "smooth" ||
@@ -367,7 +382,7 @@ export function DurationDistribution({
                   <HistogramReference
                     bins={binData}
                     domain={domain}
-                    regions={regions}
+                    regions={highlightedRegions}
                     style={distributionStyle}
                     presentation={distributionPresentation}
                   />
@@ -396,7 +411,7 @@ export function DurationDistribution({
                           ...new Set([
                             left,
                             right,
-                            ...regions
+                            ...highlightedRegions
                               .flatMap((r) => [r.from, r.to])
                               .filter((n) => n > left && n < right),
                           ]),
@@ -416,8 +431,8 @@ export function DurationDistribution({
                                 data-segment-from={start}
                                 data-segment-to={edges[i + 1]}
                                 data-reference-assessment={
-                                  regionAt(regions, start)?.assessment ??
-                                  "unassessed"
+                                  regionAt(highlightedRegions, start)
+                                    ?.assessment ?? "unassessed"
                                 }
                                 x={position(start, domain) * 300}
                                 y={100 - (b.count / peak) * 100}
@@ -603,7 +618,11 @@ export function DurationDistribution({
             {showHealthBandLabels && bands.length > 0 && (
               <div className={styles.compactRegions} aria-hidden="true">
                 {bands.map((r) => (
-                  <span key={r.from} data-assessment={r.assessment}>
+                  <span
+                    key={r.from}
+                    data-assessment={r.assessment}
+                    data-highlighted={highlightedRegions.includes(r)}
+                  >
                     <span>{r.shortLabel ?? r.label}</span>
                     <span>{range(r)}</span>
                   </span>

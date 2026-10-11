@@ -115,8 +115,17 @@ function NetworkMapSurfaceView() {
     (bounds: [[number, number], [number, number]] | null, maxZoom = 12) => {
       const current = instance.current;
       if (!current || !bounds) return;
+      const availableHeight = current.getContainer().clientHeight;
       current.fitBounds(bounds, {
-        padding: { top: 70, bottom: 65, left: 65, right: 80 },
+        padding: {
+          top: Math.min(70, Math.max(56, Math.round(availableHeight * 0.2))),
+          bottom: Math.min(
+            65,
+            Math.max(40, Math.round(availableHeight * 0.17)),
+          ),
+          left: 65,
+          right: 80,
+        },
         maxZoom,
         duration: window.matchMedia?.("(prefers-reduced-motion: reduce)")
           .matches
@@ -187,6 +196,7 @@ function NetworkMapSurfaceView() {
     };
     let disposed = false,
       observer: ResizeObserver | undefined;
+    let resizeFrame = 0;
     let detachInspection: (() => void) | undefined;
     let overlayRenderer: ReturnType<typeof createOverlayRenderer> | undefined;
     let markers: {
@@ -230,6 +240,7 @@ function NetworkMapSurfaceView() {
     let positionLabels: (() => void) | undefined;
     const observedControls = new Set<Element>();
     const element = container.current!;
+    delete element.dataset.initialViewReady;
     setState("loading");
     setBasemapError(false);
     const fail = (error: unknown) => {
@@ -262,8 +273,32 @@ function NetworkMapSurfaceView() {
           renderWorldCopies: true,
           canvasContextAttributes: { antialias: true },
           cooperativeGestures: true,
+          // The component's observer batches canvas writes after layout.
+          // Avoid a second synchronous resize from the engine's observer.
+          trackResize: false,
         });
         instance.current = map;
+        let loaded = false;
+        let initialFitPending = !initial;
+        const fitInitialView = () => {
+          if (!loaded || !initialFitPending || element.clientWidth === 0)
+            return;
+          map.resize();
+          initialFitPending = false;
+          const requested = latest.current.focus;
+          if (requested?.bounds) {
+            const { minLon, minLat, maxLon, maxLat } = requested.bounds;
+            flyToBounds(
+              [
+                [minLon, minLat],
+                [maxLon, maxLat],
+              ],
+              requested.maxZoom,
+            );
+          } else if (requested) fit(requested.facilityIds, requested.maxZoom);
+          else commands.current.fitAll();
+          element.dataset.initialViewReady = "true";
+        };
         detachInspection = overlayInspectionEvents.attach(map, element);
         overlayRenderer = createOverlayRenderer(
           map,
@@ -361,6 +396,10 @@ function NetworkMapSurfaceView() {
           const controls = Array.from(
             element.querySelectorAll(".maplibregl-ctrl"),
           );
+          const floating = element
+            .closest("[data-map-frame]")
+            ?.querySelector("[data-map-controls]");
+          if (floating) controls.push(floating);
           for (const previous of observedControls) {
             if (!controls.includes(previous)) {
               observer?.unobserve?.(previous);
@@ -382,6 +421,20 @@ function NetworkMapSurfaceView() {
               w: rect.width,
               h: rect.height,
             }));
+          // Labels must not hide other geographic markers, even when those
+          // markers have no label at the current zoom level.
+          for (const { facility } of markers) {
+            const longitude =
+              facility.coordinates[0] +
+              Math.round(
+                ((map.getCenter?.().lng ?? facility.coordinates[0]) -
+                  facility.coordinates[0]) /
+                  360,
+              ) *
+                360;
+            const point = map.project([longitude, facility.coordinates[1]]);
+            reserved.push({ x: point.x - 8, y: point.y - 8, w: 16, h: 16 });
+          }
           const placements = placeLabels(
             candidates,
             size.width,
@@ -881,7 +934,9 @@ function NetworkMapSurfaceView() {
           latest.current.onMapReady?.(map);
           window.clearTimeout(deadline);
           setState("ready");
-          if (!initial) commands.current.fitAll();
+          loaded = true;
+          if (initial) element.dataset.initialViewReady = "true";
+          fitInitialView();
           setZoom(map.getZoom());
         });
         map.on("move", () => {
@@ -921,8 +976,15 @@ function NetworkMapSurfaceView() {
           element.dataset.mapIdle = "false";
         });
         observer = new ResizeObserver(() => {
-          map.resize();
-          position();
+          // MapLibre writes canvas dimensions. Defer those writes until the
+          // observation cycle completes when a surrounding grid resizes.
+          window.cancelAnimationFrame(resizeFrame);
+          resizeFrame = window.requestAnimationFrame(() => {
+            if (disposed || element.clientWidth === 0) return;
+            map.resize();
+            fitInitialView();
+            position();
+          });
         });
         observer.observe(element);
       })
@@ -930,6 +992,7 @@ function NetworkMapSurfaceView() {
     return () => {
       disposed = true;
       surfaceOwner.current = null;
+      delete element.dataset.initialViewReady;
       setState("loading");
       commands.current = {
         fitAll() {},
@@ -940,6 +1003,7 @@ function NetworkMapSurfaceView() {
       refresh.current = null;
       refreshControls.current = null;
       observer?.disconnect();
+      window.cancelAnimationFrame(resizeFrame);
       if (positionLabels) {
         document.fonts?.removeEventListener("loadingdone", positionLabels);
         element.removeEventListener("toggle", positionLabels, true);
@@ -968,7 +1032,7 @@ function NetworkMapSurfaceView() {
 
   useEffect(() => {
     refreshControls.current?.();
-  }, [controls.navigation, controls.scale]);
+  }, [controls.navigation, controls.scale, options.controlPlacement]);
 
   useEffect(() => {
     refresh.current?.();
@@ -1027,6 +1091,7 @@ function NetworkMapSurfaceView() {
   return (
     <div
       className={styles.viewport}
+      data-fill-height={height === "fill" || undefined}
       data-map-state={state}
       data-map-zoom={zoom.toFixed(2)}
       role="region"
@@ -1051,7 +1116,7 @@ function NetworkMapSurfaceView() {
       <div
         ref={container}
         className={styles.canvas}
-        style={{ height: Math.max(220, height) }}
+        style={{ height: height === "fill" ? "100%" : Math.max(220, height) }}
       />
       {featureInspection && hasOverlayContent && (
         <NetworkMapCellPopover
