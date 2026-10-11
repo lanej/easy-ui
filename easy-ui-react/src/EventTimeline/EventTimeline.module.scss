@@ -83,11 +83,9 @@
   font-variant-numeric: tabular-nums;
   color: design-token("color.neutral.700");
   font-size: 12px;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   padding-block-start: 2px;
   min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .dot {
@@ -106,9 +104,7 @@
   font-size: 14px;
   font-weight: 600;
   min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .location,
@@ -116,6 +112,33 @@
   font-size: 12px;
   color: design-token("color.neutral.700");
   overflow-wrap: anywhere;
+}
+
+.location {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  min-inline-size: 0;
+}
+
+.locationIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  margin-block-start: 1px;
+  inline-size: 14px;
+  block-size: 14px;
+
+  svg {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+}
+
+.metrics {
+  min-inline-size: 0;
+  margin-inline-start: var(--content-inset);
+  padding-block: 0 8px;
+  padding-inline-end: var(--row-inline-padding);
 }
 
 .mapLink {
@@ -161,13 +184,6 @@
   .trailing {
     max-inline-size: 61%;
     padding-inline-end: 2px;
-  }
-
-  .location,
-  .received {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 }
 

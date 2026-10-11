@@ -22,12 +22,13 @@ test("manual runs, reruns, and unavailable evidence execute fresh checks", async
         },
       }),
     );
-    for (const [event, attempt] of [
-      ["workflow_dispatch", "1"],
-      ["pull_request", "2"],
-      ["pull_request", "1"],
+    for (const [event, attempt, suite] of [
+      ["workflow_dispatch", "1", "maps-chrome"],
+      ["pull_request", "2", "maps-chrome"],
+      ["pull_request", "1", "maps-chrome"],
+      ["workflow_dispatch", "1", "event-timeline"],
     ]) {
-      const output = join(root, `${event}-${attempt}.out`);
+      const output = join(root, `${event}-${attempt}-${suite}.out`);
       const { stderr } = await promisify(execFile)(
         process.execPath,
         [fileURLToPath(new URL("./browser-proof.mjs", import.meta.url))],
@@ -35,7 +36,7 @@ test("manual runs, reruns, and unavailable evidence execute fresh checks", async
           env: {
             ...process.env,
             PROOF_MODE: "check",
-            PROOF_SUITE: "maps-chrome",
+            PROOF_SUITE: suite,
             PROOF_BUILT: join(root, "dist"),
             GH_TOKEN: "fixture",
             GITHUB_API_URL: "http://127.0.0.1:1",

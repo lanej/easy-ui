@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { render } from "../utilities/test";
 import { EventTimeline } from "./EventTimeline";
 import { HealthAssessment } from "../HealthAssessment";
@@ -95,6 +95,38 @@ describe("EventTimeline", () => {
     ).toHaveLength(2);
   });
 
+  it("retains compact location identity and names an icon-only facility type accessibly", () => {
+    const located: EventTimelineEvent[] = [
+      {
+        id: "arrived",
+        label: "Arrived",
+        timeLabel: "17:06",
+        locationLabel: "Sacramento, CA",
+        locationTypeLabel: "Regional hub",
+        detailLabel: "Received at 17:14",
+        locationIcon: <svg data-testid="facility-icon" />,
+      },
+    ];
+    const { rerender } = render(
+      <EventTimeline events={located} size="compact" />,
+    );
+    const button = screen.getByRole("button", {
+      name: /Arrived.*Sacramento, CA/,
+    });
+    expect(button).toHaveAccessibleDescription(
+      "Regional hub. Received at 17:14",
+    );
+    expect(screen.getByText("Sacramento, CA")).toBeVisible();
+    expect(screen.getByTestId("facility-icon").parentElement).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+
+    rerender(<EventTimeline events={located} />);
+    expect(screen.getByText("Regional hub · Sacramento, CA")).toBeVisible();
+    expect(screen.getByText("Received at 17:14")).toBeVisible();
+  });
+
   it("renders caller-owned content between events without inventing intervals", () => {
     render(
       <EventTimeline
@@ -105,6 +137,64 @@ describe("EventTimeline", () => {
     expect(screen.getByText("After first")).toBeVisible();
     expect(screen.getByText("After second")).toBeVisible();
     expect(screen.queryByText("After third")).not.toBeInTheDocument();
+  });
+
+  it("retains metrics on every event, including the final observation, independently of intervals", () => {
+    render(
+      <EventTimeline
+        events={events}
+        renderMetrics={(event) => <span>Metrics for {event.id}</span>}
+        renderInterval={(event) => <span>After {event.id}</span>}
+      />,
+    );
+
+    const entries = screen.getAllByRole("listitem");
+    for (const [index, event] of events.entries()) {
+      const metric = within(entries[index]).getByText(
+        `Metrics for ${event.id}`,
+      );
+      expect(metric).toBeVisible();
+      expect(metric.closest("button")).toBeNull();
+    }
+    expect(screen.getAllByRole("button")).toHaveLength(events.length);
+    expect(screen.getByText("After first")).toBeVisible();
+    expect(screen.getByText("After second")).toBeVisible();
+    expect(screen.queryByText("After third")).not.toBeInTheDocument();
+  });
+
+  it("keeps metric controls outside event buttons and out of arrow-key selection", () => {
+    const onSelectedIdChange = vi.fn();
+    const onMetricClick = vi.fn();
+    const { container } = render(
+      <EventTimeline
+        events={events}
+        defaultSelectedId="first"
+        onSelectedIdChange={onSelectedIdChange}
+        renderMetrics={(event) => (
+          <button onClick={onMetricClick}>Inspect {event.id} metric</button>
+        )}
+      />,
+    );
+    const entries = screen.getAllByRole("listitem");
+    const select = (index: number) =>
+      within(entries[index]).getAllByRole("button")[0];
+
+    expect(container.querySelector("button button")).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Inspect first metric" }),
+    );
+    expect(onMetricClick).toHaveBeenCalledOnce();
+    expect(onSelectedIdChange).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(select(0), { key: "ArrowDown" });
+    expect(select(1)).toHaveFocus();
+    expect(onSelectedIdChange).toHaveBeenLastCalledWith("second");
+    fireEvent.keyDown(select(1), { key: "End" });
+    expect(select(2)).toHaveFocus();
+    expect(onSelectedIdChange).toHaveBeenLastCalledWith("third");
+    fireEvent.keyDown(select(2), { key: "Home" });
+    expect(select(0)).toHaveFocus();
+    expect(onSelectedIdChange).toHaveBeenLastCalledWith("first");
   });
   it("composes an optional duration assessment between events without changing chronology", () => {
     const { rerender } = render(
