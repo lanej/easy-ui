@@ -176,7 +176,7 @@ ${["Chart", "MetricCard", "Button", "DataGrid"]
 // static imports or createRequire from the repository's dependencies.
 const runner = String.raw`
 import assert from "node:assert/strict";
-import { readFileSync, realpathSync, readdirSync } from "node:fs";
+import { readFileSync, realpathSync, readdirSync, mkdirSync, copyFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -286,6 +286,12 @@ for (const subpath of ["style.css", ...expected.map((name) => "styles/" + name)]
   const specifier = "@easypost/easy-ui/" + subpath;
   assert.equal(insideConsumer(require.resolve(specifier)), insideConsumer(fileURLToPath(import.meta.resolve(specifier))));
 }
+const skill = require.resolve("@easypost/easy-ui/skills/easy-ui/SKILL.md");
+assert.equal(insideConsumer(skill), insideConsumer(fileURLToPath(import.meta.resolve("@easypost/easy-ui/skills/easy-ui/SKILL.md"))));
+const installedSkill = join(".agents", "skills", "easy-ui", "SKILL.md");
+mkdirSync(dirname(installedSkill), { recursive: true });
+copyFileSync(skill, installedSkill);
+assert.equal(readFileSync(installedSkill, "utf8"), readFileSync("expected-skill.md", "utf8"));
 const manifest = require("@easypost/easy-ui/package.json");
 assert.ok(manifest.sideEffects.includes("**/*.scss"));
 assert.ok(manifest.sideEffects.includes("**/*.css"));
@@ -404,6 +410,10 @@ try {
     const folder = join(scratch, mode);
     const consumer = join(folder, "consumer");
     await mkdir(consumer, { recursive: true });
+    await writeFile(
+      join(consumer, "expected-skill.md"),
+      await readFile(join(source, "skills/easy-ui/SKILL.md")),
+    );
     const pack = spawnSync(
       npm,
       [

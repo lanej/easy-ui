@@ -16,12 +16,14 @@
     "visualization/",
     "examples/",
     "styles/",
+    "skills/",
     "/types.d.ts",
     "style.css",
     "!src/**"
   ],
   "exports": {
     "./package.json": "./package.json",
+    "./skills/*": "./skills/*",
     "./types": {
       "types": "./dist/types.d.ts"
     },

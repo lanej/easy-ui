@@ -29,6 +29,7 @@ export default defineConfig({
         { src: "README.md", dest: "." },
         { src: "CHANGELOG.md", dest: "." },
         { src: "src/styles", dest: "." },
+        { src: "skills", dest: "." },
         {
           src: [
             "src/NetworkMap/maplibre-gl.css",

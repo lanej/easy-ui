@@ -51,6 +51,32 @@ See our [Storybook](https://main--63f50c7c86f6514d2e0ef4be.chromatic.com/) for d
 
 Packages support TypeScript's legacy `moduleResolution: "node"` as well as modern export-aware resolution. The build generates package-root component entries, deep declarations such as `DataGrid/types` and `Select/SelectField`, flat utilities, and CSS/Sass compatibility files that forward to or copy the canonical `dist` outputs. These retain the original named exports; a default export is forwarded only when the target actually provides one. No application `tsconfig` changes are required.
 
+### Agent skill
+
+The package includes an `easy-ui` skill for component usage and library
+contributions. Install it explicitly in your application project after installing
+the package; npm installation does not modify agent configuration.
+
+For Codex:
+
+```bash
+mkdir -p .agents/skills
+cp -R node_modules/@easypost/easy-ui/skills/easy-ui .agents/skills/
+```
+
+For Claude Code:
+
+```bash
+mkdir -p .claude/skills
+cp -R node_modules/@easypost/easy-ui/skills/easy-ui .claude/skills/
+```
+
+Repeat the copy after upgrading Easy UI to update the installed guidance. From a
+repository checkout, use `easy-ui-react/skills/easy-ui` as the copy source instead.
+The [skill source](skills/easy-ui/SKILL.md) is maintained with the component library.
+It delegates visual review to Viewrule and component validation to the library's
+existing tests and CI.
+
 ### Map components
 
 Map components use MapLibre GL JS `^6.9.0`, installed automatically as an Easy UI dependency. The renderer is fixed, not a pluggable engine. Map code remains lazy-loaded, so importing other components or server-rendering a map does not initialize MapLibre or WebGL.
