@@ -134,6 +134,30 @@ async function reviewStageColors(theme) {
     `review stage colors convey waiting, active, and completed work in ${theme} mode`,
   );
 }
+async function compactHeaderRisk(context) {
+  const score = page.getByRole("meter", { name: "Risk score for CASE-1042" });
+  assert.equal(await score.getAttribute("aria-valuenow"), "82");
+  assert.equal(await score.getAttribute("aria-valuemax"), "100");
+  assert.equal(await score.locator('span[style*="inline-size:"]').count(), 0);
+  const centers = await score.evaluate((meter) => {
+    const category = [...meter.parentElement.querySelectorAll("span")].find(
+      (node) => node.textContent === "Case category:Delivery review",
+    );
+    const scoreRect = meter.getBoundingClientRect();
+    const categoryRect = category.getBoundingClientRect();
+    return [
+      scoreRect.top + scoreRect.height / 2,
+      categoryRect.top + categoryRect.height / 2,
+    ];
+  });
+  assert(
+    Math.abs(centers[0] - centers[1]) <= 1,
+    "The compact score and category align in the case header",
+  );
+  checks.push(
+    `${context} header aligns the compact risk score while retaining its accessible range`,
+  );
+}
 try {
   await open(`${comparison}--linked-map`);
   await mapReady();
@@ -448,6 +472,7 @@ try {
   }
 
   await open(`${review}--record-review`);
+  await compactHeaderRisk("review");
   await audit("review-light", true);
   await page.getByRole("button", { name: "Record review" }).click();
   await page
@@ -524,6 +549,8 @@ try {
   checks.push(
     "review retry persists an independent outcome without changing the risk assessment",
   );
+  await open(`${review}--record-review`, "dark");
+  await audit("review-wide-dark", true);
   await open(`${review}--record-review`, "dark", 390);
   await audit("review-narrow-dark", true);
   await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
@@ -539,6 +566,11 @@ try {
     .getByText("Delivery review", { exact: true })
     .waitFor();
   await mapReady();
+  await compactHeaderRisk("workflow");
+  await page
+    .getByRole("heading", { name: "CASE-1042", exact: true })
+    .locator("..")
+    .screenshot({ path: `${output}/workflow-case-header.png` });
   assert(
     await page
       .getByRole("table", { name: "Candidate path comparison" })

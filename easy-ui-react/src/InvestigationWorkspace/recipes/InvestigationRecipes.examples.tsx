@@ -58,7 +58,13 @@ export function ReviewExample({
         <Badge variant="inverse" accessibilityLabel="Case category:">
           {caseCategories.delivery.label}
         </Badge>
-        <RiskScore value={82} assessment="high" size="sm" />
+        <RiskScore
+          value={82}
+          assessment="high"
+          size="sm"
+          showBar={false}
+          accessibilityLabel="Risk score for CASE-1042"
+        />
       </div>
       <ReviewOutcome
         caseId="CASE-1042"
@@ -174,6 +180,8 @@ export function InvestigationWorkflow({
               value={active.risk}
               assessment={active.assessment}
               size="sm"
+              showBar={false}
+              accessibilityLabel={`Risk score for ${active.id}`}
             />
           </div>
           <p className={styles.muted}>{active.trackingCode}</p>

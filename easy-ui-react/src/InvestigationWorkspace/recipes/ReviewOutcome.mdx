@@ -9,6 +9,8 @@ Record a human review independently of a supplied risk assessment. The recipe co
 
 <Canvas of={Stories.RecordReview} />
 
+The example header keeps the case ID, neutral category badge, and compact risk score aligned in one row when space permits. It uses `RiskScore` with `showBar={false}` to display the exact score and assessment without a second visual line. The header wraps at narrow widths while preserving the accessible score and range.
+
 ```tsx
 // Keep this owner mounted above case navigation, alongside confirmed history.
 const reviewFor = useReviewOutcomes(async (draft) => {
