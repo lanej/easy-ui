@@ -17,7 +17,7 @@ const metrics: EventMetric[] = [
     label: "Exception rate",
     valueLabel: "2%",
     assessment: "degraded",
-    statusLabel: "Elevated",
+    assessmentLabel: "Elevated",
     reference: <span role="img" aria-label="Exception distribution" />,
   },
 ];
@@ -37,7 +37,8 @@ describe("EventMetrics", () => {
       expect(dwell).toHaveAttribute("data-assessment", "healthy");
       expect(dwell).toHaveTextContent(/^Dwell time 6 h$/);
       expect(exception).toHaveAttribute("data-assessment", "degraded");
-      expect(exception).toHaveTextContent(/^Exception rate 2% · Elevated$/);
+      expect(exception).toHaveTextContent(/^Exception rate 2%$/);
+      expect(exception).not.toHaveTextContent("Elevated");
       expect(
         screen.queryByText("Within expected dwell"),
       ).not.toBeInTheDocument();
@@ -47,13 +48,13 @@ describe("EventMetrics", () => {
     },
   );
 
-  it("retains both metrics and elevated status in minimal pills, omitting references", () => {
+  it("retains both minimal outcomes without rendering their accessible assessment or references", () => {
     render(<EventMetrics metrics={metrics} variant="minimal" />);
 
     const list = screen.getByRole("list", { name: "Event metrics" });
     expect(within(list).getAllByRole("listitem")).toHaveLength(2);
     expect(screen.getByText("Dwell time 6 h")).toBeVisible();
-    expect(screen.getByText("Exception rate 2% · Elevated")).toBeVisible();
+    expect(screen.getByText("Exception rate 2%")).toBeVisible();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(screen.getAllByRole("group")).toHaveLength(2);
   });
@@ -79,7 +80,7 @@ describe("EventMetrics", () => {
         screen.getAllByText("Dwell time 6 h", { exact: true }),
       ).toHaveLength(1);
       expect(
-        screen.getAllByText("Exception rate 2% · Elevated", { exact: true }),
+        screen.getAllByText("Exception rate 2%", { exact: true }),
       ).toHaveLength(1);
     },
   );

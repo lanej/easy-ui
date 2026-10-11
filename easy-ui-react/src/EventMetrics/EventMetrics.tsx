@@ -12,7 +12,7 @@ export type EventMetric = {
   /** Formatted value and unit, such as "6 h" or "2%". Null or blank is unavailable. */
   valueLabel: string | null;
   assessment?: HealthIndicatorAssessment | null;
-  /** Optional visible context, such as "Elevated", after the metric's value. */
+  /** Optional extra context after the value; omit assessment words conveyed by color. */
   statusLabel?: string;
   /** Localized assessment meaning retained for assistive technology and hover. */
   assessmentLabel?: string;
