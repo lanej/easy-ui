@@ -1,0 +1,63 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ProportionBar } from "./ProportionBar";
+import * as Stories from "./ProportionBar.stories";
+
+<Meta of={Stories} />
+
+# ProportionBar
+
+An unframed part-to-whole metric: percentage, exact numerator/denominator, label, and proportional fill. Import from `@easypost/easy-ui/ProportionBar`. Native HTML/CSS; no chart engine or Card dependency.
+
+```tsx
+<ProportionBar
+  label="Development checkpoints affected"
+  value={1184}
+  total={1659}
+  tone="warning"
+/>
+```
+
+<Canvas of={Stories.Default} />
+
+## Layout, not framing
+
+`compact` keeps the label, percentage, and counts on one row when space permits. `expanded` emphasizes the percentage beside the label and counts on a shared baseline. The label/count group moves below the percentage only when the available container width cannot fit them together; this responds to content and text size, not the viewport. Both layouts preserve the denominator when wrapping. Neither adds a background, border, padding, or card. This is a focused metric molecule, not an application-specific report or a full comparison chart.
+
+<Canvas of={Stories.Expanded} />
+<Canvas of={Stories.Responsive} />
+<Canvas of={Stories.Narrow} />
+
+`presentation="bar"` exposes the same accessible meter without the valid-data summary. Use it next to `MetricContent` or other caller-owned content, avoiding duplicate visible labels. The caller owns any surrounding Card, section, or report prose. Non-valid states still show their label and explanation rather than disappearing.
+
+The fill is rendered by the shared `MeterBar` atom, also used by `RiskScore`. `ProportionBar` still owns its percentage formatting, population states, and accessible description. The atom is hidden from assistive technology, so there is only one meter. When composing inside a different accessible metric, use the visual-only `MeterBar` rather than nesting this molecule's `presentation="bar"` meter.
+
+<Canvas of={Stories.Presentations} />
+
+## Meaning and precision
+
+This measures a subset of a supplied population, not progress toward completing a task. Its accessible role is `meter`, with a name, zero minimum, exact numerator/denominator, and a percentage in `aria-valuetext`. It has no keyboard interaction, target marker, completion animation, or automatic success state.
+
+Tone defaults to neutral. Applications decide whether an observed share merits `success`, `warning`, or `danger`; a high percentage does not imply any of them. Supply a meaningful label and explain business interpretation in surrounding application content. Color does not carry the numeric information.
+
+<Canvas of={Stories.Tones} />
+
+Default count formatting groups English numbers. `formatValue` changes both counts; `formatPercentage` receives the fraction from 0 to 1, suitable for `Intl.NumberFormat` with `style: "percent"`. Numeric count expressions and their individual operands are directionally isolated so the numerator stays before the denominator in RTL layouts, including Arabic-Indic digits. Labels and the bar keep the surrounding direction. The default percentage rounds to one decimal place; the fill always uses the unrounded fraction, so small nonzero shares may round to 0% in text. Use a more precise formatter when needed. No minimum visible fill invents magnitude. `typography` configures label/detail text sizes; `valueSize` controls the emphasized value independently.
+
+<Canvas of={Stories.LargeText} />
+
+## Loading, missing, and invalid data
+
+Zero with a positive total is an observed 0%; equal positive values are 100%. `null` means unavailable. `0 / 0` shows `emptyTotalLabel` ("No population"), not 0%. Negative/non-finite inputs or a numerator exceeding its denominator show `invalidValueLabel` ("Invalid proportion"). These non-valid states have no filled track or meter role; exact finite counts remain visible. Counts that are missing or non-finite use an em dash. Invalid proportions are never silently clamped or reinterpreted as progress.
+
+`isLoading` suppresses stale values, counts, and the track, and exposes a localized loading status. Missing, empty, invalid, and loading labels can be supplied by the application. Query failures should use the application's existing error and retry UI, not masquerade as a zero or an empty successful result.
+
+<Canvas of={Stories.Zero} />
+<Canvas of={Stories.Full} />
+<Canvas of={Stories.NoData} />
+<Canvas of={Stories.EmptyPopulation} />
+<Canvas of={Stories.InvalidData} />
+<Canvas of={Stories.Loading} />
+
+## Properties
+
+<ArgTypes of={ProportionBar} />

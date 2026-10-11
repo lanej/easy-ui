@@ -20,22 +20,25 @@ import "@easypost/easy-ui/style.css";
 
 ## Supply the score and assessment
 
-The application or scoring service owns scoring and assessment thresholds. Pass `assessment="low"`, `"medium"`, or `"high"` explicitly; the component never derives a category from the number. The visible label accompanies each color, so the assessment remains understandable without color.
+The application or scoring service owns scoring and assessment thresholds. Pass `assessment="low"`, `"medium"`, or `"high"` explicitly; the component never derives a category from the number. The default size includes a visible assessment pill. Compact scores use the supplied assessment color on the number, with the full label retained in the accessible value and native hover hint.
 
 Keep `value`, `max`, and `assessment` from the same scoring result. A score is not a probability or percentage, and “High risk” is not an adjudication. Place explanations and application decisions in surrounding UI.
 
 <Canvas of={Stories.Assessments} />
 
-Omit `assessment` or pass `null` when a score exists without a category. The number and meter remain visible in neutral styling with “Not assessed”. A high number alone does not receive high-risk styling.
+Omit `assessment` or pass `null` when a score exists without a category. The number and meter remain neutral; “Not assessed” is visible in the default size and retained in compact accessibility and the hover hint. A high number alone does not receive high-risk styling.
 
 <Canvas of={Stories.Unassessed} />
 
 ## Compose in tracking tables
 
-Set `size="sm"` for dense layouts. Both sizes retain the value, maximum, and visible assessment. Set `showBar={false}` to omit the visual bar when the number and assessment are enough, such as in a worklist. Accessible meter semantics, including the exact value and range, are retained. This molecule composes the Text and Pill atoms without a click action or surrounding card; compose it with existing table, navigation, and detail components.
+Set `size="sm"` for dense layouts. It shows the assessment-colored score and neutral maximum without a pill. No thresholds are inferred: the supplied assessment determines color independently of the score. The default size retains its pill. Both sizes retain the exact accessible value, scale, and assessment; compact loading/unavailable states use explicit neutral text rather than a pill. In forced-color mode and print, compact scores show a plain-text assessment because color may be absent. Compact mode is appropriate when the surrounding application also makes the assessment available without relying on color or hover alone; use the default size when the category must always be visible. Set `showBar={false}` to omit the visual bar when the number and assessment are enough, such as in a worklist. Accessible meter semantics, including the exact value and range, are retained. This molecule composes the Text, Pill, and MeterBar atoms without a click action or surrounding card; compose it with existing table, navigation, and detail components.
+
+`MeterBar` supplies the same track, fill, tones, and directional rendering used by `ProportionBar`, with a thin 4px track here. It is visual only and adds no accessible role. `RiskScore` owns the single meter, exact score/maximum, assessment label, and risk-specific description. Reusing the rendering does not turn the score into a percentage or change any existing props.
 
 Use `accessibilityLabel` to identify the measured risk. In a table, include the record identifier so each score has a distinct accessible name.
 
+<Canvas of={Stories.CompactAssessments} />
 <Canvas of={Stories.CompactTrackingTable} />
 <Canvas of={Stories.WithoutBar} />
 
@@ -58,13 +61,13 @@ The scale starts at zero and defaults to a maximum of `100`. Supply a finite `ma
 
 `formatValue` formats both the score and maximum. It defaults to `String`, preserving the supplied precision. A formatter changes display text only; the original numeric values still determine the meter and its accessible range. Choose formatting precise enough to distinguish the scores your application presents.
 
-Use `assessmentLabel` for localized assessment text and `loadingLabel` / `emptyLabel` for unavailable states. The assessment label changes wording without changing the supplied category or color. When an uncategorized score is possible, also provide an appropriate localized `assessmentLabel` for that state.
+Use `assessmentLabel` for localized assessment text (including the compact accessible description and hover hint) and `loadingLabel` / `emptyLabel` for unavailable states. The assessment label changes wording without changing the supplied category or color. When an uncategorized score is possible, also provide an appropriate localized `assessmentLabel` for that state.
 
 Localize `accessibilityLabel` and `accessibilityValueText` together. The default accessible value describes the score, maximum, assessment, and higher-is-riskier direction in English. A supplied translation should retain those facts and update with the score. It is ignored while loading or unavailable. Set the surrounding content's language for correct pronunciation.
 
 <Canvas of={Stories.LocalizedNarrow} />
 
-The score and label wrap within the available width. Valid scores expose meter semantics with a zero minimum, the supplied maximum, and the exact numeric value. Loading and unavailable states expose a named group without a numeric meter. No keyboard interaction is required to read the molecule.
+The score and label wrap within the available width. The complete score/maximum expression is isolated left-to-right even in RTL layouts; labels and the shared bar retain the surrounding direction. Valid scores expose meter semantics with a zero minimum, the supplied maximum, and the exact numeric value. Loading and unavailable states expose a named group without a numeric meter. No keyboard interaction is required to read the molecule.
 
 ## Properties
 

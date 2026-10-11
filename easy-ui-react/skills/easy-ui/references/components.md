@@ -87,12 +87,16 @@ examples for configuration and missing-data behavior.
 
 | Public entry           | Choose it for                                                                    |
 | ---------------------- | -------------------------------------------------------------------------------- |
+| `MeterBar`             | Visual-only bounded track/fill atom; its owner supplies labels, states, and accessible meter semantics |
+| `ProportionBar`        | Accessible part-to-whole molecule with percentage, numerator/denominator, label, and explicit data states |
 | `BarList`              | Compact category comparisons with HTML/CSS                                       |
 | `BulletChart`          | A supplied measure and target on an explicit zero-based scale                    |
 | `CompactTimeSeries`    | A compact native SVG trend and optional reference                                |
 | `RangePlot`            | Named points and an optional interval on a shared scale                          |
 | `DurationDistribution` | Elapsed duration against supplied bins, density, cumulative points, or quantiles |
 | `NetworkMap`           | Geographical layers and inspection using MapLibre                                |
+
+For proportions, import from `@easypost/easy-ui/ProportionBar`; for a custom metric's visual fill, import from `@easypost/easy-ui/MeterBar`. Read the installed `ProportionBar/index.d.ts` or `MeterBar/index.d.ts` declarations. In a source checkout, their implementations, `<Name>.mdx` API documentation, and stories live in `easy-ui-react/src/<Name>/`. `RiskScore` and `ProportionBar` both compose `MeterBar`; do not nest accessible meters or turn a bounded score into a percentage.
 
 For map composition, import `NetworkMapSurface`, `NetworkMapProvider`,
 `NetworkMapHeading`, `NetworkMapControlPanel`, `NetworkMapLegend`,

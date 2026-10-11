@@ -1,11 +1,6 @@
 @use "../styles/common" as *;
 
 .root {
-  @include component-token(
-    "risk-score",
-    "color.fill",
-    design-token("color.neutral.600")
-  );
   @include font-style("body2");
   display: inline-flex;
   flex-direction: column;
@@ -14,30 +9,6 @@
   max-inline-size: 100%;
   min-inline-size: 0;
   vertical-align: middle;
-
-  &[data-assessment="low"] {
-    @include component-token(
-      "risk-score",
-      "color.fill",
-      design-token("color.positive.700")
-    );
-  }
-
-  &[data-assessment="medium"] {
-    @include component-token(
-      "risk-score",
-      "color.fill",
-      design-token("color.warning.700")
-    );
-  }
-
-  &[data-assessment="high"] {
-    @include component-token(
-      "risk-score",
-      "color.fill",
-      design-token("color.negative.700")
-    );
-  }
 }
 
 .summary {
@@ -75,36 +46,49 @@
   overflow-wrap: anywhere;
 }
 
-.track {
-  display: flex;
-  block-size: design-token("space.0.5");
-  inline-size: 100%;
-  border-radius: design-token("shape.border_radius.lg");
-  overflow: hidden;
-  background: design-token("color.neutral.200");
-}
-
-.fill {
-  block-size: 100%;
-  background: component-token("risk-score", "color.fill");
-}
-
 .root[data-size="sm"] {
   gap: design-token("space.0.5");
+
+  .value {
+    color: design-token("color.neutral.900");
+  }
+
+  // Use readable, visibly distinct text colors in the inherited color scheme.
+  &[data-assessment="low"] .value {
+    color: light-dark(
+      #{design-token("color.positive.700")},
+      #{design-token("color.positive.500")}
+    );
+  }
+  &[data-assessment="medium"] .value {
+    color: light-dark(
+      #{design-token("color.warning.800")},
+      #{design-token("color.warning.500")}
+    );
+  }
+  &[data-assessment="high"] .value {
+    color: light-dark(
+      #{design-token("color.negative.600")},
+      #{design-token("color.negative.500")}
+    );
+  }
 }
 
 @media (forced-colors: active) {
   .assessment {
     outline: 1px solid CanvasText;
   }
+}
 
-  .track {
-    outline: 1px solid CanvasText;
-    background: Canvas;
-  }
+.compactAssessment {
+  display: none;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
 
-  .fill {
-    forced-color-adjust: none;
-    background: CanvasText;
+// Retain a visible assessment when color is removed by the display or printing.
+@media (forced-colors: active), print {
+  .compactAssessment {
+    display: inline;
   }
 }
