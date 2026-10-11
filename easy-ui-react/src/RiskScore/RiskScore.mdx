@@ -32,7 +32,9 @@ Omit `assessment` or pass `null` when a score exists without a category. The num
 
 ## Compose in tracking tables
 
-Set `size="sm"` for dense layouts. Both sizes retain the value, maximum, and visible assessment. Set `showBar={false}` to omit the visual bar when the number and assessment are enough, such as in a worklist. Accessible meter semantics, including the exact value and range, are retained. This molecule composes the Text and Pill atoms without a click action or surrounding card; compose it with existing table, navigation, and detail components.
+Set `size="sm"` for dense layouts. Both sizes retain the value, maximum, and visible assessment. Set `showBar={false}` to omit the visual bar when the number and assessment are enough, such as in a worklist. Accessible meter semantics, including the exact value and range, are retained. This molecule composes the Text, Pill, and MeterBar atoms without a click action or surrounding card; compose it with existing table, navigation, and detail components.
+
+`MeterBar` supplies the same track, fill, tones, and directional rendering used by `ProportionBar`, with a thin 4px track here. It is visual only and adds no accessible role. `RiskScore` owns the single meter, exact score/maximum, assessment label, and risk-specific description. Reusing the rendering does not turn the score into a percentage or change any existing props.
 
 Use `accessibilityLabel` to identify the measured risk. In a table, include the record identifier so each score has a distinct accessible name.
 

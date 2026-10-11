@@ -29,6 +29,8 @@ An unframed part-to-whole metric: percentage, exact numerator/denominator, label
 
 `presentation="bar"` exposes the same accessible meter without the valid-data summary. Use it next to `MetricContent` or other caller-owned content, avoiding duplicate visible labels. The caller owns any surrounding Card, section, or report prose. Non-valid states still show their label and explanation rather than disappearing.
 
+The fill is rendered by the shared `MeterBar` atom, also used by `RiskScore`. `ProportionBar` still owns its percentage formatting, population states, and accessible description. The atom is hidden from assistive technology, so there is only one meter. When composing inside a different accessible metric, use the visual-only `MeterBar` rather than nesting this molecule's `presentation="bar"` meter.
+
 <Canvas of={Stories.Presentations} />
 
 ## Meaning and precision

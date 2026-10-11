@@ -4,6 +4,7 @@ import { init, use } from "echarts/core";
 import {
   BarChart,
   BoxplotChart,
+  CustomChart,
   HeatmapChart,
   LineChart,
   PieChart,
@@ -37,6 +38,7 @@ use([
   SankeyChart,
   BoxplotChart,
   HeatmapChart,
+  CustomChart,
   GridComponent,
   TooltipComponent,
   MarkPointComponent,

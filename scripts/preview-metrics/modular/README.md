@@ -6,13 +6,13 @@ The public `Chart` and `ChartSurface` keep the optional, lazy full-engine loader
 
 ## Registrations
 
-`portfolio.mjs` registers eight series: line, bar, scatter, pie, Sankey, treemap, heatmap, and boxplot. Areas, scenarios, histograms, cumulative distributions, prediction bands, and waterfalls compose those series using the existing fixtures.
+`portfolio.mjs` registers nine series: line, bar, scatter, pie, Sankey, treemap, heatmap, boxplot, and custom. Areas, scenarios, histograms, and cumulative distributions compose native series. The extracted interval, prediction-band, and waterfall components own custom geometry.
 
 It also registers Cartesian grids, plain/scroll legends, tooltips, inside/slider zoom, mark lines/areas/points, continuous visual maps, label layout, legacy `containLabel` support, and both renderers. Easy UI provides independently placeable headings, zoom controls, and exact tables; the full `Chart` composes these companions. The preset retains ECharts' native Sankey adjacency emphasis and Canvas support.
 
 Other series and components are intentionally absent: for example, radar, gauge, graph, calendar, timeline, toolbox, dataset transforms, piecewise visual maps, ARIA decals, and universal transitions. Register them when the application needs them. Our exact-table accessibility path remains unchanged; this experiment adds no graphical accessibility claims.
 
-All 24 recipes use the eight-series preset. Geographic maps are included in the same PR with a separate map preview and optional MapLibre dependency; the chart gallery contains no map recipes or basemap data.
+All 24 recipes use the nine-series preset. Geographic maps are included in the same PR with a separate map preview and optional MapLibre dependency; the chart gallery contains no map recipes or basemap data.
 
 `trend.mjs` is a separate engine-only size probe for an SVG time-series screen with labels, annotations, and zoom. It is not used for the gallery or claimed to support the full portfolio.
 

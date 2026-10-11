@@ -1,0 +1,21 @@
+import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import * as Stories from "./ScatterChart.stories";
+
+<Meta of={Stories} />
+
+# ScatterChart
+
+Plot paired numeric observations. A fixed symbol size gives an ordinary scatter plot.
+
+<Canvas of={Stories.Default} />
+
+Import `{ ScatterChart }` from `@easypost/easy-ui/ScatterChart`. Install the optional `echarts@^6.1.0` peer when using analytical charts.
+
+Pass native ECharts records through `series`; the component supplies the series `type`. `option` configures native axes, grids, legends, annotations, datasets, media overrides, and zoom. There is no second axis or styling grammar. Caller values override this component's defaults. Keep stable series and datum IDs for selection and ordinary refreshes.
+
+Use `dataTable` from the same records for exact values and keyboard drill-down. `onSelect`, `onRowSelect`, controlled legend/zoom, statuses, typography, and `variant="bare"` use the shared [Chart contract](?path=/docs/components-chart--docs). Applications own units, aggregation, interpretation, and provenance.
+
+<Canvas of={Stories.NarrowLayout} />
+<Canvas of={Stories.Bare} />
+
+<ArgTypes />
