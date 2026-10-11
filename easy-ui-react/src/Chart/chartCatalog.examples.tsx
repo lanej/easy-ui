@@ -126,7 +126,7 @@ export function ChartExample({
       <WaterfallChart
         {...waterfallProps}
         {...chartProps}
-        option={{ ...option, tooltip: { trigger: "item" } }}
+        option={{ ...option, tooltip: waterfallProps.option?.tooltip }}
       />
     );
   if (example === shipmentTimelineExample)
@@ -134,7 +134,7 @@ export function ChartExample({
       <IntervalChart
         {...intervalProps}
         {...chartProps}
-        option={{ ...option, tooltip: { trigger: "item" } }}
+        option={{ ...option, tooltip: intervalProps.option?.tooltip }}
       />
     );
   if (example === warehouseProgressExample)
@@ -145,7 +145,7 @@ export function ChartExample({
         option={{
           ...option,
           legend: { show: false },
-          tooltip: { trigger: "item" },
+          tooltip: warehouseIntervalProps.option?.tooltip,
         }}
       />
     );

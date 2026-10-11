@@ -1,5 +1,5 @@
 import React from "react";
-import type { CustomSeriesRenderItem } from "echarts";
+import type { CustomSeriesOption, CustomSeriesRenderItem } from "echarts";
 import { Chart, type ChartProps, type ChartOption } from "../Chart";
 import { verticalInterval } from "../Chart/intervalRenderer";
 import { visualizationColors } from "../visualization/colors";
@@ -13,6 +13,9 @@ export type WaterfallChartProps = Omit<ChartProps, "option"> & {
   /** Show signed changes and the final balance as direct labels. */
   showValues?: boolean;
   formatValue?: (value: number) => string;
+  increaseItemStyle?: CustomSeriesOption["itemStyle"];
+  decreaseItemStyle?: CustomSeriesOption["itemStyle"];
+  totalItemStyle?: CustomSeriesOption["itemStyle"];
   option?: Omit<ChartOption, "series">;
 };
 
@@ -23,6 +26,9 @@ export function WaterfallChart({
   totalLabel = "Total",
   showValues = false,
   formatValue = String,
+  increaseItemStyle,
+  decreaseItemStyle,
+  totalItemStyle,
   option,
   dataTable,
   typography,
@@ -94,13 +100,17 @@ export function WaterfallChart({
                     step.change < 0
                       ? visualizationColors.secondary
                       : visualizationColors.primary,
+                  ...(step.change < 0 ? decreaseItemStyle : increaseItemStyle),
                 },
               })),
               {
                 id: totalId,
                 name: totalLabel,
                 value: [steps.length, 0, balance, balance],
-                itemStyle: { color: visualizationColors.tertiary },
+                itemStyle: {
+                  color: visualizationColors.tertiary,
+                  ...totalItemStyle,
+                },
               },
             ],
           },

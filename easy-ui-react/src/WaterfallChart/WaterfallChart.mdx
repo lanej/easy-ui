@@ -11,7 +11,7 @@ Show signed changes and their running balance. Interval geometry handles negativ
 
 Import `{ WaterfallChart }` from `@easypost/easy-ui/WaterfallChart` with the optional `echarts@^6.1.0` peer installed.
 
-`steps` contain stable `id`, `label`, and a finite signed `change`. `initialValue` defaults to zero. Each bar runs from the previous balance to the next, and `totalLabel` names the final zero-to-balance bar. Set `showValues` to show signed direct labels; `formatValue` supplies their units. Colors distinguish direction without assigning good/bad meaning. Supply axis units through `option` and formatted exact data when needed.
+`steps` contain stable `id`, `label`, and a finite signed `change`. `initialValue` defaults to zero. Each bar runs from the previous balance to the next, and `totalLabel` names the final zero-to-balance bar. Set `showValues` to show signed direct labels; `formatValue` supplies their units. `increaseItemStyle`, `decreaseItemStyle`, and `totalItemStyle` accept native style overrides for application meanings. Default colors distinguish direction without assigning good/bad meaning. Supply axis units through `option` and formatted exact data when needed.
 
 `option` configures native axes, tooltips, grids, media overrides, and zoom; the component owns its series geometry. A default exact-data table is generated from the same records. Supply `dataTable` to format units or enrich provenance; set `showDataTable={false}` when the application provides another exact-value view.
 

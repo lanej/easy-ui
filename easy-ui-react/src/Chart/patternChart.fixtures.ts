@@ -1,4 +1,8 @@
-import type { BarSeriesOption, LineSeriesOption } from "echarts";
+import type {
+  BarSeriesOption,
+  DefaultLabelFormatterCallbackParams,
+  LineSeriesOption,
+} from "echarts";
 import {
   forecast,
   bridge,
@@ -45,9 +49,24 @@ export const predictionBandProps: PredictionBandChartProps = {
 };
 export const waterfallProps: WaterfallChartProps = {
   ...waterfallExample,
+  decreaseItemStyle: { color: visualizationColors.warning },
   option: {
     ...withoutSeries(waterfallExample.option),
-    tooltip: { trigger: "item" },
+    tooltip: {
+      trigger: "item",
+      formatter: (
+        params:
+          | DefaultLabelFormatterCallbackParams
+          | DefaultLabelFormatterCallbackParams[],
+      ) => {
+        const item = Array.isArray(params) ? params[0] : params;
+        const step = bridge[item.dataIndex];
+        const money = (value: number) => `$${value.toLocaleString("en-US")}`;
+        return step
+          ? `${step.name}: ${money(step.change)}\nBalance: ${money(step.after)}`
+          : `Net contribution: ${money(bridge[bridge.length - 1].after)}`;
+      },
+    },
   },
   steps: bridge.map((step) => ({
     id: step.name,
@@ -62,7 +81,7 @@ export const intervalProps: IntervalChartProps = {
   ...shipmentTimelineExample,
   option: {
     ...withoutSeries(shipmentTimelineExample.option),
-    tooltip: { trigger: "item" },
+    tooltip: { ...shipmentTimelineExample.option.tooltip, trigger: "item" },
   },
   intervalSeries: {
     markLine: (shipmentTimelineExample.option.series as BarSeriesOption[])[1]
@@ -89,7 +108,7 @@ export const warehouseIntervalProps: IntervalChartProps = {
   option: {
     ...withoutSeries(warehouseProgressExample.option),
     legend: { show: false },
-    tooltip: { trigger: "item" },
+    tooltip: warehouseProgressExample.option.tooltip,
   },
   intervalSeries: {
     markLine: (warehouseProgressExample.option.series as BarSeriesOption[])[3]

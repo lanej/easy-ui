@@ -82,6 +82,25 @@ try {
           false,
           `${name}: finite geometry`,
         );
+        if (name === "WaterfallChart" && width === 720) {
+          const color = await page
+            .locator("#storybook-root")
+            .evaluate((element) =>
+              getComputedStyle(element)
+                .getPropertyValue("--ezui-color-warning-700")
+                .trim(),
+            );
+          await page
+            .locator(`svg path[fill=${JSON.stringify(color)}]`)
+            .first()
+            .hover();
+          await page.getByText("Delivery: $-9,000", { exact: true }).waitFor();
+          await page.getByText("Balance: $15,000", { exact: true }).waitFor();
+          await page.mouse.move(0, 0);
+          await page.getByText("Delivery: $-9,000", { exact: true }).waitFor({
+            state: "hidden",
+          });
+        }
         const tableButton = page
           .locator("#storybook-root summary")
           .filter({ hasText: "View data table" });
@@ -108,16 +127,31 @@ try {
         await page.addScriptTag({
           path: require.resolve("axe-core/axe.min.js"),
         });
-        const violations = await page.evaluate(async () =>
-          (
-            await axe.run(document.querySelector("#storybook-root"), {
-              runOnly: {
-                type: "tag",
-                values: ["wcag2a", "wcag2aa", "wcag21aa"],
-              },
-            })
-          ).violations.map((item) => ({ id: item.id, impact: item.impact })),
-        );
+        let violations;
+        // Storybook's accessibility addon shares axe with the browser audit.
+        // Wait for its pending run before starting our scoped checks.
+        for (let attempt = 0; attempt < 40; attempt++) {
+          try {
+            violations = await page.evaluate(async () =>
+              (
+                await axe.run(document.querySelector("#storybook-root"), {
+                  runOnly: {
+                    type: "tag",
+                    values: ["wcag2a", "wcag2aa", "wcag21aa"],
+                  },
+                })
+              ).violations.map((item) => ({
+                id: item.id,
+                impact: item.impact,
+              })),
+            );
+            break;
+          } catch (error) {
+            if (!String(error).includes("already running") || attempt === 39)
+              throw error;
+            await page.waitForTimeout(50);
+          }
+        }
         assert.deepEqual(
           violations,
           [],
