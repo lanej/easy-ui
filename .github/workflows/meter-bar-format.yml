@@ -1,0 +1,32 @@
+name: MeterBar source review
+
+on:
+  push:
+    branches: [review/meter-bar-30]
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Capture formatted source and pinned formatter
+        run: |
+          npx --no-install prettier --write easy-ui-react/src/MeterBar easy-ui-react/src/ProportionBar easy-ui-react/src/RiskScore scripts/check-meter-bar.mjs scripts/check-proportion-bar.mjs
+          git diff > /tmp/meter-bar-format.patch
+          tar -czf /tmp/meter-bar-source.tgz easy-ui-react/src/MeterBar easy-ui-react/src/ProportionBar easy-ui-react/src/RiskScore scripts/check-meter-bar.mjs scripts/check-proportion-bar.mjs .editorconfig node_modules/prettier
+          git archive HEAD > /tmp/meter-bar-repository.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meter-bar-source
+          path: |
+            /tmp/meter-bar-format.patch
+            /tmp/meter-bar-source.tgz
+            /tmp/meter-bar-repository.tar
+          retention-days: 7
