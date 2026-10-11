@@ -1,4 +1,4 @@
-name: MeterBar source review
+name: MeterBar live review
 
 on:
   push:
@@ -8,25 +8,83 @@ permissions:
   contents: read
 
 jobs:
-  source:
+  live:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_SOURCE_SHA: ace89de1a909734245d0cb1c9175e214e0ad5693
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-      - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Capture formatted source and pinned formatter
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Verify and capture the live PR preview
         run: |
-          npx --no-install prettier --write easy-ui-react/src/MeterBar easy-ui-react/src/ProportionBar easy-ui-react/src/RiskScore scripts/check-meter-bar.mjs scripts/check-proportion-bar.mjs
-          git diff > /tmp/meter-bar-format.patch
-          tar -czf /tmp/meter-bar-source.tgz easy-ui-react/src/MeterBar easy-ui-react/src/ProportionBar easy-ui-react/src/RiskScore scripts/check-meter-bar.mjs scripts/check-proportion-bar.mjs .editorconfig node_modules/prettier
-          git archive HEAD > /tmp/meter-bar-repository.tar
+          mkdir -p /tmp/meter-bar-live
+          python - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          from playwright.sync_api import sync_playwright
+
+          expected = os.environ['EXPECTED_SOURCE_SHA']
+          base = 'https://lanej.io/previews/easy-ui/pr-30/'
+          output = Path('/tmp/meter-bar-live')
+          def read(path):
+              request = Request(base + path, headers={'Cache-Control': 'no-cache', 'User-Agent': 'meter-bar-review'})
+              with urlopen(request, timeout=30) as response:
+                  return response.read()
+          for attempt in range(150):
+              try:
+                  actual = read('revision.txt').decode().strip()
+                  if actual == expected:
+                      break
+                  print(f'Waiting for {expected}: live preview is {actual}', flush=True)
+              except Exception as error:
+                  print(str(error), flush=True)
+              time.sleep(5)
+          else:
+              raise AssertionError('The live preview did not reach the expected PR revision')
+          entries = json.loads(read('storybook/index.json'))['entries']
+          for story in ('compositions', 'narrow', 'states'):
+              assert 'components-meterbar--' + story in entries
+          report = {'source': expected, 'url': base + 'storybook/', 'captures': []}
+          errors = []
+          with sync_playwright() as pw:
+              browser = pw.chromium.launch()
+              try:
+                  for theme in ('light', 'dark'):
+                      for device, width in (('mobile', 390), ('desktop', 1440)):
+                          page = browser.new_page(viewport={'width': width, 'height': 900}, color_scheme=theme)
+                          page.on('pageerror', lambda error: errors.append(str(error)))
+                          for story, meters, bars in (('compositions', 4, 4), ('narrow', 4, 4), ('states', 1, 0)):
+                              url = base + f'storybook/iframe.html?id=components-meterbar--{story}&viewMode=story&globals=colorScheme:{theme}'
+                              response = page.goto(url, wait_until='networkidle')
+                              assert response and response.ok
+                              root = page.locator('#storybook-root')
+                              root.get_by_text('Unavailable share' if story == 'states' else 'Observed proportion', exact=True).wait_for()
+                              page.evaluate('document.fonts.ready')
+                              assert root.locator('[role="meter"]').count() == meters
+                              assert root.locator('[data-meter-bar]').count() == bars
+                              assert root.locator('[role="meter"] [role="meter"]').count() == 0
+                              assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                              assert not page.locator('.sb-errordisplay').is_visible()
+                              values = root.locator('[role="meter"]').evaluate_all('(nodes) => nodes.map(n => ({value:n.getAttribute("aria-valuenow"), maximum:n.getAttribute("aria-valuemax"), text:n.getAttribute("aria-valuetext"), risk:n.hasAttribute("data-assessment")}))')
+                              for value in values:
+                                  assert ('%' in value['text']) != value['risk']
+                              assert not errors, errors
+                              filename = f'meter-{story}-{theme}-{device}.png'
+                              page.screenshot(path=str(output / filename), full_page=True)
+                              root.screenshot(path=str(output / f'component-{filename}'))
+                              report['captures'].append({'story':story, 'theme':theme, 'device':device, 'width':width, 'file':filename, 'values':values})
+                          page.close()
+              finally:
+                  browser.close()
+          assert read('revision.txt').decode().strip() == expected
+          (output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
+          print(json.dumps(report))
+          PY
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: meter-bar-source
-          path: |
-            /tmp/meter-bar-format.patch
-            /tmp/meter-bar-source.tgz
-            /tmp/meter-bar-repository.tar
+          name: meter-bar-live
+          path: /tmp/meter-bar-live
           retention-days: 7
