@@ -2,7 +2,6 @@ import React from "react";
 import type { CustomSeriesOption, CustomSeriesRenderItem } from "echarts";
 import { Chart, type ChartProps, type ChartOption } from "../Chart";
 import { verticalInterval } from "../Chart/intervalRenderer";
-import { visualizationColors } from "../visualization/colors";
 import { chartDefaults, withChartSeries } from "../Chart/chartDefaults";
 
 export type WaterfallStep = { id: string; label: string; change: number };
@@ -95,34 +94,56 @@ export function WaterfallChart({
           true,
         ),
         [
+          ...(
+            [
+              {
+                id: "waterfall",
+                name: "Increase",
+                negative: false,
+                itemStyle: increaseItemStyle,
+              },
+              {
+                id: "waterfall-decrease",
+                name: "Decrease",
+                negative: true,
+                itemStyle: decreaseItemStyle,
+              },
+            ] as const
+          ).map(({ id, name, negative, itemStyle }) => ({
+            id,
+            name,
+            type: "custom" as const,
+            renderItem,
+            clip: true,
+            encode: { x: 0, y: [1, 2], tooltip: [3, 2] },
+            dimensions: ["Step", "Before", "Balance", "Change"],
+            itemStyle,
+            data: ledger.flatMap((step, index) =>
+              step.change < 0 === negative
+                ? [
+                    {
+                      id: step.id,
+                      name: step.label,
+                      value: [index, step.before, step.after, step.change],
+                    },
+                  ]
+                : [],
+            ),
+          })),
           {
-            id: "waterfall",
+            id: "waterfall-total",
+            name: "Total",
             type: "custom",
             renderItem,
             clip: true,
             encode: { x: 0, y: [1, 2], tooltip: [3, 2] },
             dimensions: ["Step", "Before", "Balance", "Change"],
+            itemStyle: totalItemStyle,
             data: [
-              ...ledger.map((step, index) => ({
-                id: step.id,
-                name: step.label,
-                value: [index, step.before, step.after, step.change],
-                itemStyle: {
-                  color:
-                    step.change < 0
-                      ? visualizationColors.secondary
-                      : visualizationColors.primary,
-                  ...(step.change < 0 ? decreaseItemStyle : increaseItemStyle),
-                },
-              })),
               {
                 id: totalId,
                 name: totalLabel,
                 value: [steps.length, 0, balance, balance],
-                itemStyle: {
-                  color: visualizationColors.tertiary,
-                  ...totalItemStyle,
-                },
               },
             ],
           },

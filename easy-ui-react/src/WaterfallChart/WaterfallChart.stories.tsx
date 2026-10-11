@@ -2,6 +2,7 @@ import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { WaterfallChart } from "./WaterfallChart";
 import { waterfallProps } from "../Chart/patternChart.fixtures";
+import { visualizationColors } from "../visualization/colors";
 
 const meta: Meta<typeof WaterfallChart> = {
   id: "components-waterfallchart",
@@ -21,6 +22,40 @@ const meta: Meta<typeof WaterfallChart> = {
 export default meta;
 type Story = StoryObj<typeof WaterfallChart>;
 export const Default: Story = {};
+export const CustomPalette: Story = {
+  args: {
+    decreaseItemStyle: undefined,
+    option: {
+      ...waterfallProps.option,
+      color: [
+        visualizationColors.secondary,
+        visualizationColors.primary,
+        visualizationColors.tertiary,
+      ],
+      media: [
+        {
+          query: { maxWidth: 600 },
+          option: {
+            color: [
+              visualizationColors.primary,
+              visualizationColors.secondary,
+              visualizationColors.tertiary,
+            ],
+          },
+        },
+        {
+          option: {
+            color: [
+              visualizationColors.secondary,
+              visualizationColors.primary,
+              visualizationColors.tertiary,
+            ],
+          },
+        },
+      ],
+    },
+  },
+};
 export const NarrowLayout: Story = {
   decorators: [
     (Story) => (
@@ -31,6 +66,7 @@ export const NarrowLayout: Story = {
   ],
 };
 export const Bare: Story = { args: { variant: "bare" } };
+export const WithoutDataTable: Story = { args: { showDataTable: false } };
 export const Loading: Story = { args: { status: "loading" } };
 export const Empty: Story = {
   args: { steps: [], status: "empty", dataTable: undefined },

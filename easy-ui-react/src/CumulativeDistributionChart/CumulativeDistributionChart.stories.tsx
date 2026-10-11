@@ -38,5 +38,6 @@ export const NarrowLayout: Story = {
   ],
 };
 export const Bare: Story = { args: { variant: "bare" } };
+export const WithoutDataTable: Story = { args: { showDataTable: false } };
 export const Loading: Story = { args: { status: "loading" } };
 export const Empty: Story = { args: { series: [], status: "empty" } };

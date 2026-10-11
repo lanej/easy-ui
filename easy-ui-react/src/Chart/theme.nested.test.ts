@@ -4,6 +4,99 @@ import type { ChartOption } from "./types";
 import tokens from "@easypost/easy-ui-tokens/js/tokens";
 
 setPlatformAPI({ measureText: (text) => ({ width: text.length * 8 }) });
+
+it.each(["light", "dark"] as const)(
+  "themes native graph, flow, hierarchy and box-plot defaults in %s",
+  (scheme) => {
+    const element = document.createElement("div");
+    const names = [
+      "neutral.800",
+      "neutral.600",
+      "neutral.000",
+      "neutral.200",
+      "primary.600",
+    ] as const;
+    for (const name of names)
+      element.style.setProperty(
+        `--ezui-color-${name.replace(".", "-")}`,
+        tokens[`theme.${scheme}.color.${name}`],
+      );
+    document.body.append(element);
+    const text = tokens[`theme.${scheme}.color.neutral.800`];
+    const background = tokens[`theme.${scheme}.color.neutral.000`];
+    const chart = init(null, themedChartTheme(element, { label: 15 }), {
+      renderer: "svg",
+      ssr: true,
+      width: 720,
+      height: 360,
+    });
+    try {
+      const option: ChartOption = {
+        xAxis: { type: "category" },
+        yAxis: { type: "value" },
+        series: [
+          {
+            type: "graph",
+            layout: "circular",
+            label: { show: true },
+            data: [{ name: "A" }, { name: "B" }],
+            links: [{ source: "A", target: "B" }],
+          },
+          {
+            type: "sankey",
+            data: [{ name: "A" }, { name: "B" }],
+            links: [{ source: "A", target: "B", value: 1 }],
+          },
+          { type: "treemap", data: [{ name: "A", value: 1 }] },
+          { type: "boxplot", data: [[0, 1, 2, 3, 4]] },
+        ],
+      };
+      chart.setOption(themedOption(element, option, false));
+      const series = chart.getOption().series as object[];
+      expect(series[0]).toMatchObject({
+        label: { color: text, fontSize: 15, textBorderWidth: 0 },
+        edgeLabel: { color: text },
+        lineStyle: { color: tokens[`theme.${scheme}.color.neutral.600`] },
+      });
+      expect(series[1]).toMatchObject({
+        label: { color: text },
+        lineStyle: { color: "source" },
+      });
+      expect(series[2]).toMatchObject({
+        label: { color: background },
+        upperLabel: { color: text },
+        breadcrumb: {
+          itemStyle: { color: background, textStyle: { color: text } },
+        },
+      });
+      expect(chart.getVisual({ seriesIndex: 3 }, "color")).not.toBe("#fff");
+      chart.setOption(
+        themedOption(
+          element,
+          {
+            series: [
+              {
+                type: "graph",
+                label: { color: "#aa33bb", textBorderWidth: 1 },
+                lineStyle: { color: "#336699" },
+                data: [{ name: "A" }],
+              },
+            ],
+          },
+          false,
+        ),
+        { notMerge: true },
+      );
+      expect((chart.getOption().series as object[])[0]).toMatchObject({
+        label: { color: "#aa33bb", textBorderWidth: 1 },
+        lineStyle: { color: "#336699" },
+      });
+    } finally {
+      chart.dispose();
+      element.remove();
+    }
+  },
+);
 const nested: ChartOption = {
   title: { id: "title", text: "Nested title" },
   legend: { id: "legend" },

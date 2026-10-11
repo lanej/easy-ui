@@ -91,7 +91,7 @@ Use `zoomState` and `legendState` to coordinate charts. Entries target a stable 
 
 <Canvas of={ChartStories.CoordinatedCharts} />
 
-Custom `color` palettes replace the default palette. Tooltips use ECharts rich text by default; formatter strings use `\n` for line breaks, as demonstrated by the waterfall.
+Custom `color` palettes replace the default palette; explicitly authored item or line colors remain authoritative. Named analytical components share the [catalog's presentation and color contract](?path=/docs/organisms-charts-choosing-a-chart--docs). Tooltips use ECharts rich text by default; formatter strings use `\n` for line breaks, as demonstrated by the waterfall.
 
 Default series, labels, borders, and tooltips use EasyPost theme tokens. Use CSS token references such as `var(--ezui-color-primary-600)` in native color fields to follow the nearest theme, including dark mode. Explicit color values and custom palettes remain application-owned. Bundled heatmaps use EasyPost sequential or diverging ramps with contrast-checked labels rather than unrelated vendor palettes.
 

@@ -9,6 +9,10 @@ Show supplied nodes and links using native graph layouts. This is an abstract re
 
 <Canvas of={Stories.Default} />
 
+This example removes the gallery’s explicit color overrides to show the active theme’s native defaults.
+
+<Canvas of={Stories.ThemeDefaults} />
+
 Import `{ GraphChart }` from `@easypost/easy-ui/GraphChart`. Install the optional `echarts@^6.1.0` peer when using analytical charts.
 
 Pass native ECharts records through `series`; the component supplies the series `type`. `option` configures native axes, grids, legends, annotations, datasets, media overrides, and zoom. There is no second axis or styling grammar. Caller values override this component's defaults. Keep stable series and datum IDs for selection and ordinary refreshes.
@@ -19,5 +23,8 @@ Use `dataTable` from the same records for exact values and keyboard drill-down. 
 
 <Canvas of={Stories.NarrowLayout} />
 <Canvas of={Stories.Bare} />
+<Canvas of={Stories.WithoutDataTable} />
+
+Use `showDataTable={false}` to omit the built-in data disclosure while retaining the plot. All analytical charts share the presentation options in the [chart catalog](?path=/docs/organisms-charts-choosing-a-chart--docs).
 
 <ArgTypes />

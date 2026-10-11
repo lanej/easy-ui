@@ -69,6 +69,196 @@ const examples = [
   ["WaterfallChart", WaterfallChartStories],
 ] as const;
 
+it.each(examples)("shares presentation controls through %s", (_name, story) => {
+  const Component = story.component as React.ComponentType<
+    Record<string, unknown>
+  >;
+  const table = { columns: ["Value"], rows: [{ id: "a", values: [1] }] };
+  const props = {
+    title: null,
+    description: null,
+    "aria-label": "External chart heading",
+    variant: "bare",
+    showDataTable: false,
+    dataTable: table,
+    height: 240,
+    typography: { label: 14 },
+    renderer: "canvas",
+    status: "ready",
+  };
+  render(<Component {...story.args} {...props} />);
+  expect(captured.props).toMatchObject(props);
+  expect(captured.props!.dataTable).toBe(table);
+});
+
+const points = [0, 1].map((x) => ({
+  id: String(x),
+  x,
+  observed: x + 1,
+  predicted: x + 2,
+  lower: x,
+  upper: x + 3,
+}));
+const steps = [
+  { id: "a", label: "Credit", change: 10 },
+  { id: "b", label: "Debit", change: -2 },
+];
+it.each(["root", "baseOption", "media", "timeline"])(
+  "uses the effective %s palette for prediction bounds and waterfall directions",
+  (kind) => {
+    const color = ["#112233", "#445566", "#778899"];
+    const option: ChartOption =
+      kind === "root"
+        ? { color }
+        : kind === "baseOption"
+          ? { baseOption: { color } }
+          : kind === "media"
+            ? {
+                baseOption: { color: ["#ff0000", "#ff0000", "#ff0000"] },
+                media: [
+                  { query: { maxWidth: 600 }, option: { color } },
+                  { option: { color: ["#ff0000", "#ff0000", "#ff0000"] } },
+                ],
+              }
+            : {
+                baseOption: {
+                  timeline: {
+                    data: ["Now", "Next"],
+                    currentIndex: 1,
+                    autoPlay: false,
+                  },
+                  color: ["#ff0000"],
+                },
+                options: [{ color: ["#ff0000"] }, { color }],
+              };
+    for (const Component of [PredictionBandChart, WaterfallChart]) {
+      render(
+        Component === PredictionBandChart ? (
+          <PredictionBandChart points={points} option={option} />
+        ) : (
+          <WaterfallChart steps={steps} option={option} />
+        ),
+      );
+      const chart = init(null, undefined, {
+        renderer: "svg",
+        ssr: true,
+        width: 390,
+        height: 360,
+      });
+      try {
+        chart.setOption(
+          themedOption(
+            document.createElement("div"),
+            captured.props!.option,
+            false,
+          ),
+        );
+        const series = chart.getOption().series as SeriesOption[];
+        const colors = series.map((_series, index) =>
+          chart.getVisual({ seriesIndex: index }, "color"),
+        );
+        expect(colors).toEqual(
+          Component === PredictionBandChart
+            ? [color[0], color[1], color[1]]
+            : color,
+        );
+        expect(chart.renderToSVGString()).toContain(color[1]);
+        if (kind === "media") {
+          chart.resize({ width: 720 });
+          expect(
+            series.map((_series, index) =>
+              chart.getVisual({ seriesIndex: index }, "color"),
+            ),
+          ).toEqual(["#ff0000", "#ff0000", "#ff0000"]);
+          chart.resize({ width: 390 });
+          expect(
+            series.map((_series, index) =>
+              chart.getVisual({ seriesIndex: index }, "color"),
+            ),
+          ).toEqual(
+            Component === PredictionBandChart
+              ? [color[0], color[1], color[1]]
+              : color,
+          );
+        }
+        // The band is below the prediction and legend selection hides both.
+        if (Component === PredictionBandChart) {
+          chart.dispatchAction({ type: "legendUnSelect", name: "Predicted" });
+          expect(chart.renderToSVGString()).not.toContain(
+            'fill-opacity="0.18"',
+          );
+        }
+      } finally {
+        chart.dispose();
+      }
+    }
+  },
+);
+
+it.each([steps.slice(0, 1), steps.slice(1), []].map((steps) => ({ steps })))(
+  "keeps waterfall palette roles when one or both directions are absent",
+  ({ steps }) => {
+    render(
+      <WaterfallChart
+        steps={steps}
+        option={{ color: ["#112233", "#445566", "#778899"] }}
+      />,
+    );
+    const chart = init(null, undefined, {
+      renderer: "svg",
+      ssr: true,
+      width: 720,
+      height: 360,
+    });
+    try {
+      chart.setOption(captured.props!.option);
+      expect(
+        [0, 1, 2].map((seriesIndex) =>
+          chart.getVisual({ seriesIndex }, "color"),
+        ),
+      ).toEqual(["#112233", "#445566", "#778899"]);
+    } finally {
+      chart.dispose();
+    }
+  },
+);
+
+it("retains explicit pattern colors, and lets the band follow or override the predicted line", () => {
+  const predictedSeries = Object.freeze({
+    lineStyle: Object.freeze({ color: "#009988" }),
+  });
+  render(
+    <PredictionBandChart points={points} predictedSeries={predictedSeries} />,
+  );
+  expect(
+    (captured.props!.option.series as CustomSeriesOption[])[2].itemStyle,
+  ).toMatchObject({ color: "#009988", opacity: 0.18 });
+  render(
+    <PredictionBandChart
+      points={points}
+      predictedSeries={predictedSeries}
+      bandItemStyle={{ color: "#aa33bb", opacity: 0.3 }}
+    />,
+  );
+  expect(
+    (captured.props!.option.series as CustomSeriesOption[])[2].itemStyle,
+  ).toMatchObject({ color: "#aa33bb", opacity: 0.3 });
+  render(
+    <WaterfallChart
+      steps={steps}
+      increaseItemStyle={{ color: "#009988" }}
+      decreaseItemStyle={{ color: "#aa33bb" }}
+      totalItemStyle={{ color: "#336699" }}
+    />,
+  );
+  expect(
+    (captured.props!.option.series as CustomSeriesOption[]).map(
+      (series) => series.itemStyle?.color,
+    ),
+  ).toEqual(["#009988", "#aa33bb", "#336699"]);
+  expect(predictedSeries.lineStyle.color).toBe("#009988");
+});
+
 it.each(examples)(
   "renders the public %s API with real ECharts geometry",
   (_name, story) => {
@@ -124,7 +314,9 @@ it.each(examples)(
       ? args.series.length
       : name === "PredictionBandChart"
         ? 3
-        : 1;
+        : name === "WaterfallChart"
+          ? 3
+          : 1;
     for (const width of [720, 390]) {
       const chart = init(null, undefined, {
         renderer: "svg",
@@ -371,8 +563,8 @@ it("draws a waterfall debit crossing zero at its actual endpoints and preserves 
     />,
   );
   const props = captured.props!;
-  const series = (props.option.series as CustomSeriesOption[])[0];
-  expect(geometry(series, 1)).toMatchObject({ shape: { y: -5, height: 15 } });
+  const series = props.option.series as CustomSeriesOption[];
+  expect(geometry(series[1])).toMatchObject({ shape: { y: -5, height: 15 } });
   expect(props.dataTable!.rows.map((row) => row.values)).toEqual([
     ["Credit", 10, 10],
     ["Debit", -15, -5],
@@ -380,9 +572,12 @@ it("draws a waterfall debit crossing zero at its actual endpoints and preserves 
     ["Total", null, 3],
   ]);
   expect(
-    (series.data as { id: string }[])
-      .map((item) => (item as { id: string }).id)
-      .slice(0, 3),
+    series
+      .slice(0, 2)
+      .flatMap((entry) =>
+        (entry.data as { id: string }[]).map((item) => item.id),
+      )
+      .sort(),
   ).toEqual(["a", "b", "c"]);
 });
 
@@ -435,7 +630,9 @@ it("renders negative prediction bounds without connecting across missing bounds"
     />,
   );
   const props = captured.props!;
-  const band = (props.option.series as CustomSeriesOption[])[0];
+  const band = (props.option.series as CustomSeriesOption[]).find(
+    (series) => series.id === "prediction-band",
+  )!;
   expect(band.data).toHaveLength(1);
   expect(geometry(band)).toMatchObject({
     shape: {

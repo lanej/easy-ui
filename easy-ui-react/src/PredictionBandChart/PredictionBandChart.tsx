@@ -1,7 +1,10 @@
 import React from "react";
-import type { CustomSeriesRenderItem, LineSeriesOption } from "echarts";
+import type {
+  CustomSeriesOption,
+  CustomSeriesRenderItem,
+  LineSeriesOption,
+} from "echarts";
 import { Chart, type ChartProps, type ChartOption } from "../Chart";
-import { visualizationColors } from "../visualization/colors";
 import { chartDefaults, withChartSeries } from "../Chart/chartDefaults";
 
 export type PredictionBandPoint = {
@@ -19,6 +22,8 @@ export type PredictionBandChartProps = Omit<ChartProps, "option"> & {
   option?: Omit<ChartOption, "series">;
   observedSeries?: Omit<LineSeriesOption, "type" | "data">;
   predictedSeries?: Omit<LineSeriesOption, "type" | "data">;
+  /** Shading follows the predicted line by default; native overrides remain explicit. */
+  bandItemStyle?: CustomSeriesOption["itemStyle"];
 };
 
 const renderBand: CustomSeriesRenderItem = (_params, api) => ({
@@ -47,6 +52,7 @@ export function PredictionBandChart({
   option,
   observedSeries,
   predictedSeries,
+  bandItemStyle,
   dataTable,
   ...props
 }: PredictionBandChartProps) {
@@ -108,21 +114,9 @@ export function PredictionBandChart({
         ),
         [
           {
-            id: "prediction-band",
-            type: "custom",
-            renderItem: renderBand,
-            silent: true,
-            clip: true,
-            encode: { x: [0, 3], y: [1, 2, 4, 5] },
-            tooltip: { show: false },
-            itemStyle: { color: visualizationColors.primary, opacity: 0.18 },
-            data: segments,
-          },
-          {
             id: "observed",
             name: "Observed",
             connectNulls: false,
-            itemStyle: { color: visualizationColors.primary },
             ...observedSeries,
             type: "line",
             data: points.map((point) => [point.x, point.observed]),
@@ -131,11 +125,33 @@ export function PredictionBandChart({
             id: "prediction",
             name: "Predicted",
             connectNulls: false,
-            itemStyle: { color: visualizationColors.primary },
             lineStyle: { type: "dashed" },
             ...predictedSeries,
             type: "line",
             data: points.map((point) => [point.x, point.predicted]),
+          },
+          {
+            id: "prediction-band",
+            // Sharing the prediction's native palette key also keeps its
+            // shading in sync with palette and legend changes in media/timelines.
+            name: String(predictedSeries?.name ?? "Predicted"),
+            type: "custom",
+            z: 1,
+            renderItem: renderBand,
+            silent: true,
+            clip: true,
+            encode: { x: [0, 3], y: [1, 2, 4, 5] },
+            tooltip: { show: false },
+            itemStyle: {
+              color:
+                predictedSeries?.lineStyle?.color ??
+                predictedSeries?.itemStyle?.color,
+              opacity: 0.18,
+              ...bandItemStyle,
+              // ECharts applies native item-color callbacks to custom series
+              // too; its custom-series typings only declare static colors.
+            } as CustomSeriesOption["itemStyle"],
+            data: segments,
           },
         ],
       )}

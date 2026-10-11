@@ -60,7 +60,7 @@ export const waterfallProps: WaterfallChartProps = {
           | DefaultLabelFormatterCallbackParams[],
       ) => {
         const item = Array.isArray(params) ? params[0] : params;
-        const step = bridge[item.dataIndex];
+        const step = bridge.find((step) => step.name === item.name);
         const money = (value: number) => `$${value.toLocaleString("en-US")}`;
         return step
           ? `${step.name}: ${money(step.change)}\nBalance: ${money(step.after)}`
