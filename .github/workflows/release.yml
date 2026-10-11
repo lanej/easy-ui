@@ -10,6 +10,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   release:
     name: Release
+    if: github.repository == 'EasyPost/easy-ui'
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -5,6 +5,7 @@ import CloseIcon from "@easypost/easy-ui-icons/Close";
 import { Button } from "../Button";
 import { IconButton } from "../IconButton";
 import { Text } from "../Text";
+import { EventDetails } from "../EventDetails";
 import type { InvestigationDetailsContext } from "./selection";
 import styles from "./InvestigationWorkspace.module.scss";
 
@@ -137,24 +138,7 @@ export function InvestigationDetails({
           )}
           <div className={styles.metadata}>
             {event && (
-              <dl className={styles.facts}>
-                <div>
-                  <dt>Event</dt>
-                  <dd>{event.timeLabel ?? "Unknown"}</dd>
-                </div>
-                {event.receivedTimeLabel && (
-                  <div>
-                    <dt>Received</dt>
-                    <dd>{event.receivedTimeLabel}</dd>
-                  </div>
-                )}
-                <div>
-                  <dt>Location</dt>
-                  <dd>
-                    {event.locationLabel ?? location?.label ?? "Not supplied"}
-                  </dd>
-                </div>
-              </dl>
+              <EventDetails event={event} locationLabel={location?.label} />
             )}
             {isNarrow && hasMore && (
               <Button

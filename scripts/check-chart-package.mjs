@@ -177,6 +177,41 @@ for (const extension of ["js", "mjs"]) {
   assert.match(composed, /Loading map/);
   assert.doesNotMatch(composed, /Oakland warehouse|Facility risk/);
 }
+for (const [name, nativeProps, expected] of [
+  [
+    "EventDetails",
+    {
+      event: {
+        id: "exact-record",
+        timeLabel: "14:10",
+        receivedTimeLabel: "14:18",
+      },
+      showEventId: true,
+    },
+    /exact-record/,
+  ],
+  [
+    "PathComparison",
+    {
+      paths: [{ id: "candidate", label: "Candidate history" }],
+      events: [],
+      rows: [],
+      selection: null,
+      onSelectionChange() {},
+    },
+    /No comparison rows supplied/,
+  ],
+]) {
+  for (const extension of ["js", "mjs"]) {
+    const entry = await import(
+      `../easy-ui-react/dist/${name}/index.${extension}`
+    );
+    assert.match(
+      renderToString(React.createElement(entry[name], nativeProps)),
+      expected,
+    );
+  }
+}
 assert.equal(
   Object.keys(require.cache).some((path) =>
     /node_modules\/maplibre-gl\//.test(path),

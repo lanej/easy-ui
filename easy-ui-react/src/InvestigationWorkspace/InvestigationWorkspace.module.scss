@@ -91,25 +91,6 @@
   color: design-token("color.neutral.700");
 }
 
-.facts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 16px;
-  margin: 0;
-  font-size: 12px;
-  > div {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-  dt {
-    color: design-token("color.neutral.700");
-  }
-  dd {
-    margin: 0;
-  }
-}
 .detailBody {
   display: grid;
   gap: design-token("space.1");

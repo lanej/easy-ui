@@ -1,0 +1,23 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as Stories from "./InvestigationWorkflow.stories";
+
+<Meta of={Stories} />
+
+# Queue to review
+
+This application recipe connects the investigation queue, path comparison, map, reusable event details, and review outcome form. Open a case, inspect an observation in a candidate history, record an independent review, and return to the filtered queue.
+
+<Canvas of={Stories.QueueToReview} />
+
+The case header repeats the queue’s neutral category badge and compact risk score so the case type and assessment remain visible during investigation. The score and assessment stay inline without a proportional bar (`showBar={false}`), and the header wraps when space is limited.
+
+The queue stays mounted while a case is open so search, filters, sorting, and pagination survive navigation. Opening a case moves keyboard focus to its heading. Returning restores focus to the case action; if a recorded review removes that case from the active filter, focus returns to search. A confirmed record updates that case's review status and remains in its history on reopening. Risk assessments remain unchanged.
+
+Each case opens its own observation snapshot with stable case-scoped event IDs, supplied timestamps, and candidate membership. The fictional network locations are shared. The missing-observations case displays an explicit empty state without another case's map or records.
+
+Review drafts and pending requests live above case navigation. Start a slow save, return to the queue, and reopen the same case: its draft remains read-only and another submission is blocked until that request finishes. Other cases keep independent drafts and outcomes. The failure example retains the original case's draft even when the failure occurs while another case is open.
+
+<Canvas of={Stories.SlowSave} />
+<Canvas of={Stories.FailedSaveAcrossNavigation} />
+
+`InvestigationRecipes.examples.tsx` owns the synthetic case state, `useReviewOutcomes` keeps review state by case, and `InvestigationCaseComparisons.fixtures.ts` supplies the independent observation snapshots. Replace those pieces with your router, query layer, and authenticated review service. The recipe source is an example rather than a public package export; `PathComparison` and `EventDetails` are the reusable public components.

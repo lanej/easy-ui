@@ -33,6 +33,11 @@ export type RiskScoreProps = {
    */
   size?: "sm" | "md";
 
+  /** Show the proportional bar beneath the score. Accessible range is retained.
+   * @default true
+   */
+  showBar?: boolean;
+
   /**
    * Accessible name identifying the risk being measured.
    * @default Risk score
@@ -98,6 +103,7 @@ export function RiskScore({
   assessment,
   max = 100,
   size = "md",
+  showBar = true,
   accessibilityLabel = "Risk score",
   accessibilityValueText,
   assessmentLabel,
@@ -194,12 +200,14 @@ export function RiskScore({
           </Pill>
         </span>
       </span>
-      <span className={styles.track} aria-hidden="true">
-        <span
-          className={styles.fill}
-          style={{ inlineSize: `${(value / max) * 100}%` }}
-        />
-      </span>
+      {showBar && (
+        <span className={styles.track} aria-hidden="true">
+          <span
+            className={styles.fill}
+            style={{ inlineSize: `${(value / max) * 100}%` }}
+          />
+        </span>
+      )}
     </span>
   );
 }
