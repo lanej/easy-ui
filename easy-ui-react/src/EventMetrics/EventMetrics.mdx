@@ -1,0 +1,68 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./EventMetrics.stories";
+
+<Meta of={Stories} />
+
+# EventMetrics
+
+A molecule for independently assessed event or facility measurements. Every pill contains its metric's label and current value, with an optional status suffix and reference. The caller supplies the values, labels, assessments, and reference content; the component does not infer thresholds or an overall event status.
+
+## Three presentations
+
+**Minimal** places the labeled metric pills in an inline flow, without references. Individual pills can wrap. In a timeline, use `renderMetrics` with `metricsPlacement="inline"` to include them in the event's shared identity flow.
+
+<Canvas of={Stories.Minimal} />
+
+**Compact** keeps the complete metric label and value inside the pill, followed by its reference. When width is limited, the reference can move below its pill without shrinking the text.
+
+<Canvas of={Stories.Compact} />
+
+**Expanded** retains the same labeled pill, with a larger reference immediately below. All three variants display “Dwell time 6 h” and “Exception rate 2%” consistently. Color conveys the assessment without a redundant status word.
+
+<Canvas of={Stories.Expanded} />
+
+## Supply independent observations
+
+```tsx
+import { EventMetrics } from "@easypost/easy-ui/EventMetrics";
+
+<EventMetrics
+  variant="minimal"
+  ariaLabel="Facility observations"
+  metrics={[
+    {
+      id: "dwell",
+      label: "Dwell time",
+      valueLabel: "6 h",
+      assessment: "healthy",
+      assessmentLabel: "Within expectations",
+    },
+    {
+      id: "exception",
+      label: "Exception rate",
+      valueLabel: "2%",
+      assessment: "degraded",
+      assessmentLabel: "Elevated exception rate",
+    },
+  ]}
+/>;
+```
+
+`valueLabel` is already formatted by the application, so durations, percentages, and counts use the same composition. The visible pill contains the metric label and value; `assessmentLabel` retains the full accessible meaning of its color. Use the optional `statusLabel` only for extra context beyond the assessment already conveyed by color. Each assessment applies to its own metric; a healthy dwell time does not suppress an elevated exception rate.
+
+`reference` accepts an existing reference component. These examples use `DurationDistribution` with explicit units and labels: completed dwell durations for the first metric, and percentage rates measured across comparable facility windows for the second. The data and policies are synthetic examples, not carrier performance.
+
+The compact example uses a concentration gradient; the expanded example uses a histogram. Both show one current-value indicator, omit percentile markers, and color only the policy interval containing the current value. The remainder of the distribution stays visible in neutral color. A percentile by itself is not a health assessment.
+
+## Missing and loading values
+
+Set `availability="unavailable"` on an unavailable metric or `isLoading` while it is being refreshed. The component suppresses the previous value, assessment, status suffix, and reference rather than displaying stale healthy or elevated results. Other metrics remain independently visible.
+
+<Canvas of={Stories.MissingData} />
+<Canvas of={Stories.Loading} />
+
+## Timeline composition
+
+Pass `EventMetrics` through `EventTimeline.renderMetrics`. For **minimal**, set `metricsPlacement="inline"` and `size="compact"`: the event label, facility icon and type, location, and individual pills share one wrapping flow within the selected event surface. For **compact** and **expanded**, retain the default `metricsPlacement="below"`. Metrics are available on the final event and remain outside the native event-selection button in both placements. Use `renderInterval` only for content that belongs to an actual interval following an event.
+
+<ArgTypes of={Stories} />

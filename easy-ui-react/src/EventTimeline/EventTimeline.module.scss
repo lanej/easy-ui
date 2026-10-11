@@ -83,11 +83,9 @@
   font-variant-numeric: tabular-nums;
   color: design-token("color.neutral.700");
   font-size: 12px;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   padding-block-start: 2px;
   min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .dot {
@@ -106,9 +104,7 @@
   font-size: 14px;
   font-weight: 600;
   min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .location,
@@ -116,6 +112,33 @@
   font-size: 12px;
   color: design-token("color.neutral.700");
   overflow-wrap: anywhere;
+}
+
+.location {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  min-inline-size: 0;
+}
+
+.locationIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  margin-block-start: 1px;
+  inline-size: 14px;
+  block-size: 14px;
+
+  svg {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+}
+
+.metrics {
+  min-inline-size: 0;
+  margin-inline-start: var(--content-inset);
+  padding-block: 0 8px;
+  padding-inline-end: var(--row-inline-padding);
 }
 
 .mapLink {
@@ -162,13 +185,6 @@
     max-inline-size: 61%;
     padding-inline-end: 2px;
   }
-
-  .location,
-  .received {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 }
 
 @container (max-width: 500px) {
@@ -186,11 +202,130 @@
   }
 }
 
+// Inline identity and metrics share a single selected surface and text flow.
+// The title remains a native selection button; its hit area covers the row,
+// while metric content sits above that hit area for independent interaction.
+.item[data-metrics-placement="inline"] {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: var(--time-column) var(--dot-column) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--column-gap);
+  padding: 10px var(--row-inline-padding);
+  border-radius: 6px;
+
+  &[data-current="true"],
+  &:has(.select:hover) {
+    background: design-token("color.primary.050");
+  }
+
+  &[data-has-trailing="true"] {
+    grid-template-columns:
+      var(--time-column) var(--dot-column) minmax(0, 1fr)
+      auto;
+
+    .trailing {
+      max-inline-size: none;
+      padding: 0;
+      position: relative;
+      z-index: 2;
+    }
+  }
+
+  .select {
+    display: inline-block;
+    inline-size: auto;
+    max-inline-size: 100%;
+    padding: 0;
+    background: transparent;
+    vertical-align: middle;
+    line-height: normal;
+  }
+
+  .select::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: 6px;
+  }
+
+  .select:focus-visible {
+    outline: none;
+  }
+
+  .select:focus-visible::after {
+    outline: 2px solid design-token("color.primary.600");
+    outline-offset: 2px;
+  }
+
+  .time {
+    padding-block-start: 7px;
+  }
+
+  .dot {
+    padding-block-start: 9px;
+  }
+
+  .location {
+    display: inline;
+    margin-inline: 4px 8px;
+    vertical-align: middle;
+  }
+
+  .locationIcon {
+    margin-block-start: 0;
+    margin-inline-end: 5px;
+    vertical-align: middle;
+  }
+}
+
+.headline {
+  min-inline-size: 0;
+  font-size: 14px;
+  line-height: 28px;
+  overflow-wrap: anywhere;
+}
+
+.inlineMetrics {
+  display: inline;
+  position: relative;
+  z-index: 2;
+}
+
+// Compact row summaries share space with a readable event identity. Their
+// contents can wrap within the trailing slot without moving below the event.
+.item[data-size="compact"][data-has-trailing="true"]:not(
+    [data-metrics-placement="inline"]
+  ) {
+  align-items: flex-start;
+  gap: 8px;
+
+  .select {
+    flex: 1 1 calc(var(--content-inset) + 108px);
+  }
+
+  .trailing {
+    flex: 0 1 auto;
+    max-inline-size: calc(100% - var(--content-inset) - 108px - 8px);
+    padding-block: 10px;
+    padding-inline-end: var(--row-inline-padding);
+  }
+}
+
 @media (forced-colors: active) {
   .item[data-current="true"] .select {
     outline: 1px solid Highlight;
   }
   .entry:not(:last-child)::before {
     background: CanvasText;
+  }
+  .item[data-current="true"][data-metrics-placement="inline"] {
+    outline: 1px solid Highlight;
+
+    .select {
+      outline: none;
+    }
   }
 }

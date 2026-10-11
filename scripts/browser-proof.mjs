@@ -81,7 +81,7 @@ async function main() {
   const env = process.env;
   const { PROOF_MODE: mode, PROOF_SUITE: suite, PROOF_BUILT: built } = env;
   if (
-    !/^(?:maps|charts)-(?:chrome|firefox|safari|screenshots|layout)$|^hosted-maps$/.test(
+    !/^(?:maps|charts)-(?:chrome|firefox|safari|screenshots|layout)$|^(?:hosted-maps|event-timeline)$/.test(
       suite ?? "",
     )
   )
@@ -103,9 +103,10 @@ async function main() {
   };
   let key = env.PROOF_DIGEST;
   if (mode === "check") {
-    const preview = suite.startsWith("charts-")
-      ? "scripts/preview-metrics"
-      : "scripts/preview-maps";
+    const preview =
+      suite.startsWith("charts-") || suite === "event-timeline"
+        ? "scripts/preview-metrics"
+        : "scripts/preview-maps";
     const inputs = execFileSync(
       "git",
       [
@@ -119,6 +120,9 @@ async function main() {
         ...(suite === "charts-layout" ? [".ui-review"] : []),
         ...(suite === "maps-layout" ? [".ui-review/maps"] : []),
         ...(suite === "hosted-maps" ? ["scripts/build-docs.mjs"] : []),
+        ...(suite === "event-timeline"
+          ? ["scripts/check-event-timeline.mjs"]
+          : []),
       ],
       { encoding: "utf8" },
     )
