@@ -8,6 +8,7 @@ import type {
   CustomSeriesRenderItemParams,
 } from "echarts";
 import type { ChartProps } from "./Chart";
+import type { ChartOption } from "./types";
 import { themedOption } from "./theme";
 
 const captured = vi.hoisted(() => ({ props: null as ChartProps | null }));
@@ -39,6 +40,7 @@ import { PredictionBandChart } from "../PredictionBandChart";
 import { WaterfallChart } from "../WaterfallChart";
 import { AreaChart } from "../AreaChart";
 import { StackedBarChart } from "../StackedBarChart";
+import { LineChart } from "../LineChart";
 import { chartDefaults } from "./chartDefaults";
 
 beforeAll(() =>
@@ -70,7 +72,9 @@ const examples = [
 it.each(examples)(
   "renders the public %s API with real ECharts geometry",
   (_name, story) => {
-    const Component = story.component as React.ComponentType<unknown>;
+    const Component = story.component as React.ComponentType<
+      Record<string, unknown>
+    >;
     render(<Component {...story.args} />);
     expect(captured.props).not.toBeNull();
     const chart = init(null, undefined, {
@@ -98,6 +102,76 @@ it.each(examples)(
     }
   },
 );
+
+it.each(examples)(
+  "renders %s series from immutable baseOption with native media overrides",
+  (name, story) => {
+    const args = story.args as Record<string, unknown>;
+    const option = Object.freeze({
+      baseOption: Object.freeze((args.option ?? {}) as ChartOption),
+      media: [
+        {
+          query: { maxWidth: 600 },
+          option: { textStyle: { fontSize: 15 } },
+        },
+      ],
+    });
+    const Component = story.component as React.ComponentType<
+      Record<string, unknown>
+    >;
+    render(<Component {...args} option={option} />);
+    const count = Array.isArray(args.series)
+      ? args.series.length
+      : name === "PredictionBandChart"
+        ? 3
+        : 1;
+    for (const width of [720, 390]) {
+      const chart = init(null, undefined, {
+        renderer: "svg",
+        ssr: true,
+        width,
+        height: 360,
+      });
+      try {
+        chart.setOption(
+          themedOption(
+            document.createElement("div"),
+            captured.props!.option,
+            false,
+          ),
+        );
+        expect(chart.getOption().series).toHaveLength(count);
+        expect(chart.renderToSVGString()).toContain("<path");
+        expect(chart.renderToSVGString()).not.toMatch(/NaN|Infinity/);
+        if (width === 390)
+          expect(chart.getOption().textStyle).toMatchObject({ fontSize: 15 });
+      } finally {
+        chart.dispose();
+      }
+    }
+    expect(option.baseOption).not.toHaveProperty("series");
+  },
+);
+
+it("keeps default axes when a minimal line chart supplies an empty baseOption", () => {
+  render(
+    <LineChart series={[{ data: [1, 3, 2] }]} option={{ baseOption: {} }} />,
+  );
+  const chart = init(null, undefined, {
+    renderer: "svg",
+    ssr: true,
+    width: 720,
+    height: 360,
+  });
+  try {
+    chart.setOption(captured.props!.option);
+    expect(chart.getOption().series).toHaveLength(1);
+    expect(chart.getOption().xAxis).toMatchObject([{ type: "category" }]);
+    expect(chart.getOption().yAxis).toMatchObject([{ type: "value" }]);
+  } finally {
+    chart.dispose();
+  }
+});
 
 it("keeps caller data and style immutable and passes interaction/state props through", () => {
   const onSelect = vi.fn();

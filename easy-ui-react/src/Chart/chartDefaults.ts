@@ -2,6 +2,16 @@ import { mergeWith } from "lodash";
 import type { DataZoomComponentOption } from "echarts";
 import type { ChartOption } from "./types";
 
+/** ECharts consumes baseOption instead of outer fields when it is supplied. */
+export function withChartSeries(
+  option: ChartOption,
+  series: ChartOption["series"],
+): ChartOption {
+  return option.baseOption
+    ? { ...option, baseOption: { ...option.baseOption, series } }
+    : { ...option, series };
+}
+
 /** Retain axis defaults; other authored native components replace their defaults. */
 export function chartDefaults(
   defaults: ChartOption,

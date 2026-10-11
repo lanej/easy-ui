@@ -2,7 +2,7 @@ import React from "react";
 import type { CustomSeriesOption } from "echarts";
 import { Chart, type ChartProps, type ChartOption } from "../Chart";
 import { horizontalInterval } from "../Chart/intervalRenderer";
-import { chartDefaults } from "../Chart/chartDefaults";
+import { chartDefaults, withChartSeries } from "../Chart/chartDefaults";
 
 export type ChartInterval = {
   id: string;
@@ -59,8 +59,8 @@ export function IntervalChart({
           })),
         }
       }
-      option={{
-        ...chartDefaults(
+      option={withChartSeries(
+        chartDefaults(
           {
             grid: {
               left: 16,
@@ -76,7 +76,7 @@ export function IntervalChart({
           option,
           true,
         ),
-        series: [
+        [
           {
             id: "intervals",
             ...intervalSeries,
@@ -96,7 +96,7 @@ export function IntervalChart({
             })),
           },
         ],
-      }}
+      )}
     />
   );
 }

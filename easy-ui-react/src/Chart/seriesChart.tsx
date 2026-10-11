@@ -2,7 +2,7 @@ import React from "react";
 import type { SeriesOption } from "echarts";
 import { Chart, type ChartProps } from "./Chart";
 import type { ChartOption } from "./types";
-import { chartDefaults } from "./chartDefaults";
+import { chartDefaults, withChartSeries } from "./chartDefaults";
 
 /** Native chart configuration excluding the series owned by the named component. */
 export type SeriesChartProps<Series> = Omit<ChartProps, "option"> & {
@@ -42,14 +42,14 @@ export function SeriesChart<Series extends Omit<SeriesOption, "type">>({
   return (
     <Chart
       {...props}
-      option={{
-        ...configuration,
-        series: series.map((entry) => ({
+      option={withChartSeries(
+        configuration,
+        series.map((entry) => ({
           ...defaults,
           ...entry,
           type,
         })) as SeriesOption[],
-      }}
+      )}
     />
   );
 }

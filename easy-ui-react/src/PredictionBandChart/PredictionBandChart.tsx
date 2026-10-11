@@ -2,7 +2,7 @@ import React from "react";
 import type { CustomSeriesRenderItem, LineSeriesOption } from "echarts";
 import { Chart, type ChartProps, type ChartOption } from "../Chart";
 import { visualizationColors } from "../visualization/colors";
-import { chartDefaults } from "../Chart/chartDefaults";
+import { chartDefaults, withChartSeries } from "../Chart/chartDefaults";
 
 export type PredictionBandPoint = {
   /** Stable record ID for the default exact-data view. */
@@ -83,8 +83,8 @@ export function PredictionBandChart({
           })),
         }
       }
-      option={{
-        ...chartDefaults(
+      option={withChartSeries(
+        chartDefaults(
           {
             grid: {
               left: 16,
@@ -106,7 +106,7 @@ export function PredictionBandChart({
           option,
           true,
         ),
-        series: [
+        [
           {
             id: "prediction-band",
             type: "custom",
@@ -138,7 +138,7 @@ export function PredictionBandChart({
             data: points.map((point) => [point.x, point.predicted]),
           },
         ],
-      }}
+      )}
     />
   );
 }

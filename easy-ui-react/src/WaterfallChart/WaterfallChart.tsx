@@ -3,7 +3,7 @@ import type { CustomSeriesOption, CustomSeriesRenderItem } from "echarts";
 import { Chart, type ChartProps, type ChartOption } from "../Chart";
 import { verticalInterval } from "../Chart/intervalRenderer";
 import { visualizationColors } from "../visualization/colors";
-import { chartDefaults } from "../Chart/chartDefaults";
+import { chartDefaults, withChartSeries } from "../Chart/chartDefaults";
 
 export type WaterfallStep = { id: string; label: string; change: number };
 export type WaterfallChartProps = Omit<ChartProps, "option"> & {
@@ -74,8 +74,8 @@ export function WaterfallChart({
           ],
         }
       }
-      option={{
-        ...chartDefaults(
+      option={withChartSeries(
+        chartDefaults(
           {
             grid: {
               left: 16,
@@ -94,7 +94,7 @@ export function WaterfallChart({
           option,
           true,
         ),
-        series: [
+        [
           {
             id: "waterfall",
             type: "custom",
@@ -127,7 +127,7 @@ export function WaterfallChart({
             ],
           },
         ],
-      }}
+      )}
     />
   );
 }

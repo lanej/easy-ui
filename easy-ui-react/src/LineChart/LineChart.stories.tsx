@@ -38,6 +38,19 @@ export const Minimal: Story = {
     dataTable: undefined,
   },
 };
+export const ResponsiveBaseOption: Story = {
+  args: {
+    option: {
+      baseOption: defaults.option,
+      media: [
+        {
+          query: { maxWidth: 600 },
+          option: { textStyle: { fontSize: 14 } },
+        },
+      ],
+    },
+  },
+};
 export const NarrowLayout: Story = {
   decorators: [
     (Story) => (

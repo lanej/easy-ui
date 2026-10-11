@@ -201,6 +201,31 @@ try {
       await svg.screenshot({ path: `${output}/${id}.png` });
     checks.push({ story: id });
   }
+  for (const width of [390, 720]) {
+    const story = "components-linechart--responsive-base-option";
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(
+      `${baseUrl}/iframe.html?id=${story}&viewMode=story&globals=colorScheme:light`,
+    );
+    const svg = page.locator("#storybook-root [role=img] svg").first();
+    await svg.waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    assert.ok(
+      (await svg.locator('path[stroke-width="2"][fill="none"]').count()) >= 3,
+      "baseOption retains observed line geometry",
+    );
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+      "responsive baseOption: page overflow",
+    );
+    await page
+      .locator("#storybook-root")
+      .screenshot({ path: `${output}/${story}-${width}.png` });
+    checks.push({ story, width });
+  }
   await page.setViewportSize({ width: 1280, height: 1000 });
   await page.goto(`${baseUrl}/?path=/docs/components-linechart--docs`);
   const docs = page.frameLocator("#storybook-preview-iframe");

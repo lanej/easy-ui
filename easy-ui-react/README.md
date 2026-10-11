@@ -56,7 +56,10 @@ Packages support TypeScript's legacy `moduleResolution: "node"` as well as moder
 The package includes an `easy-ui` skill for component usage and library
 contributions. Its npm `postinstall` links the bundled skill into the application's
 `.agents/skills/easy-ui` (Codex) and `.claude/skills/easy-ui` (Claude Code).
-The links follow package upgrades. Existing skills at either path are preserved.
+The installer uses npm's target project root, including `npm --prefix` installs.
+Links to Easy UI packages refresh when the package location changes, including
+broken links left by a removed package. Application-owned skills and unrelated
+links at either path are preserved.
 
 If lifecycle scripts are disabled, run the installer from your application root:
 
