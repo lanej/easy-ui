@@ -11,22 +11,26 @@ export function chartDefaults(
   const result: ChartOption = { ...defaults, ...option };
   // Native component arrays replace the default component list. Retain defaults
   // for the first axis while leaving additional application-owned axes alone.
-  for (const key of ["xAxis", "yAxis"] as const) {
-    const axes = option?.[key];
-    const fallback = defaults[key];
-    if (axes === undefined) result[key] = fallback;
-    else if (fallback) {
+  const axesWithDefaults = <T>(fallback: T, axes: T): T => {
+    if (axes === undefined) return fallback;
+    if (fallback && axes) {
       const decorate = (axis: object) =>
         mergeWith({}, fallback, axis, (_previous, authored) =>
           Array.isArray(authored) ? [...authored] : undefined,
         );
-      result[key] = Array.isArray(axes)
-        ? axes.length
-          ? [decorate(axes[0]), ...axes.slice(1)]
-          : []
-        : decorate(axes);
+      return (
+        Array.isArray(axes)
+          ? axes.length
+            ? [decorate(axes[0]), ...axes.slice(1)]
+            : []
+          : decorate(axes)
+      ) as T;
     }
-  }
+    return axes;
+  };
+  const authored = option as ChartOption | undefined;
+  result.xAxis = axesWithDefaults(defaults.xAxis, authored?.xAxis);
+  result.yAxis = axesWithDefaults(defaults.yAxis, authored?.yAxis);
   if (result.baseOption)
     result.baseOption = chartDefaults(defaults, result.baseOption, spanZoom);
   if (spanZoom) {
