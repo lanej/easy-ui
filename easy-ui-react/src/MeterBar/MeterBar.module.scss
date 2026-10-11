@@ -1,0 +1,61 @@
+@use "../styles/common" as *;
+
+.track {
+  @include component-token(
+    "meter-bar",
+    "color.fill",
+    design-token("color.neutral.600")
+  );
+  display: flex;
+  block-size: design-token("space.1");
+  inline-size: 100%;
+  min-inline-size: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: design-token("color.neutral.100");
+
+  &[data-tone="success"] {
+    @include component-token(
+      "meter-bar",
+      "color.fill",
+      design-token("color.positive.700")
+    );
+  }
+  &[data-tone="warning"] {
+    @include component-token(
+      "meter-bar",
+      "color.fill",
+      design-token("color.warning.700")
+    );
+  }
+  &[data-tone="danger"] {
+    @include component-token(
+      "meter-bar",
+      "color.fill",
+      design-token("color.negative.700")
+    );
+  }
+  &[data-thickness="sm"] {
+    block-size: design-token("space.0.5");
+  }
+  &[data-thickness="lg"] {
+    block-size: design-token("space.1.5");
+  }
+}
+
+.fill {
+  block-size: 100%;
+  flex: none;
+  background: component-token("meter-bar", "color.fill");
+}
+
+@media (forced-colors: active) {
+  .track {
+    outline: 1px solid CanvasText;
+    background: Canvas;
+  }
+  .fill {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+}

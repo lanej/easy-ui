@@ -22,7 +22,7 @@ it("shows one unframed proportion with its exact denominator and accessible mete
   expect(meter).toHaveAttribute("data-tone", "warning");
   expect(container.querySelector("section, article")).toBeNull();
   expect(screen.queryByRole("progressbar")).toBeNull();
-  const fill = container.querySelector<HTMLElement>("[data-proportion-fill]");
+  const fill = container.querySelector<HTMLElement>("[data-meter-fill]");
   expect(parseFloat(fill!.style.inlineSize)).toBeCloseTo(
     (1184 / 1659) * 100,
     8,
@@ -58,7 +58,7 @@ it.each([
   );
   expect(screen.getByText(text)).toBeInTheDocument();
   expect(
-    container.querySelector<HTMLElement>("[data-proportion-fill]")?.style
+    container.querySelector<HTMLElement>("[data-meter-fill]")?.style
       .inlineSize,
   ).toBe(width);
   expect(screen.getByRole("meter")).toHaveAttribute(
@@ -93,7 +93,7 @@ it.each([
       />,
     );
     expect(screen.queryByRole("meter")).toBeNull();
-    expect(container.querySelector("[data-proportion-track]")).toBeNull();
+    expect(container.querySelector("[data-meter-bar]")).toBeNull();
     expect(container.querySelector("[data-proportion-bar]")).toHaveAttribute(
       "data-value-state",
       state,

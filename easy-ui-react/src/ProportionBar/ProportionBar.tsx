@@ -1,5 +1,6 @@
 import React from "react";
 import { useId } from "react-aria";
+import { MeterBar } from "../MeterBar";
 import {
   visualizationTypographyStyle,
   type VisualizationTypography,
@@ -139,18 +140,13 @@ export function ProportionBar({
           </div>
         </div>
       )}
-      {valid && (
-        <div
-          className={styles.track}
-          data-proportion-track=""
-          aria-hidden="true"
-        >
-          <div
-            className={styles.fill}
-            data-proportion-fill=""
-            style={{ inlineSize: `${fraction * 100}%` }}
-          />
-        </div>
+      {valid && value !== null && total !== null && (
+        <MeterBar
+          value={value}
+          max={total}
+          tone={tone}
+          thickness={presentation === "expanded" ? "lg" : "md"}
+        />
       )}
     </div>
   );

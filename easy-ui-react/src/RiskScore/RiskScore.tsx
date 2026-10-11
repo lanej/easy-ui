@@ -1,5 +1,6 @@
 import React from "react";
-import { Pill, type PillTone } from "../Pill";
+import { MeterBar, type MeterBarTone } from "../MeterBar";
+import { Pill } from "../Pill";
 import { Text } from "../Text";
 import styles from "./RiskScore.module.scss";
 
@@ -80,7 +81,10 @@ const assessmentLabels = {
   high: "High risk",
   unassessed: "Not assessed",
 };
-const assessmentTones: Record<string, PillTone> = {
+const assessmentTones: Record<
+  RiskScoreAssessment | "unassessed",
+  MeterBarTone
+> = {
   low: "success",
   medium: "warning",
   high: "danger",
@@ -201,12 +205,12 @@ export function RiskScore({
         </span>
       </span>
       {showBar && (
-        <span className={styles.track} aria-hidden="true">
-          <span
-            className={styles.fill}
-            style={{ inlineSize: `${(value / max) * 100}%` }}
-          />
-        </span>
+        <MeterBar
+          value={value}
+          max={max}
+          tone={assessmentTones[level]}
+          thickness="sm"
+        />
       )}
     </span>
   );

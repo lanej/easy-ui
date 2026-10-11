@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { checkMeterBar } from "./check-meter-bar.mjs";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE ?? "playwright");
@@ -111,7 +112,7 @@ try {
                 details: rect(details),
                 label: rect(details.firstElementChild),
                 counts: rect(details.lastElementChild),
-                track: rect(meter.querySelector("[data-proportion-track]")),
+                track: rect(meter.querySelector("[data-meter-bar]")),
               };
             }),
             overflow: document.documentElement.scrollWidth - innerWidth,
@@ -120,8 +121,8 @@ try {
                 '[data-proportion-bar][role="meter"]',
               ),
             ].map((meter) => {
-              const track = meter.querySelector("[data-proportion-track]");
-              const fill = meter.querySelector("[data-proportion-fill]");
+              const track = meter.querySelector("[data-meter-bar]");
+              const fill = meter.querySelector("[data-meter-fill]");
               const trackBox = track.getBoundingClientRect();
               const fillBox = fill.getBoundingClientRect();
               const style = getComputedStyle(meter);
@@ -249,10 +250,11 @@ try {
       }
     }
   }
+  await checkMeterBar({ page, base, output, checks, accessibility });
   await page.emulateMedia({ forcedColors: "active" });
   await open("expanded", "light");
   const forced = await page
-    .locator("[data-proportion-fill]")
+    .locator("[data-meter-fill]")
     .evaluate((fill) => ({
       adjustment: getComputedStyle(fill).forcedColorAdjust,
       outline: getComputedStyle(fill.parentElement).outlineStyle,
@@ -264,7 +266,7 @@ try {
     .screenshot({ path: resolve(output, "proportion-bar-forced-colors.png") });
   checks.push({ name: "forced-colors", ...forced });
   assert.deepEqual(errors, [], "Browser exceptions");
-  console.log(`ProportionBar: ${checks.length} browser cases passed.`);
+  console.log(`ProportionBar / MeterBar: ${checks.length} browser cases passed.`);
 } catch (error) {
   errors.push(error.stack ?? String(error));
   throw error;
