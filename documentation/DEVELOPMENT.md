@@ -34,7 +34,22 @@ ScoreComposition is an explicitly separate feature review on `feat/score-composi
 2. Check whether the active API already solves the issue; older hand-patched packages can be several iterations behind. Document migration instead of copying old props into the current design.
 3. Add a focused regression case for consequential behavior. Reuse component-local setup, and keep generated screenshots/reports in validation artifacts rather than source.
 4. Follow existing React Aria, Sass-token, TypeScript, Vite, and Vitest patterns. Avoid unrelated upstream refactors or a parallel design system.
-5. Update component API documentation and a realistic synthetic example. PR descriptions should explain the final behavior, review paths, and material limits. Include this PR's Storybook preview at `https://lanej.io/previews/easy-ui/pr-<number>/storybook/`, with direct links to affected stories. Publish or refresh it through the `lanej/lanej.github.com` Pages workflow and confirm `../revision.txt` matches the PR head SHA before sharing the link.
+5. Update component API documentation and a realistic synthetic example. PR descriptions should explain the final behavior, review paths, and material limits. Follow the PR Storybook preview instructions below when contributing to this fork.
+
+## PR Storybook previews
+
+When contributing to Josh's `lanej/easy-ui` fork, put the actual per-PR Storybook
+URL directly in the PR description:
+`https://lanej.io/previews/easy-ui/pr-<number>/storybook/`.
+Add direct links to affected stories and a representative current screenshot.
+Refresh the preview through `lanej/lanej.github.com`'s existing publishing workflow
+and verify the adjacent `revision.txt` matches the Easy UI PR head. Check the live
+mobile and desktop captures. A main-branch Storybook link or future promise does
+not satisfy this requirement.
+
+Read the hosting repository's `docs/development.md` for refresh instructions.
+Prefer a fresh Pages publishing run; rerunning an artifact-producing build can
+leave duplicate `github-pages` artifacts that prevent deployment.
 
 ## Verification
 

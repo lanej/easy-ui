@@ -7,6 +7,10 @@ description: Use Easy UI's React components and documented APIs. Use when compos
 
 ## Use the library
 
+Read the bundled [component reference](references/components.md) to choose a
+component and find its public import. It covers forms, layouts, feedback, data
+views, charts, maps, and their composition companions.
+
 Read the installed package's types and the matching revision's Storybook API page
 before composing a component. Use existing components, tokens, and documented
 package subpaths. Follow the package README for the stylesheet and Provider;
@@ -35,18 +39,3 @@ Run focused checks during development and leave exhaustive browser coverage to
 the existing CI workflows. Resolve failing checks before handing off a PR.
 Use Viewrule for rendered layout review; component contract tests
 remain owned by the library's tests and CI. Screenshots do not prove API behavior.
-
-## Publish a reviewable PR in lanej/easy-ui
-
-When contributing to Josh's `lanej/easy-ui` fork, put the actual per-PR Storybook
-URL directly in the PR description:
-`https://lanej.io/previews/easy-ui/pr-<number>/storybook/`.
-Add direct links to affected stories and a representative current screenshot.
-Refresh the preview through lanej/lanej.github.com's existing publishing workflow
-and verify the adjacent `revision.txt` matches the Easy UI PR head. Check the live
-mobile and desktop captures. A main-branch Storybook link or future promise does
-not satisfy this requirement.
-
-Read the hosting repository's `docs/development.md` for refresh instructions.
-Prefer a fresh Pages publishing run; rerunning an artifact-producing build can
-leave duplicate `github-pages` artifacts that prevent deployment.

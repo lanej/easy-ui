@@ -78,6 +78,8 @@ package, keep that package installed so the user-wide links remain valid.
 Set `EASY_UI_SKIP_SKILL_INSTALL=1` to skip automatic setup. From a repository checkout, run
 `node easy-ui-react/install-skill.mjs` from your project root.
 The [skill source](skills/easy-ui/SKILL.md) is maintained with the component library.
+Its bundled [component reference](skills/easy-ui/references/components.md) covers
+component selection, public imports, and chart/map composition companions.
 It delegates visual review to Viewrule and component validation to the library's
 existing tests and CI.
 
