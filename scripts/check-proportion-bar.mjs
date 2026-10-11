@@ -161,7 +161,8 @@ try {
           const { percentage, details, label, counts, track } = layout;
           if (layout.width >= 480) {
             assert.ok(
-              percentage.top < details.bottom && details.top < percentage.bottom,
+              percentage.top < details.bottom &&
+                details.top < percentage.bottom,
               `${name}: wide percentage and text share a row`,
             );
             assert.ok(
@@ -253,12 +254,10 @@ try {
   await checkMeterBar({ page, base, output, checks, accessibility });
   await page.emulateMedia({ forcedColors: "active" });
   await open("expanded", "light");
-  const forced = await page
-    .locator("[data-meter-fill]")
-    .evaluate((fill) => ({
-      adjustment: getComputedStyle(fill).forcedColorAdjust,
-      outline: getComputedStyle(fill.parentElement).outlineStyle,
-    }));
+  const forced = await page.locator("[data-meter-fill]").evaluate((fill) => ({
+    adjustment: getComputedStyle(fill).forcedColorAdjust,
+    outline: getComputedStyle(fill.parentElement).outlineStyle,
+  }));
   assert.equal(forced.adjustment, "none");
   assert.equal(forced.outline, "solid");
   await page
@@ -266,7 +265,9 @@ try {
     .screenshot({ path: resolve(output, "proportion-bar-forced-colors.png") });
   checks.push({ name: "forced-colors", ...forced });
   assert.deepEqual(errors, [], "Browser exceptions");
-  console.log(`ProportionBar / MeterBar: ${checks.length} browser cases passed.`);
+  console.log(
+    `ProportionBar / MeterBar: ${checks.length} browser cases passed.`,
+  );
 } catch (error) {
   errors.push(error.stack ?? String(error));
   throw error;

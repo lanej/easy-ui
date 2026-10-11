@@ -9,22 +9,27 @@ it.each([
   ["medium", "warning"],
   ["high", "danger"],
   [null, "neutral"],
-] as const)("maps the supplied %s assessment to the shared bar", (assessment, tone) => {
-  const { container } = render(
-    <RiskScore value={12} assessment={assessment} />,
-  );
-  expect(container.querySelectorAll("[role=meter]")).toHaveLength(1);
-  expect(container.querySelectorAll("[data-meter-bar]")).toHaveLength(1);
-  expect(container.querySelector("[data-meter-bar]")).toHaveAttribute(
-    "data-tone",
-    tone,
-  );
-  expect(container.querySelector("[data-meter-bar]")).toHaveAttribute(
-    "data-thickness",
-    "sm",
-  );
-  expect(screen.getByRole("meter").getAttribute("aria-valuetext")).not.toContain("%");
-});
+] as const)(
+  "maps the supplied %s assessment to the shared bar",
+  (assessment, tone) => {
+    const { container } = render(
+      <RiskScore value={12} assessment={assessment} />,
+    );
+    expect(container.querySelectorAll("[role=meter]")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-meter-bar]")).toHaveLength(1);
+    expect(container.querySelector("[data-meter-bar]")).toHaveAttribute(
+      "data-tone",
+      tone,
+    );
+    expect(container.querySelector("[data-meter-bar]")).toHaveAttribute(
+      "data-thickness",
+      "sm",
+    );
+    expect(
+      screen.getByRole("meter").getAttribute("aria-valuetext"),
+    ).not.toContain("%");
+  },
+);
 
 it.each(["compact", "expanded", "bar"] as const)(
   "uses the shared bar without nesting meters in %s proportions",
@@ -65,7 +70,10 @@ it("keeps risk formatting separate from fill geometry and showBar", () => {
   const description = screen.getByRole("meter").getAttribute("aria-valuetext");
   rerender(<RiskScore {...props} showBar={false} />);
   expect(container.querySelector("[data-meter-bar]")).toBeNull();
-  expect(screen.getByRole("meter")).toHaveAttribute("aria-valuetext", description);
+  expect(screen.getByRole("meter")).toHaveAttribute(
+    "aria-valuetext",
+    description,
+  );
 });
 
 it.each([
@@ -73,26 +81,37 @@ it.each([
   [72, 100, true],
   [101, 100, false],
   [0, 0, false],
-] as const)("retains each molecule's non-valid states for %s / %s", (value, max, isLoading) => {
-  const { container } = render(
-    <>
-      <RiskScore value={value} max={max} isLoading={isLoading} />
-      <ProportionBar
-        label="Share"
-        value={value}
-        total={max}
-        isLoading={isLoading}
-      />
-    </>,
-  );
-  expect(container.querySelectorAll("[data-meter-bar]")).toHaveLength(0);
-  expect(container.querySelectorAll("[role=meter]")).toHaveLength(0);
-  if (isLoading) {
-    expect(screen.getAllByRole("status")).toHaveLength(2);
-    expect(screen.getByText("Scoring…")).toBeVisible();
-    expect(screen.getByText("Loading…")).toBeVisible();
-  } else {
-    expect(screen.getByText("Not scored")).toBeVisible();
-    expect(screen.getByText(max === 0 ? "No population" : value === null ? "No data" : "Invalid proportion")).toBeVisible();
-  }
-});
+] as const)(
+  "retains each molecule's non-valid states for %s / %s",
+  (value, max, isLoading) => {
+    const { container } = render(
+      <>
+        <RiskScore value={value} max={max} isLoading={isLoading} />
+        <ProportionBar
+          label="Share"
+          value={value}
+          total={max}
+          isLoading={isLoading}
+        />
+      </>,
+    );
+    expect(container.querySelectorAll("[data-meter-bar]")).toHaveLength(0);
+    expect(container.querySelectorAll("[role=meter]")).toHaveLength(0);
+    if (isLoading) {
+      expect(screen.getAllByRole("status")).toHaveLength(2);
+      expect(screen.getByText("Scoring…")).toBeVisible();
+      expect(screen.getByText("Loading…")).toBeVisible();
+    } else {
+      expect(screen.getByText("Not scored")).toBeVisible();
+      expect(
+        screen.getByText(
+          max === 0
+            ? "No population"
+            : value === null
+              ? "No data"
+              : "Invalid proportion",
+        ),
+      ).toBeVisible();
+    }
+  },
+);

@@ -58,8 +58,7 @@ it.each([
   );
   expect(screen.getByText(text)).toBeInTheDocument();
   expect(
-    container.querySelector<HTMLElement>("[data-meter-fill]")?.style
-      .inlineSize,
+    container.querySelector<HTMLElement>("[data-meter-fill]")?.style.inlineSize,
   ).toBe(width);
   expect(screen.getByRole("meter")).toHaveAttribute(
     "data-value-state",

@@ -65,7 +65,9 @@ function ComposedMetrics() {
   return (
     <VerticalStack gap="3">
       <VerticalStack gap="1">
-        <Text as="h3" variant="heading4">Observed proportion</Text>
+        <Text as="h3" variant="heading4">
+          Observed proportion
+        </Text>
         <ProportionBar
           label="Development checkpoints affected"
           value={1184}
@@ -75,15 +77,21 @@ function ComposedMetrics() {
         />
       </VerticalStack>
       <VerticalStack gap="1">
-        <Text as="h3" variant="heading4">Risk score</Text>
+        <Text as="h3" variant="heading4">
+          Risk score
+        </Text>
         <RiskScore value={72} assessment="high" />
       </VerticalStack>
       <VerticalStack gap="1">
-        <Text as="h3" variant="heading4">Compact risk score</Text>
+        <Text as="h3" variant="heading4">
+          Compact risk score
+        </Text>
         <RiskScore value={24} assessment="low" size="sm" />
       </VerticalStack>
       <VerticalStack gap="1">
-        <Text as="h3" variant="heading4">Custom score scale</Text>
+        <Text as="h3" variant="heading4">
+          Custom score scale
+        </Text>
         <RiskScore value={0.18765} max={1} assessment="medium" />
       </VerticalStack>
     </VerticalStack>
@@ -99,7 +107,11 @@ export const Narrow: Story = {
   ),
 };
 export const RightToLeft: Story = {
-  render: () => <div dir="rtl"><ComposedMetrics /></div>,
+  render: () => (
+    <div dir="rtl">
+      <ComposedMetrics />
+    </div>
+  ),
 };
 export const States: Story = {
   render: () => (
