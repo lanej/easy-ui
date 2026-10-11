@@ -14,6 +14,16 @@ export const CandidateHistories: Story = {
   render: () => <ComparisonExample />,
 };
 export const LinkedMap: Story = { render: () => <ComparisonExample withMap /> };
+export const IntermediateLinkedMap: Story = {
+  render: () => (
+    <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <ComparisonExample withMap />
+    </div>
+  ),
+};
+export const NarrowLinkedMap: Story = {
+  render: () => <ComparisonExample withMap narrow />,
+};
 export const Narrow: Story = { render: () => <ComparisonExample narrow /> };
 export const MissingRecords: Story = {
   args: {

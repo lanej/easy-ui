@@ -13,6 +13,8 @@ The example header keeps the case ID, neutral category badge, and compact risk s
 
 Small Select and Button controls and compact panel spacing match the investigation workbench. The notes field retains three editable lines and vertical resizing; history text wraps and preserves the full supplied notes.
 
+<Canvas of={Stories.NarrowReview} />
+
 ```tsx
 // Keep this owner mounted above case navigation, alongside confirmed history.
 const reviewFor = useReviewOutcomes(async (draft) => {

@@ -10,5 +10,12 @@ const meta: Meta<typeof ReviewOutcome> = {
 export default meta;
 type Story = StoryObj<typeof ReviewOutcome>;
 export const RecordReview: Story = { render: () => <ReviewExample /> };
+export const NarrowReview: Story = {
+  render: () => (
+    <div style={{ maxWidth: 390, margin: "0 auto" }}>
+      <ReviewExample />
+    </div>
+  ),
+};
 export const FailedSave: Story = { render: () => <ReviewExample failFirst /> };
 export const EmptyHistory: Story = { render: () => <ReviewExample empty /> };

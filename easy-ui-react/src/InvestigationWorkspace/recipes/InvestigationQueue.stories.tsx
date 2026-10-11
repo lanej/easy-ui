@@ -10,6 +10,13 @@ const meta: Meta<typeof InvestigationQueue> = {
 export default meta;
 type Story = StoryObj<typeof InvestigationQueue>;
 export const Worklist: Story = { render: () => <QueueExample /> };
+export const NarrowWorklist: Story = {
+  render: () => (
+    <div style={{ maxWidth: 390, margin: "0 auto" }}>
+      <QueueExample />
+    </div>
+  ),
+};
 export const Empty: Story = { render: () => <QueueExample empty /> };
 export const Loading: Story = { render: () => <QueueExample loading /> };
 export const Retry: Story = { render: () => <QueueExample error /> };
