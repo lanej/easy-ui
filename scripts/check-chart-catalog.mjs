@@ -97,7 +97,13 @@ try {
             .hover();
           await page.getByText("Delivery: $-9,000", { exact: true }).waitFor();
           await page.getByText("Balance: $15,000", { exact: true }).waitFor();
-          await page.mouse.move(0, 0);
+          // Leave the plot for a real DOM target. The viewport corner can be
+          // outside Chromium's hit-tested content and miss the mouseout event.
+          await page
+            .locator("#storybook-root")
+            .getByRole("heading")
+            .first()
+            .hover();
           await page.getByText("Delivery: $-9,000", { exact: true }).waitFor({
             state: "hidden",
           });
