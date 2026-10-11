@@ -1,13 +1,19 @@
-<!--
-Explain the final change and why in one or two short paragraphs.
+## Change
 
-Add only context the diff and checks do not supply, such as a stack parent,
-manual observation, external evidence, or known verification gap. Do not
-repeat automated test results, test inventories, or coverage figures.
+<!-- Describe the problem and resulting behavior. -->
 
-Include a screenshot when it helps reviewers assess a visual change; omit
-it otherwise. When included, show the actual current result through a durable
-image URL and verify that it renders inline on GitHub.
+## Storybook
 
-Omit unused sections, boilerplate checklists, and implementation history.
--->
+[Published Storybook](https://lanej.io/easy-ui/storybook/) — deployed `main`.
+
+<!-- Link directly to the affected component documentation or stories. Prefer a
+PR-specific preview when available. Otherwise say that new or updated stories
+will appear in the published Storybook after merge and deployment. -->
+
+## Preview
+
+<!-- Include a screenshot of the changed UI. -->
+
+## Validation
+
+<!-- Summarize the relevant checks and any material limits. -->
