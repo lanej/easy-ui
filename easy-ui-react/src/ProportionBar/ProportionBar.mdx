@@ -21,9 +21,10 @@ An unframed part-to-whole metric: percentage, exact numerator/denominator, label
 
 ## Layout, not framing
 
-`compact` keeps the label, percentage, and counts on one row when space permits. `expanded` emphasizes the percentage above the label and counts. Both wrap at the available container width without hiding the denominator. Neither adds a background, border, padding, or card. This is a focused metric molecule, not an application-specific report or a full comparison chart.
+`compact` keeps the label, percentage, and counts on one row when space permits. `expanded` emphasizes the percentage beside the label and counts on a shared baseline. The label/count group moves below the percentage only when the available container width cannot fit them together; this responds to content and text size, not the viewport. Both layouts preserve the denominator when wrapping. Neither adds a background, border, padding, or card. This is a focused metric molecule, not an application-specific report or a full comparison chart.
 
 <Canvas of={Stories.Expanded} />
+<Canvas of={Stories.Responsive} />
 <Canvas of={Stories.Narrow} />
 
 `presentation="bar"` exposes the same accessible meter without the valid-data summary. Use it next to `MetricContent` or other caller-owned content, avoiding duplicate visible labels. The caller owns any surrounding Card, section, or report prose. Non-valid states still show their label and explanation rather than disappearing.

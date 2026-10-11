@@ -30,6 +30,22 @@ export const Default: Story = {
   args: { label: "Checkpoints affected", value: 1184, total: 1659 },
 };
 export const Expanded: Story = { args: { ...audit, presentation: "expanded" } };
+export const Responsive: Story = {
+  render: () => (
+    <VerticalStack gap="4">
+      {[720, 480, 280].map((width) => (
+        <div key={width} style={{ inlineSize: width, maxInlineSize: "100%" }}>
+          <VerticalStack gap="2">
+            <Text as="h3" variant="heading4">
+              {width}px container
+            </Text>
+            <ProportionBar {...audit} presentation="expanded" />
+          </VerticalStack>
+        </div>
+      ))}
+    </VerticalStack>
+  ),
+};
 export const Presentations: Story = {
   render: () => (
     <VerticalStack gap="4">

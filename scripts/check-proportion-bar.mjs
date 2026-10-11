@@ -59,6 +59,7 @@ try {
       for (const story of [
         "default",
         "expanded",
+        "responsive",
         "presentations",
         "bar-only",
         "tones",
@@ -90,7 +91,29 @@ try {
                   sum + channel * [0.2126, 0.7152, 0.0722][index],
                 0,
               );
+          const rect = (element) => {
+            const { top, right, bottom, left, width } =
+              element.getBoundingClientRect();
+            return { top, right, bottom, left, width };
+          };
           return {
+            layouts: [
+              ...document.querySelectorAll(
+                '[data-proportion-bar][data-presentation="expanded"][role="meter"]',
+              ),
+            ].map((meter) => {
+              const summary = meter.firstElementChild;
+              const details = summary.lastElementChild;
+              return {
+                width: meter.getBoundingClientRect().width,
+                direction: getComputedStyle(meter).direction,
+                percentage: rect(summary.firstElementChild),
+                details: rect(details),
+                label: rect(details.firstElementChild),
+                counts: rect(details.lastElementChild),
+                track: rect(meter.querySelector("[data-proportion-track]")),
+              };
+            }),
             overflow: document.documentElement.scrollWidth - innerWidth,
             meters: [
               ...document.querySelectorAll(
@@ -133,6 +156,38 @@ try {
           };
         });
         assert.ok(measurements.overflow <= 1, `${name}: page overflow`);
+        for (const layout of measurements.layouts) {
+          const { percentage, details, label, counts, track } = layout;
+          if (layout.width >= 480) {
+            assert.ok(
+              percentage.top < details.bottom && details.top < percentage.bottom,
+              `${name}: wide percentage and text share a row`,
+            );
+            assert.ok(
+              layout.direction === "rtl"
+                ? details.right < percentage.left
+                : percentage.right < details.left,
+              `${name}: percentage precedes text with a gap`,
+            );
+            assert.ok(
+              Math.abs(label.top - counts.top) <= 1,
+              `${name}: wide label and exact counts share a row`,
+            );
+          } else if (layout.width <= 320) {
+            assert.ok(
+              details.top >= percentage.bottom,
+              `${name}: narrow container stacks the text group`,
+            );
+          }
+          assert.ok(
+            track.top >= Math.max(percentage.bottom, details.bottom),
+            `${name}: full-width bar stays below the summary`,
+          );
+          assert.ok(
+            label.width > 0 && counts.width > 0,
+            `${name}: label and denominator remain visible`,
+          );
+        }
         for (const meter of measurements.meters) {
           assert.ok(
             Math.abs(meter.ratio - meter.expected) <= 0.001,
@@ -174,22 +229,22 @@ try {
           assert.equal(await page.getByRole("status").count(), 1);
         await accessibility(name);
         checks.push({ name, ...measurements });
-        if (["default", "expanded"].includes(story) && width === 1040) {
-          await page
-            .locator("[data-proportion-bar]")
-            .screenshot({
-              path: resolve(output, `proportion-bar-${name}.png`),
-            });
+        if (["default", "expanded"].includes(story)) {
+          await page.locator("[data-proportion-bar]").screenshot({
+            path: resolve(output, `proportion-bar-${name}.png`),
+          });
         } else if (
-          ["presentations", "narrow", "large-text", "right-to-left"].includes(
-            story,
-          )
+          [
+            "responsive",
+            "presentations",
+            "narrow",
+            "large-text",
+            "right-to-left",
+          ].includes(story)
         ) {
-          await page
-            .locator("#storybook-root")
-            .screenshot({
-              path: resolve(output, `proportion-bar-${name}.png`),
-            });
+          await page.locator("#storybook-root").screenshot({
+            path: resolve(output, `proportion-bar-${name}.png`),
+          });
         }
       }
     }
