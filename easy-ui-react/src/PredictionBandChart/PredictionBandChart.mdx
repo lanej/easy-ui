@@ -1,0 +1,27 @@
+import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import * as Stories from "./PredictionBandChart.stories";
+
+<Meta of={Stories} />
+
+# PredictionBandChart
+
+Show observed and predicted values with supplied lower and upper bounds. The component does not fit a model or assign confidence; disconnected bounds remain gaps.
+
+<Canvas of={Stories.Default} />
+
+Import `{ PredictionBandChart }` from `@easypost/easy-ui/PredictionBandChart` with the optional `echarts@^6.1.0` peer installed.
+
+`points` contain stable `id`, numeric `x`, `observed`, `predicted`, `lower`, and `upper`. Supply increasing x coordinates. Bounds join only adjacent points with complete finite ordered bounds. Missing bounds break the shaded interval. Null observations remain line gaps. `observedSeries` and `predictedSeries` accept native line styling and annotations. State the interval meaning and coverage in the description; these are application-supplied model outputs.
+
+`option` configures native axes, tooltips, grids, media overrides, and zoom; the component owns its series geometry. A default exact-data table is generated from the same records. Supply `dataTable` to format units or enrich provenance; set `showDataTable={false}` when the application provides another exact-value view.
+
+Selection, keyboard data access, controlled zoom, rendering states, themes, typography, and `variant="bare"` follow the shared [Chart contract](?path=/docs/components-chart--docs).
+
+<Canvas of={Stories.NarrowLayout} />
+<Canvas of={Stories.NegativeBounds} />
+
+Supplied zoom components default to `filterMode="weakFilter"` so prediction segments overlapping the visible window remain shaded; an explicit filter mode overrides this default.
+
+<Canvas of={Stories.ZoomedSpan} />
+
+<ArgTypes />

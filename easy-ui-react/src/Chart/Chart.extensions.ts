@@ -391,7 +391,7 @@ export const boxPlotExample: ChartExampleProps = {
   },
 };
 
-const forecast = Array.from({ length: 10 }, (_, i) => ({
+export const forecast = Array.from({ length: 10 }, (_, i) => ({
   time: day(i + 1),
   observed: i < 5 ? [95.4, 95.8, 96.2, 95.9, 96.4][i] : null,
   predicted: i >= 4 ? [96.4, 96.7, 97, 97.2, 97.4, 97.5][i - 4] : null,
@@ -489,7 +489,7 @@ export const predictionBandExample: ChartExampleProps = {
   },
 };
 
-const bridge = [
+export const bridge = [
   { name: "Receipts", change: 24000 },
   { name: "Delivery", change: -9000 },
   { name: "Fees", change: -1200 },

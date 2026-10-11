@@ -39,6 +39,10 @@ const option: ChartOption = {
 />;
 ```
 
+## Separate chart components
+
+Use the [chart catalog](?path=/docs/organisms-charts-choosing-a-chart--docs) to select a separately exported component such as `LineChart`, `BarChart`, `SankeyChart`, `HistogramChart`, or `GraphChart`. Each owns its chart-specific series and has an independent API and Storybook page. `Chart` remains the shared composition and the entry for mixed-series options. The galleries below compose the extracted public components and retain their existing story links.
+
 ## Analytical examples
 
 The native `ChartOption` retains ECharts' documented configuration rather than creating a second chart grammar. It supports line/area, grouped/stacked bars, scatter/bubble, heatmap, Sankey, pie/donut, treemap, and the engine's other built-in series. These examples all use synthetic shipping data.

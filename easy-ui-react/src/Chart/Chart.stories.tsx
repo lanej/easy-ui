@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Meta, StoryObj } from "@storybook/react-vite";
 import { Chart } from "./Chart";
+import { ChartExample } from "./chartCatalog.examples";
 import { ChartSurface } from "./ChartSurface";
 import { ChartProvider } from "./ChartProvider";
 import { ChartHeading } from "./ChartHeading";
@@ -54,21 +55,52 @@ export const MobileLayout: Story = {
   ),
 };
 
-export const TimeSeries: Story = { args: timeSeriesExample };
+export const TimeSeries: Story = {
+  args: timeSeriesExample,
+  render: (args) => (
+    <ChartExample example={timeSeriesExample} overrides={args} />
+  ),
+};
 export const WithoutDataTable: Story = {
   args: { ...timeSeriesExample, dataTable: undefined },
 };
 export const HiddenDataTable: Story = {
   args: { ...timeSeriesExample, showDataTable: false },
 };
-export const Area: Story = { args: areaExample };
-export const GroupedBars: Story = { args: barExample };
-export const StackedBars: Story = { args: stackedBarExample };
-export const ScatterAndBubble: Story = { args: scatterExample };
-export const Sankey: Story = { args: sankeyExample };
-export const Heatmap: Story = { args: heatmapExample };
-export const Donut: Story = { args: donutExample };
-export const Treemap: Story = { args: treemapExample };
+export const Area: Story = {
+  args: areaExample,
+  render: (args) => <ChartExample example={areaExample} overrides={args} />,
+};
+export const GroupedBars: Story = {
+  args: barExample,
+  render: (args) => <ChartExample example={barExample} overrides={args} />,
+};
+export const StackedBars: Story = {
+  args: stackedBarExample,
+  render: (args) => (
+    <ChartExample example={stackedBarExample} overrides={args} />
+  ),
+};
+export const ScatterAndBubble: Story = {
+  args: scatterExample,
+  render: (args) => <ChartExample example={scatterExample} overrides={args} />,
+};
+export const Sankey: Story = {
+  args: sankeyExample,
+  render: (args) => <ChartExample example={sankeyExample} overrides={args} />,
+};
+export const Heatmap: Story = {
+  args: heatmapExample,
+  render: (args) => <ChartExample example={heatmapExample} overrides={args} />,
+};
+export const Donut: Story = {
+  args: donutExample,
+  render: (args) => <ChartExample example={donutExample} overrides={args} />,
+};
+export const Treemap: Story = {
+  args: treemapExample,
+  render: (args) => <ChartExample example={treemapExample} overrides={args} />,
+};
 export const Loading: Story = {
   args: { ...timeSeriesExample, status: "loading" },
 };
@@ -160,18 +192,20 @@ export function AnalyticalExamples({
           key={example.title}
           className={index === 0 ? styles.wide : undefined}
         >
-          <Chart
-            {...example}
-            renderer={renderer}
-            {...(example === scatterExample
-              ? {
-                  onSelect: (selected) => setSelection(selected.name),
-                  onRowSelect: setSelection,
-                  notice: selection
-                    ? `Selected cohort: ${selection}`
-                    : "Select a bubble or table row to inspect a cohort.",
-                }
-              : {})}
+          <ChartExample
+            example={example}
+            overrides={{
+              renderer,
+              ...(example === scatterExample
+                ? {
+                    onSelect: (selected) => setSelection(selected.name),
+                    onRowSelect: setSelection,
+                    notice: selection
+                      ? `Selected cohort: ${selection}`
+                      : "Select a bubble or table row to inspect a cohort.",
+                  }
+                : {}),
+            }}
           />
         </div>
       ))}
@@ -182,15 +216,56 @@ export const ShippingAnalytics: Story = {
   render: () => <AnalyticalExamples />,
 };
 
-export const LabeledBars: Story = { args: labeledBarsExample };
-export const AnnotatedTimeSeries: Story = { args: annotatedTrendExample };
-export const ScenarioResponse: Story = { args: scenarioExample };
-export const Histogram: Story = { args: histogramExample };
-export const CumulativeDistribution: Story = { args: cumulativeExample };
-export const ArrivalSpread: Story = { args: boxPlotExample };
-export const PredictionBand: Story = { args: predictionBandExample };
-export const ContributionWaterfall: Story = { args: waterfallExample };
-export const WeekdayHourHeatmap: Story = { args: periodicHeatmapExample };
+export const LabeledBars: Story = {
+  args: labeledBarsExample,
+  render: (args) => (
+    <ChartExample example={labeledBarsExample} overrides={args} />
+  ),
+};
+export const AnnotatedTimeSeries: Story = {
+  args: annotatedTrendExample,
+  render: (args) => (
+    <ChartExample example={annotatedTrendExample} overrides={args} />
+  ),
+};
+export const ScenarioResponse: Story = {
+  args: scenarioExample,
+  render: (args) => <ChartExample example={scenarioExample} overrides={args} />,
+};
+export const Histogram: Story = {
+  args: histogramExample,
+  render: (args) => (
+    <ChartExample example={histogramExample} overrides={args} />
+  ),
+};
+export const CumulativeDistribution: Story = {
+  args: cumulativeExample,
+  render: (args) => (
+    <ChartExample example={cumulativeExample} overrides={args} />
+  ),
+};
+export const ArrivalSpread: Story = {
+  args: boxPlotExample,
+  render: (args) => <ChartExample example={boxPlotExample} overrides={args} />,
+};
+export const PredictionBand: Story = {
+  args: predictionBandExample,
+  render: (args) => (
+    <ChartExample example={predictionBandExample} overrides={args} />
+  ),
+};
+export const ContributionWaterfall: Story = {
+  args: waterfallExample,
+  render: (args) => (
+    <ChartExample example={waterfallExample} overrides={args} />
+  ),
+};
+export const WeekdayHourHeatmap: Story = {
+  args: periodicHeatmapExample,
+  render: (args) => (
+    <ChartExample example={periodicHeatmapExample} overrides={args} />
+  ),
+};
 
 export function AnalyticalExtensions({
   renderer = "svg",
@@ -198,7 +273,11 @@ export function AnalyticalExtensions({
   return (
     <div className={styles.gallery}>
       {extensionExamples.map((example) => (
-        <Chart key={example.title} {...example} renderer={renderer} />
+        <ChartExample
+          key={example.title}
+          example={example}
+          overrides={{ renderer }}
+        />
       ))}
     </div>
   );

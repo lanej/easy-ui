@@ -16,12 +16,15 @@
     "visualization/",
     "examples/",
     "styles/",
+    "skills/",
+    "install-skill.mjs",
     "/types.d.ts",
     "style.css",
     "!src/**"
   ],
   "exports": {
     "./package.json": "./package.json",
+    "./skills/*": "./skills/*",
     "./types": {
       "types": "./dist/types.d.ts"
     },
@@ -64,6 +67,7 @@
     "directory": "dist"
   },
   "scripts": {
+    "postinstall": "node install-skill.mjs",
     "build": "rm -rf dist && run-p build:js build:types && node ../scripts/generateCompatibilityEntries.mjs",
     "build:js": "vite build",
     "build:types": "tsc --build",

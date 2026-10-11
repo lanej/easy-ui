@@ -14,7 +14,7 @@ export function cleanPkgJsonForDist(
   { preserveExports = false } = {},
 ) {
   const restPkg = JSON.parse(pkgFileContent);
-  const { exports } = restPkg;
+  const { exports, scripts } = restPkg;
   for (const key of [
     "scripts",
     "devDependencies",
@@ -35,6 +35,12 @@ export function cleanPkgJsonForDist(
     };
     restPkg.exports = rebase(exports);
   }
+  if (
+    preserveExports &&
+    restPkg.name === "@easypost/easy-ui" &&
+    scripts?.postinstall
+  )
+    restPkg.scripts = { postinstall: scripts.postinstall };
   return JSON.stringify(restPkg, null, 2);
 }
 

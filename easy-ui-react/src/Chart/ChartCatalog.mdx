@@ -1,0 +1,211 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Organisms/Charts/Choosing a chart" />
+
+# Choosing a chart
+
+Each analytical chart has a separate public component, package entry, API table, and live examples. They share the optional ECharts engine and the existing Chart lifecycle, themes, controls, selection, and exact-data disclosure.
+
+<table
+  style={{ width: "100%", tableLayout: "fixed", overflowWrap: "anywhere" }}
+>
+  <thead>
+    <tr>
+      <th scope="col" style={{ width: "35%" }}>
+        Component
+      </th>
+      <th scope="col">Use</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-linechart--docs" target="_top">
+          LineChart
+        </a>
+      </td>
+      <td>Trends, annotated observations, and numeric scenario curves</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-areachart--docs" target="_top">
+          AreaChart
+        </a>
+      </td>
+      <td>Filled trends with optional additive stacks</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-barchart--docs" target="_top">
+          BarChart
+        </a>
+      </td>
+      <td>Grouped category comparisons and direct labels</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-stackedbarchart--docs" target="_top">
+          StackedBarChart
+        </a>
+      </td>
+      <td>Additive or caller-normalized category comparisons</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-scatterchart--docs" target="_top">
+          ScatterChart
+        </a>
+      </td>
+      <td>Paired numeric observations</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-bubblechart--docs" target="_top">
+          BubbleChart
+        </a>
+      </td>
+      <td>Paired observations with explicit magnitude sizing</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-sankeychart--docs" target="_top">
+          SankeyChart
+        </a>
+      </td>
+      <td>Directed weighted flows</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-heatmapchart--docs" target="_top">
+          HeatmapChart
+        </a>
+      </td>
+      <td>Matrices and periodic weekday/hour comparisons</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-donutchart--docs" target="_top">
+          DonutChart
+        </a>
+      </td>
+      <td>Parts of a stated whole</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-treemapchart--docs" target="_top">
+          TreemapChart
+        </a>
+      </td>
+      <td>Hierarchical magnitudes</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-graphchart--docs" target="_top">
+          GraphChart
+        </a>
+      </td>
+      <td>Abstract node-link relationships</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-boxplotchart--docs" target="_top">
+          BoxPlotChart
+        </a>
+      </td>
+      <td>Supplied five-number summaries</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-histogramchart--docs" target="_top">
+          HistogramChart
+        </a>
+      </td>
+      <td>Counts in supplied equal-width buckets</td>
+    </tr>
+    <tr>
+      <td>
+        <a
+          href="./?path=/docs/components-cumulativedistributionchart--docs"
+          target="_top"
+        >
+          CumulativeDistributionChart
+        </a>
+      </td>
+      <td>Supplied cumulative observations</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-intervalchart--docs" target="_top">
+          IntervalChart
+        </a>
+      </td>
+      <td>Supplied spans on one or more lanes</td>
+    </tr>
+    <tr>
+      <td>
+        <a
+          href="./?path=/docs/components-predictionbandchart--docs"
+          target="_top"
+        >
+          PredictionBandChart
+        </a>
+      </td>
+      <td>Observations and predictions with supplied bounds</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="./?path=/docs/components-waterfallchart--docs" target="_top">
+          WaterfallChart
+        </a>
+      </td>
+      <td>Signed changes and running balances</td>
+    </tr>
+  </tbody>
+</table>
+
+Native components take `series` without an engine `type`, and `option` for native axes, tooltips, datasets, grids, zoom, and media configuration. `IntervalChart`, `PredictionBandChart`, and `WaterfallChart` accept supplied records and own their geometry. All import from their own subpath, such as `@easypost/easy-ui/LineChart`.
+
+Use native `option.baseOption` with `media` or timeline configuration when needed.
+Named components place their supplied series inside that base option, including
+the generated geometry of interval, prediction-band, and waterfall charts.
+
+Cartesian line, area, bar, histogram, cumulative-distribution, and box-plot components default to a category x-axis and value y-axis. Scatter and bubble components default to two value axes. Configure value or time axes explicitly when spacing carries numeric meaning. HeatmapChart requires `option` for its coordinate system and application-owned `visualMap`. Partial axis styling retains generated categories; authored data arrays replace them. Pattern charts default supplied zoom components to `filterMode="weakFilter"` so overlapping spans survive boundary crossings; explicit filter modes remain authoritative.
+
+```tsx
+import { LineChart } from "@easypost/easy-ui/LineChart";
+
+<LineChart
+  title="Delivered parcels"
+  series={[
+    {
+      id: "delivered",
+      name: "Delivered",
+      data: [
+        [0, 120],
+        [1, null],
+        [2, 140],
+      ],
+    },
+  ]}
+  option={{
+    xAxis: { type: "value", name: "Day" },
+    yAxis: { type: "value", name: "Parcels", min: 0 },
+  }}
+  dataTable={{
+    columns: ["Day", "Parcels"],
+    rows: [
+      { id: "day-0", values: [0, 120] },
+      { id: "day-1", values: [1, null] },
+      { id: "day-2", values: [2, 140] },
+    ],
+  }}
+/>;
+```
+
+Applications own aggregation, units, binning, statistical calculations, model outputs, and provenance. Use [Chart](?path=/docs/components-chart--docs) directly for mixed series or custom engine compositions; use ChartSurface and its companions for independently placed controls and data.
+
+## Native plots and geographical views
+
+`BarList`, `BulletChart`, `CompactTimeSeries`, `RangePlot`, `QuantileStrip`, and `DurationDistribution` already have separate components and Storybook documentation. Reuse these native plots for compact comparisons and references. `DurationDistribution` supports supplied unequal-width histogram bins, smooth density, cumulative points, percentile landmarks, and concentration bars. `NetworkMap` provides geographical layers and its independently exported surface and companions.
+
+The existing shipping and logistics galleries now compose these public chart components. Their story links remain available as comparison and integration examples.

@@ -51,6 +51,41 @@ See our [Storybook](https://main--63f50c7c86f6514d2e0ef4be.chromatic.com/) for d
 
 Packages support TypeScript's legacy `moduleResolution: "node"` as well as modern export-aware resolution. The build generates package-root component entries, deep declarations such as `DataGrid/types` and `Select/SelectField`, flat utilities, and CSS/Sass compatibility files that forward to or copy the canonical `dist` outputs. These retain the original named exports; a default export is forwarded only when the target actually provides one. No application `tsconfig` changes are required.
 
+### Agent skill
+
+The package includes an `easy-ui` skill for component usage and library
+contributions. Its npm `postinstall` links the bundled skill into the application's
+`.agents/skills/easy-ui` (Codex) and `.claude/skills/easy-ui` (Claude Code).
+The installer uses npm's target project root, including `npm --prefix` installs.
+Links to Easy UI packages refresh when the package location changes, including
+broken links left by a removed package. Application-owned skills and unrelated
+links at either path are preserved.
+
+If lifecycle scripts are disabled, run the installer from your application root:
+
+```bash
+node node_modules/@easypost/easy-ui/install-skill.mjs
+```
+
+For user-wide installation, install the package globally:
+
+```bash
+npm install -g @easypost/easy-ui
+```
+
+The global postinstall links the skill into `~/.agents/skills/easy-ui` and
+`~/.claude/skills/easy-ui`, backed by the global package so its updates refresh the
+guidance. The installer also accepts `--global`; when running it from a local
+package, keep that package installed so the user-wide links remain valid.
+
+Set `EASY_UI_SKIP_SKILL_INSTALL=1` to skip automatic setup. From a repository checkout, run
+`node easy-ui-react/install-skill.mjs` from your project root.
+The [skill source](skills/easy-ui/SKILL.md) is maintained with the component library.
+Its bundled [component reference](skills/easy-ui/references/components.md) covers
+component selection, public imports, and chart/map composition companions.
+It delegates visual review to Viewrule and component validation to the library's
+existing tests and CI.
+
 ### Map components
 
 Map components use MapLibre GL JS `^6.9.0`, installed automatically as an Easy UI dependency. The renderer is fixed, not a pluggable engine. Map code remains lazy-loaded, so importing other components or server-rendering a map does not initialize MapLibre or WebGL.
