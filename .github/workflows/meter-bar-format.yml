@@ -41,6 +41,7 @@ jobs:
       - name: Verify and capture the live components
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          NODE_PATH: ${{ github.workspace }}/scripts/preview-metrics/node_modules
         run: |
           node scripts/check-proportion-bar.mjs
           revision=$(curl --fail --silent "$REVISION_URL?review=$GITHUB_RUN_ID-after")
