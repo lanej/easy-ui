@@ -75,6 +75,11 @@ const sassSource = `
 
 const typeSource = `
 import { Chart, ChartLegend } from "@easypost/easy-ui/Chart";
+import { LineChart } from "@easypost/easy-ui/LineChart";
+import { BubbleChart, type BubbleChartSeries } from "@easypost/easy-ui/BubbleChart";
+import { IntervalChart } from "@easypost/easy-ui/IntervalChart";
+import { PredictionBandChart } from "@easypost/easy-ui/PredictionBandChart";
+import { WaterfallChart } from "@easypost/easy-ui/WaterfallChart";
 import { NetworkMapCellDetails, NetworkMapInspectionTrigger, type MapFacilityDetailsContext, type MapOverlayHoverDetailsContext, type MapInspectionTarget } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard, type MetricCardProps, type MetricContentProps } from "@easypost/easy-ui/MetricCard";
 import { ScoreComposition, ScoreSignal, ScoreContribution, ScoreConnector, ScoreResult, type ScoreCompositionProps, type ScoreCompositionColumn } from "@easypost/easy-ui/ScoreComposition";
@@ -111,11 +116,20 @@ const metricCardWithoutTrend: "trend" extends keyof MetricCardProps ? false : tr
 const metricContentWithoutTrend: "trend" extends keyof MetricContentProps ? false : true = true;
 void [metricCardWithoutTrend, metricContentWithoutTrend];
 
+// @ts-expect-error Bubble magnitude must have an explicit size mapping.
+const invalidBubble: BubbleChartSeries = { data: [[1, 2, 3]] };
+void invalidBubble;
+
 const durationReference: DurationDistributionProps = { value: 6.125, unit: "hours", domain: [0, 30], quantiles: [{fraction: 0.5, value: 9}], bins: [{from: 0, to: 10, count: 3}], cumulative: [{value: 0, fraction: 0}, {value: 30, fraction: 1}] };
 
 const facility: FacilitySummaryProps = { name: "Packed facility", observations: [{ id: "dwell", health: { assessment: "healthy" }, observation: { value: 6, unit: "h" }, reference: <DurationDistribution {...durationReference} /> }] };
 
 export const example = <>
+  <LineChart series={[{id: "line", data: [[0, 1], [1, null]]}]} option={{xAxis: {type: "value"}, yAxis: {type: "value"}}} onSelect={(selection) => { const name: string = selection.name; void name; }} />
+  <BubbleChart series={[{id: "bubble", data: [[1, 2, 3]], symbolSize: (value: number[]) => Math.sqrt(value[2])}]} />
+  <IntervalChart intervals={[{id: "span", row: "Lane", label: "Span", start: 0, end: null}]} />
+  <PredictionBandChart points={[{id: "point", x: 0, observed: null, predicted: 0, lower: -1, upper: 1}]} />
+  <WaterfallChart steps={[{id: "change", label: "Debit", change: -1}]} initialValue={0} />
   <FacilitySummary {...facility} />
   <DurationDistribution {...durationReference} />
   <DurationQuantileMetrics quantiles={[{fraction: 0.5, value: 9}]} unit="hours" />

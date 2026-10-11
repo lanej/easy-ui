@@ -1,6 +1,6 @@
 import React from "react";
 import { Card } from "../Card";
-import { Chart } from "./Chart";
+import { BarChart } from "../BarChart";
 import type { ChartSurfaceProps } from "./ChartSurface";
 import type { ChartOption } from "./types";
 
@@ -24,12 +24,6 @@ const option: ChartOption = {
     },
   },
   yAxis: { type: "value", name: "Cartons" },
-  series: services.map(({ name, values }) => ({
-    id: name,
-    name,
-    type: "bar",
-    data: values,
-  })),
 };
 
 /** Same grouped-transit composition as the application, with synthetic counts. */
@@ -44,7 +38,7 @@ export function MobileChartsExample({
 }) {
   return (
     <Card padding="2">
-      <Chart
+      <BarChart
         variant="bare"
         title="Transit tier distribution"
         description="Calendar days · Cartons by service level"
@@ -57,6 +51,11 @@ export function MobileChartsExample({
             : undefined
         }
         option={option}
+        series={services.map(({ name, values }) => ({
+          id: name,
+          name,
+          data: values,
+        }))}
         dataTable={{
           columns: ["Calendar days", "Service level", "Cartons"],
           columnOptions: { 2: { allowsSorting: true } },

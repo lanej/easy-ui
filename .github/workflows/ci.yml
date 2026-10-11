@@ -46,11 +46,12 @@ jobs:
       - name: Install Chromium
         working-directory: scripts/preview-metrics
         run: npx playwright install --with-deps chromium
-      - name: Verify facility and responsive health layouts
+      - name: Verify facility and chart layouts
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
           STORYBOOK_URL: http://127.0.0.1:9018
           FACILITY_REPORT_DIR: ${{ runner.temp }}/facility-summary-browser
+          CHART_CATALOG_REPORT_DIR: ${{ runner.temp }}/chart-catalog-browser
         run: |
           python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/facility-storybook.log" 2>&1 &
           server_pid=$!
@@ -63,6 +64,7 @@ jobs:
           done
           curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
           node scripts/check-facility-summary.mjs
+          node scripts/check-chart-catalog.mjs
       - name: Retain facility browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,5 +72,6 @@ jobs:
           name: facility-summary-browser
           path: |
             ${{ runner.temp }}/facility-summary-browser
+            ${{ runner.temp }}/chart-catalog-browser
             ${{ runner.temp }}/facility-storybook.log
           if-no-files-found: ignore

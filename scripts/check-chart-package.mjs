@@ -212,6 +212,70 @@ for (const [name, nativeProps, expected] of [
     );
   }
 }
+// Every chart family is independently importable in both package formats.
+const chartNames = [
+  "LineChart",
+  "AreaChart",
+  "BarChart",
+  "StackedBarChart",
+  "ScatterChart",
+  "BubbleChart",
+  "SankeyChart",
+  "HeatmapChart",
+  "DonutChart",
+  "TreemapChart",
+  "GraphChart",
+  "BoxPlotChart",
+  "HistogramChart",
+  "CumulativeDistributionChart",
+  "IntervalChart",
+  "PredictionBandChart",
+  "WaterfallChart",
+];
+for (const name of chartNames) {
+  const input =
+    name === "IntervalChart"
+      ? {
+          intervals: [
+            { id: "one", row: "Lane", label: "Span", start: 0, end: 1 },
+          ],
+        }
+      : name === "PredictionBandChart"
+        ? {
+            points: [
+              {
+                id: "one",
+                x: 0,
+                observed: 1,
+                predicted: null,
+                lower: null,
+                upper: null,
+              },
+            ],
+          }
+        : name === "WaterfallChart"
+          ? { steps: [{ id: "one", label: "Change", change: 1 }] }
+          : { series: [{ id: "one", data: [1], symbolSize: 10 }] };
+  for (const extension of ["js", "mjs"]) {
+    const entry = await import(
+      `../easy-ui-react/dist/${name}/index.${extension}`
+    );
+    assert.equal(
+      typeof entry[name],
+      "function",
+      `${name} is a named public export`,
+    );
+    const html = renderToString(
+      React.createElement(
+        (extension === "js" ? commonjsTheme : esmTheme).ThemeProvider,
+        null,
+        React.createElement(entry[name], { ...input, title: `${name} SSR` }),
+      ),
+    );
+    assert.match(html, /Loading chart/);
+  }
+}
+
 assert.equal(
   Object.keys(require.cache).some((path) =>
     /node_modules\/maplibre-gl\//.test(path),
