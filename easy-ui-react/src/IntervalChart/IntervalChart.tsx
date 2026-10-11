@@ -2,6 +2,7 @@ import React from "react";
 import type { CustomSeriesOption } from "echarts";
 import { Chart, type ChartProps, type ChartOption } from "../Chart";
 import { horizontalInterval } from "../Chart/intervalRenderer";
+import { chartDefaults } from "../Chart/chartDefaults";
 
 export type ChartInterval = {
   id: string;
@@ -59,11 +60,22 @@ export function IntervalChart({
         }
       }
       option={{
-        grid: { left: 16, right: 24, top: 24, bottom: 48, containLabel: true },
-        tooltip: { trigger: "item" },
-        xAxis: { type: "value" },
-        yAxis: { type: "category", data: rows, inverse: true },
-        ...option,
+        ...chartDefaults(
+          {
+            grid: {
+              left: 16,
+              right: 24,
+              top: 24,
+              bottom: 48,
+              containLabel: true,
+            },
+            tooltip: { trigger: "item" },
+            xAxis: { type: "value" },
+            yAxis: { type: "category", data: rows, inverse: true },
+          },
+          option,
+          true,
+        ),
         series: [
           {
             id: "intervals",

@@ -21,6 +21,25 @@ const meta: Meta<typeof PredictionBandChart> = {
 export default meta;
 type Story = StoryObj<typeof PredictionBandChart>;
 export const Default: Story = {};
+export const ZoomedSpan: Story = {
+  args: {
+    title: "Supplied bounds across zoom boundaries",
+    description:
+      "Synthetic bounds remain visible where supplied segments overlap the zoom window.",
+    points: [0, 10, 20].map((x) => ({
+      id: String(x),
+      x,
+      observed: x,
+      predicted: x,
+      lower: x - 2,
+      upper: x + 2,
+    })),
+    observedSeries: undefined,
+    predictedSeries: undefined,
+    dataTable: undefined,
+    option: { dataZoom: { type: "inside", startValue: 5, endValue: 15 } },
+  },
+};
 export const NarrowLayout: Story = {
   decorators: [
     (Story) => (

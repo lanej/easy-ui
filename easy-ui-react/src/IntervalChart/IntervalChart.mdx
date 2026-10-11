@@ -20,4 +20,8 @@ Selection, keyboard data access, controlled zoom, rendering states, themes, typo
 <Canvas of={Stories.NarrowLayout} />
 <Canvas of={Stories.MultipleLanes} />
 
+Partial axis styling preserves the generated lanes. Supplied zoom components default to `filterMode="weakFilter"` so spans overlapping the visible window remain drawn; an explicit filter mode overrides this default.
+
+<Canvas of={Stories.ZoomedSpan} />
+
 <ArgTypes />

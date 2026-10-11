@@ -51,3 +51,9 @@ export const CrossingZero: Story = {
 export const OpeningBalance: Story = {
   args: { ...CrossingZero.args, initialValue: 20 },
 };
+export const StyledAxis: Story = {
+  args: {
+    ...CrossingZero.args,
+    option: { xAxis: { name: "Step", axisLabel: { fontSize: 14 } } },
+  },
+};

@@ -28,6 +28,16 @@ export default meta;
 type Story = StoryObj<typeof LineChart>;
 
 export const Default: Story = {};
+export const Minimal: Story = {
+  args: {
+    title: "Minimal series configuration",
+    description:
+      "Synthetic observations using the default category and value axes.",
+    series: [{ id: "observations", data: [1, 3, 2] }],
+    option: undefined,
+    dataTable: undefined,
+  },
+};
 export const NarrowLayout: Story = {
   decorators: [
     (Story) => (

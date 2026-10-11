@@ -2,6 +2,7 @@ import React from "react";
 import type { CustomSeriesRenderItem, LineSeriesOption } from "echarts";
 import { Chart, type ChartProps, type ChartOption } from "../Chart";
 import { visualizationColors } from "../visualization/colors";
+import { chartDefaults } from "../Chart/chartDefaults";
 
 export type PredictionBandPoint = {
   /** Stable record ID for the default exact-data view. */
@@ -83,17 +84,28 @@ export function PredictionBandChart({
         }
       }
       option={{
-        grid: { left: 16, right: 24, top: 40, bottom: 48, containLabel: true },
-        xAxis: { type: "value" },
-        yAxis: { type: "value" },
-        legend: {
-          data: [
-            String(observedSeries?.name ?? "Observed"),
-            String(predictedSeries?.name ?? "Predicted"),
-          ],
-        },
-        tooltip: { trigger: "axis" },
-        ...option,
+        ...chartDefaults(
+          {
+            grid: {
+              left: 16,
+              right: 24,
+              top: 40,
+              bottom: 48,
+              containLabel: true,
+            },
+            xAxis: { type: "value" },
+            yAxis: { type: "value" },
+            legend: {
+              data: [
+                String(observedSeries?.name ?? "Observed"),
+                String(predictedSeries?.name ?? "Predicted"),
+              ],
+            },
+            tooltip: { trigger: "axis" },
+          },
+          option,
+          true,
+        ),
         series: [
           {
             id: "prediction-band",

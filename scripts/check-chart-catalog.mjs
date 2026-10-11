@@ -166,6 +166,10 @@ try {
     "components-predictionbandchart--negative-bounds",
     "components-predictionbandchart--missing-bounds",
     "components-waterfallchart--crossing-zero",
+    "components-linechart--minimal",
+    "components-intervalchart--zoomed-span",
+    "components-predictionbandchart--zoomed-span",
+    "components-waterfallchart--styled-axis",
   ]) {
     await page.goto(`${baseUrl}/iframe.html?id=${id}&viewMode=story`);
     const empty = id.endsWith("missing-endpoints");
@@ -176,6 +180,25 @@ try {
       .first()
       .waitFor();
     assert.equal(await page.locator(".sb-errordisplay").isVisible(), false);
+    const svg = page.locator("#storybook-root [role=img] svg").first();
+    if (id === "components-intervalchart--zoomed-span") {
+      assert.ok(
+        (await svg
+          .locator('g[clip-path] > path[fill]:not([fill="none"])')
+          .count()) > 0,
+      );
+      await svg.getByText("Lane A", { exact: true }).waitFor();
+    }
+    if (id === "components-predictionbandchart--zoomed-span")
+      assert.ok((await svg.locator('path[fill-opacity="0.18"]').count()) > 0);
+    if (id === "components-waterfallchart--styled-axis")
+      await svg.getByText("Net", { exact: true }).waitFor();
+    if (
+      id.includes("zoomed-span") ||
+      id.endsWith("styled-axis") ||
+      id.endsWith("minimal")
+    )
+      await svg.screenshot({ path: `${output}/${id}.png` });
     checks.push({ story: id });
   }
   await page.setViewportSize({ width: 1280, height: 1000 });

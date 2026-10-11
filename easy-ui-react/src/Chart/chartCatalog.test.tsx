@@ -39,6 +39,7 @@ import { PredictionBandChart } from "../PredictionBandChart";
 import { WaterfallChart } from "../WaterfallChart";
 import { AreaChart } from "../AreaChart";
 import { StackedBarChart } from "../StackedBarChart";
+import { chartDefaults } from "./chartDefaults";
 
 beforeAll(() =>
   setPlatformAPI({ measureText: (text) => ({ width: text.length * 7 }) }),
@@ -141,6 +142,134 @@ it("keeps caller data and style immutable and passes interaction/state props thr
     "stack",
     "application-stack",
   );
+});
+
+it.each(
+  examples.filter(([name]) =>
+    [
+      "LineChart",
+      "AreaChart",
+      "BarChart",
+      "StackedBarChart",
+      "ScatterChart",
+      "BubbleChart",
+      "BoxPlotChart",
+      "HistogramChart",
+      "CumulativeDistributionChart",
+    ].includes(name),
+  ),
+)("renders %s with only its required series", (_name, story) => {
+  const Component = story.component as React.ComponentType<{ series: unknown }>;
+  render(<Component series={(story.args as { series: unknown }).series} />);
+  const chart = init(null, undefined, {
+    renderer: "svg",
+    ssr: true,
+    width: 720,
+    height: 360,
+  });
+  try {
+    chart.setOption(captured.props!.option);
+    expect(chart.renderToSVGString()).toContain("<path");
+    expect(chart.renderToSVGString()).not.toMatch(/NaN|Infinity/);
+  } finally {
+    chart.dispose();
+  }
+});
+
+it("retains generated categories under partial axis styling without mutating overrides", () => {
+  const option = Object.freeze({
+    xAxis: Object.freeze({ name: "Time" }),
+    yAxis: Object.freeze({
+      name: "Lane",
+      axisLabel: Object.freeze({ fontSize: 14 }),
+    }),
+  });
+  render(
+    <IntervalChart
+      intervals={[{ id: "a", row: "Lane A", label: "Span", start: 0, end: 20 }]}
+      option={option}
+    />,
+  );
+  expect(captured.props!.option.yAxis).toMatchObject({
+    type: "category",
+    data: ["Lane A"],
+    inverse: true,
+    name: "Lane",
+    axisLabel: { fontSize: 14 },
+  });
+  render(
+    <WaterfallChart
+      steps={[{ id: "a", label: "Credit", change: 10 }]}
+      option={{ xAxis: [{ name: "Step" }], grid: { top: 60 } }}
+    />,
+  );
+  expect(captured.props!.option.xAxis).toEqual([
+    { type: "category", data: ["Credit", "Total"], name: "Step" },
+  ]);
+  expect(captured.props!.option.grid).toMatchObject({
+    top: 60,
+    containLabel: true,
+  });
+  const replaced = chartDefaults(
+    { xAxis: { type: "category", data: ["a", "b", "c"] } },
+    { xAxis: { data: ["replacement"] } },
+  );
+  expect(replaced.xAxis).toEqual({ type: "category", data: ["replacement"] });
+  expect(option.yAxis).not.toHaveProperty("data");
+});
+
+it("retains overlapping custom geometry when zoom boundaries cross its endpoints", () => {
+  const option = {
+    dataZoom: { type: "inside" as const, startValue: 5, endValue: 15 },
+  };
+  render(
+    <IntervalChart
+      intervals={[{ id: "a", row: "Lane A", label: "Span", start: 0, end: 20 }]}
+      option={option}
+    />,
+  );
+  const intervalOption = captured.props!.option;
+  render(
+    <PredictionBandChart
+      points={[0, 10, 20].map((x) => ({
+        id: String(x),
+        x,
+        observed: x,
+        predicted: x,
+        lower: x - 2,
+        upper: x + 2,
+      }))}
+      option={option}
+    />,
+  );
+  const chart = init(null, undefined, {
+    renderer: "svg",
+    ssr: true,
+    width: 720,
+    height: 360,
+  });
+  try {
+    chart.setOption(intervalOption);
+    expect(chart.renderToSVGString()).toContain('ecmeta_data_index="0"');
+    chart.setOption(captured.props!.option, { notMerge: true });
+    expect(chart.renderToSVGString()).toContain('fill-opacity="0.18"');
+  } finally {
+    chart.dispose();
+  }
+  expect(option.dataZoom).not.toHaveProperty("filterMode");
+  expect(
+    chartDefaults(
+      {},
+      {
+        dataZoom: [{ type: "inside", filterMode: "none" }, { type: "slider" }],
+        media: [{ option: { dataZoom: { type: "inside" } } }],
+      },
+      true,
+    ),
+  ).toMatchObject({
+    dataZoom: [{ filterMode: "none" }, { filterMode: "weakFilter" }],
+    media: [{ option: { dataZoom: { filterMode: "weakFilter" } } }],
+  });
 });
 
 function geometry(series: CustomSeriesOption, index = 0) {

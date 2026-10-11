@@ -9,6 +9,8 @@ Compare a supplied matrix through a native visualMap. Keep missing cells and sam
 
 <Canvas of={Stories.Default} />
 
+`option` is required: supply the coordinate system and application-owned `visualMap` rather than relying on an inferred matrix or color scale.
+
 Import `{ HeatmapChart }` from `@easypost/easy-ui/HeatmapChart`. Install the optional `echarts@^6.1.0` peer when using analytical charts.
 
 Pass native ECharts records through `series`; the component supplies the series `type`. `option` configures native axes, grids, legends, annotations, datasets, media overrides, and zoom. There is no second axis or styling grammar. Caller values override this component's defaults. Keep stable series and datum IDs for selection and ordinary refreshes.

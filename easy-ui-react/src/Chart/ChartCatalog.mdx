@@ -165,6 +165,8 @@ Each analytical chart has a separate public component, package entry, API table,
 
 Native components take `series` without an engine `type`, and `option` for native axes, tooltips, datasets, grids, zoom, and media configuration. `IntervalChart`, `PredictionBandChart`, and `WaterfallChart` accept supplied records and own their geometry. All import from their own subpath, such as `@easypost/easy-ui/LineChart`.
 
+Cartesian line, area, bar, histogram, cumulative-distribution, and box-plot components default to a category x-axis and value y-axis. Scatter and bubble components default to two value axes. Configure value or time axes explicitly when spacing carries numeric meaning. HeatmapChart requires `option` for its coordinate system and application-owned `visualMap`. Partial axis styling retains generated categories; authored data arrays replace them. Pattern charts default supplied zoom components to `filterMode="weakFilter"` so overlapping spans survive boundary crossings; explicit filter modes remain authoritative.
+
 ```tsx
 import { LineChart } from "@easypost/easy-ui/LineChart";
 

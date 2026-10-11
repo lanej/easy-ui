@@ -9,6 +9,10 @@ Compare observations over time or a numeric response axis. Null observations rem
 
 <Canvas of={Stories.Default} />
 
+Without `option`, LineChart uses category and value axes. Supply a value or time x-axis when numeric spacing matters.
+
+<Canvas of={Stories.Minimal} />
+
 Import `{ LineChart }` from `@easypost/easy-ui/LineChart`. Install the optional `echarts@^6.1.0` peer when using analytical charts.
 
 Pass native ECharts records through `series`; the component supplies the series `type`. `option` configures native axes, grids, legends, annotations, datasets, media overrides, and zoom. There is no second axis or styling grammar. Caller values override this component's defaults. Keep stable series and datum IDs for selection and ordinary refreshes.

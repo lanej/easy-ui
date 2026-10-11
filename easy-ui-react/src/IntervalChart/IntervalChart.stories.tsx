@@ -39,6 +39,22 @@ export const Empty: Story = {
   args: { intervals: [], status: "empty", dataTable: undefined },
 };
 export const MultipleLanes: Story = { args: warehouseIntervalProps };
+export const ZoomedSpan: Story = {
+  args: {
+    title: "Visible overlap across zoom boundaries",
+    description: "A supplied 0–20 span remains visible inside the 5–15 window.",
+    intervals: [
+      { id: "span", row: "Lane A", label: "Supplied span", start: 0, end: 20 },
+    ],
+    intervalSeries: undefined,
+    dataTable: undefined,
+    option: {
+      xAxis: { name: "Hour", nameLocation: "middle", nameGap: 32 },
+      yAxis: { axisLabel: { fontSize: 14 } },
+      dataZoom: { type: "inside", startValue: 5, endValue: 15 },
+    },
+  },
+};
 export const MissingEndpoints: Story = {
   args: {
     intervals: [

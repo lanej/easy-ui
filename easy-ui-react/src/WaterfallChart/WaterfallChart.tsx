@@ -3,6 +3,7 @@ import type { CustomSeriesOption, CustomSeriesRenderItem } from "echarts";
 import { Chart, type ChartProps, type ChartOption } from "../Chart";
 import { verticalInterval } from "../Chart/intervalRenderer";
 import { visualizationColors } from "../visualization/colors";
+import { chartDefaults } from "../Chart/chartDefaults";
 
 export type WaterfallStep = { id: string; label: string; change: number };
 export type WaterfallChartProps = Omit<ChartProps, "option"> & {
@@ -74,14 +75,25 @@ export function WaterfallChart({
         }
       }
       option={{
-        grid: { left: 16, right: 24, top: 24, bottom: 48, containLabel: true },
-        tooltip: { trigger: "item" },
-        xAxis: {
-          type: "category",
-          data: [...steps.map((step) => step.label), totalLabel],
-        },
-        yAxis: { type: "value" },
-        ...option,
+        ...chartDefaults(
+          {
+            grid: {
+              left: 16,
+              right: 24,
+              top: 24,
+              bottom: 48,
+              containLabel: true,
+            },
+            tooltip: { trigger: "item" },
+            xAxis: {
+              type: "category",
+              data: [...steps.map((step) => step.label), totalLabel],
+            },
+            yAxis: { type: "value" },
+          },
+          option,
+          true,
+        ),
         series: [
           {
             id: "waterfall",
