@@ -297,6 +297,7 @@ function NetworkMapSurfaceView() {
         mapRef.current = map;
         let loaded = false;
         let insetAttributionCollapsed = false;
+        const insetClusterClicks = new WeakSet<Event>();
         let initialFitPending = !initial;
         const fitInitialView = () => {
           if (!loaded || !initialFitPending || element.clientWidth === 0)
@@ -1040,10 +1041,16 @@ function NetworkMapSurfaceView() {
                   expand();
                   return;
                 }
+                // Native clicks can flush microtasks between DOM listeners.
+                // Own this cluster click so background dismissal cannot cancel
+                // its request, while invalidating any older pending request.
+                if (event.originalEvent)
+                  insetClusterClicks.add(event.originalEvent);
+                insetState.current.close();
                 const view = cameraKey();
                 const records = latest.current.facilities;
                 const selected = latest.current.selectedFacilityId;
-                let generation: number | undefined;
+                const generation = insetState.current.getGeneration();
                 const currentRequest = () =>
                   !disposed &&
                   generation === insetState.current.getGeneration() &&
@@ -1051,10 +1058,7 @@ function NetworkMapSurfaceView() {
                   latest.current.facilities === records &&
                   latest.current.selectedFacilityId === selected;
                 Promise.resolve()
-                  .then(() => {
-                    generation = insetState.current.getGeneration();
-                    return source.getClusterLeaves(clusterId, count, 0);
-                  })
+                  .then(() => source.getClusterLeaves(clusterId, count, 0))
                   .then((leaves) => {
                     if (!currentRequest()) return;
                     const ids = leaves.map((leaf) =>
@@ -1166,6 +1170,7 @@ function NetworkMapSurfaceView() {
           }
         });
         const closeOnBackground = (event: MouseEvent) => {
+          if (insetClusterClicks.has(event)) return;
           const target = event.target;
           if (
             !(target instanceof Element) ||
