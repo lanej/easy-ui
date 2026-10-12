@@ -30,13 +30,39 @@ An arrow runs **from a dependency to its dependent**: `subnet → api` means the
 
 Choose a resource, then use **Dependencies**, **Dependents**, or **Connected resources** to focus a bounded neighborhood. **Expand one level** grows the same anchor's neighborhood; selecting another visible resource updates the inspector without moving the anchor. **Changes + context** includes changed resources plus one level in both directions. An explicitly supplied `depth: 0` shows only the seed resources. Traversal uses only supplied edges; `onViewChange` can request more evidence from an application API.
 
-`selection`, `view`, and `collapsedGroupIds` are independently controllable. Their `default*` counterparts initialize local state. Callbacks return stable original IDs so a change row, graph node, and application inspector can share selection. Use `showDetails={false}` and `DependencyGraphDetails` for a separately placed inspector, or `renderDetails` to append a diff or evidence to the standard details.
+`selection`, `view`, and `collapsedGroupIds` are independently controllable. Their `default*` counterparts initialize local state. Callbacks return stable original IDs so a change row, graph node, and application inspector can share selection. Use `showDetails={false}` and `DependencyGraphDetails` for a separately placed inspector, or `renderDetails` to append application evidence to the standard details.
 
 <Canvas of={Stories.LinkedInspector} />
 
 Groups are flat visual boundaries. The caller chooses root/module membership using `groupId`; expanded groups have a labeled boundary. Collapse replaces the member nodes with a summary. Connections between collapsed groups bundle the original edge IDs; selecting a bundle lists every supplied relationship separately. Relationships inside a collapsed group remain available in group details. Grouping never turns a module into a resource or fabricates an edge.
 
 <Canvas of={Stories.CollapsedModules} />
+
+## Per-resource summaries and diffs
+
+Every resource can supply a `changeSummary` and typed `changes`. The graph card shows the short summary; its inspector switches between **Summary** and **Specific changes**. A field addition is a green `+` row, a removal is a red `−` row, and a changed field has both rows. Each row also has an accessible Added/Removed label. Resource operations and field changes remain distinct: a replacement retains its Replace badge while showing the exact supplied field diff.
+
+```tsx
+{
+  id: "subnet",
+  label: "Application subnet",
+  change: "replace",
+  changeSummary: "Address prefix changes; replacement required.",
+  changes: [
+    { path: "address_prefixes[0]", type: "change",
+      before: "10.20.0.0/24", after: "10.20.4.0/24" },
+    { path: "tags.owner", type: "add", after: "network-platform" },
+    { path: "tags.legacy", type: "remove", before: "true" },
+  ],
+}
+```
+
+Values are caller-formatted strings, so format numbers, booleans, and explicit `null` before supplying them. An empty string is displayed as `""`. Use `{ status: "unknown" }` for an unavailable value and `{ status: "redacted" }` for a sensitive value; never pass secrets. Omitted `changes` means specific changes were not supplied. An empty array does not establish that the resource is unchanged. Easy UI renders the supplied field operations; the application computes their meaning and diff.
+
+`defaultChangePresentation="diff"` starts each newly selected resource in the detailed view. The default is `"summary"`. Selection changes initialize that resource's presentation independently, so another resource's values cannot remain visible. `DependencyGraphChanges` is also exported for an application-owned inspector; it supports controlled `presentation`/`onPresentationChange` or local `defaultPresentation`.
+
+<Canvas of={Stories.ChangeSummary} />
+<Canvas of={Stories.SpecificChanges} />
 
 ## Layout, scale, and accessibility
 

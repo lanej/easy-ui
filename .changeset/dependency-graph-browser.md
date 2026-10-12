@@ -2,4 +2,4 @@
 "@easypost/easy-ui": minor
 ---
 
-Add DependencyGraph and its selection-details companion for directed dependency investigation. Includes bounded neighborhoods, module/root grouping, stable selection and relationship bundles, search, keyboard navigation, change labels, and explicit missing evidence states. Applications retain ownership of relationship discovery, provenance, and operational risk.
+Add DependencyGraph and its selection-details and resource-change companions for directed dependency investigation. Includes bounded neighborhoods, module/root grouping, stable selection and relationship bundles, search, keyboard navigation, per-resource change summaries and red/green field diffs, and explicit missing or redacted evidence states. Applications retain ownership of relationship discovery, provenance, and operational risk.

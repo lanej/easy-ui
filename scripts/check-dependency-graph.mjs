@@ -63,6 +63,8 @@ try {
       await page.setViewportSize({ width, height: 1000 });
       for (const story of [
         "replacement-review",
+        "change-summary",
+        "specific-changes",
         "collapsed-modules",
         "partial-evidence",
         "cyclic-relationships",
@@ -105,13 +107,82 @@ try {
           ...geometry,
           accessibilityIncomplete: await accessibility(name),
         });
-        if (story === "replacement-review" && width !== 320)
+        if (
+          ["replacement-review", "specific-changes"].includes(story) &&
+          width !== 320
+        )
           await page
             .locator("[data-dependency-graph]")
             .screenshot({ path: resolve(output, `${name}.png`) });
       }
     }
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await open("replacement-review");
+  const resourceChanges = page.locator("[data-resource-changes]");
+  await resourceChanges.getByRole("button", { name: "Summary" }).press("Enter");
+  assert.equal(
+    await resourceChanges.locator("[data-diff]").count(),
+    0,
+    "Summary hides field values",
+  );
+  await resourceChanges
+    .getByRole("button", { name: "Specific changes" })
+    .press("Enter");
+  assert.equal(
+    await resourceChanges.locator('[data-diff="removal"]').count(),
+    1,
+  );
+  assert.equal(
+    await resourceChanges.locator('[data-diff="addition"]').count(),
+    1,
+  );
+  assert.ok((await resourceChanges.innerText()).includes("10.20.0.0/24"));
+  assert.ok((await resourceChanges.innerText()).includes("10.20.4.0/24"));
+  const colors = await resourceChanges
+    .locator("[data-diff]")
+    .evaluateAll((rows) =>
+      rows.map((row) => [
+        getComputedStyle(row).color,
+        getComputedStyle(row).backgroundColor,
+      ]),
+    );
+  assert.notDeepEqual(
+    colors[0],
+    colors[1],
+    "Removal and addition have distinct themed colors",
+  );
+  await open("specific-changes");
+  assert.ok((await resourceChanges.innerText()).includes("Redacted value"));
+  assert.ok((await resourceChanges.innerText()).includes("Unknown value"));
+  await page
+    .getByRole("button", { name: /^Legacy bastion, Delete/ })
+    .press("Enter");
+  assert.equal(
+    await resourceChanges.getAttribute("data-resource-changes"),
+    "azurerm_bastion_host.legacy",
+  );
+  assert.equal(
+    await resourceChanges.locator('[data-diff="removal"]').count(),
+    2,
+  );
+  assert.equal(
+    await resourceChanges.locator('[data-diff="addition"]').count(),
+    0,
+    "Deletion has no fabricated additions",
+  );
+  await page
+    .getByRole("button", { name: /^API availability alert, Create/ })
+    .press("Enter");
+  assert.equal(
+    await resourceChanges.locator('[data-diff="addition"]').count(),
+    2,
+  );
+  assert.equal(
+    await resourceChanges.locator('[data-diff="removal"]').count(),
+    0,
+    "Creation has no fabricated removals",
+  );
+  checks.push({ name: "per-resource-summary-diff-and-value-semantics" });
   await open("replacement-review");
   const viewport = page.locator("[data-graph-canvas]");
   await viewport.evaluate((element) => {

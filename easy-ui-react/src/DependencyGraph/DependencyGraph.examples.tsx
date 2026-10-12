@@ -14,26 +14,10 @@ import type {
 } from "./types";
 import styles from "./DependencyGraph.examples.module.scss";
 
-function ResourceDiff({ node }: DependencyGraphDetailsContext) {
+function ReplacementEvidence({ node }: DependencyGraphDetailsContext) {
   if (node?.id !== subnetId) return null;
   return (
-    <div className={styles.diff}>
-      <h4>Proposed change</h4>
-      <span>Address prefix</span>
-      <dl>
-        <div>
-          <dt>Before</dt>
-          <dd>
-            <code>10.20.0.0/24</code>
-          </dd>
-        </div>
-        <div>
-          <dt>After</dt>
-          <dd>
-            <code>10.20.4.0/24</code>
-          </dd>
-        </div>
-      </dl>
+    <div className={styles.evidence}>
       <p>
         Replacement is supplied by the plan. Connected resources require review;
         the graph does not establish an outage.
@@ -58,12 +42,13 @@ export function DependencyGraphReviewExample(
       groups={dependencyGroups}
       defaultView={{ scope: "dependents", nodeId: subnetId, depth: 1 }}
       defaultCollapsedGroupIds={["data", "observability"]}
+      defaultChangePresentation="diff"
       coverage={{
         status: "partial",
         description:
           "Configuration references supplied. Runtime dependencies may be missing.",
       }}
-      renderDetails={(context) => <ResourceDiff {...context} />}
+      renderDetails={(context) => <ReplacementEvidence {...context} />}
       {...props}
       selection={selection}
       onSelectionChange={(next) => {
@@ -93,7 +78,7 @@ export function DependencyGraphLinkedInspectorExample() {
         groups={dependencyGroups}
         selection={selection}
         onSelectionChange={setSelection}
-        renderDetails={(context) => <ResourceDiff {...context} />}
+        renderDetails={(context) => <ReplacementEvidence {...context} />}
       />
     </div>
   );

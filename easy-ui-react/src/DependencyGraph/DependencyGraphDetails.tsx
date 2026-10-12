@@ -1,6 +1,7 @@
 import React from "react";
 import type {
   DependencyGraphDetailsContext,
+  DependencyGraphChangePresentation,
   DependencyGraphEdge,
   DependencyGraphGroup,
   DependencyGraphNode,
@@ -8,6 +9,7 @@ import type {
   DependencyGraphSelection,
 } from "./types";
 import { dependencyChangeLabels } from "./model";
+import { DependencyGraphChanges } from "./DependencyGraphChanges";
 import styles from "./DependencyGraph.module.scss";
 
 export type DependencyGraphDetailsProps = {
@@ -17,6 +19,7 @@ export type DependencyGraphDetailsProps = {
   selection: DependencyGraphSelection;
   onSelectionChange: (selection: DependencyGraphSelection) => void;
   renderDetails?: DependencyGraphProps["renderDetails"];
+  defaultChangePresentation?: DependencyGraphChangePresentation;
 };
 
 export function dependencyGraphDetailsContext({
@@ -110,6 +113,11 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
                 </p>
               )}
               <code className={styles.identifier}>{context.node.id}</code>
+              <DependencyGraphChanges
+                key={context.node.id}
+                node={context.node}
+                defaultPresentation={props.defaultChangePresentation}
+              />
             </>
           )}
           {context.group?.description && (

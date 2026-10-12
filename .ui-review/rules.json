@@ -316,7 +316,12 @@
     "severity": "error",
     "reason": "Distinct resource/group nodes remain separate in a directed graph.",
     "designRules": ["DR-006", "DR-007"],
-    "pages": ["dependency-graph", "dependency-graph-large-dark"]
+    "pages": [
+      "dependency-graph",
+      "dependency-graph-large-dark",
+      "dependency-graph-summary",
+      "dependency-graph-specific"
+    ]
   },
   {
     "id": "dependency-graph-primary-labels",
@@ -326,6 +331,11 @@
     "severity": "error",
     "reason": "Resource labels use the primary text floor before camera zoom.",
     "designRules": ["DR-007"],
-    "pages": ["dependency-graph", "dependency-graph-large-dark"]
+    "pages": [
+      "dependency-graph",
+      "dependency-graph-large-dark",
+      "dependency-graph-summary",
+      "dependency-graph-specific"
+    ]
   }
 ]

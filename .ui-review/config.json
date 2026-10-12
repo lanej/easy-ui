@@ -131,6 +131,18 @@
       "path": "/dependency-graph.html?large=1&dark=1",
       "ready": "[data-dependency-graph] [data-graph-node]",
       "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-summary",
+      "path": "/dependency-graph.html?summary=1",
+      "ready": "[data-resource-changes][data-presentation=\"summary\"]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-specific",
+      "path": "/dependency-graph.html?specific=1",
+      "ready": "[data-resource-changes] [data-diff]",
+      "viewports": ["desktop", "mobile"]
     }
   ],
   "viewports": [

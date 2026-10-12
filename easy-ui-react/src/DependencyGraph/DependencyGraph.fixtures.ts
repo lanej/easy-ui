@@ -39,6 +39,15 @@ export const dependencyNodes: DependencyGraphNode[] = [
     label: "Application subnet",
     description: "azurerm_subnet · 10.20.4.0/24",
     change: "replace",
+    changeSummary: "Address prefix changes; replacement required.",
+    changes: [
+      {
+        path: "address_prefixes[0]",
+        type: "change",
+        before: "10.20.0.0/24",
+        after: "10.20.4.0/24",
+      },
+    ],
     groupId: "network",
   },
   {
@@ -46,6 +55,29 @@ export const dependencyNodes: DependencyGraphNode[] = [
     label: "Shipping API",
     description: "azurerm_container_app",
     change: "update",
+    changeSummary: "Container image and tags change; credentials rotate.",
+    changes: [
+      {
+        path: "template.containers[0].image",
+        type: "change",
+        before: "registry.example.com/shipping:1.8",
+        after: "registry.example.com/shipping:1.9",
+      },
+      { path: "tags.owner", type: "add", after: "shipping-platform" },
+      { path: "tags.legacy", type: "remove", before: "true" },
+      {
+        path: "secrets.database_url",
+        type: "change",
+        before: { status: "redacted" },
+        after: { status: "redacted" },
+      },
+      {
+        path: "latest_revision_name",
+        type: "change",
+        before: "shipping-api--r18",
+        after: { status: "unknown" },
+      },
+    ],
     groupId: "services",
   },
   {
@@ -74,6 +106,11 @@ export const dependencyNodes: DependencyGraphNode[] = [
     label: "Legacy bastion",
     description: "azurerm_bastion_host",
     change: "delete",
+    changeSummary: "Legacy bastion is removed.",
+    changes: [
+      { path: "name", type: "remove", before: "legacy-bastion" },
+      { path: "sku", type: "remove", before: "Basic" },
+    ],
     groupId: "network",
   },
   {
@@ -81,6 +118,11 @@ export const dependencyNodes: DependencyGraphNode[] = [
     label: "API availability alert",
     description: "azurerm_monitor_metric_alert",
     change: "create",
+    changeSummary: "Availability monitoring is added.",
+    changes: [
+      { path: "enabled", type: "add", after: "true" },
+      { path: "scopes[0]", type: "add", after: { status: "unknown" } },
+    ],
     groupId: "observability",
   },
 ];
@@ -173,6 +215,19 @@ export function largeDependencyFixture(size = 1000) {
           )
         ].id,
       change: index === 501 ? "replace" : "unchanged",
+      ...(index === 501
+        ? {
+            changeSummary: "Service configuration requires replacement.",
+            changes: [
+              {
+                path: "configuration_version",
+                type: "change" as const,
+                before: "v1",
+                after: "v2",
+              },
+            ],
+          }
+        : {}),
     }),
   );
   const edges = nodes.slice(1).map((node, index): DependencyGraphEdge => ({

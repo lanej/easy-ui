@@ -3,6 +3,23 @@ import type { ReactNode } from "react";
 export type DependencyGraphChange =
   "create" | "update" | "replace" | "delete" | "unchanged" | "unknown";
 
+/** Formatted display text, or an explicit unavailable value. Never supply secrets. */
+export type DependencyGraphChangeValue =
+  string | { status: "unknown" | "redacted" };
+
+/** Absence is explicit: an addition has no before value, a removal has no after. */
+export type DependencyGraphPropertyChange = { path: string } & (
+  | { type: "add"; after: DependencyGraphChangeValue }
+  | { type: "remove"; before: DependencyGraphChangeValue }
+  | {
+      type: "change";
+      before: DependencyGraphChangeValue;
+      after: DependencyGraphChangeValue;
+    }
+);
+
+export type DependencyGraphChangePresentation = "summary" | "diff";
+
 export type DependencyGraphNode = {
   id: string;
   label: string;
@@ -10,6 +27,10 @@ export type DependencyGraphNode = {
   description?: string;
   /** Omitted change information is unknown, not proof of no change. */
   change?: DependencyGraphChange;
+  /** Caller-owned explanation of this resource's proposed changes. */
+  changeSummary?: string;
+  /** Exact supplied field changes. Easy UI does not compute a diff from snapshots. */
+  changes?: readonly DependencyGraphPropertyChange[];
   groupId?: string;
 };
 
@@ -84,6 +105,8 @@ export type DependencyGraphProps = {
   /** Viewport height in CSS pixels. The graph scrolls within this viewport. */
   height?: number;
   showDetails?: boolean;
+  /** Initial change presentation for each newly selected resource. */
+  defaultChangePresentation?: DependencyGraphChangePresentation;
   /** Additional evidence/diff content below the standard selection details. */
   renderDetails?: (context: DependencyGraphDetailsContext) => ReactNode;
 };

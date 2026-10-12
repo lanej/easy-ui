@@ -3,6 +3,7 @@ import { fireEvent, screen, within } from "@testing-library/react";
 import { render } from "../utilities/test";
 import { DependencyGraph } from "./DependencyGraph";
 import { DependencyGraphDetails } from "./DependencyGraphDetails";
+import { DependencyGraphChanges } from "./DependencyGraphChanges";
 import { DependencyGraphReviewExample } from "./DependencyGraph.examples";
 import {
   dependencyNodes as nodes,
@@ -223,5 +224,132 @@ describe("DependencyGraph interaction contract", () => {
       />,
     );
     expect(screen.getByText("No resources in this view.")).toBeInTheDocument();
+  });
+});
+
+describe("DependencyGraph per-resource changes", () => {
+  it("switches between summary and exact diff without moving the graph, and resets for another resource", () => {
+    const { container } = render(
+      <DependencyGraph
+        title="Graph"
+        nodes={nodes}
+        edges={edges}
+        defaultSelection={{ type: "node", id: subnetId }}
+      />,
+    );
+    const details = screen.getByRole("complementary", {
+      name: "Graph selection details",
+    });
+    const positions = [
+      ...container.querySelectorAll("[data-graph-item-card]"),
+    ].map((node) => node.getAttribute("style"));
+    expect(
+      within(details).getByText(
+        "Address prefix changes; replacement required.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(details).queryByText("10.20.0.0/24")).not.toBeInTheDocument();
+    fireEvent.click(
+      within(details).getByRole("button", { name: "Specific changes" }),
+    );
+    expect(within(details).getByText("10.20.0.0/24")).toBeInTheDocument();
+    expect(within(details).getByText("10.20.4.0/24")).toBeInTheDocument();
+    expect(
+      [...container.querySelectorAll("[data-graph-item-card]")].map((node) =>
+        node.getAttribute("style"),
+      ),
+    ).toEqual(positions);
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Shipping API, Update/ }),
+    );
+    expect(
+      within(details).getByRole("button", { name: "Summary" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      within(details).getByText("1 added · 1 removed · 3 changed"),
+    ).toBeInTheDocument();
+    expect(within(details).queryByText("10.20.0.0/24")).not.toBeInTheDocument();
+  });
+  it("distinguishes additions, removals, empty strings, null text, unknown values, and redaction", () => {
+    const { container } = render(
+      <DependencyGraphChanges
+        defaultPresentation="diff"
+        node={{
+          id: "a",
+          label: "A",
+          change: "update",
+          changes: [
+            { path: "added", type: "add", after: "false" },
+            { path: "removed", type: "remove", before: "0" },
+            { path: "nullable", type: "change", before: "", after: "null" },
+            {
+              path: "<script>ignored</script>",
+              type: "change",
+              before: { status: "redacted" },
+              after: { status: "unknown" },
+            },
+          ],
+        }}
+      />,
+    );
+    const rows = (selector: string) =>
+      [...container.querySelectorAll(selector)].map((row) => row.textContent);
+    expect(rows('[data-diff="addition"]')).toEqual([
+      "+Added: false",
+      "+Added: null",
+      "+Added: Unknown value",
+    ]);
+    expect(rows('[data-diff="removal"]')).toEqual([
+      "−Removed: 0",
+      '−Removed: ""',
+      "−Removed: Redacted value",
+    ]);
+    expect(screen.getByText("<script>ignored</script>")).toBeInTheDocument();
+    expect(container.querySelector("script")).toBeNull();
+  });
+  it("keeps controlled presentation under application ownership", () => {
+    const change = vi.fn();
+    const { rerender } = render(
+      <DependencyGraphChanges
+        node={nodes[1]}
+        presentation="summary"
+        onPresentationChange={change}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Specific changes" }));
+    expect(change).toHaveBeenCalledWith("diff");
+    expect(screen.queryByText("10.20.0.0/24")).not.toBeInTheDocument();
+    rerender(
+      <DependencyGraphChanges
+        node={nodes[1]}
+        presentation="diff"
+        onPresentationChange={change}
+      />,
+    );
+    expect(screen.getByText("10.20.0.0/24")).toBeInTheDocument();
+  });
+  it("does not fabricate a field diff from a resource operation or missing evidence", () => {
+    const { container, rerender } = render(
+      <DependencyGraphChanges
+        node={{ id: "a", label: "A", change: "replace" }}
+        defaultPresentation="diff"
+      />,
+    );
+    expect(
+      screen.getByText("Specific changes were not supplied."),
+    ).toBeInTheDocument();
+    expect(container.querySelector("[data-diff]")).toBeNull();
+    rerender(
+      <DependencyGraphChanges
+        node={{ id: "a", label: "A", changes: [] }}
+        defaultPresentation="diff"
+      />,
+    );
+    expect(screen.getByText("No field changes supplied.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Summary" }));
+    expect(screen.getByText("Resource change is unknown.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("No resource change planned."),
+    ).not.toBeInTheDocument();
   });
 });

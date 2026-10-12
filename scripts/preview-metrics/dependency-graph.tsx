@@ -3,6 +3,12 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "../../easy-ui-react/src/Theme";
 import { DependencyGraphReviewExample } from "../../easy-ui-react/src/DependencyGraph/DependencyGraph.examples";
+import { DependencyGraph } from "../../easy-ui-react/src/DependencyGraph";
+import {
+  dependencyNodes,
+  dependencyEdges,
+  dependencyGroups,
+} from "../../easy-ui-react/src/DependencyGraph/DependencyGraph.fixtures";
 import "../../easy-ui-react/src/styles/global.scss";
 import "../../.storybook/public/poppins.css";
 
@@ -20,7 +26,23 @@ createRoot(document.getElementById("root")!).render(
         minHeight: "100vh",
       }}
     >
-      <DependencyGraphReviewExample />
+      {query.get("specific") === "1" ? (
+        <DependencyGraph
+          title="Resource dependencies"
+          nodes={dependencyNodes}
+          edges={dependencyEdges}
+          groups={dependencyGroups}
+          defaultSelection={{ type: "node", id: "azurerm_container_app.api" }}
+          defaultChangePresentation="diff"
+          defaultView={{ scope: "changes", depth: 0 }}
+        />
+      ) : (
+        <DependencyGraphReviewExample
+          defaultChangePresentation={
+            query.get("summary") === "1" ? "summary" : "diff"
+          }
+        />
+      )}
     </main>
   </ThemeProvider>,
 );

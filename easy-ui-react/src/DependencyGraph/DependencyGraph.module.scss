@@ -63,6 +63,10 @@
   align-items: center;
   gap: 4px;
   margin-inline-start: auto;
+  button {
+    min-inline-size: 32px;
+    min-block-size: 32px;
+  }
   output {
     min-inline-size: 3ch;
     text-align: center;
@@ -356,6 +360,55 @@
   display: block;
   font-size: 0.75rem;
   color: design-token("color.neutral.700");
+}
+.resourceChanges {
+  margin-block-start: 16px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid design-token("color.neutral.200");
+  h4 {
+    margin-block-start: 0;
+  }
+  p {
+    margin-block-end: 8px;
+  }
+}
+.changeControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-block-end: 12px;
+}
+.fieldChanges {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  dt {
+    margin-block-end: 4px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+  dd {
+    margin: 0;
+  }
+}
+.diffLine {
+  display: grid;
+  grid-template-columns: 1ch minmax(0, 1fr);
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 0.8125rem;
+  code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  &[data-diff="addition"] {
+    background: design-token("color.positive.100");
+    color: design-token("color.positive.800");
+  }
+  &[data-diff="removal"] {
+    background: design-token("color.negative.100");
+    color: design-token("color.negative.800");
+  }
 }
 .relationships {
   list-style: none;

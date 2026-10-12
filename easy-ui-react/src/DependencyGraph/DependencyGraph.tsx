@@ -60,6 +60,7 @@ export function DependencyGraph({
   onRetry,
   height = 480,
   showDetails = true,
+  defaultChangePresentation,
   renderDetails,
 }: DependencyGraphProps) {
   const [localSelection, setLocalSelection] = useState(defaultSelection);
@@ -395,14 +396,18 @@ export function DependencyGraph({
       {focusNode && (
         <p className={styles.focusContext}>
           {scopeLabels[view.scope]} of <strong>{focusNode.label}</strong> ·{" "}
-          {"depth" in view ? (view.depth ?? 1) : 0} level(s)
+          {"depth" in view ? (view.depth ?? 1) : 0}{" "}
+          {"depth" in view && (view.depth ?? 1) === 1 ? "level" : "levels"}
         </p>
       )}
       {!!model?.unavailable.length && (
         <details className={styles.unresolved}>
           <summary>
-            {model.unavailable.length} relationship(s) have unavailable
-            endpoints
+            {model.unavailable.length}{" "}
+            {model.unavailable.length === 1
+              ? "relationship has"
+              : "relationships have"}{" "}
+            unavailable endpoints
           </summary>
           {model.unavailable.map((edge) => (
             <button
@@ -676,10 +681,13 @@ export function DependencyGraph({
                             <span
                               className={styles.nodeDescription}
                               title={
-                                node?.description ?? item.group?.description
+                                node?.changeSummary ??
+                                node?.description ??
+                                item.group?.description
                               }
                             >
-                              {node?.description ??
+                              {node?.changeSummary ??
+                                node?.description ??
                                 item.group?.description ??
                                 node?.id}
                             </span>
@@ -737,6 +745,7 @@ export function DependencyGraph({
             selection={selection}
             onSelectionChange={select}
             renderDetails={renderDetails}
+            defaultChangePresentation={defaultChangePresentation}
           />
         )}
       </div>

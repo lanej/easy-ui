@@ -37,6 +37,17 @@ type Story = StoryObj<typeof DependencyGraph>;
 export const ReplacementReview: Story = {
   render: (args) => <DependencyGraphReviewExample {...args} />,
 };
+export const ChangeSummary: Story = {
+  args: { defaultChangePresentation: "summary" },
+  render: (args) => <DependencyGraphReviewExample {...args} />,
+};
+export const SpecificChanges: Story = {
+  args: {
+    defaultSelection: { type: "node", id: "azurerm_container_app.api" },
+    defaultChangePresentation: "diff",
+    defaultView: { scope: "changes", depth: 0 },
+  },
+};
 export const AllResources: Story = {};
 export const CollapsedModules: Story = {
   args: {
