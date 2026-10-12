@@ -64,13 +64,40 @@
     "type": "required-elements",
     "selector": "[data-journey-zoom-example]",
     "required": [
-      "[data-map-state]",
+      "[data-map-geography] > [data-map-state]",
+      "[data-map-zoom-sections]"
+    ],
+    "severity": "error",
+    "reason": "One geographic frame keeps the full journey visible with an embedded inset layer.",
+    "designRules": ["DR-006", "DR-007"]
+  },
+  {
+    "pages": ["journey-sections", "journey-sections-large-text"],
+    "type": "required-elements",
+    "selector": "[data-journey-zoom-example]",
+    "severity": "error",
+    "designRules": ["DR-006", "DR-007"],
+    "id": "journey-desktop-insets",
+    "viewports": ["desktop"],
+    "required": [
       "[data-map-zoom-section=\"origin\"] [data-map-state]",
       "[data-map-zoom-section=\"destination\"] [data-map-state]"
     ],
+    "reason": "Desktop shows both embedded origin and destination close-ups."
+  },
+  {
+    "pages": ["journey-sections", "journey-sections-large-text"],
+    "type": "required-elements",
+    "selector": "[data-journey-zoom-example]",
     "severity": "error",
-    "reason": "One geographic frame retains the journey overview and close-up inset surfaces.",
-    "designRules": ["DR-006", "DR-007"]
+    "designRules": ["DR-006", "DR-007"],
+    "id": "journey-mobile-inset",
+    "viewports": ["mobile"],
+    "required": [
+      "[data-map-zoom-section][data-active=\"true\"] [data-map-state]",
+      "[data-map-zoom-sections] [role=\"group\"] button"
+    ],
+    "reason": "Mobile shows the active inset with controls to choose the other close-up, while retaining the overview."
   },
   {
     "id": "journey-section-bounds",
