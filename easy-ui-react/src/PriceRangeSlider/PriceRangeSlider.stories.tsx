@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 import { PriceRangeSlider, PriceRangeSliderProps } from "./PriceRangeSlider";
 import { Button } from "../Button";
 import styles from "./PriceRangeSlider.stories.module.scss";
@@ -56,6 +57,7 @@ const meta: Meta<typeof PriceRangeSlider> = {
   args: {
     basePriceUsd: 14.28,
     range: { minRatio: 7.85 / 14.28, maxRatio: 7.95 / 14.28 },
+    onValidityChange: fn(),
   },
 };
 export default meta;
