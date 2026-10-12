@@ -160,3 +160,20 @@ it("composes signed-value atoms without another card and suppresses them while l
   expect(screen.queryByText("+100")).toBeNull();
   expect(screen.getByRole("status")).toHaveTextContent("Loading…");
 });
+
+it("renders compact KPI content without a decorative icon or fabricated point-in-time status", () => {
+  render(
+    <MetricContent
+      label="Delivery exception rate"
+      value="1.4%"
+      supportingText="Current 30-day cohort"
+      valueSize={24}
+      typography={{ title: 14 }}
+    />,
+  );
+  expect(screen.getByText("Delivery exception rate")).toBeInTheDocument();
+  expect(screen.getByText("1.4%")).toBeInTheDocument();
+  expect(screen.getByText("Current 30-day cohort")).toBeInTheDocument();
+  expect(screen.queryByText("Point-in-time")).toBeNull();
+  expect(screen.queryByRole("img")).toBeNull();
+});

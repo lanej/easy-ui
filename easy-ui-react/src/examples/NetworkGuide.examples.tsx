@@ -6,9 +6,6 @@ import { TabPanels } from "../TabPanels";
 import { Chart } from "../Chart";
 import { Card } from "../Card";
 import { MetricContent } from "../MetricCard";
-import { KpiTile } from "../KpiTile";
-import LocalShippingIcon from "@easypost/easy-ui-icons/LocalShipping";
-import ScheduleIcon from "@easypost/easy-ui-icons/Schedule";
 import { WorkspaceHeader } from "../WorkspaceHeader";
 import { Pill } from "../Pill";
 import { NetworkInvestigationMap } from "./NetworkInvestigationMap.examples";
@@ -241,28 +238,19 @@ export function NetworkGuideExample({
             />
           </div>
           <div data-decision-label>
-            <KpiTile
-              icon={LocalShippingIcon}
-              metric={{
-                label: "13:00–14:00 throughput / capacity",
-                displayValue: `${Math.round((hub.capacity * hub.pressure) / 100).toLocaleString("en-US")} / ${hub.capacity.toLocaleString("en-US")} per hour`,
-              }}
-              compact
-              bare
-              hideUnavailableLabel
+            <MetricContent
+              label="13:00–14:00 throughput / capacity"
+              value={`${Math.round((hub.capacity * hub.pressure) / 100).toLocaleString("en-US")} / ${hub.capacity.toLocaleString("en-US")} per hour`}
+              typography={{ title: 12 }}
+              valueSize={16}
             />
           </div>
           <div data-decision-label>
-            <KpiTile
-              icon={ScheduleIcon}
-              accent="purple"
-              metric={{
-                label: "Median facility dwell · last 24h",
-                displayValue: `${hub.dwell} hours`,
-              }}
-              compact
-              bare
-              hideUnavailableLabel
+            <MetricContent
+              label="Median facility dwell · last 24h"
+              value={`${hub.dwell} hours`}
+              typography={{ title: 12 }}
+              valueSize={16}
             />
           </div>
           <div data-decision-label>

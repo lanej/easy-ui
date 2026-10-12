@@ -8,9 +8,8 @@
   examples no longer duplicate the metric label/value structure.
 - `Pill` and `PillButton` are standalone atoms. `PillGroup` composes the label
   atom while retaining its tag-list navigation and removal behavior.
-- `KpiTile` composes a metric tile with explicit inputs. `WorkspaceHeader`
-  composes compact navigation and identity. Both accept application-owned data
-  and content without depending on application providers.
+- `WorkspaceHeader` composes compact navigation and identity with
+  application-owned data and content.
 - Forge's wordmark uses the active text color. Its optional navigation toggle
   supports either a panel icon or a hamburger.
 - `DrawerRow` composes a stable summary and full-width vertical details through
