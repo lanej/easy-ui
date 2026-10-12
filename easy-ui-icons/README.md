@@ -57,6 +57,20 @@ Icons imported as illustrated above will assume a weight of 300. To import an ic
 import Icon400 from "@easypost/easy-ui/Icon400";
 ```
 
+### Easy UI brand
+
+The custom `EasyUI` symbol identifies the library. It inherits the existing
+`Icon` size and color tokens and has no weight variants:
+
+```tsx
+import EasyUIIcon from "@easypost/easy-ui-icons/EasyUI";
+
+<Icon symbol={EasyUIIcon} color="primary.500" accessibilityLabel="Easy UI" />;
+```
+
+Omit the label when adjacent text already names Easy UI. Brand assets and
+light/dark lockups are documented in Storybook's **Foundations / Brand** page.
+
 ### SVG files
 
 For projects that don’t use React and need the raw SVG, icons are available as `*.svg` files in the `svg` folder.
