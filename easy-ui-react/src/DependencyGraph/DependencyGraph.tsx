@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useId } from "react-aria";
 import { Button } from "../Button";
 import { Select } from "../Select";
 import { TextField } from "../TextField";
@@ -72,7 +73,7 @@ export function DependencyGraph({
   const [zoom, setZoom] = useState(1);
   const viewport = useRef<HTMLDivElement>(null);
   const firstFit = useRef(false);
-  const instanceId = React.useId().replace(/:/g, "");
+  const instanceId = useId().replace(/:/g, "");
   const selection =
     controlledSelection === undefined ? localSelection : controlledSelection;
   const view = controlledView ?? localView;
