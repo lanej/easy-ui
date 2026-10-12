@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "node ../preview-tokens.mjs",
+    "prebuild": "node ../preview-tokens.mjs && node ../preview-icons.mjs",
     "build": "vite build",
     "capture": "node capture.mjs",
     "measure": "node measure-bundles.mjs",
-    "premeasure:modular": "node ../preview-tokens.mjs",
+    "premeasure:modular": "node ../preview-tokens.mjs && node ../preview-icons.mjs",
     "measure:modular": "node measure-modular.mjs",
     "capture:modular": "node capture-modular.mjs",
     "audit:browsers": "node audit/playwright.mjs",
@@ -34,6 +34,9 @@
     "vite": "6.3.5"
   },
   "devDependencies": {
+    "@material-symbols/svg-300": "^0.40.2",
+    "@svgr/core": "^8.1.0",
+    "@svgr/plugin-jsx": "^8.1.0",
     "axe-core": "4.10.3",
     "playwright": "1.63.0",
     "selenium-webdriver": "4.35.0",

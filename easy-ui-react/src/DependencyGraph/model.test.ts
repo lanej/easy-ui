@@ -1,4 +1,8 @@
-import { buildDependencyGraph, visibleDependencyNodes } from "./model";
+import {
+  buildDependencyGraph,
+  visibleDependencyNodes,
+  foldDependencyBranches,
+} from "./model";
 import type { DependencyGraphNode, DependencyGraphEdge } from "./types";
 
 const nodes: DependencyGraphNode[] = [
@@ -165,5 +169,57 @@ describe("DependencyGraph grouping and layout", () => {
     expect(graph.items.some((item) => item.node?.id === "other-root")).toBe(
       false,
     );
+  });
+});
+
+describe("DependencyGraph branch folding", () => {
+  it("folds a tree and reopens the same original resources", () => {
+    const folded = foldDependencyBranches(nodes, edges, ["subnet"]);
+    expect([...folded.visible].sort()).toEqual(["network", "subnet"]);
+    expect(folded.hiddenCounts.get("subnet")).toBe(3);
+    expect(foldDependencyBranches(nodes, edges, []).visible.size).toBe(
+      nodes.length,
+    );
+  });
+  it("retains a shared dependent through another open branch", () => {
+    const diamond = [
+      ...edges,
+      { id: "worker-alert", source: "worker", target: "alert" },
+    ];
+    const folded = foldDependencyBranches(nodes, diamond, ["api"]);
+    expect(folded.visible.has("alert")).toBe(true);
+    expect(folded.hiddenCounts.get("api")).toBe(0);
+  });
+  it("handles disconnected cycles, self-links, and missing endpoints without inventing nodes", () => {
+    const records = [
+      { id: "a", label: "A" },
+      { id: "b", label: "B" },
+      { id: "c", label: "C" },
+    ];
+    const links = [
+      { id: "a-b", source: "a", target: "b" },
+      { id: "b-a", source: "b", target: "a" },
+      { id: "self", source: "c", target: "c" },
+      { id: "missing", source: "b", target: "unknown" },
+    ];
+    const folded = foldDependencyBranches(records, links, ["b"]);
+    expect([...folded.visible].sort()).toEqual(["b", "c"]);
+    expect(folded.hiddenCounts.get("b")).toBe(1);
+    expect(foldDependencyBranches(records, links, []).visible.size).toBe(3);
+  });
+  it("keeps the neighborhood anchor reachable through nested folds", () => {
+    const folded = foldDependencyBranches(
+      nodes,
+      edges,
+      ["network", "api"],
+      "subnet",
+    );
+    expect([...folded.visible].sort()).toEqual([
+      "api",
+      "network",
+      "subnet",
+      "worker",
+    ]);
+    expect(folded.hiddenCounts.get("api")).toBe(1);
   });
 });

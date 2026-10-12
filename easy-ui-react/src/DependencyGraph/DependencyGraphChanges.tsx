@@ -16,6 +16,8 @@ export type DependencyGraphChangesProps = {
   ) => void;
   /** Hide the summary/diff switch when embedding a fixed diff inside a card. */
   showPresentationControls?: boolean;
+  /** Inline changed fragments with shared text shown once. */
+  compact?: boolean;
 };
 
 const summaries = {
@@ -27,30 +29,58 @@ const summaries = {
   unknown: "Resource change is unknown.",
 } as const;
 
+const formatValue = (value: DependencyGraphChangeValue) =>
+  typeof value === "string"
+    ? value === ""
+      ? '""'
+      : value
+    : value.status === "redacted"
+      ? "Redacted value"
+      : "Unknown value";
+
 function DiffLine({
   kind,
   value,
+  prefix = "",
+  suffix = "",
 }: {
   kind: "addition" | "removal";
   value: DependencyGraphChangeValue;
+  prefix?: string;
+  suffix?: string;
 }) {
-  const text =
-    typeof value === "string"
-      ? value === ""
-        ? '""'
-        : value
-      : value.status === "redacted"
-        ? "Redacted value"
-        : "Unknown value";
+  const text = formatValue(value);
+  const fragment = text.slice(prefix.length, text.length - suffix.length);
   return (
-    <div className={styles.diffLine} data-diff={kind}>
+    <span className={styles.diffLine} data-diff={kind}>
       <span aria-hidden="true">{kind === "addition" ? "+" : "−"}</span>
       <span className={styles.visuallyHidden}>
         {kind === "addition" ? "Added: " : "Removed: "}
       </span>
-      <code>{text}</code>
-    </div>
+      <code>
+        {prefix && <span className={styles.visuallyHidden}>{prefix}</span>}
+        {fragment || <span aria-hidden="true">∅</span>}
+        {suffix && <span className={styles.visuallyHidden}>{suffix}</span>}
+      </code>
+    </span>
   );
+}
+
+function sharedText(before: string, after: string) {
+  const a = Array.from(before),
+    b = Array.from(after);
+  let start = 0,
+    end = 0;
+  while (start < Math.min(a.length, b.length) && a[start] === b[start]) start++;
+  while (
+    end < Math.min(a.length, b.length) - start &&
+    a[a.length - end - 1] === b[b.length - end - 1]
+  )
+    end++;
+  return {
+    prefix: a.slice(0, start).join(""),
+    suffix: end ? a.slice(-end).join("") : "",
+  };
 }
 
 /** Summary or exact field diff for one resource, including missing/redacted values. */
@@ -60,6 +90,7 @@ export function DependencyGraphChanges({
   defaultPresentation = "summary",
   onPresentationChange,
   showPresentationControls = true,
+  compact = false,
 }: DependencyGraphChangesProps) {
   const [localPresentation, setLocalPresentation] =
     useState(defaultPresentation);
@@ -83,8 +114,9 @@ export function DependencyGraphChanges({
       aria-label={`${node.label} changes`}
       data-resource-changes={node.id}
       data-presentation={presentation}
+      data-compact={compact || undefined}
     >
-      <h4>Resource changes</h4>
+      {!compact && <h4>Resource changes</h4>}
       {showPresentationControls && (
         <div
           className={styles.changeControls}
@@ -118,21 +150,48 @@ export function DependencyGraphChanges({
         </>
       ) : changes.length ? (
         <dl className={styles.fieldChanges}>
-          {changes.map((change, index) => (
-            <div key={`${change.path}:${index}`}>
-              <dt>
-                <code>{change.path}</code>
-              </dt>
-              <dd>
-                {change.type !== "add" && (
-                  <DiffLine kind="removal" value={change.before} />
-                )}
-                {change.type !== "remove" && (
-                  <DiffLine kind="addition" value={change.after} />
-                )}
-              </dd>
-            </div>
-          ))}
+          {changes.map((change, index) => {
+            const shared =
+              compact &&
+              change.type === "change" &&
+              typeof change.before === "string" &&
+              typeof change.after === "string" &&
+              change.before !== change.after
+                ? sharedText(
+                    formatValue(change.before),
+                    formatValue(change.after),
+                  )
+                : { prefix: "", suffix: "" };
+            return (
+              <div key={`${change.path}:${index}`}>
+                <dt>
+                  <code>{change.path}</code>
+                </dt>
+                <dd>
+                  {shared.prefix && (
+                    <code aria-hidden="true">{shared.prefix}</code>
+                  )}
+                  {change.type !== "add" && (
+                    <DiffLine
+                      kind="removal"
+                      value={change.before}
+                      {...shared}
+                    />
+                  )}
+                  {change.type !== "remove" && (
+                    <DiffLine
+                      kind="addition"
+                      value={change.after}
+                      {...shared}
+                    />
+                  )}
+                  {shared.suffix && (
+                    <code aria-hidden="true">{shared.suffix}</code>
+                  )}
+                </dd>
+              </div>
+            );
+          })}
         </dl>
       ) : null}
       {!changes.length && (

@@ -51,6 +51,17 @@ createRoot(document.getElementById("root")!).render(
         />
       ) : (
         <DependencyGraphReviewExample
+          defaultCollapsedNodeIds={
+            query.get("folded") === "1" ? [subnetId] : []
+          }
+          defaultExpandedChangeNodeIds={
+            query.get("overview") === "1" ? [] : [subnetId]
+          }
+          defaultView={
+            query.get("overview") === "1"
+              ? { scope: "all" }
+              : { scope: "dependents", nodeId: subnetId, depth: 1 }
+          }
           defaultChangePresentation={
             query.get("summary") === "1" ? "summary" : "diff"
           }

@@ -83,6 +83,7 @@ try {
         "specific-changes",
         "expanded-attribute-differences",
         "collapsed-modules",
+        "collapsible-branches",
         "partial-evidence",
         "cyclic-relationships",
         "thousand-resources",
@@ -146,6 +147,7 @@ try {
             "replacement-review",
             "specific-changes",
             "expanded-attribute-differences",
+            "collapsible-branches",
           ].includes(story) &&
           width !== 320
         )
@@ -201,6 +203,123 @@ try {
     "Toggle retains keyboard focus",
   );
   checks.push({ name: "inline-card-expansion-keyboard-and-measured-layout" });
+  await open("expanded-attribute-differences");
+  const graph = page.locator("[data-dependency-graph]");
+  await page.getByRole("button", { name: "Zoom out graph" }).click();
+  await settledCards();
+  assert.equal(await graph.getAttribute("data-graph-density"), "summary");
+  assert.equal(await card.locator("[data-diff]").count(), 0);
+  await page.getByRole("button", { name: "Zoom out graph" }).click();
+  await settledCards();
+  assert.equal(await graph.getAttribute("data-graph-density"), "overview");
+  await card
+    .getByRole("button", {
+      name: "Show attribute differences for Shipping API",
+    })
+    .press("Enter");
+  await settledCards();
+  assert.equal(await graph.getAttribute("data-graph-density"), "detail");
+  assert.equal(await card.locator('[data-diff="addition"]').count(), 4);
+  const inlineValues = await card
+    .locator("[data-diff] code")
+    .evaluateAll((values) => values.map((value) => value.textContent));
+  assert.ok(inlineValues.includes("registry.example.com/shipping:1.8"));
+  assert.ok(inlineValues.includes("registry.example.com/shipping:1.9"));
+  assert.equal(
+    await card.locator("[data-resource-changes] h4").count(),
+    0,
+    "Compact cards omit redundant headings",
+  );
+  checks.push({ name: "semantic-zoom-restores-inline-diffs-and-exact-values" });
+  const canvas = page.locator("[data-graph-canvas]");
+  await canvas.focus();
+  await canvas.press("-");
+  assert.equal(await graph.getAttribute("data-graph-density"), "summary");
+  await canvas.press("+");
+  assert.equal(await graph.getAttribute("data-graph-density"), "detail");
+  await canvas.evaluate((element) =>
+    element.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        ctrlKey: true,
+        deltaY: 200,
+      }),
+    ),
+  );
+  await settledCards();
+  assert.equal(await graph.getAttribute("data-graph-density"), "overview");
+  const targets = await page
+    .locator("[data-graph-canvas] button")
+    .evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
+      }),
+    );
+  assert.ok(
+    targets.every(({ width, height }) => width >= 24 && height >= 24),
+    "Overview controls keep usable click targets",
+  );
+  await graph.screenshot({ path: resolve(output, "overview-desktop.png") });
+  checks.push({ name: "keyboard-and-modified-wheel-zoom" });
+  await open("collapsible-branches");
+  const database = page.getByRole("button", {
+    name: /^Primary database, Update/,
+  });
+  assert.ok((await database.getAttribute("aria-label")).includes("Database"));
+  await page
+    .getByRole("button", { name: "Collapse dependents of Primary database" })
+    .press("Enter");
+  await settledCards();
+  assert.equal(await page.locator('[data-graph-node="storage"]').count(), 0);
+  assert.equal(
+    await page.locator('[data-graph-node="authorization"]').count(),
+    1,
+    "Shared policy stays reachable from authentication",
+  );
+  assert.equal(
+    await page
+      .locator("[data-graph-edge-ids]")
+      .filter({ has: page.locator("title", { hasText: "db-policy" }) })
+      .count(),
+    0,
+    "Folded outgoing relationship is hidden even when its target is shared",
+  );
+  assert.ok((await graph.innerText()).includes("1 hidden"));
+  await page
+    .getByRole("button", { name: "Expand dependents of Primary database" })
+    .press("Enter");
+  await settledCards();
+  assert.equal(await page.locator('[data-graph-node="storage"]').count(), 1);
+  await page
+    .getByRole("button", { name: "Collapse dependents of Private network" })
+    .press("Enter");
+  await settledCards();
+  assert.equal(await page.locator("[data-graph-node]").count(), 1);
+  await page
+    .getByRole("button", { name: "Expand all branches" })
+    .press("Enter");
+  await settledCards();
+  assert.equal(await page.locator("[data-graph-node]").count(), 5);
+  checks.push({
+    name: "branch-disclosures-shared-paths-type-icons-and-expand-all",
+  });
+  for (const atom of ["expandbutton", "collapsebutton"]) {
+    await page.goto(
+      `${base}/iframe.html?id=components-${atom}--disclosure&viewMode=story`,
+    );
+    const toggle = page.getByRole("button", { name: /resource details/ });
+    await toggle.waitFor();
+    const previous = await toggle.getAttribute("aria-expanded");
+    await toggle.press("Space");
+    assert.notEqual(await toggle.getAttribute("aria-expanded"), previous);
+    assert.ok(
+      await toggle.evaluate((element) => document.activeElement === element),
+    );
+    await accessibility(`${atom}-disclosure`);
+    checks.push({ name: `${atom}-keyboard-disclosure` });
+  }
   await open("replacement-review");
   const resourceChanges = page.locator(
     "[data-graph-details] [data-resource-changes]",

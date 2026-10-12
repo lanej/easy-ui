@@ -155,6 +155,18 @@
       "path": "/dependency-graph.html?inline=1&large=1&dark=1",
       "ready": "[data-graph-card-diff] [data-diff]",
       "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-overview",
+      "path": "/dependency-graph.html?overview=1",
+      "ready": "[data-dependency-graph] [data-graph-node]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-folded",
+      "path": "/dependency-graph.html?folded=1",
+      "ready": "[data-dependency-graph] [data-graph-node]",
+      "viewports": ["desktop", "mobile"]
     }
   ],
   "viewports": [

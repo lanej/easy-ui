@@ -99,6 +99,12 @@ export function previewConfig(engine = "full", outDir = "dist") {
     },
     resolve: {
       alias: {
+        ...Object.fromEntries(
+          ["Database", "Storage", "Hub", "Remove"].map((name) => [
+            `@easypost/easy-ui-icons/${name}`,
+            local(`./.preview-icons/${name}.jsx`),
+          ]),
+        ),
         "@easypost/easy-ui-tokens/js/tokens": local(
           "./.preview-tokens/dist/js/tokens.mjs",
         ),

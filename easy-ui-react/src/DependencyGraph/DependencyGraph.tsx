@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useId } from "react-aria";
 import { Button } from "../Button";
+import { ExpandButton } from "../ExpandButton";
+import { CollapseButton } from "../CollapseButton";
+import { Icon } from "../Icon";
 import { Select } from "../Select";
 import { TextField } from "../TextField";
 import { DependencyGraphDetails } from "./DependencyGraphDetails";
@@ -9,6 +12,7 @@ import {
   buildDependencyGraph,
   dependencyChangeLabels,
   hasDependencyGraphChanges,
+  foldDependencyBranches,
   visibleDependencyNodes,
 } from "./model";
 import type { GraphItem } from "./model";
@@ -30,6 +34,14 @@ const scopeLabels = {
   neighbors: "Connected resources",
 } as const;
 const rem = (value: number) => `${value / 16}rem`;
+const overviewChanges = {
+  create: "+",
+  update: "~",
+  replace: "↻",
+  delete: "−",
+  unchanged: "=",
+  unknown: "?",
+} as const;
 const sameEdgeSelection = (
   selection: DependencyGraphSelection,
   ids: readonly string[],
@@ -56,6 +68,9 @@ export function DependencyGraph({
   collapsedGroupIds: controlledCollapsed,
   defaultCollapsedGroupIds = [],
   onCollapsedGroupIdsChange,
+  collapsedNodeIds: controlledCollapsedNodes,
+  defaultCollapsedNodeIds = [],
+  onCollapsedNodeIdsChange,
   expandedChangeNodeIds: controlledExpandedChanges,
   defaultExpandedChangeNodeIds = [],
   onExpandedChangeNodeIdsChange,
@@ -75,6 +90,9 @@ export function DependencyGraph({
     defaultCollapsedGroupIds,
   );
   const [query, setQuery] = useState("");
+  const [localCollapsedNodes, setLocalCollapsedNodes] = useState(
+    defaultCollapsedNodeIds,
+  );
   const [localExpandedChanges, setLocalExpandedChanges] = useState(
     defaultExpandedChangeNodeIds,
   );
@@ -89,6 +107,13 @@ export function DependencyGraph({
     controlledSelection === undefined ? localSelection : controlledSelection;
   const view = controlledView ?? localView;
   const collapsed = controlledCollapsed ?? localCollapsed;
+  const collapsedNodes = controlledCollapsedNodes ?? localCollapsedNodes;
+  const density = zoom < 0.7 ? "overview" : zoom < 1 ? "summary" : "detail";
+  const changeCollapsedNodes = (next: readonly string[]) => {
+    if (controlledCollapsedNodes === undefined)
+      setLocalCollapsedNodes([...next]);
+    onCollapsedNodeIdsChange?.(next);
+  };
   const expandedChanges = controlledExpandedChanges ?? localExpandedChanges;
   const changeExpandedChanges = (next: readonly string[]) => {
     if (controlledExpandedChanges === undefined)
@@ -122,16 +147,64 @@ export function DependencyGraph({
       .map((record) => `Duplicate ${kind} ID: ${record.id}`);
   })[0];
   // Selection/search never participate in layout. Local exploration preserves coordinates.
+  const branches = useMemo(
+    () =>
+      foldDependencyBranches(
+        nodes,
+        edges,
+        collapsedNodes,
+        "nodeId" in view ? view.nodeId : undefined,
+      ),
+    [nodes, edges, collapsedNodes, view],
+  );
+  const projectedNodes = useMemo(
+    () => nodes.filter((node) => branches.visible.has(node.id)),
+    [nodes, branches],
+  );
+  const projectedEdges = useMemo(() => {
+    const records = new Set(nodes.map((node) => node.id));
+    const stops = new Set(collapsedNodes);
+    return edges.filter(
+      (edge) =>
+        !records.has(edge.source) ||
+        !records.has(edge.target) ||
+        (branches.visible.has(edge.source) &&
+          branches.visible.has(edge.target) &&
+          !stops.has(edge.source)),
+    );
+  }, [nodes, edges, branches, collapsedNodes]);
   const model = useMemo(
     () =>
       duplicate
         ? null
-        : buildDependencyGraph(nodes, edges, groups, collapsed, nodeHeights),
-    [nodes, edges, groups, collapsed, duplicate, nodeHeights],
+        : buildDependencyGraph(
+            projectedNodes,
+            projectedEdges,
+            groups,
+            collapsed,
+            nodeHeights,
+            density === "overview" ? 192 : 256,
+            zoom,
+          ),
+    [
+      projectedNodes,
+      projectedEdges,
+      groups,
+      collapsed,
+      duplicate,
+      nodeHeights,
+      density,
+      zoom,
+    ],
   );
   const visible = useMemo(
-    () => visibleDependencyNodes(nodes, edges, view),
-    [nodes, edges, view],
+    () =>
+      new Set(
+        [...visibleDependencyNodes(nodes, edges, view)].filter((id) =>
+          branches.visible.has(id),
+        ),
+      ),
+    [nodes, edges, view, branches],
   );
   const items =
     model?.items.filter((item) =>
@@ -176,7 +249,8 @@ export function DependencyGraph({
     );
     if (!members.length) return [];
     const x = Math.min(...members.map((item) => item.x)) - 16;
-    const y = Math.min(...members.map((item) => item.y)) - 44;
+    const y =
+      Math.min(...members.map((item) => item.y)) - Math.max(44, 25 / zoom + 8);
     return [
       {
         ...cluster,
@@ -214,7 +288,40 @@ export function DependencyGraph({
       )
     : [];
   const highlighted = new Set(highlightedEdgeIds);
-  const fit = () => {
+  const changeZoom = (next: number) => {
+    const scale = Math.round(Math.max(0.4, Math.min(2, next)) * 100) / 100;
+    const element = viewport.current;
+    const centerX = element
+      ? (element.scrollLeft + element.clientWidth / 2) / zoom
+      : 0;
+    const centerY = element
+      ? (element.scrollTop + element.clientHeight / 2) / zoom
+      : 0;
+    setZoom(scale);
+    if (element)
+      requestAnimationFrame(() => {
+        element.scrollLeft = Math.max(
+          0,
+          centerX * scale - element.clientWidth / 2,
+        );
+        element.scrollTop = Math.max(
+          0,
+          centerY * scale - element.clientHeight / 2,
+        );
+      });
+  };
+  useEffect(() => {
+    const element = viewport.current;
+    if (!element) return;
+    const wheel = (event: WheelEvent) => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+      changeZoom(zoom * Math.exp(-event.deltaY * 0.002));
+    };
+    element.addEventListener("wheel", wheel, { passive: false });
+    return () => element.removeEventListener("wheel", wheel);
+  });
+  const fit = (initial = false) => {
     const element = viewport.current;
     if (!element || !items.length) return;
     const rootSize = parseFloat(
@@ -227,20 +334,22 @@ export function DependencyGraph({
     const y = Math.min(...boxes.map((item) => item.y));
     const right = Math.max(...boxes.map((item) => item.x + item.width));
     const bottom = Math.max(...boxes.map((item) => item.y + item.height));
-    // Keep labels readable: large neighborhoods scroll instead of shrinking to a hairball.
-    const scale = Math.max(
-      element.clientWidth < 600 ||
-        items.some(
-          (item) => item.node && expandedChanges.includes(item.node.id),
-        )
+    // Initial expanded cards remain readable. Explicit fit can use the overview.
+    const fitted = Math.max(
+      initial &&
+        (element.clientWidth < 600 ||
+          items.some(
+            (item) => item.node && expandedChanges.includes(item.node.id),
+          ))
         ? 1
-        : 0.75,
+        : 0.4,
       Math.min(
         1,
         (element.clientWidth - 48) / ((right - x) * unit),
         (element.clientHeight - 48) / ((bottom - y) * unit),
       ),
     );
+    const scale = Math.floor(fitted * 100) / 100;
     setZoom(scale);
     const anchorId = selectedNode?.id ?? focusNode?.id;
     const anchor =
@@ -260,12 +369,13 @@ export function DependencyGraph({
       items.every((item) => !item.node || nodeHeights.has(item.node.id));
     if (!firstFit.current && items.length && status === "ready" && measured) {
       firstFit.current = true;
-      fit();
+      fit(true);
     }
   });
   const showNode = (id: string) => {
     const node = nodes.find((record) => record.id === id);
     if (!node) return;
+    if (!branches.visible.has(id)) changeCollapsedNodes([]);
     if (node.groupId && collapsed.includes(node.groupId))
       changeCollapsed(collapsed.filter((groupId) => groupId !== node.groupId));
     changeView({ scope: "neighbors", nodeId: id, depth: 1 });
@@ -341,7 +451,13 @@ export function DependencyGraph({
         );
 
   return (
-    <section className={styles.root} data-dependency-graph aria-label={title}>
+    <section
+      className={styles.root}
+      data-dependency-graph
+      data-graph-density={density}
+      style={{ "--dependency-graph-zoom": zoom } as React.CSSProperties}
+      aria-label={title}
+    >
       <header className={styles.heading}>
         <div>
           <h2>{title}</h2>
@@ -434,29 +550,35 @@ export function DependencyGraph({
             Expand one level
           </Button>
         )}
+        {!!collapsedNodes.length && (
+          <Button
+            size="sm"
+            variant="outlined"
+            onPress={() => changeCollapsedNodes([])}
+          >
+            Expand all branches
+          </Button>
+        )}
         <div className={styles.cameraControls}>
-          <Button
-            size="sm"
-            variant="text"
-            color="primary"
-            aria-label="Zoom out graph"
-            isDisabled={zoom <= 0.75}
-            onPress={() => setZoom((value) => Math.max(0.75, value - 0.15))}
-          >
-            −
-          </Button>
+          <CollapseButton
+            accessibilityLabel="Zoom out graph"
+            aria-expanded={undefined}
+            isDisabled={zoom <= 0.4}
+            onPress={() => changeZoom(zoom - 0.2)}
+          />
           <output aria-label="Graph zoom">{Math.round(zoom * 100)}%</output>
+          <ExpandButton
+            accessibilityLabel="Zoom in graph"
+            aria-expanded={undefined}
+            isDisabled={zoom >= 2}
+            onPress={() => changeZoom(zoom + 0.2)}
+          />
           <Button
             size="sm"
-            variant="text"
+            variant="outlined"
             color="primary"
-            aria-label="Zoom in graph"
-            isDisabled={zoom >= 1.5}
-            onPress={() => setZoom((value) => Math.min(1.5, value + 0.15))}
+            onPress={() => fit()}
           >
-            +
-          </Button>
-          <Button size="sm" variant="outlined" color="primary" onPress={fit}>
             Fit visible
           </Button>
         </div>
@@ -532,9 +654,18 @@ export function DependencyGraph({
               <div
                 className={styles.viewport}
                 data-graph-canvas
+                id={`${instanceId}-canvas`}
                 ref={viewport}
                 tabIndex={0}
                 aria-label="Dependency graph canvas"
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (["+", "=", "-", "0"].includes(event.key)) {
+                    event.preventDefault();
+                    if (event.key === "0") fit();
+                    else changeZoom(zoom + (event.key === "-" ? -0.2 : 0.2));
+                  }
+                }}
                 style={{
                   height: Number.isFinite(height) && height > 0 ? height : 480,
                 }}
@@ -575,16 +706,13 @@ export function DependencyGraph({
                           >
                             {cluster.group.label}
                           </button>
-                          <button
-                            type="button"
-                            className={styles.textButton}
-                            aria-label={`Collapse ${cluster.group.label}`}
-                            onClick={() =>
+                          <CollapseButton
+                            accessibilityLabel={`Collapse ${cluster.group.label}`}
+                            aria-controls={`${instanceId}-canvas`}
+                            onPress={() =>
                               changeCollapsed([...collapsed, cluster.group.id])
                             }
-                          >
-                            Collapse
-                          </button>
+                          />
                         </div>
                       </div>
                     ))}
@@ -685,6 +813,15 @@ export function DependencyGraph({
                           member.change !== "unknown",
                       ).length;
                       const label = node?.label ?? item.group!.label;
+                      const diffShown =
+                        !!node &&
+                        density === "detail" &&
+                        expandedChanges.includes(node.id);
+                      const branchCollapsed =
+                        !!node && collapsedNodes.includes(node.id);
+                      const dependents = node
+                        ? (branches.dependentCounts.get(node.id) ?? 0)
+                        : 0;
                       const shown = item.members.filter((member) =>
                         visible.has(member.id),
                       ).length;
@@ -713,7 +850,7 @@ export function DependencyGraph({
                             aria-pressed={selected}
                             aria-label={
                               node
-                                ? `${label}, ${dependencyChangeLabels[node.change ?? "unknown"]}${node.description ? `, ${node.description}` : ""}`
+                                ? `${label}, ${dependencyChangeLabels[node.change ?? "unknown"]}${node.description ? `, ${node.description}` : ""}${node.iconLabel ? `, ${node.iconLabel}` : ""}`
                                 : `${label}, ${item.members.length} resources, ${changed} changed`
                             }
                             onKeyDown={(event) => navigate(event, item)}
@@ -725,13 +862,25 @@ export function DependencyGraph({
                             }
                           >
                             <span className={styles.nodeTop}>
+                              {node?.icon && (
+                                <span className={styles.resourceIcon}>
+                                  <Icon symbol={node.icon} size="sm" />
+                                </span>
+                              )}
                               {node ? (
                                 <span
                                   className={styles.change}
                                   data-change={node.change ?? "unknown"}
+                                  title={
+                                    dependencyChangeLabels[
+                                      node.change ?? "unknown"
+                                    ]
+                                  }
                                 >
                                   {
-                                    dependencyChangeLabels[
+                                    (density === "overview"
+                                      ? overviewChanges
+                                      : dependencyChangeLabels)[
                                       node.change ?? "unknown"
                                     ]
                                   }
@@ -762,61 +911,93 @@ export function DependencyGraph({
                                 node?.id}
                             </span>
                           </button>
-                          {node && hasDependencyGraphChanges(node) && (
-                            <>
-                              <button
-                                type="button"
-                                className={styles.cardExpand}
-                                aria-label={`${expandedChanges.includes(node.id) ? "Hide" : "Show"} attribute differences for ${label}`}
-                                aria-expanded={expandedChanges.includes(
-                                  node.id,
+                          {node &&
+                            (hasDependencyGraphChanges(node) ||
+                              dependents > 0) && (
+                              <div className={styles.cardControls}>
+                                {hasDependencyGraphChanges(node) && (
+                                  <span className={styles.controlPair}>
+                                    <ExpandButton
+                                      accessibilityLabel={`${diffShown ? "Hide" : "Show"} attribute differences for ${label}`}
+                                      expanded={diffShown}
+                                      aria-controls={`${instanceId}-diff-${items.indexOf(item)}`}
+                                      onPress={() => {
+                                        if (!diffShown && zoom < 1) setZoom(1);
+                                        changeExpandedChanges(
+                                          diffShown
+                                            ? expandedChanges.filter(
+                                                (id) => id !== node.id,
+                                              )
+                                            : expandedChanges.includes(node.id)
+                                              ? expandedChanges
+                                              : [...expandedChanges, node.id],
+                                        );
+                                      }}
+                                    />
+                                    <span className={styles.controlCaption}>
+                                      {node.changes?.length
+                                        ? `${node.changes.length} ${node.changes.length === 1 ? "field" : "fields"}`
+                                        : "Changes"}
+                                    </span>
+                                  </span>
                                 )}
-                                aria-controls={`${instanceId}-diff-${items.indexOf(item)}`}
-                                onClick={() =>
-                                  changeExpandedChanges(
-                                    expandedChanges.includes(node.id)
-                                      ? expandedChanges.filter(
-                                          (id) => id !== node.id,
+                                {dependents > 0 && (
+                                  <span className={styles.controlPair}>
+                                    <CollapseButton
+                                      accessibilityLabel={`${branchCollapsed ? "Expand" : "Collapse"} dependents of ${label}`}
+                                      expanded={!branchCollapsed}
+                                      aria-controls={`${instanceId}-canvas`}
+                                      onPress={() =>
+                                        changeCollapsedNodes(
+                                          branchCollapsed
+                                            ? collapsedNodes.filter(
+                                                (id) => id !== node.id,
+                                              )
+                                            : [...collapsedNodes, node.id],
                                         )
-                                      : [...expandedChanges, node.id],
-                                  )
-                                }
-                              >
-                                {expandedChanges.includes(node.id)
-                                  ? "Hide attribute differences"
-                                  : "Show attribute differences"}
-                              </button>
-                              <div
-                                id={`${instanceId}-diff-${items.indexOf(item)}`}
-                                hidden={!expandedChanges.includes(node.id)}
-                                className={styles.nodeChanges}
-                                data-graph-card-diff={node.id}
-                              >
-                                {expandedChanges.includes(node.id) && (
-                                  <DependencyGraphChanges
-                                    node={node}
-                                    presentation="diff"
-                                    showPresentationControls={false}
-                                  />
+                                      }
+                                    />
+                                    <span className={styles.controlCaption}>
+                                      {branchCollapsed
+                                        ? `${branches.hiddenCounts.get(node.id) ?? 0} hidden`
+                                        : `${dependents} ${dependents === 1 ? "branch" : "branches"}`}
+                                    </span>
+                                  </span>
                                 )}
                               </div>
-                            </>
+                            )}
+                          {node && hasDependencyGraphChanges(node) && (
+                            <div
+                              id={`${instanceId}-diff-${items.indexOf(item)}`}
+                              hidden={!diffShown}
+                              className={styles.nodeChanges}
+                              data-graph-card-diff={node.id}
+                            >
+                              {diffShown && (
+                                <DependencyGraphChanges
+                                  node={node}
+                                  presentation="diff"
+                                  showPresentationControls={false}
+                                  compact
+                                />
+                              )}
+                            </div>
                           )}
                           {item.group && (
-                            <button
-                              type="button"
-                              className={styles.groupExpand}
-                              aria-label={`Expand ${label}`}
-                              onClick={() =>
-                                changeCollapsed(
-                                  collapsed.filter(
-                                    (id) => id !== item.group!.id,
-                                  ),
-                                )
-                              }
-                            >
-                              Expand group
-                            </button>
+                            <div className={styles.groupExpand}>
+                              <ExpandButton
+                                accessibilityLabel={`Expand ${label}`}
+                                aria-controls={`${instanceId}-canvas`}
+                                onPress={() =>
+                                  changeCollapsed(
+                                    collapsed.filter(
+                                      (id) => id !== item.group!.id,
+                                    ),
+                                  )
+                                }
+                              />
+                              <span>Expand group</span>
+                            </div>
                           )}
                         </article>
                       );
@@ -829,7 +1010,12 @@ export function DependencyGraph({
                   Dependency <span aria-hidden="true">→</span> dependent
                 </span>
                 <span>
-                  Scroll to explore · Arrow keys move between resources
+                  {density === "overview"
+                    ? "Overview"
+                    : density === "summary"
+                      ? "Summaries"
+                      : "Attribute detail"}{" "}
+                  · Scroll to explore · Ctrl/⌘ + scroll to zoom
                 </span>
               </div>
             </>

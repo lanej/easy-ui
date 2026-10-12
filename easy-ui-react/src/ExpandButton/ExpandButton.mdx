@@ -1,0 +1,25 @@
+import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import * as Stories from "./ExpandButton.stories";
+
+<Meta of={Stories} />
+
+# ExpandButton
+
+A reusable positive (+) disclosure atom built on `IconButton`. Supply `accessibilityLabel` to name the content and `aria-controls` to identify its container. The collapsed default uses the positive (+) icon and `aria-expanded={false}`. `expanded` can control the current state and switches between + and − without replacing the focused button. The caller owns disclosure state and content visibility.
+
+```tsx
+import { ExpandButton } from "@easypost/easy-ui/ExpandButton";
+
+<ExpandButton
+  accessibilityLabel="Expand resource details"
+  aria-controls="resource-details"
+  onPress={expandDetails}
+/>;
+```
+
+Use `ExpandButton` for a collapsed default and `CollapseButton` for an expanded default. Both accept the same size, color, variant, press, and disabled props as `IconButton`. When using the symbol for a zoom action, override `aria-expanded={undefined}`; zoom does not disclose content.
+
+<Canvas of={Stories.Default} />
+<Canvas of={Stories.Disclosure} />
+<Canvas of={Stories.Disabled} />
+<ArgTypes />

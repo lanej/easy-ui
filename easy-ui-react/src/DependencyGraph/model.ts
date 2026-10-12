@@ -7,7 +7,8 @@ import type {
 } from "./types";
 
 export const NODE_WIDTH = 256;
-export const NODE_HEIGHT = 112;
+export const NODE_HEIGHT = 88;
+const GROUP_HEIGHT = 112;
 export const hasDependencyGraphChanges = (node: DependencyGraphNode) =>
   !!node.changes?.length ||
   (!!node.change && node.change !== "unchanged" && node.change !== "unknown");
@@ -39,10 +40,17 @@ export function buildDependencyGraph(
   groups: readonly DependencyGraphGroup[],
   collapsedGroupIds: readonly string[],
   nodeHeights: ReadonlyMap<string, number> = new Map(),
+  nodeWidth = NODE_WIDTH,
+  zoom = 1,
 ) {
   const records = new Map(nodes.map((node) => [node.id, node]));
   const groupRecords = new Map(groups.map((group) => [group.id, group]));
   const collapsed = new Set(collapsedGroupIds);
+  const branchSources = new Set(
+    edges
+      .filter((edge) => edge.source !== edge.target && records.has(edge.target))
+      .map((edge) => edge.source),
+  );
   const nodeKey = (node: DependencyGraphNode) =>
     node.groupId &&
     collapsed.has(node.groupId) &&
@@ -70,11 +78,14 @@ export function buildDependencyGraph(
         members: [node],
         x: 0,
         y: 0,
-        width: NODE_WIDTH,
+        width: key.startsWith("node:") ? nodeWidth : NODE_WIDTH,
         height: key.startsWith("node:")
           ? (nodeHeights.get(node.id) ??
-            NODE_HEIGHT + (hasDependencyGraphChanges(node) ? 42 : 2))
-          : NODE_HEIGHT,
+            NODE_HEIGHT +
+              (hasDependencyGraphChanges(node) || branchSources.has(node.id)
+                ? 42
+                : 2))
+          : GROUP_HEIGHT,
       });
   }
   const connections = new Map<string, GraphConnection>();
@@ -100,10 +111,10 @@ export function buildDependencyGraph(
   graph.setGraph({
     rankdir: "LR",
     ranksep: 88,
-    nodesep: 32,
+    nodesep: Math.max(32, 25 / zoom + 8),
     edgesep: 16,
     marginx: 28,
-    marginy: 48,
+    marginy: Math.max(48, 25 / zoom + 12),
   });
   graph.setDefaultEdgeLabel(() => ({}));
   for (const group of [...groupRecords.values()].sort(compare)) {
@@ -151,6 +162,69 @@ export function buildDependencyGraph(
     width: graph.graph().width ?? 0,
     height: graph.graph().height ?? 0,
   };
+}
+
+/** Fold outgoing branches, preserving resources reachable through other open paths. */
+export function foldDependencyBranches(
+  nodes: readonly DependencyGraphNode[],
+  edges: readonly DependencyGraphEdge[],
+  collapsedNodeIds: readonly string[],
+  anchorId?: string,
+) {
+  const graph = new graphlib.Graph({ directed: true });
+  for (const node of nodes) graph.setNode(node.id);
+  for (const edge of edges)
+    if (graph.hasNode(edge.source) && graph.hasNode(edge.target))
+      graph.setEdge(edge.source, edge.target);
+  const collapsed = new Set(collapsedNodeIds);
+  // Cyclic components need one deterministic entry; do not seed every cycle member.
+  const components = graphlib.alg.tarjan(graph).map((ids) => ids.sort());
+  const componentOf = new Map<string, number>();
+  components.forEach((ids, index) =>
+    ids.forEach((id) => componentOf.set(id, index)),
+  );
+  const incoming = new Set<number>();
+  for (const edge of graph.edges())
+    if (componentOf.get(edge.v) !== componentOf.get(edge.w))
+      incoming.add(componentOf.get(edge.w)!);
+  const seeds = components.flatMap((ids, index) =>
+    incoming.has(index)
+      ? []
+      : [
+          (anchorId && ids.includes(anchorId) && anchorId) ||
+            ids.find((id) => collapsed.has(id)) ||
+            ids[0],
+        ],
+  );
+  if (anchorId && graph.hasNode(anchorId)) seeds.push(anchorId);
+  const reach = (stops: ReadonlySet<string>) => {
+    const visible = new Set<string>();
+    const queue = [...seeds];
+    for (let index = 0; index < queue.length; index++) {
+      const id = queue[index];
+      if (visible.has(id)) continue;
+      visible.add(id);
+      if (!stops.has(id)) queue.push(...(graph.successors(id) ?? []));
+    }
+    return visible;
+  };
+  const visible = reach(collapsed);
+  const hiddenCounts = new Map<string, number>();
+  for (const id of collapsed) {
+    const open = new Set(collapsed);
+    open.delete(id);
+    hiddenCounts.set(
+      id,
+      [...reach(open)].filter((id) => !visible.has(id)).length,
+    );
+  }
+  const dependentCounts = new Map(
+    nodes.map((node) => [
+      node.id,
+      (graph.successors(node.id) ?? []).filter((id) => id !== node.id).length,
+    ]),
+  );
+  return { visible, hiddenCounts, dependentCounts };
 }
 
 /** Traverse only supplied directed edges. This computes visibility, never risk. */

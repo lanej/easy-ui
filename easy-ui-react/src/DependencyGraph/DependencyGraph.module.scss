@@ -1,5 +1,17 @@
 @use "../styles/common" as *;
 
+.resourceIcon > span {
+  inline-size: max(1.25rem, calc(14px / var(--dependency-graph-zoom)));
+  block-size: max(1.25rem, calc(14px / var(--dependency-graph-zoom)));
+}
+
+.cardControls button,
+.groupExpand button,
+.clusterHeading button {
+  min-inline-size: max(2rem, calc(25px / var(--dependency-graph-zoom)));
+  min-block-size: max(2rem, calc(25px / var(--dependency-graph-zoom)));
+}
+
 .root {
   container-type: inline-size;
   min-inline-size: 0;
@@ -111,6 +123,12 @@
     }
   }
 }
+.cardControls button > span:last-child,
+.groupExpand button > span:last-child,
+.clusterHeading button > span:last-child {
+  inline-size: max(1rem, calc(14px / var(--dependency-graph-zoom)));
+  block-size: max(1rem, calc(14px / var(--dependency-graph-zoom)));
+}
 .focusContext {
   margin: 0 0 12px;
   color: design-token("color.neutral.700");
@@ -157,13 +175,21 @@
 }
 .clusterHeading {
   position: absolute;
+  z-index: 1;
   inset-block-start: 4px;
   inset-inline: 12px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
   white-space: nowrap;
   font-size: 0.8125rem;
+  background: design-token("color.neutral.100");
+  > button:first-child {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 .edges {
   position: absolute;
@@ -242,26 +268,22 @@
   }
 }
 .node[data-graph-resource-card] .nodeSelect {
-  block-size: 7rem;
+  block-size: auto;
+  min-block-size: 5.5rem;
 }
-.cardExpand {
-  display: block;
-  inline-size: calc(100% - 24px);
-  min-block-size: 32px;
-  margin: 0 12px 8px;
-  padding: 2px 0;
-  border: 0;
-  background: transparent;
-  color: design-token("color.primary.700");
-  font: inherit;
+.cardControls {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px 8px;
   font-size: 0.75rem;
-  text-align: start;
-  cursor: pointer;
+  color: design-token("color.neutral.700");
 }
 
 .nodeTop {
   display: flex;
   align-items: center;
+  gap: 8px;
   font-size: 0.75rem;
 }
 .nodeLabel {
@@ -324,6 +346,9 @@
   }
 }
 .groupExpand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-block-size: 32px;
   position: absolute;
   inset-block-end: 8px;
@@ -552,4 +577,48 @@
   h4 {
     font-size: 0.8125rem;
   }
+}
+
+.resourceChanges[data-compact="true"] {
+  .fieldChanges {
+    gap: 8px;
+    dt {
+      font-size: 0.75rem;
+      overflow-wrap: anywhere;
+    }
+    dd {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+  }
+  .diffLine {
+    display: inline;
+    border-radius: 3px;
+    padding: 1px 3px;
+    margin-inline: 1px;
+    > span:first-child {
+      margin-inline-end: 2px;
+    }
+  }
+}
+
+.root[data-graph-density="overview"] {
+  .nodeDescription,
+  .controlCaption {
+    display: none;
+  }
+  .node[data-graph-resource-card] .nodeLabel {
+    font-size: max(0.875rem, calc(11px / var(--dependency-graph-zoom)));
+  }
+  .change {
+    font-size: max(0.75rem, calc(10px / var(--dependency-graph-zoom)));
+  }
+}
+
+.controlPair {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }

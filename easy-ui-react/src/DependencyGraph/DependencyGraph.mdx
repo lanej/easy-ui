@@ -30,7 +30,7 @@ An arrow runs **from a dependency to its dependent**: `subnet → api` means the
 
 Choose a resource, then use **Dependencies**, **Dependents**, or **Connected resources** to focus a bounded neighborhood. **Expand one level** grows the same anchor's neighborhood; selecting another visible resource updates the inspector without moving the anchor. **Changes + context** includes changed resources plus one level in both directions. An explicitly supplied `depth: 0` shows only the seed resources. Traversal uses only supplied edges; `onViewChange` can request more evidence from an application API.
 
-`selection`, `view`, and `collapsedGroupIds` are independently controllable. Their `default*` counterparts initialize local state. Callbacks return stable original IDs so a change row, graph node, and application inspector can share selection. Use `showDetails={false}` and `DependencyGraphDetails` for a separately placed inspector, or `renderDetails` to append application evidence to the standard details.
+`selection`, `view`, `collapsedGroupIds`, and `collapsedNodeIds` are independently controllable. Their `default*` counterparts initialize local state. Callbacks return stable original IDs so a change row, graph node, and application inspector can share selection. Use `showDetails={false}` and `DependencyGraphDetails` for a separately placed inspector, or `renderDetails` to append application evidence to the standard details.
 
 <Canvas of={Stories.LinkedInspector} />
 
@@ -38,9 +38,19 @@ Groups are flat visual boundaries. The caller chooses root/module membership usi
 
 <Canvas of={Stories.CollapsedModules} />
 
+## Dependent branch collapse and resource icons
+
+Each resource with dependents has a **−** control to fold its outgoing branch. **+** reopens it; **Expand all branches** clears branch folds. The caption shows how many resources are hidden. Shared resources stay visible through other open paths, and cycles have a deterministic entry. A focused neighborhood retains its anchor. Folded relationships remain available in the inspector, with their original IDs. Searching or revealing a hidden resource opens the folds when necessary.
+
+Control this independently with `collapsedNodeIds`, `defaultCollapsedNodeIds`, and `onCollapsedNodeIdsChange`. Branch folding can relayout the graph; it does not alter the caller's nodes, edges, or selection.
+
+Pass `icon` and `iconLabel` on a node to identify its type. `icon` accepts the standard Easy UI `IconSymbol`, including a custom SVG component. The label becomes part of the resource button's accessible name. Icons are caller-owned; Easy UI does not infer type from a resource ID. The icon package provides Database, Storage, Hub (network), Key (authentication), and Shield (authorization).
+
+<Canvas of={Stories.CollapsibleBranches} />
+
 ## Per-resource summaries and diffs
 
-Every resource can supply a `changeSummary` and typed `changes`. The graph card shows the short summary. **Show attribute differences** expands that resource card with its exact field diff; **Hide attribute differences** returns it to the compact view. Expansion is independent of selection and works with `showDetails={false}`. The inspector also switches between **Summary** and **Specific changes**. A field addition is a green `+` row, a removal is a red `−` row, and a changed field has both rows. Each row also has an accessible Added/Removed label. Resource operations and field changes remain distinct: a replacement retains its Replace badge while showing the exact supplied field diff.
+Every resource can supply a `changeSummary` and typed `changes`. The graph card shows the short summary. The **+** control labeled **Show attribute differences** expands that resource card with its exact field diff; The **−** control labeled **Hide attribute differences** returns it to the compact view. Expansion is independent of selection and works with `showDetails={false}`. The inspector also switches between **Summary** and **Specific changes**. Inside cards, changed string values show their shared prefix and suffix once, with red `−` removed fragments and green `+` added fragments inline. Added and removed fields retain their full value. The inspector shows full before/after rows. Both presentations provide accessible Added/Removed labels and complete values; unknown and redacted values are never compared as string fragments. Resource operations and field changes remain distinct: a replacement retains its Replace badge while showing the exact supplied field diff.
 
 ```tsx
 {
@@ -59,7 +69,7 @@ Every resource can supply a `changeSummary` and typed `changes`. The graph card 
 
 Values are caller-formatted strings, so format numbers, booleans, and explicit `null` before supplying them. An empty string is displayed as `""`. Use `{ status: "unknown" }` for an unavailable value and `{ status: "redacted" }` for a sensitive value; never pass secrets. Omitted `changes` means specific changes were not supplied. An empty array does not establish that the resource is unchanged. Easy UI renders the supplied field operations; the application computes their meaning and diff.
 
-`defaultChangePresentation="diff"` starts each newly selected resource in the detailed view. The default is `"summary"`. Selection changes initialize that resource's presentation independently, so another resource's values cannot remain visible. `DependencyGraphChanges` is also exported for an application-owned inspector; it supports controlled `presentation`/`onPresentationChange` or local `defaultPresentation`.
+`defaultChangePresentation="diff"` starts each newly selected resource in the detailed view. The default is `"summary"`. Selection changes initialize that resource's presentation independently, so another resource's values cannot remain visible. `DependencyGraphChanges` accepts `compact` for the inline fragment presentation and is also exported for an application-owned inspector; it supports controlled `presentation`/`onPresentationChange` or local `defaultPresentation`.
 
 `expandedChangeNodeIds`, `defaultExpandedChangeNodeIds`, and `onExpandedChangeNodeIdsChange` control which resource cards show their attribute differences. Callbacks return original resource IDs. Multiple cards can be expanded at once.
 
@@ -69,7 +79,9 @@ Values are caller-formatted strings, so format numbers, booleans, and explicit `
 
 ## Layout, scale, and accessibility
 
-Dagre handles directed layout, cycles, self-links, and disconnected components. Stable IDs are sorted before layout. Selection, search, highlighting, and neighborhood filtering preserve coordinates and pan/zoom; changing actual graph topology, card expansion, or group collapse state can relayout the graph. Expanded card heights are measured so neighboring cards and connections accommodate wrapped attribute values. The viewport retains its camera until **Fit visible** is requested. Fit retains 100% while attribute cards are expanded and on narrow canvases, starts from the selected resource or neighborhood anchor there, and stops at 75% on wider ones; large graphs scroll rather than shrinking into an unreadable whole-infrastructure diagram.
+Dagre handles directed layout, cycles, self-links, and disconnected components. Stable IDs are sorted before layout. Selection, search, highlighting, and neighborhood filtering preserve coordinates and pan/zoom; changing actual graph topology, card expansion, or group collapse state can relayout the graph. Expanded card heights are measured so neighboring cards and connections accommodate wrapped attribute values. Zoom ranges from 40% to 200% and changes the card presentation automatically: below 70%, an overview shows icons, labels, actions, and compact disclosure controls; from 70% to below 100%, cards show summaries; at 100% and above, expanded cards show attribute diffs. Expanded-card state survives zooming out and returns when zooming in. Opening an attribute control zooms to at least 100%. Use the toolbar +/− controls, Ctrl/⌘ plus wheel or pinch, or focus the canvas and press +/−. Press 0 or **Fit visible** to fit the current view. Ordinary wheel and trackpad movement scrolls. Initial fitting keeps expanded cards and narrow canvases at 100%; an explicit fit can use the overview.
+
+Card and group disclosure controls use the reusable `ExpandButton` (+) and `CollapseButton` (−) atoms.
 
 Use groups and bounded neighborhoods for large plans. The initial scale story supplies 1,000 nodes while rendering only the visible grouped neighborhood. Layout is synchronous and uses the supplied projected graph; this is not an unbounded graph engine or a claim of tested performance beyond that fixture. Querying and relationship discovery stay in the application.
 

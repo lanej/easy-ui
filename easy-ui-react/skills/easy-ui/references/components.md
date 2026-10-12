@@ -122,3 +122,8 @@ relationship discovery, evidence, change kinds, and risk. Read its Storybook
 examples and types before using the independently controlled view and selection.
 
 Each DependencyGraph resource can supply `changeSummary` and typed `changes` for a summary or red/green field diff. Resource cards expand their attribute differences inline; use `expandedChangeNodeIds` to control expansion independently of selection. Use `DependencyGraphChanges` from the same subpath for an application-owned resource inspector. Supply explicit unknown/redacted values and compute the actual diff in the application.
+
+
+### Disclosure atoms and dependency density
+
+`ExpandButton` and `CollapseButton` provide reusable positive (+) and negative (−) disclosure controls. Supply `accessibilityLabel`, `aria-controls`, and `onPress`; control `expanded` to retain focus while changing the symbol. `DependencyGraph` uses these for inline attributes, groups, and dependent branches. `collapsedNodeIds`/`onCollapsedNodeIdsChange` fold branches independently of `collapsedGroupIds`. Shared resources remain visible through other open paths. Nodes accept the standard `IconSymbol` as `icon` and a caller-owned `iconLabel`. Zoom changes cards from overview (<70%) to summary (<100%) to detail; expanding attributes restores at least 100%.

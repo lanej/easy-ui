@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { IconSymbol } from "../types";
 
 export type DependencyGraphChange =
   "create" | "update" | "replace" | "delete" | "unchanged" | "unknown";
@@ -25,6 +26,10 @@ export type DependencyGraphNode = {
   label: string;
   /** Resource type, address, or other caller-owned context. */
   description?: string;
+  /** Caller-supplied resource type symbol, using Easy UI's normal Icon contract. */
+  icon?: IconSymbol;
+  /** Accessible resource type label, such as Database or Authentication. */
+  iconLabel?: string;
   /** Omitted change information is unknown, not proof of no change. */
   change?: DependencyGraphChange;
   /** Caller-owned explanation of this resource's proposed changes. */
@@ -92,6 +97,10 @@ export type DependencyGraphProps = {
   collapsedGroupIds?: readonly string[];
   defaultCollapsedGroupIds?: readonly string[];
   onCollapsedGroupIdsChange?: (ids: readonly string[]) => void;
+  /** Stop following dependent branches at these resources. Shared paths stay visible. */
+  collapsedNodeIds?: readonly string[];
+  defaultCollapsedNodeIds?: readonly string[];
+  onCollapsedNodeIdsChange?: (ids: readonly string[]) => void;
   /** Resources whose cards show attribute differences inline. */
   expandedChangeNodeIds?: readonly string[];
   defaultExpandedChangeNodeIds?: readonly string[];

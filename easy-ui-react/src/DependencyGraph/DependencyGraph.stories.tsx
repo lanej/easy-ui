@@ -1,4 +1,9 @@
 import React from "react";
+import DatabaseIcon from "@easypost/easy-ui-icons/Database";
+import StorageIcon from "@easypost/easy-ui-icons/Storage";
+import HubIcon from "@easypost/easy-ui-icons/Hub";
+import KeyIcon from "@easypost/easy-ui-icons/Key";
+import ShieldIcon from "@easypost/easy-ui-icons/Shield";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DependencyGraph } from "./DependencyGraph";
 import {
@@ -49,6 +54,72 @@ export const SpecificChanges: Story = {
   },
 };
 export const AllResources: Story = {};
+export const CollapsibleBranches: Story = {
+  args: {
+    title: "Resource branches",
+    description:
+      "Use − to fold dependent branches and + to reopen them. Shared resources remain visible through open paths.",
+    nodes: [
+      {
+        id: "network",
+        label: "Private network",
+        change: "unchanged",
+        icon: HubIcon,
+        iconLabel: "Network",
+      },
+      {
+        id: "database",
+        label: "Primary database",
+        change: "update",
+        icon: DatabaseIcon,
+        iconLabel: "Database",
+        changes: [
+          { path: "version", type: "change", before: "16.3", after: "16.4" },
+        ],
+      },
+      {
+        id: "storage",
+        label: "Database backups",
+        change: "create",
+        icon: StorageIcon,
+        iconLabel: "Storage",
+        changes: [{ path: "retention_days", type: "add", after: "30" }],
+      },
+      {
+        id: "authentication",
+        label: "Identity service",
+        change: "unchanged",
+        icon: KeyIcon,
+        iconLabel: "Authentication",
+      },
+      {
+        id: "authorization",
+        label: "Access policy",
+        change: "update",
+        icon: ShieldIcon,
+        iconLabel: "Authorization",
+        changes: [
+          { path: "role", type: "change", before: "reader", after: "writer" },
+        ],
+      },
+    ],
+    edges: [
+      { id: "network-db", source: "network", target: "database" },
+      { id: "db-storage", source: "database", target: "storage" },
+      { id: "network-auth", source: "network", target: "authentication" },
+      { id: "auth-policy", source: "authentication", target: "authorization" },
+      {
+        id: "db-policy",
+        source: "database",
+        target: "authorization",
+        variant: "dashed",
+      },
+    ],
+    groups: [],
+    showDetails: false,
+    height: 600,
+  },
+};
 export const ExpandedAttributeDifferences: Story = {
   args: {
     height: 720,

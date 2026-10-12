@@ -248,8 +248,12 @@ describe("DependencyGraph per-resource changes", () => {
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(within(card).getByText("10.20.0.0/24")).toBeInTheDocument();
-    expect(within(card).getByText("10.20.4.0/24")).toBeInTheDocument();
+    expect(card.querySelector('[data-diff="removal"] code')).toHaveTextContent(
+      "10.20.0.0/24",
+    );
+    expect(card.querySelector('[data-diff="addition"] code')).toHaveTextContent(
+      "10.20.4.0/24",
+    );
     expect(change).not.toHaveBeenCalled();
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -280,7 +284,11 @@ describe("DependencyGraph per-resource changes", () => {
         name: "Hide attribute differences for Application subnet",
       }),
     ).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText("10.20.0.0/24")).toBeInTheDocument();
+    expect(
+      screen
+        .getByRole("region", { name: "Application subnet changes" })
+        .querySelector('[data-diff="removal"] code'),
+    ).toHaveTextContent("10.20.0.0/24");
   });
   it("switches between summary and exact diff without moving the graph, and resets for another resource", () => {
     const { container } = render(
@@ -380,7 +388,11 @@ describe("DependencyGraph per-resource changes", () => {
         onPresentationChange={change}
       />,
     );
-    expect(screen.getByText("10.20.0.0/24")).toBeInTheDocument();
+    expect(
+      screen
+        .getByRole("region", { name: "Application subnet changes" })
+        .querySelector('[data-diff="removal"] code'),
+    ).toHaveTextContent("10.20.0.0/24");
   });
   it("does not fabricate a field diff from a resource operation or missing evidence", () => {
     const { container, rerender } = render(
@@ -405,5 +417,130 @@ describe("DependencyGraph per-resource changes", () => {
     expect(
       screen.queryByText("No resource change planned."),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("DependencyGraph zoom and branch disclosures", () => {
+  it("keeps attribute expansion and selection while changing zoom presentations", () => {
+    const change = vi.fn();
+    const { container } = render(
+      <DependencyGraph
+        title="Graph"
+        nodes={nodes}
+        edges={edges}
+        showDetails={false}
+        defaultExpandedChangeNodeIds={[subnetId]}
+        defaultSelection={{ type: "node", id: subnetId }}
+        onSelectionChange={change}
+      />,
+    );
+    const graph = container.querySelector("[data-dependency-graph]")!;
+    const card = container.querySelector(
+      `[data-graph-resource-card="${subnetId}"]`,
+    )!;
+    expect(graph).toHaveAttribute("data-graph-density", "detail");
+    fireEvent.click(screen.getByRole("button", { name: "Zoom out graph" }));
+    expect(graph).toHaveAttribute("data-graph-density", "summary");
+    expect(card.querySelector("[data-diff]")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Zoom out graph" }));
+    expect(graph).toHaveAttribute("data-graph-density", "overview");
+    fireEvent.click(
+      within(card as HTMLElement).getByRole("button", {
+        name: "Show attribute differences for Application subnet",
+      }),
+    );
+    expect(graph).toHaveAttribute("data-graph-density", "detail");
+    expect(card.querySelector("[data-diff]")).not.toBeNull();
+    expect(card).toHaveAttribute("data-selected", "true");
+    expect(change).not.toHaveBeenCalled();
+  });
+  it("folds dependent branches independently and reports original IDs in controlled mode", () => {
+    const change = vi.fn();
+    const props = {
+      title: "Graph",
+      nodes: [
+        { id: "a", label: "A" },
+        { id: "b", label: "B" },
+        { id: "c", label: "C" },
+      ],
+      edges: [
+        { id: "a-b", source: "a", target: "b" },
+        { id: "b-c", source: "b", target: "c" },
+      ],
+      onCollapsedNodeIdsChange: change,
+    };
+    const { rerender } = render(
+      <DependencyGraph {...props} collapsedNodeIds={[]} />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Collapse dependents of A" }),
+    );
+    expect(change).toHaveBeenCalledWith(["a"]);
+    expect(
+      screen.getByRole("button", { name: "B, Change unknown" }),
+    ).toBeInTheDocument();
+    rerender(<DependencyGraph {...props} collapsedNodeIds={["a"]} />);
+    expect(
+      screen.queryByRole("button", { name: "B, Change unknown" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("2 hidden")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Expand all branches" }),
+    );
+    expect(change).toHaveBeenLastCalledWith([]);
+  });
+  it("accepts a caller-owned type symbol and includes its meaning in the resource name", () => {
+    const Symbol = () => <svg data-testid="custom-type" />;
+    render(
+      <DependencyGraph
+        title="Graph"
+        nodes={[{ id: "a", label: "A", icon: Symbol, iconLabel: "Storage" }]}
+        edges={[]}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "A, Change unknown, Storage" }),
+    ).toContainElement(screen.getByTestId("custom-type"));
+  });
+  it("shares string fragments visually while keeping full accessible before/after values", () => {
+    const { container } = render(
+      <DependencyGraphChanges
+        presentation="diff"
+        compact
+        showPresentationControls={false}
+        node={{
+          id: "a",
+          label: "A",
+          changes: [
+            {
+              path: "image",
+              type: "change",
+              before: "registry/app:1.8",
+              after: "registry/app:1.9",
+            },
+            {
+              path: "secret",
+              type: "change",
+              before: { status: "redacted" },
+              after: { status: "unknown" },
+            },
+            {
+              path: "unicode",
+              type: "change",
+              before: "😀old",
+              after: "😀new",
+            },
+          ],
+        }}
+      />,
+    );
+    const removals = container.querySelectorAll('[data-diff="removal"] code');
+    const additions = container.querySelectorAll('[data-diff="addition"] code');
+    expect(removals[0]).toHaveTextContent("registry/app:1.8");
+    expect(additions[0]).toHaveTextContent("registry/app:1.9");
+    expect(removals[1]).toHaveTextContent("Redacted value");
+    expect(additions[1]).toHaveTextContent("Unknown value");
+    expect(removals[2]).toHaveTextContent("😀old");
+    expect(additions[2]).toHaveTextContent("😀new");
   });
 });

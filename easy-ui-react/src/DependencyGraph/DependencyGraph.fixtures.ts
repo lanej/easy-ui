@@ -3,6 +3,11 @@ import type {
   DependencyGraphGroup,
   DependencyGraphNode,
 } from "./types";
+import DatabaseIcon from "@easypost/easy-ui-icons/Database";
+import HubIcon from "@easypost/easy-ui-icons/Hub";
+import KeyIcon from "@easypost/easy-ui-icons/Key";
+import CodeIcon from "@easypost/easy-ui-icons/Code";
+import AlarmIcon from "@easypost/easy-ui-icons/Alarm";
 
 export const dependencyGroups: DependencyGraphGroup[] = [
   {
@@ -31,6 +36,8 @@ export const dependencyNodes: DependencyGraphNode[] = [
     id: "azurerm_virtual_network.production",
     label: "Production network",
     description: "azurerm_virtual_network",
+    icon: HubIcon,
+    iconLabel: "Network",
     change: "unchanged",
     groupId: "network",
   },
@@ -38,6 +45,8 @@ export const dependencyNodes: DependencyGraphNode[] = [
     id: "azurerm_subnet.application",
     label: "Application subnet",
     description: "azurerm_subnet · 10.20.4.0/24",
+    icon: HubIcon,
+    iconLabel: "Network",
     change: "replace",
     changeSummary: "Address prefix changes; replacement required.",
     changes: [
@@ -54,6 +63,8 @@ export const dependencyNodes: DependencyGraphNode[] = [
     id: "azurerm_container_app.api",
     label: "Shipping API",
     description: "azurerm_container_app",
+    icon: CodeIcon,
+    iconLabel: "Application",
     change: "update",
     changeSummary: "Container image and tags change; credentials rotate.",
     changes: [
@@ -83,6 +94,8 @@ export const dependencyNodes: DependencyGraphNode[] = [
   {
     id: "azurerm_container_app.worker",
     label: "Label worker",
+    icon: CodeIcon,
+    iconLabel: "Application",
     description: "azurerm_container_app",
     change: "unchanged",
     groupId: "services",
@@ -90,6 +103,8 @@ export const dependencyNodes: DependencyGraphNode[] = [
   {
     id: "azurerm_postgresql_flexible_server.primary",
     label: "Primary database",
+    icon: DatabaseIcon,
+    iconLabel: "Database",
     description: "azurerm_postgresql_flexible_server",
     change: "unchanged",
     groupId: "data",
@@ -97,6 +112,8 @@ export const dependencyNodes: DependencyGraphNode[] = [
   {
     id: "azurerm_private_dns_zone.database",
     label: "Database DNS",
+    icon: HubIcon,
+    iconLabel: "Network",
     description: "azurerm_private_dns_zone",
     change: "unchanged",
     groupId: "data",
@@ -104,6 +121,8 @@ export const dependencyNodes: DependencyGraphNode[] = [
   {
     id: "azurerm_bastion_host.legacy",
     label: "Legacy bastion",
+    icon: KeyIcon,
+    iconLabel: "Authentication",
     description: "azurerm_bastion_host",
     change: "delete",
     changeSummary: "Legacy bastion is removed.",
@@ -116,6 +135,8 @@ export const dependencyNodes: DependencyGraphNode[] = [
   {
     id: "azurerm_monitor_metric_alert.api",
     label: "API availability alert",
+    icon: AlarmIcon,
+    iconLabel: "Monitoring",
     description: "azurerm_monitor_metric_alert",
     change: "create",
     changeSummary: "Availability monitoring is added.",
