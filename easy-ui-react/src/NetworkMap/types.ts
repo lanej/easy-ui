@@ -357,9 +357,8 @@ export type NetworkMapProps = {
    * Color scale for the legacy single-layer surface's `fill-color` ramp (ignored when
    * `surface.metrics` is supplied — give each metric its own `colorScale` there instead).
    * Defaults to this component's original 5-stop 0/30/60/90/120-minute ramp, preserved exactly
-   * for callers that pass neither this nor `surface.metrics` (e.g. `logistics-services`'
-   * `TheftPatternsScreen.tsx`, which already transforms its own values to fit that default rather
-   * than being handed a configurable scale). Supply this when `medianMinutes` isn't a 0-120-minute
+   * for callers that pass neither this nor `surface.metrics`, including consumers that
+   * transform their own values to fit that default. Supply this when `medianMinutes` isn't a 0-120-minute
    * elapsed time — e.g. minutes-since-midnight.
    */
   deliverySurfaceColorScale?: MapSurfaceColorScale;
