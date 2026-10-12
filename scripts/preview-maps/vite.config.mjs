@@ -27,6 +27,7 @@ export default defineConfig({
           "maplibre-gl",
           "echarts",
           "lodash",
+          "overlayscrollbars-react",
           "@easypost/easy-ui-icons",
         ].map((name) => [name, local(`./node_modules/${name}`)]),
       ),
