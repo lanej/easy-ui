@@ -18,7 +18,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Adapted from Logistics Services’ components/shell/KpiTile. Keeps its icon chip, metric, delta pill, compact and point-in-time states, without depending on the application's data provider. Composes Easy UI MetricContent, Pill, Icon and Card.",
+          "Metric tile with an icon chip, metric, delta pill, and compact and point-in-time states. Composes Easy UI MetricContent, Pill, Icon and Card with application-supplied values.",
       },
     },
   },

@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import LocalShippingIcon from "@easypost/easy-ui-icons/LocalShipping";
 import { KpiTile } from "./KpiTile";
 
-it("renders the Logistics Services metric and delta composition", () => {
+it("renders the metric and delta composition", () => {
   render(
     <KpiTile
       icon={LocalShippingIcon}

@@ -8,14 +8,13 @@
   examples no longer duplicate the metric label/value structure.
 - `Pill` and `PillButton` are standalone atoms. `PillGroup` composes the label
   atom while retaining its tag-list navigation and removal behavior.
-- `KpiTile` ports Logistics Services' metric tile without its application data
-  provider. `WorkspaceHeader` adapts its compact navigation/identity composition,
-  not a required title/subtitle hero. These are reusable components; the
-  data-backed Logistics Services screens have not been ported wholesale.
+- `KpiTile` composes a metric tile with explicit inputs. `WorkspaceHeader`
+  composes compact navigation and identity. Both accept application-owned data
+  and content without depending on application providers.
 - Forge's wordmark uses the active text color. Its optional navigation toggle
   supports either a panel icon or a hamburger.
-- `DrawerRow` adapts Logistics Services' stable summary and full-width vertical
-  detail pattern through `Disclosure`, `UnstyledButton`, and `Icon`. `DrawerTable`
+- `DrawerRow` composes a stable summary and full-width vertical details through
+  `Disclosure`, `UnstyledButton`, and `Icon`. `DrawerTable`
   composes these row molecules into a single-expansion worklist without
   importing domain models, data fetching, URL state, or pagination policy.
 - Network chart labels, including heatmap legend endpoints and Sankey labels,
@@ -51,7 +50,7 @@ boundaries, not missing atom wrappers.
    Their retained visual-review configuration still contains retired Storybook
    URLs. Give the standalone examples stable preview routes and update the
    checks; do not restore workflow entries simply to satisfy old checks.
-5. **Continue concrete Logistics Services adoption.**
+5. **Continue concrete component adoption.**
    Extract provider-independent compositions with explicit inputs before
    importing full screens. Preserve their established navigation and content
    hierarchy rather than imposing a universal title/subtitle convention.
