@@ -69,6 +69,7 @@ export default defineConfig({
         [
           "react",
           "echarts",
+          "@dagrejs/dagre",
           "maplibre-gl",
           "react-dom",
           "vitest",

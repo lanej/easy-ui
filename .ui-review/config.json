@@ -119,6 +119,18 @@
           "setup": ".ui-review/checkpoints/score-charts-dark.mjs"
         }
       ]
+    },
+    {
+      "name": "dependency-graph",
+      "path": "/dependency-graph.html",
+      "ready": "[data-dependency-graph] [data-graph-node]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-large-dark",
+      "path": "/dependency-graph.html?large=1&dark=1",
+      "ready": "[data-dependency-graph] [data-graph-node]",
+      "viewports": ["desktop", "mobile"]
     }
   ],
   "viewports": [

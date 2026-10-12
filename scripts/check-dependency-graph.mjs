@@ -1,0 +1,248 @@
+import assert from "node:assert/strict";
+import { createRequire } from "node:module";
+import { mkdir, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+
+const require = createRequire(import.meta.url);
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE ?? "playwright");
+const base = process.env.STORYBOOK_URL ?? "http://127.0.0.1:9018";
+const output = resolve(
+  process.env.FACILITY_REPORT_DIR ?? "/tmp/easy-ui-metrics",
+  "dependency-graph",
+);
+await mkdir(output, { recursive: true });
+const browser = await chromium.launch({
+  executablePath: process.env.BROWSER_EXECUTABLE_PATH,
+  args: JSON.parse(process.env.BROWSER_LAUNCH_ARGS ?? "[]"),
+});
+const page = await browser.newPage();
+const errors = [];
+const checks = [];
+page.on("pageerror", (error) => errors.push(error.message));
+page.on("console", (event) => {
+  if (["warning", "error"].includes(event.type()))
+    errors.push(`${event.type()}: ${event.text()}`);
+});
+async function open(story, theme = "light") {
+  await page.goto(
+    `${base}/iframe.html?id=components-dependencygraph--${story}&viewMode=story&globals=colorScheme:${theme}`,
+  );
+  await page.locator("[data-dependency-graph]").waitFor();
+  await page.evaluate(() => document.fonts.ready);
+}
+async function accessibility(name) {
+  await page.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
+  let result;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      result = await page.evaluate(async () =>
+        axe.run(document.querySelector("#storybook-root"), {
+          runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa"] },
+        }),
+      );
+      break;
+    } catch (error) {
+      if (!String(error).includes("already running") || attempt === 59)
+        throw error;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+  assert.deepEqual(
+    result.violations.map(({ id, nodes }) => ({
+      id,
+      targets: nodes.map(({ target }) => target),
+    })),
+    [],
+    `${name}: accessibility`,
+  );
+  return result.incomplete.map(({ id }) => id);
+}
+try {
+  for (const theme of ["light", "dark"])
+    for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: 1000 });
+      for (const story of [
+        "replacement-review",
+        "collapsed-modules",
+        "partial-evidence",
+        "cyclic-relationships",
+        "thousand-resources",
+      ]) {
+        const name = `${story}-${theme}-${width}`;
+        await open(story, theme);
+        const geometry = await page.evaluate(() => {
+          const boxes = [
+            ...document.querySelectorAll("[data-graph-item-card]"),
+          ].map((node) => {
+            const { left, right, top, bottom } = node.getBoundingClientRect();
+            return { left, right, top, bottom };
+          });
+          return {
+            overflow: document.documentElement.scrollWidth - innerWidth,
+            boxes,
+          };
+        });
+        assert.ok(geometry.overflow <= 1, `${name}: page overflow`);
+        for (let a = 0; a < geometry.boxes.length; a++)
+          for (let b = a + 1; b < geometry.boxes.length; b++) {
+            const first = geometry.boxes[a],
+              second = geometry.boxes[b];
+            assert.ok(
+              first.right <= second.left ||
+                second.right <= first.left ||
+                first.bottom <= second.top ||
+                second.bottom <= first.top,
+              `${name}: overlapping resource cards`,
+            );
+          }
+        if (story === "thousand-resources")
+          assert.ok(
+            geometry.boxes.length <= 5,
+            `${name}: bounded grouped neighborhood`,
+          );
+        checks.push({
+          name,
+          ...geometry,
+          accessibilityIncomplete: await accessibility(name),
+        });
+        if (story === "replacement-review" && width !== 320)
+          await page
+            .locator("[data-dependency-graph]")
+            .screenshot({ path: resolve(output, `${name}.png`) });
+      }
+    }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await open("replacement-review");
+  const viewport = page.locator("[data-graph-canvas]");
+  await viewport.evaluate((element) => {
+    element.scrollLeft = 100;
+    element.scrollTop = 50;
+  });
+  const before = await page
+    .locator("[data-graph-item-card]")
+    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("style")));
+  const camera = await viewport.evaluate((element) => [
+    element.scrollLeft,
+    element.scrollTop,
+  ]);
+  await page
+    .getByRole("button", { name: /^Shipping API, Update/ })
+    .press("Enter");
+  await page
+    .locator("[data-graph-details] h3")
+    .filter({ hasText: /^Shipping API$/ })
+    .waitFor();
+  assert.equal(
+    await page.locator("[data-graph-details] h3").innerText(),
+    "Shipping API",
+  );
+  assert.deepEqual(
+    await page
+      .locator("[data-graph-item-card]")
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("style"))),
+    before,
+    "Selection preserves coordinates",
+  );
+  // Native keyboard focus can scroll to a node; a data refresh must then retain that camera.
+  const selectedCamera = await viewport.evaluate((element) => [
+    element.scrollLeft,
+    element.scrollTop,
+  ]);
+  await page.getByRole("button", { name: "Expand one level" }).click();
+  assert.ok(
+    (await page.locator("[data-dependency-graph]").innerText()).includes(
+      "Dependents of Application subnet",
+    ),
+    "Selection does not silently move the traversal anchor",
+  );
+  assert.deepEqual(
+    await viewport.evaluate((element) => [
+      element.scrollLeft,
+      element.scrollTop,
+    ]),
+    selectedCamera,
+    "Neighborhood expansion preserves camera",
+  );
+  await page
+    .getByRole("searchbox", { name: "Find resource" })
+    .fill("Database DNS");
+  await page
+    .getByRole("region", { name: "Resource search results" })
+    .getByRole("button", { name: /Database DNS/ })
+    .press("Enter");
+  await page
+    .locator('[data-graph-node="azurerm_private_dns_zone.database"]')
+    .waitFor();
+  assert.equal(
+    await page.locator("[data-graph-details] h3").innerText(),
+    "Database DNS",
+    "Search reveals a previously hidden module member",
+  );
+  await page
+    .getByRole("button", { name: /^Database DNS, Unchanged/ })
+    .press("ArrowRight");
+  assert.ok(
+    await page.evaluate(() =>
+      document.activeElement.hasAttribute("data-graph-item"),
+    ),
+    "Arrow-key resource navigation",
+  );
+  checks.push({
+    name: "keyboard-exploration-and-camera",
+    camera,
+    selectedCamera,
+  });
+  await open("collapsed-modules");
+  const details = page.locator("[data-graph-details]");
+  await details
+    .getByRole("button", {
+      name: /Application subnet.*Shipping API.*Network attachment/,
+    })
+    .press("Enter");
+  await details
+    .locator("h3")
+    .filter({ hasText: /^Network attachment$/ })
+    .waitFor();
+  assert.equal(await details.locator("h3").innerText(), "Network attachment");
+  assert.ok(
+    (await details.innerText()).includes("api.infrastructure_subnet_id"),
+    "Selected edge retains supplied evidence",
+  );
+  await details
+    .getByRole("button", { name: "Inspect dependent" })
+    .press("Enter");
+  await details
+    .locator("h3")
+    .filter({ hasText: /^Shipping API$/ })
+    .waitFor();
+  assert.equal(await details.locator("h3").innerText(), "Shipping API");
+  await page.getByRole("button", { name: "Reveal selected resource" }).click();
+  await page.locator('[data-graph-node="azurerm_container_app.api"]').waitFor();
+  checks.push({ name: "collapsed-group-original-edge-and-node-identities" });
+  await open("replacement-review", "dark");
+  await page.evaluate(() => (document.documentElement.style.fontSize = "20px"));
+  await page.setViewportSize({ width: 320, height: 1000 });
+  await page.getByRole("button", { name: "Fit visible" }).click();
+  assert.ok(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1,
+    ),
+    "Enlarged text does not overflow the page",
+  );
+  await accessibility("enlarged-text");
+  await page
+    .locator("[data-dependency-graph]")
+    .screenshot({ path: resolve(output, "enlarged-text-dark-320.png") });
+  checks.push({ name: "enlarged-text-dark-320" });
+  assert.deepEqual(errors, [], "Runtime diagnostics");
+  console.log(`DependencyGraph: ${checks.length} browser cases passed.`);
+} catch (error) {
+  errors.push(error.stack ?? String(error));
+  throw error;
+} finally {
+  await writeFile(
+    resolve(output, "results.json"),
+    JSON.stringify({ checks, errors }, null, 2),
+  );
+  await browser.close();
+}

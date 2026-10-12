@@ -1,0 +1,65 @@
+import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import * as Stories from "./DependencyGraph.stories";
+
+<Meta of={Stories} />
+
+# DependencyGraph
+
+Investigate directed resource dependencies with focused neighborhoods, collapsed groups, readable HTML nodes, and linked resource/relationship selection. Use `GraphChart` for a general analytical node-link chart.
+
+<Canvas of={Stories.ReplacementReview} />
+
+## Smallest input
+
+Import from `@easypost/easy-ui/DependencyGraph` with the normal Easy UI Provider and stylesheet. No ECharts peer or engine configuration is required.
+
+```tsx
+<DependencyGraph
+  title="Service dependencies"
+  nodes={[
+    { id: "subnet", label: "Application subnet", change: "replace" },
+    { id: "api", label: "API service" },
+  ]}
+  edges={[{ id: "subnet-api", source: "subnet", target: "api" }]}
+/>
+```
+
+An arrow runs **from a dependency to its dependent**: `subnet → api` means the API depends on the subnet. Translate reverse-oriented Terraform/OpenTofu relationships in the application. Easy UI does not infer resources, edges, risk, execution order, or operational blast radius.
+
+## Investigation and selection
+
+Choose a resource, then use **Dependencies**, **Dependents**, or **Connected resources** to focus a bounded neighborhood. **Expand one level** grows the same anchor's neighborhood; selecting another visible resource updates the inspector without moving the anchor. **Changes + context** includes changed resources plus one level in both directions. An explicitly supplied `depth: 0` shows only the seed resources. Traversal uses only supplied edges; `onViewChange` can request more evidence from an application API.
+
+`selection`, `view`, and `collapsedGroupIds` are independently controllable. Their `default*` counterparts initialize local state. Callbacks return stable original IDs so a change row, graph node, and application inspector can share selection. Use `showDetails={false}` and `DependencyGraphDetails` for a separately placed inspector, or `renderDetails` to append a diff or evidence to the standard details.
+
+<Canvas of={Stories.LinkedInspector} />
+
+Groups are flat visual boundaries. The caller chooses root/module membership using `groupId`; expanded groups have a labeled boundary. Collapse replaces the member nodes with a summary. Connections between collapsed groups bundle the original edge IDs; selecting a bundle lists every supplied relationship separately. Relationships inside a collapsed group remain available in group details. Grouping never turns a module into a resource or fabricates an edge.
+
+<Canvas of={Stories.CollapsedModules} />
+
+## Layout, scale, and accessibility
+
+Dagre handles directed layout, cycles, self-links, and disconnected components. Stable IDs are sorted before layout. Selection, search, highlighting, and neighborhood filtering preserve coordinates and pan/zoom; changing actual graph topology or group collapse state can relayout the graph. The viewport retains its camera until **Fit visible** is requested. Fit retains 100% on narrow canvases and stops at 75% on wider ones; large graphs scroll rather than shrinking into an unreadable whole-infrastructure diagram.
+
+Use groups and bounded neighborhoods for large plans. The initial scale story supplies 1,000 nodes while rendering only the visible grouped neighborhood. Layout is synchronous and uses the supplied projected graph; this is not an unbounded graph engine or a claim of tested performance beyond that fixture. Querying and relationship discovery stay in the application.
+
+Tab focuses HTML node controls; arrow keys move to a resource in that direction, and Enter/Space selects it. The viewport supports normal keyboard/trackpad scrolling. SVG connections are pointer-selectable; the same relationships are keyboard-selectable in resource/group details. Search reaches resources hidden by grouping or scope. Long labels have a full accessible name; exact IDs and descriptions appear in selection details.
+
+<Canvas of={Stories.ThousandResources} />
+<Canvas of={Stories.Narrow} />
+
+## Evidence and state
+
+Supply `coverage` when the application knows whether relationship evidence is complete, partial, or unknown. Complete describes the supplied evidence scope; it does not establish complete runtime impact. Missing endpoints are exposed as unresolved relationships and remain selectable. An empty supplied relationship set is not presented as proof of isolation. Duplicate node, edge, or group IDs produce a visible input error.
+
+Use `variant="dashed"` on an edge for a caller-defined distinction and explain its meaning through `label`/`description`. Use `highlightedEdgeIds` for a caller-computed path. Missing change metadata is displayed as unknown. Create, update, replace, delete, and unchanged have explicit labels as well as theme-aware colors; change kinds are not risk scores.
+
+<Canvas of={Stories.PartialEvidence} />
+<Canvas of={Stories.CyclicRelationships} />
+<Canvas of={Stories.HighlightedPath} />
+<Canvas of={Stories.Loading} />
+<Canvas of={Stories.Empty} />
+<Canvas of={Stories.Error} />
+
+<ArgTypes />

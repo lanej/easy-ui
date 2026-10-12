@@ -111,3 +111,12 @@ For map composition, import `NetworkMapSurface`, `NetworkMapProvider`,
 `NetworkMapInspectionTrigger` from `@easypost/easy-ui/NetworkMap`.
 Follow the package README for MapLibre stylesheet and worker setup. Use
 `GraphChart` for abstract relationships without geographical coordinates.
+
+## Dependency investigation
+
+Import `DependencyGraph` and `DependencyGraphDetails` from
+`@easypost/easy-ui/DependencyGraph`. Supply stable node/edge IDs; arrows run
+from dependency to dependent. The organism owns directed layout, bounded
+neighborhoods, group collapse, search, and linked selection. Applications own
+relationship discovery, evidence, change kinds, and risk. Read its Storybook
+examples and types before using the independently controlled view and selection.

@@ -1,0 +1,37 @@
+@use "../styles/common" as *;
+
+.diff {
+  border-block-start: 1px solid design-token("color.neutral.200");
+  margin-block-start: 16px;
+  padding-block-start: 8px;
+  dl {
+    display: grid;
+    gap: 8px;
+    margin: 8px 0;
+  }
+  dl > div {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    gap: 8px;
+  }
+  dt {
+    color: design-token("color.neutral.700");
+  }
+  dd {
+    margin: 0;
+  }
+  p {
+    color: design-token("color.neutral.700");
+    font-size: 0.8125rem;
+  }
+}
+.linked {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+@media (min-width: 1100px) {
+  .linked {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+}

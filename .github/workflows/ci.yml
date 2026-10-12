@@ -66,6 +66,7 @@ jobs:
           node scripts/check-facility-summary.mjs
           node scripts/check-chart-catalog.mjs
           node scripts/check-proportion-bar.mjs
+          node scripts/check-dependency-graph.mjs
       - name: Retain facility, chart, and proportion browser evidence
         if: always()
         uses: actions/upload-artifact@v4
