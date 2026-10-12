@@ -260,18 +260,22 @@ export type MapFocus = {
   maxZoom?: number;
 };
 
-/** A caller-defined group of journey locations to focus within the same map. */
+/** A caller-defined group of journey locations shown in an embedded close-up inset. */
 export type NetworkMapZoomSection = {
-  /** Stable, unique ID for the section's focus control. */
+  /** Stable, unique ID. Keeps this section's map and camera across record updates. */
   id: string;
   title: string;
   description?: string;
-  /** Fit these valid locations without filtering the journey's facilities or connections. */
+  /** Only these facilities and connections with both endpoints in this group are shown. */
   facilityIds: readonly string[];
+  /** Inset viewport height in CSS pixels. Defaults to 260; minimum 220. */
+  height?: number;
   /** Upper zoom bound when fitting this section. Defaults to 13. */
   maxZoom?: number;
-  /** Change to refit this section only while it is active. Data alone preserves pan/zoom. */
+  /** Change to explicitly refit after updating the section's locations. Data alone preserves pan/zoom. */
   focusRevision?: string | number;
+  /** Receives this section's initialized map, separately from the overview's onMapReady. */
+  onMapReady?: NetworkMapProps["onMapReady"];
 };
 
 /** Built-in controls. An omitted or true flag shows a control only when it is applicable. */
@@ -348,7 +352,7 @@ export type NetworkMapProps = {
   facilities?: readonly MapFacility[];
   /** Ordered connections in that cohort. */
   segments?: readonly MapSegment[];
-  /** Optional section focus controls for the same map, alongside an entire-journey action. */
+  /** Optional close-up insets embedded in the journey viewport, sharing selection and layer visibility. */
   zoomSections?: readonly NetworkMapZoomSection[];
   /** Optional time-filtered weather/disruption polygons. */
   areas?: readonly MapArea[];

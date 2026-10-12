@@ -1,7 +1,7 @@
 import React from "react";
 import type { NetworkMapProps } from "./types";
 import { NetworkMapProvider } from "./NetworkMapContext";
-import { NetworkMapSurface } from "./NetworkMapSurface";
+import { NetworkMapViewport } from "./NetworkMapViewport";
 import {
   NetworkMapHeading,
   NetworkMapControlPanel,
@@ -19,6 +19,7 @@ export function NetworkMap(props: NetworkMapProps) {
       <div
         className={styles.root}
         data-fill-height={props.height === "fill" || undefined}
+        data-has-insets={Boolean(props.zoomSections?.length) || undefined}
         style={visualizationTypographyStyle(props.typography)}
       >
         <NetworkMapHeading />
@@ -33,7 +34,7 @@ export function NetworkMap(props: NetworkMapProps) {
           >
             <NetworkMapControlPanel />
           </div>
-          <NetworkMapSurface />
+          <NetworkMapViewport />
         </div>
         {props.showSelectionDetails !== false && <NetworkMapSelectionDetails />}
         {props.showLegend !== false && <NetworkMapLegend />}

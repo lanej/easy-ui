@@ -4,6 +4,7 @@ export { NetworkMapInspectionTrigger } from "./NetworkMapInspectionTrigger";
 export type { NetworkMapInspectionTriggerProps } from "./NetworkMapInspectionTrigger";
 export { NetworkMapSurface } from "./NetworkMapSurface";
 export { NetworkMapZoomSections } from "./NetworkMapZoomSections";
+export { NetworkMapViewport } from "./NetworkMapViewport";
 export { NetworkMapCellDetails } from "./NetworkMapCellDetails";
 export type { NetworkMapCellDetailsProps } from "./NetworkMapCellDetails";
 export {

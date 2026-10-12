@@ -458,6 +458,12 @@
 .mapFrame {
   position: relative;
 }
+.geography {
+  position: relative;
+  container-name: network-map;
+  container-type: inline-size;
+  min-inline-size: 0;
+}
 .root[data-fill-height="true"] {
   block-size: 100%;
   display: flex;
@@ -470,6 +476,15 @@
     flex: 1 1 0;
     min-block-size: 220px;
   }
+  .geography {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-block-size: 220px;
+  }
+  &[data-has-insets="true"] {
+    min-block-size: min-content;
+  }
 }
 .viewport[data-fill-height="true"] {
   flex: 1 1 0;
@@ -479,6 +494,9 @@
     inset: 0;
   }
 }
+.geography[data-has-insets="true"] .viewport[data-fill-height="true"] {
+  min-block-size: 560px;
+}
 .overMapControls {
   position: absolute;
   inset-block-start: 10px;
@@ -486,16 +504,6 @@
   inset-inline-end: 50px;
   z-index: 7;
   pointer-events: none;
-  [data-map-zoom-sections] {
-    padding: 0;
-    margin-block-end: 8px;
-    p {
-      inline-size: fit-content;
-      background: design-token("color.neutral.000");
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-  }
   .toolbar {
     padding: 0;
     justify-content: flex-start;

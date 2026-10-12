@@ -8,7 +8,6 @@ import type {
 import { useId } from "react-aria";
 import { useNetworkMap } from "./NetworkMapContext";
 import { NetworkMapToolbar } from "./NetworkMapToolbar";
-import { NetworkMapZoomSections } from "./NetworkMapZoomSections";
 import { NetworkMapCellDetails } from "./NetworkMapCellDetails";
 import { defaultDeliverySurfaceColorScale } from "./surfaceRendering";
 import { visualizationTypographyStyle } from "../visualization/typography";
@@ -94,36 +93,27 @@ export function NetworkMapControlPanel() {
     commands,
   } = useNetworkMap();
   return (
-    <>
-      <NetworkMapZoomSections />
-      <NetworkMapToolbar
-        accessibleName={accessibleName}
-        labelledBy={options["aria-labelledby"]}
-        controls={{
-          ...controls,
-          fitAll:
-            options.zoomSections?.length && !options.toolbarControls
-              ? false
-              : controls.fitAll,
-        }}
-        labels={options.controlLabels}
-        toolbarControls={
-          options.controls === false ? [] : options.toolbarControls
-        }
-        overlays={options.overlays}
-        onOverlayVisibilityChange={changeOverlayVisibility}
-        ready={state === "ready"}
-        visibility={visibility}
-        onVisibilityChange={changeVisibility}
-        onFitAll={() => commands.current.fitAll()}
-        onSelectedSegment={() => commands.current.selectedSegment()}
-        onLatestEvent={() => commands.current.latestEvent()}
-        metrics={options.surface?.metrics}
-        activeMetricKey={activeMetric?.key}
-        onMetricChange={setActiveMetric}
-        style={visualizationTypographyStyle(options.typography)}
-      />
-    </>
+    <NetworkMapToolbar
+      accessibleName={accessibleName}
+      labelledBy={options["aria-labelledby"]}
+      controls={controls}
+      labels={options.controlLabels}
+      toolbarControls={
+        options.controls === false ? [] : options.toolbarControls
+      }
+      overlays={options.overlays}
+      onOverlayVisibilityChange={changeOverlayVisibility}
+      ready={state === "ready"}
+      visibility={visibility}
+      onVisibilityChange={changeVisibility}
+      onFitAll={() => commands.current.fitAll()}
+      onSelectedSegment={() => commands.current.selectedSegment()}
+      onLatestEvent={() => commands.current.latestEvent()}
+      metrics={options.surface?.metrics}
+      activeMetricKey={activeMetric?.key}
+      onMetricChange={setActiveMetric}
+      style={visualizationTypographyStyle(options.typography)}
+    />
   );
 }
 

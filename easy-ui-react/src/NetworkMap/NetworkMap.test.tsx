@@ -2852,168 +2852,52 @@ it("retains exact low probabilities and encoded connection values when the engin
   expect(transfers).toHaveTextContent("1, 2; 3, 4");
 });
 
-describe("journey section focus in one map", () => {
-  const journey: NetworkMapProps = {
-    ...props,
-    facilities: [
-      ...props.facilities,
-      {
-        id: "acceptance",
-        label: "Acceptance",
-        kind: "hub",
-        coordinates: [-122.02, 37.97],
-      },
-      {
-        id: "delivery",
-        label: "Delivery",
-        kind: "destination",
-        coordinates: [-83.2, 42.3],
-      },
-      { id: "invalid", label: "Unknown", kind: "hub", coordinates: [NaN, 0] },
+it("reserves the inset band when fitting the full journey", async () => {
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(660);
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+    function (this: HTMLElement) {
+      return this.hasAttribute("data-map-zoom-sections")
+        ? new DOMRect(12, 340, 776, 276)
+        : new DOMRect(0, 0, 800, 660);
+    },
+  );
+  render(
+    <NetworkMapProvider
+      {...props}
+      height={660}
+      zoomSections={[{ id: "origin", title: "Origin", facilityIds: ["one"] }]}
+    >
+      <div data-map-geography>
+        <NetworkMapSurface />
+        <div data-map-zoom-sections />
+      </div>
+    </NetworkMapProvider>,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  act(() => listeners.load());
+  expect(fitBounds).toHaveBeenLastCalledWith(
+    [
+      [-122, 38],
+      [-122, 38],
     ],
-    segments: [
-      {
-        id: "first",
-        label: "Origin handoff",
-        from: "one",
-        to: "acceptance",
-        evidence: "transfer",
-      },
-      {
-        id: "long",
-        label: "Long transfer",
-        from: "acceptance",
-        to: "delivery",
-        evidence: "planned",
-      },
-    ],
-    zoomSections: [
-      {
-        id: "origin",
-        title: "Origin detail",
-        facilityIds: ["one", "acceptance", "one", "missing", "invalid"],
-        maxZoom: 14,
-      },
-      {
-        id: "destination",
-        title: "Destination detail",
-        facilityIds: ["delivery"],
-      },
-    ],
-    showDataTable: false,
-  };
-  async function load() {
-    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
-    act(() => listeners.load());
-    fitBounds.mockClear();
-  }
-  it("fits valid section locations without filtering the journey, changing selection or replacing the map", async () => {
-    render(<NetworkMap {...journey} selectedFacilityId="delivery" />);
-    await load();
-    fireEvent.click(screen.getByRole("button", { name: "Origin detail" }));
-    expect(fitBounds).toHaveBeenCalledOnce();
-    expect(fitBounds.mock.lastCall![0][0][0]).toBeCloseTo(-122.02);
-    expect(fitBounds.mock.lastCall![0][1][0]).toBeCloseTo(-122);
-    expect(fitBounds.mock.lastCall![1]).toMatchObject({ maxZoom: 14 });
-    expect(props.onFacilitySelect).not.toHaveBeenCalled();
-    expect(
-      screen.getByRole("button", { name: "Select Delivery" }),
-    ).toHaveAttribute("aria-pressed", "true");
-    expect(sourceDefs.get("easy-ui-transfers")?.data).toMatchObject({
-      features: [
-        expect.anything(),
-        expect.objectContaining({
-          properties: expect.objectContaining({ evidence: "planned" }),
-        }),
-      ],
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Destination detail" }));
-    expect(fitBounds.mock.lastCall![1]).toMatchObject({ maxZoom: 13 });
-    fireEvent.click(screen.getByRole("button", { name: "Entire journey" }));
-    expect(fitBounds.mock.lastCall![1]).toMatchObject({ maxZoom: 11 });
-    expect(constructor).toHaveBeenCalledOnce();
-  });
-  it("preserves the requested view through selection, refresh and reordering, with explicit active-only refits", async () => {
-    const { rerender } = render(<NetworkMap {...journey} />);
-    await load();
-    fireEvent.click(screen.getByRole("button", { name: "Origin detail" }));
-    fitBounds.mockClear();
-    const update = {
-      ...journey,
-      facilities: journey.facilities!.map((facility) => ({
-        ...facility,
-        detail: "Updated",
-      })),
-      zoomSections: [...journey.zoomSections!].reverse(),
-    };
-    rerender(
-      <NetworkMap
-        {...update}
-        selectedFacilityId="acceptance"
-        layerVisibility={{ risk: false }}
-      />,
-    );
-    expect(fitBounds).not.toHaveBeenCalled();
-    expect(
-      screen.getByRole("button", { name: "Origin detail" }),
-    ).toHaveAttribute("aria-pressed", "true");
-    rerender(
-      <NetworkMap
-        {...update}
-        zoomSections={update.zoomSections.map((section) =>
-          section.id === "destination"
-            ? { ...section, focusRevision: 2 }
-            : section,
-        )}
-      />,
-    );
-    expect(fitBounds).not.toHaveBeenCalled();
-    rerender(
-      <NetworkMap
-        {...update}
-        zoomSections={update.zoomSections.map((section) => ({
-          ...section,
-          focusRevision: 3,
-        }))}
-      />,
-    );
-    expect(fitBounds).toHaveBeenCalledOnce();
-    fireEvent.click(screen.getByRole("button", { name: "Origin detail" }));
-    expect(fitBounds).toHaveBeenCalledTimes(2);
-    rerender(
-      <NetworkMap
-        {...update}
-        focus={{ revision: "external", facilityIds: ["delivery"] }}
-      />,
-    );
-    expect(
-      screen.getByRole("button", { name: "Origin detail" }),
-    ).toHaveAttribute("aria-pressed", "false");
-    expect(
-      screen.getByRole("button", { name: "Entire journey" }),
-    ).toHaveAttribute("aria-pressed", "false");
-    expect(constructor).toHaveBeenCalledOnce();
-  });
-  it("does not refit when an active section loses its mapped locations", async () => {
-    const { rerender } = render(<NetworkMap {...journey} />);
-    await load();
-    fireEvent.click(screen.getByRole("button", { name: "Destination detail" }));
-    fitBounds.mockClear();
-    rerender(
-      <NetworkMap
-        {...journey}
-        facilities={journey.facilities!.filter(
-          (facility) => facility.id !== "delivery",
-        )}
-      />,
-    );
-    expect(
-      screen.getByRole("button", { name: "Destination detail" }),
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: "Destination detail" }),
-    ).toHaveAttribute("aria-pressed", "false");
-    expect(fitBounds).not.toHaveBeenCalled();
-    expect(constructor).toHaveBeenCalledOnce();
+    expect.objectContaining({
+      padding: expect.objectContaining({ bottom: 344 }),
+    }),
+  );
+});
+
+it("keeps enough viewport height for the overview above its embedded insets", async () => {
+  const { container } = render(
+    <NetworkMap
+      {...props}
+      height={80}
+      zoomSections={[
+        { id: "empty", title: "Unmapped", facilityIds: ["missing"] },
+      ]}
+    />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  expect(container.querySelector("[data-map-state] > div")).toHaveStyle({
+    height: "560px",
   });
 });

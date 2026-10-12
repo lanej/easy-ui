@@ -59,17 +59,17 @@
     "designRules": ["DR-006", "DR-015"]
   },
   {
-    "id": "journey-map-and-focus-controls",
+    "id": "journey-map-with-insets",
     "pages": ["journey-sections", "journey-sections-large-text"],
     "type": "required-elements",
     "selector": "[data-journey-zoom-example]",
     "required": [
       "[data-map-state]",
-      "[data-map-zoom-section=\"origin\"] button",
-      "[data-map-zoom-section=\"destination\"] button"
+      "[data-map-zoom-section=\"origin\"] [data-map-state]",
+      "[data-map-zoom-section=\"destination\"] [data-map-state]"
     ],
     "severity": "error",
-    "reason": "One journey map retains focus controls for both local handoffs at every reviewed width.",
+    "reason": "One geographic frame retains the journey overview and close-up inset surfaces.",
     "designRules": ["DR-006", "DR-007"]
   },
   {
@@ -77,10 +77,10 @@
     "pages": ["journey-sections", "journey-sections-large-text"],
     "type": "within-bounds",
     "selector": "[data-map-zoom-section]",
-    "container": "[data-map-zoom-sections]",
+    "container": "[data-map-geography]",
     "tolerance": 1,
     "severity": "error",
-    "reason": "Section focus controls must fit their container when wrapping at narrow widths.",
+    "reason": "Inset cards must remain embedded within the geographic viewport at narrow and wide widths.",
     "designRules": ["DR-007"]
   }
 ]

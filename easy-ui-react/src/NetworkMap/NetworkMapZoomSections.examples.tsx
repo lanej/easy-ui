@@ -106,7 +106,7 @@ export function JourneyZoomExample({
           size="sm"
           onPress={() => setFocusRevision((value) => value + 1)}
         >
-          Refit active section
+          Refit insets
         </Button>
         <label>
           <input
@@ -128,12 +128,15 @@ export function JourneyZoomExample({
         zoomSections={sections.map((section) => ({
           ...section,
           focusRevision,
+          onMapReady: localBasemap
+            ? (map) => recordMap(section.id, map)
+            : undefined,
         }))}
         selectedFacilityId={selected}
         onFacilitySelect={setSelected}
         latestFacilityId="dbn"
         primaryFacilityIds={["oak", "slc", "chi", "dtw"]}
-        height={460}
+        height={largeText ? 780 : 660}
         controls={{ risk: false, latestEvent: false, selectedSegment: false }}
         controlLabels={{ fitAll: "Entire journey" }}
         layerVisibility={{ risk }}

@@ -1,28 +1,110 @@
 @use "../styles/common" as *;
 
 .sections {
-  min-inline-size: 0;
-  padding: 0 24px 16px;
+  position: absolute;
+  inset-inline: 12px;
+  inset-block-end: 44px;
+  z-index: 4;
+  pointer-events: none;
 }
-.buttons {
+.panels {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: design-token("space.2");
-  > span {
-    max-inline-size: 100%;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 12px;
+}
+.section {
+  flex: 0 1 340px;
+  max-inline-size: 340px;
+  min-inline-size: 0;
+  overflow: hidden;
+  border: 1px solid design-token("color.neutral.300");
+  border-radius: 8px;
+  box-shadow: 0 3px 14px #10274333;
+  background: design-token("color.neutral.000");
+  color: design-token("color.neutral.900");
+  pointer-events: auto;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 8px;
+  padding: 8px 10px;
+  h3 {
+    margin: 0;
+    font-size: var(--ezui-viz-control-size, 14px);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  p {
+    margin: 4px 0 0;
+    color: design-token("color.neutral.700");
+    font-size: var(--ezui-viz-label-size, 12px);
+    overflow-wrap: anywhere;
+  }
+  button {
+    flex-shrink: 0;
   }
 }
-.label {
+.controlLabel {
   font-size: var(--ezui-viz-control-size, 14px);
-  overflow-wrap: anywhere;
 }
-.description {
+.switcher {
+  display: none;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-end: 8px;
+  pointer-events: auto;
+}
+.empty {
+  min-block-size: 220px;
+  padding: 16px;
   color: design-token("color.neutral.700");
   font-size: var(--ezui-viz-description-size, 14px);
-  overflow-wrap: anywhere;
   p {
-    margin: design-token("space.2") 0 0;
+    margin: 0;
+  }
+}
+.leaders {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+  fill: none;
+  stroke: design-token("color.primary.600");
+  stroke-width: 1.5;
+  polyline {
+    stroke-dasharray: 4 4;
+  }
+  circle {
+    stroke-width: 2;
+  }
+}
+@container network-map (max-width: 700px) {
+  .switcher {
+    display: flex;
+  }
+  .panels {
+    display: grid;
+  }
+  .section {
+    grid-area: 1 / 1;
+    inline-size: 100%;
+    max-inline-size: none;
+    visibility: hidden;
+    opacity: 0;
+    z-index: 0;
+    pointer-events: none;
+    &[data-active="true"] {
+      visibility: visible;
+      opacity: 1;
+      z-index: 1;
+      pointer-events: auto;
+    }
   }
 }
 .example {

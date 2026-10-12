@@ -72,9 +72,8 @@ function NetworkMapSurfaceView() {
     zoom,
     setZoom,
     commands,
-    activeZoomSectionId,
-    setActiveZoomSectionId,
     surfaceOwner,
+    mapRef,
     accessibleName,
   } = useNetworkMap();
   const {
@@ -120,13 +119,27 @@ function NetworkMapSurfaceView() {
     (bounds: [[number, number], [number, number]] | null, maxZoom = 12) => {
       const current = instance.current;
       if (!current || !bounds) return;
-      const availableHeight = current.getContainer().clientHeight;
+      const element = current.getContainer();
+      const availableHeight = element.clientHeight;
+      const isInset = Boolean(element.closest("[data-map-zoom-section]"));
+      const insets = latest.current.zoomSections?.length
+        ? element
+            .closest("[data-map-geography]")
+            ?.querySelector("[data-map-zoom-sections]")
+        : null;
+      const reservedBottom = insets
+        ? availableHeight -
+          (insets.getBoundingClientRect().top -
+            element.getBoundingClientRect().top) +
+          24
+        : 0;
       current.fitBounds(bounds, {
         padding: {
           top: Math.min(70, Math.max(56, Math.round(availableHeight * 0.2))),
-          bottom: Math.min(
-            65,
-            Math.max(40, Math.round(availableHeight * 0.17)),
+          bottom: Math.max(
+            reservedBottom,
+            isInset ? 80 : 0,
+            Math.min(65, Math.max(40, Math.round(availableHeight * 0.17))),
           ),
           left: 65,
           right: 80,
@@ -161,7 +174,6 @@ function NetworkMapSurfaceView() {
     // after every setup, while reading current data from the stable ref.
     commands.current = {
       fitAll: () => {
-        setActiveZoomSectionId(null);
         const p = latest.current;
         const validFacilities = p.facilities.filter((f) =>
           validCoordinate(f.coordinates),
@@ -182,28 +194,12 @@ function NetworkMapSurfaceView() {
             ];
         flyToBounds(overlayFitBounds(points, p.overlays), 11);
       },
-      zoomSection: (id) => {
-        const p = latest.current;
-        const section = p.zoomSections?.find((item) => item.id === id);
-        if (!instance.current || !section) return;
-        const ids = section.facilityIds.filter((facilityId) =>
-          p.facilities.some(
-            (facility) =>
-              facility.id === facilityId &&
-              validCoordinate(facility.coordinates),
-          ),
-        );
-        if (!ids.length) return;
-        setActiveZoomSectionId(id);
-        fit(ids, section.maxZoom ?? 13);
-      },
       selectedSegment: () => {
         const p = latest.current;
         const segment = p.segments.find(
           (item) => item.id === p.selectedSegmentId,
         );
         if (segment) {
-          setActiveZoomSectionId(undefined);
           p.onFacilitySelect?.(segment.to);
           fit([segment.from, segment.to], 13);
         }
@@ -211,7 +207,6 @@ function NetworkMapSurfaceView() {
       latestEvent: () => {
         const id = latest.current.latestFacilityId;
         if (id) {
-          setActiveZoomSectionId(undefined);
           latest.current.onFacilitySelect?.(id);
           fit([id], 12);
         }
@@ -301,7 +296,9 @@ function NetworkMapSurfaceView() {
           trackResize: false,
         });
         instance.current = map;
+        mapRef.current = map;
         let loaded = false;
+        let insetAttributionCollapsed = false;
         let initialFitPending = !initial;
         const fitInitialView = () => {
           if (!loaded || !initialFitPending || element.clientWidth === 0)
@@ -423,6 +420,12 @@ function NetworkMapSurfaceView() {
             .closest("[data-map-frame]")
             ?.querySelector("[data-map-controls]");
           if (floating) controls.push(floating);
+          const insets = latest.current.zoomSections?.length
+            ? element
+                .closest("[data-map-geography]")
+                ?.querySelector("[data-map-zoom-sections]")
+            : null;
+          if (insets) controls.push(insets);
           for (const previous of observedControls) {
             if (!controls.includes(previous)) {
               observer?.unobserve?.(previous);
@@ -993,7 +996,22 @@ function NetworkMapSurfaceView() {
             );
         });
         map.on("idle", () => {
-          if (!disposed) element.dataset.mapIdle = "true";
+          if (disposed) return;
+          element.dataset.mapIdle = "true";
+          if (
+            !insetAttributionCollapsed &&
+            element.closest("[data-map-zoom-section]")
+          ) {
+            const attribution = element.querySelector<HTMLDetailsElement>(
+              ".maplibregl-ctrl-attrib.maplibregl-compact",
+            );
+            if (attribution) {
+              attribution.open = false;
+              attribution.classList.remove("maplibregl-compact-show");
+              insetAttributionCollapsed = true;
+              position();
+            }
+          }
         });
         map.on("movestart", () => {
           element.dataset.mapIdle = "false";
@@ -1019,11 +1037,9 @@ function NetworkMapSurfaceView() {
       setState("loading");
       commands.current = {
         fitAll() {},
-        zoomSection() {},
         selectedSegment() {},
         latestEvent() {},
       };
-      setActiveZoomSectionId(undefined);
       window.clearTimeout(deadline);
       refresh.current = null;
       refreshControls.current = null;
@@ -1038,6 +1054,7 @@ function NetworkMapSurfaceView() {
       detachInspection?.();
       instance.current?.remove();
       instance.current = null;
+      mapRef.current = null;
       inspectionEvents.close();
       overlayInspectionEvents.close();
     };
@@ -1048,8 +1065,8 @@ function NetworkMapSurfaceView() {
     commands,
     setState,
     setZoom,
-    setActiveZoomSectionId,
     surfaceOwner,
+    mapRef,
     fit,
     flyToBounds,
     inspectionEvents,
@@ -1101,7 +1118,6 @@ function NetworkMapSurfaceView() {
   ]);
   useEffect(() => {
     if (state !== "ready" || !options.focus) return;
-    setActiveZoomSectionId(undefined);
     const { bounds, facilityIds, maxZoom } = options.focus;
     if (bounds) {
       flyToBounds(
@@ -1117,53 +1133,6 @@ function NetworkMapSurfaceView() {
     // A camera request is keyed by revision. Data updates do not recenter the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.focus?.revision, state]);
-  const activeSection = options.zoomSections?.find(
-    (section) => section.id === activeZoomSectionId,
-  );
-  const externalFocusRevision = options.focus?.revision;
-  const previousSectionFocus = useRef<{
-    id?: string | null;
-    revision?: string | number;
-    externalRevision?: string | number;
-  }>({});
-  useEffect(() => {
-    const previous = previousSectionFocus.current;
-    previousSectionFocus.current = {
-      id: activeZoomSectionId,
-      revision: activeSection?.focusRevision,
-      externalRevision: externalFocusRevision,
-    };
-    if (!activeZoomSectionId) return;
-    // An external camera request wins over a section revision in the same update.
-    if (
-      externalFocusRevision !== undefined &&
-      previous.externalRevision !== externalFocusRevision
-    )
-      return;
-    const hasLocations = activeSection?.facilityIds.some((id) =>
-      facilities.some(
-        (facility) =>
-          facility.id === id && validCoordinate(facility.coordinates),
-      ),
-    );
-    if (!hasLocations) {
-      setActiveZoomSectionId(undefined);
-    } else if (
-      state === "ready" &&
-      previous.id === activeZoomSectionId &&
-      previous.revision !== activeSection?.focusRevision
-    ) {
-      commands.current.zoomSection(activeZoomSectionId);
-    }
-  }, [
-    activeZoomSectionId,
-    activeSection,
-    facilities,
-    state,
-    commands,
-    setActiveZoomSectionId,
-    externalFocusRevision,
-  ]);
   useEffect(() => {
     instance.current?.resize();
   }, [height]);
@@ -1210,7 +1179,12 @@ function NetworkMapSurfaceView() {
       <div
         ref={container}
         className={styles.canvas}
-        style={{ height: height === "fill" ? "100%" : Math.max(220, height) }}
+        style={{
+          height:
+            height === "fill"
+              ? "100%"
+              : Math.max(options.zoomSections?.length ? 560 : 220, height),
+        }}
       />
       {featureInspection && hasOverlayContent && (
         <NetworkMapCellPopover

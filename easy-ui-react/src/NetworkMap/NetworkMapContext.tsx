@@ -10,6 +10,7 @@ import { resolveMapControls } from "./controls";
 import { useLayerVisibility } from "./useLayerVisibility";
 import { useSurfaceMetric } from "./useSurfaceMetric";
 import { useOverlayVisibility } from "./useOverlayVisibility";
+import type { Map as MapInstance } from "maplibre-gl";
 import type {
   MapArea,
   MapFacility,
@@ -23,7 +24,6 @@ const emptyAreas: readonly MapArea[] = [];
 type MapState = "loading" | "ready" | "error";
 type MapCommands = {
   fitAll: () => void;
-  zoomSection: (id: string) => void;
   selectedSegment: () => void;
   latestEvent: () => void;
 };
@@ -45,14 +45,10 @@ function useMapState(input: NetworkMapProps) {
   );
   const [state, setState] = useState<MapState>("loading");
   const [zoom, setZoom] = useState(0);
-  // Null represents the full-route fit; undefined represents another camera request.
-  const [activeZoomSectionId, setActiveZoomSectionId] = useState<
-    string | null
-  >();
   const surfaceOwner = useRef<symbol | null>(null);
+  const mapRef = useRef<MapInstance | null>(null);
   const commands = useRef<MapCommands>({
     fitAll() {},
-    zoomSection() {},
     selectedSegment() {},
     latestEvent() {},
   });
@@ -68,10 +64,9 @@ function useMapState(input: NetworkMapProps) {
     setState,
     zoom,
     setZoom,
-    activeZoomSectionId,
-    setActiveZoomSectionId,
     commands,
     surfaceOwner,
+    mapRef,
     accessibleName: props["aria-label"] || props.title || "Map",
     controls: resolveMapControls(props),
   };

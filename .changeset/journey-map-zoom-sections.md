@@ -2,4 +2,4 @@
 "@easypost/easy-ui": minor
 ---
 
-Add opt-in NetworkMap zoom sections for journeys with long transfers and dense local handoffs. Section focus controls and an entire-journey action use one map canvas while preserving the full route, controlled selection, evidence styling and layer visibility. Export NetworkMapZoomSections for custom control placement.
+Add opt-in NetworkMap zoom sections as close-up insets embedded within the journey map. Keep the full route visible above the inset area, connect insets to overview locations, and share selection and layer visibility while preserving independent cameras. Include a compact inset switch for narrow containers and export NetworkMapViewport for custom composition.

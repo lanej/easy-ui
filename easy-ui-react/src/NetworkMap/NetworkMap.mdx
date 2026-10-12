@@ -127,7 +127,7 @@ Regional throughput, expected volume, operating capacity, dwell, backlog and con
 
 <Canvas of={NetworkMapStories.ZoomedJourney} />
 
-Use `zoomSections` when long transfers compress the origin and destination handoffs into overlapping markers. **Entire journey**, **Origin** and **Destination** focus controls use the same map canvas. A section fits its supplied locations; the full set of facilities and connections remains in the map. Selecting a section moves the camera without changing the selected tracking record.
+Use `zoomSections` when long transfers compress the origin and destination handoffs into overlapping markers. The full journey stays visible in one geographic frame, with origin and destination close-ups embedded over its lower corners. Leader lines connect the visible insets to their locations on the overview. The overview fits above the inset area so the cards do not cover route stops or labels.
 
 ```tsx
 <NetworkMap
@@ -155,13 +155,13 @@ Use `zoomSections` when long transfers compress the origin and destination hando
 />
 ```
 
-The caller defines the groups; geographic proximity does not establish journey membership. Use stable, unique section IDs and the same facility IDs as the journey. Repeated scans at one facility still share one marker. Unknown IDs and invalid coordinates are ignored when fitting. A section with no mapped locations has a disabled focus control and an explicit unavailable message.
+The caller defines the groups; geographic proximity does not establish journey membership. Use stable, unique section IDs and the same facility IDs as the overview. Each inset shows its valid facilities and connections whose endpoints are both in that group. Unknown IDs and invalid coordinates are omitted. An unmapped section shows an explicit empty state.
 
-Selection and immutable record refreshes preserve the map instance and camera. Click a section again to refit after panning, or use **Entire journey** to return to the full route. A section's `focusRevision` explicitly requests a refit only while that section is active; its `maxZoom` defaults to 13. An external `focus` request or another camera action clears the active section. Free pan/zoom remains available within any requested view.
+The insets share controlled selection, evidence styling, layer visibility, overlays and inspection renderers with the overview. Selecting a stop or refreshing immutable records preserves every camera. Each **Fit section** control refits only its inset; `focusRevision` requests an explicit refit after location updates. Each inset's `maxZoom` defaults to 13 and its viewport `height` defaults to 260px (minimum 220px). The overview retains the full route and its **Entire journey** action.
 
-`NetworkMapControlPanel` includes the focus controls when `zoomSections` is supplied. With a custom `NetworkMapProvider` layout, use the exported `NetworkMapZoomSections` on its own when only the journey view controls are needed. `controls={false}` hides them; `controls={{ fitAll: false }}` hides the entire-journey action. A configured toolbar `fitAll` action takes the place of the default return control. The controls wrap in narrow containers and retain the declared typography sizes.
+At widths up to 700px, a compact switch chooses one visible inset while the overview remains visible above it. Hidden insets retain their cameras and stay out of keyboard and screen-reader navigation. Wider containers show the close-ups together. The main viewport has a minimum height of 560px when insets are present; use a taller viewport for larger text or long inset descriptions. `controls={false}` hides inset camera controls and the narrow-layout switch too.
 
-One surface, legend, selected-record detail and optional data disclosure serve the journey. Sections create no additional MapLibre instances. The existing `focus`, `initialView`, `height` and `onMapReady` props still describe this one map.
+One legend, selected-record detail and optional data disclosure serve the whole journey. Use `NetworkMapViewport` under `NetworkMapProvider` for custom layouts that need the same embedded composition. The exported `NetworkMapZoomSections` belongs inside a relative geographic viewport alongside `NetworkMapSurface`. Each inset uses its own MapLibre surface with provider attribution, so additional insets incur rendering and tile requests. Keep the number of sections bounded.
 
 <Canvas of={NetworkMapStories.ZoomedJourneyNarrow} />
 
