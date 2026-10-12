@@ -109,11 +109,15 @@ that path automatically. The root order lives in `preview.tsx`.
 
 Do not add component levels above Organisms. The discovery globs in `main.ts`
 include component stories outside `src/examples` by default. Within
-`src/examples`, only standalone chart, map, and encoding stories are included;
+`src/examples`, only standalone chart and map stories are included;
 workflow demos such as pricing review and network investigation remain outside
 the catalog. Their source is retained for standalone examples and tests.
 New stories must demonstrate a reusable component, not reintroduce a workflow
 category.
+
+Design-audit exercises, including deliberately misleading encoding comparisons,
+belong in the standalone examples. Chart-selection and usage guidance belongs
+alongside the reusable chart catalog and component documentation.
 
 When moving an existing entry, preserve its metadata `id`. Entries moved from the
 previous hierarchy have explicit legacy IDs so bookmarks, documentation URLs,
