@@ -524,6 +524,42 @@ it("moves controls without replacing the map, canvas, or camera", async () => {
   }
 });
 
+it("names the native canvas distinctly and updates external heading associations without replacing the map", async () => {
+  const view = render(
+    <>
+      <h2 id="route-heading">Tracking path</h2>
+      <NetworkMap {...props} />
+    </>,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  const instance = constructor.mock.calls[0][0];
+  const canvas = instance.getCanvas();
+  expect(canvas).toHaveAttribute("aria-label", "Network interactive map");
+  view.rerender(
+    <>
+      <h2 id="route-heading">Tracking path</h2>
+      <NetworkMap {...props} aria-labelledby="route-heading" />
+    </>,
+  );
+  const ids = canvas.getAttribute("aria-labelledby")!.split(" ");
+  expect(ids[0]).toBe("route-heading");
+  expect(document.getElementById(ids[1])).toHaveTextContent("interactive map");
+  expect(canvas).not.toHaveAttribute("aria-label");
+  view.rerender(
+    <>
+      <h2 id="route-heading">Tracking path</h2>
+      <NetworkMap {...props} aria-label="Updated journey" />
+    </>,
+  );
+  expect(canvas).toHaveAttribute(
+    "aria-label",
+    "Updated journey interactive map",
+  );
+  expect(canvas).not.toHaveAttribute("aria-labelledby");
+  expect(constructor).toHaveBeenCalledTimes(1);
+});
+
 it("calls onMapReady exactly once, with the live map instance, only after the component's own layer setup", async () => {
   const onMapReady = vi.fn(() => callOrder.push("onMapReady"));
   const view = render(<NetworkMap {...props} onMapReady={onMapReady} />);

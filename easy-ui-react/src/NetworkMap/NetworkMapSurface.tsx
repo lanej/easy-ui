@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useId } from "react-aria";
 import { Button } from "../Button";
 import type {
   GeoJSONSource,
@@ -83,9 +84,11 @@ function NetworkMapSurfaceView() {
     onFacilitySelect,
     selectedSegmentId,
     latestFacilityId,
+    "aria-labelledby": canvasLabelledBy,
     height = 560,
   } = options;
   const container = useRef<HTMLDivElement>(null);
+  const canvasLabelId = useId();
   const owner = useRef(Symbol("map surface"));
   const instance = useRef<MapInstance | null>(null);
   const refresh = useRef<(() => void) | null>(null);
@@ -1035,6 +1038,23 @@ function NetworkMapSurfaceView() {
   }, [controls.navigation, controls.scale, options.controlPlacement]);
 
   useEffect(() => {
+    if (state !== "ready") return;
+    const canvas = instance.current?.getCanvas();
+    if (!canvas) return;
+    const externalLabel = canvasLabelledBy?.trim();
+    if (externalLabel) {
+      canvas.setAttribute(
+        "aria-labelledby",
+        `${externalLabel} ${canvasLabelId}`,
+      );
+      canvas.removeAttribute("aria-label");
+    } else {
+      canvas.removeAttribute("aria-labelledby");
+      canvas.setAttribute("aria-label", `${accessibleName} interactive map`);
+    }
+  }, [state, accessibleName, canvasLabelledBy, canvasLabelId]);
+
+  useEffect(() => {
     refresh.current?.();
   }, [
     facilities,
@@ -1113,6 +1133,9 @@ function NetworkMapSurfaceView() {
         }
       }}
     >
+      <span id={canvasLabelId} hidden>
+        interactive map
+      </span>
       <div
         ref={container}
         className={styles.canvas}

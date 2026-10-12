@@ -17,6 +17,12 @@ Checks cover national/regional/local camera actions, keyboard event/parcel/facil
 
 Refreshing dependencies also exposed a pre-existing token-build mismatch: the manifest requested Style Dictionary 5 while the old lockfile contained 4.3.3. Both 5.1.1 and 5.5.3 failed with 64 unresolved token references in a clean install. The token workspace is pinned to the previously locked 4.3.3 so the monorepo builds reproducibly; this does not migrate token formats.
 
+## Journey zoom sections
+
+`journey.html` exercises a complete parcel journey with independently fitted origin and destination maps. It uses a local basemap for repeatable interaction checks; `?tiles=1` loads the same OpenFreeMap style as the Storybook examples. Add `theme=dark`, `large=1`, `narrow=1`, or `empty=1` to review the corresponding states.
+
+`journey-checks.mjs` runs through the existing Chrome/Firefox/Safari adapters. It checks geographic enlargement, section membership and evidence, shared keyboard selection, immutable refreshes, layer visibility, independent camera controls, responsive layout and explicit unmapped-section states. It also captures both themes at desktop/mobile widths and runs accessibility scans. Review the Storybook images with real basemap tiles as well.
+
 ## Cell inspection
 
 Open `regressions.html?inspection=1` for a local-basemap distribution example. Hover the left cell, click/tap to pin its range plot, move into the card, and dismiss with Close or Escape. The right cell deliberately has no distribution. Use large text and narrow widths, refresh the records, hide the layer, and expand Inspect cell from exact data using the keyboard.
@@ -24,7 +30,6 @@ Open `regressions.html?inspection=1` for a local-basemap distribution example. H
 `inspection-checks.mjs` adds real pointer, keyboard, containment, font-size, console, and accessibility checks to all three existing browser audits. The native chart uses explicit synthetic quartiles; it does not derive a distribution from the median and IQR. Cards scroll within constrained viewports and leave room for provider attribution.
 
 `regressions.html?inspection=1&charts=1` demonstrates arbitrary chart content using the same renderer. Pin the left cell and switch Chart view between a histogram, estimated density and native daily-median history. The application recipe supplies observations and declares its binning and kernel bandwidth; the right cell remains summary-only. Charts and exact-value disclosures also work from Inspect cell with the layer hidden. Focusing an embedded selector pins the card without stealing focus. The optional ECharts engine is isolated from the ordinary map gallery and loads only when a chart mounts; `measure.mjs` checks these dependency boundaries.
-
 
 ## Facility and shared-route inspection
 

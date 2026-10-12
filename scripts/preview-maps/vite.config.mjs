@@ -44,6 +44,7 @@ export default defineConfig({
         regressions: local("./regressions.html"),
         composition: local("./composition.html"),
         richInspection: local("./rich-inspection.html"),
+        journey: local("./journey.html"),
       },
     },
   },

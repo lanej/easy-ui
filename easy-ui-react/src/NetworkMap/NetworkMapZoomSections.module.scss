@@ -1,0 +1,59 @@
+@use "../styles/common" as *;
+
+.sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: design-token("space.3");
+  padding: design-token("space.3");
+  border-top: 1px solid design-token("color.neutral.200");
+}
+.section {
+  min-inline-size: 0;
+}
+.empty {
+  padding: design-token("space.3");
+  color: design-token("color.neutral.700");
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 12px;
+  font-size: var(--ezui-viz-description-size, 14px);
+  overflow-wrap: anywhere;
+  h3 {
+    margin: 0;
+    color: design-token("color.neutral.900");
+    font-size: var(--ezui-viz-title-size, 18px);
+  }
+}
+.example {
+  padding: design-token("space.4");
+  margin-inline: auto;
+  min-inline-size: 0;
+  background: design-token("color.neutral.000");
+  color: design-token("color.neutral.900");
+}
+.exampleControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: design-token("space.3");
+  align-items: end;
+  margin-block-end: design-token("space.4");
+  > :first-child {
+    inline-size: 240px;
+    max-inline-size: 100%;
+  }
+  label:has(input) {
+    display: flex;
+    gap: design-token("space.1");
+    align-items: center;
+    min-block-size: 32px;
+  }
+}
+.exampleHeading {
+  margin: 0 0 design-token("space.3");
+  color: design-token("color.neutral.900");
+  font-size: 24px;
+}
+.exampleRoute {
+  margin: 0 0 design-token("space.3");
+  color: design-token("color.neutral.900");
+  font-size: 18px;
+}

@@ -3,6 +3,7 @@ export { NetworkMapProvider } from "./NetworkMapContext";
 export { NetworkMapInspectionTrigger } from "./NetworkMapInspectionTrigger";
 export type { NetworkMapInspectionTriggerProps } from "./NetworkMapInspectionTrigger";
 export { NetworkMapSurface } from "./NetworkMapSurface";
+export { NetworkMapZoomSections } from "./NetworkMapZoomSections";
 export { NetworkMapCellDetails } from "./NetworkMapCellDetails";
 export type { NetworkMapCellDetailsProps } from "./NetworkMapCellDetails";
 export {
@@ -16,6 +17,7 @@ export type { NetworkMapDataViewProps } from "./NetworkMapCompanions";
 export type { VisualizationTypography } from "../visualization/typography";
 export type {
   NetworkMapProps,
+  NetworkMapZoomSection,
   MapOverlay,
   MapOverlayLayer,
   MapOverlaySelection,

@@ -10,6 +10,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { NetworkMap } from "./NetworkMap";
 import { NetworkMapExample } from "./NetworkMap.examples";
+import { JourneyZoomExample } from "./NetworkMapZoomSections.examples";
 import {
   CellChartExample,
   inspectionObservations,
@@ -31,6 +32,18 @@ export default meta;
 type Story = StoryObj<typeof NetworkMapExample>;
 export const ParcelJourney: Story = {
   render: () => <NetworkMapExample audience="parcel" />,
+};
+export const ZoomedJourney: Story = {
+  render: () => <JourneyZoomExample />,
+};
+export const ZoomedJourneyNarrow: Story = {
+  render: () => <JourneyZoomExample narrow />,
+};
+export const ZoomedJourneyLargeText: Story = {
+  render: () => <JourneyZoomExample largeText />,
+};
+export const ZoomedJourneyUnmapped: Story = {
+  render: () => <JourneyZoomExample emptySection />,
 };
 export const ShipperFlow: Story = {
   render: () => <NetworkMapExample audience="shipper" />,

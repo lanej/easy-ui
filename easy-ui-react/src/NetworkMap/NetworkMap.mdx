@@ -123,6 +123,46 @@ Three warehouses feed a delivery network. The origin filter updates the full dai
 
 Regional throughput, expected volume, operating capacity, dwell, backlog and conditional exception risk. Current, stale and unavailable facility scores remain distinct. A forecast polygon carries its source and valid interval. Weather exposure does not establish the cause of a delay.
 
+## Zoomed journey sections
+
+<Canvas of={NetworkMapStories.ZoomedJourney} />
+
+Use `zoomSections` when long transfers compress the origin and destination handoffs into overlapping markers. The overview retains the complete journey; each named section shows its supplied facilities and connections with both endpoints in that group. The sections have independent geographic scales, pan/zoom and **Fit section** controls. They sit side by side when their container has room and stack in a narrow slot, including beside a tracking timeline.
+
+```tsx
+<NetworkMap
+  title="Tracking path"
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  facilities={facilities}
+  segments={segments}
+  selectedFacilityId={selected}
+  onFacilitySelect={setSelected}
+  showDataTable={false}
+  controlLabels={{ fitAll: "Entire journey" }}
+  zoomSections={[
+    {
+      id: "origin",
+      title: "Origin · Oakland",
+      facilityIds: ["warehouse", "acceptance", "origin-sort"],
+    },
+    {
+      id: "destination",
+      title: "Destination · Dearborn",
+      facilityIds: ["regional-sort", "delivery-unit", "destination"],
+    },
+  ]}
+/>
+```
+
+The caller defines the groups; geographic proximity does not establish journey membership. Use stable, unique section IDs and the same facility IDs as the overview. Repeated scans at one facility still share one marker. Unknown IDs and invalid coordinates are omitted from section geography. A section with no mapped locations shows an explicit empty state.
+
+Selection, evidence styles, risk visibility, overlays and inspection renderers stay connected to the overview. Selection and immutable record refreshes preserve every camera. A section's `focusRevision` explicitly requests a later refit; its `maxZoom` defaults to 13 and `height` defaults to 280px (minimum 220px). The overview's `focus`, `initialView`, `height` and `onMapReady` apply only to that overview. Each section can supply its own `onMapReady`. `controls={false}` hides section fit/navigation/scale controls too; individual overview navigation/scale opt-outs also apply to sections.
+
+One legend, selected-record detail and optional data disclosure serve the journey. Sections omit duplicate companions. With a custom `NetworkMapProvider` layout, place the exported `NetworkMapZoomSections` wherever the detail maps belong. Each section uses its own MapLibre surface and retains provider attribution, so additional sections incur additional rendering and tile requests. Keep the number of sections bounded.
+
+<Canvas of={NetworkMapStories.ZoomedJourneyNarrow} />
+
 ## Camera, selection and labels
 
 Facilities have stable IDs; segments reference their endpoints. `selectedFacilityId` and `onFacilitySelect` control selection across markers and table rows. Provide the callback to enable selection. `selectedSegmentId` emphasizes a connection and makes Selected leg available when its geometry can be fitted. `latestFacilityId` identifies the last observed facility, never an interpolated position.
