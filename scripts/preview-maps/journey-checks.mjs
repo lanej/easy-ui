@@ -377,7 +377,7 @@ export async function checkJourneySections({
   await browser.open(`${base}/journey.html?clustered=1`);
   await browser.wait(overviewReady);
   const clusteredCamera = await browser.evaluate(cameras);
-  const clickCluster = () => {
+  const clusterPoint = () => {
     const map = window.journeyMaps.overview;
     const feature = map
       .queryRenderedFeatures({ layers: ["easy-ui-facility-cluster-circles"] })
@@ -386,15 +386,13 @@ export async function checkJourneySections({
     const point = map.project(feature.geometry.coordinates);
     const canvas = map.getCanvas(),
       rect = canvas.getBoundingClientRect();
-    canvas.dispatchEvent(
-      new MouseEvent("click", {
-        clientX: point.x + rect.left,
-        clientY: point.y + rect.top,
-        bubbles: true,
-      }),
-    );
+    return { x: point.x + rect.left, y: point.y + rect.top };
   };
-  await browser.evaluate(clickCluster);
+  const clickCluster = async () => {
+    const { x, y } = await browser.evaluate(clusterPoint);
+    await browser.clickPoint(x, y);
+  };
+  await clickCluster();
   await browser.wait(insetReady);
   check(
     "A native cluster contained in a local journey group opens one inset without zooming the overview",
@@ -414,7 +412,7 @@ export async function checkJourneySections({
           resolve(await original(...args));
       });
   });
-  await browser.evaluate(clickCluster);
+  await clickCluster();
   await browser.wait(() => Boolean(window.resolveJourneyLeaves));
   await browser.clickNamed("button", "Entire journey");
   await browser.wait(overviewReady);
