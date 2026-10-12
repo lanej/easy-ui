@@ -136,9 +136,9 @@ export async function checkJourneySections({
             ].every((n) => n.style.visibility === "visible"),
         ),
       );
-      await browser.evaluate(
-        () => (window.journeyBefore = { ...window.journeyMaps }),
-      );
+      await browser.evaluate(() => {
+        window.journeyBefore = { ...window.journeyMaps };
+      });
       await browser.key(
         `${section("origin")} [data-map-facility-id="acceptance"]`,
         "Enter",
@@ -276,15 +276,15 @@ export async function checkJourneySections({
       );
       await browser.key(marker("oak"), "Enter");
       await browser.wait(insetReady);
-      await browser.evaluate(() =>
+      await browser.evaluate(() => {
         window.journeyMaps.overview.fitBounds(
           [
             [-122.24, 37.741],
             [-122.212, 37.79],
           ],
           { padding: 80, maxZoom: 13, duration: 0 },
-        ),
-      );
+        );
+      });
       await browser.wait(overviewReady);
       check(
         `${name}: zooming the main view to readable local stops removes the inset and indicator`,
