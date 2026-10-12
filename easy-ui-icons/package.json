@@ -12,7 +12,17 @@
       "import": "./dist/*.mjs",
       "require": "./dist/*.js"
     },
-    "./svg/*.svg": "./dist/svg/*.svg"
+    "./svg/*.svg": "./dist/svg/*.svg",
+    "./*.js": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    },
+    "./*.mjs": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.mjs"
+    },
+    "./*.d.ts": "./dist/*.d.ts",
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public",

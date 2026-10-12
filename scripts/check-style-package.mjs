@@ -348,6 +348,12 @@ const insideConsumer = (file) => {
 const iconSpecifier = "@easypost/easy-ui-icons/EasyUI";
 insideConsumer(require.resolve(iconSpecifier));
 insideConsumer(fileURLToPath(import.meta.resolve(iconSpecifier)));
+for (const suffix of [".js", ".mjs"]) {
+  insideConsumer(require.resolve(iconSpecifier + suffix));
+  const explicit = await import(iconSpecifier + suffix);
+  assert.equal(typeof explicit.default, "function", "Keep explicit icon file imports available");
+}
+assert.equal(require("@easypost/easy-ui-icons/package.json").name, "@easypost/easy-ui-icons");
 for (const load of [require, (specifier) => import(specifier)]) {
   const exported = await load(iconSpecifier);
   const Symbol = exported.default ?? exported;
