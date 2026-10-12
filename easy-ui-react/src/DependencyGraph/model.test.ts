@@ -89,6 +89,38 @@ describe("DependencyGraph directed exploration", () => {
 });
 
 describe("DependencyGraph grouping and layout", () => {
+  it("routes around measured card heights without overlapping another resource", () => {
+    const graph = buildDependencyGraph(
+      nodes,
+      edges,
+      groups,
+      [],
+      new Map([
+        ["subnet", 800],
+        ["api", 300],
+      ]),
+    );
+    expect(graph.items.find((item) => item.node?.id === "subnet")!.height).toBe(
+      800,
+    );
+    for (const a of graph.items)
+      for (const b of graph.items) {
+        if (a.key === b.key) continue;
+        expect(
+          a.x + a.width <= b.x ||
+            b.x + b.width <= a.x ||
+            a.y + a.height <= b.y ||
+            b.y + b.height <= a.y,
+        ).toBe(true);
+      }
+    expect(
+      graph.connections.every((connection) =>
+        connection.points.every(
+          (point) => Number.isFinite(point.x) && Number.isFinite(point.y),
+        ),
+      ),
+    ).toBe(true);
+  });
   it("bundles cross-group relationships with exact original IDs and retains group members", () => {
     const graph = buildDependencyGraph(nodes, edges, groups, ["net", "app"]);
     expect(

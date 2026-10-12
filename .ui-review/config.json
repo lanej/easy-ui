@@ -143,6 +143,18 @@
       "path": "/dependency-graph.html?specific=1",
       "ready": "[data-resource-changes] [data-diff]",
       "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-inline",
+      "path": "/dependency-graph.html?inline=1",
+      "ready": "[data-graph-card-diff] [data-diff]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-inline-large-dark",
+      "path": "/dependency-graph.html?inline=1&large=1&dark=1",
+      "ready": "[data-graph-card-diff] [data-diff]",
+      "viewports": ["desktop", "mobile"]
     }
   ],
   "viewports": [

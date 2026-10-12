@@ -92,6 +92,10 @@ export type DependencyGraphProps = {
   collapsedGroupIds?: readonly string[];
   defaultCollapsedGroupIds?: readonly string[];
   onCollapsedGroupIdsChange?: (ids: readonly string[]) => void;
+  /** Resources whose cards show attribute differences inline. */
+  expandedChangeNodeIds?: readonly string[];
+  defaultExpandedChangeNodeIds?: readonly string[];
+  onExpandedChangeNodeIdsChange?: (ids: readonly string[]) => void;
   /** Caller-computed path or other relationships to emphasize. */
   highlightedEdgeIds?: readonly string[];
   /** Coverage of the supplied relationship evidence, not operational impact. */

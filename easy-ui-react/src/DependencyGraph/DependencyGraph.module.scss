@@ -241,6 +241,24 @@
     background: design-token("color.primary.050");
   }
 }
+.node[data-graph-resource-card] .nodeSelect {
+  block-size: 7rem;
+}
+.cardExpand {
+  display: block;
+  inline-size: calc(100% - 24px);
+  min-block-size: 32px;
+  margin: 0 12px 8px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: design-token("color.primary.700");
+  font: inherit;
+  font-size: 0.75rem;
+  text-align: start;
+  cursor: pointer;
+}
+
 .nodeTop {
   display: flex;
   align-items: center;
@@ -524,4 +542,14 @@
 
 .node[data-group="true"] .nodeLabel {
   -webkit-line-clamp: 1;
+}
+
+.nodeChanges {
+  padding: 0 12px 12px;
+  .resourceChanges {
+    margin-block-start: 0;
+  }
+  h4 {
+    font-size: 0.8125rem;
+  }
 }

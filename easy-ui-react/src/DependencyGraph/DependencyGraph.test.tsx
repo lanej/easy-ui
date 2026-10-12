@@ -228,6 +228,60 @@ describe("DependencyGraph interaction contract", () => {
 });
 
 describe("DependencyGraph per-resource changes", () => {
+  it("expands attribute differences inside the card independently of selection and the inspector", () => {
+    const change = vi.fn();
+    const { container } = render(
+      <DependencyGraph
+        title="Graph"
+        nodes={nodes}
+        edges={edges}
+        showDetails={false}
+        onSelectionChange={change}
+      />,
+    );
+    const card = container.querySelector(
+      `[data-graph-resource-card="${subnetId}"]`,
+    )! as HTMLElement;
+    const toggle = within(card).getByRole("button", {
+      name: "Show attribute differences for Application subnet",
+    });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(within(card).getByText("10.20.0.0/24")).toBeInTheDocument();
+    expect(within(card).getByText("10.20.4.0/24")).toBeInTheDocument();
+    expect(change).not.toHaveBeenCalled();
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(within(card).queryByText("10.20.0.0/24")).not.toBeInTheDocument();
+  });
+  it("requests original resource IDs and respects controlled card expansion", () => {
+    const change = vi.fn();
+    const props = {
+      title: "Graph",
+      nodes,
+      edges,
+      showDetails: false,
+      onExpandedChangeNodeIdsChange: change,
+    };
+    const { rerender } = render(
+      <DependencyGraph {...props} expandedChangeNodeIds={[]} />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Show attribute differences for Application subnet",
+      }),
+    );
+    expect(change).toHaveBeenCalledWith([subnetId]);
+    expect(screen.queryByText("10.20.0.0/24")).not.toBeInTheDocument();
+    rerender(<DependencyGraph {...props} expandedChangeNodeIds={[subnetId]} />);
+    expect(
+      screen.getByRole("button", {
+        name: "Hide attribute differences for Application subnet",
+      }),
+    ).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("10.20.0.0/24")).toBeInTheDocument();
+  });
   it("switches between summary and exact diff without moving the graph, and resets for another resource", () => {
     const { container } = render(
       <DependencyGraph

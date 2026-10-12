@@ -8,6 +8,9 @@ import type {
 
 export const NODE_WIDTH = 256;
 export const NODE_HEIGHT = 112;
+export const hasDependencyGraphChanges = (node: DependencyGraphNode) =>
+  !!node.changes?.length ||
+  (!!node.change && node.change !== "unchanged" && node.change !== "unknown");
 const compare = (a: { id: string }, b: { id: string }) =>
   a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 
@@ -35,6 +38,7 @@ export function buildDependencyGraph(
   edges: readonly DependencyGraphEdge[],
   groups: readonly DependencyGraphGroup[],
   collapsedGroupIds: readonly string[],
+  nodeHeights: ReadonlyMap<string, number> = new Map(),
 ) {
   const records = new Map(nodes.map((node) => [node.id, node]));
   const groupRecords = new Map(groups.map((group) => [group.id, group]));
@@ -67,7 +71,10 @@ export function buildDependencyGraph(
         x: 0,
         y: 0,
         width: NODE_WIDTH,
-        height: NODE_HEIGHT,
+        height: key.startsWith("node:")
+          ? (nodeHeights.get(node.id) ??
+            NODE_HEIGHT + (hasDependencyGraphChanges(node) ? 42 : 2))
+          : NODE_HEIGHT,
       });
   }
   const connections = new Map<string, GraphConnection>();

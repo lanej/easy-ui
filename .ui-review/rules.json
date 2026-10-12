@@ -320,7 +320,9 @@
       "dependency-graph",
       "dependency-graph-large-dark",
       "dependency-graph-summary",
-      "dependency-graph-specific"
+      "dependency-graph-specific",
+      "dependency-graph-inline",
+      "dependency-graph-inline-large-dark"
     ]
   },
   {
@@ -335,7 +337,9 @@
       "dependency-graph",
       "dependency-graph-large-dark",
       "dependency-graph-summary",
-      "dependency-graph-specific"
+      "dependency-graph-specific",
+      "dependency-graph-inline",
+      "dependency-graph-inline-large-dark"
     ]
   }
 ]

@@ -121,4 +121,4 @@ neighborhoods, group collapse, search, and linked selection. Applications own
 relationship discovery, evidence, change kinds, and risk. Read its Storybook
 examples and types before using the independently controlled view and selection.
 
-Each DependencyGraph resource can supply `changeSummary` and typed `changes` for a summary or red/green field diff. Use `DependencyGraphChanges` from the same subpath for an application-owned resource inspector. Supply explicit unknown/redacted values and compute the actual diff in the application.
+Each DependencyGraph resource can supply `changeSummary` and typed `changes` for a summary or red/green field diff. Resource cards expand their attribute differences inline; use `expandedChangeNodeIds` to control expansion independently of selection. Use `DependencyGraphChanges` from the same subpath for an application-owned resource inspector. Supply explicit unknown/redacted values and compute the actual diff in the application.

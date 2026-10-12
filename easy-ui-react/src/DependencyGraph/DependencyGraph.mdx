@@ -40,7 +40,7 @@ Groups are flat visual boundaries. The caller chooses root/module membership usi
 
 ## Per-resource summaries and diffs
 
-Every resource can supply a `changeSummary` and typed `changes`. The graph card shows the short summary; its inspector switches between **Summary** and **Specific changes**. A field addition is a green `+` row, a removal is a red `−` row, and a changed field has both rows. Each row also has an accessible Added/Removed label. Resource operations and field changes remain distinct: a replacement retains its Replace badge while showing the exact supplied field diff.
+Every resource can supply a `changeSummary` and typed `changes`. The graph card shows the short summary. **Show attribute differences** expands that resource card with its exact field diff; **Hide attribute differences** returns it to the compact view. Expansion is independent of selection and works with `showDetails={false}`. The inspector also switches between **Summary** and **Specific changes**. A field addition is a green `+` row, a removal is a red `−` row, and a changed field has both rows. Each row also has an accessible Added/Removed label. Resource operations and field changes remain distinct: a replacement retains its Replace badge while showing the exact supplied field diff.
 
 ```tsx
 {
@@ -61,12 +61,15 @@ Values are caller-formatted strings, so format numbers, booleans, and explicit `
 
 `defaultChangePresentation="diff"` starts each newly selected resource in the detailed view. The default is `"summary"`. Selection changes initialize that resource's presentation independently, so another resource's values cannot remain visible. `DependencyGraphChanges` is also exported for an application-owned inspector; it supports controlled `presentation`/`onPresentationChange` or local `defaultPresentation`.
 
+`expandedChangeNodeIds`, `defaultExpandedChangeNodeIds`, and `onExpandedChangeNodeIdsChange` control which resource cards show their attribute differences. Callbacks return original resource IDs. Multiple cards can be expanded at once.
+
+<Canvas of={Stories.ExpandedAttributeDifferences} />
 <Canvas of={Stories.ChangeSummary} />
 <Canvas of={Stories.SpecificChanges} />
 
 ## Layout, scale, and accessibility
 
-Dagre handles directed layout, cycles, self-links, and disconnected components. Stable IDs are sorted before layout. Selection, search, highlighting, and neighborhood filtering preserve coordinates and pan/zoom; changing actual graph topology or group collapse state can relayout the graph. The viewport retains its camera until **Fit visible** is requested. Fit retains 100% on narrow canvases and stops at 75% on wider ones; large graphs scroll rather than shrinking into an unreadable whole-infrastructure diagram.
+Dagre handles directed layout, cycles, self-links, and disconnected components. Stable IDs are sorted before layout. Selection, search, highlighting, and neighborhood filtering preserve coordinates and pan/zoom; changing actual graph topology, card expansion, or group collapse state can relayout the graph. Expanded card heights are measured so neighboring cards and connections accommodate wrapped attribute values. The viewport retains its camera until **Fit visible** is requested. Fit retains 100% while attribute cards are expanded and on narrow canvases, starts from the selected resource or neighborhood anchor there, and stops at 75% on wider ones; large graphs scroll rather than shrinking into an unreadable whole-infrastructure diagram.
 
 Use groups and bounded neighborhoods for large plans. The initial scale story supplies 1,000 nodes while rendering only the visible grouped neighborhood. Layout is synchronous and uses the supplied projected graph; this is not an unbounded graph engine or a claim of tested performance beyond that fixture. Querying and relationship discovery stay in the application.
 

@@ -42,7 +42,8 @@ export function DependencyGraphReviewExample(
       groups={dependencyGroups}
       defaultView={{ scope: "dependents", nodeId: subnetId, depth: 1 }}
       defaultCollapsedGroupIds={["data", "observability"]}
-      defaultChangePresentation="diff"
+      defaultChangePresentation="summary"
+      defaultExpandedChangeNodeIds={[subnetId]}
       coverage={{
         status: "partial",
         description:

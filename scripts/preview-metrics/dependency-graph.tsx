@@ -8,6 +8,7 @@ import {
   dependencyNodes,
   dependencyEdges,
   dependencyGroups,
+  subnetId,
 } from "../../easy-ui-react/src/DependencyGraph/DependencyGraph.fixtures";
 import "../../easy-ui-react/src/styles/global.scss";
 import "../../.storybook/public/poppins.css";
@@ -26,7 +27,19 @@ createRoot(document.getElementById("root")!).render(
         minHeight: "100vh",
       }}
     >
-      {query.get("specific") === "1" ? (
+      {query.get("inline") === "1" ? (
+        <DependencyGraph
+          height={720}
+          title="Resource dependencies"
+          nodes={dependencyNodes}
+          edges={dependencyEdges}
+          groups={dependencyGroups}
+          defaultExpandedChangeNodeIds={[subnetId, "azurerm_container_app.api"]}
+          defaultView={{ scope: "dependents", nodeId: subnetId, depth: 1 }}
+          defaultCollapsedGroupIds={["data", "observability"]}
+          showDetails={false}
+        />
+      ) : query.get("specific") === "1" ? (
         <DependencyGraph
           title="Resource dependencies"
           nodes={dependencyNodes}

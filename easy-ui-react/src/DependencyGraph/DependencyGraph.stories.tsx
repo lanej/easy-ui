@@ -49,6 +49,17 @@ export const SpecificChanges: Story = {
   },
 };
 export const AllResources: Story = {};
+export const ExpandedAttributeDifferences: Story = {
+  args: {
+    height: 720,
+    defaultExpandedChangeNodeIds: [subnetId, "azurerm_container_app.api"],
+    defaultView: { scope: "dependents", nodeId: subnetId, depth: 1 },
+    defaultCollapsedGroupIds: ["data", "observability"],
+    showDetails: false,
+    description:
+      "Expand individual cards to inspect attribute differences inline.",
+  },
+};
 export const CollapsedModules: Story = {
   args: {
     defaultCollapsedGroupIds: dependencyGroups.map((group) => group.id),

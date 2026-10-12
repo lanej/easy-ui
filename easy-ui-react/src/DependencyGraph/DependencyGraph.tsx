@@ -4,9 +4,11 @@ import { Button } from "../Button";
 import { Select } from "../Select";
 import { TextField } from "../TextField";
 import { DependencyGraphDetails } from "./DependencyGraphDetails";
+import { DependencyGraphChanges } from "./DependencyGraphChanges";
 import {
   buildDependencyGraph,
   dependencyChangeLabels,
+  hasDependencyGraphChanges,
   visibleDependencyNodes,
 } from "./model";
 import type { GraphItem } from "./model";
@@ -54,6 +56,9 @@ export function DependencyGraph({
   collapsedGroupIds: controlledCollapsed,
   defaultCollapsedGroupIds = [],
   onCollapsedGroupIdsChange,
+  expandedChangeNodeIds: controlledExpandedChanges,
+  defaultExpandedChangeNodeIds = [],
+  onExpandedChangeNodeIdsChange,
   highlightedEdgeIds = [],
   coverage,
   status = "ready",
@@ -70,6 +75,12 @@ export function DependencyGraph({
     defaultCollapsedGroupIds,
   );
   const [query, setQuery] = useState("");
+  const [localExpandedChanges, setLocalExpandedChanges] = useState(
+    defaultExpandedChangeNodeIds,
+  );
+  const [nodeHeights, setNodeHeights] = useState<ReadonlyMap<string, number>>(
+    () => new Map(),
+  );
   const [zoom, setZoom] = useState(1);
   const viewport = useRef<HTMLDivElement>(null);
   const firstFit = useRef(false);
@@ -78,6 +89,12 @@ export function DependencyGraph({
     controlledSelection === undefined ? localSelection : controlledSelection;
   const view = controlledView ?? localView;
   const collapsed = controlledCollapsed ?? localCollapsed;
+  const expandedChanges = controlledExpandedChanges ?? localExpandedChanges;
+  const changeExpandedChanges = (next: readonly string[]) => {
+    if (controlledExpandedChanges === undefined)
+      setLocalExpandedChanges([...next]);
+    onExpandedChangeNodeIdsChange?.(next);
+  };
   const select = (next: DependencyGraphSelection) => {
     if (controlledSelection === undefined) setLocalSelection(next);
     onSelectionChange?.(next);
@@ -107,8 +124,10 @@ export function DependencyGraph({
   // Selection/search never participate in layout. Local exploration preserves coordinates.
   const model = useMemo(
     () =>
-      duplicate ? null : buildDependencyGraph(nodes, edges, groups, collapsed),
-    [nodes, edges, groups, collapsed, duplicate],
+      duplicate
+        ? null
+        : buildDependencyGraph(nodes, edges, groups, collapsed, nodeHeights),
+    [nodes, edges, groups, collapsed, duplicate, nodeHeights],
   );
   const visible = useMemo(
     () => visibleDependencyNodes(nodes, edges, view),
@@ -118,6 +137,39 @@ export function DependencyGraph({
     model?.items.filter((item) =>
       item.members.some((node) => visible.has(node.id)),
     ) ?? [];
+  const renderedNodeIds = items
+    .filter((item) => item.node)
+    .map((item) => item.node!.id)
+    .join("\0");
+  useEffect(() => {
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) => {
+      const rootSize =
+        parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      setNodeHeights((previous) => {
+        const next = new Map(previous);
+        let changed = false;
+        for (const entry of entries) {
+          const element = entry.target as HTMLElement;
+          const height = Math.ceil(
+            ((entry.borderBoxSize?.[0]?.blockSize ?? element.offsetHeight) *
+              16) /
+              rootSize,
+          );
+          const id = element.dataset.graphResourceCard;
+          if (id && height > 0 && next.get(id) !== height) {
+            next.set(id, height);
+            changed = true;
+          }
+        }
+        return changed ? next : previous;
+      });
+    });
+    viewport.current
+      ?.querySelectorAll("[data-graph-resource-card]")
+      .forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, [renderedNodeIds, status, duplicate]);
   const clusters = (model?.clusters ?? []).flatMap((cluster) => {
     const members = items.filter(
       (item) => item.node?.groupId === cluster.group.id,
@@ -177,7 +229,12 @@ export function DependencyGraph({
     const bottom = Math.max(...boxes.map((item) => item.y + item.height));
     // Keep labels readable: large neighborhoods scroll instead of shrinking to a hairball.
     const scale = Math.max(
-      element.clientWidth < 600 ? 1 : 0.75,
+      element.clientWidth < 600 ||
+        items.some(
+          (item) => item.node && expandedChanges.includes(item.node.id),
+        )
+        ? 1
+        : 0.75,
       Math.min(
         1,
         (element.clientWidth - 48) / ((right - x) * unit),
@@ -185,13 +242,23 @@ export function DependencyGraph({
       ),
     );
     setZoom(scale);
+    const anchorId = selectedNode?.id ?? focusNode?.id;
+    const anchor =
+      element.clientWidth < 600 && anchorId
+        ? items.find((item) =>
+            item.members.some((node) => node.id === anchorId),
+          )
+        : undefined;
     requestAnimationFrame(() => {
-      element.scrollLeft = Math.max(0, x * unit * scale - 24);
-      element.scrollTop = Math.max(0, y * unit * scale - 24);
+      element.scrollLeft = Math.max(0, (anchor?.x ?? x) * unit * scale - 24);
+      element.scrollTop = Math.max(0, (anchor?.y ?? y) * unit * scale - 24);
     });
   };
   useEffect(() => {
-    if (!firstFit.current && items.length && status === "ready") {
+    const measured =
+      typeof ResizeObserver === "undefined" ||
+      items.every((item) => !item.node || nodeHeights.has(item.node.id));
+    if (!firstFit.current && items.length && status === "ready" && measured) {
       firstFit.current = true;
       fit();
     }
@@ -629,11 +696,13 @@ export function DependencyGraph({
                           data-group={!!item.group || undefined}
                           data-selected={selected || undefined}
                           data-graph-item-card={item.key}
+                          data-graph-resource-card={node?.id}
+                          data-graph-layout-height={item.height}
                           style={{
                             left: rem(item.x),
                             top: rem(item.y),
                             width: rem(item.width),
-                            height: rem(item.height),
+                            height: node ? undefined : rem(item.height),
                           }}
                         >
                           <button
@@ -693,6 +762,46 @@ export function DependencyGraph({
                                 node?.id}
                             </span>
                           </button>
+                          {node && hasDependencyGraphChanges(node) && (
+                            <>
+                              <button
+                                type="button"
+                                className={styles.cardExpand}
+                                aria-label={`${expandedChanges.includes(node.id) ? "Hide" : "Show"} attribute differences for ${label}`}
+                                aria-expanded={expandedChanges.includes(
+                                  node.id,
+                                )}
+                                aria-controls={`${instanceId}-diff-${items.indexOf(item)}`}
+                                onClick={() =>
+                                  changeExpandedChanges(
+                                    expandedChanges.includes(node.id)
+                                      ? expandedChanges.filter(
+                                          (id) => id !== node.id,
+                                        )
+                                      : [...expandedChanges, node.id],
+                                  )
+                                }
+                              >
+                                {expandedChanges.includes(node.id)
+                                  ? "Hide attribute differences"
+                                  : "Show attribute differences"}
+                              </button>
+                              <div
+                                id={`${instanceId}-diff-${items.indexOf(item)}`}
+                                hidden={!expandedChanges.includes(node.id)}
+                                className={styles.nodeChanges}
+                                data-graph-card-diff={node.id}
+                              >
+                                {expandedChanges.includes(node.id) && (
+                                  <DependencyGraphChanges
+                                    node={node}
+                                    presentation="diff"
+                                    showPresentationControls={false}
+                                  />
+                                )}
+                              </div>
+                            </>
+                          )}
                           {item.group && (
                             <button
                               type="button"

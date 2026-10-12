@@ -29,6 +29,22 @@ async function open(story, theme = "light") {
   );
   await page.locator("[data-dependency-graph]").waitFor();
   await page.evaluate(() => document.fonts.ready);
+  await settledCards();
+}
+async function settledCards() {
+  await page.waitForFunction(() => {
+    const unit =
+      parseFloat(getComputedStyle(document.documentElement).fontSize) / 16;
+    return [...document.querySelectorAll("[data-graph-item-card]")].every(
+      (card) =>
+        Math.abs(
+          card.getBoundingClientRect().height /
+            new DOMMatrix(getComputedStyle(card.parentElement).transform).a /
+            unit -
+            Number(card.dataset.graphLayoutHeight),
+        ) <= 1.1,
+    );
+  });
 }
 async function accessibility(name) {
   await page.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
@@ -65,6 +81,7 @@ try {
         "replacement-review",
         "change-summary",
         "specific-changes",
+        "expanded-attribute-differences",
         "collapsed-modules",
         "partial-evidence",
         "cyclic-relationships",
@@ -97,6 +114,23 @@ try {
               `${name}: overlapping resource cards`,
             );
           }
+        if (story === "expanded-attribute-differences" && width < 600) {
+          const visibleDiff = await page.evaluate(() => {
+            const viewport = document
+              .querySelector("[data-graph-canvas]")
+              .getBoundingClientRect();
+            const row = document
+              .querySelector(
+                '[data-graph-card-diff="azurerm_subnet.application"] [data-diff="addition"]',
+              )
+              .getBoundingClientRect();
+            return row.top >= viewport.top && row.bottom <= viewport.bottom;
+          });
+          assert.ok(
+            visibleDiff,
+            `${name}: anchored card differences are visible on mobile`,
+          );
+        }
         if (story === "thousand-resources")
           assert.ok(
             geometry.boxes.length <= 5,
@@ -108,7 +142,11 @@ try {
           accessibilityIncomplete: await accessibility(name),
         });
         if (
-          ["replacement-review", "specific-changes"].includes(story) &&
+          [
+            "replacement-review",
+            "specific-changes",
+            "expanded-attribute-differences",
+          ].includes(story) &&
           width !== 320
         )
           await page
@@ -117,8 +155,56 @@ try {
       }
     }
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await open("expanded-attribute-differences");
+  const card = page.locator(
+    '[data-graph-resource-card="azurerm_container_app.api"]',
+  );
+  const selectionBefore = await card.getAttribute("data-selected");
+  const expandedHeight = await card.evaluate(
+    (el) => el.getBoundingClientRect().height,
+  );
+  assert.equal(await card.locator('[data-diff="addition"]').count(), 4);
+  assert.equal(await card.locator('[data-diff="removal"]').count(), 4);
+  await card
+    .getByRole("button", {
+      name: "Hide attribute differences for Shipping API",
+    })
+    .press("Enter");
+  await settledCards();
+  assert.equal(await card.locator("[data-diff]").count(), 0);
+  assert.ok(
+    (await card.evaluate((el) => el.getBoundingClientRect().height)) <
+      expandedHeight,
+  );
+  await card
+    .getByRole("button", {
+      name: "Show attribute differences for Shipping API",
+    })
+    .press("Enter");
+  await settledCards();
+  assert.equal(
+    await card.getAttribute("data-selected"),
+    selectionBefore,
+    "Card expansion does not change selection",
+  );
+  assert.equal(
+    await page.locator("[data-graph-details]").count(),
+    0,
+    "Inline differences work without an inspector",
+  );
+  assert.ok(
+    await card
+      .getByRole("button", {
+        name: "Hide attribute differences for Shipping API",
+      })
+      .evaluate((el) => document.activeElement === el),
+    "Toggle retains keyboard focus",
+  );
+  checks.push({ name: "inline-card-expansion-keyboard-and-measured-layout" });
   await open("replacement-review");
-  const resourceChanges = page.locator("[data-resource-changes]");
+  const resourceChanges = page.locator(
+    "[data-graph-details] [data-resource-changes]",
+  );
   await resourceChanges.getByRole("button", { name: "Summary" }).press("Enter");
   assert.equal(
     await resourceChanges.locator("[data-diff]").count(),

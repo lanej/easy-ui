@@ -14,6 +14,8 @@ export type DependencyGraphChangesProps = {
   onPresentationChange?: (
     presentation: DependencyGraphChangePresentation,
   ) => void;
+  /** Hide the summary/diff switch when embedding a fixed diff inside a card. */
+  showPresentationControls?: boolean;
 };
 
 const summaries = {
@@ -57,6 +59,7 @@ export function DependencyGraphChanges({
   presentation: controlledPresentation,
   defaultPresentation = "summary",
   onPresentationChange,
+  showPresentationControls = true,
 }: DependencyGraphChangesProps) {
   const [localPresentation, setLocalPresentation] =
     useState(defaultPresentation);
@@ -82,28 +85,30 @@ export function DependencyGraphChanges({
       data-presentation={presentation}
     >
       <h4>Resource changes</h4>
-      <div
-        className={styles.changeControls}
-        role="group"
-        aria-label="Change presentation"
-      >
-        <Button
-          size="sm"
-          variant={presentation === "summary" ? "filled" : "outlined"}
-          aria-pressed={presentation === "summary"}
-          onPress={() => choose("summary")}
+      {showPresentationControls && (
+        <div
+          className={styles.changeControls}
+          role="group"
+          aria-label="Change presentation"
         >
-          Summary
-        </Button>
-        <Button
-          size="sm"
-          variant={presentation === "diff" ? "filled" : "outlined"}
-          aria-pressed={presentation === "diff"}
-          onPress={() => choose("diff")}
-        >
-          Specific changes
-        </Button>
-      </div>
+          <Button
+            size="sm"
+            variant={presentation === "summary" ? "filled" : "outlined"}
+            aria-pressed={presentation === "summary"}
+            onPress={() => choose("summary")}
+          >
+            Summary
+          </Button>
+          <Button
+            size="sm"
+            variant={presentation === "diff" ? "filled" : "outlined"}
+            aria-pressed={presentation === "diff"}
+            onPress={() => choose("diff")}
+          >
+            Specific changes
+          </Button>
+        </div>
+      )}
       {presentation === "summary" ? (
         <>
           <p>{node.changeSummary ?? summaries[node.change ?? "unknown"]}</p>
