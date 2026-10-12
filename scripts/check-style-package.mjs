@@ -30,6 +30,14 @@ const run = (command, args, cwd) =>
     maxBuffer: 20 * 1024 * 1024,
   });
 
+const packedIcons = JSON.parse(
+  run(
+    npm,
+    ["pack", "--ignore-scripts", "--json", "--pack-destination", scratch],
+    join(repository, "easy-ui-icons/dist"),
+  ),
+)[0];
+
 async function checkSkillInstallerLifecycle(packageDirectory, folder) {
   // Run the packed installer through actual npm global lifecycle hooks without
   // writing to the real user's agent directories or installing library dependencies.
@@ -217,6 +225,7 @@ const sassSource = `
 `;
 
 const typeSource = `
+import EasyUIIcon from "@easypost/easy-ui-icons/EasyUI";
 import { Chart, ChartLegend } from "@easypost/easy-ui/Chart";
 import { LineChart } from "@easypost/easy-ui/LineChart";
 import { BubbleChart, type BubbleChartSeries } from "@easypost/easy-ui/BubbleChart";
@@ -252,7 +261,7 @@ const menu: MenuRowAction = { type: "menu", renderMenuOverlay: () => null };
 const size: SelectFieldSize = "md";
 const field: BaseSelectFieldProps = { size, validationState: "valid" };
 const heading: Heading = "h2";
-const icon: IconSymbol = () => null;
+const icon: IconSymbol = EasyUIIcon;
 const responsive: ResponsiveProp<string> = { sm: "1rem" };
 const className: string = classNames("packed", false);
 const metricCardWithoutTrend: "trend" extends keyof MetricCardProps ? false : true = true;
@@ -336,6 +345,31 @@ const insideConsumer = (file) => {
   assert.ok(!relative(process.cwd(), path).startsWith(".."), "Dependency escaped isolated consumer: " + path);
   return path;
 };
+const iconSpecifier = "@easypost/easy-ui-icons/EasyUI";
+insideConsumer(require.resolve(iconSpecifier));
+insideConsumer(fileURLToPath(import.meta.resolve(iconSpecifier)));
+for (const suffix of [".js", ".mjs"]) {
+  insideConsumer(require.resolve(iconSpecifier + suffix));
+  const explicit = await import(iconSpecifier + suffix);
+  assert.equal(typeof explicit.default, "function", "Keep explicit icon file imports available");
+}
+assert.equal(require("@easypost/easy-ui-icons/package.json").name, "@easypost/easy-ui-icons");
+for (const load of [require, (specifier) => import(specifier)]) {
+  const exported = await load(iconSpecifier);
+  const Symbol = exported.default ?? exported;
+  assert.equal(typeof Symbol, "function", "Custom SVG must export a React component, not an asset URL");
+  const { Icon } = await load("@easypost/easy-ui/Icon");
+  const html = renderToString(React.createElement(Icon, { symbol: Symbol, accessibilityLabel: "Easy UI" }));
+  assert.match(html, /viewBox="0 0 512 512"/);
+  const sourceIcon = readFileSync("expected-icon.svg", "utf8");
+  const originalPath = sourceIcon.match(/\bd="([^"]+)"/)[1];
+  assert.ok(html.includes('d="' + originalPath + '"'), "The rendered icon must preserve the complete official symbol");
+  assert.match(html, /fill="currentColor"/);
+  assert.match(html, new RegExp("<title[^>]*>Easy UI</title>"));
+  assert.doesNotMatch(html, /aria-hidden="true"/);
+}
+const rawIcon = insideConsumer(require.resolve("@easypost/easy-ui-icons/svg/EasyUI.svg"));
+assert.equal(readFileSync(rawIcon, "utf8"), readFileSync("expected-icon.svg", "utf8"));
 for (const subpath of ["Chart", "Chart/index", "MetricCard", "NetworkMap", "ScoreComposition", "utilities/css"]) {
   const specifier = "@easypost/easy-ui/" + subpath;
   insideConsumer(require.resolve(specifier));
@@ -638,6 +672,8 @@ try {
           type: "module",
           dependencies: {
             "@easypost/easy-ui": "file:" + join(folder, packed.filename),
+            "@easypost/easy-ui-icons":
+              "file:" + join(scratch, packedIcons.filename),
             react: "18.3.1",
             "react-dom": "18.3.1",
             "react-is": "18.3.1",
@@ -657,6 +693,10 @@ try {
       JSON.stringify(sassFiles),
     );
     await writeFile(join(consumer, "consumer.scss"), sassSource);
+    await writeFile(
+      join(consumer, "expected-icon.svg"),
+      await readFile(join(repository, "easy-ui-icons/src/EasyUI.svg")),
+    );
     await writeFile(join(consumer, "consumer-types.tsx"), typeSource);
     await writeFile(
       join(consumer, "expected-types.json"),

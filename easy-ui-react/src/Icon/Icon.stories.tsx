@@ -1,5 +1,6 @@
 import CheckCircleIcon from "@easypost/easy-ui-icons/CheckCircle";
 import ErrorIcon from "@easypost/easy-ui-icons/Error";
+import EasyUIIcon from "@easypost/easy-ui-icons/EasyUI";
 import InfoIcon from "@easypost/easy-ui-icons/Info";
 import WarningIcon from "@easypost/easy-ui-icons/Warning";
 import { Meta, StoryObj } from "@storybook/react-vite";
@@ -27,6 +28,7 @@ const meta: Meta<typeof Icon> = {
       Info: InfoIcon,
       Warning: WarningIcon,
       Error: ErrorIcon,
+      EasyUI: EasyUIIcon,
       FedExLogoImg: FedExLogoImg,
     }),
     size: createLabelledOptionsControl({
@@ -70,4 +72,14 @@ export const Gallery: Story = {
       ))}
     </VerticalStack>
   ),
+};
+
+export const EasyUIBrand: Story = {
+  render: Template.bind({}),
+  args: {
+    symbol: EasyUIIcon,
+    color: "primary.500",
+    size: "lg",
+    accessibilityLabel: "Easy UI",
+  },
 };

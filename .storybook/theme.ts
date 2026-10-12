@@ -14,12 +14,10 @@ function createStorybookTheme(colorScheme: "light" | "dark") {
   return create({
     base: colorScheme,
     gridCellSize,
-    brandTitle: "EasyPost Easy UI Storybook",
+    brandTitle: "Easy UI Storybook",
     brandUrl: "./",
     brandImage:
-      colorScheme === "dark"
-        ? "./easypost-logo-dark.svg"
-        : "./easypost-logo.svg?v=20230308",
+      colorScheme === "dark" ? "./easy-ui-logo-dark.svg" : "./easy-ui-logo.svg",
     brandTarget: "_self",
     appBg: palette["color.neutral.000"],
     appContentBg: palette["color.neutral.000"],
