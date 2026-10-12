@@ -10,6 +10,7 @@ import { resolveMapControls } from "./controls";
 import { useLayerVisibility } from "./useLayerVisibility";
 import { useSurfaceMetric } from "./useSurfaceMetric";
 import { useOverlayVisibility } from "./useOverlayVisibility";
+import { useMapInsets } from "./useMapInsets";
 import type { Map as MapInstance } from "maplibre-gl";
 import type {
   MapArea,
@@ -39,6 +40,7 @@ function useMapState(input: NetworkMapProps) {
     overlays: resolvedOverlays,
   };
   const mapInspection = useMapInspection(props);
+  const insets = useMapInsets(props);
   const { visibility, changeVisibility } = useLayerVisibility(props);
   const { activeMetric, setActiveMetric } = useSurfaceMetric(
     props.surface?.metrics,
@@ -67,6 +69,7 @@ function useMapState(input: NetworkMapProps) {
     commands,
     surfaceOwner,
     mapRef,
+    insets,
     accessibleName: props["aria-label"] || props.title || "Map",
     controls: resolveMapControls(props),
   };

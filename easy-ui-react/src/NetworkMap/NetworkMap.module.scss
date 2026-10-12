@@ -176,6 +176,22 @@
     z-index: 4;
   }
 }
+// A compact count advertises additional nearby stops without opening a close-up.
+.marker[data-map-inset-count]::after {
+  content: "+" attr(data-map-inset-count);
+  position: absolute;
+  inset-inline-start: calc(50% + 8px);
+  inset-block-end: calc(50% + 8px);
+  min-inline-size: 24px;
+  padding: 1px 4px;
+  border: 1px solid design-token("color.primary.600");
+  border-radius: 12px;
+  background: design-token("color.neutral.000");
+  color: design-token("color.primary.600");
+  font-size: var(--ezui-viz-label-size, 12px);
+  line-height: 1.4;
+  white-space: nowrap;
+}
 .pin {
   display: grid;
   place-items: center;
@@ -495,7 +511,7 @@
   }
 }
 .geography[data-has-insets="true"] .viewport[data-fill-height="true"] {
-  min-block-size: 560px;
+  min-block-size: 660px;
 }
 .overMapControls {
   position: absolute;

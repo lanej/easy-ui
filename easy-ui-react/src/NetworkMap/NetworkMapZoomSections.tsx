@@ -1,172 +1,210 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useId } from "react-aria";
 import { Button } from "../Button";
 import { NetworkMapProvider, useNetworkMap } from "./NetworkMapContext";
 import { NetworkMapSurface } from "./NetworkMapSurface";
-import { geographicBounds, validCoordinate } from "./geometry";
+import { validCoordinate } from "./geometry";
 import type { NetworkMapZoomSection } from "./types";
 import { visualizationTypographyStyle } from "../visualization/typography";
 import styles from "./NetworkMapZoomSections.module.scss";
 
-type Leader = { id: string; x: number; y: number; endX: number; endY: number };
+type Placement = {
+  left: number;
+  top: number;
+  narrow: boolean;
+  x: number;
+  y: number;
+  endX: number;
+  endY: number;
+};
 
-/** Close-up insets inside NetworkMapViewport, sharing its journey selection and layers. */
+/** One requested close-up for a crowded node, without changing the overview camera. */
 export function NetworkMapZoomSections() {
-  const { props: options, mapRef, state, accessibleName } = useNetworkMap();
-  const root = useRef<HTMLDivElement>(null);
-  const [activeId, setActiveId] = useState(
-    () =>
-      options.zoomSections?.find((section) =>
-        section.facilityIds.includes(options.selectedFacilityId ?? ""),
-      )?.id ?? options.zoomSections?.[0]?.id,
+  const { props: options, mapRef, insets } = useNetworkMap();
+  const { setDock, close } = insets;
+  const card = useRef<HTMLElement>(null);
+  const [placement, setPlacement] = useState<Placement>({
+    left: 12,
+    top: 12,
+    narrow: false,
+    x: 0,
+    y: 0,
+    endX: 0,
+    endY: 0,
+  });
+  const active = insets.active;
+  const section = options.zoomSections?.find(
+    (item) => item.id === active?.sectionId,
   );
-  const [narrow, setNarrow] = useState(false);
-  const [leaders, setLeaders] = useState<Leader[]>([]);
-  const sections = options.zoomSections;
-  const active =
-    sections?.find((section) => section.id === activeId) ?? sections?.[0];
-  useEffect(() => {
-    const element = root.current;
+  const activeSection = useMemo(
+    () =>
+      section && active
+        ? { ...section, facilityIds: active.facilityIds }
+        : undefined,
+    [section, active],
+  );
+  useLayoutEffect(() => {
+    const element = card.current;
     const frame = element?.closest<HTMLElement>("[data-map-geography]");
-    if (!element || !frame) return;
     const map = mapRef.current;
+    if (!element || !frame || !map || !active) return;
+    let disposed = false;
     const update = () => {
-      const isNarrow = frame.clientWidth <= 700;
-      setNarrow(isNarrow);
-      if (!map) return;
+      if (disposed) return;
       const base = frame.getBoundingClientRect();
       const canvas = map.getContainer().getBoundingClientRect();
-      const insetTop = element.getBoundingClientRect().top;
-      const next: Leader[] = [];
-      for (const section of sections ?? []) {
-        if (isNarrow && section.id !== active?.id) continue;
-        const bounds = geographicBounds(
-          options.facilities
-            .filter((facility) => section.facilityIds.includes(facility.id))
-            .map((facility) => facility.coordinates),
-        );
-        const card = [
-          ...element.querySelectorAll<HTMLElement>("[data-map-zoom-section]"),
-        ].find((node) => node.dataset.mapZoomSection === section.id);
-        if (!bounds || !card) continue;
-        const centerLongitude = (bounds[0][0] + bounds[1][0]) / 2;
+      const bounds = element.getBoundingClientRect();
+      const anchor = options.facilities.find(
+        (facility) => facility.id === active.anchorId,
+      );
+      if (!anchor || !validCoordinate(anchor.coordinates)) return;
+      const project = (coordinates: readonly [number, number]) => {
         const longitude =
-          centerLongitude +
-          Math.round((map.getCenter().lng - centerLongitude) / 360) * 360;
-        const point = map.project([
-          longitude,
-          (bounds[0][1] + bounds[1][1]) / 2,
-        ]);
-        const x = point.x + canvas.left - base.left;
-        const y = point.y + canvas.top - base.top;
-        if (
-          x < 14 ||
-          x > base.width - 14 ||
-          y < 14 ||
-          y + base.top + 14 >= insetTop
-        )
-          continue;
-        const target = card.getBoundingClientRect();
-        next.push({
-          id: section.id,
-          x,
-          y,
-          endX: target.left + target.width / 2 - base.left,
-          endY: target.top - base.top,
-        });
-      }
-      setLeaders(next);
+          coordinates[0] +
+          Math.round((map.getCenter().lng - coordinates[0]) / 360) * 360;
+        const point = map.project([longitude, coordinates[1]]);
+        return {
+          x: point.x + canvas.left - base.left,
+          y: point.y + canvas.top - base.top,
+        };
+      };
+      const source = project(anchor.coordinates);
+      const points = options.facilities
+        .filter((facility) => validCoordinate(facility.coordinates))
+        .map((facility) => project(facility.coordinates));
+      const attribution = map
+        .getContainer()
+        .querySelector(".maplibregl-ctrl-attrib")
+        ?.getBoundingClientRect();
+      const bottom = Math.max(
+        44,
+        attribution && attribution.height > 0
+          ? base.bottom - attribution.top + 12
+          : 44,
+      );
+      const candidates = [
+        { left: 12, top: Math.max(12, base.height - bottom - bounds.height) },
+        {
+          left: Math.max(12, base.width - bounds.width - 12),
+          top: Math.max(12, base.height - bottom - bounds.height),
+        },
+        { left: 12, top: 12 },
+        { left: Math.max(12, base.width - bounds.width - 12), top: 12 },
+      ];
+      const inside = (
+        point: { x: number; y: number },
+        position: { left: number; top: number },
+        margin = 0,
+      ) =>
+        point.x >= position.left - margin &&
+        point.x <= position.left + bounds.width + margin &&
+        point.y >= position.top - margin &&
+        point.y <= position.top + bounds.height + margin;
+      const score = (position: { left: number; top: number }) =>
+        (inside(source, position, 16) ? 10000 : 0) +
+        points.filter((point) => inside(point, position, 16)).length;
+      const position = candidates.reduce((best, next) =>
+        score(next) < score(best) ? next : best,
+      );
+      const endX = Math.min(
+        position.left + bounds.width,
+        Math.max(position.left, source.x),
+      );
+      const endY = Math.min(
+        position.top + bounds.height,
+        Math.max(position.top, source.y),
+      );
+      setPlacement({
+        ...position,
+        narrow: frame.clientWidth <= 700,
+        ...source,
+        endX,
+        endY,
+      });
+      setDock(position.top === 12 ? "top" : "bottom");
     };
     update();
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
+        close(true);
+      }
+    };
+    frame.addEventListener("keydown", onEscape);
     const observer =
       typeof ResizeObserver === "undefined"
         ? undefined
         : new ResizeObserver(update);
     observer?.observe(frame);
     observer?.observe(element);
-    map?.on("move", update);
-    map?.on("resize", update);
+    map.on("resize", update);
     return () => {
+      disposed = true;
       observer?.disconnect();
-      map?.off("move", update);
-      map?.off("resize", update);
+      map.off("resize", update);
+      frame.removeEventListener("keydown", onEscape);
     };
-  }, [sections, options.facilities, active?.id, state, mapRef]);
-  if (!sections?.length) return null;
+  }, [active, options.facilities, mapRef, setDock, close]);
   const ids = new Set<string>();
-  for (const section of sections) {
-    if (!section.id || ids.has(section.id))
+  for (const item of options.zoomSections ?? []) {
+    if (!item.id || ids.has(item.id))
       throw new Error("Map zoom section IDs must be nonempty and unique");
-    ids.add(section.id);
+    ids.add(item.id);
   }
+  if (!activeSection || !active) return null;
+  const dx = placement.endX - placement.x;
+  const dy = placement.endY - placement.y;
+  const length = Math.hypot(dx, dy);
   return (
-    <>
-      <svg className={styles.leaders} data-map-inset-leaders aria-hidden="true">
-        {leaders.map((leader) => (
-          <g key={leader.id} data-map-inset-leader={leader.id}>
-            <polyline
-              points={`${leader.x},${leader.y + 14} ${leader.x},${(leader.y + leader.endY) / 2} ${leader.endX},${leader.endY}`}
+    <div
+      className={styles.sections}
+      data-map-zoom-sections
+      style={visualizationTypographyStyle(options.typography)}
+    >
+      {length > 14 && (
+        <svg
+          className={styles.leaders}
+          data-map-inset-leaders
+          aria-hidden="true"
+        >
+          <g data-map-inset-leader={active.sectionId}>
+            <line
+              x1={placement.x + (dx / length) * 14}
+              y1={placement.y + (dy / length) * 14}
+              x2={placement.endX}
+              y2={placement.endY}
             />
-            <circle cx={leader.x} cy={leader.y} r={14} />
+            <circle cx={placement.x} cy={placement.y} r={14} />
           </g>
-        ))}
-      </svg>
-      <div
-        ref={root}
-        className={styles.sections}
-        data-map-zoom-sections
-        style={visualizationTypographyStyle(options.typography)}
-      >
-        {options.controls !== false && sections.length > 1 && (
-          <div
-            className={styles.switcher}
-            role="group"
-            aria-label={`${accessibleName} close-up insets`}
-          >
-            {sections.map((section) => (
-              <Button
-                key={section.id}
-                size="sm"
-                variant={active?.id === section.id ? "filled" : "outlined"}
-                type="button"
-                aria-pressed={active?.id === section.id}
-                onPress={() => setActiveId(section.id)}
-              >
-                <span className={styles.controlLabel}>{section.title}</span>
-              </Button>
-            ))}
-          </div>
-        )}
-        <div className={styles.panels}>
-          {sections.map((section) => (
-            <ZoomSection
-              key={section.id}
-              section={section}
-              active={active?.id === section.id}
-              hidden={narrow && active?.id !== section.id}
-            />
-          ))}
-        </div>
-      </div>
-    </>
+        </svg>
+      )}
+      <ZoomSection
+        key={active.key}
+        section={activeSection}
+        element={card}
+        narrow={placement.narrow}
+        position={{ left: placement.left, top: placement.top }}
+        onClose={() => insets.close(true)}
+      />
+    </div>
   );
 }
 
 function ZoomSection({
   section,
-  active,
-  hidden,
+  narrow,
+  element,
+  position,
+  onClose,
 }: {
   section: NetworkMapZoomSection;
-  active: boolean;
-  hidden: boolean;
+  narrow: boolean;
+  element: React.RefObject<HTMLElement | null>;
+  position: { left: number; top: number };
+  onClose: () => void;
 }) {
   const { props: options, visibility, accessibleName } = useNetworkMap();
   const [requests, setRequests] = useState(0);
-  const element = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (element.current) element.current.inert = hidden;
-  }, [hidden]);
   const headingId = useId();
   const facilities = useMemo(() => {
     const ids = new Set(section.facilityIds);
@@ -201,8 +239,14 @@ function ZoomSection({
       ref={element}
       className={styles.section}
       data-map-zoom-section={section.id}
-      data-active={active}
-      aria-hidden={hidden || undefined}
+      style={position}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          onClose();
+        }
+      }}
       aria-labelledby={headingId}
     >
       {facilities.length ? (
@@ -217,7 +261,10 @@ function ZoomSection({
           zoomSections={undefined}
           initialView={undefined}
           focus={focus}
-          height={section.height ?? 260}
+          height={
+            section.height ??
+            (narrow && (options.typography?.label ?? 12) <= 14 ? 240 : 260)
+          }
           primaryFacilityIds={section.facilityIds}
           clusterFacilities={undefined}
           layerVisibility={visibility}
@@ -239,6 +286,7 @@ function ZoomSection({
           <InsetHeader
             heading={heading}
             onFit={() => setRequests((value) => value + 1)}
+            onClose={onClose}
           />
           <NetworkMapSurface />
         </NetworkMapProvider>
@@ -257,28 +305,43 @@ function ZoomSection({
 function InsetHeader({
   heading,
   onFit,
+  onClose,
 }: {
   heading: React.ReactNode;
   onFit: () => void;
+  onClose: () => void;
 }) {
   const { props: options, state } = useNetworkMap();
   return (
     <header className={styles.header}>
-      <div>
+      <div className={styles.metadata} tabIndex={0}>
         {heading}
         {options.description && <p>{options.description}</p>}
       </div>
-      {options.controls !== false && (
+      <div className={styles.actions}>
+        {options.controls !== false && (
+          <Button
+            size="sm"
+            variant="text"
+            type="button"
+            isDisabled={state !== "ready"}
+            onPress={onFit}
+          >
+            <span className={styles.controlLabel}>Fit</span>
+          </Button>
+        )}
         <Button
           size="sm"
           variant="text"
           type="button"
-          isDisabled={state !== "ready"}
-          onPress={onFit}
+          aria-label="Close close-up"
+          onPress={onClose}
         >
-          <span className={styles.controlLabel}>Fit section</span>
+          <span className={styles.closeIcon} aria-hidden="true">
+            ×
+          </span>
         </Button>
-      )}
+      </div>
     </header>
   );
 }

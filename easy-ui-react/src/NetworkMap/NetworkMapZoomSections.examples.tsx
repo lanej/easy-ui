@@ -43,13 +43,13 @@ export const journeyZoomSections: NetworkMapZoomSection[] = [
   {
     id: "origin",
     title: "Origin",
-    description: "Oakland · Warehouse → acceptance → origin sort",
+    description: "Oakland handoffs",
     facilityIds: ["oak", "acceptance", "origin-sort"],
   },
   {
     id: "destination",
     title: "Destination",
-    description: "Dearborn · Regional sort → distribution → delivery area",
+    description: "Dearborn handoffs",
     facilityIds: ["dtw", "dbn", "dst"],
   },
 ];
@@ -59,15 +59,16 @@ export function JourneyZoomExample({
   largeText = false,
   localBasemap = false,
   emptySection = false,
+  clustered = false,
 }: {
   narrow?: boolean;
   largeText?: boolean;
   localBasemap?: boolean;
   emptySection?: boolean;
+  clustered?: boolean;
 }) {
   const [selected, setSelected] = useState("dbn");
   const [revision, setRevision] = useState(0);
-  const [focusRevision, setFocusRevision] = useState(0);
   const [risk, setRisk] = useState(false);
   const sections = emptySection
     ? [
@@ -102,12 +103,6 @@ export function JourneyZoomExample({
         <Button size="sm" onPress={() => setRevision((value) => value + 1)}>
           Refresh records
         </Button>
-        <Button
-          size="sm"
-          onPress={() => setFocusRevision((value) => value + 1)}
-        >
-          Refit insets
-        </Button>
         <label>
           <input
             type="checkbox"
@@ -118,6 +113,9 @@ export function JourneyZoomExample({
         </label>
       </div>
       <h2 className={styles.exampleRoute}>Oakland → Dearborn</h2>
+      <p className={styles.exampleHint}>
+        Select a stop marked +n to view nearby handoffs.
+      </p>
       <NetworkMap
         aria-label="Oakland → Dearborn"
         description="EP-104 · Ground · Synthetic journey"
@@ -127,7 +125,6 @@ export function JourneyZoomExample({
         segments={zoomJourneySegments}
         zoomSections={sections.map((section) => ({
           ...section,
-          focusRevision,
           onMapReady: localBasemap
             ? (map) => recordMap(section.id, map)
             : undefined,
@@ -136,6 +133,7 @@ export function JourneyZoomExample({
         onFacilitySelect={setSelected}
         latestFacilityId="dbn"
         primaryFacilityIds={["oak", "slc", "chi", "dtw"]}
+        clusterFacilities={clustered ? { radius: 50, maxZoom: 8 } : undefined}
         height={largeText ? 780 : 660}
         controls={{ risk: false, latestEvent: false, selectedSegment: false }}
         controlLabels={{ fitAll: "Entire journey" }}
@@ -172,4 +170,7 @@ function recordMap(
     journeyMaps?: Record<string, typeof map>;
   };
   (fixture.journeyMaps ??= {})[id] = map;
+  map.once("remove", () => {
+    if (fixture.journeyMaps?.[id] === map) delete fixture.journeyMaps[id];
+  });
 }

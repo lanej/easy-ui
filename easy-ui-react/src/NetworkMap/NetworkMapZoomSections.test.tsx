@@ -1,36 +1,66 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import type { Map as MapInstance } from "maplibre-gl";
 import { NetworkMap } from "./NetworkMap";
 import { NetworkMapProvider, useNetworkMap } from "./NetworkMapContext";
-import { NetworkMapZoomSections } from "./NetworkMapZoomSections";
+import { NetworkMapViewport } from "./NetworkMapViewport";
+import { crowdedInsetNodes } from "./useMapInsets";
 import type { NetworkMapProps } from "./types";
 
 const seen = new Map<string, NetworkMapProps>();
 const mounts = new Map<string, number>();
+let scale = 14;
+const project = ([longitude, latitude]: number[]) => ({
+  x: 400 + (longitude + 122.2) * scale,
+  y: 330 + (latitude - 37.8) * scale,
+});
 vi.mock("./NetworkMapSurface", () => ({
   NetworkMapSurface: function TestSurface() {
-    const { props: options, setState } = useNetworkMap();
+    const { props: options, setState, mapRef, insets } = useNetworkMap();
+    const { update } = insets;
+    const element = useRef<HTMLDivElement>(null);
     const name = options["aria-label"] ?? options.title ?? "Map";
     seen.set(name, options);
     useEffect(() => {
       mounts.set(name, (mounts.get(name) ?? 0) + 1);
       setState("ready");
     }, [name, setState]);
+    useEffect(() => {
+      const container = element.current!;
+      Object.defineProperties(container, {
+        clientWidth: { value: 1300, configurable: true },
+        clientHeight: { value: 660, configurable: true },
+      });
+      const map = {
+        getContainer: () => container,
+        getCenter: () => ({ lng: -96 }),
+        project,
+        isMoving: () => false,
+        on() {},
+        off() {},
+      } as unknown as MapInstance;
+      mapRef.current = map;
+      update(map);
+    }, [mapRef, update, options.facilities, options.zoomSections]);
     return (
-      <div data-testid={name}>
+      <div ref={element} data-testid={name}>
         {options.facilities?.map((facility) => (
           <button
             key={facility.id}
-            onClick={() => options.onFacilitySelect?.(facility.id)}
+            data-map-facility-id={facility.id}
+            onClick={() => {
+              insets.request(facility.id);
+              options.onFacilitySelect?.(facility.id);
+            }}
           >
             {facility.label}
           </button>
         ))}
+        <button onClick={() => insets.close()}>Move overview</button>
       </div>
     );
   },
 }));
-
 const records: NetworkMapProps = {
   title: "Journey",
   mapStyle: { version: 8, sources: {}, layers: [] },
@@ -108,31 +138,53 @@ const records: NetworkMapProps = {
 };
 const originName = "Journey · Origin detail";
 const destinationName = "Journey · Destination detail";
+const overview = () => within(screen.getByTestId("Journey"));
+const openOrigin = () => fireEvent.click(overview().getByText("Origin"));
 beforeEach(() => {
   seen.clear();
   mounts.clear();
+  scale = 14;
 });
 
-it("fits explicit local groups without including the long transfer or losing supplied evidence", () => {
-  render(
+it("starts with only the overview even when a crowded facility is already selected", () => {
+  const { container } = render(
+    <NetworkMap {...records} selectedFacilityId="a" />,
+  );
+  expect(seen.size).toBe(1);
+  expect(
+    container.querySelector("[data-map-zoom-section]"),
+  ).not.toBeInTheDocument();
+});
+it("opens only the clicked crowded group and preserves the supplied local evidence", () => {
+  const { container } = render(
     <NetworkMap
       {...records}
-      focus={{ revision: "external", facilityIds: ["c"] }}
       initialView={{ center: [0, 0], zoom: 1 }}
+      focus={{ revision: "external", facilityIds: ["c"] }}
     />,
   );
+  openOrigin();
   const origin = seen.get(originName)!;
   expect(origin.facilities?.map((facility) => facility.id)).toEqual(["a", "b"]);
   expect(origin.segments).toEqual([records.segments![0]]);
   expect(origin.segments![0]).toBe(records.segments![0]);
   expect(origin.initialView).toBeUndefined();
   expect(origin.focus?.maxZoom).toBe(14);
-  expect(seen.get(destinationName)?.segments).toEqual([records.segments![2]]);
+  expect(seen.has(destinationName)).toBe(false);
+  expect(container.querySelectorAll("[data-map-zoom-section]")).toHaveLength(1);
+  expect(seen.get("Journey")?.focus?.revision).toBe("external");
   expect(seen.get("Journey")?.segments).toHaveLength(3);
-  expect(screen.queryByText("View data")).not.toBeInTheDocument();
 });
-
-it("shares controlled selection without issuing camera requests to any map", () => {
+it("does not open an inset for a node that is readable at the current scale", () => {
+  scale = 5000;
+  const { container } = render(<NetworkMap {...records} />);
+  openOrigin();
+  expect(
+    container.querySelector("[data-map-zoom-section]"),
+  ).not.toBeInTheDocument();
+  expect(seen.size).toBe(1);
+});
+it("shares selection without opening another inset or changing its focus revision", () => {
   function LinkedJourney() {
     const [selected, setSelected] = useState("a");
     return (
@@ -144,141 +196,112 @@ it("shares controlled selection without issuing camera requests to any map", () 
     );
   }
   render(<LinkedJourney />);
+  openOrigin();
   const before = seen.get(originName)!.focus!.revision;
   fireEvent.click(
-    within(screen.getByTestId(destinationName)).getByText("Delivery"),
+    within(screen.getByTestId(originName)).getByText("Acceptance"),
   );
-  for (const options of seen.values())
-    expect(options.selectedFacilityId).toBe("d");
-  expect(seen.get(originName)!.focus!.revision).toBe(before);
-  expect([...mounts.values()]).toEqual([1, 1, 1]);
+  expect(seen.get("Journey")?.selectedFacilityId).toBe("b");
+  expect(seen.get(originName)?.selectedFacilityId).toBe("b");
+  expect(seen.get(originName)?.focus?.revision).toBe(before);
+  expect([...mounts.values()]).toEqual([1, 1]);
 });
-
-it("keeps each camera through immutable refreshes and reordering, with explicit refits and independent reset", () => {
-  const { container, rerender } = render(<NetworkMap {...records} />);
+it("retains the requested inset through immutable refreshes and explicit local refits", () => {
+  const { rerender } = render(<NetworkMap {...records} />);
+  openOrigin();
   const original = seen.get(originName)!.focus!.revision;
-  const other = seen.get(destinationName)!.focus!.revision;
-  fireEvent.click(
-    within(
-      container.querySelector('[data-map-zoom-section="origin"]')!,
-    ).getByRole("button", { name: "Fit section" }),
-  );
-  const reset = seen.get(originName)!.focus!.revision;
-  expect(reset).not.toBe(original);
-  expect(seen.get(destinationName)!.focus!.revision).toBe(other);
-  const update = {
-    ...records,
-    facilities: records.facilities!.map((facility) => ({
-      ...facility,
-      detail: "Updated",
-    })),
-    zoomSections: [...records.zoomSections!].reverse(),
-  };
-  rerender(<NetworkMap {...update} />);
-  expect(seen.get(originName)!.focus!.revision).toBe(reset);
-  expect([...mounts.values()]).toEqual([1, 1, 1]);
+  fireEvent.click(screen.getByRole("button", { name: "Fit" }));
+  const fitted = seen.get(originName)!.focus!.revision;
+  expect(fitted).not.toBe(original);
   rerender(
     <NetworkMap
-      {...update}
-      zoomSections={update.zoomSections.map((section) => ({
-        ...section,
-        focusRevision: 2,
-      }))}
+      {...records}
+      facilities={records.facilities!.map((f) => ({ ...f, detail: "Updated" }))}
+      zoomSections={[...records.zoomSections!].reverse()}
     />,
   );
-  expect(seen.get(originName)!.focus!.revision).not.toBe(reset);
+  expect(seen.get(originName)?.focus?.revision).toBe(fitted);
+  expect([...mounts.values()]).toEqual([1, 1]);
 });
-
-it("shares parent layer visibility and resolved overlays while preserving map controls opt-out", () => {
-  const options: NetworkMapProps = {
-    ...records,
-    controls: false,
-    defaultLayerVisibility: { risk: false, weather: true },
-    overlays: [
-      {
-        id: "context",
-        label: "Context",
-        data: { type: "FeatureCollection", features: [] },
-        layers: [],
-        visible: false,
-      },
-    ],
-  };
-  const { rerender } = render(<NetworkMap {...options} />);
-  expect(seen.get(originName)!.layerVisibility).toEqual({
+it("keeps only one inset when choosing another crowded node", () => {
+  const { container } = render(<NetworkMap {...records} />);
+  openOrigin();
+  fireEvent.click(overview().getByText("Delivery"));
+  expect(container.querySelectorAll("[data-map-zoom-section]")).toHaveLength(1);
+  expect(screen.queryByTestId(originName)).not.toBeInTheDocument();
+  expect(screen.getByTestId(destinationName)).toBeInTheDocument();
+  expect(seen.get(destinationName)?.segments![0].evidence).toBe("planned");
+  expect(mounts.get("Journey")).toBe(1);
+});
+it("closes with Escape or Close and returns focus to the source node", () => {
+  const { container } = render(<NetworkMap {...records} />);
+  openOrigin();
+  fireEvent.keyDown(overview().getByText("Origin"), { key: "Escape" });
+  expect(
+    container.querySelector("[data-map-zoom-section]"),
+  ).not.toBeInTheDocument();
+  expect(overview().getByText("Origin")).toHaveFocus();
+  openOrigin();
+  fireEvent.click(screen.getByRole("button", { name: "Close close-up" }));
+  expect(
+    container.querySelector("[data-map-zoom-section]"),
+  ).not.toBeInTheDocument();
+});
+it("does not reopen on a camera change and omits invalid or unmapped candidates", () => {
+  const { container } = render(<NetworkMap {...records} />);
+  openOrigin();
+  fireEvent.click(overview().getByText("Move overview"));
+  expect(
+    container.querySelector("[data-map-zoom-section]"),
+  ).not.toBeInTheDocument();
+  fireEvent.click(overview().getByText("Unknown location"));
+  expect(
+    container.querySelector("[data-map-zoom-section]"),
+  ).not.toBeInTheDocument();
+});
+it("shares resolved layers and retains dismissal when camera controls are disabled", () => {
+  render(
+    <NetworkMap
+      {...records}
+      controls={false}
+      defaultLayerVisibility={{ risk: false, weather: true }}
+    />,
+  );
+  openOrigin();
+  expect(seen.get(originName)?.layerVisibility).toEqual({
     risk: false,
     weather: true,
     deliverySurface: false,
   });
-  expect(seen.get(originName)!.overlays).toEqual(seen.get("Journey")!.overlays);
+  expect(screen.queryByRole("button", { name: "Fit" })).not.toBeInTheDocument();
   expect(
-    screen.queryByRole("button", { name: "Fit section" }),
-  ).not.toBeInTheDocument();
-  rerender(<NetworkMap {...options} layerVisibility={{ risk: true }} />);
-  expect(seen.get(destinationName)!.layerVisibility!.risk).toBe(true);
-});
-
-it("shows unavailable location groups instead of opening an unrelated world map", () => {
-  render(
-    <NetworkMap
-      {...records}
-      zoomSections={[
-        {
-          id: "empty",
-          title: "Unmapped handoff",
-          facilityIds: ["missing", "invalid"],
-        },
-      ]}
-    />,
-  );
-  expect(
-    screen.getByText("No mapped locations in this section."),
+    screen.getByRole("button", { name: "Close close-up" }),
   ).toBeInTheDocument();
-  expect(seen.size).toBe(1);
 });
-
-it("can be composed independently, without inheriting the overview's external heading IDs", () => {
-  render(
+it("composes inside one frame without inheriting the overview's external heading IDs", () => {
+  const { container } = render(
     <NetworkMapProvider {...records} aria-labelledby="external-title">
-      <h2 id="external-title">External journey title</h2>
-      <NetworkMapZoomSections />
+      <h2 id="external-title">External title</h2>
+      <NetworkMapViewport />
     </NetworkMapProvider>,
   );
-  expect(seen.get(originName)!["aria-labelledby"]).toBeUndefined();
+  openOrigin();
+  expect(container.querySelectorAll("[data-map-geography]")).toHaveLength(1);
+  expect(seen.get(originName)?.["aria-labelledby"]).toBeUndefined();
   expect(
     screen.getByRole("heading", { name: "Origin detail" }),
   ).toBeInTheDocument();
-  expect(seen.size).toBe(2);
 });
-
-it("embeds the overview and close-ups inside one geographic frame", () => {
-  const { container } = render(<NetworkMap {...records} />);
-  const frame = container.querySelector("[data-map-geography]")!;
-  expect(container.querySelectorAll("[data-map-geography]")).toHaveLength(1);
-  expect(frame).toContainElement(screen.getByTestId("Journey"));
-  expect(frame).toContainElement(screen.getByTestId(originName));
-  expect(frame).toContainElement(screen.getByTestId(destinationName));
-  expect(frame.querySelector("[data-map-inset-leaders]")).toBeInTheDocument();
-});
-
-it("switches the narrow inset without changing selection, camera requests or map identities", () => {
-  const { container } = render(
-    <NetworkMap {...records} selectedFacilityId="a" />,
-  );
-  const initial = seen.get(originName)!.focus!.revision;
-  // JSDOM does not evaluate container queries; the browser suite checks visibility.
-  const switcher = container.querySelector<HTMLElement>(
-    '[aria-label="Journey close-up insets"]',
-  )!;
-  fireEvent.click(within(switcher).getByText("Destination detail"));
-  expect(
-    container.querySelector('[data-map-zoom-section="origin"]'),
-  ).toHaveAttribute("aria-hidden", "true");
-  expect(
-    container.querySelector('[data-map-zoom-section="destination"]'),
-  ).not.toHaveAttribute("aria-hidden");
-  expect(seen.get(originName)!.focus!.revision).toBe(initial);
-  for (const options of seen.values())
-    expect(options.selectedFacilityId).toBe("a");
-  expect([...mounts.values()]).toEqual([1, 1, 1]);
+it("measures crowding in screen pixels and excludes far, missing and invalid members", () => {
+  const map = {
+    getContainer: () => ({ clientWidth: 1300, clientHeight: 660 }),
+    getCenter: () => ({ lng: -96 }),
+    project,
+  } as unknown as Parameters<typeof crowdedInsetNodes>[1];
+  const crowded = crowdedInsetNodes(records, map);
+  expect(crowded.get("a")?.facilityIds).toEqual(["a", "b"]);
+  expect(crowded.get("c")?.facilityIds).toEqual(["c", "d"]);
+  expect(crowded.has("invalid")).toBe(false);
+  scale = 5000;
+  expect(crowdedInsetNodes(records, map).size).toBe(0);
 });

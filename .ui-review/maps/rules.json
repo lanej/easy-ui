@@ -59,45 +59,17 @@
     "designRules": ["DR-006", "DR-015"]
   },
   {
-    "id": "journey-map-with-insets",
+    "id": "journey-map-on-demand",
     "pages": ["journey-sections", "journey-sections-large-text"],
     "type": "required-elements",
     "selector": "[data-journey-zoom-example]",
     "required": [
       "[data-map-geography] > [data-map-state]",
-      "[data-map-zoom-sections]"
+      "[data-map-inset-count]"
     ],
     "severity": "error",
-    "reason": "One geographic frame keeps the full journey visible with an embedded inset layer.",
+    "reason": "The default journey shows its overview and crowded-node availability indicators without opening a close-up.",
     "designRules": ["DR-006", "DR-007"]
-  },
-  {
-    "pages": ["journey-sections", "journey-sections-large-text"],
-    "type": "required-elements",
-    "selector": "[data-journey-zoom-example]",
-    "severity": "error",
-    "designRules": ["DR-006", "DR-007"],
-    "id": "journey-desktop-insets",
-    "viewports": ["desktop"],
-    "required": [
-      "[data-map-zoom-section=\"origin\"] [data-map-state]",
-      "[data-map-zoom-section=\"destination\"] [data-map-state]"
-    ],
-    "reason": "Desktop shows both embedded origin and destination close-ups."
-  },
-  {
-    "pages": ["journey-sections", "journey-sections-large-text"],
-    "type": "required-elements",
-    "selector": "[data-journey-zoom-example]",
-    "severity": "error",
-    "designRules": ["DR-006", "DR-007"],
-    "id": "journey-mobile-inset",
-    "viewports": ["mobile"],
-    "required": [
-      "[data-map-zoom-section][data-active=\"true\"] [data-map-state]",
-      "[data-map-zoom-sections] [role=\"group\"] button"
-    ],
-    "reason": "Mobile shows the active inset with controls to choose the other close-up, while retaining the overview."
   },
   {
     "id": "journey-section-bounds",
@@ -107,7 +79,8 @@
     "container": "[data-map-geography]",
     "tolerance": 1,
     "severity": "error",
-    "reason": "Inset cards must remain embedded within the geographic viewport at narrow and wide widths.",
-    "designRules": ["DR-007"]
+    "reason": "A requested close-up stays within the geographic frame; initial overviews need no inset.",
+    "designRules": ["DR-007"],
+    "optional": true
   }
 ]

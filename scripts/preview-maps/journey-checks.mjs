@@ -1,69 +1,44 @@
 import assert from "node:assert/strict";
-
-const cameraState = () =>
+const cameras = () =>
   Object.fromEntries(
     Object.entries(window.journeyMaps).map(([id, map]) => [
       id,
       { center: map.getCenter().toArray(), zoom: map.getZoom() },
     ]),
   );
-const ready = () =>
+const overviewReady = () =>
   window.journeyMaps &&
-  Object.keys(window.journeyMaps).length === 3 &&
+  Object.keys(window.journeyMaps).length === 1 &&
   Object.values(window.journeyMaps).every(
     (map) => map.loaded() && !map.isMoving(),
   ) &&
-  document.querySelectorAll('[data-map-state="ready"]').length === 3;
+  document.querySelectorAll('[data-map-state="ready"]').length === 1;
+const insetReady = () =>
+  window.journeyMaps &&
+  Object.keys(window.journeyMaps).length === 2 &&
+  Object.values(window.journeyMaps).every(
+    (map) => map.loaded() && !map.isMoving(),
+  ) &&
+  document.querySelectorAll('[data-map-state="ready"]').length === 2;
+const marker = (id) =>
+  `[data-map-geography] > [data-map-state] [data-map-facility-id="${id}"]`;
 const section = (id) => `[data-map-zoom-section="${id}"]`;
-const layout = () => {
+const bounded = () => {
   const frame = document
     .querySelector("[data-map-geography]")
     .getBoundingClientRect();
-  const insets = document
-    .querySelector("[data-map-zoom-sections]")
-    .getBoundingClientRect();
-  const cards = [
-    ...document.querySelectorAll("[data-map-zoom-section]"),
-  ].filter((node) => getComputedStyle(node).visibility === "visible");
+  const card = document
+    .querySelector("[data-map-zoom-section]")
+    ?.getBoundingClientRect();
   return (
     document.documentElement.scrollWidth <= innerWidth + 1 &&
-    cards.every((node) => {
-      const rect = node.getBoundingClientRect();
-      return (
-        rect.left >= frame.left &&
-        rect.right <= frame.right &&
-        rect.top > frame.top &&
-        rect.bottom < frame.bottom
-      );
-    }) &&
-    (innerWidth > 1000 ? cards.length === 2 : cards.length === 1) &&
-    window.journeyMaps.overview.getContainer().clientHeight >= 560 &&
-    insets.top > frame.top + 180
+    card &&
+    card.left >= frame.left &&
+    card.right <= frame.right &&
+    card.top >= frame.top &&
+    card.bottom <= frame.bottom
   );
 };
-const clearOverview = () => {
-  const map = window.journeyMaps.overview;
-  const element = map.getContainer();
-  const top =
-    document.querySelector("[data-map-zoom-sections]").getBoundingClientRect()
-      .top - element.getBoundingClientRect().top;
-  return [
-    [-122.24, 37.79],
-    [-111.96, 40.76],
-    [-87.66, 41.81],
-    [-83.18, 42.37],
-    [-83.276, 42.296],
-  ].every((coordinate) => {
-    const point = map.project(coordinate);
-    return (
-      point.x >= 24 &&
-      point.x <= element.clientWidth - 24 &&
-      point.y >= 24 &&
-      point.y < top - 14
-    );
-  });
-};
-
 export async function checkJourneySections({
   browser,
   base,
@@ -72,222 +47,384 @@ export async function checkJourneySections({
   scan,
   clean,
 }) {
-  for (const theme of ["light", "dark"]) {
+  for (const theme of ["light", "dark"])
     for (const width of [1440, 390]) {
       const name = `${theme}/${width}`;
       await browser.resize(width, 1100);
       await browser.open(`${base}/journey.html?theme=${theme}`);
-      await browser.wait(ready);
-      const initial = await browser.evaluate(cameraState);
+      await browser.wait(overviewReady);
+      const initial = await browser.evaluate(cameras);
       check(
-        `${name}: overview and enlarged insets use independent geographic scales`,
-        initial.origin.zoom > initial.overview.zoom + 5 &&
-          initial.destination.zoom > initial.overview.zoom + 4,
-      );
-      check(
-        `${name}: both close-ups are embedded in one responsive map frame`,
-        await browser.evaluate(layout),
-      );
-      check(
-        `${name}: fitting the journey keeps all route stops above the insets`,
-        await browser.evaluate(clearOverview),
-      );
-      check(
-        `${name}: projected leaders connect the visible insets to their geographic sections`,
+        `${name}: zoomed-out journey starts with one map and no inset`,
         await browser.evaluate(
           () =>
-            document.querySelectorAll("[data-map-inset-leader]").length ===
-            (innerWidth > 1000 ? 2 : 1),
+            !document.querySelector("[data-map-zoom-section]") &&
+            document.querySelectorAll(".maplibregl-map").length === 1,
         ),
       );
       check(
-        `${name}: overview retains the whole route while insets retain local evidence`,
-        await browser.evaluate(async () => {
-          const records = Object.fromEntries(
-            await Promise.all(
-              Object.entries(window.journeyMaps).map(async ([id, map]) => [
-                id,
-                (await map.getSource("easy-ui-transfers").getData()).features,
-              ]),
+        `${name}: crowded stops advertise nearby locations without opening anything`,
+        await browser.evaluate(
+          () =>
+            [...document.querySelectorAll("[data-map-inset-count]")].length ===
+              2 &&
+            [...document.querySelectorAll("[data-map-inset-count]")].every(
+              (node) =>
+                node.dataset.mapInsetCount === "2" &&
+                node.getAttribute("aria-label").includes("Close-up available"),
             ),
-          );
-          return (
-            records.overview.length === 7 &&
-            records.origin.length === 2 &&
-            records.destination.length === 2 &&
-            records.destination.some(
-              (feature) => feature.properties.evidence === "planned",
-            )
-          );
-        }),
-      );
-      check(
-        `${name}: inset markers keep all three local location labels available`,
-        await browser.evaluate(() =>
-          [
-            ...document.querySelectorAll(
-              '[data-map-zoom-section] .maplibregl-marker [data-map-label="true"]',
-            ),
-          ].every((label) => label.style.visibility === "visible"),
         ),
       );
       await capture(`journey-sections-${theme}-${width}`);
       await scan(`journey-sections-${theme}-${width}`);
-      if (width < 1000) {
-        await browser.clickNamed("button", "Origin");
-        check(
-          `${name}: mobile inset switching preserves all cameras and overview context`,
+      await browser.key(marker("slc"), "Enter");
+      await browser.wait(overviewReady);
+      check(
+        `${name}: ordinary stop selection keeps the overview clean`,
+        await browser.evaluate(
+          () => !document.querySelector("[data-map-zoom-section]"),
+        ),
+      );
+      assert.deepEqual(
+        await browser.evaluate(cameras),
+        initial,
+        "Selection does not change the overview camera",
+      );
+      await browser.key(marker("oak"), "Enter");
+      await browser.wait(insetReady);
+      const opened = await browser.evaluate(cameras);
+      check(
+        `${name}: clicking a crowded node opens one bounded origin close-up`,
+        (await browser.evaluate(bounded)) &&
           (await browser.evaluate(
             () =>
-              document
-                .querySelector('[data-map-zoom-section="origin"]')
-                .getAttribute("aria-hidden") !== "true",
-          )) && (await browser.evaluate(clearOverview)),
-        );
-        assert.deepEqual(
-          await browser.evaluate(cameraState),
-          initial,
-          "Choosing an inset preserves all cameras",
-        );
-      }
-      await browser.evaluate(() => {
-        window.journeyBefore = { ...window.journeyMaps };
-      });
+              document.querySelectorAll("[data-map-zoom-section]").length ===
+                1 && document.querySelector('[data-map-zoom-section="origin"]'),
+          )),
+      );
+      check(
+        `${name}: the close-up enlarges local handoffs without moving the journey`,
+        opened.origin.zoom > initial.overview.zoom + 4 &&
+          JSON.stringify(opened.overview) === JSON.stringify(initial.overview),
+      );
+      check(
+        `${name}: origin retains only its nearby stops and local evidence`,
+        await browser.evaluate(async () => {
+          const data = await window.journeyMaps.origin
+            .getSource("easy-ui-transfers")
+            .getData();
+          return (
+            data.features.length === 2 &&
+            data.features.every((f) => f.properties.evidence === "transfer")
+          );
+        }),
+      );
+      check(
+        `${name}: local labels and a geographic leader remain visible`,
+        await browser.evaluate(
+          () =>
+            document.querySelectorAll("[data-map-inset-leader]").length === 1 &&
+            [
+              ...document.querySelectorAll(
+                '[data-map-zoom-section] [data-map-label="true"]',
+              ),
+            ].length === 3 &&
+            [
+              ...document.querySelectorAll(
+                '[data-map-zoom-section] [data-map-label="true"]',
+              ),
+            ].every((n) => n.style.visibility === "visible"),
+        ),
+      );
+      await browser.evaluate(
+        () => (window.journeyBefore = { ...window.journeyMaps }),
+      );
       await browser.key(
-        `${section("origin")} .maplibregl-marker[title="Oakland acceptance"]`,
+        `${section("origin")} [data-map-facility-id="acceptance"]`,
         "Enter",
       );
       await browser.wait(
         () =>
           document.querySelectorAll(
-            '.maplibregl-marker[data-selected="true"][title="Oakland acceptance"]',
+            '[data-map-facility-id="acceptance"][data-selected="true"]',
           ).length === 2,
       );
       assert.deepEqual(
-        await browser.evaluate(cameraState),
-        initial,
-        "Shared selection preserves every camera",
+        await browser.evaluate(cameras),
+        opened,
+        "Shared selection preserves both cameras",
       );
       await browser.clickNamed("button", "Refresh records");
       await browser.wait(() => document.body.innerText.includes("Updated"));
-      await browser.wait(ready);
-      assert.deepEqual(
-        await browser.evaluate(cameraState),
-        initial,
-        "Immutable refresh preserves every camera",
-      );
+      await browser.wait(insetReady);
       check(
-        `${name}: linked selection and refresh keep every map instance`,
+        `${name}: record refresh preserves the requested inset, selection and both map instances`,
         await browser.evaluate(() =>
           Object.entries(window.journeyMaps).every(
             ([id, map]) => window.journeyBefore[id] === map,
           ),
         ),
       );
-      await browser.clickNamed("checkbox", "Facility risk");
-      check(
-        `${name}: shared risk visibility reaches both overview and destination inset`,
-        await browser.evaluate(
-          () =>
-            [
-              ...document.querySelectorAll(
-                '.maplibregl-marker[data-risk="elevated"]',
-              ),
-            ].length >= 2,
-        ),
-      );
       assert.deepEqual(
-        await browser.evaluate(cameraState),
-        initial,
-        "Layer changes preserve cameras",
+        await browser.evaluate(cameras),
+        opened,
+        "Refresh preserves cameras",
       );
       await browser.click(`${section("origin")} .maplibregl-ctrl-zoom-in`);
-      await browser.wait(ready);
-      const zoomed = await browser.evaluate(cameraState);
+      await browser.wait(insetReady);
+      const zoomed = await browser.evaluate(cameras);
       check(
-        `${name}: zooming an inset leaves the journey and other inset unchanged`,
-        zoomed.origin.zoom > initial.origin.zoom &&
-          JSON.stringify(zoomed.overview) ===
-            JSON.stringify(initial.overview) &&
-          JSON.stringify(zoomed.destination) ===
-            JSON.stringify(initial.destination),
+        `${name}: inset navigation leaves the main map unchanged`,
+        zoomed.origin.zoom > opened.origin.zoom &&
+          JSON.stringify(zoomed.overview) === JSON.stringify(initial.overview),
       );
-      await browser.key(`${section("origin")} header button`, "Enter");
-      await browser.wait(ready);
-      const fitted = await browser.evaluate(cameraState);
+      await browser.key(
+        `${section("origin")} header button:not([aria-label])`,
+        "Enter",
+      );
+      await browser.wait(insetReady);
       check(
-        `${name}: keyboard Fit section resets only that inset`,
-        Math.abs(fitted.origin.zoom - initial.origin.zoom) < 0.001 &&
-          JSON.stringify(fitted.overview) ===
-            JSON.stringify(initial.overview) &&
-          JSON.stringify(fitted.destination) ===
-            JSON.stringify(initial.destination),
+        `${name}: local Fit restores the close-up without moving the journey`,
+        Math.abs(
+          (await browser.evaluate(cameras)).origin.zoom - opened.origin.zoom,
+        ) < 0.001,
       );
       await capture(`journey-origin-${theme}-${width}`);
       await scan(`journey-origin-${theme}-${width}`);
-      if (width < 1000) await browser.clickNamed("button", "Destination");
+      await browser.key(
+        `${section("origin")} header button:not([aria-label])`,
+        "Escape",
+      );
+      await browser.wait(overviewReady);
+      check(
+        `${name}: Escape dismisses and returns focus to its source stop`,
+        await browser.evaluate(
+          () =>
+            !document.querySelector("[data-map-zoom-section]") &&
+            document.activeElement.dataset.mapFacilityId === "oak",
+        ),
+      );
+      await browser.key(marker("dbn"), "Enter");
+      await browser.wait(insetReady);
+      check(
+        `${name}: another crowded stop opens only its destination close-up`,
+        (await browser.evaluate(bounded)) &&
+          (await browser.evaluate(
+            () =>
+              Object.keys(window.journeyMaps).join(",") ===
+                "overview,destination" &&
+              document.querySelectorAll("[data-map-zoom-section]").length === 1,
+          )),
+      );
+      check(
+        `${name}: destination preserves planned evidence`,
+        await browser.evaluate(async () => {
+          const data = await window.journeyMaps.destination
+            .getSource("easy-ui-transfers")
+            .getData();
+          return (
+            data.features.length === 2 &&
+            data.features.some((f) => f.properties.evidence === "planned")
+          );
+        }),
+      );
+      await browser.clickNamed("checkbox", "Facility risk");
+      await browser.wait(insetReady);
+      check(
+        `${name}: facility risk stays shared with the requested inset`,
+        await browser.evaluate(() =>
+          [
+            ...document.querySelectorAll(
+              "[data-map-zoom-section] [data-map-facility-id]",
+            ),
+          ].every((node) => {
+            const main = [
+              ...document.querySelectorAll(
+                "[data-map-geography] > [data-map-state] [data-map-facility-id]",
+              ),
+            ].find(
+              (item) =>
+                item.dataset.mapFacilityId === node.dataset.mapFacilityId,
+            );
+            return main && main.dataset.risk === node.dataset.risk;
+          }),
+        ),
+      );
       await capture(`journey-destination-${theme}-${width}`);
       await scan(`journey-destination-${theme}-${width}`);
-      if (width < 1000) await browser.clickNamed("button", "Origin");
-      await browser.click(`${section("origin")} .maplibregl-ctrl-zoom-in`);
-      await browser.wait(ready);
-      await browser.clickNamed("button", "Refit insets");
-      await browser.wait(ready);
+      await browser.clickNamed("button", "Close close-up");
+      await browser.wait(overviewReady);
       check(
-        `${name}: explicit inset refits preserve the overview camera`,
-        JSON.stringify((await browser.evaluate(cameraState)).overview) ===
-          JSON.stringify(initial.overview),
+        `${name}: Close returns to the same journey with availability still indicated`,
+        (await browser.evaluate(
+          () =>
+            !document.querySelector("[data-map-zoom-section]") &&
+            document.querySelectorAll("[data-map-inset-count]").length === 2,
+        )) &&
+          JSON.stringify((await browser.evaluate(cameras)).overview) ===
+            JSON.stringify(initial.overview),
       );
-      const beforeLeader = await browser.evaluate(
-        () =>
-          document
-            .querySelector("[data-map-inset-leader] polyline")
-            ?.getAttribute("points") ?? "",
+      await browser.key(marker("oak"), "Enter");
+      await browser.wait(insetReady);
+      await browser.clickNamed("button", "Entire journey");
+      await browser.wait(overviewReady);
+      check(
+        `${name}: Entire journey dismisses even when the overview is already at its full-route fit`,
+        await browser.evaluate(
+          () => !document.querySelector("[data-map-zoom-section]"),
+        ),
       );
+      await browser.key(marker("oak"), "Enter");
+      await browser.wait(insetReady);
+      await browser.evaluate(() =>
+        window.journeyMaps.overview.fitBounds(
+          [
+            [-122.24, 37.741],
+            [-122.212, 37.79],
+          ],
+          { padding: 80, maxZoom: 13, duration: 0 },
+        ),
+      );
+      await browser.wait(overviewReady);
+      check(
+        `${name}: zooming the main view to readable local stops removes the inset and indicator`,
+        await browser.evaluate(
+          () =>
+            !document.querySelector("[data-map-zoom-section]") &&
+            [...document.querySelectorAll("[data-map-inset-available]")].filter(
+              (n) =>
+                ["oak", "acceptance", "origin-sort"].includes(
+                  n.dataset.mapFacilityId,
+                ),
+            ).length === 0,
+        ),
+      );
+      await browser.key(marker("acceptance"), "Enter");
+      await browser.wait(overviewReady);
+      check(
+        `${name}: readable local nodes do not reopen a redundant inset`,
+        await browser.evaluate(
+          () => !document.querySelector("[data-map-zoom-section]"),
+        ),
+      );
+      await browser.clickNamed("button", "Entire journey");
+      await browser.wait(overviewReady);
+      check(
+        `${name}: returning to the fully zoomed-out journey advertises availability without reopening`,
+        await browser.evaluate(
+          () =>
+            !document.querySelector("[data-map-zoom-section]") &&
+            document.querySelectorAll("[data-map-inset-count]").length === 2,
+        ),
+      );
+      await browser.key(marker("dbn"), "Enter");
+      await browser.wait(insetReady);
       await browser.click(
         "[data-map-geography] > [data-map-state] .maplibregl-ctrl-zoom-out",
       );
-      await browser.wait(ready);
+      await browser.wait(overviewReady);
       check(
-        `${name}: leader lines track the overview camera`,
-        beforeLeader !==
-          (await browser.evaluate(
-            () =>
-              document
-                .querySelector("[data-map-inset-leader] polyline")
-                ?.getAttribute("points") ?? "",
-          )),
-      );
-      await browser.clickNamed("button", "Entire journey");
-      await browser.wait(ready);
-      check(
-        `${name}: returning to the journey fits the route clear of the insets`,
-        await browser.evaluate(clearOverview),
+        `${name}: zooming out dismisses the requested inset`,
+        await browser.evaluate(
+          () => !document.querySelector("[data-map-zoom-section]"),
+        ),
       );
       if (clean) await clean(`journey-sections-${theme}-${width}`);
     }
-  }
   await browser.resize(390, 1100);
   await browser.open(`${base}/journey.html?theme=dark&large=1&empty=1`);
-  await browser.wait(ready);
-  await browser.clickNamed("button", "Unmapped handoff");
+  await browser.wait(overviewReady);
   check(
-    "Unmapped inset has an explicit empty state and no unrelated world map",
+    "Unmapped groups have no misleading close-up indicator or world-map inset",
     await browser.evaluate(
       () =>
-        document
-          .querySelector('[data-map-zoom-section="missing"]')
-          .textContent.includes("No mapped locations in this section.") &&
-        document.querySelectorAll(".maplibregl-map").length === 3,
+        !document.querySelector('[data-map-inset-available="missing"]') &&
+        !document.querySelector("[data-map-zoom-section]"),
     ),
   );
+  await browser.key(marker("oak"), "Enter");
+  await browser.wait(insetReady);
   check(
-    "Large text inset layout preserves the overview and mobile bounds",
-    (await browser.evaluate(clearOverview)) &&
-      (await browser.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth + 1,
-      )),
+    "Large text close-up remains bounded and leaves native overview navigation accessible",
+    await browser.evaluate(() => {
+      const frame = document
+          .querySelector("[data-map-geography]")
+          .getBoundingClientRect(),
+        card = document
+          .querySelector("[data-map-zoom-section]")
+          .getBoundingClientRect(),
+        nav = document
+          .querySelector(
+            "[data-map-geography] > [data-map-state] .maplibregl-ctrl-zoom-in",
+          )
+          .getBoundingClientRect();
+      return (
+        document.documentElement.scrollWidth <= innerWidth + 1 &&
+        card.left >= frame.left &&
+        card.right <= frame.right &&
+        card.top >= frame.top &&
+        card.bottom <= frame.bottom &&
+        (nav.bottom <= card.top ||
+          nav.top >= card.bottom ||
+          nav.right <= card.left ||
+          nav.left >= card.right)
+      );
+    }),
   );
   await capture("journey-sections-large-text-empty-mobile");
   await scan("journey-sections-large-text-empty-mobile");
+  await browser.resize(1440, 1100);
+  await browser.open(`${base}/journey.html?clustered=1`);
+  await browser.wait(overviewReady);
+  const clusteredCamera = await browser.evaluate(cameras);
+  const clickCluster = () => {
+    const map = window.journeyMaps.overview;
+    const feature = map
+      .queryRenderedFeatures({ layers: ["easy-ui-facility-cluster-circles"] })
+      .find((item) => item.geometry.coordinates[0] < -120);
+    if (!feature) throw new Error("Origin cluster is unavailable");
+    const point = map.project(feature.geometry.coordinates);
+    const canvas = map.getCanvas(),
+      rect = canvas.getBoundingClientRect();
+    canvas.dispatchEvent(
+      new MouseEvent("click", {
+        clientX: point.x + rect.left,
+        clientY: point.y + rect.top,
+        bubbles: true,
+      }),
+    );
+  };
+  await browser.evaluate(clickCluster);
+  await browser.wait(insetReady);
+  check(
+    "A native cluster contained in a local journey group opens one inset without zooming the overview",
+    JSON.stringify((await browser.evaluate(cameras)).overview) ===
+      JSON.stringify(clusteredCamera.overview),
+  );
+  await browser.clickNamed("button", "Close close-up");
+  await browser.wait(overviewReady);
+  await browser.evaluate(() => {
+    const source = window.journeyMaps.overview.getSource(
+      "easy-ui-facility-clusters",
+    );
+    const original = source.getClusterLeaves.bind(source);
+    source.getClusterLeaves = (...args) =>
+      new Promise((resolve) => {
+        window.resolveJourneyLeaves = async () =>
+          resolve(await original(...args));
+      });
+  });
+  await browser.evaluate(clickCluster);
+  await browser.wait(() => Boolean(window.resolveJourneyLeaves));
+  await browser.clickNamed("button", "Entire journey");
+  await browser.wait(overviewReady);
+  await browser.evaluate(async () => {
+    await window.resolveJourneyLeaves();
+  });
+  check(
+    "A delayed native-cluster result cannot reopen an inset after returning to the whole journey",
+    await browser.evaluate(
+      () => !document.querySelector("[data-map-zoom-section]"),
+    ),
+  );
 }

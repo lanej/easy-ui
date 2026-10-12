@@ -15,6 +15,7 @@ createRoot(document.getElementById("root")!).render(
         largeText={query.has("large")}
         narrow={query.has("narrow")}
         emptySection={query.has("empty")}
+        clustered={query.has("clustered")}
       />
     </main>
   </ThemeProvider>,

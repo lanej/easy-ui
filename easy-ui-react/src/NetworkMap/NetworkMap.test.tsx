@@ -151,6 +151,9 @@ class FakeMap {
   getZoom() {
     return 9;
   }
+  getCenter() {
+    return { lng: -96, lat: 38 };
+  }
   project() {
     return { x: 200, y: 100 };
   }
@@ -2852,7 +2855,7 @@ it("retains exact low probabilities and encoded connection values when the engin
   expect(transfers).toHaveTextContent("1, 2; 3, 4");
 });
 
-it("reserves the inset band when fitting the full journey", async () => {
+it("fits the full viewport without reserving space for unopened insets", async () => {
   vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(660);
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
     function (this: HTMLElement) {
@@ -2881,12 +2884,12 @@ it("reserves the inset band when fitting the full journey", async () => {
       [-122, 38],
     ],
     expect.objectContaining({
-      padding: expect.objectContaining({ bottom: 344 }),
+      padding: expect.objectContaining({ bottom: 65 }),
     }),
   );
 });
 
-it("keeps enough viewport height for the overview above its embedded insets", async () => {
+it("keeps enough viewport height for an on-demand close-up", async () => {
   const { container } = render(
     <NetworkMap
       {...props}
@@ -2898,6 +2901,25 @@ it("keeps enough viewport height for the overview above its embedded insets", as
   );
   await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
   expect(container.querySelector("[data-map-state] > div")).toHaveStyle({
-    height: "560px",
+    height: "660px",
   });
+});
+
+it("leaves enough geographic space for labels inside a compact close-up", async () => {
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(220);
+  render(
+    <NetworkMapProvider {...props} height={220}>
+      <section data-map-zoom-section="local">
+        <NetworkMapSurface />
+      </section>
+    </NetworkMapProvider>,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  act(() => listeners.load());
+  expect(fitBounds).toHaveBeenLastCalledWith(
+    expect.any(Array),
+    expect.objectContaining({
+      padding: expect.objectContaining({ top: 16, bottom: 84 }),
+    }),
+  );
 });

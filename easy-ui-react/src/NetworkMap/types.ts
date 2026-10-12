@@ -260,7 +260,7 @@ export type MapFocus = {
   maxZoom?: number;
 };
 
-/** A caller-defined group of journey locations shown in an embedded close-up inset. */
+/** A caller-defined journey group eligible for an on-demand close-up when its nodes crowd together. */
 export type NetworkMapZoomSection = {
   /** Stable, unique ID. Keeps this section's map and camera across record updates. */
   id: string;
@@ -268,7 +268,7 @@ export type NetworkMapZoomSection = {
   description?: string;
   /** Only these facilities and connections with both endpoints in this group are shown. */
   facilityIds: readonly string[];
-  /** Inset viewport height in CSS pixels. Defaults to 260; minimum 220. */
+  /** Inset viewport height in CSS pixels. Defaults to 260 (240 in narrow frames); minimum 220. */
   height?: number;
   /** Upper zoom bound when fitting this section. Defaults to 13. */
   maxZoom?: number;
@@ -352,7 +352,7 @@ export type NetworkMapProps = {
   facilities?: readonly MapFacility[];
   /** Ordered connections in that cohort. */
   segments?: readonly MapSegment[];
-  /** Optional close-up insets embedded in the journey viewport, sharing selection and layer visibility. */
+  /** Local groups that offer a close-up after clicking crowded nodes; insets stay closed initially. */
   zoomSections?: readonly NetworkMapZoomSection[];
   /** Optional time-filtered weather/disruption polygons. */
   areas?: readonly MapArea[];
