@@ -30,6 +30,7 @@
   },
   {
     "id": "map-composed-parts",
+    "pages": ["composition", "large-text"],
     "type": "required-elements",
     "selector": ".composition-page",
     "required": [
@@ -44,6 +45,7 @@
   },
   {
     "id": "map-selection-outside-surface",
+    "pages": ["composition", "large-text"],
     "type": "relative-position",
     "selector": ".composition-page",
     "from": "[data-map-state]",
@@ -55,5 +57,30 @@
     "severity": "error",
     "reason": "Selected-record content follows the viewport without covering geography, navigation or attribution.",
     "designRules": ["DR-006", "DR-015"]
+  },
+  {
+    "id": "journey-overview-and-sections",
+    "pages": ["journey-sections", "journey-sections-large-text"],
+    "type": "required-elements",
+    "selector": "[data-journey-zoom-example]",
+    "required": [
+      "[data-map-state]",
+      "[data-map-zoom-section=\"origin\"] [data-map-state]",
+      "[data-map-zoom-section=\"destination\"] [data-map-state]"
+    ],
+    "severity": "error",
+    "reason": "The full journey and both enlarged local handoffs remain available at every reviewed width.",
+    "designRules": ["DR-006", "DR-007"]
+  },
+  {
+    "id": "journey-section-bounds",
+    "pages": ["journey-sections", "journey-sections-large-text"],
+    "type": "within-bounds",
+    "selector": "[data-map-zoom-section]",
+    "container": "[data-map-zoom-sections]",
+    "tolerance": 1,
+    "severity": "error",
+    "reason": "Section maps must fit their own container when laid out side by side or stacked.",
+    "designRules": ["DR-007"]
   }
 ]
