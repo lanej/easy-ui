@@ -72,6 +72,8 @@ function NetworkMapSurfaceView() {
     zoom,
     setZoom,
     commands,
+    activeZoomSectionId,
+    setActiveZoomSectionId,
     surfaceOwner,
     accessibleName,
   } = useNetworkMap();
@@ -159,6 +161,7 @@ function NetworkMapSurfaceView() {
     // after every setup, while reading current data from the stable ref.
     commands.current = {
       fitAll: () => {
+        setActiveZoomSectionId(null);
         const p = latest.current;
         const validFacilities = p.facilities.filter((f) =>
           validCoordinate(f.coordinates),
@@ -179,12 +182,28 @@ function NetworkMapSurfaceView() {
             ];
         flyToBounds(overlayFitBounds(points, p.overlays), 11);
       },
+      zoomSection: (id) => {
+        const p = latest.current;
+        const section = p.zoomSections?.find((item) => item.id === id);
+        if (!instance.current || !section) return;
+        const ids = section.facilityIds.filter((facilityId) =>
+          p.facilities.some(
+            (facility) =>
+              facility.id === facilityId &&
+              validCoordinate(facility.coordinates),
+          ),
+        );
+        if (!ids.length) return;
+        setActiveZoomSectionId(id);
+        fit(ids, section.maxZoom ?? 13);
+      },
       selectedSegment: () => {
         const p = latest.current;
         const segment = p.segments.find(
           (item) => item.id === p.selectedSegmentId,
         );
         if (segment) {
+          setActiveZoomSectionId(undefined);
           p.onFacilitySelect?.(segment.to);
           fit([segment.from, segment.to], 13);
         }
@@ -192,6 +211,7 @@ function NetworkMapSurfaceView() {
       latestEvent: () => {
         const id = latest.current.latestFacilityId;
         if (id) {
+          setActiveZoomSectionId(undefined);
           latest.current.onFacilitySelect?.(id);
           fit([id], 12);
         }
@@ -999,9 +1019,11 @@ function NetworkMapSurfaceView() {
       setState("loading");
       commands.current = {
         fitAll() {},
+        zoomSection() {},
         selectedSegment() {},
         latestEvent() {},
       };
+      setActiveZoomSectionId(undefined);
       window.clearTimeout(deadline);
       refresh.current = null;
       refreshControls.current = null;
@@ -1026,6 +1048,7 @@ function NetworkMapSurfaceView() {
     commands,
     setState,
     setZoom,
+    setActiveZoomSectionId,
     surfaceOwner,
     fit,
     flyToBounds,
@@ -1078,6 +1101,7 @@ function NetworkMapSurfaceView() {
   ]);
   useEffect(() => {
     if (state !== "ready" || !options.focus) return;
+    setActiveZoomSectionId(undefined);
     const { bounds, facilityIds, maxZoom } = options.focus;
     if (bounds) {
       flyToBounds(
@@ -1093,6 +1117,53 @@ function NetworkMapSurfaceView() {
     // A camera request is keyed by revision. Data updates do not recenter the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.focus?.revision, state]);
+  const activeSection = options.zoomSections?.find(
+    (section) => section.id === activeZoomSectionId,
+  );
+  const externalFocusRevision = options.focus?.revision;
+  const previousSectionFocus = useRef<{
+    id?: string | null;
+    revision?: string | number;
+    externalRevision?: string | number;
+  }>({});
+  useEffect(() => {
+    const previous = previousSectionFocus.current;
+    previousSectionFocus.current = {
+      id: activeZoomSectionId,
+      revision: activeSection?.focusRevision,
+      externalRevision: externalFocusRevision,
+    };
+    if (!activeZoomSectionId) return;
+    // An external camera request wins over a section revision in the same update.
+    if (
+      externalFocusRevision !== undefined &&
+      previous.externalRevision !== externalFocusRevision
+    )
+      return;
+    const hasLocations = activeSection?.facilityIds.some((id) =>
+      facilities.some(
+        (facility) =>
+          facility.id === id && validCoordinate(facility.coordinates),
+      ),
+    );
+    if (!hasLocations) {
+      setActiveZoomSectionId(undefined);
+    } else if (
+      state === "ready" &&
+      previous.id === activeZoomSectionId &&
+      previous.revision !== activeSection?.focusRevision
+    ) {
+      commands.current.zoomSection(activeZoomSectionId);
+    }
+  }, [
+    activeZoomSectionId,
+    activeSection,
+    facilities,
+    state,
+    commands,
+    setActiveZoomSectionId,
+    externalFocusRevision,
+  ]);
   useEffect(() => {
     instance.current?.resize();
   }, [height]);

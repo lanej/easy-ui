@@ -59,17 +59,17 @@
     "designRules": ["DR-006", "DR-015"]
   },
   {
-    "id": "journey-overview-and-sections",
+    "id": "journey-map-and-focus-controls",
     "pages": ["journey-sections", "journey-sections-large-text"],
     "type": "required-elements",
     "selector": "[data-journey-zoom-example]",
     "required": [
       "[data-map-state]",
-      "[data-map-zoom-section=\"origin\"] [data-map-state]",
-      "[data-map-zoom-section=\"destination\"] [data-map-state]"
+      "[data-map-zoom-section=\"origin\"] button",
+      "[data-map-zoom-section=\"destination\"] button"
     ],
     "severity": "error",
-    "reason": "The full journey and both enlarged local handoffs remain available at every reviewed width.",
+    "reason": "One journey map retains focus controls for both local handoffs at every reviewed width.",
     "designRules": ["DR-006", "DR-007"]
   },
   {
@@ -80,7 +80,7 @@
     "container": "[data-map-zoom-sections]",
     "tolerance": 1,
     "severity": "error",
-    "reason": "Section maps must fit their own container when laid out side by side or stacked.",
+    "reason": "Section focus controls must fit their container when wrapping at narrow widths.",
     "designRules": ["DR-007"]
   }
 ]

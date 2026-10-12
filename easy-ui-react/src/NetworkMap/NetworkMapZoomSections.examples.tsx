@@ -4,7 +4,12 @@ import { NetworkMap } from "./NetworkMap";
 import { Select } from "../Select";
 import { Button } from "../Button";
 import { exampleBasemap, parcelFacilities } from "./NetworkMap.fixtures";
-import type { MapFacility, MapSegment, NetworkMapZoomSection } from "./types";
+import type {
+  MapFacility,
+  MapSegment,
+  NetworkMapProps,
+  NetworkMapZoomSection,
+} from "./types";
 import styles from "./NetworkMapZoomSections.module.scss";
 
 export const zoomJourneyFacilities: MapFacility[] = [
@@ -37,14 +42,14 @@ export const zoomJourneySegments: MapSegment[] = zoomJourneyFacilities
 export const journeyZoomSections: NetworkMapZoomSection[] = [
   {
     id: "origin",
-    title: "Origin · Oakland",
-    description: "Warehouse → acceptance → origin sort",
+    title: "Origin",
+    description: "Oakland · Warehouse → acceptance → origin sort",
     facilityIds: ["oak", "acceptance", "origin-sort"],
   },
   {
     id: "destination",
-    title: "Destination · Dearborn",
-    description: "Regional sort → distribution → delivery area",
+    title: "Destination",
+    description: "Dearborn · Regional sort → distribution → delivery area",
     facilityIds: ["dtw", "dbn", "dst"],
   },
 ];
@@ -101,7 +106,7 @@ export function JourneyZoomExample({
           size="sm"
           onPress={() => setFocusRevision((value) => value + 1)}
         >
-          Refit detail maps
+          Refit active section
         </Button>
         <label>
           <input
@@ -115,7 +120,7 @@ export function JourneyZoomExample({
       <h2 className={styles.exampleRoute}>Oakland → Dearborn</h2>
       <NetworkMap
         aria-label="Oakland → Dearborn"
-        description="EP-104 · Ground · Origin and destination handoffs enlarged below · Synthetic journey"
+        description="EP-104 · Ground · Synthetic journey"
         mapStyle={localBasemap ? emptyBasemap : exampleBasemap}
         workerUrl={workerUrl}
         facilities={revision ? refreshed : zoomJourneyFacilities}
@@ -123,15 +128,12 @@ export function JourneyZoomExample({
         zoomSections={sections.map((section) => ({
           ...section,
           focusRevision,
-          onMapReady: localBasemap
-            ? (map) => recordMap(section.id, map)
-            : undefined,
         }))}
         selectedFacilityId={selected}
         onFacilitySelect={setSelected}
         latestFacilityId="dbn"
         primaryFacilityIds={["oak", "slc", "chi", "dtw"]}
-        height={360}
+        height={460}
         controls={{ risk: false, latestEvent: false, selectedSegment: false }}
         controlLabels={{ fitAll: "Entire journey" }}
         layerVisibility={{ risk }}
@@ -161,7 +163,7 @@ const emptyBasemap = { version: 8 as const, sources: {}, layers: [] };
 // Map handles exist only in the acceptance fixture, never in the regular examples/component.
 function recordMap(
   id: string,
-  map: Parameters<NonNullable<NetworkMapZoomSection["onMapReady"]>>[0],
+  map: Parameters<NonNullable<NetworkMapProps["onMapReady"]>>[0],
 ) {
   const fixture = window as unknown as {
     journeyMaps?: Record<string, typeof map>;

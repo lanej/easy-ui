@@ -1,26 +1,28 @@
 @use "../styles/common" as *;
 
 .sections {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-  gap: design-token("space.3");
-  padding: design-token("space.3");
-  border-top: 1px solid design-token("color.neutral.200");
-}
-.section {
   min-inline-size: 0;
+  padding: 0 24px 16px;
 }
-.empty {
-  padding: design-token("space.3");
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: design-token("space.2");
+  > span {
+    max-inline-size: 100%;
+  }
+}
+.label {
+  font-size: var(--ezui-viz-control-size, 14px);
+  overflow-wrap: anywhere;
+}
+.description {
   color: design-token("color.neutral.700");
-  border: 1px solid design-token("color.neutral.200");
-  border-radius: 12px;
   font-size: var(--ezui-viz-description-size, 14px);
   overflow-wrap: anywhere;
-  h3 {
-    margin: 0;
-    color: design-token("color.neutral.900");
-    font-size: var(--ezui-viz-title-size, 18px);
+  p {
+    margin: design-token("space.2") 0 0;
   }
 }
 .example {

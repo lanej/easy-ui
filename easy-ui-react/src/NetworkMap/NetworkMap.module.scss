@@ -486,6 +486,16 @@
   inset-inline-end: 50px;
   z-index: 7;
   pointer-events: none;
+  [data-map-zoom-sections] {
+    padding: 0;
+    margin-block-end: 8px;
+    p {
+      inline-size: fit-content;
+      background: design-token("color.neutral.000");
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+  }
   .toolbar {
     padding: 0;
     justify-content: flex-start;

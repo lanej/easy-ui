@@ -127,7 +127,7 @@ Regional throughput, expected volume, operating capacity, dwell, backlog and con
 
 <Canvas of={NetworkMapStories.ZoomedJourney} />
 
-Use `zoomSections` when long transfers compress the origin and destination handoffs into overlapping markers. The overview retains the complete journey; each named section shows its supplied facilities and connections with both endpoints in that group. The sections have independent geographic scales, pan/zoom and **Fit section** controls. They sit side by side when their container has room and stack in a narrow slot, including beside a tracking timeline.
+Use `zoomSections` when long transfers compress the origin and destination handoffs into overlapping markers. **Entire journey**, **Origin** and **Destination** focus controls use the same map canvas. A section fits its supplied locations; the full set of facilities and connections remains in the map. Selecting a section moves the camera without changing the selected tracking record.
 
 ```tsx
 <NetworkMap
@@ -155,11 +155,13 @@ Use `zoomSections` when long transfers compress the origin and destination hando
 />
 ```
 
-The caller defines the groups; geographic proximity does not establish journey membership. Use stable, unique section IDs and the same facility IDs as the overview. Repeated scans at one facility still share one marker. Unknown IDs and invalid coordinates are omitted from section geography. A section with no mapped locations shows an explicit empty state.
+The caller defines the groups; geographic proximity does not establish journey membership. Use stable, unique section IDs and the same facility IDs as the journey. Repeated scans at one facility still share one marker. Unknown IDs and invalid coordinates are ignored when fitting. A section with no mapped locations has a disabled focus control and an explicit unavailable message.
 
-Selection, evidence styles, risk visibility, overlays and inspection renderers stay connected to the overview. Selection and immutable record refreshes preserve every camera. A section's `focusRevision` explicitly requests a later refit; its `maxZoom` defaults to 13 and `height` defaults to 280px (minimum 220px). The overview's `focus`, `initialView`, `height` and `onMapReady` apply only to that overview. Each section can supply its own `onMapReady`. `controls={false}` hides section fit/navigation/scale controls too; individual overview navigation/scale opt-outs also apply to sections.
+Selection and immutable record refreshes preserve the map instance and camera. Click a section again to refit after panning, or use **Entire journey** to return to the full route. A section's `focusRevision` explicitly requests a refit only while that section is active; its `maxZoom` defaults to 13. An external `focus` request or another camera action clears the active section. Free pan/zoom remains available within any requested view.
 
-One legend, selected-record detail and optional data disclosure serve the journey. Sections omit duplicate companions. With a custom `NetworkMapProvider` layout, place the exported `NetworkMapZoomSections` wherever the detail maps belong. Each section uses its own MapLibre surface and retains provider attribution, so additional sections incur additional rendering and tile requests. Keep the number of sections bounded.
+`NetworkMapControlPanel` includes the focus controls when `zoomSections` is supplied. With a custom `NetworkMapProvider` layout, use the exported `NetworkMapZoomSections` on its own when only the journey view controls are needed. `controls={false}` hides them; `controls={{ fitAll: false }}` hides the entire-journey action. A configured toolbar `fitAll` action takes the place of the default return control. The controls wrap in narrow containers and retain the declared typography sizes.
+
+One surface, legend, selected-record detail and optional data disclosure serve the journey. Sections create no additional MapLibre instances. The existing `focus`, `initialView`, `height` and `onMapReady` props still describe this one map.
 
 <Canvas of={NetworkMapStories.ZoomedJourneyNarrow} />
 

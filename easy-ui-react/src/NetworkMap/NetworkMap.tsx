@@ -2,7 +2,6 @@ import React from "react";
 import type { NetworkMapProps } from "./types";
 import { NetworkMapProvider } from "./NetworkMapContext";
 import { NetworkMapSurface } from "./NetworkMapSurface";
-import { NetworkMapZoomSections } from "./NetworkMapZoomSections";
 import {
   NetworkMapHeading,
   NetworkMapControlPanel,
@@ -36,7 +35,6 @@ export function NetworkMap(props: NetworkMapProps) {
           </div>
           <NetworkMapSurface />
         </div>
-        <NetworkMapZoomSections />
         {props.showSelectionDetails !== false && <NetworkMapSelectionDetails />}
         {props.showLegend !== false && <NetworkMapLegend />}
         {props.showDataTable !== false && <NetworkMapDataView />}
