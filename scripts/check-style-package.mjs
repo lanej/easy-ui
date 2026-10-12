@@ -360,7 +360,10 @@ for (const load of [require, (specifier) => import(specifier)]) {
   assert.equal(typeof Symbol, "function", "Custom SVG must export a React component, not an asset URL");
   const { Icon } = await load("@easypost/easy-ui/Icon");
   const html = renderToString(React.createElement(Icon, { symbol: Symbol, accessibilityLabel: "Easy UI" }));
-  assert.equal((html.match(/<rect/g) ?? []).length, 6);
+  assert.match(html, /viewBox="0 0 512 512"/);
+  const sourceIcon = readFileSync("expected-icon.svg", "utf8");
+  const originalPath = sourceIcon.match(/\bd="([^"]+)"/)[1];
+  assert.ok(html.includes('d="' + originalPath + '"'), "The rendered icon must preserve the complete official symbol");
   assert.match(html, /fill="currentColor"/);
   assert.match(html, new RegExp("<title[^>]*>Easy UI</title>"));
   assert.doesNotMatch(html, /aria-hidden="true"/);

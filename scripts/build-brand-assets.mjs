@@ -11,12 +11,13 @@ const wordmark = await readFile(
   "utf8",
 );
 const width = Number(wordmark.match(/viewBox="0 0 ([\d.]+) 32"/)[1]);
+const viewBox = mark.match(/viewBox="([\d. ]+)"/)[1];
 const inner = (svg) =>
   svg.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
 const svg = (width, body) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 32">${body}</svg>\n`;
 const symbol = (color) =>
-  `<svg width="32" height="32" viewBox="0 0 24 24" fill="${color}">${inner(mark)}</svg>`;
+  `<svg x="4" y="4" width="24" height="24" viewBox="${viewBox}" fill="${color}">${inner(mark)}</svg>`;
 const assets = {
   "easy-ui-icon.svg": svg(32, symbol(tokens["color.blue.500"])),
   "easy-ui-favicon.svg": svg(
@@ -25,7 +26,7 @@ const assets = {
   ),
   "easy-ui-logo.svg": svg(
     44 + width,
-    `${symbol(tokens["theme.light.color.primary.500"])}<g transform="translate(44)" fill="${tokens["theme.light.color.neutral.900"]}">${inner(wordmark)}</g>`,
+    `${symbol(tokens["theme.light.color.primary.500"])}<g transform="translate(44)" fill="${tokens["color.blue.800"]}">${inner(wordmark)}</g>`,
   ),
   "easy-ui-logo-dark.svg": svg(
     44 + width,
