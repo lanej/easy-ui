@@ -1,0 +1,35 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as Stories from "./Pill.stories";
+
+<Meta of={Stories} />
+
+# Pill
+
+A compact label for status, categories, or supporting metadata.
+
+## Usage
+
+```tsx
+import { Pill } from "@easypost/easy-ui/Pill";
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
+
+### Tones
+
+<Canvas of={Stories.Tones} />
+
+### Selectable
+
+<Canvas of={Stories.Selectable} />
+
+### Disabled
+
+<Canvas of={Stories.Disabled} />

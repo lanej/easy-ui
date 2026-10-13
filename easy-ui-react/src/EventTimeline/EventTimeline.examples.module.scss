@@ -1,0 +1,109 @@
+@use "../styles/common" as *;
+
+.singleExample {
+  inline-size: 420px;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.comparison {
+  display: grid;
+  gap: 20px;
+  inline-size: 420px;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.introduction,
+.presentationHeading {
+  display: grid;
+  gap: 6px;
+
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  p {
+    font-size: 12px;
+    line-height: 1.5;
+    color: design-token("color.neutral.700");
+  }
+}
+
+.presentation {
+  min-inline-size: 0;
+  border-block-start: 1px solid design-token("color.neutral.300");
+  padding-block-start: 16px;
+}
+
+.presentationHeading {
+  margin-block-end: 12px;
+}
+
+.coordinated {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(160px, 1fr);
+  gap: 20px;
+  max-inline-size: 780px;
+}
+
+.selectionPanel,
+.mapColumn {
+  min-inline-size: 0;
+
+  h3 {
+    margin: 0 0 12px;
+    font-size: 14px;
+  }
+
+  p {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+}
+
+.mapAdjacent {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  gap: 16px;
+  max-inline-size: 960px;
+}
+
+.mapSurface {
+  min-block-size: 240px;
+  min-inline-size: 0;
+  border: 1px solid design-token("color.neutral.300");
+  border-radius: 10px;
+  padding: 16px;
+  background: design-token("color.neutral.050");
+  color: inherit;
+
+  h3 {
+    margin: 0 0 12px;
+    font-size: 14px;
+  }
+
+  p {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 720px) {
+  .mapAdjacent,
+  .coordinated {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

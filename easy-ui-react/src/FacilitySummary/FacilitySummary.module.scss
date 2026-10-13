@@ -1,0 +1,58 @@
+@use "../styles/common" as *;
+.root {
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 640px;
+  display: grid;
+  gap: design-token("space.1.5");
+  overflow-wrap: anywhere;
+}
+.identity {
+  display: grid;
+  gap: design-token("space.0.5");
+}
+.name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: design-token("space.1");
+  min-inline-size: 0;
+}
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: design-token("space.1.5");
+}
+.observations {
+  display: grid;
+  gap: design-token("space.2");
+  min-inline-size: 0;
+}
+.details {
+  min-inline-size: 0;
+}
+.root[data-variant="compact"] {
+  gap: design-token("space.1");
+  .observations {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: design-token("space.1");
+  }
+}
+.root[data-variant="detailed"] {
+  max-inline-size: 960px;
+}
+
+.observation {
+  display: grid;
+  gap: design-token("space.0.5");
+  min-inline-size: 0;
+}
+
+// The facility controls available width; small headline sizing must not cap the reference column.
+.observation > [data-size="sm"] {
+  max-inline-size: none;
+}
+
+.reference {
+  min-inline-size: 0;
+}

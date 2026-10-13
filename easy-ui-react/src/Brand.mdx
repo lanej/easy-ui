@@ -1,0 +1,142 @@
+import React from "react";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import EasyUIIcon from "@easypost/easy-ui-icons/EasyUI";
+import * as BrandStories from "./Icon/Brand.stories";
+
+<Meta of={BrandStories} />
+
+# Brand
+
+Easy UI is EasyPost's design system. Its product lockup pairs the official
+EasyPost symbol with the “Easy UI” name in the shared Poppins typeface.
+The symbol keeps the geometry and proportions of the existing EasyPost asset.
+
+<div
+  className="sb-unstyled"
+  data-easy-ui-brand="lockups"
+  style={{ display: "flex", flexWrap: "wrap", gap: 16 }}
+>
+  <div
+    style={{
+      flex: "1 1 200px",
+      padding: 24,
+      background: "#fff",
+      color: "#131b2a",
+      borderRadius: 8,
+    }}
+  >
+    <img
+      src="./easy-ui-logo.svg"
+      alt="Easy UI"
+      width="184"
+      height="48"
+      style={{ maxWidth: "100%", height: "auto" }}
+    />
+    <p style={{ marginBottom: 0 }}>Light surface</p>
+  </div>
+  <div
+    style={{
+      flex: "1 1 200px",
+      padding: 24,
+      background: "#131b2a",
+      color: "#fff",
+      borderRadius: 8,
+    }}
+  >
+    <img
+      src="./easy-ui-logo-dark.svg"
+      alt="Easy UI"
+      width="184"
+      height="48"
+      style={{ maxWidth: "100%", height: "auto" }}
+    />
+    <p style={{ marginBottom: 0 }}>Dark surface</p>
+  </div>
+</div>
+
+## Small sizes
+
+Use the official symbol where the product lockup will not fit. Keep its
+proportions and leave clear space around it at small sizes.
+
+<div
+  className="sb-unstyled"
+  data-easy-ui-brand="sizes"
+  style={{
+    display: "flex",
+    alignItems: "end",
+    flexWrap: "wrap",
+    gap: 32,
+    color: "var(--ezui-color-primary-500)",
+  }}
+>
+  {[16, 24, 32, 64].map((size) => (
+    <div
+      key={size}
+      style={{ display: "grid", justifyItems: "center", gap: 12 }}
+    >
+      <EasyUIIcon
+        width={size}
+        height={size}
+        aria-hidden="true"
+        focusable="false"
+      />
+      <span style={{ color: "var(--ezui-color-neutral-900)", fontSize: 14 }}>
+        {size}px
+      </span>
+    </div>
+  ))}
+</div>
+
+## Use in a component
+
+Pass the symbol to the existing [`Icon`](/docs/primitives-icon--docs) component.
+It inherits size and color tokens, including the active light or dark theme.
+Supply a label when the mark conveys meaning on its own; omit it beside visible
+“Easy UI” text.
+
+<Canvas of={BrandStories.Mark} />
+
+```tsx
+import { Icon } from "@easypost/easy-ui/Icon";
+import EasyUIIcon from "@easypost/easy-ui-icons/EasyUI";
+
+<Icon
+  symbol={EasyUIIcon}
+  color="primary.500"
+  size="lg"
+  accessibilityLabel="Easy UI"
+/>;
+```
+
+## Download assets
+
+<ul>
+  <li>
+    <a href="./easy-ui-icon.svg" download>
+      Blue mark SVG
+    </a>
+  </li>
+  <li>
+    <a href="./easy-ui-logo.svg" download>
+      Light-surface wordmark SVG
+    </a>
+  </li>
+  <li>
+    <a href="./easy-ui-logo-dark.svg" download>
+      Dark-surface wordmark SVG
+    </a>
+  </li>
+  <li>
+    <a href="./easy-ui-favicon.svg" download>
+      Favicon SVG
+    </a>
+  </li>
+</ul>
+
+The monochrome source is also available from
+`@easypost/easy-ui-icons/svg/EasyUI.svg`. Use the favicon's opaque blue tile for
+browser tabs. Keep asset proportions intact and avoid adding outlines, shadows,
+or extra pieces to the mark. The canonical symbol is reused from EasyPost's
+existing Storybook favicon; this product lockup does not replace the official
+EasyPost company wordmark.

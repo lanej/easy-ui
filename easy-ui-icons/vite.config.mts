@@ -3,20 +3,39 @@ import path from "path";
 import { glob } from "glob";
 import prettier from "prettier";
 import { transform as transformSvg } from "@svgr/core";
-import { defineConfig, transformWithEsbuild } from "vite";
+import { defineConfig, normalizePath, transformWithEsbuild } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import { cleanPkgJsonForDist } from "../scripts/copyDistFiles.mjs";
 
 const JS_PREFIX = "";
 const SVG_PREFIX = "svg/";
+const ICON_SOURCE_PREFIX = normalizePath(path.join(__dirname, "src")) + "/";
 
 /** @type {import('vite').UserConfig} */
 export default defineConfig({
   plugins: [
+    // Claim custom SVG modules before Vite's asset loader turns them into URLs.
+    {
+      name: "ezui-vite-plugin-custom-svg",
+      enforce: "pre",
+      async load(id) {
+        if (
+          normalizePath(id).startsWith(ICON_SOURCE_PREFIX) &&
+          id.endsWith(".svg")
+        ) {
+          return compileSvg.call(this, id);
+        }
+      },
+    },
     buildSvg(),
     viteStaticCopy({
       targets: [
-        { src: "package.json", dest: ".", transform: cleanPkgJsonForDist },
+        {
+          src: "package.json",
+          dest: ".",
+          transform: (content) =>
+            cleanPkgJsonForDist(content, { preserveExports: true }),
+        },
         { src: "README.md", dest: "." },
         { src: "CHANGELOG.md", dest: "." },
       ],
@@ -42,32 +61,40 @@ function buildSvg() {
   return {
     name: "ezui-vite-plugin-build-svg",
     async transform(_code, id) {
-      const { name: svgName, ext } = path.parse(id);
-      const svgFilename =
-        ext === ".json" ? await getSvgFilenameFromJson(id) : id;
-      const svgFileContent = await fs.promises.readFile(svgFilename, "utf8");
-      const componentCode = await transformSvg(
-        svgFileContent,
-        { plugins: ["@svgr/plugin-jsx"], dimensions: false, titleProp: true },
-        { componentName: svgName },
-      );
-      const res = await transformWithEsbuild(componentCode, id, {
-        loader: "jsx",
-      });
-      const svgTypeFile = await generateSvgTypeFile(svgName);
-      this.emitFile({
-        type: "asset",
-        fileName: `${JS_PREFIX}${svgName}.d.ts`,
-        source: Buffer.from(svgTypeFile),
-      });
-      this.emitFile({
-        type: "asset",
-        fileName: `${SVG_PREFIX}${svgName}.svg`,
-        source: Buffer.from(svgFileContent),
-      });
-      return res;
+      if (
+        !normalizePath(id).startsWith(ICON_SOURCE_PREFIX) ||
+        !id.endsWith(".json")
+      )
+        return;
+      return compileSvg.call(this, id);
     },
   };
+}
+
+async function compileSvg(this: import("rollup").PluginContext, id: string) {
+  const { name: svgName, ext } = path.parse(id);
+  const svgFilename = ext === ".json" ? await getSvgFilenameFromJson(id) : id;
+  const svgFileContent = await fs.promises.readFile(svgFilename, "utf8");
+  const componentCode = await transformSvg(
+    svgFileContent,
+    { plugins: ["@svgr/plugin-jsx"], dimensions: false, titleProp: true },
+    { componentName: svgName },
+  );
+  const res = await transformWithEsbuild(componentCode, id, {
+    loader: "jsx",
+  });
+  const svgTypeFile = await generateSvgTypeFile(svgName);
+  this.emitFile({
+    type: "asset",
+    fileName: `${JS_PREFIX}${svgName}.d.ts`,
+    source: Buffer.from(svgTypeFile),
+  });
+  this.emitFile({
+    type: "asset",
+    fileName: `${SVG_PREFIX}${svgName}.svg`,
+    source: Buffer.from(svgFileContent),
+  });
+  return res;
 }
 
 async function getSvgFilenameFromJson(filename: string) {

@@ -1,0 +1,39 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as Stories from "./IntervalChart.stories";
+
+<Meta of={Stories} />
+
+# IntervalChart
+
+Draw supplied start/end spans on named lanes. Multiple intervals can share a lane. Missing or reversed spans stay in exact data and have no invented geometry.
+
+## Usage
+
+```tsx
+import { IntervalChart } from "@easypost/easy-ui/IntervalChart";
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes />
+
+## Examples
+
+Import `{ IntervalChart }` from `@easypost/easy-ui/IntervalChart` with the optional `echarts@^6.1.0` peer installed.
+
+`intervals` contain stable `id`, `row`, `label`, `start`, and `end`. Coordinates use the axis unit; a time axis takes epoch milliseconds. Multiple spans can share `row`. `intervalSeries` accepts native reference annotations and series styling. `itemStyle` accepts native colors and token references. The default y-axis follows lane order; when replacing its categories, preserve that order. Missing, nonfinite, or reversed endpoints remain in the exact-data view and are omitted from the plot. No progress or location between observations is inferred.
+
+`option` configures native axes, tooltips, grids, media overrides, and zoom; the component owns its series geometry. A default exact-data table is generated from the same records. Supply `dataTable` to format units or enrich provenance; set `showDataTable={false}` when the application provides another exact-value view.
+
+Selection, keyboard data access, controlled zoom, rendering states, themes, typography, and `variant="bare"` follow the shared [Chart contract](?path=/docs/components-chart--docs).
+
+<Canvas of={Stories.NarrowLayout} />
+<Canvas of={Stories.WithoutDataTable} />
+<Canvas of={Stories.MultipleLanes} />
+
+Partial axis styling preserves the generated lanes. Supplied zoom components default to `filterMode="weakFilter"` so spans overlapping the visible window remain drawn; an explicit filter mode overrides this default.
+
+<Canvas of={Stories.ZoomedSpan} />

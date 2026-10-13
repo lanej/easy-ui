@@ -12,6 +12,10 @@ ScoreComposition is an explicitly separate feature review on `feat/score-composi
 
 ## Component boundaries
 
+- **Assessment composition:** `HealthAssessment` is an organism coordinating the pill, observed value, freshness, optional percentile metrics, and responsive reference layout. `DurationDistribution` is a molecule owning the supplied duration reference graph. Compose that same molecule into the organism rather than duplicating rendering or health policy. Classification follows responsibility, including when optional content is hidden.
+
+- **Analytical chart types:** each chart family has a public subpath and independent Storybook documentation. Named native components accept native series without `type` and separate native `option` configuration. `IntervalChart`, `PredictionBandChart`, and `WaterfallChart` own geometry from supplied records; applications retain aggregation, model bounds, units, and meaning. The shipping/logistics galleries exercise these same public APIs. Use generic `Chart` for mixed series and `ChartSurface` for external compositions.
+
 - **Rendering surfaces:** `ChartSurface` and `NetworkMapSurface` own engine rendering and lifecycle. Optional providers connect independently placed headings, controls, legends, selection details, and exact data. Do not require logistics placeholders or a title to render a map.
 - **Small visual components:** use `Chart` for trends and reuse native components such as `RangePlot` and `BarList` when they express the data. The standalone SVG Sparkline API and MetricCard trend prop have been removed. ECharts is an optional lazy peer; MapLibre is a required package dependency that loads lazily when a map mounts. A map detail chart should not force a second rendering engine into every map.
 - **Rich map inspectors:** `renderCellDetails` hosts arbitrary React content. Compose `NetworkMapCellDetails` with children to retain summary/provenance around a supplied chart. Keep chart recipes separate from map behavior; applications own histogram bins, density estimation and time-series data. Embedded controls pin the card while retaining focus, and the same renderer serves the keyboard-accessible table detail.
@@ -20,7 +24,7 @@ ScoreComposition is an explicitly separate feature review on `feat/score-composi
 - **Chart data disclosures:** enrich the chart's existing folded data view through `dataTable.renderCell` and column options. Keep plot and table derived from the same records; preserve exact values and comparison baselines. Custom content mounts on first opening and remains mounted across collapse. Sorting is opt-in by column and uses original or supplied sort values; controlled requests do not change the plot. Sticky headings and measured leading-column pinning preserve context while reserving space for data on narrow screens.
 - **Mobile chart layout:** ordinary unpositioned Cartesian charts use a wrapping HTML `ChartLegend` outside the plot. Keep explicit engine layouts intact; `layout="native"` opts out. Preserve shared legend state, keyboard/touch selection, and caller typography. Use the existing bare variant inside application cards; keep concise axis labels and full exact-data labels derived from the same records.
 - **Mobile grids:** use existing column selection and `size="sm"` before inventing a second table model. Column `whiteSpace` keeps identifiers and units together; numeric body values default to no wrapping, with an explicit `"normal"` override. Rows and headers grow for rich content and larger text, and expanded details follow the measured body height. For dense comparisons, keep columns at readable minimum widths, allow headings to wrap, and retain the identifying column while scrolling within the table. The ten-column example defaults to the full report and fits on wide desktops. A focused metric and its supplied sample are an optional application view; explain comparison baselines once.
-- **Vertical drawer rows:** `DrawerTable` composes `DrawerRow` molecules adapted from Logistics Services. Summary facts stay visible above full-width inline details, with unrelated actions outside the disclosure button. This is a list, not a native table or replacement for DataGrid's column and selection semantics. Its optional footer composes the shared Pagination molecule through `DrawerTable.Pagination` and `DrawerTable.RowsPerPage`. Applications own page rows, order, fetching, and URL state.
+- **Vertical drawer rows:** `DrawerTable` composes `DrawerRow` molecules. Summary facts stay visible above full-width inline details, with unrelated actions outside the disclosure button. This is a list, not a native table or replacement for DataGrid's column and selection semantics. Its optional footer composes the shared Pagination molecule through `DrawerTable.Pagination` and `DrawerTable.RowsPerPage`. Applications own page rows, order, fetching, and URL state.
 - **Date inputs:** reuse `DatePicker` or `DateRangePicker` for editable dates and calendar selection. Use `@internationalized/date` values, linked descriptions/errors, and `name` or `startName`/`endName` for form submission. Clearing is opt-in. Read-only values remain submittable; disabled values do not. Applications own submission and controlled values.
 - **State and accessibility:** respect controlled values, preserve camera/selection through ordinary data updates, and support keyboard and touch paths alongside pointer interactions. Exact values and missing-data states must survive engine failures and hidden layers.
 
@@ -30,7 +34,22 @@ ScoreComposition is an explicitly separate feature review on `feat/score-composi
 2. Check whether the active API already solves the issue; older hand-patched packages can be several iterations behind. Document migration instead of copying old props into the current design.
 3. Add a focused regression case for consequential behavior. Reuse component-local setup, and keep generated screenshots/reports in validation artifacts rather than source.
 4. Follow existing React Aria, Sass-token, TypeScript, Vite, and Vitest patterns. Avoid unrelated upstream refactors or a parallel design system.
-5. Update component API documentation and a realistic synthetic example. PR descriptions should explain the final behavior, review paths, and material limits.
+5. Update component API documentation and a realistic synthetic example. PR descriptions should explain the final behavior, review paths, and material limits. Follow the PR Storybook preview instructions below when contributing to this fork.
+
+## PR Storybook previews
+
+When contributing to Josh's `lanej/easy-ui` fork, put the actual per-PR Storybook
+URL directly in the PR description:
+`https://lanej.io/previews/easy-ui/pr-<number>/storybook/`.
+Add direct links to affected stories and a representative current screenshot.
+Refresh the preview through `lanej/lanej.github.com`'s existing publishing workflow
+and verify the adjacent `revision.txt` matches the Easy UI PR head. Check the live
+mobile and desktop captures. A main-branch Storybook link or future promise does
+not satisfy this requirement.
+
+Read the hosting repository's `docs/development.md` for refresh instructions.
+Prefer a fresh Pages publishing run; rerunning an artifact-producing build can
+leave duplicate `github-pages` artifacts that prevent deployment.
 
 ## Verification
 
@@ -69,3 +88,25 @@ Charts, maps, screenshots, and layout reviews reuse recent successful browser ev
 Evidence must come from a successful run of the same workflow and PR/ref, and expires after seven days. Failed, cancelled, missing, or inaccessible evidence causes fresh checks. Manual workflow dispatch and reruns always execute the checks. A reused job summary links to the original run; it does not present that run's screenshots as new captures. Preview builds, bundle assertions, and ordinary package checks continue to run. Browser installation, interaction/accessibility audits, screenshot comparisons, and View Rule execution can then be skipped independently for unchanged suites.
 
 Every documentation deployment checks its new source revision and published inspector/worker assets over HTTP. Its expensive hosted map audit is reused only when the deployed map build and test inputs match. Keep these deployment checks even when reusing browser results. Run `node --test scripts/browser-proof.test.mjs` when changing the shared evidence helper or workflow conditions.
+
+### Duration reference verification
+
+Run focused `DurationDistribution` and `HealthAssessment` tests. With Storybook running and the locked `scripts/preview-metrics` Playwright dependencies installed, run:
+
+```sh
+BROWSER_CHANNEL=chrome STORYBOOK_URL=http://localhost:9013 node scripts/check-duration-distribution.mjs
+```
+
+`DURATION_REPORT_DIR` selects its screenshots and report. The harness covers supplied CDF/bin overlays, quantiles without invented geometry, missing/invalid/outside states, optional exact-data keyboard disclosure, standalone and composed references, narrow layouts, enlarged text, forced colors, both themes, and the existing assessment option alignment. Browser executable/module overrides support managed test environments. Run `node scripts/check-style-package.mjs` after building to verify packed package exports and TypeScript consumers.
+
+### Linked investigation verification
+
+`InvestigationWorkspace` owns the controlled event/location/path/connection selection and composes the existing timeline and map. Applications supply candidate membership and detail content; preserve ambiguous histories and unlocated events when coordinating the views.
+
+Run its focused tests and `NetworkMap` tests, then build Storybook and run `STORYBOOK_URL=http://localhost:9019 node scripts/check-investigation-workspace.mjs` using the locked `scripts/preview-metrics` Playwright dependencies. `INVESTIGATION_REPORT_DIR` selects its screenshots and report. The harness checks actual map clicks, keyboard selection, location stepping, shared connections, external selection, immutable refreshes, camera retention, related-event filtering, mobile keyboard tabs, disclosure state, initial framing after revealing a hidden map, responsive layouts, large text, and light/dark accessibility. The investigation workflow retains this browser evidence. Examples use a local schematic basemap with synthetic observations.
+
+### Standalone chart verification
+
+Run the Chart tests (including `chartCatalog.test.tsx`), package build, and Storybook build. `node scripts/check-chart-package.mjs` checks all chart subpaths in both module formats without eager engine loading; `node scripts/check-style-package.mjs` verifies packed TypeScript consumers.
+
+With built Storybook served locally, run `STORYBOOK_URL=http://localhost:9013 node scripts/check-chart-catalog.mjs` with the existing Playwright browser dependencies. The harness checks all 17 analytical component entries, light/dark desktop and narrow layouts, keyboard exact-data disclosure, finite renderer geometry, accessibility, pattern edge cases, and the rendered API table. `CHART_CATALOG_REPORT_DIR` selects screenshots and measured results. The main CI workflow runs it alongside the existing facility checks.

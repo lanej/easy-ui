@@ -1,9 +1,10 @@
 // Explicit registry for the 24 non-geographic analytical recipes. This is an application
 // preset, not a replacement for the library's unrestricted ECharts option API.
-import { init, use } from "echarts/core";
+import { init, use as register } from "echarts/core";
 import {
   BarChart,
   BoxplotChart,
+  CustomChart,
   HeatmapChart,
   LineChart,
   PieChart,
@@ -26,7 +27,7 @@ import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
 
 // Match the full entry's installation order. Marker preprocessors affect
 // component drawing order where a point and a reference line overlap.
-use([
+register([
   CanvasRenderer,
   SVGRenderer,
   LineChart,
@@ -37,6 +38,7 @@ use([
   SankeyChart,
   BoxplotChart,
   HeatmapChart,
+  CustomChart,
   GridComponent,
   TooltipComponent,
   MarkPointComponent,

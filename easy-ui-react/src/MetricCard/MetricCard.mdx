@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { MetricCard } from "./MetricCard";
 import * as MetricCardStories from "./MetricCard.stories";
 
@@ -8,17 +9,29 @@ import * as MetricCardStories from "./MetricCard.stories";
 
 Show a metric and its comparison baseline. Compose `Chart` alongside metric content when a trend is needed. Values and comparisons are formatted by the application, which owns the metric definition, locale, time zone, and aggregation.
 
-<Canvas of={MetricCardStories.ShippingOverview} />
+## Usage
 
-## Comparison meaning
+```tsx
+import { MetricCard } from "@easypost/easy-ui/MetricCard";
+```
+
+<Canvas of={MetricCardStories.Default} />
+
+## Props
+
+<ArgTypes of={MetricCard} />
+
+## Examples
+
+### Comparison meaning
 
 Specify the comparison period and units. A change from 96.6% to 97.8% is **1.2 percentage points**, not 1.2 percent. Direction does not determine sentiment: decreasing cost can be positive, while increasing volume can be neutral. Only set sentiment when the application can justify that interpretation. Use text that makes the direction clear without color.
 
 Positive comparisons use dark text on the success background to preserve text contrast. Give cards distinct labels when multiple metrics or states appear together so their accessible regions can be distinguished.
 
-<Canvas of={MetricCardStories.Default} />
+<Canvas of={MetricCardStories.ShippingOverview} />
 
-## Reusing content
+### Reusing content
 
 `MetricContent` exposes the same value, comparison, loading and missing-data behavior without a Card or region wrapper. Place it in a caller-owned Card, section, or report layout. `MetricComparisonContent` is independently usable when a comparison and its explicit baseline belong elsewhere. Both are available from the MetricCard entry.
 
@@ -26,11 +39,24 @@ Positive comparisons use dark text on the success background to preserve text co
 
 <Canvas of={MetricCardStories.CallerOwnedFrame} />
 
+### Compact KPI summaries
+
+Use the same `MetricContent` API when a metric belongs inside an existing page section rather than another card. The compact example uses smaller typography and responsive grid columns, without decorative icons or an implied status for a point-in-time value.
+
+<Canvas of={MetricCardStories.CompactSummary} />
+
+### Migrating from `KpiTile`
+
+`KpiTile` was a duplicate wrapper and is removed from Easy UI. Use `MetricCard` for independent framed metrics or `MetricContent` inside an existing frame. Map `metric.label` to `label` and `metric.displayValue` to `value`. Convert `metric.deltaDisplay` into `comparison.label`, and supply the required `comparison.baseline` (for example, `vs previous 30 days`). Assign `comparison.sentiment` only when the business interpretation is known; change direction alone does not establish sentiment.
+
+For a metric without a comparison, omit `comparison`. Do not replace the obsolete `Point-in-time` pill. The old `icon`, `accent`, `bare`, `compact`, and `hideUnavailableLabel` switches do not map to new props: compose framing and typography explicitly using `MetricContent`, `valueSize`, and `typography`.
+
+
 Values also accept a React element, allowing `SignedValue` atoms or separately colored range endpoints to compose into the same metric molecule. Sign colors remain opt-in; metric content does not infer business sentiment from a formatted string. Smaller `valueSize` settings scale the value row without retaining a card-sized empty height.
 
 <Canvas of={MetricCardStories.SignedValues} />
 
-## Loading and unavailable values
+### Loading and unavailable values
 
 Pass `isLoading` while a query is loading. The previous value and comparison are suppressed. Pass `null` for an unavailable value and a formatted `"0"` for an observed zero. For query failures, compose an existing `Banner` with a retry action; do not present a failed query as zero or an empty successful result. Loading and empty labels can be localized.
 
@@ -38,10 +64,6 @@ Pass `isLoading` while a query is loading. The previous value and comparison are
 <Canvas of={MetricCardStories.NoData} />
 <Canvas of={MetricCardStories.Zero} />
 
-## Trends
+### Trends
 
 Use the Apache ECharts-backed `Chart` component for trends, with labelled axes, an explicit domain, and exact observations in its data disclosure. `MetricCard` and `MetricContent` no longer accept a `trend` prop; place a `Chart` in a caller-owned layout instead.
-
-## Properties
-
-<ArgTypes of={MetricCard} />

@@ -1,5 +1,6 @@
 import React from "react";
-import { Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as ThemeStories from "./Theme.stories";
 
 <Meta of={ThemeStories} />
@@ -8,9 +9,23 @@ import * as ThemeStories from "./Theme.stories";
 
 A `<ThemeProvider />` enables users to customize the theming of their application. It allows for defining colors and typography that can be used throughout an application or section.
 
+## Usage
+
+```tsx
+import { ThemeProvider } from "@easypost/easy-ui/Theme";
+```
+
+<Canvas of={ThemeStories.Default} />
+
+## Props
+
+<ArgTypes of={ThemeStories} />
+
+## Examples
+
 See `easy-ui-tokens/src/theme/light.json` for all available theme-aware design tokens.
 
-## Custom Theme
+### Custom Theme
 
 By default, the root `<EasyUIProvider />` includes a default EasyPost theme.
 
@@ -61,9 +76,7 @@ function GreenButton(buttonProps: ButtonProps) {
 }
 ```
 
-<Canvas of={ThemeStories.Default} />
-
-## Dark or Light Mode
+### Dark or Light Mode
 
 The default theme includes light and dark palettes. `Provider` and `ThemeProvider` accept `colorScheme="light"`, `"dark"`, `"system"` (the default), or `"inverted"`. System mode follows the operating system automatically; inversion reverses the parent scheme. Native form controls follow the same scheme.
 

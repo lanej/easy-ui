@@ -7,12 +7,12 @@ import { WorkspaceHeader } from "./WorkspaceHeader";
 const meta = {
   title: "Organisms/Navigation/WorkspaceHeader",
   component: WorkspaceHeader,
-  args: { title: "Dynamic Pricing", icon: PriceChangeIcon },
+  args: { title: "Operations Overview", icon: PriceChangeIcon },
   parameters: {
     docs: {
       description: {
         component:
-          "Adapted from Logistics Services’ DynamicPricingScreen and shared TabBar: navigation and workspace identity share a compact toolbar. Navigation and actions remain caller-supplied; there is no required subtitle.",
+          "Navigation and workspace identity share a compact toolbar. Navigation and actions remain caller-supplied; there is no required subtitle.",
       },
     },
   },
@@ -25,10 +25,10 @@ export const WithNavigation: Story = {
     navigation: (
       <div
         role="group"
-        aria-label="Pricing views"
+        aria-label="Workspace views"
         style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
       >
-        <PillButton isSelected>Rate card</PillButton>
+        <PillButton isSelected>Overview</PillButton>
         <PillButton>Performance</PillButton>
       </div>
     ),

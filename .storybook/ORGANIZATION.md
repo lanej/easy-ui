@@ -89,10 +89,10 @@ recreating label/value/loading markup. `MetricContent` accepts `SignedValue`
 elements so numeric presentation composes without moving workflow meaning into
 the atom.
 
-Use Logistics Services' existing screen compositions as adoption references.
-`WorkspaceHeader` follows its compact Dynamic Pricing navigation/identity row,
-without a required subtitle. `KpiTile` adapts its shell metric tile without the
-application data-provider dependency. Both reuse Easy UI building blocks.
+Use existing screen compositions as adoption references. `WorkspaceHeader`
+provides a compact navigation and identity row without a required subtitle.
+`MetricContent` provides unframed metrics inside caller-owned layouts.
+Both reuse Easy UI building blocks.
 Standalone `Pill` labels and `PillButton` actions are Atoms; `PillGroup` remains
 a Molecule that adds tag-list navigation and removal to the shared pill atom.
 
@@ -109,11 +109,34 @@ that path automatically. The root order lives in `preview.tsx`.
 
 Do not add component levels above Organisms. The discovery globs in `main.ts`
 include component stories outside `src/examples` by default. Within
-`src/examples`, only standalone chart, map, and encoding stories are included;
+`src/examples`, only the standalone NetworkMap variants are included;
 workflow demos such as pricing review and network investigation remain outside
 the catalog. Their source is retained for standalone examples and tests.
 New stories must demonstrate a reusable component, not reintroduce a workflow
 category.
+
+The investigation browser workflow sets `STORYBOOK_TEST_RECIPES=true` for its
+private test build. This adds recipe stories solely for interaction coverage;
+normal builds and published previews continue to exclude them.
+
+Use one `Data Display` subgroup for generic metrics and distributions. Reserve
+`Feedback` for assessments, alerts, and status. Preserve IDs when moving entries.
+
+## Component documentation
+
+Start each component page with its purpose, followed by `Usage`, `Props`, and
+`Examples`. Usage includes its public package import and the simplest live
+example. Props provides the generated API reference (or the authored hook API
+for a hook-only entry). Examples retains relevant states, interactions, and
+composition guidance. Keep detailed domain guidance below those primary sections.
+
+Use Markdown tables for documentation; the shared MDX configuration and table
+renderer provide semantic markup, readable columns, and local keyboard scrolling.
+Keep workflow recipes and pricing application demonstrations outside discovery.
+
+Design-audit exercises, including deliberately misleading encoding comparisons,
+belong in the standalone examples. Chart-selection and usage guidance belongs
+alongside the reusable chart catalog and component documentation.
 
 When moving an existing entry, preserve its metadata `id`. Entries moved from the
 previous hierarchy have explicit legacy IDs so bookmarks, documentation URLs,

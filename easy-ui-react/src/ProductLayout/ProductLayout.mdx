@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, ArgTypes, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { ProductLayout } from "./ProductLayout";
 import * as ProductLayoutStories from "./ProductLayout.stories";
 
@@ -9,7 +9,19 @@ import * as ProductLayoutStories from "./ProductLayout.stories";
 
 `ProductLayout` defines the header, sidebar, and main areas of a product page.
 
+## Usage
+
+```tsx
+import { ProductLayout } from "@easypost/easy-ui/ProductLayout";
+```
+
 <Canvas of={ProductLayoutStories.EmptyContent} />
+
+## Props
+
+<ArgTypes of={ProductLayout} />
+
+## Examples
 
 `ProductLayout` is a compound component consisting of `ProductLayout`, `ProductLayout.Sidebar`, `ProductLayout.Header`, and either `ProductLayout.Content` or `ProductLayout.TabbedContent`.
 
@@ -61,7 +73,7 @@ _Example structure_:
 />
 ```
 
-## Nested Content with Tabs
+### Nested Content with Tabs
 
 `ProductLayout` can contain nested content using the `ProductLayout.TabbedContent` component.
 
@@ -103,24 +115,20 @@ Tabs can be supplied to `ProductLayout.TabbedContent` through the `tabs` prop. `
 
 <Canvas of={ProductLayoutStories.TabbedContent} />
 
-## Properties
+#### ProductLayout
 
-### ProductLayout
-
-<ArgTypes of={ProductLayout} />
-
-### ProductLayout.Sidebar
+#### ProductLayout.Sidebar
 
 <ArgTypes of={ProductLayout.Sidebar} />
 
-### ProductLayout.Header
+#### ProductLayout.Header
 
 <ArgTypes of={ProductLayout.Header} />
 
-### ProductLayout.Content
+#### ProductLayout.Content
 
 <ArgTypes of={ProductLayout.Content} />
 
-### ProductLayout.TabbedContent
+#### ProductLayout.TabbedContent
 
 <ArgTypes of={ProductLayout.TabbedContent} />

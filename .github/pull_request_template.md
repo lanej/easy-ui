@@ -1,13 +1,19 @@
-<!--
-Explain the final change and why in one or two short paragraphs.
+## Change
 
-Add only context the diff and checks do not supply, such as a stack parent,
-manual observation, external evidence, or known verification gap. Do not
-repeat automated test results, test inventories, or coverage figures.
+<!-- Describe the problem and resulting behavior. -->
 
-Include a screenshot when it helps reviewers assess a visual change; omit
-it otherwise. When included, show the actual current result through a durable
-image URL and verify that it renders inline on GitHub.
+## Storybook
 
-Omit unused sections, boilerplate checklists, and implementation history.
--->
+[Storybook preview](https://lanej.io/previews/easy-ui/pr-PR_NUMBER/storybook/)
+
+<!-- Replace PR_NUMBER with this pull request's number. Publish or refresh the
+preview, then confirm ../revision.txt matches the PR head SHA before sharing it.
+Link directly to the affected component documentation or stories in this preview. -->
+
+## Preview
+
+<!-- Include a screenshot of the changed UI. -->
+
+## Validation
+
+<!-- Summarize the relevant checks and any material limits. -->

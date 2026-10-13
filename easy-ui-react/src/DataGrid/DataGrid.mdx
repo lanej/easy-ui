@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, ArgTypes, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { DataGrid } from "./DataGrid";
 import * as DataGridStories from "./DataGrid.stories";
 
@@ -9,9 +9,21 @@ import * as DataGridStories from "./DataGrid.stories";
 
 A `DataGrid` is an interactive table used for working with a large collection of data in a scannable way.
 
+## Usage
+
+```tsx
+import { DataGrid } from "@easypost/easy-ui/DataGrid";
+```
+
 <Canvas of={DataGridStories.Default} />
 
-## `DataGrid` architecture
+## Props
+
+<ArgTypes of={DataGrid} />
+
+## Examples
+
+### `DataGrid` architecture
 
 `DataGrid` is a single component that takes in a `columns` array to define its structure and a `rows` array to define its content. `columns` and `rows` must have `key`s. `rows` must have a corresponding property for each `key` in `column`.
 
@@ -88,7 +100,7 @@ const rows = [
 />;
 ```
 
-## With Selection
+### With Selection
 
 `DataGrid` supports selection with the `selectionMode` prop. Pass in `multiple` to allow selecting multiple rows. Pass in `single` to allow selecting a single row at a time.
 
@@ -110,7 +122,7 @@ Selection can be controlled with the `selectedKeys` and `onSelectionChange` prop
 
 <Controls of={DataGridStories.WithSelection} />
 
-## With Row Expansion
+### With Row Expansion
 
 `DataGrid` supports row expansion through the `renderExpandedRow` prop. Supplying a function to this render prop, with the content to render for each row, will show expansion buttons on each row for the user to expand.
 
@@ -136,7 +148,7 @@ While `isLoading` is true, the grid hides expanded details and suspends their la
 
 <Canvas of={DataGridStories.ControlledExpansion} />
 
-## With Kebab Menu
+### With Kebab Menu
 
 `DataGrid` supports rendering a kebab menu on each row through the `rowActions` prop.
 
@@ -161,7 +173,7 @@ Provide an array of actions to the `rowActions` prop with an action type of `men
 
 <Canvas of={DataGridStories.WithKebabMenu} />
 
-## With Sort
+### With Sort
 
 `DataGrid` supports sorting through the `sortDescriptor` and `onSortChange` props.
 
@@ -202,7 +214,7 @@ function SortableDataGrid(args: DataGridProps) {
 
 <Canvas of={DataGridStories.WithSort} />
 
-## With Grouping and Subtotals
+### With Grouping and Subtotals
 
 Pass `grouping` to gather rows by a string or numeric key and append a subtotal after each group. Rows need not be adjacent. Groups appear in the order their keys first occur in `rows`; data rows retain their relative order within each group. Numeric and string keys are distinct (`1` and `"1"` form different groups).
 
@@ -251,7 +263,7 @@ The Service Split example reproduces the Analytics homepage's carrier and servic
 
 <Canvas of={DataGridStories.ServiceSplit} />
 
-### Collapsible groups
+#### Collapsible groups
 
 Set `grouping.isCollapsible` to show a chevron button beside each subtotal label. Groups start expanded. Clicking the chevron, or pressing Enter or Space while it is focused, hides the group's detail rows and keeps its subtotal visible. The button announces the group name and expanded state. Subtotals keep their position after their group when expanded.
 
@@ -290,7 +302,7 @@ Collapsing changes visibility only. Aggregators still receive every supplied row
 
 <Canvas of={DataGridStories.ServiceSplitCollapsible} />
 
-## Height and Column Layout
+### Height and Column Layout
 
 The grid fills its container's width. Overflow scrolls within the frame; the existing grid styling hides native scrollbars and uses sticky-edge shadows. For a wide report, provide a visible scrolling hint or a focused column selection so additional metrics are discoverable.
 
@@ -303,13 +315,13 @@ The grid fills its container's width. Overflow scrolls within the frame; the exi
 
 `DataGridColumnOptions` is exported from `@easypost/easy-ui/DataGrid/types`:
 
-| Column option | Type                              | Behavior                                                                                                                                                    |
-| ------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alignment`   | `"start"`, `"center"`, or `"end"` | Sets horizontal alignment. Explicit alignment overrides the numeric default.                                                                                |
-| `isNumeric`   | `boolean`                         | Uses equal-width digits and defaults to end alignment and unwrapped body values. Headings can still wrap. Formatting currency, percentages, and locale-specific numbers remains the renderer's responsibility. |
-| `width`       | `CSSProperties["width"]`          | Preferred column width. Accepts pixels as numbers or CSS lengths such as `"20%"`. Automatic table layout may widen a column to fit its content.             |
-| `minWidth`    | `CSSProperties["minWidth"]`       | Keeps columns readable when space is limited. If the column minimums exceed the container width, the table scrolls horizontally.                            |
-| `whiteSpace` | `"normal"` or `"nowrap"` | Controls wrapping in headings, data, and subtotals. `"nowrap"` keeps short identifiers or a value with its unit together; `"normal"` overrides numeric body defaults for longer rich content. Explicit line breaks and block children still work. |
+| Column option | Type                              | Behavior                                                                                                                                                                                                                                          |
+| ------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alignment`   | `"start"`, `"center"`, or `"end"` | Sets horizontal alignment. Explicit alignment overrides the numeric default.                                                                                                                                                                      |
+| `isNumeric`   | `boolean`                         | Uses equal-width digits and defaults to end alignment and unwrapped body values. Headings can still wrap. Formatting currency, percentages, and locale-specific numbers remains the renderer's responsibility.                                    |
+| `width`       | `CSSProperties["width"]`          | Preferred column width. Accepts pixels as numbers or CSS lengths such as `"20%"`. Automatic table layout may widen a column to fit its content.                                                                                                   |
+| `minWidth`    | `CSSProperties["minWidth"]`       | Keeps columns readable when space is limited. If the column minimums exceed the container width, the table scrolls horizontally.                                                                                                                  |
+| `whiteSpace`  | `"normal"` or `"nowrap"`          | Controls wrapping in headings, data, and subtotals. `"nowrap"` keeps short identifiers or a value with its unit together; `"normal"` overrides numeric body defaults for longer rich content. Explicit line breaks and block children still work. |
 
 Keep presentation in `columnOptions`, keyed by the same keys as `columns`, so existing arbitrary column metadata retains its meaning. Selection, expansion, and action columns are added independently; they do not shift which data columns receive these options.
 
@@ -332,7 +344,7 @@ Use natural height for a short table on a page. Add `maxHeight={280}` when the s
 
 <Controls of={DataGridStories.ServiceSplit} />
 
-## With Custom Size
+### With Custom Size
 
 `DataGrid` supports `sm`, `md`, and `lg` minimum row heights with the `size` prop. Rich or wrapped content can grow beyond that minimum, including in expanded rows. `sm` also reduces horizontal cell and edge padding while retaining the same readable text size. The existing medium and large horizontal spacing is unchanged.
 
@@ -340,7 +352,7 @@ Use natural height for a short table on a page. Add `maxHeight={280}` when the s
 
 <Controls of={DataGridStories.WithCustomSize} />
 
-## Mobile benchmark reports
+### Mobile benchmark reports
 
 Keep the full comparison available at readable column widths. The ten-column example starts with every column visible: headings wrap, numeric values stay together, and the zone remains frozen while the table scrolls within its card. All ten columns fit on a wide desktop. On a phone, horizontal scrolling preserves cross-column comparison without shrinking the text.
 
@@ -350,7 +362,7 @@ The optional “Focus on one metric” view places that metric's supplied sample
 
 Use `size="sm"`, `columnOptions.zone.whiteSpace="nowrap"`, and `isNumeric: true` on numeric columns. Supply `minWidth` for the full comparison. For SLA subsets, use the population corresponding to the selected metric; do not reuse an unrelated shipment count. This composition leaves units, aggregation, benchmark meaning, and responsive column policy with the application.
 
-## With Custom Rendering
+### With Custom Rendering
 
 `DataGrid` supports custom rendering of content for row and column cells using the `renderRowCell` and `renderColumnCell` props.
 
@@ -379,7 +391,7 @@ In the example below, to make the status text green or red depending on whether 
 
 <Canvas of={DataGridStories.WithCustomRendering} />
 
-## Header Variant
+### Header Variant
 
 `DataGrid` supports alternate header styles through the `headerVariant` prop. Pass `secondary` or `emphasized` as alternate versions of the header.
 
@@ -387,13 +399,13 @@ In the example below, to make the status text green or red depending on whether 
 
 <Controls of={DataGridStories.WithHeaderVariant} />
 
-## Empty State
+### Empty State
 
 `DataGrid` supports rendering empty state through `renderEmptyState` prop.
 
 <Canvas of={DataGridStories.EmptyState} />
 
-## Loading State
+### Loading State
 
 `DataGrid` supports rendering loading state through `isLoading` prop.
 
@@ -401,7 +413,7 @@ In the example below, to make the status text green or red depending on whether 
 
 <Controls of={DataGridStories.LoadingState} />
 
-## Footer
+### Footer
 
 `DataGrid` supports rendering a footer through the `renderFooter` prop. The footer is a bar at the foot of the grid's frame, outside the region that scrolls, so the rows scroll above it and it casts a shadow over them once there's anything below the fold. `maxRows` still counts body rows with a footer present. It stays mounted through the empty and loading states.
 
@@ -440,17 +452,17 @@ const [rowsPerPage, setRowsPerPage] = useState(50);
 
 Unlike the rest of the data grid, the footer's height is fixed and doesn't scale with `size`. `maxRows` still counts body rows, so adding a footer grows the data grid rather than eating into the rows it shows.
 
-### With a Custom Footer
+#### With a Custom Footer
 
 The regions accept anything, so a footer needn't paginate at all.
 
 <Canvas of={DataGridStories.WithCustomFooter} />
 
-### Footer with an Empty State
+#### Footer with an Empty State
 
 <Canvas of={DataGridStories.FooterWithEmptyState} />
 
-## Auto Height
+### Auto Height
 
 `maxRows` takes `auto` in place of a row count, which bounds the data grid by the height its container makes available and scrolls the rows within it. This suits a data grid in a fluid layout, where the room it has to work with comes from the page rather than from a number settled on in advance.
 
@@ -490,7 +502,7 @@ Two things to watch for in the surrounding layout:
 
 With no height established anywhere above it, `auto` has nothing to bound the data grid by, and it falls back to drawing every row.
 
-### Filling a Container
+#### Filling a Container
 
 A container that stretches the data grid rather than letting it shrink turns the auto height into a fill. The rows take the extra room and the footer holds the bottom of the layout however few rows there are, which is what a data grid anchored to the foot of a page wants.
 
@@ -503,31 +515,27 @@ A container that stretches the data grid rather than letting it shrink turns the
 </div>
 ```
 
-### Scrolling Both Axes
+#### Scrolling Both Axes
 
 Content wider than the frame scrolls horizontally within the same bound. The rows scroll under the column headers and past the sticky selection column, while the footer holds the bottom of the frame and keeps its own width rather than stretching to the width of the table.
 
 <Canvas of={DataGridStories.AutoHeightScrollingBothAxes} />
 
-## Properties
+#### DataGrid
 
-### DataGrid
-
-<ArgTypes of={DataGrid} />
-
-### DataGrid.Footer
+#### DataGrid.Footer
 
 <ArgTypes of={DataGrid.Footer} />
 
-### DataGrid.Pagination
+#### DataGrid.Pagination
 
 <ArgTypes of={DataGrid.Pagination} />
 
-### DataGrid.RowsPerPage
+#### DataGrid.RowsPerPage
 
 <ArgTypes of={DataGrid.RowsPerPage} />
 
-### Long labels in a narrow container
+#### Long labels in a narrow container
 
 The following example uses a 480-pixel panel that also fits smaller screens. Its long service names use the existing `Text whiteSpace="nowrap"` renderer so content stays within the grid's fixed row heights. Horizontal scrolling exposes the full text and numeric columns, while the carrier column stays visible. This is genuine content overflow; natural height avoids an additional vertical scrollbar.
 

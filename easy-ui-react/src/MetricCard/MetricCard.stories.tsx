@@ -13,7 +13,7 @@ import { SignedValue } from "../SignedValue";
 
 const meta: Meta<typeof MetricCard> = {
   id: "components-metriccard",
-  title: "Molecules/Feedback/MetricCard",
+  title: "Molecules/Data Display/MetricCard",
   component: MetricCard,
 };
 export default meta;
@@ -72,6 +72,48 @@ export const ShippingOverview: Story = {
             baseline: "vs previous 30 days",
             sentiment: "positive",
           }}
+        />
+      </HorizontalGrid>
+    </VerticalStack>
+  ),
+};
+
+/** Compact KPI summaries without a mandatory icon, decorative chip, or invented status. */
+export const CompactSummary: Story = {
+  render: () => (
+    <VerticalStack gap="2">
+      <Text as="h2" variant="heading4">
+        Compact shipping metrics
+      </Text>
+      <Text color="neutral.600">
+        Illustrative data · June 1–30 · Comparisons use the previous 30 days
+      </Text>
+      <HorizontalGrid columns={{ xs: 1, sm: 2, lg: 3 }} gap="3">
+        <MetricContent
+          label="Labels purchased"
+          value="24,810"
+          valueSize={24}
+          typography={{ title: 14 }}
+          comparison={{ label: "8.3% higher", baseline: "vs previous 30 days" }}
+        />
+        <MetricContent
+          label="Average rated cost"
+          value="$5.20"
+          supportingText="USD · June 1–30"
+          valueSize={24}
+          typography={{ title: 14 }}
+          comparison={{
+            label: "4.2% lower",
+            baseline: "vs previous 30 days",
+            sentiment: "positive",
+          }}
+        />
+        <MetricContent
+          label="Delivery exception rate"
+          value="1.4%"
+          supportingText="Current 30-day cohort"
+          valueSize={24}
+          typography={{ title: 14 }}
         />
       </HorizontalGrid>
     </VerticalStack>

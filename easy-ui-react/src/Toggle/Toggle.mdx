@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { Toggle } from "./Toggle";
 import * as ToggleStories from "./Toggle.stories";
 
@@ -9,9 +9,21 @@ import * as ToggleStories from "./Toggle.stories";
 
 A Toggle is an interactive binary control. Use a Toggle when an "on/off" or "yes/no" input is needed.
 
+## Usage
+
+```tsx
+import { Toggle } from "@easypost/easy-ui/Toggle";
+```
+
 <Canvas of={ToggleStories.Default} />
 
-## Selected
+## Props
+
+<ArgTypes of={Toggle} />
+
+## Examples
+
+### Selected
 
 A `<Toggle />` can be selected using `isSelected` (controlled) or `defaultSelected` (uncontrolled).
 
@@ -19,7 +31,7 @@ A `<Toggle />` can be selected using `isSelected` (controlled) or `defaultSelect
 
 <Controls of={ToggleStories.Selected} include={["isSelected"]} />
 
-## Disabled
+### Disabled
 
 A `<Toggle />` can be disabled using `isDisabled`.
 
@@ -27,7 +39,7 @@ A `<Toggle />` can be disabled using `isDisabled`.
 
 <Controls of={ToggleStories.Disabled} include={["isDisabled", "isSelected"]} />
 
-## Variants
+### Variants
 
 A `<Toggle />` can be colored using the `variant` prop.
 
@@ -35,7 +47,7 @@ A `<Toggle />` can be colored using the `variant` prop.
 
 <Controls of={ToggleStories.Variants} include={["isSelected"]} />
 
-## Standalone
+### Standalone
 
 In most cases, a `<Toggle />` should have a visible label.
 
@@ -47,7 +59,3 @@ If the `<Toggle />` does not have a visible label, an `aria-label` or `aria-labe
   of={ToggleStories.Standalone}
   include={["isDisabled", "isSelected"]}
 />
-
-## Properties
-
-<ArgTypes of={Toggle} />

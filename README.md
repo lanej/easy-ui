@@ -1,5 +1,10 @@
 # Easy UI
 
+<img src=".storybook/public/easy-ui-icon.svg" width="64" height="64" alt="Easy UI brand mark" />
+
+For agent-assisted component usage, install the bundled
+[Easy UI skill](easy-ui-react/README.md#agent-skill) for Codex or Claude Code.
+
 > Resources, components, and design guidelines for shaping the shipper experience at EasyPost.
 
 | Status | Owner            | Help                                                        |

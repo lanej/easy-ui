@@ -1,0 +1,40 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
+import * as Stories from "./StatusDot.stories";
+
+<Meta of={Stories} />
+
+# StatusDot
+
+A reusable atom for a small status marker. The caller supplies its tone and required status label; the label provides an accessible name and hover hint. No freshness, health, timing, or loading policy is inferred.
+
+## Usage
+
+```tsx
+import { StatusDot } from "@easypost/easy-ui/StatusDot";
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
+
+<Controls of={Stories.Default} />
+
+```tsx
+import { StatusDot } from "@easypost/easy-ui/StatusDot";
+
+<StatusDot tone="warning" label="Needs attention" current />;
+```
+
+`current` adds a persistent circular highlight behind the dot without changing its tone or footprint. The current item also exposes `aria-current="true"`. `animate` defaults to `true` and plays a one-shot 260ms entrance when current becomes true; disable it for static presentation. Reduced-motion preferences suppress the animation. The highlight has a distinct outline in forced-colors mode.
+
+This is not an interactive control. The containing row or marker owns selection and keyboard behavior; the status dot only reflects the caller's state. Current does not mean urgent or live. For unfamiliar status meanings, use a nearby visible label.
+
+<Canvas of={Stories.Tones} />
+<Canvas of={Stories.Compact} />
+<Canvas of={Stories.CurrentByTone} />
+<Canvas of={Stories.SelectionTransition} />

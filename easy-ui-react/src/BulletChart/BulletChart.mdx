@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { BulletChart } from "./BulletChart";
 import * as Stories from "./BulletChart.stories";
 
@@ -8,7 +9,20 @@ import * as Stories from "./BulletChart.stories";
 
 A compact measure against a target: a filled bar, target marker, and explicit zero-based scale. Native HTML/CSS; no chart engine. Import from `@easypost/easy-ui/BulletChart`.
 
+## Usage
+
+```tsx
+import { BulletChart } from "@easypost/easy-ui/BulletChart";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={BulletChart} />
+
+## Examples
+
 <Canvas of={Stories.CostTarget} />
 
 Supply a finite positive `max` and non-negative `value` and `target`. Set the same `max` to compare multiple measures in the same unit. Null shows `emptyLabel`; invalid values show `invalidValueLabel`. Finite values beyond the scale retain their exact value with `outOfDomainLabel` and omit their mark by default. Choose `overflow="clamp"` to draw them explicitly at the boundary while retaining the exact value and outside-scale label. Invalid scales show `invalidScaleLabel` and no marks; zero remains observed data. A missing measure suppresses the plot while preserving the target as text.
@@ -25,5 +39,3 @@ For a present invalid or outside-scale measure, the supplied scale and any valid
 Exact measure, target, and scale remain available without hover. The target uses a marker shape instead of color alone. No animation or keyboard interaction. Exceeding a target does not automatically imply success: the application owns business meaning, metric definitions, units, and loading/error states.
 
 This intentionally small component has one measure and one target. Use `Chart` for qualitative range bands, signed values, multiple series, tooltips, or a full analytical view.
-
-<ArgTypes of={BulletChart} />

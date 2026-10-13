@@ -134,7 +134,10 @@ export async function checkSurfaceInspection({
   await scan("cell-inspection-mobile");
   await browser.clickNamed("button", "Close cell details");
   await browser.clickNamed("button", "Toggle surface visibility");
-  await browser.key("[data-map-state] ~ details > summary", "Enter");
+  await browser.key(
+    'details:has(> [aria-label$="delivery surface data"]) > summary',
+    "Enter",
+  );
   await browser.key("td details > summary", "Enter");
   await browser.wait(() =>
     Boolean(document.querySelector("td details[open] figure")),
@@ -320,7 +323,10 @@ export async function checkSurfaceInspection({
     }),
   );
   await browser.clickNamed("button", "Toggle surface visibility");
-  await browser.key("[data-map-state] ~ details > summary", "Enter");
+  await browser.key(
+    'details:has(> [aria-label$="delivery surface data"]) > summary',
+    "Enter",
+  );
   await browser.key(
     '[aria-label$="delivery surface data"] tbody tr:first-child td details > summary',
     "Enter",

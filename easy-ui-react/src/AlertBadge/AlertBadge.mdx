@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { AlertBadge } from "./AlertBadge";
 import * as AlertBadgeStories from "./AlertBadge.stories";
 
@@ -7,15 +7,29 @@ import * as AlertBadgeStories from "./AlertBadge.stories";
 
 # AlertBadge
 
-## Variants
+A compact assessment badge combining a status indicator and a label.
 
-Variants control the color of the `<AlertBadge />`, indicates different statuses. `"primary" | "secondary" | "success" | "danger"<default>`
+## Usage
+
+```tsx
+import { AlertBadge } from "@easypost/easy-ui/AlertBadge";
+```
 
 <Canvas of={AlertBadgeStories.Variants} />
 
+## Props
+
+<ArgTypes of={AlertBadge} />
+
+## Examples
+
+### Variants
+
+Variants control the color of the `<AlertBadge />`, indicates different statuses. `"primary" | "secondary" | "success" | "danger"<default>`
+
 <Controls of={AlertBadgeStories.Variants} />
 
-## Placement
+### Placement
 
 Determine where the `<AlertBadge />` will show up on the attached component. `"top right"<default> | "bottom right"`
 
@@ -23,7 +37,7 @@ Determine where the `<AlertBadge />` will show up on the attached component. `"t
 
 <Controls of={AlertBadgeStories.Placement} />
 
-## Icons
+### Icons
 
 An `<AlertBadge />` can contain a single icon using the `icon` property. The `icon` property accepts any icon symbol from `@easypost/easy-ui-icons`.
 
@@ -31,14 +45,10 @@ An `<AlertBadge />` can contain a single icon using the `icon` property. The `ic
 
 <Controls of={AlertBadgeStories.Icon} />
 
-## With Tooltip
+### With Tooltip
 
 `<AlertBadge />` will not interfere with Tooltip placement of target component.
 
 <Canvas of={AlertBadgeStories.WithTooltip} />
 
 <Controls of={AlertBadgeStories.WithTooltip} />
-
-## Properties
-
-<ArgTypes of={AlertBadge} />

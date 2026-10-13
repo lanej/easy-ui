@@ -10,9 +10,12 @@ import { resolveMapControls } from "./controls";
 import { useLayerVisibility } from "./useLayerVisibility";
 import { useSurfaceMetric } from "./useSurfaceMetric";
 import { useOverlayVisibility } from "./useOverlayVisibility";
+import { useMapInsets } from "./useMapInsets";
+import type { Map as MapInstance } from "maplibre-gl";
 import type {
   MapArea,
   MapFacility,
+  MapFocus,
   MapSegment,
   NetworkMapProps,
 } from "./types";
@@ -22,10 +25,16 @@ const emptySegments: readonly MapSegment[] = [];
 const emptyAreas: readonly MapArea[] = [];
 type MapState = "loading" | "ready" | "error";
 type MapCommands = {
+  focus: (target: MapFocus) => void;
   fitAll: () => void;
   selectedSegment: () => void;
   latestEvent: () => void;
 };
+
+/** The overview supplies its metric selection to close-ups that share its legend. */
+export const NetworkMapMetricContext = createContext<ReturnType<
+  typeof useSurfaceMetric
+> | null>(null);
 
 function useMapState(input: NetworkMapProps) {
   const { resolvedOverlays, changeOverlayVisibility } =
@@ -38,14 +47,17 @@ function useMapState(input: NetworkMapProps) {
     overlays: resolvedOverlays,
   };
   const mapInspection = useMapInspection(props);
+  const insets = useMapInsets(props);
   const { visibility, changeVisibility } = useLayerVisibility(props);
-  const { activeMetric, setActiveMetric } = useSurfaceMetric(
-    props.surface?.metrics,
-  );
+  const localMetric = useSurfaceMetric(props.surface?.metrics);
+  const { activeMetric, setActiveMetric } =
+    useContext(NetworkMapMetricContext) ?? localMetric;
   const [state, setState] = useState<MapState>("loading");
   const [zoom, setZoom] = useState(0);
   const surfaceOwner = useRef<symbol | null>(null);
+  const mapRef = useRef<MapInstance | null>(null);
   const commands = useRef<MapCommands>({
+    focus() {},
     fitAll() {},
     selectedSegment() {},
     latestEvent() {},
@@ -64,6 +76,8 @@ function useMapState(input: NetworkMapProps) {
     setZoom,
     commands,
     surfaceOwner,
+    mapRef,
+    insets,
     accessibleName: props["aria-label"] || props.title || "Map",
     controls: resolveMapControls(props),
   };

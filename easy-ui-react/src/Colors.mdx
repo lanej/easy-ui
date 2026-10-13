@@ -1,7 +1,6 @@
 import React from "react";
 import { Markdown, Meta } from "@storybook/addon-docs/blocks";
 import { ColorPalette } from "./utilities/ColorPalette";
-import { Provider as EasyUIProvider } from "./Provider";
 
 <Meta title="Foundations/Colors" />
 
@@ -11,13 +10,9 @@ Easy UI's base palette is the canonical set of colors the design system is built
 
 Filter by family, shade, or hex, and select any swatch to copy its hex value.
 
-<EasyUIProvider>
-
 <div className="sb-unstyled">
   <ColorPalette />
 </div>
-
-</EasyUIProvider>
 
 ### Usage
 

@@ -7,6 +7,7 @@ import { CompactTimeSeries } from "../../easy-ui-react/src/CompactTimeSeries";
 import { RangePlot } from "../../easy-ui-react/src/RangePlot";
 import { BulletChart } from "../../easy-ui-react/src/BulletChart";
 import { BarList } from "../../easy-ui-react/src/BarList";
+import { ProportionBar } from "../../easy-ui-react/src/ProportionBar";
 import {
   MetricContent,
   MetricComparisonContent,
@@ -56,6 +57,69 @@ function NativeRegressions() {
           Increase native text size
         </label>
       </header>
+      <section
+        aria-label="Unframed part-to-whole metrics"
+        data-native-case="proportions"
+      >
+        <h2>Part to whole, without a card</h2>
+        <div className="native-grid">
+          <div className="native-stack">
+            <ProportionBar
+              label={label("Affected checkpoints")}
+              value={1184}
+              total={1659}
+              tone="warning"
+              typography={typography}
+              valueSize={large ? 24 : 18}
+            />
+            <ProportionBar
+              label={label("Affected checkpoints")}
+              value={1184}
+              total={1659}
+              tone="warning"
+              presentation="expanded"
+              typography={typography}
+              valueSize={large ? 40 : 32}
+            />
+          </div>
+          <div className="native-stack">
+            <ProportionBar
+              label={label("Observed zero")}
+              value={0}
+              total={1659}
+              typography={typography}
+            />
+            <ProportionBar
+              label={label("Empty population")}
+              value={0}
+              total={0}
+              typography={typography}
+            />
+            <ProportionBar
+              label={label("Unavailable observation")}
+              value={null}
+              total={1659}
+              typography={typography}
+            />
+          </div>
+          <div className="native-stack">
+            <MetricContent
+              label={label("Affected checkpoints")}
+              value="71.4%"
+              supportingText="1,184 / 1,659 checkpoints"
+              typography={typography}
+              valueSize={large ? 36 : 28}
+            />
+            <ProportionBar
+              label={label("Affected checkpoints")}
+              value={1184}
+              total={1659}
+              tone="warning"
+              presentation="bar"
+            />
+          </div>
+        </div>
+      </section>
       <section
         aria-label="Native time geometry and precision"
         data-native-case="time"

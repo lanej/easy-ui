@@ -1,15 +1,28 @@
 import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as PriceRangeSliderStories from "./PriceRangeSlider.stories";
 
 <Meta of={PriceRangeSliderStories} />
 
 # PriceRangeSlider
 
-Adopted from logistics-services' shared price-envelope editor, without its data-provider dependency. Both dollar inputs and the track edit one controlled range. The percentage describes each price relative to the supplied standard price; being below or above standard is not a success or warning state.
+A controlled price-range editor. Both dollar inputs and the track edit one range. The percentage describes each price relative to the supplied standard price; being below or above standard is not a success or warning state.
+
+## Usage
+
+```tsx
+import { PriceRangeSlider } from "@easypost/easy-ui/PriceRangeSlider";
+```
 
 <Canvas of={PriceRangeSliderStories.NarrowRange} />
 
-## Controlled range
+## Props
+
+<ArgTypes of={PriceRangeSliderStories} />
+
+## Examples
+
+### Controlled range
 
 Supply a finite positive `basePriceUsd`, a finite nonnegative ordered `range` (`minRatio <= maxRatio`), and update that range in `onRangeChange`. Ratios are never rounded before the callback. Displayed dollars use two decimal places. Dollar fields commit on blur or Enter; Escape discards a draft. Invalid or crossing values stay visible with an error until corrected or reset.
 
@@ -23,11 +36,19 @@ Increment `resetKey` when applying a preset, including an unchanged preset, to d
 
 <Canvas of={PriceRangeSliderStories.Unavailable} />
 
-## Properties
+### Percent entry
+
+Set `unit="percent"` to enter percentages of standard. The controlled value still uses ratios: an entry of 70 commits `0.7`. Dollar annotations use the supplied reference price. Slider-handle arrow keys move by 0.1 percentage points; slider values and track endpoints use percentages.
+
+<Canvas of={PriceRangeSliderStories.PercentRange} />
+
+### Properties
 
 - `basePriceUsd: number` — standard parcel price in US dollars.
 - `range: PriceRatioRange` — controlled minimum and maximum ratios of standard.
 - `onRangeChange: (range: PriceRatioRange) => void` — receives the next unrounded ratios.
 - `resetKey?: number` — increment to reset drafts after choosing a preset; defaults to zero.
+- `onValidityChange?: (valid: boolean) => void` — false while entry is uncommitted or unavailable; use it to gate saving. Unmount releases this gate.
+- `unit?: "currency" | "percent"` — input, track and accessible value units; defaults to currency.
 
 `PriceRatioRange` contains `minRatio: number` and `maxRatio: number`. Import both the component and type from `@easypost/easy-ui/PriceRangeSlider`.

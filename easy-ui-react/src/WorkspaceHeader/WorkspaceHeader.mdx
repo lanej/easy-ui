@@ -1,0 +1,27 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as Stories from "./WorkspaceHeader.stories";
+
+<Meta of={Stories} />
+
+# WorkspaceHeader
+
+A compact workspace heading with optional identity, navigation, and actions.
+
+## Usage
+
+```tsx
+import { WorkspaceHeader } from "@easypost/easy-ui/WorkspaceHeader";
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
+
+### With Navigation
+
+<Canvas of={Stories.WithNavigation} />

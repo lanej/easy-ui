@@ -6,6 +6,7 @@ import { backgrounds, gridCellSize } from "./theme";
 import { normalizeColorScheme, readColorScheme } from "./colorScheme";
 import { ThemedDocsContainer } from "./ThemedDocsContainer";
 import { viewports } from "./viewports";
+import { DocsTable } from "./DocsTable";
 
 const preview: Preview = {
   initialGlobals: { colorScheme: readColorScheme() },
@@ -36,6 +37,7 @@ const preview: Preview = {
     },
     docs: {
       container: ThemedDocsContainer,
+      components: { table: DocsTable },
     },
     backgrounds: {
       grid: {

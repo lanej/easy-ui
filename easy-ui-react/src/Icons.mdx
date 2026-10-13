@@ -3,7 +3,6 @@ import { Markdown, Meta } from "@storybook/addon-docs/blocks";
 import tokens from "@easypost/easy-ui-tokens/js/tokens";
 import { IconGallery } from "./utilities/IconGallery";
 import { getTokenAliases } from "./utilities/tokens";
-import { Provider as EasyUIProvider } from "./Provider";
 
 export const sizesTable = [
   "| Size | Value |",
@@ -20,15 +19,14 @@ export const sizesTable = [
 
 Easy UI's icon set is a subset of [Material Symbols](https://fonts.google.com/icons?icon.set=Material+Symbols), drawn outlined at a weight of 300. Each icon ships from `@easypost/easy-ui-icons` as its own entry point, so importing one leaves the rest out of your bundle.
 
-Filter by name, and select any icon to copy its import statement.
+The custom `EasyUI` brand symbol follows the same import and `Icon` API. See
+[Brand](/docs/foundations-brand--docs) for its wordmarks, favicon, and usage.
 
-<EasyUIProvider>
+Filter by name, and select any icon to copy its import statement.
 
 <div className="sb-unstyled">
   <IconGallery />
 </div>
-
-</EasyUIProvider>
 
 ### Usage
 

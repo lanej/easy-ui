@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { EmptyStateCard } from "./EmptyStateCard";
 import * as EmptyStateCardStories from "./EmptyStateCard.stories";
 
@@ -9,23 +9,35 @@ import * as EmptyStateCardStories from "./EmptyStateCard.stories";
 
 An `<EmptyStateCard />` is a styled container designed to display relevant information when there is no nearby data to display.
 
-It is a compound component consisting of `<EmptyStateCard.MultiSection />`, `<EmptyStateCard.Section />`, `<EmptyStateCard.TextGroup />`, `<EmptyStateCard.HeaderText />`, `<EmptyStateCard.BodyText />`, and `<EmptyStateCard.ActionGroup />`
+## Usage
 
-## Simple
+```tsx
+import { EmptyStateCard } from "@easypost/easy-ui/EmptyStateCard";
+```
 
 <Canvas of={EmptyStateCardStories.Simple} />
 
-## Alignment
+## Props
+
+<ArgTypes of={EmptyStateCard} />
+
+## Examples
+
+It is a compound component consisting of `<EmptyStateCard.MultiSection />`, `<EmptyStateCard.Section />`, `<EmptyStateCard.TextGroup />`, `<EmptyStateCard.HeaderText />`, `<EmptyStateCard.BodyText />`, and `<EmptyStateCard.ActionGroup />`
+
+### Simple
+
+### Alignment
 
 `<EmptyStateCard.Section />` and `<EmptyStateCard.TextGroup />` can accept `VerticalStack` props to override defaults and to assist with alignment. Similarly, `<EmptyStateCard.ActionGroup />` can accept `HorizontalStack` props.
 
 <Canvas of={EmptyStateCardStories.Alignment} />
 
-## Multiple Sections
+### Multiple Sections
 
 Use `EmptyStateCard.MultiSection` to render horizontally aligned sections; it can accept `HorizontalStack` props to assist with alignment.
 
-### Decorative
+#### Decorative
 
 Use `hasDecorativeBackground` to render a `<EmptyStateCard.Section />` with a decorative background.
 
@@ -33,38 +45,34 @@ Use `hasDecorativeBackground` to render a `<EmptyStateCard.Section />` with a de
 
 <Canvas of={EmptyStateCardStories.Decorative} />
 
-### Custom Markup
+#### Custom Markup
 
 A `<EmptyStateCard.Section />` can also render custom markup.
 
 <Canvas of={EmptyStateCardStories.Custom} />
 
-## Properties
+#### EmptyStateCard
 
-### EmptyStateCard
-
-<ArgTypes of={EmptyStateCard} />
-
-### EmptyStateCard.MultiSection
+#### EmptyStateCard.MultiSection
 
 <ArgTypes of={EmptyStateCard.MultiSection} />
 
-### EmptyStateCard.Section
+#### EmptyStateCard.Section
 
 <ArgTypes of={EmptyStateCard.Section} />
 
-### EmptyStateCard.TextGroup
+#### EmptyStateCard.TextGroup
 
 <ArgTypes of={EmptyStateCard.TextGroup} />
 
-### EmptyStateCard.HeaderText
+#### EmptyStateCard.HeaderText
 
 <ArgTypes of={EmptyStateCard.TextGroup} />
 
-### EmptyStateCard.BodyText
+#### EmptyStateCard.BodyText
 
 <ArgTypes of={EmptyStateCard.BodyText} />
 
-### EmptyStateCard.ActionGroup
+#### EmptyStateCard.ActionGroup
 
 <ArgTypes of={EmptyStateCard.ActionGroup} />

@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { Card } from "./Card";
 import * as CardStories from "./Card.stories";
 
@@ -9,15 +9,27 @@ import * as CardStories from "./Card.stories";
 
 Cards are styled containers that group related content.
 
-## Outlined
+## Usage
 
-By default cards are rendered with a border. This is the same as `variant="outlined"`.
+```tsx
+import { Card } from "@easypost/easy-ui/Card";
+```
 
 <Canvas of={CardStories.Outlined} />
 
+## Props
+
+<ArgTypes of={Card} />
+
+## Examples
+
+### Outlined
+
+By default cards are rendered with a border. This is the same as `variant="outlined"`.
+
 <Controls of={CardStories.Outlined} />
 
-## Solid
+### Solid
 
 Cards can be borderless using `variant="solid"`.
 
@@ -25,7 +37,7 @@ Cards can be borderless using `variant="solid"`.
 
 <Controls of={CardStories.Solid} />
 
-## Flagged
+### Flagged
 
 Cards can be flagged using `variant="flagged"`. Use the `status` prop to adjust the flag style.
 
@@ -33,7 +45,7 @@ Cards can be flagged using `variant="flagged"`. Use the `status` prop to adjust 
 
 <Controls of={CardStories.Flagged} />
 
-## Shadow
+### Shadow
 
 Cards can have a shadow using the `boxShadow` prop. Use any value in the `shadow.level` token namespace.
 
@@ -41,7 +53,7 @@ Cards can have a shadow using the `boxShadow` prop. Use any value in the `shadow
 
 <Controls of={CardStories.Shadow} />
 
-## Border Radius
+### Border Radius
 
 Cards can have a border radius using the `borderRadius` prop. Use any value in the `shape.border_radius` token namespace.
 
@@ -49,7 +61,7 @@ Cards can have a border radius using the `borderRadius` prop. Use any value in t
 
 <Controls of={CardStories.BorderRadius} />
 
-## Padding
+### Padding
 
 By default, Cards have a uniform padding of `space.2`.
 
@@ -61,7 +73,7 @@ Similarly, the `paddingX` and `paddingY` props accept a spacing token or an obje
 
 <Canvas of={CardStories.PaddingXAndPaddingY} />
 
-## Composition
+### Composition
 
 Cards are composable. Use `<Card.Container />` and `<Card.Area />` to create cards with complex content.
 
@@ -73,45 +85,45 @@ To create a card with two columns, for instance, use `<Card.Container />` and `<
 
 <Canvas of={CardStories.Composition} />
 
-## Examples
+### Examples
 
-### Checkbox card
+#### Checkbox card
 
 <Canvas of={CardStories.ExampleCheckbox} />
 
-### Radio card
+#### Radio card
 
 <Canvas of={CardStories.ExampleRadio} />
 
-### Link card
+#### Link card
 
 <Canvas of={CardStories.ExampleLink} />
 
-### Button card
+#### Button card
 
 <Canvas of={CardStories.ExampleButton} />
 
-### Tile A
+#### Tile A
 
 <Canvas of={CardStories.ExampleTileA} />
 
-### Tile B
+#### Tile B
 
 <Canvas of={CardStories.ExampleTileB} />
 
-### Tile C
+#### Tile C
 
 <Canvas of={CardStories.ExampleTileC} />
 
-### Slat
+#### Slat
 
 <Canvas of={CardStories.ExampleSlat} />
 
-### Callout
+#### Callout
 
 <Canvas of={CardStories.ExampleCallout} />
 
-### Layouts
+#### Layouts
 
 Card content behavior should follow the rules of their parent layouts.
 
@@ -119,16 +131,12 @@ In the example below, a `HorizontalGrid` is set to stretch each `Card` to the he
 
 <Canvas of={CardStories.ExampleStretch} />
 
-## Properties
+#### Card
 
-### Card
-
-<ArgTypes of={Card} />
-
-### Card.Container
+#### Card.Container
 
 <ArgTypes of={Card.Container} />
 
-### Card.Area
+#### Card.Area
 
 <ArgTypes of={Card.Area} />

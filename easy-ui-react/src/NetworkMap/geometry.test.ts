@@ -11,6 +11,38 @@ import type { MapArea, MapFacility, MapSegment, MapSurfaceCell } from "./types";
 import { networkSegments, facilityMetrics } from "./NetworkMap.fixtures";
 import { GeoJSONVT } from "@maplibre/geojson-vt";
 
+it("keeps local connection widths on the original cohort's volume scale", () => {
+  const facilities: MapFacility[] = [
+    { id: "a", label: "A", kind: "hub", coordinates: [0, 0] },
+    { id: "b", label: "B", kind: "hub", coordinates: [1, 1] },
+    { id: "c", label: "C", kind: "hub", coordinates: [2, 2] },
+  ];
+  const segments: MapSegment[] = [
+    {
+      id: "local",
+      from: "a",
+      to: "b",
+      label: "Local",
+      evidence: "transfer",
+      volume: 20,
+    },
+    {
+      id: "remote",
+      from: "b",
+      to: "c",
+      label: "Remote",
+      evidence: "transfer",
+      volume: 10000,
+    },
+  ];
+  const overview = segmentData(facilities, segments);
+  const local = segmentData(facilities, segments.slice(0, 1), segments);
+  expect(local.features[0].properties?.width).toBe(
+    overview.features[0].properties?.width,
+  );
+  expect(local.features[0].properties?.width).toBeCloseTo(2.2236068);
+});
+
 it("fits dateline and ordinary journeys using the shortest longitude interval", () => {
   expect(
     geographicBounds([
@@ -425,4 +457,37 @@ it("keeps equivalent positive/negative 180-degree vertices finite and on one mer
     ],
   ]);
   expect(parts.flat(2).every(Number.isFinite)).toBe(true);
+});
+
+it("keeps labels clear of markers in a narrow branching path", () => {
+  const labels = [
+    { id: "selected", x: 142, y: 158, width: 130, height: 27, priority: 1000 },
+    { id: "destination", x: 276, y: 158, width: 80, height: 27, priority: 500 },
+    { id: "origin", x: 65, y: 158, width: 92, height: 27, priority: 500 },
+    { id: "north", x: 206, y: 123, width: 85, height: 27, priority: 0 },
+    { id: "south", x: 206, y: 193, width: 85, height: 27, priority: 0 },
+    { id: "west", x: 100, y: 112, width: 90, height: 27, priority: 0 },
+  ];
+  const points = labels.map(({ x, y }) => ({
+    x: x - 8,
+    y: y - 8,
+    w: 16,
+    h: 16,
+  }));
+  const positions = placeLabels(labels, 356, 300, points);
+  expect(positions.has("selected")).toBe(true);
+  expect(positions.has("destination")).toBe(true);
+  for (const label of labels) {
+    const position = positions.get(label.id);
+    if (!position) continue;
+    const x = label.x + position.left,
+      y = label.y + position.top;
+    for (const point of points)
+      expect(
+        x < point.x + point.w &&
+          x + label.width > point.x &&
+          y < point.y + point.h &&
+          y + label.height > point.y,
+      ).toBe(false);
+  }
 });

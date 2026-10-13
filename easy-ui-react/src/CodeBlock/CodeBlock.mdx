@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { CodeBlock } from "./CodeBlock";
 import * as CodeBlockStories from "./CodeBlock.stories";
 
@@ -9,19 +9,31 @@ import * as CodeBlockStories from "./CodeBlock.stories";
 
 A `<CodeBlock />` wraps one or more `<CodeSnippet />`s to provide the user the ability to switch languages and copy code.
 
+## Usage
+
+```tsx
+import { CodeBlock } from "@easypost/easy-ui/CodeBlock";
+```
+
+<Canvas of={CodeBlockStories.Default} />
+
+## Props
+
+<ArgTypes of={CodeBlock} />
+
+## Examples
+
 `<CodeBlock />` is a multi-part component. Use `<CodeBlock.Header />` and `<CodeBlock.Snippet />` to build the `<CodeBlock />`. `<CodeBlock.Snippet />` accepts all properties that `<CodeSnippet />` accepts. `<CodeBlock.Header />` and `<CodeBlock.Snippet />` should be direct children of `<CodeBlock />`. To reuse multiple snippets, enclose them in a function and invoke directly in render.
 
 `<CodeBlock />` is a controlled component. It requires the consumer to provide a selected language and manage its state. Use the `language` and `onLanguageChange` props to control the currently active `<CodeSnippet />`.
 
-<Canvas of={CodeBlockStories.Default} />
-
-## Single Language Mode
+### Single Language Mode
 
 If `<CodeBlock />` contains only one `<CodeBlock.Snippet />`, the `<CodeBlock />` will be in single language mode and not show a language selector.
 
 <Canvas of={CodeBlockStories.SingleLanguageMode} />
 
-## Custom Header
+### Custom Header
 
 `<CodeBlock.Header />` can be customized. It accepts a `color` property to change its color scheme, defaulting to `neutral`. Change the header's title by modifying the `children` prop.
 
@@ -29,7 +41,7 @@ If `<CodeBlock />` contains only one `<CodeBlock.Snippet />`, the `<CodeBlock />
 
 <Controls of={CodeBlockStories.CustomHeader} />
 
-## Side by Side
+### Side by Side
 
 Using `<HorizontalGrid />`, two `<CodeBlock />`'s can be placed side by side for a request-response pattern.
 
@@ -37,21 +49,17 @@ Using `<HorizontalGrid />`, two `<CodeBlock />`'s can be placed side by side for
 
 <Controls of={CodeBlockStories.SideBySide} />
 
-## Properties
+#### CodeBlock
 
-### CodeBlock
-
-<ArgTypes of={CodeBlock} />
-
-### CodeBlock.Header
+#### CodeBlock.Header
 
 <ArgTypes of={CodeBlock.Header} />
 
-### CodeBlock.Snippet
+#### CodeBlock.Snippet
 
 <ArgTypes of={CodeBlock.Snippet} />
 
-### Example architecture
+#### Example architecture
 
 ```jsx
 const [language, onLanguageChange] = useState("javascript");

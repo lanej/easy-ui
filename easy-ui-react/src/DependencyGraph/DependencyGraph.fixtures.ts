@@ -1,0 +1,388 @@
+import type {
+  DependencyGraphEdge,
+  DependencyGraphGroup,
+  DependencyGraphNode,
+} from "./types";
+import DatabaseIcon from "@easypost/easy-ui-icons/Database";
+import HubIcon from "@easypost/easy-ui-icons/Hub";
+import KeyIcon from "@easypost/easy-ui-icons/Key";
+import CodeIcon from "@easypost/easy-ui-icons/Code";
+import AlarmIcon from "@easypost/easy-ui-icons/Alarm";
+
+export const dependencyGroups: DependencyGraphGroup[] = [
+  {
+    id: "network",
+    label: "Production / network",
+    description: "Shared network root",
+  },
+  {
+    id: "services",
+    label: "Production / services",
+    description: "Application module",
+  },
+  {
+    id: "data",
+    label: "Production / data",
+    description: "Persistent resources",
+  },
+  {
+    id: "observability",
+    label: "Shared / observability",
+    description: "Monitoring root",
+  },
+];
+export const dependencyNodes: DependencyGraphNode[] = [
+  {
+    id: "azurerm_virtual_network.production",
+    label: "Production network",
+    description: "azurerm_virtual_network",
+    icon: HubIcon,
+    iconLabel: "Network",
+    change: "unchanged",
+    groupId: "network",
+  },
+  {
+    id: "azurerm_subnet.application",
+    label: "Application subnet",
+    description: "azurerm_subnet · 10.20.4.0/24",
+    icon: HubIcon,
+    iconLabel: "Network",
+    change: "replace",
+    changeSummary: "Address prefix changes; replacement required.",
+    changes: [
+      {
+        path: "address_prefixes[0]",
+        type: "change",
+        before: "10.20.0.0/24",
+        after: "10.20.4.0/24",
+      },
+    ],
+    groupId: "network",
+  },
+  {
+    id: "azurerm_container_app.api",
+    label: "Shipping API",
+    description: "azurerm_container_app",
+    icon: CodeIcon,
+    iconLabel: "Application",
+    change: "update",
+    changeSummary: "Container image and tags change; credentials rotate.",
+    changes: [
+      {
+        path: "template.containers[0].image",
+        type: "change",
+        before: "registry.example.com/shipping:1.8",
+        after: "registry.example.com/shipping:1.9",
+      },
+      { path: "tags.owner", type: "add", after: "shipping-platform" },
+      { path: "tags.legacy", type: "remove", before: "true" },
+      {
+        path: "secrets.database_url",
+        type: "change",
+        before: { status: "redacted" },
+        after: { status: "redacted" },
+      },
+      {
+        path: "latest_revision_name",
+        type: "change",
+        before: "shipping-api--r18",
+        after: { status: "unknown" },
+      },
+    ],
+    groupId: "services",
+  },
+  {
+    id: "azurerm_container_app.worker",
+    label: "Label worker",
+    icon: CodeIcon,
+    iconLabel: "Application",
+    description: "azurerm_container_app",
+    change: "unchanged",
+    groupId: "services",
+  },
+  {
+    id: "azurerm_postgresql_flexible_server.primary",
+    label: "Primary database",
+    icon: DatabaseIcon,
+    iconLabel: "Database",
+    description: "azurerm_postgresql_flexible_server",
+    change: "unchanged",
+    groupId: "data",
+  },
+  {
+    id: "azurerm_private_dns_zone.database",
+    label: "Database DNS",
+    icon: HubIcon,
+    iconLabel: "Network",
+    description: "azurerm_private_dns_zone",
+    change: "unchanged",
+    groupId: "data",
+  },
+  {
+    id: "azurerm_bastion_host.legacy",
+    label: "Legacy bastion",
+    icon: KeyIcon,
+    iconLabel: "Authentication",
+    description: "azurerm_bastion_host",
+    change: "delete",
+    changeSummary: "Legacy bastion is removed.",
+    changes: [
+      { path: "name", type: "remove", before: "legacy-bastion" },
+      { path: "sku", type: "remove", before: "Basic" },
+    ],
+    groupId: "network",
+  },
+  {
+    id: "azurerm_monitor_metric_alert.api",
+    label: "API availability alert",
+    icon: AlarmIcon,
+    iconLabel: "Monitoring",
+    description: "azurerm_monitor_metric_alert",
+    change: "create",
+    changeSummary: "Availability monitoring is added.",
+    changes: [
+      { path: "enabled", type: "add", after: "true" },
+      { path: "scopes[0]", type: "add", after: { status: "unknown" } },
+    ],
+    groupId: "observability",
+  },
+];
+export const subnetId = dependencyNodes[1].id;
+export const dependencyEdges: DependencyGraphEdge[] = [
+  {
+    id: "network-subnet",
+    source: dependencyNodes[0].id,
+    target: subnetId,
+    label: "Subnet membership",
+    description:
+      "Declared configuration reference: application.virtual_network_name → production.name.",
+  },
+  {
+    id: "subnet-api",
+    change: "add",
+    source: subnetId,
+    target: dependencyNodes[2].id,
+    label: "Network attachment",
+    description:
+      "Declared configuration reference: api.infrastructure_subnet_id → application.id.",
+  },
+  {
+    id: "subnet-worker",
+    source: subnetId,
+    target: dependencyNodes[3].id,
+    label: "Network attachment",
+    description:
+      "Declared configuration reference: worker.infrastructure_subnet_id → application.id.",
+  },
+  {
+    id: "subnet-database",
+    source: subnetId,
+    target: dependencyNodes[4].id,
+    label: "Delegated subnet",
+    description:
+      "Declared configuration reference: primary.delegated_subnet_id → application.id.",
+  },
+  {
+    id: "dns-database",
+    source: dependencyNodes[5].id,
+    target: dependencyNodes[4].id,
+    label: "Private DNS",
+    description:
+      "Declared configuration reference: primary.private_dns_zone_id → database.id.",
+  },
+  {
+    id: "network-bastion",
+    change: "remove",
+    source: dependencyNodes[0].id,
+    target: dependencyNodes[6].id,
+    label: "Network attachment",
+    description: "Declared configuration reference in the prior plan.",
+  },
+  {
+    id: "api-alert",
+    change: "add",
+    source: dependencyNodes[2].id,
+    target: dependencyNodes[7].id,
+    label: "Monitored resource",
+    description:
+      "Declared configuration reference: alert.scopes contains api.id.",
+  },
+  {
+    id: "database-api",
+    change: "remove",
+    source: dependencyNodes[4].id,
+    target: dependencyNodes[2].id,
+    label: "Connection configuration",
+    description:
+      "Application-supplied relationship. Runtime reachability has not been verified.",
+    variant: "dashed",
+  },
+];
+
+/** Realistic grouped scale fixture; only the bounded neighborhood is rendered initially. */
+export function largeDependencyFixture(size = 1000) {
+  const groups = Array.from({ length: 25 }, (_, index) => ({
+    id: `module-${index}`,
+    label: `Root ${index + 1} / application`,
+    description: "Supplied module grouping",
+  }));
+  const nodes = Array.from(
+    { length: size },
+    (_, index): DependencyGraphNode => ({
+      id: `resource-${index}`,
+      label: `Service resource ${index + 1}`,
+      description: `module.application[${index}].resource`,
+      groupId:
+        groups[
+          Math.min(
+            groups.length - 1,
+            Math.floor(index / (size / groups.length)),
+          )
+        ].id,
+      change: index === 501 ? "replace" : "unchanged",
+      ...(index === 501
+        ? {
+            changeSummary: "Service configuration requires replacement.",
+            changes: [
+              {
+                path: "configuration_version",
+                type: "change" as const,
+                before: "v1",
+                after: "v2",
+              },
+            ],
+          }
+        : {}),
+    }),
+  );
+  const edges = nodes.slice(1).map((node, index): DependencyGraphEdge => ({
+    id: `link-${index}`,
+    source: nodes[Math.floor(index / 3)].id,
+    target: node.id,
+    label: "Declared dependency",
+  }));
+  return { nodes, edges, groups };
+}
+
+export const relationshipChangeNodes = dependencyNodes.filter((node) =>
+  [
+    "azurerm_container_app.api",
+    "azurerm_postgresql_flexible_server.primary",
+    "azurerm_container_app.worker",
+  ].includes(node.id),
+);
+export const relationshipChangeEdges: DependencyGraphEdge[] = [
+  {
+    id: "old-connection",
+    source: "azurerm_postgresql_flexible_server.primary",
+    target: "azurerm_container_app.api",
+    label: "Previous database connection",
+    change: "remove",
+  },
+  {
+    id: "new-connection",
+    source: "azurerm_postgresql_flexible_server.primary",
+    target: "azurerm_container_app.api",
+    label: "New database connection",
+    change: "add",
+  },
+  {
+    id: "worker-connection",
+    source: "azurerm_container_app.worker",
+    target: "azurerm_container_app.api",
+    label: "Worker connection",
+    change: "unchanged",
+  },
+];
+
+export const attributeDependencyNodes: DependencyGraphNode[] = [
+  {
+    id: "database",
+    label: "Database",
+    icon: DatabaseIcon,
+    iconLabel: "Database",
+    change: "update",
+    changes: [
+      {
+        path: "endpoint",
+        type: "change",
+        before: "db-v1.internal:5432",
+        after: "db-v2.internal:5432",
+      },
+      {
+        path: "replica_endpoint",
+        type: "change",
+        before: "replica-v1.internal:5432",
+        after: "replica-v2.internal:5432",
+      },
+      { path: "version", type: "change", before: "16.3", after: "16.4" },
+    ],
+  },
+  {
+    id: "network",
+    label: "Private network",
+    icon: HubIcon,
+    iconLabel: "Network",
+    change: "unchanged",
+  },
+  {
+    id: "api",
+    label: "Shipping API",
+    icon: dependencyNodes[2].icon,
+    iconLabel: "Application",
+    change: "update",
+    changes: [
+      {
+        path: "image",
+        type: "change",
+        before: "registry.example.com/shipping:1.8",
+        after: "registry.example.com/shipping:1.9",
+      },
+      {
+        path: "env.DATABASE_URL",
+        type: "change",
+        before: "postgres://db-v1.internal:5432/app",
+        after: "postgres://replica-v2.internal:5432/app",
+      },
+      {
+        path: "env.HEALTHCHECK_DATABASE_ENDPOINT",
+        type: "change",
+        before: "db-v1.internal:5432",
+        after: "db-v2.internal:5432",
+      },
+    ],
+  },
+];
+export const attributeDependencyEdges: DependencyGraphEdge[] = [
+  {
+    id: "database-reference",
+    source: "database",
+    target: "api",
+    sourceAttributePath: "replica_endpoint",
+    targetAttributePath: "env.DATABASE_URL",
+    change: "update",
+    label: "Database reference",
+    description:
+      "Reference changed from database.primary.endpoint to database.primary.replica_endpoint. The caller matches it as one modified relationship.",
+  },
+  {
+    id: "healthcheck-reference",
+    source: "database",
+    target: "api",
+    sourceAttributePath: "endpoint",
+    targetAttributePath: "env.HEALTHCHECK_DATABASE_ENDPOINT",
+    change: "unchanged",
+    label: "Healthcheck reference",
+    description:
+      "The expression still references database.primary.endpoint. Its resolved value changes, but the relationship remains unchanged.",
+  },
+  {
+    id: "network-depends-on",
+    source: "network",
+    target: "api",
+    change: "unchanged",
+    label: "Explicit depends_on",
+    description:
+      "depends_on = [network.private] creates a block-to-block dependency.",
+  },
+];

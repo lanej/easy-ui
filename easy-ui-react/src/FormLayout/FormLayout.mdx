@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, ArgTypes, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { FormLayout } from "./FormLayout";
 import * as FormLayoutStories from "./FormLayout.stories";
 
@@ -9,11 +9,23 @@ import * as FormLayoutStories from "./FormLayout.stories";
 
 `FormLayout` arranges a layout of form elements with preset spacing.
 
+## Usage
+
+```tsx
+import { FormLayout } from "@easypost/easy-ui/FormLayout";
+```
+
 <Canvas of={FormLayoutStories.Basic} />
+
+## Props
+
+<ArgTypes of={FormLayout} />
+
+## Examples
 
 Use `FormLayout.Header`, `FormLayout.Tile` and `FormLayout.HelperText` to render a header with title and helper text for the closest `FormLayout` and `FormLayout.Section`.
 
-## Sections
+### Sections
 
 `FormLayout` can be divided into logical sections. Each section is rendered as a `fieldset` with its title as a `legend`.
 
@@ -21,7 +33,7 @@ Use `FormLayout.Section` to introduce a new section to the form.
 
 <Canvas of={FormLayoutStories.Sections} />
 
-## Columns
+### Columns
 
 `FormLayout` and `FormLayout.Section` can be divided into grids using the `FormLayout.Grid` component. Use the `columns` prop to specify the columns configuration.
 
@@ -29,7 +41,7 @@ This is a wrapper around `HorizontalGrid`, so the same rules apply as that compo
 
 <Canvas of={FormLayoutStories.Columns} />
 
-## Nesting
+### Nesting
 
 `FormLayout` can contain any number of levels of `FormLayout.Section`s and `FormLayout.Grid`s to produce complex layouts.
 
@@ -37,7 +49,7 @@ Use with caution as too much nesting can cause users to become disoriented.
 
 <Canvas of={FormLayoutStories.Nesting} />
 
-## As a form element
+### As a form element
 
 By default, `FormLayout` renders as a `div` to not presuppose a consumer's surrounding structure. The underlying element can be controlled with the `as` prop. For example, a `FormLayout` can be a `form` by providing `as="form"`.
 
@@ -45,7 +57,7 @@ Consider adding a `<button type="submit" />` in these cases to provide users wit
 
 <Canvas of={FormLayoutStories.AsAForm} />
 
-## Custom markup
+### Custom markup
 
 `FormLayout`s can be composed with arbitrary markup.
 
@@ -57,24 +69,20 @@ Or, wrap a `FormLayout.Section`'s content with a `TabsPanel`.
 
 <Canvas of={FormLayoutStories.WithTabs} />
 
-## Properties
+#### FormLayout
 
-### FormLayout
-
-<ArgTypes of={FormLayout} />
-
-### FormLayout.Header
+#### FormLayout.Header
 
 <ArgTypes of={FormLayout.Header} />
 
-### FormLayout.Title
+#### FormLayout.Title
 
 <ArgTypes of={FormLayout.Title} />
 
-### FormLayout.HelperText
+#### FormLayout.HelperText
 
 <ArgTypes of={FormLayout.HelperText} />
 
-### FormLayout.Grid
+#### FormLayout.Grid
 
 <ArgTypes of={FormLayout.Grid} />

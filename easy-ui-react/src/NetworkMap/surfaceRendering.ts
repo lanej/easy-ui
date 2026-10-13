@@ -53,10 +53,9 @@ export function buildDeliverySurfaceFilter(
 }
 
 /**
- * The exact ramp this component has always used. Do not change these values: a real consumer
- * (`logistics-services`' `TheftPatternsScreen.tsx`) already transforms its own values into a
- * synthetic 0-120 range specifically to fit this default, and changing it would silently break
- * that workaround. Callers whose values don't fit a 0-120-minute elapsed-time range should pass
+ * Preserve this component's original ramp for existing consumers that transform values into a
+ * synthetic 0-120 range to fit this default. Changing it would alter their rendered colors.
+ * Callers whose values don't fit a 0-120-minute elapsed-time range should pass
  * `NetworkMapProps.deliverySurfaceColorScale` (or a per-metric `colorScale`) instead.
  */
 export const defaultDeliverySurfaceColorScale: MapSurfaceColorScale = [

@@ -5,12 +5,16 @@ import {
   mkdir,
   readFile,
   readdir,
+  readlink,
+  realpath,
   rm,
+  symlink,
+  unlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { cleanPkgJsonForDist } from "./copyDistFiles.mjs";
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -28,6 +32,165 @@ const cache =
   process.env.npm_config_cache ??
   process.env.NPM_CONFIG_CACHE ??
   run(npm, ["config", "get", "cache"], repository).trim();
+const supportsAllowScripts =
+  run(npm, ["config", "get", "allow-scripts"], repository).trim() !==
+  "undefined";
+
+const packedIcons = JSON.parse(
+  run(
+    npm,
+    ["pack", "--ignore-scripts", "--json", "--pack-destination", scratch],
+    join(repository, "easy-ui-icons/dist"),
+  ),
+)[0];
+
+async function checkSkillInstallerLifecycle(packageDirectory, folder) {
+  // Run the packed installer through actual npm global lifecycle hooks without
+  // writing to the real user's agent directories or installing library dependencies.
+  const fixture = join(folder, "global-skill-fixture");
+  const userDirectory = join(folder, "global-skill-user");
+  await mkdir(userDirectory, { recursive: true });
+  // Resolve macOS's /var -> /private/var alias before computing relative links.
+  const user = await realpath(userDirectory);
+  await mkdir(join(fixture, "skills/easy-ui"), { recursive: true });
+  await writeFile(
+    join(fixture, "install-skill.mjs"),
+    await readFile(join(packageDirectory, "install-skill.mjs")),
+  );
+  await writeFile(
+    join(fixture, "skills/easy-ui/SKILL.md"),
+    await readFile(join(packageDirectory, "skills/easy-ui/SKILL.md")),
+  );
+  await writeFile(
+    join(fixture, "package.json"),
+    JSON.stringify({
+      name: "@easypost/easy-ui",
+      version: "0.0.0-installer-fixture",
+      files: ["install-skill.mjs", "skills"],
+      scripts: { postinstall: "node install-skill.mjs" },
+    }),
+  );
+  const boundary = join(folder, "skill-user-boundary.mjs");
+  await writeFile(
+    boundary,
+    "import os from 'node:os'; import { syncBuiltinESMExports } from 'node:module'; " +
+      "os.homedir = () => " +
+      JSON.stringify(user) +
+      "; syncBuiltinESMExports();",
+  );
+  const pack = JSON.parse(
+    run(
+      npm,
+      ["pack", "--ignore-scripts", "--json", "--pack-destination", fixture],
+      fixture,
+    ),
+  )[0];
+  const runGlobal = (args) =>
+    execFileSync(
+      npm,
+      [
+        ...args,
+        "--offline",
+        "--no-audit",
+        "--no-fund",
+        ...(supportsAllowScripts
+          ? ["--allow-scripts=file:" + join(fixture, pack.filename)]
+          : []),
+      ],
+      {
+        cwd: folder,
+        encoding: "utf8",
+        maxBuffer: 20 * 1024 * 1024,
+        env: {
+          ...process.env,
+          NODE_OPTIONS:
+            (process.env.NODE_OPTIONS ?? "") +
+            " --import=" +
+            pathToFileURL(boundary).href,
+        },
+      },
+    );
+  const prefixes = [1, 2, 3, 4].map((index) =>
+    join(folder, "global-prefix-" + index),
+  );
+  const packageSkill = (prefix) =>
+    join(
+      prefix,
+      process.platform === "win32" ? "node_modules" : "lib/node_modules",
+      "@easypost/easy-ui/skills/easy-ui",
+    );
+  const links = [".agents", ".claude"].map((name) =>
+    join(user, name, "skills/easy-ui"),
+  );
+  const install = (prefix) =>
+    runGlobal([
+      "install",
+      "--global",
+      "--prefix",
+      prefix,
+      join(fixture, pack.filename),
+    ]);
+  let logs = "";
+  for (const prefix of prefixes.slice(0, 2)) {
+    logs += install(prefix);
+    for (const link of links)
+      assert.equal(await realpath(link), await realpath(packageSkill(prefix)));
+  }
+  logs += runGlobal([
+    "uninstall",
+    "--global",
+    "--prefix",
+    prefixes[1],
+    "@easypost/easy-ui",
+  ]);
+  for (const link of links)
+    await assert.rejects(realpath(link), { code: "ENOENT" });
+  logs += install(prefixes[2]);
+  for (const link of links)
+    assert.equal(
+      await realpath(link),
+      await realpath(packageSkill(prefixes[2])),
+    );
+
+  const authored = join(folder, "authored-skill");
+  await mkdir(authored);
+  await writeFile(
+    join(authored, "SKILL.md"),
+    "Application-owned linked skill\n",
+  );
+  await unlink(links[1]);
+  await symlink(
+    authored,
+    links[1],
+    process.platform === "win32" ? "junction" : "dir",
+  );
+  logs += install(prefixes[3]);
+  assert.equal(
+    await realpath(links[0]),
+    await realpath(packageSkill(prefixes[3])),
+  );
+  assert.equal(await realpath(links[1]), await realpath(authored));
+  const missing = join(folder, "missing-authored-skill");
+  await unlink(links[0]);
+  await symlink(
+    missing,
+    links[0],
+    process.platform === "win32" ? "junction" : "dir",
+  );
+  logs += runGlobal([
+    "rebuild",
+    "--global",
+    "--prefix",
+    prefixes[3],
+    "@easypost/easy-ui",
+  ]);
+  assert.equal(resolve(await readlink(links[0])), missing);
+  assert.equal(
+    await readFile(join(links[1], "SKILL.md"), "utf8"),
+    "Application-owned linked skill\n",
+  );
+  await writeFile(join(folder, "skill-global-lifecycle.log"), logs);
+}
 const sassFiles = (await readdir(join(source, "src/styles")))
   .filter((file) => file.endsWith(".scss"))
   .sort();
@@ -83,7 +246,13 @@ const sassSource = `
 `;
 
 const typeSource = `
+import EasyUIIcon from "@easypost/easy-ui-icons/EasyUI";
 import { Chart, ChartLegend } from "@easypost/easy-ui/Chart";
+import { LineChart } from "@easypost/easy-ui/LineChart";
+import { BubbleChart, type BubbleChartSeries } from "@easypost/easy-ui/BubbleChart";
+import { IntervalChart } from "@easypost/easy-ui/IntervalChart";
+import { PredictionBandChart } from "@easypost/easy-ui/PredictionBandChart";
+import { WaterfallChart } from "@easypost/easy-ui/WaterfallChart";
 import { NetworkMapCellDetails, NetworkMapInspectionTrigger, type MapFacilityDetailsContext, type MapOverlayHoverDetailsContext, type MapInspectionTarget } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard, type MetricCardProps, type MetricContentProps } from "@easypost/easy-ui/MetricCard";
 import { ScoreComposition, ScoreSignal, ScoreContribution, ScoreConnector, ScoreResult, type ScoreCompositionProps, type ScoreCompositionColumn } from "@easypost/easy-ui/ScoreComposition";
@@ -92,6 +261,8 @@ import { DataGrid } from "@easypost/easy-ui/DataGrid";
 import { DatePicker } from "@easypost/easy-ui/DatePicker";
 import { DateRangePicker } from "@easypost/easy-ui/DateRangePicker";
 import { DrawerTable, DrawerRow } from "@easypost/easy-ui/DrawerTable";
+import { FacilitySummary, type FacilitySummaryProps } from "@easypost/easy-ui/FacilitySummary";
+import { DurationDistribution, DurationQuantileMetrics, type DurationDistributionProps } from "@easypost/easy-ui/DurationDistribution";
 import { Select } from "@easypost/easy-ui/Select";
 import { SelectField, type BaseSelectFieldProps, type SelectFieldSize } from "@easypost/easy-ui/Select/SelectField";
 import type { KeyedSortDescriptor, MenuRowAction } from "@easypost/easy-ui/DataGrid/types";
@@ -111,14 +282,30 @@ const menu: MenuRowAction = { type: "menu", renderMenuOverlay: () => null };
 const size: SelectFieldSize = "md";
 const field: BaseSelectFieldProps = { size, validationState: "valid" };
 const heading: Heading = "h2";
-const icon: IconSymbol = () => null;
+const icon: IconSymbol = EasyUIIcon;
 const responsive: ResponsiveProp<string> = { sm: "1rem" };
 const className: string = classNames("packed", false);
 const metricCardWithoutTrend: "trend" extends keyof MetricCardProps ? false : true = true;
 const metricContentWithoutTrend: "trend" extends keyof MetricContentProps ? false : true = true;
 void [metricCardWithoutTrend, metricContentWithoutTrend];
 
+// @ts-expect-error Bubble magnitude must have an explicit size mapping.
+const invalidBubble: BubbleChartSeries = { data: [[1, 2, 3]] };
+void invalidBubble;
+
+const durationReference: DurationDistributionProps = { value: 6.125, unit: "hours", domain: [0, 30], quantiles: [{fraction: 0.5, value: 9}], bins: [{from: 0, to: 10, count: 3}], cumulative: [{value: 0, fraction: 0}, {value: 30, fraction: 1}] };
+
+const facility: FacilitySummaryProps = { name: "Packed facility", observations: [{ id: "dwell", health: { assessment: "healthy" }, observation: { value: 6, unit: "h" }, reference: <DurationDistribution {...durationReference} /> }] };
+
 export const example = <>
+  <LineChart series={[{id: "line", data: [[0, 1], [1, null]]}]} option={{xAxis: {type: "value"}, yAxis: {type: "value"}}} onSelect={(selection) => { const name: string = selection.name; void name; }} />
+  <BubbleChart series={[{id: "bubble", data: [[1, 2, 3]], symbolSize: (value: number[]) => Math.sqrt(value[2])}]} />
+  <IntervalChart intervals={[{id: "span", row: "Lane", label: "Span", start: 0, end: null}]} />
+  <PredictionBandChart points={[{id: "point", x: 0, observed: null, predicted: 0, lower: -1, upper: 1}]} />
+  <WaterfallChart steps={[{id: "change", label: "Debit", change: -1}]} initialValue={0} />
+  <FacilitySummary {...facility} />
+  <DurationDistribution {...durationReference} />
+  <DurationQuantileMetrics quantiles={[{fraction: 0.5, value: 9}]} unit="hours" />
   <DrawerTable aria-label="Packed drawers" rows={[{key: "one" as const, count: 1}]} expandedKey={null} onExpandedChange={(key) => { const next: "one" | null = key; void next; }} renderRow={(row) => <span>{row.count}</span>} renderExpandedRow={(row) => <span>{row.key}</span>} />
   <DrawerRow summary={<span>Packed row</span>}>Packed details</DrawerRow>
   <DrawerTable rows={[{key: "paged", count: 2}]} renderRow={(row) => <span>{row.count}</span>} renderExpandedRow={() => null} renderFooter={() => <DrawerTable.Pagination page={1} count={2} onChange={(page) => { const requested: number = page; void requested; }} />} />
@@ -162,8 +349,9 @@ ${["Chart", "MetricCard", "Button", "DataGrid"]
 // static imports or createRequire from the repository's dependencies.
 const runner = String.raw`
 import assert from "node:assert/strict";
-import { readFileSync, realpathSync, readdirSync } from "node:fs";
+import { readFileSync, realpathSync, readdirSync, lstatSync } from "node:fs";
 import { createRequire } from "node:module";
+import { execFileSync } from "node:child_process";
 import { dirname, join, resolve, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import React from "react";
@@ -178,6 +366,31 @@ const insideConsumer = (file) => {
   assert.ok(!relative(process.cwd(), path).startsWith(".."), "Dependency escaped isolated consumer: " + path);
   return path;
 };
+const iconSpecifier = "@easypost/easy-ui-icons/EasyUI";
+insideConsumer(require.resolve(iconSpecifier));
+insideConsumer(fileURLToPath(import.meta.resolve(iconSpecifier)));
+for (const suffix of [".js", ".mjs"]) {
+  insideConsumer(require.resolve(iconSpecifier + suffix));
+  const explicit = await import(iconSpecifier + suffix);
+  assert.equal(typeof explicit.default, "function", "Keep explicit icon file imports available");
+}
+assert.equal(require("@easypost/easy-ui-icons/package.json").name, "@easypost/easy-ui-icons");
+for (const load of [require, (specifier) => import(specifier)]) {
+  const exported = await load(iconSpecifier);
+  const Symbol = exported.default ?? exported;
+  assert.equal(typeof Symbol, "function", "Custom SVG must export a React component, not an asset URL");
+  const { Icon } = await load("@easypost/easy-ui/Icon");
+  const html = renderToString(React.createElement(Icon, { symbol: Symbol, accessibilityLabel: "Easy UI" }));
+  assert.match(html, /viewBox="0 0 512 512"/);
+  const sourceIcon = readFileSync("expected-icon.svg", "utf8");
+  const originalPath = sourceIcon.match(/\bd="([^"]+)"/)[1];
+  assert.ok(html.includes('d="' + originalPath + '"'), "The rendered icon must preserve the complete official symbol");
+  assert.match(html, /fill="currentColor"/);
+  assert.match(html, new RegExp("<title[^>]*>Easy UI</title>"));
+  assert.doesNotMatch(html, /aria-hidden="true"/);
+}
+const rawIcon = insideConsumer(require.resolve("@easypost/easy-ui-icons/svg/EasyUI.svg"));
+assert.equal(readFileSync(rawIcon, "utf8"), readFileSync("expected-icon.svg", "utf8"));
 for (const subpath of ["Chart", "Chart/index", "MetricCard", "NetworkMap", "ScoreComposition", "utilities/css"]) {
   const specifier = "@easypost/easy-ui/" + subpath;
   insideConsumer(require.resolve(specifier));
@@ -272,6 +485,15 @@ for (const subpath of ["style.css", ...expected.map((name) => "styles/" + name)]
   const specifier = "@easypost/easy-ui/" + subpath;
   assert.equal(insideConsumer(require.resolve(specifier)), insideConsumer(fileURLToPath(import.meta.resolve(specifier))));
 }
+const skill = require.resolve("@easypost/easy-ui/skills/easy-ui/SKILL.md");
+assert.equal(insideConsumer(skill), insideConsumer(fileURLToPath(import.meta.resolve("@easypost/easy-ui/skills/easy-ui/SKILL.md"))));
+const installedSkill = join(".agents", "skills", "easy-ui", "SKILL.md");
+assert.ok(lstatSync(dirname(installedSkill)).isSymbolicLink());
+assert.equal(readFileSync(installedSkill, "utf8"), readFileSync("expected-skill.md", "utf8"));
+assert.equal(readFileSync(".claude/skills/easy-ui/SKILL.md", "utf8"), "Application-owned skill\n");
+const reference = require.resolve("@easypost/easy-ui/skills/easy-ui/references/components.md");
+assert.equal(insideConsumer(reference), insideConsumer(fileURLToPath(import.meta.resolve("@easypost/easy-ui/skills/easy-ui/references/components.md"))));
+assert.equal(readFileSync(reference, "utf8"), readFileSync("expected-components.md", "utf8"));
 const manifest = require("@easypost/easy-ui/package.json");
 assert.ok(manifest.sideEffects.includes("**/*.scss"));
 assert.ok(manifest.sideEffects.includes("**/*.css"));
@@ -390,6 +612,19 @@ try {
     const folder = join(scratch, mode);
     const consumer = join(folder, "consumer");
     await mkdir(consumer, { recursive: true });
+    await mkdir(join(consumer, ".claude/skills/easy-ui"), { recursive: true });
+    await writeFile(
+      join(consumer, ".claude/skills/easy-ui/SKILL.md"),
+      "Application-owned skill\n",
+    );
+    await writeFile(
+      join(consumer, "expected-skill.md"),
+      await readFile(join(source, "skills/easy-ui/SKILL.md")),
+    );
+    await writeFile(
+      join(consumer, "expected-components.md"),
+      await readFile(join(source, "skills/easy-ui/references/components.md")),
+    );
     const pack = spawnSync(
       npm,
       [
@@ -456,8 +691,15 @@ try {
         {
           private: true,
           type: "module",
+          allowScripts: {
+            ["file:" + join(folder, packed.filename)]: true,
+            "@parcel/watcher": true,
+            esbuild: true,
+          },
           dependencies: {
             "@easypost/easy-ui": "file:" + join(folder, packed.filename),
+            "@easypost/easy-ui-icons":
+              "file:" + join(scratch, packedIcons.filename),
             react: "18.3.1",
             "react-dom": "18.3.1",
             "react-is": "18.3.1",
@@ -477,6 +719,10 @@ try {
       JSON.stringify(sassFiles),
     );
     await writeFile(join(consumer, "consumer.scss"), sassSource);
+    await writeFile(
+      join(consumer, "expected-icon.svg"),
+      await readFile(join(repository, "easy-ui-icons/src/EasyUI.svg")),
+    );
     await writeFile(join(consumer, "consumer-types.tsx"), typeSource);
     await writeFile(
       join(consumer, "expected-types.json"),
@@ -502,15 +748,32 @@ try {
       run(
         npm,
         [
+          "--prefix",
+          consumer,
           "install",
-          "--ignore-scripts",
           "--no-audit",
           "--no-fund",
           "--cache",
           cache,
         ],
-        consumer,
+        folder,
       ),
+    );
+    await assert.rejects(realpath(join(folder, ".agents/skills/easy-ui")), {
+      code: "ENOENT",
+    });
+    const nested = join(consumer, "nested-invocation");
+    await mkdir(nested);
+    await writeFile(
+      join(folder, "nested-rebuild.log"),
+      run(npm, ["rebuild", "@easypost/easy-ui", "--offline"], nested),
+    );
+    await assert.rejects(realpath(join(nested, ".agents/skills/easy-ui")), {
+      code: "ENOENT",
+    });
+    await checkSkillInstallerLifecycle(
+      join(consumer, "node_modules/@easypost/easy-ui"),
+      folder,
     );
     const output = run(process.execPath, ["check.mjs"], consumer);
     await writeFile(join(folder, "result.log"), output);

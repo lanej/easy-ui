@@ -1,0 +1,107 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Organisms/Charts/Choosing a chart" />
+
+# Choosing a chart
+
+Each analytical chart has a separate public component, package entry, API table, and live examples. They share the optional ECharts engine and the existing Chart lifecycle, themes, controls, selection, and exact-data disclosure.
+
+| Component                                                                                 | Use                                                         |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [LineChart](./?path=/docs/components-linechart--docs)                                     | Trends, annotated observations, and numeric scenario curves |
+| [AreaChart](./?path=/docs/components-areachart--docs)                                     | Filled trends with optional additive stacks                 |
+| [BarChart](./?path=/docs/components-barchart--docs)                                       | Grouped category comparisons and direct labels              |
+| [StackedBarChart](./?path=/docs/components-stackedbarchart--docs)                         | Additive or caller-normalized category comparisons          |
+| [ScatterChart](./?path=/docs/components-scatterchart--docs)                               | Paired numeric observations                                 |
+| [BubbleChart](./?path=/docs/components-bubblechart--docs)                                 | Paired observations with explicit magnitude sizing          |
+| [SankeyChart](./?path=/docs/components-sankeychart--docs)                                 | Directed weighted flows                                     |
+| [HeatmapChart](./?path=/docs/components-heatmapchart--docs)                               | Matrices and periodic weekday/hour comparisons              |
+| [DonutChart](./?path=/docs/components-donutchart--docs)                                   | Parts of a stated whole                                     |
+| [TreemapChart](./?path=/docs/components-treemapchart--docs)                               | Hierarchical magnitudes                                     |
+| [GraphChart](./?path=/docs/components-graphchart--docs)                                   | Abstract node-link relationships                            |
+| [BoxPlotChart](./?path=/docs/components-boxplotchart--docs)                               | Supplied five-number summaries                              |
+| [HistogramChart](./?path=/docs/components-histogramchart--docs)                           | Counts in supplied equal-width buckets                      |
+| [CumulativeDistributionChart](./?path=/docs/components-cumulativedistributionchart--docs) | Supplied cumulative observations                            |
+| [IntervalChart](./?path=/docs/components-intervalchart--docs)                             | Supplied spans on one or more lanes                         |
+| [PredictionBandChart](./?path=/docs/components-predictionbandchart--docs)                 | Observations and predictions with supplied bounds           |
+| [WaterfallChart](./?path=/docs/components-waterfallchart--docs)                           | Signed changes and running balances                         |
+
+Native components take `series` without an engine `type`, and `option` for native axes, tooltips, datasets, grids, zoom, and media configuration. `IntervalChart`, `PredictionBandChart`, and `WaterfallChart` accept supplied records and own their geometry. All import from their own subpath, such as `@easypost/easy-ui/LineChart`.
+
+Use native `option.baseOption` with `media` or timeline configuration when needed.
+Named components place their supplied series inside that base option, including
+the generated geometry of interval, prediction-band, and waterfall charts.
+
+Cartesian line, area, bar, histogram, cumulative-distribution, and box-plot components default to a category x-axis and value y-axis. Scatter and bubble components default to two value axes. Configure value or time axes explicitly when spacing carries numeric meaning. HeatmapChart requires `option` for its coordinate system and application-owned `visualMap`. Partial axis styling retains generated categories; authored data arrays replace them. Pattern charts default supplied zoom components to `filterMode="weakFilter"` so overlapping spans survive boundary crossings; explicit filter modes remain authoritative.
+
+```tsx
+import { LineChart } from "@easypost/easy-ui/LineChart";
+
+<LineChart
+  title="Delivered parcels"
+  series={[
+    {
+      id: "delivered",
+      name: "Delivered",
+      data: [
+        [0, 120],
+        [1, null],
+        [2, 140],
+      ],
+    },
+  ]}
+  option={{
+    xAxis: { type: "value", name: "Day" },
+    yAxis: { type: "value", name: "Parcels", min: 0 },
+  }}
+  dataTable={{
+    columns: ["Day", "Parcels"],
+    rows: [
+      { id: "day-0", values: [0, 120] },
+      { id: "day-1", values: [1, null] },
+      { id: "day-2", values: [2, 140] },
+    ],
+  }}
+/>;
+```
+
+Applications own aggregation, units, binning, statistical calculations, model outputs, and provenance. Use [Chart](?path=/docs/components-chart--docs) directly for mixed series or custom engine compositions; use ChartSurface and its companions for independently placed controls and data.
+
+## Shared presentation options
+
+All 17 analytical components inherit the same Chart presentation contract.
+
+| Option                                               | Behavior                                                                                                                                         |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `showDataTable={false}`                              | Hide the built-in disclosure, whether the table is supplied or generated. Keep an application-owned equivalent data view available where needed. |
+| `variant="bare"`                                     | Omit the surrounding Card when the application owns the frame. The default is `"card"`.                                                          |
+| `title`, `description`                               | Independently optional. Use an accessible label or linked external heading when omitting them.                                                   |
+| `height`, `renderer`, `typography`                   | Configure plot height, SVG/canvas rendering, and text roles.                                                                                     |
+| `status`, `loadingLabel`, `emptyLabel`, `errorLabel` | Use the same loading, empty, and error presentation.                                                                                             |
+| `option.color`                                       | Supply the automatic categorical palette. Explicit native item/line colors take precedence.                                                      |
+
+Native series wrappers show a table only when `dataTable` is supplied. Interval,
+prediction-band, and waterfall charts can generate exact rows from their structured
+records. `showDataTable={false}` is the common opt-out in every component; omitting
+`dataTable` alone does not disable a generated table. Each component documents a
+Without Data Table story alongside its bare, loading, and empty states.
+
+Default categorical palettes and native labels follow the nearest Easy UI theme.
+Graph links use the neutral theme color; flow links inherit their source color.
+Heatmap magnitudes use an application-owned `visualMap.inRange.color` scale rather
+than the categorical palette. The bundled examples use fixed EasyPost sequential
+or diverging ramps with contrasting cell labels.
+
+Prediction charts use the first palette color for observations and the second
+for predictions and their band. An explicitly colored predicted line also colors
+the band; `bandItemStyle` can override its color or opacity. Waterfall charts use
+the first three palette colors for increases, decreases, and the total, including
+when one direction is absent. Palette changes in base, media, and timeline options
+follow the same native engine behavior as other charts. No good/bad meaning is
+inferred from the sign of a change.
+
+## Native plots and geographical views
+
+`BarList`, `BulletChart`, `CompactTimeSeries`, `RangePlot`, `QuantileStrip`, and `DurationDistribution` already have separate components and Storybook documentation. Reuse these native plots for compact comparisons and references. `DurationDistribution` supports supplied unequal-width histogram bins, smooth density, cumulative points, percentile landmarks, and concentration bars. `NetworkMap` provides geographical layers and its independently exported surface and companions.
+
+The existing shipping and logistics galleries now compose these public chart components. Their story links remain available as comparison and integration examples.

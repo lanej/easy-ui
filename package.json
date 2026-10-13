@@ -33,6 +33,7 @@
     "build:docs": "node scripts/build-docs.mjs",
     "build:icons": "FORCE_COLOR=1 turbo run build --filter=@easypost/easy-ui-icons",
     "build:react": "FORCE_COLOR=1 turbo run build --filter=@easypost/easy-ui",
+    "prebuild:storybook": "node scripts/build-brand-assets.mjs",
     "build:storybook": "storybook build",
     "build:tokens": "FORCE_COLOR=1 turbo run build --filter=@easypost/easy-ui-tokens",
     "build:typedoc": "typedoc --options typedoc.json",
@@ -44,6 +45,7 @@
     "dev": "FORCE_COLOR=1 turbo run dev",
     "format": "prettier . --write",
     "lint": "FORCE_COLOR=1 turbo run lint",
+    "prestart:storybook": "node scripts/build-brand-assets.mjs",
     "start:storybook": "storybook dev -p 9003",
     "test": "FORCE_COLOR=1 turbo run test",
     "test:watch:react": "npm run test:watch --workspace @easypost/easy-ui"
@@ -67,6 +69,7 @@
     "prettier": "3.9.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "remark-gfm": "^4.0.1",
     "storybook": "^10.6.0",
     "stylelint": "^16.21.0",
     "turbo": "^2.4.4",

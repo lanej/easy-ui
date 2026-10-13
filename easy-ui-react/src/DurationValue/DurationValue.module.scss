@@ -1,0 +1,17 @@
+@use "../styles/common" as *;
+
+.root {
+  display: inline-block;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.value {
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  overflow-wrap: anywhere;
+}

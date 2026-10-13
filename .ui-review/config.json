@@ -119,6 +119,72 @@
           "setup": ".ui-review/checkpoints/score-charts-dark.mjs"
         }
       ]
+    },
+    {
+      "name": "dependency-graph",
+      "path": "/dependency-graph.html",
+      "ready": "[data-dependency-graph] [data-graph-node]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-large-dark",
+      "path": "/dependency-graph.html?large=1&dark=1",
+      "ready": "[data-dependency-graph] [data-graph-node]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-summary",
+      "path": "/dependency-graph.html?summary=1",
+      "ready": "[data-resource-changes][data-presentation=\"summary\"]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-specific",
+      "path": "/dependency-graph.html?specific=1",
+      "ready": "[data-resource-changes] [data-diff]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-inline",
+      "path": "/dependency-graph.html?inline=1",
+      "ready": "[data-graph-card-diff] [data-diff]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-inline-large-dark",
+      "path": "/dependency-graph.html?inline=1&large=1&dark=1",
+      "ready": "[data-graph-card-diff] [data-diff]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-overview",
+      "path": "/dependency-graph.html?overview=1",
+      "ready": "[data-dependency-graph] [data-graph-node]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-folded",
+      "path": "/dependency-graph.html?folded=1",
+      "ready": "[data-dependency-graph] [data-graph-node]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-links",
+      "path": "/dependency-graph.html?links=1",
+      "ready": "[data-graph-edge-ids][data-link-change=\"add\"]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-responsive-diffs",
+      "path": "/dependency-graph.html?responsive=1",
+      "ready": "[data-field-values]",
+      "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-attributes",
+      "path": "/dependency-graph.html?anchors=1",
+      "ready": "[data-graph-target-attribute]",
+      "viewports": ["desktop", "mobile"]
     }
   ],
   "viewports": [

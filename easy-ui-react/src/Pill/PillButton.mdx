@@ -1,0 +1,35 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as Stories from "./PillButton.stories";
+
+<Meta of={Stories} />
+
+# PillButton
+
+A pill-shaped action with standard button behavior.
+
+## Usage
+
+```tsx
+import { PillButton } from "@easypost/easy-ui/Pill";
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
+
+### Selected
+
+<Canvas of={Stories.Selected} />
+
+### Disabled
+
+<Canvas of={Stories.Disabled} />
+
+### Controlled
+
+<Canvas of={Stories.Controlled} />

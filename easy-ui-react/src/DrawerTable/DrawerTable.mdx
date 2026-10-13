@@ -1,18 +1,30 @@
-import React from "react";
-import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Controls, ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./DrawerTable.stories";
 
 <Meta of={Stories} />
 
 # DrawerTable
 
-Table-style summary rows with full-width vertical details, adapted from
-Logistics Services' parcel and lane worklists. Opening details does not repeat
+Table-style summary rows with full-width vertical details. Opening details does not repeat
 or replace the summary. This is an accessible **list of disclosures**, not an
 HTML table or modal side drawer. Use `DataGrid` when column headers, sorting,
 selection, or grid keyboard navigation are required.
 
+## Usage
+
+```tsx
+import { DrawerTable } from "@easypost/easy-ui/DrawerTable";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
+
 <Controls />
 
 Import `DrawerTable` and the independently usable `DrawerRow` from
@@ -39,7 +51,7 @@ clicking it again requests `null`. `expandedKey={null}` is controlled closed
 state, while omitting `expandedKey` enables local state. Use `defaultExpandedKey`
 only for the initial uncontrolled selection.
 
-## Pagination
+### Pagination
 
 Use `renderFooter` to place `DrawerTable.Pagination` and optional
 `DrawerTable.RowsPerPage` outside the disclosure list. Pagination is controlled:
@@ -74,8 +86,7 @@ Rows removed from the supplied page unmount even with `mountPolicy="preserve"`.
 Persist drafts outside the row if they must survive page changes; the caller
 can clear a controlled `expandedKey` when navigating.
 
-Closed details unmount by default, matching Logistics Services' lazy evidence
-panels. `mountPolicy="preserve"` keeps every detail mounted, including before
+Closed details unmount by default. `mountPolicy="preserve"` keeps every detail mounted, including before
 first opening, and retains form state on collapse. Do not use preservation for
 expensive panels without accounting for that initial work.
 

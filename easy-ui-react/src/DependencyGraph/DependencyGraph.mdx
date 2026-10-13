@@ -1,0 +1,160 @@
+import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import * as Stories from "./DependencyGraph.stories";
+
+<Meta of={Stories} />
+
+# DependencyGraph
+
+Investigate directed resource dependencies with focused neighborhoods, collapsed groups, readable HTML nodes, and linked resource/relationship selection. Use `GraphChart` for a general analytical node-link chart.
+
+## Usage
+
+Import from `@easypost/easy-ui/DependencyGraph` with the normal Easy UI Provider and stylesheet. No ECharts peer or engine configuration is required.
+
+`title` and `description` are optional. Without them, no heading row is rendered. Use `accessibilityLabel` to name an embedded graph; it defaults to the title or “Resource dependencies”. Relationship colors convey added, removed, and modified links without a persistent legend; selection details retain their textual change labels.
+
+```tsx
+import { DependencyGraph } from "@easypost/easy-ui/DependencyGraph";
+
+<DependencyGraph
+  title="Service dependencies"
+  nodes={[
+    { id: "subnet", label: "Application subnet", change: "replace" },
+    { id: "api", label: "API service" },
+  ]}
+  edges={[{ id: "subnet-api", source: "subnet", target: "api" }]}
+/>;
+```
+
+An arrow runs **from a dependency to its dependent**: `subnet → api` means the API depends on the subnet. Translate reverse-oriented Terraform/OpenTofu relationships in the application. Easy UI does not infer resources, edges, risk, execution order, or operational blast radius.
+
+## Props
+
+<ArgTypes />
+
+## Examples
+
+### Replacement review
+
+<Canvas of={Stories.ReplacementReview} />
+
+### Investigation and selection
+
+Choose a resource, then use **Dependencies**, **Dependents**, or **Connected resources** to focus a bounded neighborhood. **Expand one level** grows the same anchor's neighborhood; selecting another visible resource updates the inspector without moving the anchor. **Changes + context** includes changed resources plus one level in both directions. An explicitly supplied `depth: 0` shows only the seed resources. Traversal uses only supplied edges; `onViewChange` can request more evidence from an application API.
+
+`selection`, `view`, `collapsedGroupIds`, and `collapsedNodeIds` are independently controllable. Their `default*` counterparts initialize local state. Callbacks return stable original IDs so a change row, graph node, and application inspector can share selection. Use `showDetails={false}` and `DependencyGraphDetails` for a separately placed inspector, or `renderDetails` to append application evidence to the standard details.
+
+The inspector's +/− control widens it on desktop and reveals its full height at any width. Expansion preserves selection, the active diff view, and resource ordering. Use `detailsExpanded`, `defaultDetailsExpanded`, and `onDetailsExpandedChange` to control it. A separately placed `DependencyGraphDetails` accepts `expanded` and `onExpandedChange`; its parent owns the column width.
+
+<Canvas of={Stories.EmbeddedInspector} />
+
+<Canvas of={Stories.LinkedInspector} />
+
+### Application-supplied risk findings
+
+Use `renderNodeAnnotation(node)` to place a finding directly on a resource block. Use `renderAttributeAnnotation(node, change)` to attach a finding to the exact attribute block, alongside its before/after values. Match on the resource ID and `change.path` so the annotation stays with the supplied attribute. Include severity, rationale, and optional expandable supporting evidence in the annotation itself; it does not require the sidebar.
+
+Resource annotations remain visible when attribute differences are collapsed. Attribute annotations appear with their expanded differences, both in cards and the inspector. The graph does not automatically promote attribute findings to resource findings. Both hooks contribute to measured card height and accessible descriptions, preserving change colors and resource ordering as evidence expands. `DependencyGraphChanges` and `DependencyGraphDetails` also accept `renderAttributeAnnotation` for standalone composition. `renderDetails(context)` remains available for additional selection context.
+
+The application owns assessments and their evidence. A change operation, a reachable dependency, or missing risk data does not establish risk or safety. This extension supports future analysis that combines planned changes with runtime relationships, including affected resources that have no planned changes. No risk engine, severity thresholds, or synthetic scores are built into the graph.
+
+The following example uses illustrative caller-supplied findings. High risk is attached to the API's `env.DATABASE_URL` attribute block. Medium risk is attached to the unchanged worker's resource block. Expand Supporting evidence in either annotation to inspect its rationale in place; unannotated resources are not implicitly low risk.
+
+<Canvas of={Stories.RiskAnnotations} />
+
+Groups are flat visual boundaries. The caller chooses root/module membership using `groupId`; expanded groups have a labeled boundary. Collapse replaces the member nodes with a summary. Connections between collapsed groups bundle the original edge IDs; selecting a bundle lists every supplied relationship separately. Relationships inside a collapsed group remain available in group details. Grouping never turns a module into a resource or fabricates an edge.
+
+<Canvas of={Stories.CollapsedModules} />
+
+### Dependent branch collapse and resource icons
+
+Each resource with dependents has a **−** control to fold its outgoing branch. **+** reopens it; **Expand all branches** clears branch folds. The caption shows how many resources are hidden. Shared resources stay visible through other open paths, and cycles have a deterministic entry. A focused neighborhood retains its anchor. Folded relationships remain available in the inspector, with their original IDs. Searching or revealing a hidden resource opens the folds when necessary.
+
+Control this independently with `collapsedNodeIds`, `defaultCollapsedNodeIds`, and `onCollapsedNodeIdsChange`. Branch folding preserves resource order; it does not alter the caller's nodes, edges, or selection.
+
+Pass `icon` and `iconLabel` on a node to identify its type. `icon` accepts the standard Easy UI `IconSymbol`, including a custom SVG component. The label becomes part of the resource button's accessible name. Icons are caller-owned; Easy UI does not infer type from a resource ID. The icon package provides Database, Storage, Hub (network), Key (authentication), and Shield (authorization).
+
+<Canvas of={Stories.CollapsibleBranches} />
+
+### Per-resource summaries and diffs
+
+Every resource can supply a `changeSummary` and typed `changes`. The graph card shows the short summary. The **+** control labeled **Show attribute differences** expands that resource card with its exact field diff; The **−** control labeled **Hide attribute differences** returns it to the compact view. Expansion is independent of selection and works with `showDetails={false}`. The inspector also switches between **Summary** and **Specific changes**. Attribute values stack on narrow cards and inspectors, with the removed value above the added value. At 36rem of available content width they align side by side. The layout responds to the containing component rather than the page or graph zoom. Red `−` marks removal and green `+` marks addition; full values wrap without visible Before/After headers. Those labels remain available to screen readers. “Not present” distinguishes an absent side from an empty string, unknown value, or redacted value. Resource operations and field changes remain distinct: a replacement retains its Replace badge while showing the exact supplied field diff.
+
+```tsx
+{
+  id: "subnet",
+  label: "Application subnet",
+  change: "replace",
+  changeSummary: "Address prefix changes; replacement required.",
+  changes: [
+    { path: "address_prefixes[0]", type: "change",
+      before: "10.20.0.0/24", after: "10.20.4.0/24" },
+    { path: "tags.owner", type: "add", after: "network-platform" },
+    { path: "tags.legacy", type: "remove", before: "true" },
+  ],
+}
+```
+
+Values are caller-formatted strings, so format numbers, booleans, and explicit `null` before supplying them. An empty string is displayed as `""`. Use `{ status: "unknown" }` for an unavailable value and `{ status: "redacted" }` for a sensitive value; never pass secrets. Omitted `changes` means specific changes were not supplied. An empty array does not establish that the resource is unchanged. Easy UI renders the supplied field operations; the application computes their meaning and diff.
+
+`defaultChangePresentation="diff"` starts each newly selected resource in the detailed view. The default is `"summary"`. Selection changes initialize that resource's presentation independently, so another resource's values cannot remain visible. `DependencyGraphChanges` accepts `compact` to omit the heading when embedded in a card and is also exported for an application-owned inspector; it supports controlled `presentation`/`onPresentationChange` or local `defaultPresentation`.
+
+`expandedChangeNodeIds`, `defaultExpandedChangeNodeIds`, and `onExpandedChangeNodeIdsChange` control which resource cards show their attribute differences. Callbacks return original resource IDs. Multiple cards can be expanded at once.
+
+<Canvas of={Stories.ExpandedAttributeDifferences} />
+<Canvas of={Stories.ChangeSummary} />
+<Canvas of={Stories.SpecificChanges} />
+
+### Layout, scale, and accessibility
+
+Dagre establishes the initial directed resource order from the full topology, including folded resources. Hiding/showing edges, expanding/collapsing differences, folding branches or groups, and responsive card measurements preserve each card's relative horizontal and vertical order. Expanded cards grow to show their full content; measured widths and heights adjust spacing and routing so neighbors can move without swapping order or overlapping. There is no card height cap or nested diff scroller. A different resource set or group membership starts a new layout; increment `layoutRevision` to deliberately recompute the order after relationship topology changes with the same IDs. Filtering `edges` preserves the order; `hiddenEdgeIds` hides lines while retaining complete relationship evidence for traversal and details. Zoom ranges from 40% to 200% and changes the card presentation automatically: below 70%, an overview shows icons, labels, actions, and compact disclosure controls; from 70% to below 100%, cards show summaries; at 100% and above, expanded cards show attribute diffs. Expanded-card state survives zooming out and returns when zooming in. Opening an attribute control zooms to at least 100% and keeps that resource in view. Use the toolbar +/− controls, Ctrl/⌘ plus wheel or pinch, or focus the canvas and press +/−. Press 0 or **Fit visible** to fit the current view. Ordinary wheel and trackpad movement scrolls. Initial fitting keeps expanded cards and narrow canvases at 100%; an explicit fit can use the overview.
+
+Card and group disclosure controls use the reusable `ExpandButton` (+) and `CollapseButton` (−) atoms.
+
+Use groups and bounded neighborhoods for large plans. The initial scale story supplies 1,000 nodes while rendering only the visible grouped neighborhood. Initial layout is synchronous and establishes order for all supplied resources, including those hidden by grouping. Presentation changes adjust spacing without rerunning Dagre; this is not an unbounded graph engine or a claim of tested performance beyond that fixture. Querying and relationship discovery stay in the application.
+
+Tab focuses HTML node controls; arrow keys move to a resource in that direction, and Enter/Space selects it. The viewport supports normal keyboard/trackpad scrolling. SVG connections are pointer-selectable; the same relationships are keyboard-selectable in resource/group details. Search reaches resources hidden by grouping or scope. Long labels have a full accessible name; exact IDs and descriptions appear in selection details.
+
+<Canvas of={Stories.ThousandResources} />
+<Canvas of={Stories.Narrow} />
+
+### Evidence and state
+
+Supply `coverage` when the application knows whether relationship evidence is complete, partial, or unknown. Complete describes the supplied evidence scope; it does not establish complete runtime impact. Missing endpoints are exposed as unresolved relationships and remain selectable. An empty supplied relationship set is not presented as proof of isolation. Duplicate node, edge, or group IDs produce a visible input error.
+
+Use `variant="dashed"` on an edge for a caller-defined distinction and explain its meaning through `label`/`description`. Use `highlightedEdgeIds` for a caller-computed path. Missing change metadata is displayed as unknown. Create, update, replace, delete, and unchanged have explicit labels as well as theme-aware colors; change kinds are not risk scores.
+
+<Canvas of={Stories.PartialEvidence} />
+<Canvas of={Stories.CyclicRelationships} />
+<Canvas of={Stories.HighlightedPath} />
+<Canvas of={Stories.Loading} />
+<Canvas of={Stories.Empty} />
+<Canvas of={Stories.Error} />
+
+### Stable resource order
+
+Resource cards use a compact identity/status row, 25px disclosure controls (preserved while zooming out), and tighter attribute spacing. A description row appears only when supplied. Expanded cards grow to display every difference. Values retain 13px text, full content, and responsive stacked/paired layout. Measured card sizes update spacing and routing while preserving resource order; the graph canvas handles scrolling for large cards.
+
+<Canvas of={Stories.StableResourceOrder} />
+
+### Relationship changes
+
+Supply `edge.change` as `"add"`, `"remove"`, `"update"`, `"unchanged"`, or `"unknown"`. Omission means unknown. Link changes are independent of resource operations: an unchanged resource can gain or lose relationships. Supply the union of before and after links, retaining removed links with their original IDs. Added links use green arrows; removed links use red arrows; caller-matched modified links (`"update"`) use one yellow arrow. Matching belongs to the application: Easy UI does not infer that two red/green edges are one relationship. A changed resolved attribute value alone does not imply a changed reference. Omit both attribute paths for explicit block-level `depends_on`; supply attribute paths for references. The connections have no status symbols or bundle badges. Relationship details include textual status labels. Added and removed links between the same endpoints stay separate, including when endpoints are collapsed into groups; same-status links with matching visible endpoint paths may bundle and retain all IDs. The **Changes** view includes both supplied endpoints of added/removed/modified links. Neighborhood and branch traversal follow all supplied links, including removed links, to support comparison of old and new topology.
+
+<Canvas of={Stories.RelationshipChanges} />
+
+<Canvas of={Stories.ResponsiveAttributeDifferences} />
+
+### Attribute endpoints and routing
+
+Optionally supply `sourceAttributePath` and/or `targetAttributePath` on a relationship. Paths match exact supplied attribute-change paths. A visible expanded field receives the arrow at its row; hidden or missing fields, collapsed groups, and overview cards fall back to resource-level endpoints. Relationship details retain the supplied paths regardless of presentation. Easy UI does not infer which attribute creates a dependency.
+
+Connections use rounded orthogonal lanes around cards and group headings. Default ports follow neighboring resources' vertical order; parallel changes use separate ports/lanes. Cycles and self-links use exterior corridors. Reordering caller arrays does not change routes.
+
+```tsx
+{ id: "database-reference", source: "database", target: "api",
+  sourceAttributePath: "endpoint", targetAttributePath: "env.DATABASE_URL",
+  change: "add" }
+```
+
+<Canvas of={Stories.AttributeDependencies} />

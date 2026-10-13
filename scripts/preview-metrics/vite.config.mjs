@@ -99,6 +99,12 @@ export function previewConfig(engine = "full", outDir = "dist") {
     },
     resolve: {
       alias: {
+        ...Object.fromEntries(
+          ["Database", "Storage", "Hub", "Remove"].map((name) => [
+            `@easypost/easy-ui-icons/${name}`,
+            local(`./.preview-icons/${name}.jsx`),
+          ]),
+        ),
         "@easypost/easy-ui-tokens/js/tokens": local(
           "./.preview-tokens/dist/js/tokens.mjs",
         ),
@@ -121,6 +127,7 @@ export function previewConfig(engine = "full", outDir = "dist") {
             "lodash",
             "@easypost/easy-ui-icons",
             "echarts",
+            "@dagrejs/dagre",
             "maplibre-gl",
           ].map((name) => [name, local(`./node_modules/${name}`)]),
         ),
@@ -148,6 +155,7 @@ export function previewConfig(engine = "full", outDir = "dist") {
               states: local("./audit.html"),
               layout: local("./layout.html"),
               native: local("./native-regressions.html"),
+              dependencies: local("./dependency-graph.html"),
               chartComposition: local("./chart-composition.html"),
               chartDataView: local("./chart-data-view.html"),
               mobileCharts: local("./mobile-charts.html"),

@@ -308,5 +308,46 @@
     "reason": "Expanded score examples must render both charts rather than pass on empty loading states.",
     "designRules": ["DR-006", "DR-007"],
     "pages": ["score-chart-details"]
+  },
+  {
+    "id": "dependency-graph-node-overlap",
+    "type": "no-overlap",
+    "selector": "[data-dependency-graph] [data-graph-item-card]",
+    "severity": "error",
+    "reason": "Distinct resource/group nodes remain separate in a directed graph.",
+    "designRules": ["DR-006", "DR-007"],
+    "pages": [
+      "dependency-graph",
+      "dependency-graph-large-dark",
+      "dependency-graph-summary",
+      "dependency-graph-specific",
+      "dependency-graph-inline",
+      "dependency-graph-inline-large-dark",
+      "dependency-graph-overview",
+      "dependency-graph-folded",
+      "dependency-graph-links",
+      "dependency-graph-attributes"
+    ]
+  },
+  {
+    "id": "dependency-graph-primary-labels",
+    "type": "min-font-size",
+    "selector": "[data-dependency-graph] [data-graph-item] strong",
+    "min": 14,
+    "severity": "error",
+    "reason": "Resource labels use the primary text floor before camera zoom.",
+    "designRules": ["DR-007"],
+    "pages": [
+      "dependency-graph",
+      "dependency-graph-large-dark",
+      "dependency-graph-summary",
+      "dependency-graph-specific",
+      "dependency-graph-inline",
+      "dependency-graph-inline-large-dark",
+      "dependency-graph-overview",
+      "dependency-graph-folded",
+      "dependency-graph-links",
+      "dependency-graph-attributes"
+    ]
   }
 ]

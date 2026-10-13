@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { useId } from "react-aria";
 import { Button } from "../Button";
 import type {
   GeoJSONSource,
@@ -24,7 +31,7 @@ import {
   validAreaCoordinates,
   validSurfaceBounds,
 } from "./geometry";
-import type { MapFacility, NetworkMapProps } from "./types";
+import type { MapFacility, MapFocus, NetworkMapProps } from "./types";
 import { NetworkMapCellDetails } from "./NetworkMapCellDetails";
 import { NetworkMapCellPopover } from "./NetworkMapCellPopover";
 import { useSurfaceInspection } from "./useSurfaceInspection";
@@ -38,6 +45,7 @@ import {
   resolveVisualizationTypography,
 } from "../visualization/typography";
 import styles from "./NetworkMap.module.scss";
+import { NetworkMapRouteContext } from "./NetworkMapRouteContext";
 
 /** Rendering and engine lifecycle only. Compose under NetworkMapProvider to share state with companions,
  * or supply mapStyle/workerUrl and data directly for a standalone surface. Attribution is retained.
@@ -60,6 +68,9 @@ export function NetworkMapSurface(
 }
 
 function NetworkMapSurfaceView() {
+  const routeData = useContext(NetworkMapRouteContext);
+  const routeContext = useRef(routeData);
+  routeContext.current = routeData;
   const {
     props: options,
     mapInspection,
@@ -72,6 +83,8 @@ function NetworkMapSurfaceView() {
     setZoom,
     commands,
     surfaceOwner,
+    mapRef,
+    insets,
     accessibleName,
   } = useNetworkMap();
   const {
@@ -83,15 +96,19 @@ function NetworkMapSurfaceView() {
     onFacilitySelect,
     selectedSegmentId,
     latestFacilityId,
+    "aria-labelledby": canvasLabelledBy,
     height = 560,
   } = options;
   const container = useRef<HTMLDivElement>(null);
+  const canvasLabelId = useId();
   const owner = useRef(Symbol("map surface"));
   const instance = useRef<MapInstance | null>(null);
   const refresh = useRef<(() => void) | null>(null);
   const refreshControls = useRef<(() => void) | null>(null);
   const latest = useRef(options);
   latest.current = options;
+  const insetState = useRef(insets);
+  insetState.current = insets;
 
   const [basemapError, setBasemapError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -115,8 +132,24 @@ function NetworkMapSurfaceView() {
     (bounds: [[number, number], [number, number]] | null, maxZoom = 12) => {
       const current = instance.current;
       if (!current || !bounds) return;
+      const element = current.getContainer();
+      const availableHeight = element.clientHeight;
+      const isInset = Boolean(element.closest("[data-map-zoom-section]"));
+      const compactInset = isInset && availableHeight <= 240;
       current.fitBounds(bounds, {
-        padding: { top: 70, bottom: 65, left: 65, right: 80 },
+        padding: {
+          top: compactInset
+            ? 16
+            : Math.min(70, Math.max(56, Math.round(availableHeight * 0.2))),
+          bottom: compactInset
+            ? 84
+            : Math.max(
+                isInset ? 80 : 0,
+                Math.min(65, Math.max(40, Math.round(availableHeight * 0.17))),
+              ),
+          left: 65,
+          right: 80,
+        },
         maxZoom,
         duration: window.matchMedia?.("(prefers-reduced-motion: reduce)")
           .matches
@@ -137,6 +170,20 @@ function NetworkMapSurfaceView() {
     },
     [flyToBounds],
   );
+  const focusView = useCallback(
+    ({ bounds, facilityIds, maxZoom }: MapFocus) => {
+      if (bounds) {
+        flyToBounds(
+          [
+            [bounds.minLon, bounds.minLat],
+            [bounds.maxLon, bounds.maxLat],
+          ],
+          maxZoom,
+        );
+      } else fit(facilityIds, maxZoom);
+    },
+    [fit, flyToBounds],
+  );
 
   useEffect(() => {
     if (surfaceOwner.current && surfaceOwner.current !== owner.current)
@@ -146,7 +193,12 @@ function NetworkMapSurfaceView() {
     // commands with the engine lifecycle so its initial fit and toolbar work
     // after every setup, while reading current data from the stable ref.
     commands.current = {
+      focus: (target) => {
+        insetState.current.close();
+        focusView(target);
+      },
       fitAll: () => {
+        insetState.current.close();
         const p = latest.current;
         const validFacilities = p.facilities.filter((f) =>
           validCoordinate(f.coordinates),
@@ -187,7 +239,9 @@ function NetworkMapSurfaceView() {
     };
     let disposed = false,
       observer: ResizeObserver | undefined;
+    let resizeFrame = 0;
     let detachInspection: (() => void) | undefined;
+    let detachInsetClick: (() => void) | undefined;
     let overlayRenderer: ReturnType<typeof createOverlayRenderer> | undefined;
     let markers: {
       facility: MapFacility;
@@ -202,6 +256,7 @@ function NetworkMapSurfaceView() {
     // "sourcedata" indefinitely.
     let lastClusterFacilities: typeof facilities | undefined;
     let lastFacilities: typeof facilities | undefined;
+    let lastRouteData: typeof routeData | undefined;
     let lastSegments: typeof segments | undefined;
     let lastAreas: typeof areas | undefined;
     let lastSurface: typeof surface;
@@ -230,6 +285,7 @@ function NetworkMapSurfaceView() {
     let positionLabels: (() => void) | undefined;
     const observedControls = new Set<Element>();
     const element = container.current!;
+    delete element.dataset.initialViewReady;
     setState("loading");
     setBasemapError(false);
     const fail = (error: unknown) => {
@@ -262,8 +318,26 @@ function NetworkMapSurfaceView() {
           renderWorldCopies: true,
           canvasContextAttributes: { antialias: true },
           cooperativeGestures: true,
+          // The component's observer batches canvas writes after layout.
+          // Avoid a second synchronous resize from the engine's observer.
+          trackResize: false,
         });
         instance.current = map;
+        mapRef.current = map;
+        let loaded = false;
+        let insetAttributionCollapsed = false;
+        const insetClusterClicks = new WeakSet<Event>();
+        let initialFitPending = !initial;
+        const fitInitialView = () => {
+          if (!loaded || !initialFitPending || element.clientWidth === 0)
+            return;
+          map.resize();
+          initialFitPending = false;
+          const requested = latest.current.focus;
+          if (requested) focusView(requested);
+          else commands.current.fitAll();
+          element.dataset.initialViewReady = "true";
+        };
         detachInspection = overlayInspectionEvents.attach(map, element);
         overlayRenderer = createOverlayRenderer(
           map,
@@ -280,14 +354,24 @@ function NetworkMapSurfaceView() {
         let navigation:
           InstanceType<typeof engine.NavigationControl> | undefined;
         let scale: InstanceType<typeof engine.ScaleControl> | undefined;
+        let navigationPosition: "top-right" | "bottom-right" = "top-right";
         const updateControls = () => {
           const configured = latest.current.controls;
           const showNavigation =
             configured !== false && configured?.navigation !== false;
           const showScale = configured !== false && configured?.scale !== false;
+          const nextPosition =
+            insetState.current.active && insetState.current.dock === "top"
+              ? "bottom-right"
+              : "top-right";
+          if (navigation && navigationPosition !== nextPosition) {
+            map.removeControl(navigation);
+            navigation = undefined;
+          }
           if (showNavigation && !navigation) {
             navigation = new engine.NavigationControl({ showCompass: false });
-            map.addControl(navigation, "top-right");
+            navigationPosition = nextPosition;
+            map.addControl(navigation, navigationPosition);
           } else if (!showNavigation && navigation) {
             map.removeControl(navigation);
             navigation = undefined;
@@ -312,7 +396,64 @@ function NetworkMapSurfaceView() {
             latest.current.onRenderError?.(event.error);
           }
         });
+        let managedInsetIndicators = false;
         const position = () => {
+          if (latest.current.zoomSections?.length || managedInsetIndicators) {
+            const available = insetState.current.update(map);
+            const representatives = new Map<string, string>();
+            const ranks = new Map<string, number>();
+            for (const { facility } of markers) {
+              const candidate = available.get(facility.id);
+              if (!candidate) continue;
+              const rank =
+                (facility.id === latest.current.selectedFacilityId ? 1000 : 0) +
+                (facility.id === latest.current.latestFacilityId ? 500 : 0) +
+                (latest.current.primaryFacilityIds?.includes(facility.id)
+                  ? 250
+                  : 0) +
+                (facility.priority ?? 0);
+              if (
+                !ranks.has(candidate.key) ||
+                rank > ranks.get(candidate.key)!
+              ) {
+                ranks.set(candidate.key, rank);
+                representatives.set(candidate.key, facility.id);
+              }
+            }
+            for (const { facility, button } of markers) {
+              const candidate = available.get(facility.id);
+              button.dataset.mapFacilityId = facility.id;
+              button.disabled =
+                !latest.current.onFacilitySelect &&
+                !latest.current.renderFacilityDetails &&
+                !candidate;
+              button.setAttribute(
+                "aria-label",
+                `${!latest.current.onFacilitySelect && (latest.current.renderFacilityDetails || candidate) ? "Inspect" : "Select"} ${facility.label}${facility.detail ? `: ${facility.detail}` : ""}${candidate ? `. Close-up available: ${candidate.facilityIds.length - 1} nearby stops` : ""}`,
+              );
+              if (candidate) {
+                button.dataset.mapInsetAvailable = candidate.sectionId;
+                button.setAttribute(
+                  "aria-expanded",
+                  String(insetState.current.isOpen(facility.id)),
+                );
+              } else {
+                delete button.dataset.mapInsetAvailable;
+                button.removeAttribute("aria-expanded");
+              }
+              if (
+                candidate &&
+                representatives.get(candidate.key) === facility.id
+              )
+                button.dataset.mapInsetCount = String(
+                  candidate.facilityIds.length - 1,
+                );
+              else delete button.dataset.mapInsetCount;
+            }
+            managedInsetIndicators = Boolean(
+              latest.current.zoomSections?.length,
+            );
+          }
           const p = latest.current,
             size = element.getBoundingClientRect();
           const candidates = markers.flatMap(({ facility: f, label }) => {
@@ -361,6 +502,16 @@ function NetworkMapSurfaceView() {
           const controls = Array.from(
             element.querySelectorAll(".maplibregl-ctrl"),
           );
+          const floating = element
+            .closest("[data-map-frame]")
+            ?.querySelector("[data-map-controls]");
+          if (floating) controls.push(floating);
+          const insets = latest.current.zoomSections?.length
+            ? element
+                .closest("[data-map-geography]")
+                ?.querySelector("[data-map-zoom-section]")
+            : null;
+          if (insets) controls.push(insets);
           for (const previous of observedControls) {
             if (!controls.includes(previous)) {
               observer?.unobserve?.(previous);
@@ -382,6 +533,35 @@ function NetworkMapSurfaceView() {
               w: rect.width,
               h: rect.height,
             }));
+          // Labels must not hide other geographic markers, even when those
+          // markers have no label at the current zoom level.
+          for (const { facility, button } of markers) {
+            const longitude =
+              facility.coordinates[0] +
+              Math.round(
+                ((map.getCenter?.().lng ?? facility.coordinates[0]) -
+                  facility.coordinates[0]) /
+                  360,
+              ) *
+                360;
+            const point = map.project([longitude, facility.coordinates[1]]);
+            reserved.push({ x: point.x - 8, y: point.y - 8, w: 16, h: 16 });
+            const count = button.dataset.mapInsetCount;
+            if (count) {
+              // Keep nearby labels clear of the availability pill as well as
+              // the pin, including when annotation text is enlarged.
+              const fontSize = resolveVisualizationTypography(
+                p.typography,
+              ).label;
+              const badgeHeight = fontSize * 1.4 + 4;
+              reserved.push({
+                x: point.x + 8,
+                y: point.y - 8 - badgeHeight,
+                w: Math.max(24, (count.length + 1) * fontSize * 0.7 + 10),
+                h: badgeHeight,
+              });
+            }
+          }
           const placements = placeLabels(
             candidates,
             size.width,
@@ -422,12 +602,23 @@ function NetworkMapSurfaceView() {
           }
           const blue = css.getPropertyValue("--map-route").trim() || "#113abf";
           const muted = css.getPropertyValue("--map-muted").trim() || "#6a7e9d";
-          if (p.facilities !== lastFacilities || p.segments !== lastSegments) {
+          if (
+            p.facilities !== lastFacilities ||
+            p.segments !== lastSegments ||
+            routeContext.current !== lastRouteData
+          ) {
             (map.getSource("easy-ui-transfers") as GeoJSONSource).setData(
-              segmentData(p.facilities, p.segments),
+              segmentData(
+                routeContext.current.facilities.length
+                  ? [...p.facilities, ...routeContext.current.facilities]
+                  : p.facilities,
+                p.segments,
+                routeContext.current.volumeSegments,
+              ),
             );
             lastFacilities = p.facilities;
             lastSegments = p.segments;
+            lastRouteData = routeContext.current;
           }
           if (p.areas !== lastAreas) {
             (map.getSource("easy-ui-weather") as GeoJSONSource).setData(
@@ -544,6 +735,7 @@ function NetworkMapSurfaceView() {
             const button = existing?.button ?? document.createElement("button");
             button.type = "button";
             button.classList.add(styles.marker);
+            button.dataset.mapFacilityId = f.id;
             button.dataset.kind = f.kind;
             button.dataset.selected = String(f.id === p.selectedFacilityId);
             button.dataset.latest = String(f.id === p.latestFacilityId);
@@ -604,7 +796,9 @@ function NetworkMapSurfaceView() {
                 overlayInspectionEvents.leave(event.relatedTarget),
               );
               button.addEventListener("click", () => {
-                inspect(true);
+                if (insetState.current.request(f.id))
+                  overlayInspectionEvents.close();
+                else inspect(true);
                 latest.current.onFacilitySelect?.(f.id);
               });
             }
@@ -634,8 +828,14 @@ function NetworkMapSurfaceView() {
           map.addSource("easy-ui-transfers", {
             type: "geojson",
             data: segmentData(
-              latest.current.facilities,
+              routeContext.current.facilities.length
+                ? [
+                    ...latest.current.facilities,
+                    ...routeContext.current.facilities,
+                  ]
+                : latest.current.facilities,
               latest.current.segments,
+              routeContext.current.volumeSegments,
             ),
           });
           map.addSource("easy-ui-weather", {
@@ -851,16 +1051,75 @@ function NetworkMapSurfaceView() {
                 const source = map.getSource("easy-ui-facility-clusters") as
                   GeoJSONSource | undefined;
                 if (!feature || clusterId === undefined || !source) return;
-                source.getClusterExpansionZoom(clusterId).then((zoom) => {
-                  if (disposed) return;
-                  const [lng, lat] = (
-                    feature.geometry as {
-                      type: "Point";
-                      coordinates: [number, number];
-                    }
-                  ).coordinates;
-                  map.easeTo({ center: [lng, lat], zoom });
-                });
+                const expand = () => {
+                  source.getClusterExpansionZoom(clusterId).then((zoom) => {
+                    if (disposed) return;
+                    const [lng, lat] = (
+                      feature.geometry as {
+                        type: "Point";
+                        coordinates: [number, number];
+                      }
+                    ).coordinates;
+                    map.easeTo({ center: [lng, lat], zoom });
+                  });
+                };
+                const sections = latest.current.zoomSections;
+                const count = Number(feature.properties?.point_count);
+                if (
+                  !sections?.length ||
+                  !Number.isFinite(count) ||
+                  count >
+                    Math.max(
+                      ...sections.map(
+                        (section) => new Set(section.facilityIds).size,
+                      ),
+                    )
+                ) {
+                  expand();
+                  return;
+                }
+                // Native clicks can flush microtasks between DOM listeners.
+                // Own this cluster click so background dismissal cannot cancel
+                // its request, while invalidating any older pending request.
+                if (event.originalEvent)
+                  insetClusterClicks.add(event.originalEvent);
+                insetState.current.close();
+                const view = cameraKey();
+                const records = latest.current.facilities;
+                const selected = latest.current.selectedFacilityId;
+                const generation = insetState.current.getGeneration();
+                const currentRequest = () =>
+                  !disposed &&
+                  generation === insetState.current.getGeneration() &&
+                  cameraKey() === view &&
+                  latest.current.facilities === records &&
+                  latest.current.selectedFacilityId === selected;
+                Promise.resolve()
+                  .then(() => source.getClusterLeaves(clusterId, count, 0))
+                  .then((leaves) => {
+                    if (!currentRequest()) return;
+                    const ids = leaves.map((leaf) =>
+                      String(leaf.properties?.id),
+                    );
+                    const available = insetState.current.update(map);
+                    const candidate = ids
+                      .map((id) => available.get(id))
+                      .find(
+                        (item) =>
+                          item &&
+                          ids.every((id) => item.facilityIds.includes(id)),
+                      );
+                    if (
+                      candidate &&
+                      insetState.current.request(candidate.anchorId)
+                    ) {
+                      overlayInspectionEvents.close();
+                      latest.current.onFacilitySelect?.(candidate.anchorId);
+                    } else expand();
+                  })
+                  .catch(() => {
+                    if (currentRequest()) expand();
+                  });
               },
             );
             map.on("mouseenter", "easy-ui-facility-cluster-circles", () => {
@@ -872,6 +1131,7 @@ function NetworkMapSurfaceView() {
           }
           lastFacilities = latest.current.facilities;
           lastSegments = latest.current.segments;
+          lastRouteData = routeContext.current;
           lastAreas = latest.current.areas;
           lastSurface = latest.current.surface;
           lastClusterFacilities = latest.current.facilities;
@@ -881,10 +1141,24 @@ function NetworkMapSurfaceView() {
           latest.current.onMapReady?.(map);
           window.clearTimeout(deadline);
           setState("ready");
-          if (!initial) commands.current.fitAll();
+          loaded = true;
+          if (initial) element.dataset.initialViewReady = "true";
+          fitInitialView();
           setZoom(map.getZoom());
         });
+        const cameraKey = () =>
+          JSON.stringify([
+            map.getCenter?.().lng,
+            map.getCenter?.().lat,
+            map.getZoom(),
+            map.getBearing?.(),
+            map.getPitch?.(),
+          ]);
+        let previousCamera = cameraKey();
         map.on("move", () => {
+          const camera = cameraKey();
+          if (camera !== previousCamera) insetState.current.close();
+          previousCamera = camera;
           position();
           if (!disposed) {
             inspectionEvents.move(map);
@@ -915,14 +1189,50 @@ function NetworkMapSurfaceView() {
             );
         });
         map.on("idle", () => {
-          if (!disposed) element.dataset.mapIdle = "true";
+          if (disposed) return;
+          element.dataset.mapIdle = "true";
+          if (
+            !insetAttributionCollapsed &&
+            (element.closest("[data-map-zoom-section]") ||
+              latest.current.zoomSections?.length)
+          ) {
+            const attribution = element.querySelector<HTMLDetailsElement>(
+              ".maplibregl-ctrl-attrib.maplibregl-compact",
+            );
+            if (attribution) {
+              attribution.open = false;
+              attribution.classList.remove("maplibregl-compact-show");
+              insetAttributionCollapsed = true;
+              position();
+            }
+          }
         });
+        const closeOnBackground = (event: MouseEvent) => {
+          if (insetClusterClicks.has(event)) return;
+          const target = event.target;
+          if (
+            !(target instanceof Element) ||
+            (!target.closest("[data-map-facility-id]") &&
+              !target.closest(".maplibregl-ctrl"))
+          )
+            insetState.current.close();
+        };
+        element.addEventListener("click", closeOnBackground);
+        detachInsetClick = () =>
+          element.removeEventListener("click", closeOnBackground);
         map.on("movestart", () => {
           element.dataset.mapIdle = "false";
         });
         observer = new ResizeObserver(() => {
-          map.resize();
-          position();
+          // MapLibre writes canvas dimensions. Defer those writes until the
+          // observation cycle completes when a surrounding grid resizes.
+          window.cancelAnimationFrame(resizeFrame);
+          resizeFrame = window.requestAnimationFrame(() => {
+            if (disposed || element.clientWidth === 0) return;
+            map.resize();
+            fitInitialView();
+            position();
+          });
         });
         observer.observe(element);
       })
@@ -930,8 +1240,10 @@ function NetworkMapSurfaceView() {
     return () => {
       disposed = true;
       surfaceOwner.current = null;
+      delete element.dataset.initialViewReady;
       setState("loading");
       commands.current = {
+        focus() {},
         fitAll() {},
         selectedSegment() {},
         latestEvent() {},
@@ -940,6 +1252,7 @@ function NetworkMapSurfaceView() {
       refresh.current = null;
       refreshControls.current = null;
       observer?.disconnect();
+      window.cancelAnimationFrame(resizeFrame);
       if (positionLabels) {
         document.fonts?.removeEventListener("loadingdone", positionLabels);
         element.removeEventListener("toggle", positionLabels, true);
@@ -947,8 +1260,10 @@ function NetworkMapSurfaceView() {
       markers.forEach((m) => m.marker.remove());
       overlayRenderer?.dispose();
       detachInspection?.();
+      detachInsetClick?.();
       instance.current?.remove();
       instance.current = null;
+      mapRef.current = null;
       inspectionEvents.close();
       overlayInspectionEvents.close();
     };
@@ -960,20 +1275,46 @@ function NetworkMapSurfaceView() {
     setState,
     setZoom,
     surfaceOwner,
+    mapRef,
     fit,
     flyToBounds,
+    focusView,
     inspectionEvents,
     overlayInspectionEvents,
   ]);
 
   useEffect(() => {
     refreshControls.current?.();
-  }, [controls.navigation, controls.scale]);
+  }, [
+    controls.navigation,
+    controls.scale,
+    options.controlPlacement,
+    insets.active,
+    insets.dock,
+  ]);
+
+  useEffect(() => {
+    if (state !== "ready") return;
+    const canvas = instance.current?.getCanvas();
+    if (!canvas) return;
+    const externalLabel = canvasLabelledBy?.trim();
+    if (externalLabel) {
+      canvas.setAttribute(
+        "aria-labelledby",
+        `${externalLabel} ${canvasLabelId}`,
+      );
+      canvas.removeAttribute("aria-label");
+    } else {
+      canvas.removeAttribute("aria-labelledby");
+      canvas.setAttribute("aria-label", `${accessibleName} interactive map`);
+    }
+  }, [state, accessibleName, canvasLabelledBy, canvasLabelId]);
 
   useEffect(() => {
     refresh.current?.();
   }, [
     facilities,
+    routeData,
     segments,
     areas,
     surface,
@@ -991,21 +1332,12 @@ function NetworkMapSurfaceView() {
     options.overlays,
     options.onOverlaySelect,
     options.renderFacilityDetails,
+    options.zoomSections,
+    insets.active,
   ]);
   useEffect(() => {
     if (state !== "ready" || !options.focus) return;
-    const { bounds, facilityIds, maxZoom } = options.focus;
-    if (bounds) {
-      flyToBounds(
-        [
-          [bounds.minLon, bounds.minLat],
-          [bounds.maxLon, bounds.maxLat],
-        ],
-        maxZoom ?? 12,
-      );
-    } else {
-      fit(facilityIds, maxZoom);
-    }
+    focusView(options.focus);
     // A camera request is keyed by revision. Data updates do not recenter the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.focus?.revision, state]);
@@ -1027,6 +1359,7 @@ function NetworkMapSurfaceView() {
   return (
     <div
       className={styles.viewport}
+      data-fill-height={height === "fill" || undefined}
       data-map-state={state}
       data-map-zoom={zoom.toFixed(2)}
       role="region"
@@ -1048,10 +1381,18 @@ function NetworkMapSurfaceView() {
         }
       }}
     >
+      <span id={canvasLabelId} hidden>
+        interactive map
+      </span>
       <div
         ref={container}
         className={styles.canvas}
-        style={{ height: Math.max(220, height) }}
+        style={{
+          height:
+            height === "fill"
+              ? "100%"
+              : Math.max(options.zoomSections?.length ? 700 : 220, height),
+        }}
       />
       {featureInspection && hasOverlayContent && (
         <NetworkMapCellPopover

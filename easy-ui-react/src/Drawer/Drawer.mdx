@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { Drawer, DrawerContainer } from "./Drawer";
 import * as DrawerStories from "./Drawer.stories";
 
@@ -9,9 +9,23 @@ import * as DrawerStories from "./Drawer.stories";
 
 A `Drawer` is a modal that stays on the side of the screen.
 
+## Usage
+
+```tsx
+import { Drawer } from "@easypost/easy-ui/Drawer";
+```
+
+<Canvas of={DrawerStories.Standalone} />
+
+## Props
+
+<ArgTypes of={Drawer.Trigger} />
+
+## Examples
+
 Use a `<Drawer />` when you want to capture information from the user as a part of a concentrated workflow without having them leave the parent page.
 
-### Drawer architecture
+#### Drawer architecture
 
 `<Drawer />` is a compound component. Use `<Drawer.Trigger />`, `<Drawer />`, `<Drawer.Header />`, and `<Drawer.Body />` to construct a drawer. `Drawer` includes `Drawer.Banner`, `Drawer.BanneredContentArea`, `Drawer.StandaloneContentArea`, and `Drawer.CloseButton` for using preset Drawer patterns.
 
@@ -56,7 +70,7 @@ _Drawer example with banner and tabs:_
 </Drawer.Trigger>
 ```
 
-### Triggering the drawer
+#### Triggering the drawer
 
 `<Drawer.Trigger />` must contain exactly two direct children.
 
@@ -66,7 +80,7 @@ The second element must be a `<Drawer />`. If access to programmatically close t
 
 Alternatively, a `<Drawer />` can be wrapped in a `<DrawerContainer />` to entirely control the triggering process. See the Custom Triggers story below.
 
-### State management
+#### State management
 
 By default, a `<Drawer />` manages its own open state.
 
@@ -76,17 +90,15 @@ It can be made to open by default using the `defaultOpen` prop on `<Drawer.Trigg
 
 Use the `useDrawerTrigger()` hook inside a Drawer component to access the drawer state. Use the drawer trigger state to determine if the drawer `isOpen`. The drawer trigger state can also be used to programmatically `close()` the drawer.
 
-### Focus containment
+#### Focus containment
 
 A `<Drawer />` traps focus until it's closed. When a drawer is closed, it returns focus to the element that triggered the drawer.
 
-## Standalone Example
+### Standalone Example
 
 In its simplest form, a `<Drawer />` requires a triggering element and a `<Drawer />` that renders a body.
 
-<Canvas of={DrawerStories.Standalone} />
-
-## Banner and Tabs Example
+### Banner and Tabs Example
 
 A `<Drawer />` offers several components to customize the experience. This example uses all available components.
 
@@ -94,7 +106,7 @@ Refer to the property tables at the bottom of the page for full documentation.
 
 <Canvas of={DrawerStories.BannerAndTabs} />
 
-## Nondismissable
+### Nondismissable
 
 By default, `<Drawer />`s are dismissable, meaning a user can exit the drawer without performing an action. Exiting can be done by clicking on the underlay behind the drawer, pressing the `Esc` key, or clicking the close icon.
 
@@ -104,7 +116,7 @@ To override that behavior, set `isDismissable` to `false` on the `<Drawer.Trigge
 
 <Controls of={DrawerStories.Nondismissable} />
 
-## Custom Triggers
+### Custom Triggers
 
 A `<Drawer />` can be wrapped in a `<DrawerContainer />` to entirely control the triggering process.
 
@@ -112,44 +124,40 @@ A `<DrawerContainer />` renders a single `<Drawer />` as a child. If no child is
 
 <Canvas of={DrawerStories.MenuTrigger} />
 
-## Properties
+#### Drawer.Trigger
 
-### Drawer.Trigger
-
-<ArgTypes of={Drawer.Trigger} />
-
-### Drawer
+#### Drawer
 
 <ArgTypes of={Drawer} />
 
-### Drawer.Header
+#### Drawer.Header
 
 <ArgTypes of={Drawer.Header} />
 
-### Drawer.Body
+#### Drawer.Body
 
 <ArgTypes of={Drawer.Body} />
 
-### Drawer.Body
+#### Drawer.Body
 
 <ArgTypes of={Drawer.Body} />
 
-### Drawer.Title
+#### Drawer.Title
 
 <ArgTypes of={Drawer.Title} />
 
-### Drawer.Banner
+#### Drawer.Banner
 
 <ArgTypes of={Drawer.Banner} />
 
-### Drawer.BanneredContentArea
+#### Drawer.BanneredContentArea
 
 <ArgTypes of={Drawer.BanneredContentArea} />
 
-### Drawer.StandaloneContentArea
+#### Drawer.StandaloneContentArea
 
 <ArgTypes of={Drawer.StandaloneContentArea} />
 
-### DrawerContainer
+#### DrawerContainer
 
 <ArgTypes of={DrawerContainer} />

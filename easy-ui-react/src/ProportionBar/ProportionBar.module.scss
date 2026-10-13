@@ -1,0 +1,58 @@
+@use "../styles/common" as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: design-token("space.1");
+  inline-size: 100%;
+  min-inline-size: 0;
+  color: design-token("color.neutral.900");
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  min-inline-size: 0;
+}
+.details {
+  display: contents;
+}
+.label {
+  order: 1;
+  flex: 1 1 12em;
+  min-inline-size: 0;
+  font-size: var(--ezui-viz-label-size, 14px);
+  color: design-token("color.neutral.700");
+}
+.percentage {
+  order: 2;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.counts {
+  order: 3;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  font-size: var(--ezui-viz-detail-size, 14px);
+  font-variant-numeric: tabular-nums;
+  color: design-token("color.neutral.600");
+}
+.root[data-presentation="expanded"] {
+  .percentage {
+    order: 0;
+  }
+  .details {
+    display: flex;
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+  }
+}

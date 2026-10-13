@@ -78,11 +78,12 @@ export function splitAntimeridian(
 export function segmentData(
   facilities: readonly MapFacility[],
   segments: readonly MapSegment[],
+  volumeSegments: readonly MapSegment[] = segments,
 ): FeatureCollection<Geometry> {
   const byId = new Map(facilities.map((f) => [f.id, f]));
   const maxVolume = Math.max(
     1,
-    ...segments.map((s) =>
+    ...volumeSegments.map((s) =>
       Number.isFinite(s.volume) ? Math.max(0, s.volume ?? 0) : 0,
     ),
   );
@@ -298,6 +299,8 @@ export function placeLabels(
       [-c.width / 2, -labelHeight - 17],
       [centeredLeft, -labelHeight - 12],
       [centeredLeft, 18],
+      [24 - c.width, -labelHeight - 17],
+      [24 - c.width, 18],
     ]) {
       const box = { x: c.x + dx, y: c.y + dy, w: c.width, h: labelHeight };
       if (
