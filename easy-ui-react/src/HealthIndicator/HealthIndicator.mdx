@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { HealthIndicator } from "./HealthIndicator";
 import * as Stories from "./HealthIndicator.stories";
 
@@ -8,7 +9,20 @@ import * as Stories from "./HealthIndicator.stories";
 
 A compact atom displaying an application-supplied health assessment with a text-labeled Pill. Use the small size beside a measurement to keep the assessment distinct and secondary. It never calculates health, risk, thresholds, or recommended action.
 
+## Usage
+
+```tsx
+import { HealthIndicator } from "@easypost/easy-ui/HealthIndicator";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={HealthIndicator} />
+
+## Examples
+
 <Controls of={Stories.Default} />
 
 ```tsx
@@ -17,7 +31,7 @@ import { HealthIndicator } from "@easypost/easy-ui/HealthIndicator";
 <HealthIndicator assessment="healthy" label="As expected" />;
 ```
 
-## Supplied assessments and data states
+### Supplied assessments and data states
 
 Choose `healthy`, `degraded`, or `unhealthy` in the application. Omitting the assessment, passing `null`, or supplying an unknown runtime value displays neutral “Not assessed”. Missing assessment must never imply healthy.
 
@@ -25,14 +39,10 @@ Set `availability="unavailable"` when an observation cannot support an assessmen
 
 <Canvas of={Stories.AllStates} />
 
-## Compact and localized layouts
+### Compact and localized layouts
 
 Use `variant="dot"` for a status dot beside a label in dense layouts. The assessment remains available as an accessible name and tooltip. Use `size="sm"` in dense tables. Labels wrap within the available width rather than truncating information. Visible words identify each state independently of its color. `label` localizes the current assessment or unassessed wording; `unavailableLabel` and `loadingLabel` localize their distinct states. Set the surrounding language and optional `accessibilityLabel` to identify the subject. The atom is noninteractive and adds no keyboard stops.
 
 <Canvas of={Stories.Compact} />
 <Canvas of={Stories.LocalizedNarrow} />
 <Canvas of={Stories.LargeText} />
-
-## Properties
-
-<ArgTypes of={HealthIndicator} />

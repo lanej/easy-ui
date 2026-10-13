@@ -1,13 +1,19 @@
-import React from "react";
-import {
-  Canvas,
-  Meta,
-  ArgTypes,
-  Controls,
-  Markdown,
-} from "@storybook/addon-docs/blocks";
+import { Meta, Markdown } from "@storybook/addon-docs/blocks";
 import Readme from "../README.md?raw";
 
 <Meta title="Getting Started" />
 
-<Markdown>{Readme}</Markdown>
+<Markdown>
+  {Readme.replace(
+    "https://main--63f50c7c86f6514d2e0ef4be.chromatic.com/",
+    "?path=/docs/organisms-charts-choosing-a-chart--docs",
+  )
+    .replace(
+      "skills/easy-ui/SKILL.md",
+      "https://github.com/lanej/easy-ui/blob/main/easy-ui-react/skills/easy-ui/SKILL.md",
+    )
+    .replace(
+      "skills/easy-ui/references/components.md",
+      "https://github.com/lanej/easy-ui/blob/main/easy-ui-react/skills/easy-ui/references/components.md",
+    )}
+</Markdown>

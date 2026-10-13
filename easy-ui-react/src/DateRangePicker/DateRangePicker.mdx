@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { DateRangePicker } from "./DateRangePicker";
 import * as DateRangePickerStories from "./DateRangePicker.stories";
 
@@ -9,21 +9,33 @@ import * as DateRangePickerStories from "./DateRangePicker.stories";
 
 DateRangePicker combines keyboard-editable start and end dates with a separate calendar button.
 
+## Usage
+
+```tsx
+import { DateRangePicker } from "@easypost/easy-ui/DateRangePicker";
+```
+
 <Canvas of={DateRangePickerStories.Standalone} />
 
-## Default values
+## Props
+
+<ArgTypes of={DateRangePicker} />
+
+## Examples
+
+### Default values
 
 A `<DateRangePicker />` component allows users to set default selected date (uncontrolled).
 
 <Canvas of={DateRangePickerStories.DefaultValue} />
 
-## Label
+### Label
 
 Use `label` to render a visible label above the `<DateRangePicker />`. The label is rendered with the same styles as the label on `<TextField />` and `<Select />`, so date range pickers line up with neighboring fields. Use `aria-label` instead when the date range picker has no visible label.
 
 <Canvas of={DateRangePickerStories.Label} />
 
-## Sizes
+### Sizes
 
 Use `size="sm"` to render a smaller `<DateRangePicker />`.
 
@@ -31,19 +43,19 @@ Use `size="sm"` to render a smaller `<DateRangePicker />`.
 
 <Controls of={DateRangePickerStories.Sizes} include={["size"]} />
 
-## Set minimum and maximum value
+### Set minimum and maximum value
 
 Set minimum and maximum allowed date that a user may select or enter. Dates outside the minimum and maximum value are disabled and unreachable.
 
 <Canvas of={DateRangePickerStories.LimitAvailableDates} />
 
-## Set Date Availability
+### Set Date Availability
 
 Callback that is called for each date of the calendar. If it returns `true`, then the date is unavailable.
 
 <Canvas of={DateRangePickerStories.DatesAvailability} />
 
-## Disabled DateRangePicker
+### Disabled DateRangePicker
 
 Use `isDisabled` to disabled the DateRangePicker entirely.
 
@@ -51,7 +63,7 @@ Use `isDisabled` to disabled the DateRangePicker entirely.
 
 <Controls of={DateRangePickerStories.Disabled} include={["isDisabled"]} />
 
-## Forms and clearing
+### Forms and clearing
 
 Use `startName` and `endName` to submit the two selected dates through `FormData`.
 Calendar dates serialize as `YYYY-MM-DD`; use values from `@internationalized/date`.
@@ -68,25 +80,21 @@ reports invalid state without blocking submission.
 
 <Canvas of={DateRangePickerStories.Form} />
 
-## Read-only values
+### Read-only values
 
 `isReadOnly` prevents editing, opening the calendar, and clearing while retaining
 both form values. `isDisabled` omits both values from submission.
 
 <Canvas of={DateRangePickerStories.ReadOnly} />
 
-## Controlled Selection
+### Controlled Selection
 
 For controlled selection, use `onChange` and `value`. Uncontrolled selection is possible with `defaultValue`. See associated code snippet.
 
 <Canvas of={DateRangePickerStories.ControlledSelection} />
 
-## Invalid Selection
+### Invalid Selection
 
 An error message is displayed when the selected value is invalid according to application logic. Select more than 7 days to see the error message.
 
 <Canvas of={DateRangePickerStories.InvalidSelection} />
-
-## Properties
-
-<ArgTypes of={DateRangePicker} />

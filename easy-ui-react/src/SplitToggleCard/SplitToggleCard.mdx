@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { SplitToggleCard } from "./SplitToggleCard";
 import * as SplitToggleCardStories from "./SplitToggleCard.stories";
 
@@ -9,9 +9,21 @@ import * as SplitToggleCardStories from "./SplitToggleCard.stories";
 
 A `<SplitToggleCard />` is an interactive binary control with related content.
 
+## Usage
+
+```tsx
+import { SplitToggleCard } from "@easypost/easy-ui/SplitToggleCard";
+```
+
 <Canvas of={SplitToggleCardStories.Standard} />
 
-## Default Selected
+## Props
+
+<ArgTypes of={SplitToggleCard} />
+
+## Examples
+
+### Default Selected
 
 A `<SplitToggleCard />` can be selected using `defaultSelected` (uncontrolled).
 
@@ -21,7 +33,7 @@ A `<SplitToggleCard />` can be selected using `defaultSelected` (uncontrolled).
   include={["defaultSelected"]}
 />
 
-## Selected
+### Selected
 
 A `<SplitToggleCard />` can be selected using `isSelected` (controlled).
 
@@ -29,7 +41,7 @@ A `<SplitToggleCard />` can be selected using `isSelected` (controlled).
 
 <Controls of={SplitToggleCardStories.Selected} include={["isSelected"]} />
 
-## Disabled
+### Disabled
 
 A `<SplitToggleCard />` can be disabled using `isDisabled`.
 
@@ -40,7 +52,7 @@ A `<SplitToggleCard />` can be disabled using `isDisabled`.
   include={["isDisabled", "isSelected"]}
 />
 
-## Read-Only
+### Read-Only
 
 A `<SplitToggleCard />` can be read-only using `isReadOnly`.
 
@@ -50,7 +62,3 @@ A `<SplitToggleCard />` can be read-only using `isReadOnly`.
   of={SplitToggleCardStories.ReadOnly}
   include={["isReadOnly", "isSelected"]}
 />
-
-## Properties
-
-<ArgTypes of={SplitToggleCard} />

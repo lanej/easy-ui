@@ -1,4 +1,5 @@
-import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./WaterfallChart.stories";
 
 <Meta of={Stories} />
@@ -7,7 +8,19 @@ import * as Stories from "./WaterfallChart.stories";
 
 Show signed changes and their running balance. Interval geometry handles negative balances and crossings of zero; the final bar spans zero to the supplied ledger total.
 
+## Usage
+
+```tsx
+import { WaterfallChart } from "@easypost/easy-ui/WaterfallChart";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes />
+
+## Examples
 
 Import `{ WaterfallChart }` from `@easypost/easy-ui/WaterfallChart` with the optional `echarts@^6.1.0` peer installed.
 
@@ -33,5 +46,3 @@ that role's series rather than the full ledger.
 Partial axis styling retains the generated step labels. Supplied zoom components default to `filterMode="weakFilter"` to retain overlapping balance spans; explicit filter modes remain authoritative.
 
 <Canvas of={Stories.StyledAxis} />
-
-<ArgTypes />

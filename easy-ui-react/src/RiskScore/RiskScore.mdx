@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { RiskScore } from "./RiskScore";
 import * as Stories from "./RiskScore.stories";
 
@@ -8,7 +9,20 @@ import * as Stories from "./RiskScore.stories";
 
 Display a supplied risk score with its scale, a visible assessment, and a thin proportional meter. Higher scores mean higher risk. Use the default size in summaries and the compact size in tracking tables.
 
+## Usage
+
+```tsx
+import { RiskScore } from "@easypost/easy-ui/RiskScore";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={RiskScore} />
+
+## Examples
+
 <Controls of={Stories.Default} />
 
 ```tsx
@@ -18,7 +32,7 @@ import "@easypost/easy-ui/style.css";
 <RiskScore value={87} assessment="high" />;
 ```
 
-## Supply the score and assessment
+### Supply the score and assessment
 
 The application or scoring service owns scoring and assessment thresholds. Pass `assessment="low"`, `"medium"`, or `"high"` explicitly; the component never derives a category from the number. The default size includes a visible assessment pill. Compact scores use the supplied assessment color on the number, with the full label retained in the accessible value and native hover hint.
 
@@ -30,7 +44,7 @@ Omit `assessment` or pass `null` when a score exists without a category. The num
 
 <Canvas of={Stories.Unassessed} />
 
-## Compose in tracking tables
+### Compose in tracking tables
 
 Set `size="sm"` for dense layouts. It shows the assessment-colored score and neutral maximum without a pill. No thresholds are inferred: the supplied assessment determines color independently of the score. The default size retains its pill. Both sizes retain the exact accessible value, scale, and assessment; compact loading/unavailable states use explicit neutral text rather than a pill. In forced-color mode and print, compact scores show a plain-text assessment because color may be absent. Compact mode is appropriate when the surrounding application also makes the assessment available without relying on color or hover alone; use the default size when the category must always be visible. Set `showBar={false}` to omit the visual bar when the number and assessment are enough, such as in a worklist. Accessible meter semantics, including the exact value and range, are retained. This molecule composes the Text, Pill, and MeterBar atoms without a click action or surrounding card; compose it with existing table, navigation, and detail components.
 
@@ -42,7 +56,7 @@ Use `accessibilityLabel` to identify the measured risk. In a table, include the 
 <Canvas of={Stories.CompactTrackingTable} />
 <Canvas of={Stories.WithoutBar} />
 
-## Distinguish loading, unavailable, and zero
+### Distinguish loading, unavailable, and zero
 
 Pass `isLoading` while retrieving a score. It suppresses the previous value, assessment, and meter, displaying “Scoring…” with a busy state and a status label. Pass `value={null}` when a score is unavailable; it displays “Not scored” without a meter. Both states suppress a supplied assessment and its color.
 
@@ -51,13 +65,13 @@ Pass `isLoading` while retrieving a score. It suppresses the previous value, ass
 
 Zero is a valid score with an empty meter. Do not substitute zero for an unavailable result. Non-finite values, values outside `[0, max]`, and invalid maxima use the unavailable state; they are never clamped to a valid score. Applications handle errors and retries outside the molecule.
 
-## Choose the scale
+### Choose the scale
 
 The scale starts at zero and defaults to a maximum of `100`. Supply a finite `max` greater than zero for a different scale, such as `max={1}`. The meter represents `value / max`; changing the maximum changes the scale, not the assessment. The exact score and maximum remain visible, without a percent sign.
 
 <Canvas of={Stories.ZeroAndCustomScale} />
 
-## Localize labels and number formatting
+### Localize labels and number formatting
 
 `formatValue` formats both the score and maximum. It defaults to `String`, preserving the supplied precision. A formatter changes display text only; the original numeric values still determine the meter and its accessible range. Choose formatting precise enough to distinguish the scores your application presents.
 
@@ -68,7 +82,3 @@ Localize `accessibilityLabel` and `accessibilityValueText` together. The default
 <Canvas of={Stories.LocalizedNarrow} />
 
 The score and label wrap within the available width. The complete score/maximum expression is isolated left-to-right even in RTL layouts; labels and the shared bar retain the surrounding direction. Valid scores expose meter semantics with a zero minimum, the supplied maximum, and the exact numeric value. Loading and unavailable states expose a named group without a numeric meter. No keyboard interaction is required to read the molecule.
-
-## Properties
-
-<ArgTypes of={RiskScore} />

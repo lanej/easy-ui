@@ -1,4 +1,5 @@
-import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./CumulativeDistributionChart.stories";
 
 <Meta of={Stories} />
@@ -7,7 +8,19 @@ import * as Stories from "./CumulativeDistributionChart.stories";
 
 Show supplied cumulative points. The default step interpolation can be overridden per series; specify fractions or percentages in the axis.
 
+## Usage
+
+```tsx
+import { CumulativeDistributionChart } from "@easypost/easy-ui/CumulativeDistributionChart";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes />
+
+## Examples
 
 Import `{ CumulativeDistributionChart }` from `@easypost/easy-ui/CumulativeDistributionChart`. Install the optional `echarts@^6.1.0` peer when using analytical charts.
 
@@ -22,5 +35,3 @@ Use `dataTable` from the same records for exact values and keyboard drill-down. 
 <Canvas of={Stories.WithoutDataTable} />
 
 Use `showDataTable={false}` to omit the built-in data disclosure while retaining the plot. All analytical charts share the presentation options in the [chart catalog](?path=/docs/organisms-charts-choosing-a-chart--docs).
-
-<ArgTypes />

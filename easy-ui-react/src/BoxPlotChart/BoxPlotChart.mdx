@@ -1,4 +1,5 @@
-import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./BoxPlotChart.stories";
 
 <Meta of={Stories} />
@@ -7,7 +8,19 @@ import * as Stories from "./BoxPlotChart.stories";
 
 Show explicitly supplied five-number summaries in min, P25, median, P75, max order. The component does not calculate quantiles.
 
+## Usage
+
+```tsx
+import { BoxPlotChart } from "@easypost/easy-ui/BoxPlotChart";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes />
+
+## Examples
 
 This example removes the gallery’s explicit color overrides to show the active theme’s native defaults.
 
@@ -26,5 +39,3 @@ Use `dataTable` from the same records for exact values and keyboard drill-down. 
 <Canvas of={Stories.WithoutDataTable} />
 
 Use `showDataTable={false}` to omit the built-in data disclosure while retaining the plot. All analytical charts share the presentation options in the [chart catalog](?path=/docs/organisms-charts-choosing-a-chart--docs).
-
-<ArgTypes />

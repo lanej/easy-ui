@@ -8,6 +8,9 @@ export function normalizeColorScheme(value: unknown): StorybookColorScheme {
 
 export function readColorScheme(): StorybookColorScheme {
   try {
+    const globals = new URLSearchParams(window.location.search).get("globals");
+    const explicit = /(?:^|;)colorScheme:([^;]*)(?:;|$)/.exec(globals ?? "");
+    if (explicit) return normalizeColorScheme(explicit[1]);
     return normalizeColorScheme(window.localStorage.getItem(preferenceKey));
   } catch {
     return "system";

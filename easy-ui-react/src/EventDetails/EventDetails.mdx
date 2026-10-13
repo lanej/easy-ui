@@ -1,4 +1,5 @@
 import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./EventDetails.stories";
 
 <Meta of={Stories} />
@@ -7,7 +8,19 @@ import * as Stories from "./EventDetails.stories";
 
 A molecule for exact observation metadata in inspectors, previews, and drawers. The investigation workspace uses the same inline description list. Occurrence time and receipt time remain separate; the component does not parse, sort, or reinterpret caller-formatted values.
 
+## Usage
+
+```tsx
+import { EventDetails } from "@easypost/easy-ui/EventDetails";
+```
+
 <Canvas of={Stories.Inline} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
 
 ```tsx
 import { EventDetails } from "@easypost/easy-ui/EventDetails";

@@ -13,7 +13,7 @@ import { SignedValue } from "../SignedValue";
 
 const meta: Meta<typeof MetricCard> = {
   id: "components-metriccard",
-  title: "Molecules/Feedback/MetricCard",
+  title: "Molecules/Data Display/MetricCard",
   component: MetricCard,
 };
 export default meta;
