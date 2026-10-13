@@ -90,6 +90,79 @@ describe("DependencyGraph interaction contract", () => {
     expect(node).not.toHaveAttribute("aria-describedby");
     expect(screen.queryByText(/risk/i)).not.toBeInTheDocument();
   });
+  it("keeps attribute findings on the matching block in cards and inspector diffs", () => {
+    const changes = [
+      {
+        path: "endpoint",
+        type: "change" as const,
+        before: "primary",
+        after: "replica",
+      },
+      { path: "version", type: "change" as const, before: "1", after: "2" },
+    ];
+    const resources = [
+      { id: "api", label: "API", changes },
+      { id: "worker", label: "Worker", changes },
+    ];
+    const select = vi.fn();
+    const evidence = vi.fn();
+    const { container } = render(
+      <DependencyGraph
+        nodes={resources}
+        edges={[]}
+        defaultSelection={{ type: "node", id: "api" }}
+        defaultChangePresentation="diff"
+        defaultExpandedChangeNodeIds={["api", "worker"]}
+        onSelectionChange={select}
+        renderAttributeAnnotation={(node, change) =>
+          node.id === "api" && change.path === "endpoint" ? (
+            <div>
+              High risk: writes may fail.
+              <button onClick={evidence}>Read evidence</button>
+            </div>
+          ) : null
+        }
+      />,
+    );
+    const card = container.querySelector(
+      '[data-graph-resource-card="api"]',
+    ) as HTMLElement;
+    const details = screen.getByRole("complementary", {
+      name: "Graph selection details",
+    });
+    for (const block of [card, details]) {
+      const endpoint = within(block).getByText("endpoint").closest("dt");
+      expect(endpoint).toHaveAccessibleDescription(
+        "High risk: writes may fail. Read evidence",
+      );
+      expect(
+        within(block).getByText("version").closest("dt"),
+      ).not.toHaveAttribute("aria-describedby");
+      expect(within(block).getByText("primary")).toBeVisible();
+      expect(within(block).getByText("replica")).toBeVisible();
+    }
+    expect(
+      container.querySelector(
+        '[data-graph-resource-card="worker"] [data-graph-attribute-annotation]',
+      ),
+    ).toBeNull();
+    const ids = [
+      ...container.querySelectorAll("[data-graph-attribute-annotation]"),
+    ].map((el) => el.id);
+    expect(new Set(ids).size).toBe(2);
+    fireEvent.click(
+      within(card).getByRole("button", { name: "Read evidence" }),
+    );
+    expect(evidence).toHaveBeenCalledOnce();
+    expect(select).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(card).getByRole("button", {
+        name: "Hide attribute differences for API",
+      }),
+    );
+    expect(within(card).queryByText(/High risk/)).not.toBeInTheDocument();
+    expect(within(details).getByText(/High risk/)).toBeVisible();
+  });
   it("does not label absent change evidence as unchanged", () => {
     render(
       <DependencyGraph

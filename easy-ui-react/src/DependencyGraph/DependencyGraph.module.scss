@@ -415,6 +415,12 @@
 }
 .nodeAnnotation {
   padding: 0 8px 6px;
+}
+.attributeAnnotation {
+  margin: 6px 0 0;
+}
+.nodeAnnotation,
+.attributeAnnotation {
   font-size: max(0.75rem, calc(12px / var(--dependency-graph-zoom)));
   > * {
     font-size: inherit;

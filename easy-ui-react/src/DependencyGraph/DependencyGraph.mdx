@@ -52,11 +52,13 @@ The inspector's +/− control widens it on desktop and reveals its full height a
 
 ### Application-supplied risk findings
 
-Use `renderNodeAnnotation(node)` for a compact finding or assessment beside a resource, and `renderDetails(context)` for severity, rationale, provenance, and supporting evidence. Annotations contribute to measured card height and the resource button's accessible description. They preserve the existing change colors and ordering. Relationship-specific findings can use the selected original edge IDs in the details context.
+Use `renderNodeAnnotation(node)` to place a finding directly on a resource block. Use `renderAttributeAnnotation(node, change)` to attach a finding to the exact attribute block, alongside its before/after values. Match on the resource ID and `change.path` so the annotation stays with the supplied attribute. Include severity, rationale, and optional expandable supporting evidence in the annotation itself; it does not require the sidebar.
+
+Resource annotations remain visible when attribute differences are collapsed. Attribute annotations appear with their expanded differences, both in cards and the inspector. The graph does not automatically promote attribute findings to resource findings. Both hooks contribute to measured card height and accessible descriptions, preserving change colors and resource ordering as evidence expands. `DependencyGraphChanges` and `DependencyGraphDetails` also accept `renderAttributeAnnotation` for standalone composition. `renderDetails(context)` remains available for additional selection context.
 
 The application owns assessments and their evidence. A change operation, a reachable dependency, or missing risk data does not establish risk or safety. This extension supports future analysis that combines planned changes with runtime relationships, including affected resources that have no planned changes. No risk engine, severity thresholds, or synthetic scores are built into the graph.
 
-The following example uses illustrative caller-supplied findings. The API's modified database reference and an unchanged worker receive different assessments; unannotated resources are not implicitly low risk.
+The following example uses illustrative caller-supplied findings. High risk is attached to the API's `env.DATABASE_URL` attribute block. Medium risk is attached to the unchanged worker's resource block. Expand Supporting evidence in either annotation to inspect its rationale in place; unannotated resources are not implicitly low risk.
 
 <Canvas of={Stories.RiskAnnotations} />
 

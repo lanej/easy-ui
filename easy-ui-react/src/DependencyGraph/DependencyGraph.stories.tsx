@@ -41,6 +41,7 @@ const meta: Meta<typeof DependencyGraph> = {
     groups: { control: false },
     renderDetails: { control: false },
     renderNodeAnnotation: { control: false },
+    renderAttributeAnnotation: { control: false },
   },
   parameters: { layout: "padded" },
 };
@@ -79,7 +80,7 @@ export const RiskAnnotations: Story = {
     docs: {
       description: {
         story:
-          "Illustrative application-supplied findings combine plan changes with service inventory and runtime dependency evidence. The graph displays the findings without calculating risk. An unchanged resource can still be affected; omitted annotations do not mean low risk.",
+          "Illustrative application-supplied findings combine plan changes with service inventory and runtime dependency evidence. Findings and expandable evidence live on the relevant resource or attribute block. The graph displays the findings without calculating risk. An unchanged resource can still be affected; omitted annotations do not mean low risk.",
       },
     },
   },

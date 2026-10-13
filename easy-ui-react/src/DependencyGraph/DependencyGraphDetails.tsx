@@ -20,6 +20,7 @@ export type DependencyGraphDetailsProps = {
   selection: DependencyGraphSelection;
   onSelectionChange: (selection: DependencyGraphSelection) => void;
   renderDetails?: DependencyGraphProps["renderDetails"];
+  renderAttributeAnnotation?: DependencyGraphProps["renderAttributeAnnotation"];
   defaultChangePresentation?: DependencyGraphChangePresentation;
   /** Optional size control for an application-owned inspector layout. */
   expanded?: boolean;
@@ -136,6 +137,7 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
                   key={context.node.id}
                   node={context.node}
                   defaultPresentation={props.defaultChangePresentation}
+                  renderAttributeAnnotation={props.renderAttributeAnnotation}
                 />
               </>
             )}

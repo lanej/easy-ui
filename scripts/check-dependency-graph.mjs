@@ -1135,25 +1135,25 @@ try {
           ),
         );
     const expandedBefore = await expandedCards();
-    const assertOrdering = (cards) => {
+    const assertOrdering = (cards, reference = before) => {
       assert.deepEqual(
         cards.map((card) => card.id),
-        before.map((card) => card.id),
+        reference.map((card) => card.id),
       );
-      for (let a = 0; a < before.length; a++)
-        for (let b = a + 1; b < before.length; b++) {
+      for (let a = 0; a < reference.length; a++)
+        for (let b = a + 1; b < reference.length; b++) {
           for (const axis of ["x", "y"])
             assert.equal(
               Math.sign(cards[a][axis] - cards[b][axis]),
-              Math.sign(before[a][axis] - before[b][axis]),
-              "Inspector resizing preserves resource ordering",
+              Math.sign(reference[a][axis] - reference[b][axis]),
+              "Resizing blocks preserves resource ordering",
             );
           assert.ok(
             cards[a].x + cards[a].width <= cards[b].x ||
               cards[b].x + cards[b].width <= cards[a].x ||
               cards[a].y + cards[a].height <= cards[b].y ||
               cards[b].y + cards[b].height <= cards[a].y,
-            "Inspector resizing does not overlap cards",
+            "Resizing blocks does not overlap cards",
           );
         }
     };
@@ -1228,9 +1228,33 @@ try {
     await open("risk-annotations");
     assert.equal(await graph.locator("header").count(), 0);
     assert.equal(
-      await graph.locator("[data-graph-node-annotation]").count(),
-      2,
+      await details.count(),
+      0,
+      "Risk findings do not require the sidebar",
     );
+    const riskBefore = await positions();
+    const workerCard = graph.locator('[data-graph-resource-card="worker"]');
+    const workerAnnotation = workerCard.locator("[data-graph-node-annotation]");
+    const apiCard = graph.locator('[data-graph-resource-card="api"]');
+    const attribute = apiCard.locator('[data-field-change="env.DATABASE_URL"]');
+    const attributeAnnotation = attribute.locator(
+      "[data-graph-attribute-annotation]",
+    );
+    assert.equal(
+      await graph.locator("[data-graph-node-annotation]").count(),
+      1,
+    );
+    assert.equal(
+      await graph.locator("[data-graph-attribute-annotation]").count(),
+      1,
+    );
+    assert.ok((await workerAnnotation.innerText()).includes("Medium risk"));
+    assert.ok((await attributeAnnotation.innerText()).includes("High risk"));
+    assert.ok(
+      (await attributeAnnotation.innerText()).includes("Writes may fail"),
+    );
+    assert.equal(await workerCard.getAttribute("data-change"), "unchanged");
+    assert.equal(await apiCard.getAttribute("data-change"), "update");
     assert.equal(
       await graph
         .locator(
@@ -1245,30 +1269,89 @@ try {
         .count(),
       1,
     );
-    await graph.screenshot({
-      path: resolve(output, `risk-annotations-${width}.png`),
-    });
-    const worker = graph.getByRole("button", {
+    const describedBy = (el) =>
+      document.getElementById(el.getAttribute("aria-describedby")).textContent;
+    assert.ok(
+      (await attribute.locator("dt").evaluate(describedBy)).includes(
+        "High risk",
+      ),
+    );
+    const worker = workerCard.getByRole("button", {
       name: "Background worker, Unchanged",
       exact: true,
     });
-    await worker.click();
-    assert.equal(await details.locator("h3").innerText(), "Background worker");
-    const assessment = details.getByRole("region", { name: "Risk assessment" });
-    assert.ok((await assessment.innerText()).includes("Medium risk"));
+    assert.ok((await worker.evaluate(describedBy)).includes("Medium risk"));
+    if (width < 600) await apiCard.scrollIntoViewIfNeeded();
+    await graph.screenshot({
+      path: resolve(output, `risk-annotations-${width}.png`),
+    });
+    for (const [annotation, id] of [
+      [attributeAnnotation, "api"],
+      [workerAnnotation, "worker"],
+    ]) {
+      const disclosure = annotation.locator("summary");
+      await disclosure.focus();
+      await disclosure.press("Enter");
+      await settledCards();
+      assert.equal(
+        await annotation.locator("details").evaluate((el) => el.open),
+        true,
+      );
+      assert.equal(
+        await disclosure.evaluate((el) => document.activeElement === el),
+        true,
+      );
+      const expanded = await positions();
+      assertOrdering(expanded, riskBefore);
+      assert.ok(
+        expanded.find((card) => card.id === id).height >
+          riskBefore.find((card) => card.id === id).height,
+        "Inline evidence grows its resource block",
+      );
+      assert.equal(
+        await graph.locator('[data-graph-node][aria-pressed="true"]').count(),
+        0,
+        "Evidence disclosure does not change resource selection",
+      );
+    }
     assert.ok(
-      (await assessment.innerText()).includes("no planned resource changes"),
+      (await workerAnnotation.innerText()).includes(
+        "no planned resource changes",
+      ),
+    );
+    assert.ok(
+      (await attributeAnnotation.innerText()).includes("service inventory"),
+    );
+    await apiCard.scrollIntoViewIfNeeded();
+    await graph.screenshot({
+      path: resolve(output, `risk-attribute-evidence-${width}.png`),
+    });
+    await apiCard
+      .getByRole("button", {
+        name: "Hide attribute differences for Shipping API",
+      })
+      .click();
+    await settledCards();
+    assert.equal(
+      await graph.locator("[data-graph-attribute-annotation]").count(),
+      0,
     );
     assert.equal(
-      await worker.evaluate((el) =>
-        document
-          .getElementById(el.getAttribute("aria-describedby"))
-          .textContent.trim(),
-      ),
-      "Medium risk",
+      await workerAnnotation.count(),
+      1,
+      "Resource findings stay on collapsed blocks",
     );
+    assertOrdering(await positions(), riskBefore);
+    await apiCard
+      .getByRole("button", {
+        name: "Show attribute differences for Shipping API",
+      })
+      .click();
+    await settledCards();
+    assert.equal(await attributeAnnotation.count(), 1);
+    assertOrdering(await positions(), riskBefore);
     await accessibility(`risk-annotations-${width}`);
-    checks.push({ name: `caller-owned-risk-and-unchanged-resource-${width}` });
+    checks.push({ name: `inline-resource-and-attribute-risk-${width}` });
   }
   assert.deepEqual(errors, [], "Runtime diagnostics");
   console.log(`DependencyGraph: ${checks.length} browser cases passed.`);

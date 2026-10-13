@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 import { Button } from "../Button";
 import type {
   DependencyGraphChangePresentation,
   DependencyGraphChangeValue,
   DependencyGraphNode,
+  DependencyGraphProps,
 } from "./types";
 import styles from "./DependencyGraph.module.scss";
 
@@ -18,6 +19,7 @@ export type DependencyGraphChangesProps = {
   showPresentationControls?: boolean;
   /** Omit the heading when embedding inside a resource card. */
   compact?: boolean;
+  renderAttributeAnnotation?: DependencyGraphProps["renderAttributeAnnotation"];
 };
 
 const summaries = {
@@ -73,7 +75,9 @@ export function DependencyGraphChanges({
   onPresentationChange,
   showPresentationControls = true,
   compact = false,
+  renderAttributeAnnotation,
 }: DependencyGraphChangesProps) {
+  const instanceId = useId();
   const [localPresentation, setLocalPresentation] =
     useState(defaultPresentation);
   const presentation = controlledPresentation ?? localPresentation;
@@ -135,26 +139,43 @@ export function DependencyGraphChanges({
           className={styles.fieldChanges}
           aria-label={`${node.label} attribute differences`}
         >
-          {changes.map((change, index) => (
-            <div
-              key={`${change.path}:${index}`}
-              data-field-change={change.path}
-            >
-              <dt>
-                <code>{change.path}</code>
-              </dt>
-              <dd className={styles.fieldValues} data-field-values>
-                <DiffValue
-                  kind="removal"
-                  value={change.type === "add" ? undefined : change.before}
-                />
-                <DiffValue
-                  kind="addition"
-                  value={change.type === "remove" ? undefined : change.after}
-                />
-              </dd>
-            </div>
-          ))}
+          {changes.map((change, index) => {
+            const annotation = renderAttributeAnnotation?.(node, change);
+            const hasAnnotation =
+              annotation != null &&
+              typeof annotation !== "boolean" &&
+              annotation !== "";
+            const annotationId = `${instanceId}-attribute-annotation-${index}`;
+            return (
+              <div
+                key={`${change.path}:${index}`}
+                data-field-change={change.path}
+              >
+                <dt aria-describedby={hasAnnotation ? annotationId : undefined}>
+                  <code>{change.path}</code>
+                </dt>
+                <dd className={styles.fieldValues} data-field-values>
+                  <DiffValue
+                    kind="removal"
+                    value={change.type === "add" ? undefined : change.before}
+                  />
+                  <DiffValue
+                    kind="addition"
+                    value={change.type === "remove" ? undefined : change.after}
+                  />
+                </dd>
+                {hasAnnotation && (
+                  <dd
+                    id={annotationId}
+                    className={styles.attributeAnnotation}
+                    data-graph-attribute-annotation
+                  >
+                    {annotation}
+                  </dd>
+                )}
+              </div>
+            );
+          })}
         </dl>
       ) : null}
       {!changes.length && (

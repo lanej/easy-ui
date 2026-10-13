@@ -141,8 +141,13 @@ export type DependencyGraphProps = {
   onDetailsExpandedChange?: (expanded: boolean) => void;
   /** Initial change presentation for each newly selected resource. */
   defaultChangePresentation?: DependencyGraphChangePresentation;
-  /** Optional compact application-owned context, such as a risk finding. Does not change diff colors or infer risk. */
+  /** Application-owned annotation on the resource block, such as a risk finding. Does not infer risk. */
   renderNodeAnnotation?: (node: DependencyGraphNode) => ReactNode;
+  /** Annotation on an exact attribute block in expanded cards and inspector diffs. */
+  renderAttributeAnnotation?: (
+    node: DependencyGraphNode,
+    change: DependencyGraphPropertyChange,
+  ) => ReactNode;
   /** Additional evidence/diff content below the standard selection details. */
   renderDetails?: (context: DependencyGraphDetailsContext) => ReactNode;
 };

@@ -96,6 +96,7 @@ export function DependencyGraph({
   onDetailsExpandedChange,
   defaultChangePresentation,
   renderNodeAnnotation,
+  renderAttributeAnnotation,
   renderDetails,
 }: DependencyGraphProps) {
   const [localSelection, setLocalSelection] = useState(defaultSelection);
@@ -1188,6 +1189,9 @@ export function DependencyGraph({
                                   presentation="diff"
                                   showPresentationControls={false}
                                   compact
+                                  renderAttributeAnnotation={
+                                    renderAttributeAnnotation
+                                  }
                                 />
                               )}
                             </div>
@@ -1253,6 +1257,7 @@ export function DependencyGraph({
             selection={selection}
             onSelectionChange={select}
             renderDetails={renderDetails}
+            renderAttributeAnnotation={renderAttributeAnnotation}
             defaultChangePresentation={defaultChangePresentation}
             expanded={detailsExpanded}
             onExpandedChange={changeDetailsExpanded}

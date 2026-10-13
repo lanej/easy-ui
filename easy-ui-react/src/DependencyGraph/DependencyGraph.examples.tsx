@@ -191,15 +191,32 @@ const riskEdges = [
     variant: "dashed" as const,
   },
 ];
-const riskFor = (id: string) =>
-  Object.prototype.hasOwnProperty.call(riskFindings, id)
-    ? riskFindings[id as keyof typeof riskFindings]
-    : undefined;
 function RiskLabel({ severity }: { severity: "high" | "medium" }) {
   return (
     <Pill size="sm" tone={severity === "high" ? "danger" : "warning"}>
       {severity === "high" ? "High risk" : "Medium risk"}
     </Pill>
+  );
+}
+
+function RiskAnnotation({
+  finding,
+}: {
+  finding: (typeof riskFindings)[keyof typeof riskFindings];
+}) {
+  return (
+    <div className={styles.riskAnnotation}>
+      <RiskLabel severity={finding.severity} />
+      <p>{finding.summary}</p>
+      <details>
+        <summary>Supporting evidence</summary>
+        <ul>
+          {finding.evidence.map((evidence) => (
+            <li key={evidence}>{evidence}</li>
+          ))}
+        </ul>
+      </details>
+    </div>
   );
 }
 
@@ -210,35 +227,18 @@ export function DependencyGraphRiskExample() {
       nodes={riskNodes}
       edges={riskEdges}
       height={650}
-      defaultSelection={{ type: "node", id: "api" }}
+      showDetails={false}
       defaultExpandedChangeNodeIds={["database", "api"]}
-      defaultChangePresentation="diff"
-      defaultDetailsExpanded
-      renderNodeAnnotation={(node) => {
-        const risk = riskFor(node.id);
-        return risk ? <RiskLabel severity={risk.severity} /> : null;
-      }}
-      renderDetails={({ node, edges }) => {
-        const risk = node
-          ? riskFor(node.id)
-          : edges.some((edge) => edge.id === "database-reference")
-            ? riskFindings.api
-            : undefined;
-        if (!risk) return null;
-        return (
-          <section className={styles.evidence} aria-label="Risk assessment">
-            <h4>Risk assessment</h4>
-            <RiskLabel severity={risk.severity} />
-            <p>{risk.summary}</p>
-            <h4>Supporting evidence</h4>
-            <ul>
-              {risk.evidence.map((evidence) => (
-                <li key={evidence}>{evidence}</li>
-              ))}
-            </ul>
-          </section>
-        );
-      }}
+      renderNodeAnnotation={(node) =>
+        node.id === "worker" ? (
+          <RiskAnnotation finding={riskFindings.worker} />
+        ) : null
+      }
+      renderAttributeAnnotation={(node, change) =>
+        node.id === "api" && change.path === "env.DATABASE_URL" ? (
+          <RiskAnnotation finding={riskFindings.api} />
+        ) : null
+      }
     />
   );
 }
