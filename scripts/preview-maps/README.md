@@ -19,7 +19,7 @@ Refreshing dependencies also exposed a pre-existing token-build mismatch: the ma
 
 ## Journey zoom sections
 
-`journey.html` exercises a complete parcel journey with independently fitted origin and destination maps. It uses a local basemap for repeatable interaction checks; `?tiles=1` loads the same OpenFreeMap style as the Storybook examples. Add `theme=dark`, `large=1`, `narrow=1`, `empty=1`, `tall=1`, `weighted=1`, or `metrics=1` to review the corresponding states.
+`journey.html` exercises a complete parcel journey with independently fitted origin and destination maps. The normal preview loads the same OpenFreeMap geography as the Storybook examples. Browser interaction checks explicitly use `?local=1` for a tile-free test fixture; that fixture is not used for the PR visual-review captures. Add `theme=dark`, `large=1`, `narrow=1`, `empty=1`, `tall=1`, `weighted=1`, or `metrics=1` to review the corresponding states.
 
 `journey-checks.mjs` runs through the existing Chrome/Firefox/Safari adapters. It checks geographic enlargement, section membership and evidence, shared keyboard selection, immutable refreshes, layer visibility, independent camera controls, responsive layout, oversized inset containment, shared flow-width normalization and explicit unmapped-section states. It also captures both themes at desktop/mobile widths and runs accessibility scans. Review the Storybook images with real basemap tiles as well.
 

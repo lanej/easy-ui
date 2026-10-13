@@ -51,7 +51,7 @@ export async function checkJourneySections({
     for (const width of [1440, 390]) {
       const name = `${theme}/${width}`;
       await browser.resize(width, 1100);
-      await browser.open(`${base}/journey.html?theme=${theme}`);
+      await browser.open(`${base}/journey.html?local=1&theme=${theme}`);
       await browser.wait(overviewReady);
       const initial = await browser.evaluate(cameras);
       check(
@@ -370,7 +370,7 @@ export async function checkJourneySections({
       if (clean) await clean(`journey-sections-${theme}-${width}`);
     }
   await browser.resize(390, 1100);
-  await browser.open(`${base}/journey.html?theme=dark&large=1&empty=1`);
+  await browser.open(`${base}/journey.html?local=1&theme=dark&large=1&empty=1`);
   await browser.wait(overviewReady);
   check(
     "Unmapped groups have no misleading close-up indicator or world-map inset",
@@ -413,7 +413,7 @@ export async function checkJourneySections({
   await scan("journey-sections-large-text-empty-mobile");
   for (const width of [1440, 390]) {
     await browser.resize(width, 1100);
-    await browser.open(`${base}/journey.html?tall=1&weighted=1`);
+    await browser.open(`${base}/journey.html?local=1&tall=1&weighted=1`);
     await browser.wait(overviewReady);
     await browser.key(marker("oak"), "Enter");
     await browser.wait(insetReady);
@@ -500,7 +500,7 @@ export async function checkJourneySections({
   }
   for (const width of [1440, 390]) {
     await browser.resize(width, 1100);
-    await browser.open(`${base}/journey.html?metrics=1`);
+    await browser.open(`${base}/journey.html?local=1&metrics=1`);
     await browser.wait(overviewReady);
     await browser.clickNamed("radio", "Delivery-time spread");
     await browser.key(marker("oak"), "Enter");
@@ -579,7 +579,7 @@ export async function checkJourneySections({
     if (clean) await clean(`journey-metrics-${width}`);
   }
   await browser.resize(1440, 1100);
-  await browser.open(`${base}/journey.html?clustered=1`);
+  await browser.open(`${base}/journey.html?local=1&clustered=1`);
   await browser.wait(overviewReady);
   const clusteredCamera = await browser.evaluate(cameras);
   const clusterPoint = () => {

@@ -11,7 +11,7 @@ createRoot(document.getElementById("root")!).render(
   <ThemeProvider colorScheme={query.get("theme") === "dark" ? "dark" : "light"}>
     <main>
       <JourneyZoomExample
-        localBasemap={!query.has("tiles")}
+        localBasemap={query.has("local")}
         largeText={query.has("large")}
         narrow={query.has("narrow")}
         emptySection={query.has("empty")}
