@@ -37,12 +37,14 @@ async function settledCards() {
       parseFloat(getComputedStyle(document.documentElement).fontSize) / 16;
     return [...document.querySelectorAll("[data-graph-item-card]")].every(
       (card) =>
-        Math.abs(
+        // Match the ResizeObserver's rounded layout measurement before capturing
+        // positions. A one-pixel tolerance could accept its previous reading.
+        Math.ceil(
           card.getBoundingClientRect().height /
             new DOMMatrix(getComputedStyle(card.parentElement).transform).a /
             unit -
-            Number(card.dataset.graphLayoutHeight),
-        ) <= 1.1,
+            0.001,
+        ) === Number(card.dataset.graphLayoutHeight),
     );
   });
 }
