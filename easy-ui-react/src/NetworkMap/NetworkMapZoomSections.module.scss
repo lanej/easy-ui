@@ -116,8 +116,15 @@
   background: design-token("color.neutral.000");
   color: design-token("color.neutral.900");
 }
+.exampleFilters {
+  display: flex;
+  inline-size: 320px;
+  align-items: center;
+  gap: 8px;
+}
 .exampleLocation {
-  inline-size: 200px;
+  flex: 1;
+  min-inline-size: 0;
 }
 .exampleHeader {
   display: flex;

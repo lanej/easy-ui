@@ -76,33 +76,53 @@ export async function checkJourneySections({
           }),
         ),
       );
+      const compactToolbar = await browser.evaluate(() => {
+        const toolbars = document.querySelectorAll(
+          '[aria-label$="camera and layers"]',
+        );
+        if (toolbars.length !== 1) return false;
+        const toolbar = toolbars[0];
+        const controls = [
+          ...toolbar.querySelectorAll("button, input[type=checkbox]"),
+        ];
+        const rows = controls.map((control) => {
+          const rect = (
+            control.closest("label") ?? control
+          ).getBoundingClientRect();
+          return Math.round((rect.top + rect.bottom) / 2);
+        });
+        return (
+          controls.length === 4 &&
+          toolbar.textContent.includes("Refresh records") &&
+          toolbar.textContent.includes("Facility risk") &&
+          toolbar.textContent.includes("Entire journey") &&
+          Math.max(...rows) - Math.min(...rows) <=
+            (innerWidth > 800 ? 12 : 52) &&
+          document.documentElement.scrollWidth <= innerWidth + 1
+        );
+      });
+      if (!compactToolbar) {
+        console.log(
+          "Toolbar layout",
+          await browser.evaluate(() => ({
+            width: innerWidth,
+            overflow: document.documentElement.scrollWidth - innerWidth,
+            controls: [
+              ...document.querySelectorAll(
+                '[aria-label$="camera and layers"] button, [aria-label$="camera and layers"] input[type=checkbox]',
+              ),
+            ].map((element) => ({
+              text: element.getAttribute("aria-label") ?? element.textContent,
+              top: element.getBoundingClientRect().top,
+              width: element.getBoundingClientRect().width,
+            })),
+          })),
+        );
+        await capture(`journey-toolbar-failure-${theme}-${width}`);
+      }
       check(
         `${name}: filters and map actions share one compact wrapping toolbar`,
-        await browser.evaluate(() => {
-          const toolbars = document.querySelectorAll(
-            '[aria-label$="camera and layers"]',
-          );
-          if (toolbars.length !== 1) return false;
-          const toolbar = toolbars[0];
-          const controls = [
-            ...toolbar.querySelectorAll("button, input[type=checkbox]"),
-          ];
-          const rows = controls.map((control) => {
-            const rect = (
-              control.closest("label") ?? control
-            ).getBoundingClientRect();
-            return Math.round((rect.top + rect.bottom) / 2);
-          });
-          return (
-            controls.length === 4 &&
-            toolbar.textContent.includes("Refresh records") &&
-            toolbar.textContent.includes("Facility risk") &&
-            toolbar.textContent.includes("Entire journey") &&
-            Math.max(...rows) - Math.min(...rows) <=
-              (innerWidth > 800 ? 12 : 52) &&
-            document.documentElement.scrollWidth <= innerWidth + 1
-          );
-        }),
+        compactToolbar,
       );
       const initial = await browser.evaluate(cameras);
       check(

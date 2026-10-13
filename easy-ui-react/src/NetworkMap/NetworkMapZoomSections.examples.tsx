@@ -183,27 +183,29 @@ export function JourneyZoomExample({
       <NetworkMap
         toolbarContent={
           <>
-            <div className={styles.exampleLocation}>
-              <Select
-                aria-label="Selected location"
-                selectedKey={selected}
-                onSelectionChange={(id) => setSelected(String(id))}
+            <div className={styles.exampleFilters}>
+              <div className={styles.exampleLocation}>
+                <Select
+                  aria-label="Selected location"
+                  selectedKey={selected}
+                  onSelectionChange={(id) => setSelected(String(id))}
+                  size="sm"
+                >
+                  {zoomJourneyFacilities.map((facility) => (
+                    <Select.Option key={facility.id}>
+                      {facility.label}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+              <Button
                 size="sm"
+                variant="outlined"
+                onPress={() => setRevision((value) => value + 1)}
               >
-                {zoomJourneyFacilities.map((facility) => (
-                  <Select.Option key={facility.id}>
-                    {facility.label}
-                  </Select.Option>
-                ))}
-              </Select>
+                Refresh records
+              </Button>
             </div>
-            <Button
-              size="sm"
-              variant="outlined"
-              onPress={() => setRevision((value) => value + 1)}
-            >
-              Refresh records
-            </Button>
             <Checkbox isSelected={risk} onChange={setRisk}>
               <span className={styles.controlLabel}>Facility risk</span>
             </Checkbox>
