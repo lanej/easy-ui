@@ -8,8 +8,6 @@ import type {
 
 export const NODE_WIDTH = 256;
 export const NODE_HEIGHT = 52;
-export const CARD_MAX_HEIGHT = 224;
-export const CARD_MAX_WIDTH = 352;
 const GROUP_HEIGHT = 96;
 export const hasDependencyGraphChanges = (node: DependencyGraphNode) =>
   !!node.changes?.length ||
@@ -35,8 +33,11 @@ export type GraphConnection = {
   points: { x: number; y: number }[];
 };
 
-export type GraphLayoutAnchors = {
-  positions: ReadonlyMap<string, { x: number; y: number }>;
+type LayoutBox = Pick<GraphItem, "x" | "y" | "width" | "height">;
+
+export type GraphLayoutOrder = {
+  boxes: ReadonlyMap<string, LayoutBox>;
+  groupBounds: ReadonlyMap<string, LayoutBox>;
   width: number;
   height: number;
 };
@@ -54,35 +55,72 @@ export function dependencyGraphLayoutKey(
   ]);
 }
 
-/** Reserve bounded card space once, including resources initially hidden by disclosure. */
-export function createDependencyGraphAnchors(
+/** Establish ordering from the full topology, independently of card expansion. */
+export function createDependencyGraphOrder(
   nodes: readonly DependencyGraphNode[],
   edges: readonly DependencyGraphEdge[],
   groups: readonly DependencyGraphGroup[],
-): GraphLayoutAnchors {
+): GraphLayoutOrder {
   const graph = buildDependencyGraph(
     nodes,
     edges,
     groups,
     [],
-    new Map(nodes.map((node) => [node.id, CARD_MAX_HEIGHT])),
-    CARD_MAX_WIDTH,
+    new Map(nodes.map((node) => [node.id, NODE_HEIGHT])),
+    NODE_WIDTH,
     0.4,
   );
-  const positions = new Map(
-    graph.items.map((item) => [item.key, { x: item.x, y: item.y }]),
-  );
+  const boxes = new Map(graph.items.map((item) => [item.key, item]));
   for (const cluster of graph.clusters) {
     const members = graph.items.filter(
       (item) => item.node?.groupId === cluster.group.id,
     );
-    positions.set(`group:${cluster.group.id}`, {
-      x: Math.min(...members.map((item) => item.x)),
-      y: Math.min(...members.map((item) => item.y)),
+    const x = Math.min(...members.map((item) => item.x));
+    const y = Math.min(...members.map((item) => item.y));
+    boxes.set(`group:${cluster.group.id}`, {
+      key: `group:${cluster.group.id}`,
+      members: cluster.members,
+      x,
+      y,
+      width: Math.max(...members.map((item) => item.x + item.width)) - x,
+      height: Math.max(...members.map((item) => item.y + item.height)) - y,
     });
   }
-  // Perimeter routes retain scrollable space even when relationships disappear.
-  return { positions, width: graph.width + 64, height: graph.height + 64 };
+  return {
+    boxes,
+    groupBounds: new Map(
+      graph.clusters.map((cluster) => [cluster.group.id, cluster]),
+    ),
+    width: graph.width + 64,
+    height: graph.height + 64,
+  };
+}
+
+type LayoutSpacing = { start: number; end: number; span: number };
+
+/** A monotone coordinate map preserves ordering while making room for content. */
+function spaceLayoutAxis(coordinates: number[], constraints: LayoutSpacing[]) {
+  const sorted = [...new Set(coordinates)].sort((a, b) => a - b);
+  const ending = new Map<number, LayoutSpacing[]>();
+  for (const constraint of constraints) {
+    const list = ending.get(constraint.end) ?? [];
+    list.push(constraint);
+    ending.set(constraint.end, list);
+  }
+  const positions = new Map<number, number>();
+  let previous = 0;
+  let position = 0;
+  for (const coordinate of sorted) {
+    position += coordinate - previous;
+    for (const constraint of ending.get(coordinate) ?? [])
+      position = Math.max(
+        position,
+        positions.get(constraint.start)! + constraint.span,
+      );
+    positions.set(coordinate, position);
+    previous = coordinate;
+  }
+  return positions;
 }
 
 /** Sort stable IDs before layout so caller reordering cannot move the graph. */
@@ -94,7 +132,7 @@ export function buildDependencyGraph(
   nodeHeights: ReadonlyMap<string, number> = new Map(),
   nodeWidth: number | ReadonlyMap<string, number> = NODE_WIDTH,
   zoom = 1,
-  anchors?: GraphLayoutAnchors,
+  order?: GraphLayoutOrder,
 ) {
   const records = new Map(nodes.map((node) => [node.id, node]));
   const groupRecords = new Map(groups.map((group) => [group.id, group]));
@@ -170,11 +208,50 @@ export function buildDependencyGraph(
     else
       connections.set(key, { key, source, target, edges: [edge], points: [] });
   }
-  if (anchors) {
-    for (const item of items.values()) {
-      const point = anchors.positions.get(item.key)!;
-      item.x = point.x;
-      item.y = point.y;
+  if (order) {
+    const current = [...items.values()];
+    // Expand spacing along the original axes without rerunning Dagre's ordering.
+    // Horizontal interval constraints keep wider cards in their original columns.
+    const x = spaceLayoutAxis(
+      [...order.boxes.values()].flatMap((box) => [box.x, box.x + box.width]),
+      current.map((item) => {
+        const box = order.boxes.get(item.key)!;
+        return { start: box.x, end: box.x + box.width, span: item.width };
+      }),
+    );
+    const constraints: LayoutSpacing[] = [];
+    for (const upper of current) {
+      const a = order.boxes.get(upper.key)!;
+      for (const lower of current) {
+        const b = order.boxes.get(lower.key)!;
+        if (a.y + a.height > b.y) continue;
+        const upperGroup = upper.node?.groupId ?? upper.group?.id;
+        const lowerGroup = lower.node?.groupId ?? lower.group?.id;
+        // Separate whole group boundaries from other groups/resources as well.
+        const left =
+          upperGroup !== lowerGroup && upperGroup
+            ? (order.groupBounds.get(upperGroup) ?? a)
+            : a;
+        const right =
+          upperGroup !== lowerGroup && lowerGroup
+            ? (order.groupBounds.get(lowerGroup) ?? b)
+            : b;
+        if (left.x < right.x + right.width && right.x < left.x + left.width)
+          constraints.push({
+            start: a.y,
+            end: b.y,
+            span: upper.height + b.y - a.y - a.height,
+          });
+      }
+    }
+    const y = spaceLayoutAxis(
+      [...order.boxes.values()].map((box) => box.y),
+      constraints,
+    );
+    for (const item of current) {
+      const box = order.boxes.get(item.key)!;
+      item.x = x.get(box.x)!;
+      item.y = y.get(box.y)!;
     }
     const clusters = [...groupRecords.values()]
       .sort(compare)
@@ -201,8 +278,14 @@ export function buildDependencyGraph(
       connections: [...connections.values()],
       clusters,
       unavailable,
-      width: anchors.width,
-      height: anchors.height,
+      width: Math.max(
+        order.width,
+        ...current.map((item) => item.x + item.width + 64),
+      ),
+      height: Math.max(
+        order.height,
+        ...current.map((item) => item.y + item.height + 64),
+      ),
     };
   }
   const graph = new graphlib.Graph({ compound: true, multigraph: true });

@@ -1,5 +1,6 @@
 import {
   buildDependencyGraph,
+  createDependencyGraphOrder,
   visibleDependencyNodes,
   foldDependencyBranches,
 } from "./model";
@@ -93,6 +94,74 @@ describe("DependencyGraph directed exploration", () => {
 });
 
 describe("DependencyGraph grouping and layout", () => {
+  it("grows full cards and shifts neighbors without changing either axis order", () => {
+    const order = createDependencyGraphOrder(nodes, edges, groups);
+    const compact = buildDependencyGraph(
+      nodes,
+      edges,
+      groups,
+      [],
+      new Map(),
+      256,
+      1,
+      order,
+    );
+    const expanded = buildDependencyGraph(
+      nodes,
+      edges,
+      groups,
+      [],
+      new Map([
+        ["api", 800],
+        ["network", 1200],
+        ["subnet", 640],
+      ]),
+      352,
+      1,
+      order,
+    );
+    expect(expanded.height).toBeGreaterThan(compact.height);
+    expect(expanded.items.find((item) => item.node?.id === "api")!.height).toBe(
+      800,
+    );
+    expect(expanded.items.map((item) => [item.x, item.y])).not.toEqual(
+      compact.items.map((item) => [item.x, item.y]),
+    );
+    for (const a of expanded.items)
+      for (const b of expanded.items) {
+        if (a.key === b.key) continue;
+        const oldA = compact.items.find((item) => item.key === a.key)!;
+        const oldB = compact.items.find((item) => item.key === b.key)!;
+        expect(Math.sign(a.x - b.x)).toBe(Math.sign(oldA.x - oldB.x));
+        expect(Math.sign(a.y - b.y)).toBe(Math.sign(oldA.y - oldB.y));
+        expect(
+          a.x + a.width <= b.x ||
+            b.x + b.width <= a.x ||
+            a.y + a.height <= b.y ||
+            b.y + b.height <= a.y,
+        ).toBe(true);
+      }
+    expect(
+      buildDependencyGraph(
+        nodes,
+        [],
+        groups,
+        [],
+        new Map([
+          ["api", 800],
+          ["network", 1200],
+          ["subnet", 640],
+        ]),
+        352,
+        1,
+        order,
+      ).items.map((item) => [item.x, item.y]),
+    ).toEqual(expanded.items.map((item) => [item.x, item.y]));
+    expect(
+      buildDependencyGraph(nodes, edges, groups, [], new Map(), 256, 1, order),
+    ).toEqual(compact);
+  });
+
   it("routes around measured card heights without overlapping another resource", () => {
     const graph = buildDependencyGraph(
       nodes,

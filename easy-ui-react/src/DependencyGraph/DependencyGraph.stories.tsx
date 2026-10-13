@@ -60,7 +60,7 @@ export const SpecificChanges: Story = {
   },
 };
 export const AllResources: Story = {};
-export const StableResourcePositions: Story = {
+export const StableResourceOrder: Story = {
   render: () => <DependencyGraphStableLayoutExample />,
 };
 export const CollapsibleBranches: Story = {

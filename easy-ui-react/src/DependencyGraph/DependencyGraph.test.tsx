@@ -682,7 +682,7 @@ it("renders a caller-matched modified reference once and preserves its selection
   expect(relationship).toHaveAttribute("aria-pressed", "true");
 });
 
-describe("DependencyGraph stable resource positions", () => {
+describe("DependencyGraph stable resource order", () => {
   const positions = (container: HTMLElement) =>
     Object.fromEntries(
       [
@@ -691,16 +691,28 @@ describe("DependencyGraph stable resource positions", () => {
         ),
       ].map((card) => [
         card.dataset.graphResourceCard!,
-        [card.style.left, card.style.top],
+        [parseFloat(card.style.left), parseFloat(card.style.top)],
       ]),
     );
+  const assertOrder = (
+    current: ReturnType<typeof positions>,
+    initial: ReturnType<typeof positions>,
+  ) => {
+    for (const [id, point] of Object.entries(current))
+      for (const [other, target] of Object.entries(current))
+        for (const axis of [0, 1])
+          expect(
+            Math.sign(point[axis] - target[axis]),
+            `${id} / ${other}`,
+          ).toBe(Math.sign(initial[id][axis] - initial[other][axis]));
+  };
   const props = { title: "Graph", nodes, edges, groups, showDetails: false };
 
-  it("keeps resource anchors when callers hide and restore relationships", () => {
+  it("keeps resource order when callers hide and restore relationships", () => {
     const { container, rerender } = render(<DependencyGraph {...props} />);
     const initial = positions(container);
     rerender(<DependencyGraph {...props} edges={[]} />);
-    expect(positions(container)).toEqual(initial);
+    assertOrder(positions(container), initial);
     rerender(
       <DependencyGraph
         {...props}
@@ -708,31 +720,28 @@ describe("DependencyGraph stable resource positions", () => {
         nodes={[...nodes].reverse()}
       />,
     );
-    expect(positions(container)).toEqual(initial);
+    assertOrder(positions(container), initial);
   });
 
-  it("keeps surviving resources fixed through card, branch and group disclosure", () => {
+  it("keeps surviving resource order through card, branch and group disclosure", () => {
     const { container, rerender } = render(<DependencyGraph {...props} />);
     const initial = positions(container);
-    const assertAnchors = () => {
-      for (const [id, position] of Object.entries(positions(container)))
-        expect(position, id).toEqual(initial[id]);
-    };
+    const assertOrdering = () => assertOrder(positions(container), initial);
     rerender(
       <DependencyGraph
         {...props}
         expandedChangeNodeIds={[subnetId, "azurerm_container_app.api"]}
       />,
     );
-    assertAnchors();
+    assertOrdering();
     rerender(<DependencyGraph {...props} collapsedNodeIds={[subnetId]} />);
-    assertAnchors();
+    assertOrdering();
     rerender(
       <DependencyGraph {...props} collapsedGroupIds={["services", "data"]} />,
     );
-    assertAnchors();
+    assertOrdering();
     rerender(<DependencyGraph {...props} />);
-    expect(positions(container)).toEqual(initial);
+    assertOrder(positions(container), initial);
   });
 
   it("hides lines without losing evidence and only relayouts the same IDs on an explicit revision", () => {
@@ -745,7 +754,7 @@ describe("DependencyGraph stable resource positions", () => {
       />,
     );
     expect(container.querySelectorAll("[data-graph-edge-ids]")).toHaveLength(0);
-    expect(positions(container)).toEqual(initial);
+    assertOrder(positions(container), initial);
     expect(
       screen.getByRole("button", {
         name: "Collapse dependents of Application subnet",
@@ -766,6 +775,6 @@ describe("DependencyGraph stable resource positions", () => {
     );
     const revised = positions(container);
     rerender(<DependencyGraph {...props} edges={edges} layoutRevision={1} />);
-    expect(positions(container)).toEqual(revised);
+    assertOrder(positions(container), revised);
   });
 });

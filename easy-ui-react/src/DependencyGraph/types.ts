@@ -117,9 +117,9 @@ export type DependencyGraphProps = {
   onExpandedChangeNodeIdsChange?: (ids: readonly string[]) => void;
   /** Caller-computed path or other relationships to emphasize. */
   highlightedEdgeIds?: readonly string[];
-  /** Hide relationship lines without changing resource positions or traversal evidence. */
+  /** Hide relationship lines without changing resource order or traversal evidence. */
   hiddenEdgeIds?: readonly string[];
-  /** Request a fresh directed layout for changed topology with the same resource IDs. */
+  /** Recompute the directed resource order for changed topology with the same resource IDs. */
   layoutRevision?: string | number;
   /** Coverage of the supplied relationship evidence, not operational impact. */
   coverage?: {

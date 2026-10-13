@@ -267,7 +267,6 @@
 .node[data-graph-resource-card] {
   display: flex;
   flex-direction: column;
-  max-block-size: 14rem;
 }
 .cardControls {
   display: flex;
@@ -622,9 +621,6 @@
 }
 
 .nodeChanges {
-  min-block-size: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
   padding: 0 6px 6px;
   .resourceChanges {
     margin-block-start: 0;
@@ -644,10 +640,6 @@
   h4 {
     font-size: 0.8125rem;
   }
-}
-.nodeChanges:focus-visible {
-  outline: 2px solid design-token("color.primary.500");
-  outline-offset: -2px;
 }
 
 .root[data-graph-density="overview"] {

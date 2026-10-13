@@ -85,7 +85,7 @@ try {
         "attribute-dependencies",
         "expanded-attribute-differences",
         "collapsed-modules",
-        "stable-resource-positions",
+        "stable-resource-order",
         "collapsible-branches",
         "partial-evidence",
         "cyclic-relationships",
@@ -728,7 +728,7 @@ try {
     await open("attribute-dependencies", theme);
     await page.waitForFunction(
       () =>
-        document.querySelectorAll("[data-graph-target-attribute]").length === 1,
+        document.querySelectorAll("[data-graph-target-attribute]").length === 2,
     );
     const graph = page.locator("[data-dependency-graph]");
     const compactCards = await graph
@@ -773,8 +773,8 @@ try {
       "Dense cards preserve single-row identity/status, readable values and usable targets",
     );
     assert.ok(
-      compactCards.find((card) => card.id === "api").height <= 224,
-      "Expanded cards stay within the 224px height budget",
+      compactCards.find((card) => card.id === "api").height > 224,
+      "Expanded cards grow to fit full differences",
     );
     assert.ok(
       compactCards.find((card) => card.id === "network").height <= 64,
@@ -895,7 +895,7 @@ try {
     );
     assert.equal(
       await graph.locator("[data-graph-target-attribute]").count(),
-      1,
+      2,
     );
     await page
       .getByRole("button", { name: "Show attribute differences for Database" })
@@ -921,7 +921,7 @@ try {
       .click();
     await page.waitForFunction(
       () =>
-        document.querySelectorAll("[data-graph-target-attribute]").length === 1,
+        document.querySelectorAll("[data-graph-target-attribute]").length === 2,
     );
     await page.getByRole("button", { name: "Zoom out" }).click();
     await page.waitForFunction(
@@ -930,7 +930,7 @@ try {
     await page.getByRole("button", { name: "Zoom in" }).click();
     await page.waitForFunction(
       () =>
-        document.querySelectorAll("[data-graph-target-attribute]").length === 1,
+        document.querySelectorAll("[data-graph-target-attribute]").length === 2,
     );
     assert.equal(
       await page
@@ -947,48 +947,72 @@ try {
   }
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 1000 });
-    await open("stable-resource-positions");
-    const anchors = () =>
-      page
-        .locator("[data-graph-resource-card]")
-        .evaluateAll((cards) =>
-          Object.fromEntries(
-            cards.map((card) => [
-              card.dataset.graphResourceCard,
-              [card.style.left, card.style.top],
-            ]),
-          ),
-        );
-    const initial = await anchors();
-    const viewport = page.locator("[data-graph-canvas]");
-    const camera = () =>
-      viewport.evaluate((element) => [element.scrollLeft, element.scrollTop]);
-    const scene = () =>
-      viewport.evaluate((element) => [
-        element.scrollWidth,
-        element.scrollHeight,
-      ]);
-    const originalCamera = await camera();
-    const originalScene = await scene();
-    const assertAnchors = async (transition) => {
-      await settledCards();
-      for (const [id, position] of Object.entries(await anchors()))
-        assert.deepEqual(
-          position,
-          initial[id],
-          `${width}: ${transition} preserves ${id}`,
-        );
-      assert.deepEqual(
-        await camera(),
-        originalCamera,
-        `${width}: ${transition} preserves pan`,
+    await open("stable-resource-order");
+    const boxes = () =>
+      page.locator("[data-graph-resource-card]").evaluateAll((cards) =>
+        Object.fromEntries(
+          cards.map((card) => [
+            card.dataset.graphResourceCard,
+            {
+              x: parseFloat(getComputedStyle(card).left),
+              y: parseFloat(getComputedStyle(card).top),
+              width: card.offsetWidth,
+              height: card.offsetHeight,
+            },
+          ]),
+        ),
       );
-      assert.deepEqual(
-        await scene(),
-        originalScene,
-        `${width}: ${transition} preserves scroll extent`,
+    const initial = await boxes();
+    const assertOrder = async (transition) => {
+      await settledCards();
+      const current = await boxes();
+      for (const [id, a] of Object.entries(current))
+        for (const [other, b] of Object.entries(current)) {
+          for (const axis of ["x", "y"])
+            assert.equal(
+              Math.sign(a[axis] - b[axis]),
+              Math.sign(initial[id][axis] - initial[other][axis]),
+              `${width}: ${transition} preserves ${id}/${other} order`,
+            );
+          if (id !== other)
+            assert.ok(
+              a.x + a.width <= b.x ||
+                b.x + b.width <= a.x ||
+                a.y + a.height <= b.y ||
+                b.y + b.height <= a.y,
+              `${width}: ${transition} has no overlapping cards`,
+            );
+        }
+    };
+    const fullContent = async () => {
+      const content = await page
+        .locator('[data-graph-card-diff="api"]')
+        .evaluate((element) => ({
+          scrollHeight: element.scrollHeight,
+          clientHeight: element.clientHeight,
+          bottom: element.getBoundingClientRect().bottom,
+          last: element
+            .querySelector(
+              '[data-field-change="env.HEALTHCHECK_DATABASE_ENDPOINT"] [data-diff="addition"]',
+            )
+            .getBoundingClientRect().bottom,
+          overflow: getComputedStyle(element).overflowY,
+        }));
+      assert.ok(
+        content.last <= content.bottom + 1,
+        "Final full value fits in the expanded card",
+      );
+      assert.ok(
+        content.scrollHeight <= content.clientHeight + 1,
+        "Full differences need no nested scroll",
+      );
+      assert.equal(content.overflow, "visible");
+      assert.ok(
+        (await boxes()).api.height > 224,
+        "Cards expand beyond the removed height cap",
       );
     };
+    await fullContent();
     for (const transition of [
       "Hide all edges",
       "Show all edges",
@@ -998,90 +1022,58 @@ try {
       "Expand database group",
     ]) {
       await page.getByRole("button", { name: transition, exact: true }).click();
-      await assertAnchors(transition);
-      if (transition === "Hide all edges")
-        assert.equal(await page.locator("[data-graph-edge-ids]").count(), 0);
-      if (transition === "Show all edges")
-        assert.equal(await page.locator("[data-graph-edge-ids]").count(), 3);
+      await assertOrder(transition);
+      const current = await boxes();
+      if (transition === "Hide all edges" || transition === "Show all edges") {
+        assert.deepEqual(
+          current,
+          initial,
+          "Edge visibility leaves geometry unchanged",
+        );
+        assert.equal(
+          await page.locator("[data-graph-edge-ids]").count(),
+          transition === "Hide all edges" ? 0 : 3,
+        );
+      }
+      if (transition === "Collapse attribute differences") {
+        assert.ok(
+          current.api.height < initial.api.height,
+          "Collapse shrinks the card",
+        );
+        assert.ok(
+          current.database.height < initial.database.height,
+          "Collapse shrinks the other card",
+        );
+      }
+      if (transition === "Expand attribute differences") await fullContent();
+      if (
+        width === 1440 &&
+        [
+          "Show all edges",
+          "Hide all edges",
+          "Collapse attribute differences",
+        ].includes(transition)
+      ) {
+        const name = {
+          "Show all edges": "expanded",
+          "Hide all edges": "hidden-edges",
+          "Collapse attribute differences": "collapsed",
+        }[transition];
+        await page
+          .locator("[data-dependency-graph]")
+          .screenshot({ path: resolve(output, `stable-order-${name}.png`) });
+      }
     }
     assert.deepEqual(
-      await anchors(),
+      await boxes(),
       initial,
-      "Restored resources return to their original anchors",
+      "Restoring disclosure returns the same layout",
     );
-    const diff = page.locator('[data-graph-card-diff="api"]');
-    assert.ok(
-      await diff.evaluate(
-        (element) => element.scrollHeight > element.clientHeight,
-      ),
-      "Long differences scroll inside the card",
-    );
-    await diff.focus();
-    await diff.press("End");
-    await page.waitForFunction(() => {
-      const edge = document.querySelector(
-        '[data-graph-edge-ids*="healthcheck-reference"]',
-      );
-      return (
-        edge?.dataset.graphTargetAttribute ===
-        "env.HEALTHCHECK_DATABASE_ENDPOINT"
-      );
-    });
-    assert.equal(
-      await page
-        .locator('[data-graph-edge-ids*="healthcheck-reference"]')
-        .getAttribute("data-graph-target-attribute"),
-      "env.HEALTHCHECK_DATABASE_ENDPOINT",
-    );
-    const sourceDiff = page.locator('[data-graph-card-diff="database"]');
-    await sourceDiff.focus();
-    await sourceDiff.press("End");
-    await page.waitForFunction(
-      () =>
-        !document.querySelector(
-          '[data-graph-edge-ids*="healthcheck-reference"][data-graph-source-attribute]',
-        ),
-    );
-    assert.equal(
-      await page
-        .locator('[data-graph-edge-ids*="healthcheck-reference"]')
-        .getAttribute("data-graph-source-attribute"),
-      null,
-      "A scrolled-out source attribute falls back to the block",
-    );
-    assert.deepEqual(
-      await anchors(),
-      initial,
-      "Diff scrolling never moves resource anchors",
-    );
-    const bottomValueVisible = await diff.evaluate((element) => {
-      const viewport = element.getBoundingClientRect();
-      const last = element
-        .querySelector(
-          '[data-field-change="env.HEALTHCHECK_DATABASE_ENDPOINT"] [data-diff="addition"]',
-        )
-        .getBoundingClientRect();
-      return last.top >= viewport.top && last.bottom <= viewport.bottom + 1;
-    });
-    assert.ok(
-      bottomValueVisible,
-      "The final full value is reachable with the keyboard",
-    );
-    await diff.press("Home");
-    await page.waitForFunction(
-      () =>
-        !document.querySelector(
-          '[data-graph-edge-ids*="healthcheck-reference"][data-graph-target-attribute]',
-        ),
-    );
-    await accessibility(`stable-resource-positions-${width}`);
+    await accessibility(`stable-resource-order-${width}`);
     await page
       .locator("[data-dependency-graph]")
-      .screenshot({ path: resolve(output, `stable-positions-${width}.png`) });
-    checks.push({
-      name: `stable-anchors-edge-card-group-and-keyboard-diff-scroll-${width}`,
-      positions: initial,
-    });
+      .screenshot({ path: resolve(output, `stable-order-${width}.png`) });
+    checks.push({ name: `stable-order-and-full-card-expansion-${width}` });
   }
   assert.deepEqual(errors, [], "Runtime diagnostics");
   console.log(`DependencyGraph: ${checks.length} browser cases passed.`);

@@ -63,8 +63,8 @@ export function DependencyGraphStableLayoutExample() {
         </Button>
       </div>
       <DependencyGraph
-        title="Stable resource positions"
-        description="Hide edges, expand differences, or fold resource groups. Resource anchors stay in place; long differences scroll within the card."
+        title="Stable resource order"
+        description="Expand full differences, hide edges, or fold resource groups. Cards grow and spacing adjusts while resource ordering stays consistent."
         nodes={stableNodes}
         edges={attributeDependencyEdges}
         groups={stableGroups}

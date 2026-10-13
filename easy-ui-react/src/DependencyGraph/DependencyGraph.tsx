@@ -10,7 +10,7 @@ import { DependencyGraphDetails } from "./DependencyGraphDetails";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
 import {
   buildDependencyGraph,
-  createDependencyGraphAnchors,
+  createDependencyGraphOrder,
   dependencyGraphLayoutKey,
   dependencyChangeLabels,
   hasDependencyGraphChanges,
@@ -163,9 +163,7 @@ export function DependencyGraph({
   const newLayout = () => ({
     key: layoutKey,
     error: duplicate,
-    anchors: duplicate
-      ? null
-      : createDependencyGraphAnchors(nodes, edges, groups),
+    order: duplicate ? null : createDependencyGraphOrder(nodes, edges, groups),
   });
   const [layout, setLayout] = useState(newLayout);
   // Only a new resource/group identity or explicit revision starts a fresh layout.
@@ -234,7 +232,7 @@ export function DependencyGraph({
               ]),
             ),
             zoom,
-            currentLayout.anchors ?? undefined,
+            currentLayout.order ?? undefined,
           ),
     [
       nodes,
@@ -248,7 +246,7 @@ export function DependencyGraph({
       canvasWidth,
       density,
       zoom,
-      currentLayout.anchors,
+      currentLayout.order,
     ],
   );
   const visible = useMemo(
@@ -351,12 +349,7 @@ export function DependencyGraph({
       ?.querySelectorAll("[data-graph-resource-card] [data-field-change]")
       .forEach((element) => observer.observe(element));
     measurePorts();
-    const element = viewport.current;
-    element?.addEventListener("scroll", measurePorts, true);
-    return () => {
-      observer.disconnect();
-      element?.removeEventListener("scroll", measurePorts, true);
-    };
+    return () => observer.disconnect();
   }, [renderedNodeIds, status, duplicate, nodes, expandedChanges, density]);
   const clusters = useMemo(
     () =>
@@ -1179,9 +1172,6 @@ export function DependencyGraph({
                               hidden={!diffShown}
                               className={styles.nodeChanges}
                               data-graph-card-diff={node.id}
-                              role="region"
-                              aria-label={`${label} attribute differences`}
-                              tabIndex={diffShown ? 0 : undefined}
                             >
                               {diffShown && (
                                 <DependencyGraphChanges
