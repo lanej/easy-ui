@@ -18,15 +18,15 @@
   display: flex;
   justify-content: space-between;
   align-items: start;
-  gap: 16px;
-  padding: 20px 24px 14px;
+  gap: 8px;
+  padding: 12px 16px 8px;
   h3 {
     margin: 0;
     font-size: var(--ezui-viz-title-size, 18px);
     line-height: 1.4;
   }
   p {
-    margin: 6px 0 0;
+    margin: 4px 0 0;
     font-size: var(--ezui-viz-description-size, 14px);
     color: design-token("color.neutral.700");
   }
@@ -42,10 +42,10 @@
 .toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 24px 16px;
+  justify-content: flex-start;
+  padding: 0 16px 10px;
 }
 .buttons {
   display: flex;
@@ -426,10 +426,10 @@
 }
 @media (max-width: 640px) {
   .heading {
-    padding: 16px;
+    padding: 10px 12px 6px;
   }
   .toolbar {
-    padding: 0 16px 12px;
+    padding: 0 12px 10px;
   }
   .scale {
     display: none;
@@ -533,4 +533,8 @@
     pointer-events: auto;
     background: design-token("color.neutral.000");
   }
+}
+
+.root > .mapFrame:first-child > :not([data-map-controls]) .toolbar {
+  padding-block-start: 10px;
 }

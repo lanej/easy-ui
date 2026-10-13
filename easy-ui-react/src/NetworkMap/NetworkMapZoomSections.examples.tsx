@@ -3,6 +3,7 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { NetworkMap } from "./NetworkMap";
 import { Select } from "../Select";
 import { Button } from "../Button";
+import { Checkbox } from "../Checkbox";
 import { exampleBasemap, parcelFacilities } from "./NetworkMap.fixtures";
 import type {
   MapFacility,
@@ -169,10 +170,17 @@ export function JourneyZoomExample({
       data-journey-zoom-example
       style={{ maxWidth: narrow ? 540 : 1120 }}
     >
-      <h1 className={styles.exampleHeading}>Tracking path</h1>
+      <div className={styles.exampleHeader}>
+        <h1 className={styles.exampleHeading}>Tracking path</h1>
+        <h2 className={styles.exampleRoute}>Oakland → Dearborn</h2>
+      </div>
+      <p className={styles.exampleHint}>
+        <span>EP-104 · Ground · Synthetic journey</span>
+        <span>Select +n for nearby handoffs.</span>
+      </p>
       <div className={styles.exampleControls}>
         <Select
-          label="Selected location"
+          aria-label="Selected location"
           selectedKey={selected}
           onSelectionChange={(id) => setSelected(String(id))}
           size="sm"
@@ -181,25 +189,19 @@ export function JourneyZoomExample({
             <Select.Option key={facility.id}>{facility.label}</Select.Option>
           ))}
         </Select>
-        <Button size="sm" onPress={() => setRevision((value) => value + 1)}>
+        <Button
+          size="sm"
+          variant="outlined"
+          onPress={() => setRevision((value) => value + 1)}
+        >
           Refresh records
         </Button>
-        <label>
-          <input
-            type="checkbox"
-            checked={risk}
-            onChange={(event) => setRisk(event.target.checked)}
-          />{" "}
-          Facility risk
-        </label>
+        <Checkbox isSelected={risk} onChange={setRisk}>
+          <span className={styles.controlLabel}>Facility risk</span>
+        </Checkbox>
       </div>
-      <h2 className={styles.exampleRoute}>Oakland → Dearborn</h2>
-      <p className={styles.exampleHint}>
-        Select a stop marked +n to view nearby handoffs.
-      </p>
       <NetworkMap
         aria-label="Oakland → Dearborn"
-        description="EP-104 · Ground · Synthetic journey"
         mapStyle={localBasemap ? emptyBasemap : exampleBasemap}
         workerUrl={workerUrl}
         facilities={revision ? refreshed : zoomJourneyFacilities}
