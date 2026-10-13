@@ -3,6 +3,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "../../easy-ui-react/src/Theme";
 import { DependencyGraphReviewExample } from "../../easy-ui-react/src/DependencyGraph/DependencyGraph.examples";
+import { DependencyGraphChanges } from "../../easy-ui-react/src/DependencyGraph/DependencyGraphChanges";
 import { DependencyGraph } from "../../easy-ui-react/src/DependencyGraph";
 import {
   relationshipChangeNodes,
@@ -29,7 +30,17 @@ createRoot(document.getElementById("root")!).render(
         minHeight: "100vh",
       }}
     >
-      {query.get("links") === "1" ? (
+      {query.get("responsive") === "1" ? (
+        <div style={{ maxWidth: 960 }}>
+          <h2>Shipping API changes</h2>
+          <DependencyGraphChanges
+            node={dependencyNodes[2]}
+            compact
+            defaultPresentation="diff"
+            showPresentationControls={false}
+          />
+        </div>
+      ) : query.get("links") === "1" ? (
         <DependencyGraph
           title="Connection changes"
           nodes={relationshipChangeNodes}

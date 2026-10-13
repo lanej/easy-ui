@@ -549,35 +549,24 @@ try {
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     await open("relationship-changes", width === 390 ? "dark" : "light");
-    const table = page.locator("[data-graph-resource-card] table");
-    assert.equal(
-      await table
-        .getByRole("columnheader", { name: "Before", exact: true })
-        .count(),
-      1,
+    const diff = page.locator(
+      "[data-graph-resource-card] [data-resource-changes]",
     );
-    assert.equal(
-      await table
-        .getByRole("columnheader", { name: "After", exact: true })
-        .count(),
-      1,
-    );
-    const alignment = await table.evaluate((table) =>
-      [...table.querySelectorAll("tbody")].every((row) => {
-        const cells = [...row.querySelectorAll("td")].map((cell) =>
-          cell.getBoundingClientRect(),
-        );
-        return (
-          cells.length === 2 &&
-          Math.abs(cells[0].top - cells[1].top) <= 1 &&
-          Math.abs(cells[0].bottom - cells[1].bottom) <= 1 &&
-          cells[0].right <= cells[1].left + 1
-        );
-      }),
-    );
+    assert.equal(await diff.getByRole("columnheader").count(), 0);
     assert.ok(
-      alignment,
-      "Every resource attribute has aligned before/after cells",
+      await diff.locator("[data-field-values]").evaluateAll((rows) =>
+        rows.every((row) => {
+          const [before, after] = [...row.children].map((cell) =>
+            cell.getBoundingClientRect(),
+          );
+          return (
+            after.top >= before.bottom - 1 &&
+            Math.abs(before.left - after.left) <= 1 &&
+            Math.abs(before.right - after.right) <= 1
+          );
+        }),
+      ),
+      "Narrow graph cards stack full-width values",
     );
     assert.equal(
       await page
@@ -638,8 +627,94 @@ try {
       "true",
     );
     checks.push({
-      name: `aligned-columns-and-independent-link-changes-${width}`,
+      name: `stacked-resource-diffs-and-independent-link-changes-${width}`,
     });
+  }
+
+  for (const [width, theme, columns] of [
+    [1440, "light", 2],
+    [390, "dark", 1],
+  ]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(
+      `${base}/iframe.html?id=components-dependencygraph--responsive-attribute-differences&viewMode=story&globals=colorScheme:${theme}`,
+    );
+    const diff = page.locator("[data-resource-changes]");
+    await diff.locator("[data-field-values]").first().waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    assert.equal(await page.getByRole("columnheader").count(), 0);
+    const geometry = await diff
+      .locator("[data-field-values]")
+      .evaluateAll((rows) =>
+        rows.map((row) => {
+          const [before, after] = [...row.children].map((cell) =>
+            cell.getBoundingClientRect(),
+          );
+          return {
+            stacked:
+              after.top >= before.bottom - 1 &&
+              Math.abs(before.left - after.left) <= 1 &&
+              Math.abs(before.right - after.right) <= 1,
+            paired:
+              Math.abs(before.top - after.top) <= 1 &&
+              Math.abs(before.bottom - after.bottom) <= 1 &&
+              before.right <= after.left + 1,
+          };
+        }),
+      );
+    assert.ok(
+      geometry.every((row) => (columns === 1 ? row.stacked : row.paired)),
+      `Responsive diff uses ${columns} column(s) at ${width}px`,
+    );
+    assert.ok(
+      await diff
+        .getByText("Before:", { exact: true })
+        .evaluateAll((labels) =>
+          labels.every(
+            (label) =>
+              label.getBoundingClientRect().width <= 1 &&
+              label.getBoundingClientRect().height <= 1,
+          ),
+        ),
+      "Before labels are screen-reader-only",
+    );
+    assert.ok(
+      await diff
+        .getByText("After:", { exact: true })
+        .evaluateAll((labels) =>
+          labels.every(
+            (label) =>
+              label.getBoundingClientRect().width <= 1 &&
+              label.getBoundingClientRect().height <= 1,
+          ),
+        ),
+      "After labels are screen-reader-only",
+    );
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    );
+    await accessibility(`responsive-diff-${theme}-${width}`);
+    await diff.screenshot({
+      path: resolve(output, `responsive-diff-${theme}-${width}.png`),
+    });
+    if (columns === 2) {
+      await diff.evaluate((element) => (element.style.width = "320px"));
+      assert.ok(
+        await diff.locator("[data-field-values]").evaluateAll((rows) =>
+          rows.every((row) => {
+            const [a, b] = [...row.children].map((c) =>
+              c.getBoundingClientRect(),
+            );
+            return b.top >= a.bottom - 1 && Math.abs(a.left - b.left) <= 1;
+          }),
+        ),
+        "Diff responds to its narrow container on a wide page",
+      );
+      checks.push({ name: "responsive-diff-container-width-on-wide-page" });
+    }
+    checks.push({ name: `responsive-diff-${theme}-${width}` });
   }
   assert.deepEqual(errors, [], "Runtime diagnostics");
   console.log(`DependencyGraph: ${checks.length} browser cases passed.`);

@@ -50,14 +50,14 @@ function DiffValue({
       className={styles.diffLine}
       data-diff={value === undefined ? "absent" : kind}
     >
+      <span className={styles.visuallyHidden}>
+        {kind === "addition" ? "After: " : "Before: "}
+      </span>
       {value === undefined ? (
         <span className={styles.muted}>Not present</span>
       ) : (
         <>
           <span aria-hidden="true">{kind === "addition" ? "+" : "−"}</span>
-          <span className={styles.visuallyHidden}>
-            {kind === "addition" ? "Added: " : "Removed: "}
-          </span>
           <code>{formatValue(value)}</code>
         </>
       )}
@@ -131,40 +131,31 @@ export function DependencyGraphChanges({
           )}
         </>
       ) : changes.length ? (
-        <table
+        <dl
           className={styles.fieldChanges}
           aria-label={`${node.label} attribute differences`}
         >
-          <thead>
-            <tr>
-              <th scope="col">Before</th>
-              <th scope="col">After</th>
-            </tr>
-          </thead>
           {changes.map((change, index) => (
-            <tbody key={`${change.path}:${index}`}>
-              <tr>
-                <th colSpan={2} scope="rowgroup">
-                  <code>{change.path}</code>
-                </th>
-              </tr>
-              <tr>
-                <td>
-                  <DiffValue
-                    kind="removal"
-                    value={change.type === "add" ? undefined : change.before}
-                  />
-                </td>
-                <td>
-                  <DiffValue
-                    kind="addition"
-                    value={change.type === "remove" ? undefined : change.after}
-                  />
-                </td>
-              </tr>
-            </tbody>
+            <div
+              key={`${change.path}:${index}`}
+              data-field-change={change.path}
+            >
+              <dt>
+                <code>{change.path}</code>
+              </dt>
+              <dd className={styles.fieldValues} data-field-values>
+                <DiffValue
+                  kind="removal"
+                  value={change.type === "add" ? undefined : change.before}
+                />
+                <DiffValue
+                  kind="addition"
+                  value={change.type === "remove" ? undefined : change.after}
+                />
+              </dd>
+            </div>
           ))}
-        </table>
+        </dl>
       ) : null}
       {!changes.length && (
         <p className={styles.muted}>

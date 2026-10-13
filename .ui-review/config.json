@@ -173,6 +173,12 @@
       "path": "/dependency-graph.html?links=1",
       "ready": "[data-graph-edge-ids][data-link-change=\"add\"]",
       "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-responsive-diffs",
+      "path": "/dependency-graph.html?responsive=1",
+      "ready": "[data-field-values]",
+      "viewports": ["desktop", "mobile"]
     }
   ],
   "viewports": [

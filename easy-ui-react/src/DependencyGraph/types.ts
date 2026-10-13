@@ -107,7 +107,7 @@ export type DependencyGraphProps = {
   collapsedNodeIds?: readonly string[];
   defaultCollapsedNodeIds?: readonly string[];
   onCollapsedNodeIdsChange?: (ids: readonly string[]) => void;
-  /** Resources whose cards show side-by-side attribute differences. */
+  /** Resources whose cards show responsive attribute differences. */
   expandedChangeNodeIds?: readonly string[];
   defaultExpandedChangeNodeIds?: readonly string[];
   onExpandedChangeNodeIdsChange?: (ids: readonly string[]) => void;

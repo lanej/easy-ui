@@ -357,14 +357,14 @@ describe("DependencyGraph per-resource changes", () => {
     const rows = (selector: string) =>
       [...container.querySelectorAll(selector)].map((row) => row.textContent);
     expect(rows('[data-diff="addition"]')).toEqual([
-      "+Added: false",
-      "+Added: null",
-      "+Added: Unknown value",
+      "After: +false",
+      "After: +null",
+      "After: +Unknown value",
     ]);
     expect(rows('[data-diff="removal"]')).toEqual([
-      "−Removed: 0",
-      '−Removed: ""',
-      "−Removed: Redacted value",
+      "Before: −0",
+      'Before: −""',
+      "Before: −Redacted value",
     ]);
     expect(screen.getByText("<script>ignored</script>")).toBeInTheDocument();
     expect(container.querySelector("script")).toBeNull();
@@ -502,7 +502,7 @@ describe("DependencyGraph zoom and branch disclosures", () => {
       screen.getByRole("button", { name: "A, Change unknown, Storage" }),
     ).toContainElement(screen.getByTestId("custom-type"));
   });
-  it("keeps additions, removals and empty strings distinct in aligned cells", () => {
+  it("keeps absent values and empty strings distinct in responsive diffs", () => {
     render(
       <DependencyGraphChanges
         presentation="diff"
@@ -516,11 +516,19 @@ describe("DependencyGraph zoom and branch disclosures", () => {
         }}
       />,
     );
-    const rows = screen.getByRole("table").querySelectorAll("tbody");
-    expect(rows[0].querySelectorAll("td")[0]).toHaveTextContent("Not present");
-    expect(rows[0].querySelectorAll("td")[1]).toHaveTextContent('""');
-    expect(rows[1].querySelectorAll("td")[0]).toHaveTextContent("old value");
-    expect(rows[1].querySelectorAll("td")[1]).toHaveTextContent("Not present");
+    const rows = screen
+      .getByLabelText("A attribute differences")
+      .querySelectorAll("dd");
+    expect(rows[0].querySelectorAll("[data-diff]")[0]).toHaveTextContent(
+      "Not present",
+    );
+    expect(rows[0].querySelectorAll("[data-diff]")[1]).toHaveTextContent('""');
+    expect(rows[1].querySelectorAll("[data-diff]")[0]).toHaveTextContent(
+      "old value",
+    );
+    expect(rows[1].querySelectorAll("[data-diff]")[1]).toHaveTextContent(
+      "Not present",
+    );
   });
   it("keeps added and removed relationships individually selectable with unchanged endpoints", () => {
     const { container } = render(
@@ -572,7 +580,7 @@ describe("DependencyGraph zoom and branch disclosures", () => {
       }),
     ).toHaveAttribute("aria-pressed", "true");
   });
-  it("aligns full before and after values per resource without eliding shared text", () => {
+  it("retains full accessible values without visible column headers", () => {
     const { container } = render(
       <DependencyGraphChanges
         presentation="diff"
@@ -605,14 +613,14 @@ describe("DependencyGraph zoom and branch disclosures", () => {
       />,
     );
     expect(
-      screen.getByRole("table", { name: "A attribute differences" }),
+      screen.getByLabelText("A attribute differences"),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("columnheader", { name: "Before" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("columnheader", { name: "After" }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader")).not.toBeInTheDocument();
+    for (const label of ["Before:", "After:"]) {
+      expect(screen.getAllByText(label)).toHaveLength(3);
+      for (const element of screen.getAllByText(label))
+        expect(element.className).toContain("visuallyHidden");
+    }
     const removals = container.querySelectorAll('[data-diff="removal"] code');
     const additions = container.querySelectorAll('[data-diff="addition"] code');
     expect(removals[0]).toHaveTextContent("registry/app:1.8");

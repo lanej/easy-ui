@@ -6,6 +6,7 @@ import KeyIcon from "@easypost/easy-ui-icons/Key";
 import ShieldIcon from "@easypost/easy-ui-icons/Shield";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DependencyGraph } from "./DependencyGraph";
+import { DependencyGraphChanges } from "./DependencyGraphChanges";
 import {
   DependencyGraphReviewExample,
   DependencyGraphLinkedInspectorExample,
@@ -129,8 +130,7 @@ export const ExpandedAttributeDifferences: Story = {
     defaultView: { scope: "dependents", nodeId: subnetId, depth: 1 },
     defaultCollapsedGroupIds: ["data", "observability"],
     showDetails: false,
-    description:
-      "Expand individual cards to inspect attribute differences side by side.",
+    description: "Expand individual cards to inspect attribute differences.",
   },
 };
 export const CollapsedModules: Story = {
@@ -223,4 +223,18 @@ export const RelationshipChanges: Story = {
     defaultSelection: { type: "node", id: "azurerm_container_app.api" },
     height: 720,
   },
+};
+
+export const ResponsiveAttributeDifferences: Story = {
+  render: () => (
+    <div style={{ maxWidth: 960 }}>
+      <h2>Shipping API changes</h2>
+      <DependencyGraphChanges
+        node={dependencyNodes[2]}
+        compact
+        defaultPresentation="diff"
+        showPresentationControls={false}
+      />
+    </div>
+  ),
 };
