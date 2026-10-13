@@ -21,6 +21,75 @@ beforeAll(() => {
 });
 
 describe("DependencyGraph interaction contract", () => {
+  it("embeds without a heading and keeps the graph named", () => {
+    const { container, rerender } = render(
+      <DependencyGraph nodes={nodes} edges={edges} showDetails={false} />,
+    );
+    expect(
+      screen.getByRole("region", { name: "Resource dependencies" }),
+    ).toBeInTheDocument();
+    expect(container.querySelector("header")).toBeNull();
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+    rerender(
+      <DependencyGraph
+        nodes={nodes}
+        edges={edges}
+        showDetails={false}
+        description="Proposed network changes"
+        accessibilityLabel="Plan review"
+      />,
+    );
+    expect(
+      screen.getByRole("region", { name: "Plan review" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Proposed network changes")).toBeVisible();
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+  });
+  it("keeps inspector expansion controlled and preserves selection", () => {
+    const onExpandedChange = vi.fn();
+    const props = {
+      nodes,
+      edges,
+      defaultSelection: { type: "node" as const, id: subnetId },
+      onDetailsExpandedChange: onExpandedChange,
+    };
+    const { rerender } = render(
+      <DependencyGraph {...props} detailsExpanded={false} />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Expand selection details" }),
+    );
+    expect(onExpandedChange).toHaveBeenCalledWith(true);
+    expect(
+      screen.getByRole("button", { name: "Expand selection details" }),
+    ).toHaveAttribute("aria-expanded", "false");
+    rerender(<DependencyGraph {...props} detailsExpanded />);
+    expect(
+      screen.getByRole("button", { name: "Collapse selection details" }),
+    ).toHaveAttribute("aria-expanded", "true");
+    expect(
+      screen.getByRole("heading", { name: "Application subnet" }),
+    ).toBeVisible();
+  });
+  it("announces supplied annotations without changing resource operations", () => {
+    const resource = {
+      id: "worker",
+      label: "Worker",
+      change: "unchanged" as const,
+    };
+    const { rerender } = render(
+      <DependencyGraph
+        nodes={[resource]}
+        edges={[]}
+        renderNodeAnnotation={() => <span>High risk</span>}
+      />,
+    );
+    const node = screen.getByRole("button", { name: "Worker, Unchanged" });
+    expect(node).toHaveAccessibleDescription("High risk");
+    rerender(<DependencyGraph nodes={[resource]} edges={[]} />);
+    expect(node).not.toHaveAttribute("aria-describedby");
+    expect(screen.queryByText(/risk/i)).not.toBeInTheDocument();
+  });
   it("does not label absent change evidence as unchanged", () => {
     render(
       <DependencyGraph
@@ -674,7 +743,9 @@ it("renders a caller-matched modified reference once and preserves its selection
     "marker-end",
     expect.stringContaining("arrow-update"),
   );
-  expect(screen.getByText("Modified link")).toBeInTheDocument();
+  expect(
+    screen.queryByLabelText("Relationship changes legend"),
+  ).not.toBeInTheDocument();
   const relationship = screen.getByRole("button", {
     name: /Database reference.*Modified relationship/,
   });

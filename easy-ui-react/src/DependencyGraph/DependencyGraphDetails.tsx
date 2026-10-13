@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useId } from "react";
+import { ExpandButton } from "../ExpandButton";
 import type {
   DependencyGraphDetailsContext,
   DependencyGraphChangePresentation,
@@ -20,6 +21,9 @@ export type DependencyGraphDetailsProps = {
   onSelectionChange: (selection: DependencyGraphSelection) => void;
   renderDetails?: DependencyGraphProps["renderDetails"];
   defaultChangePresentation?: DependencyGraphChangePresentation;
+  /** Optional size control for an application-owned inspector layout. */
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 };
 
 export function dependencyGraphDetailsContext({
@@ -63,6 +67,7 @@ export function dependencyGraphDetailsContext({
 /** Can live beside an application-owned inspector using the same controlled selection. */
 export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
   const { selection, nodes, onSelectionChange, renderDetails } = props;
+  const contentId = useId();
   const context = dependencyGraphDetailsContext(props);
   const records = new Map(nodes.map((node) => [node.id, node]));
   const title =
@@ -77,19 +82,12 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
       className={styles.details}
       aria-label="Graph selection details"
       data-graph-details
+      data-expanded={props.expanded || undefined}
     >
-      {!selection ? (
-        <p className={styles.muted}>
-          Select a resource or relationship to inspect it.
-        </p>
-      ) : !found ? (
-        <p role="status">
-          The selected record is unavailable in the supplied graph.
-        </p>
-      ) : (
-        <>
-          <div className={styles.detailHeading}>
-            <h3>{title}</h3>
+      <div className={styles.detailHeading}>
+        <h3>{selection && found ? title : "Selection"}</h3>
+        <div className={styles.detailActions}>
+          {selection && (
             <button
               type="button"
               className={styles.textButton}
@@ -98,159 +96,181 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
             >
               Clear
             </button>
-          </div>
-          {context.node && (
-            <>
-              <span
-                className={styles.change}
-                data-change={context.node.change ?? "unknown"}
-              >
-                {dependencyChangeLabels[context.node.change ?? "unknown"]}
-              </span>
-              {context.node.description && (
-                <p className={styles.detailDescription}>
-                  {context.node.description}
-                </p>
-              )}
-              <code className={styles.identifier}>{context.node.id}</code>
-              <DependencyGraphChanges
-                key={context.node.id}
-                node={context.node}
-                defaultPresentation={props.defaultChangePresentation}
-              />
-            </>
           )}
-          {context.group?.description && (
-            <p className={styles.detailDescription}>
-              {context.group.description}
-            </p>
+          {props.onExpandedChange && (
+            <ExpandButton
+              expanded={props.expanded}
+              accessibilityLabel={`${props.expanded ? "Collapse" : "Expand"} selection details`}
+              aria-controls={contentId}
+              onPress={() => props.onExpandedChange?.(!props.expanded)}
+            />
           )}
-          {context.group && (
-            <div className={styles.members}>
-              {nodes
-                .filter((node) => node.groupId === context.group!.id)
-                .map((node) => (
-                  <button
-                    key={node.id}
-                    type="button"
-                    className={styles.relationship}
-                    onClick={() =>
-                      onSelectionChange({ type: "node", id: node.id })
-                    }
-                  >
-                    <strong>{node.label}</strong>
-                    <span>
-                      {dependencyChangeLabels[node.change ?? "unknown"]}
-                    </span>
-                  </button>
-                ))}
-            </div>
-          )}
-          {renderDetails?.(context)}
-          <h4>
-            {context.node || context.group
-              ? "Connected relationships"
-              : "Selected relationships"}{" "}
-            <span className={styles.muted}>({context.edges.length})</span>
-          </h4>
-          {!context.edges.length && (
-            <p className={styles.muted}>
-              No relationships supplied for this selection.
-            </p>
-          )}
-          <ul className={styles.relationships}>
-            {context.edges.map((edge) => {
-              const source = records.get(edge.source);
-              const target = records.get(edge.target);
-              const current =
-                selection.type === "edge" && selection.id === edge.id;
-              return (
-                <li key={edge.id}>
-                  <button
-                    type="button"
-                    className={styles.relationship}
-                    data-link-change={edge.change}
-                    aria-pressed={current}
-                    onClick={() =>
-                      onSelectionChange({ type: "edge", id: edge.id })
-                    }
-                  >
-                    <span>
-                      {source?.label ?? edge.source}
-                      {edge.sourceAttributePath !== undefined && (
-                        <code> · {edge.sourceAttributePath}</code>
-                      )}{" "}
-                      <span aria-hidden="true">→</span>
-                      <span className={styles.visuallyHidden}>
-                        {" "}
-                        is a dependency of{" "}
-                      </span>{" "}
-                      {target?.label ?? edge.target}
-                      {edge.targetAttributePath !== undefined && (
-                        <code> · {edge.targetAttributePath}</code>
-                      )}
-                    </span>
-                    <strong>{edge.label ?? "Dependency"}</strong>
-                    <span
-                      className={styles.linkChange}
-                      data-link-change={edge.change ?? "unknown"}
+        </div>
+      </div>
+      <div id={contentId}>
+        {!selection ? (
+          <p className={styles.muted}>
+            Select a resource or relationship to inspect it.
+          </p>
+        ) : !found ? (
+          <p role="status">
+            The selected record is unavailable in the supplied graph.
+          </p>
+        ) : (
+          <>
+            {context.node && (
+              <>
+                <span
+                  className={styles.change}
+                  data-change={context.node.change ?? "unknown"}
+                >
+                  {dependencyChangeLabels[context.node.change ?? "unknown"]}
+                </span>
+                {context.node.description && (
+                  <p className={styles.detailDescription}>
+                    {context.node.description}
+                  </p>
+                )}
+                <code className={styles.identifier}>{context.node.id}</code>
+                <DependencyGraphChanges
+                  key={context.node.id}
+                  node={context.node}
+                  defaultPresentation={props.defaultChangePresentation}
+                />
+              </>
+            )}
+            {context.group?.description && (
+              <p className={styles.detailDescription}>
+                {context.group.description}
+              </p>
+            )}
+            {context.group && (
+              <div className={styles.members}>
+                {nodes
+                  .filter((node) => node.groupId === context.group!.id)
+                  .map((node) => (
+                    <button
+                      key={node.id}
+                      type="button"
+                      className={styles.relationship}
+                      onClick={() =>
+                        onSelectionChange({ type: "node", id: node.id })
+                      }
                     >
-                      {edge.change === "add"
-                        ? "Added relationship"
-                        : edge.change === "remove"
-                          ? "Removed relationship"
-                          : edge.change === "update"
-                            ? "Modified relationship"
-                            : edge.change === "unchanged"
-                              ? "Unchanged relationship"
-                              : "Relationship change unknown"}
-                    </span>
-                  </button>
-                  {(!source || !target) && (
-                    <span className={styles.unavailable}>
-                      Endpoint unavailable in supplied resources
-                    </span>
-                  )}
-                  {edge.description &&
-                    (selection.type === "edge" ||
-                      selection.type === "edges") && (
-                      <p className={styles.edgeDescription}>
-                        {edge.description}
-                      </p>
+                      <strong>{node.label}</strong>
+                      <span>
+                        {dependencyChangeLabels[node.change ?? "unknown"]}
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            )}
+            {renderDetails?.(context)}
+            <h4>
+              {context.node || context.group
+                ? "Connected relationships"
+                : "Selected relationships"}{" "}
+              <span className={styles.muted}>({context.edges.length})</span>
+            </h4>
+            {!context.edges.length && (
+              <p className={styles.muted}>
+                No relationships supplied for this selection.
+              </p>
+            )}
+            <ul className={styles.relationships}>
+              {context.edges.map((edge) => {
+                const source = records.get(edge.source);
+                const target = records.get(edge.target);
+                const current =
+                  selection.type === "edge" && selection.id === edge.id;
+                return (
+                  <li key={edge.id}>
+                    <button
+                      type="button"
+                      className={styles.relationship}
+                      data-link-change={edge.change}
+                      aria-pressed={current}
+                      onClick={() =>
+                        onSelectionChange({ type: "edge", id: edge.id })
+                      }
+                    >
+                      <span>
+                        {source?.label ?? edge.source}
+                        {edge.sourceAttributePath !== undefined && (
+                          <code> · {edge.sourceAttributePath}</code>
+                        )}{" "}
+                        <span aria-hidden="true">→</span>
+                        <span className={styles.visuallyHidden}>
+                          {" "}
+                          is a dependency of{" "}
+                        </span>{" "}
+                        {target?.label ?? edge.target}
+                        {edge.targetAttributePath !== undefined && (
+                          <code> · {edge.targetAttributePath}</code>
+                        )}
+                      </span>
+                      <strong>{edge.label ?? "Dependency"}</strong>
+                      <span
+                        className={styles.linkChange}
+                        data-link-change={edge.change ?? "unknown"}
+                      >
+                        {edge.change === "add"
+                          ? "Added relationship"
+                          : edge.change === "remove"
+                            ? "Removed relationship"
+                            : edge.change === "update"
+                              ? "Modified relationship"
+                              : edge.change === "unchanged"
+                                ? "Unchanged relationship"
+                                : "Relationship change unknown"}
+                      </span>
+                    </button>
+                    {(!source || !target) && (
+                      <span className={styles.unavailable}>
+                        Endpoint unavailable in supplied resources
+                      </span>
                     )}
-                  {(selection.type === "edge" ||
-                    selection.type === "edges") && (
-                    <div className={styles.endpointActions}>
-                      {source && (
-                        <button
-                          type="button"
-                          className={styles.textButton}
-                          onClick={() =>
-                            onSelectionChange({ type: "node", id: source.id })
-                          }
-                        >
-                          Inspect dependency
-                        </button>
+                    {edge.description &&
+                      (selection.type === "edge" ||
+                        selection.type === "edges") && (
+                        <p className={styles.edgeDescription}>
+                          {edge.description}
+                        </p>
                       )}
-                      {target && (
-                        <button
-                          type="button"
-                          className={styles.textButton}
-                          onClick={() =>
-                            onSelectionChange({ type: "node", id: target.id })
-                          }
-                        >
-                          Inspect dependent
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </>
-      )}
+                    {(selection.type === "edge" ||
+                      selection.type === "edges") && (
+                      <div className={styles.endpointActions}>
+                        {source && (
+                          <button
+                            type="button"
+                            className={styles.textButton}
+                            onClick={() =>
+                              onSelectionChange({ type: "node", id: source.id })
+                            }
+                          >
+                            Inspect dependency
+                          </button>
+                        )}
+                        {target && (
+                          <button
+                            type="button"
+                            className={styles.textButton}
+                            onClick={() =>
+                              onSelectionChange({ type: "node", id: target.id })
+                            }
+                          >
+                            Inspect dependent
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </div>
     </aside>
   );
 }

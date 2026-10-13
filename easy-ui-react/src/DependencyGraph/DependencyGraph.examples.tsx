@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { DependencyGraph } from "./DependencyGraph";
 import { DependencyGraphDetails } from "./DependencyGraphDetails";
 import { Button } from "../Button";
+import { Pill } from "../Pill";
 import {
   dependencyNodes,
   dependencyEdges,
@@ -152,5 +153,92 @@ export function DependencyGraphLinkedInspectorExample() {
         renderDetails={(context) => <ReplacementEvidence {...context} />}
       />
     </div>
+  );
+}
+
+// Illustrative findings from an application-owned assessment, not graph inference.
+const riskFindings = {
+  api: {
+    severity: "high",
+    summary: "Writes may fail when the API connects to a read replica.",
+    evidence: [
+      "The plan changes DATABASE_URL from the primary endpoint to the replica endpoint.",
+      "The service inventory identifies this API as a database writer.",
+    ],
+  },
+  worker: {
+    severity: "medium",
+    summary:
+      "Existing worker connections may be interrupted during the database endpoint change.",
+    evidence: [
+      "The worker has no planned resource changes.",
+      "Runtime discovery identifies an active connection to the changing database endpoint.",
+    ],
+  },
+} as const;
+const riskNodes = [
+  ...attributeDependencyNodes,
+  { id: "worker", label: "Background worker", change: "unchanged" as const },
+];
+const riskEdges = [
+  ...attributeDependencyEdges,
+  {
+    id: "database-worker",
+    source: "database",
+    target: "worker",
+    label: "Runtime database connection",
+    change: "unchanged" as const,
+    variant: "dashed" as const,
+  },
+];
+const riskFor = (id: string) =>
+  Object.hasOwn(riskFindings, id)
+    ? riskFindings[id as keyof typeof riskFindings]
+    : undefined;
+function RiskLabel({ severity }: { severity: "high" | "medium" }) {
+  return (
+    <Pill size="sm" tone={severity === "high" ? "danger" : "warning"}>
+      {severity === "high" ? "High risk" : "Medium risk"}
+    </Pill>
+  );
+}
+
+export function DependencyGraphRiskExample() {
+  return (
+    <DependencyGraph
+      accessibilityLabel="Resource change review"
+      nodes={riskNodes}
+      edges={riskEdges}
+      height={650}
+      defaultSelection={{ type: "node", id: "api" }}
+      defaultExpandedChangeNodeIds={["database", "api"]}
+      defaultChangePresentation="diff"
+      defaultDetailsExpanded
+      renderNodeAnnotation={(node) => {
+        const risk = riskFor(node.id);
+        return risk ? <RiskLabel severity={risk.severity} /> : null;
+      }}
+      renderDetails={({ node, edges }) => {
+        const risk = node
+          ? riskFor(node.id)
+          : edges.some((edge) => edge.id === "database-reference")
+            ? riskFindings.api
+            : undefined;
+        if (!risk) return null;
+        return (
+          <section className={styles.evidence} aria-label="Risk assessment">
+            <h4>Risk assessment</h4>
+            <RiskLabel severity={risk.severity} />
+            <p>{risk.summary}</p>
+            <h4>Supporting evidence</h4>
+            <ul>
+              {risk.evidence.map((evidence) => (
+                <li key={evidence}>{evidence}</li>
+              ))}
+            </ul>
+          </section>
+        );
+      }}
+    />
   );
 }

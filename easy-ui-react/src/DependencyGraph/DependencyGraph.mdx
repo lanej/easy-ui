@@ -11,6 +11,8 @@ Investigate directed resource dependencies with focused neighborhoods, collapsed
 
 Import from `@easypost/easy-ui/DependencyGraph` with the normal Easy UI Provider and stylesheet. No ECharts peer or engine configuration is required.
 
+`title` and `description` are optional. Without them, no heading row is rendered. Use `accessibilityLabel` to name an embedded graph; it defaults to the title or “Resource dependencies”. Relationship colors convey added, removed, and modified links without a persistent legend; selection details retain their textual change labels.
+
 ```tsx
 import { DependencyGraph } from "@easypost/easy-ui/DependencyGraph";
 
@@ -42,7 +44,21 @@ Choose a resource, then use **Dependencies**, **Dependents**, or **Connected res
 
 `selection`, `view`, `collapsedGroupIds`, and `collapsedNodeIds` are independently controllable. Their `default*` counterparts initialize local state. Callbacks return stable original IDs so a change row, graph node, and application inspector can share selection. Use `showDetails={false}` and `DependencyGraphDetails` for a separately placed inspector, or `renderDetails` to append application evidence to the standard details.
 
+The inspector's +/− control widens it on desktop and reveals its full height at any width. Expansion preserves selection, the active diff view, and resource ordering. Use `detailsExpanded`, `defaultDetailsExpanded`, and `onDetailsExpandedChange` to control it. A separately placed `DependencyGraphDetails` accepts `expanded` and `onExpandedChange`; its parent owns the column width.
+
+<Canvas of={Stories.EmbeddedInspector} />
+
 <Canvas of={Stories.LinkedInspector} />
+
+### Application-supplied risk findings
+
+Use `renderNodeAnnotation(node)` for a compact finding or assessment beside a resource, and `renderDetails(context)` for severity, rationale, provenance, and supporting evidence. Annotations contribute to measured card height and the resource button's accessible description. They preserve the existing change colors and ordering. Relationship-specific findings can use the selected original edge IDs in the details context.
+
+The application owns assessments and their evidence. A change operation, a reachable dependency, or missing risk data does not establish risk or safety. This extension supports future analysis that combines planned changes with runtime relationships, including affected resources that have no planned changes. No risk engine, severity thresholds, or synthetic scores are built into the graph.
+
+The following example uses illustrative caller-supplied findings. The API's modified database reference and an unchanged worker receive different assessments; unannotated resources are not implicitly low risk.
+
+<Canvas of={Stories.RiskAnnotations} />
 
 Groups are flat visual boundaries. The caller chooses root/module membership using `groupId`; expanded groups have a labeled boundary. Collapse replaces the member nodes with a summary. Connections between collapsed groups bundle the original edge IDs; selecting a bundle lists every supplied relationship separately. Relationships inside a collapsed group remain available in group details. Grouping never turns a module into a resource or fabricates an edge.
 

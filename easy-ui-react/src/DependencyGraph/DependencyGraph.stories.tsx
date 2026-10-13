@@ -11,6 +11,7 @@ import {
   DependencyGraphReviewExample,
   DependencyGraphLinkedInspectorExample,
   DependencyGraphStableLayoutExample,
+  DependencyGraphRiskExample,
 } from "./DependencyGraph.examples";
 import {
   relationshipChangeNodes,
@@ -39,6 +40,7 @@ const meta: Meta<typeof DependencyGraph> = {
     edges: { control: false },
     groups: { control: false },
     renderDetails: { control: false },
+    renderNodeAnnotation: { control: false },
   },
   parameters: { layout: "padded" },
 };
@@ -60,6 +62,28 @@ export const SpecificChanges: Story = {
   },
 };
 export const AllResources: Story = {};
+export const EmbeddedInspector: Story = {
+  args: {
+    title: undefined,
+    description: undefined,
+    accessibilityLabel: "Resource change review",
+    defaultSelection: { type: "node", id: "azurerm_container_app.api" },
+    defaultChangePresentation: "diff",
+    defaultExpandedChangeNodeIds: [subnetId, "azurerm_container_app.api"],
+    height: 650,
+  },
+};
+export const RiskAnnotations: Story = {
+  render: () => <DependencyGraphRiskExample />,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Illustrative application-supplied findings combine plan changes with service inventory and runtime dependency evidence. The graph displays the findings without calculating risk. An unchanged resource can still be affected; omitted annotations do not mean low risk.",
+      },
+    },
+  },
+};
 export const StableResourceOrder: Story = {
   render: () => <DependencyGraphStableLayoutExample />,
 };

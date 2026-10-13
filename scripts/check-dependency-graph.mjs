@@ -86,6 +86,8 @@ try {
         "expanded-attribute-differences",
         "collapsed-modules",
         "stable-resource-order",
+        "embedded-inspector",
+        "risk-annotations",
         "collapsible-branches",
         "partial-evidence",
         "cyclic-relationships",
@@ -1080,6 +1082,142 @@ try {
       .locator("[data-dependency-graph]")
       .screenshot({ path: resolve(output, `stable-order-${width}.png`) });
     checks.push({ name: `stable-order-and-full-card-expansion-${width}` });
+  }
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await open("embedded-inspector");
+    const graph = page.locator("[data-dependency-graph]");
+    const details = graph.locator("[data-graph-details]");
+    assert.equal(await graph.locator("header").count(), 0);
+    assert.equal(
+      await graph.getAttribute("aria-label"),
+      "Resource change review",
+    );
+    assert.equal(
+      await graph.getByLabel("Relationship changes legend").count(),
+      0,
+    );
+    const widthBefore = await details.evaluate(
+      (el) => el.getBoundingClientRect().width,
+    );
+    const positions = () =>
+      graph.locator("[data-graph-resource-card]").evaluateAll((cards) =>
+        cards.map((card) => ({
+          id: card.dataset.graphResourceCard,
+          x: parseFloat(getComputedStyle(card).left),
+          y: parseFloat(getComputedStyle(card).top),
+        })),
+      );
+    const before = await positions();
+    if (width === 1440)
+      await graph.screenshot({
+        path: resolve(output, "embedded-inspector-desktop.png"),
+      });
+    const expand = details.getByRole("button", {
+      name: "Expand selection details",
+    });
+    await expand.focus();
+    await expand.press("Enter");
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-graph-details]").dataset.expanded ===
+        "true",
+    );
+    await settledCards();
+    const collapse = details.getByRole("button", {
+      name: "Collapse selection details",
+    });
+    assert.equal(
+      await collapse.evaluate((el) => el === document.activeElement),
+      true,
+    );
+    assert.equal(await details.locator("h3").innerText(), "Shipping API");
+    assert.equal(
+      await details
+        .getByRole("button", { name: "Specific changes" })
+        .getAttribute("aria-pressed"),
+      "true",
+    );
+    assert.equal(
+      await details.evaluate((el) => getComputedStyle(el).maxHeight),
+      "none",
+    );
+    if (width === 1440)
+      assert.ok(
+        (await details.evaluate((el) => el.getBoundingClientRect().width)) >
+          widthBefore + 100,
+      );
+    const after = await positions();
+    for (let a = 0; a < before.length; a++)
+      for (let b = a + 1; b < before.length; b++) {
+        assert.equal(after[a].id, before[a].id);
+        for (const axis of ["x", "y"])
+          assert.equal(
+            Math.sign(after[a][axis] - after[b][axis]),
+            Math.sign(before[a][axis] - before[b][axis]),
+            "Inspector expansion preserves resource ordering",
+          );
+      }
+    await accessibility(`expanded-inspector-${width}`);
+    await graph.screenshot({
+      path: resolve(output, `expanded-inspector-${width}.png`),
+    });
+    await collapse.press("Enter");
+    await page.waitForFunction(
+      () => !document.querySelector("[data-graph-details]").dataset.expanded,
+    );
+    await settledCards();
+    assert.equal(
+      await details.evaluate((el) => el.getBoundingClientRect().width),
+      widthBefore,
+    );
+    assert.deepEqual(await positions(), before);
+    checks.push({ name: `optional-heading-and-expanded-inspector-${width}` });
+
+    await open("risk-annotations");
+    assert.equal(await graph.locator("header").count(), 0);
+    assert.equal(
+      await graph.locator("[data-graph-node-annotation]").count(),
+      2,
+    );
+    assert.equal(
+      await graph
+        .locator(
+          '[data-graph-resource-card="network"] [data-graph-node-annotation]',
+        )
+        .count(),
+      0,
+    );
+    assert.equal(
+      await graph
+        .locator('[data-graph-edge-ids][data-link-change="update"]')
+        .count(),
+      1,
+    );
+    await graph.screenshot({
+      path: resolve(output, `risk-annotations-${width}.png`),
+    });
+    const worker = graph.getByRole("button", {
+      name: "Background worker, Unchanged",
+      exact: true,
+    });
+    await worker.click();
+    assert.equal(await details.locator("h3").innerText(), "Background worker");
+    const assessment = details.getByRole("region", { name: "Risk assessment" });
+    assert.ok((await assessment.innerText()).includes("Medium risk"));
+    assert.ok(
+      (await assessment.innerText()).includes("no planned resource changes"),
+    );
+    assert.equal(
+      await worker.evaluate((el) =>
+        document
+          .getElementById(el.getAttribute("aria-describedby"))
+          .textContent.trim(),
+      ),
+      "Medium risk",
+    );
+    await accessibility(`risk-annotations-${width}`);
+    checks.push({ name: `caller-owned-risk-and-unchanged-resource-${width}` });
   }
   assert.deepEqual(errors, [], "Runtime diagnostics");
   console.log(`DependencyGraph: ${checks.length} browser cases passed.`);

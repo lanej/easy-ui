@@ -91,8 +91,11 @@ export type DependencyGraphDetailsContext = {
 };
 
 export type DependencyGraphProps = {
-  title: string;
+  /** Optional visible heading. Omit it when the surrounding application supplies context. */
+  title?: string;
   description?: string;
+  /** Region name when no visible title is supplied. Defaults to Resource dependencies. */
+  accessibilityLabel?: string;
   nodes: readonly DependencyGraphNode[];
   edges: readonly DependencyGraphEdge[];
   /** Flat visual groups; applications choose root/module boundaries and labels. */
@@ -132,8 +135,14 @@ export type DependencyGraphProps = {
   /** Viewport height in CSS pixels. The graph scrolls within this viewport. */
   height?: number;
   showDetails?: boolean;
+  /** Widen the built-in inspector and show its full height. */
+  detailsExpanded?: boolean;
+  defaultDetailsExpanded?: boolean;
+  onDetailsExpandedChange?: (expanded: boolean) => void;
   /** Initial change presentation for each newly selected resource. */
   defaultChangePresentation?: DependencyGraphChangePresentation;
+  /** Optional compact application-owned context, such as a risk finding. Does not change diff colors or infer risk. */
+  renderNodeAnnotation?: (node: DependencyGraphNode) => ReactNode;
   /** Additional evidence/diff content below the standard selection details. */
   renderDetails?: (context: DependencyGraphDetailsContext) => ReactNode;
 };

@@ -63,6 +63,7 @@ const sameEdgeSelection = (
 export function DependencyGraph({
   title,
   description,
+  accessibilityLabel,
   nodes,
   edges,
   groups = EMPTY_GROUPS,
@@ -90,10 +91,23 @@ export function DependencyGraph({
   onRetry,
   height = 480,
   showDetails = true,
+  detailsExpanded: controlledDetailsExpanded,
+  defaultDetailsExpanded = false,
+  onDetailsExpandedChange,
   defaultChangePresentation,
+  renderNodeAnnotation,
   renderDetails,
 }: DependencyGraphProps) {
   const [localSelection, setLocalSelection] = useState(defaultSelection);
+  const [localDetailsExpanded, setLocalDetailsExpanded] = useState(
+    defaultDetailsExpanded,
+  );
+  const detailsExpanded = controlledDetailsExpanded ?? localDetailsExpanded;
+  const changeDetailsExpanded = (expanded: boolean) => {
+    if (controlledDetailsExpanded === undefined)
+      setLocalDetailsExpanded(expanded);
+    onDetailsExpandedChange?.(expanded);
+  };
   const [localView, setLocalView] = useState(defaultView);
   const [localCollapsed, setLocalCollapsed] = useState(
     defaultCollapsedGroupIds,
@@ -615,17 +629,16 @@ export function DependencyGraph({
       data-dependency-graph
       data-graph-density={density}
       style={{ "--dependency-graph-zoom": zoom } as React.CSSProperties}
-      aria-label={title}
+      aria-label={accessibilityLabel || title || "Resource dependencies"}
     >
-      <header className={styles.heading}>
-        <div>
-          <h2>{title}</h2>
-          {description && <p>{description}</p>}
-        </div>
-        <span className={styles.count}>
-          {visible.size} of {nodes.length} resources
-        </span>
-      </header>
+      {(title || description) && (
+        <header className={styles.heading}>
+          <div>
+            {title && <h2>{title}</h2>}
+            {description && <p>{description}</p>}
+          </div>
+        </header>
+      )}
       {coverage && (
         <p className={styles.coverage} data-coverage={coverage.status}>
           <strong>
@@ -636,29 +649,6 @@ export function DependencyGraph({
                 : "Relationship coverage unknown"}
           </strong>
           {coverage.description && <span>{coverage.description}</span>}
-        </p>
-      )}
-      {edges.some(
-        (edge) =>
-          edge.change === "add" ||
-          edge.change === "remove" ||
-          edge.change === "update",
-      ) && (
-        <p
-          className={styles.linkLegend}
-          aria-label="Relationship changes legend"
-        >
-          <span className={styles.linkChange} data-link-change="add">
-            Added link
-          </span>
-          <span className={styles.linkChange} data-link-change="remove">
-            Removed link
-          </span>
-          {edges.some((edge) => edge.change === "update") && (
-            <span className={styles.linkChange} data-link-change="update">
-              Modified link
-            </span>
-          )}
         </p>
       )}
       <div className={styles.toolbar}>
@@ -796,6 +786,7 @@ export function DependencyGraph({
       <div
         className={styles.workspace}
         data-has-details={showDetails || undefined}
+        data-details-expanded={detailsExpanded || undefined}
       >
         <div className={styles.graphColumn}>
           {status !== "ready" || duplicate || !nodes.length || !items.length ? (
@@ -1007,6 +998,12 @@ export function DependencyGraph({
                       const shown = item.members.filter((member) =>
                         visible.has(member.id),
                       ).length;
+                      const annotation = node && renderNodeAnnotation?.(node);
+                      const hasAnnotation =
+                        annotation != null &&
+                        typeof annotation !== "boolean" &&
+                        annotation !== "";
+                      const annotationId = `${instanceId}-annotation-${items.indexOf(item)}`;
                       return (
                         <article
                           key={item.key}
@@ -1030,6 +1027,9 @@ export function DependencyGraph({
                             data-graph-node={node?.id}
                             data-graph-item={item.key}
                             aria-pressed={selected}
+                            aria-describedby={
+                              hasAnnotation ? annotationId : undefined
+                            }
                             aria-label={
                               node
                                 ? `${label}, ${dependencyChangeLabels[node.change ?? "unknown"]}${node.description ? `, ${node.description}` : ""}${node.iconLabel ? `, ${node.iconLabel}` : ""}`
@@ -1095,6 +1095,15 @@ export function DependencyGraph({
                               </span>
                             )}
                           </button>
+                          {hasAnnotation && (
+                            <div
+                              id={annotationId}
+                              className={styles.nodeAnnotation}
+                              data-graph-node-annotation
+                            >
+                              {annotation}
+                            </div>
+                          )}
                           {node &&
                             (hasDependencyGraphChanges(node) ||
                               dependents > 0) && (
@@ -1207,6 +1216,9 @@ export function DependencyGraph({
               </div>
               <div className={styles.canvasFooter}>
                 <span>
+                  {visible.size} of {nodes.length} resources
+                </span>
+                <span>
                   Dependency <span aria-hidden="true">→</span> dependent
                 </span>
                 <span>
@@ -1242,6 +1254,8 @@ export function DependencyGraph({
             onSelectionChange={select}
             renderDetails={renderDetails}
             defaultChangePresentation={defaultChangePresentation}
+            expanded={detailsExpanded}
+            onExpandedChange={changeDetailsExpanded}
           />
         )}
       </div>

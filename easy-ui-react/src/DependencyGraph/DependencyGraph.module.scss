@@ -35,10 +35,6 @@
     color: design-token("color.neutral.700");
   }
 }
-.count {
-  flex-shrink: 0;
-  color: design-token("color.neutral.700");
-}
 .muted {
   color: design-token("color.neutral.700");
 }
@@ -388,6 +384,9 @@
   overflow-wrap: anywhere;
   max-block-size: 34rem;
   overflow: auto;
+  &[data-expanded="true"] {
+    max-block-size: none;
+  }
   h3 {
     margin: 0;
     font-size: 1rem;
@@ -408,6 +407,18 @@
   align-items: start;
   gap: 8px;
   margin-block-end: 8px;
+}
+.detailActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nodeAnnotation {
+  padding: 0 8px 6px;
+  font-size: max(0.75rem, calc(12px / var(--dependency-graph-zoom)));
+  > * {
+    font-size: inherit;
+  }
 }
 .detailDescription {
   margin-block-end: 6px;
@@ -574,6 +585,9 @@
 @container (min-width: 960px) {
   .workspace[data-has-details="true"] {
     grid-template-columns: minmax(0, 1fr) 280px;
+    &[data-details-expanded="true"] {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
   }
 }
 @container (max-width: 480px) {
@@ -659,14 +673,6 @@
   display: flex;
   align-items: center;
   gap: 5px;
-}
-
-.linkLegend {
-  display: flex;
-  gap: 16px;
-  margin: 0;
-  padding: 0 16px 12px;
-  font-size: 0.8125rem;
 }
 
 .connection[data-link-change="update"] .edgeLine {
