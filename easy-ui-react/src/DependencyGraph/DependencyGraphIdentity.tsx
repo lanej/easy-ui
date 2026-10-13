@@ -71,7 +71,9 @@ export function DependencyGraphIdentity({
               title={dependencyChangeLabels[node.change]}
               aria-label={dependencyChangeLabels[node.change]}
             >
-              {overview || node.change === "unknown" || node.change === "unchanged"
+              {overview ||
+              node.change === "unknown" ||
+              node.change === "unchanged"
                 ? compactChanges[node.change]
                 : dependencyChangeLabels[node.change]}
             </span>

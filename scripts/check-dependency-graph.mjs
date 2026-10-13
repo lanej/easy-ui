@@ -102,6 +102,9 @@ try {
         "embedded-inspector",
         "risk-annotations",
         "collapsible-branches",
+        "source-only-evidence",
+        "source-only-evidence-inspector",
+        "explicit-change-evidence",
         "partial-evidence",
         "cyclic-relationships",
         "thousand-resources",
@@ -168,6 +171,9 @@ try {
             "attribute-dependencies",
             "expanded-attribute-differences",
             "collapsible-branches",
+            "source-only-evidence",
+            "source-only-evidence-inspector",
+            "explicit-change-evidence",
           ].includes(story) &&
           width !== 320
         )

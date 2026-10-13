@@ -1,3 +1,4 @@
+import { realWorldNodes, realWorldEdges } from "./DependencyGraph.realWorld";
 import React from "react";
 import DatabaseIcon from "@easypost/easy-ui-icons/Database";
 import StorageIcon from "@easypost/easy-ui-icons/Storage";
@@ -281,5 +282,54 @@ export const AttributeDependencies: Story = {
     defaultExpandedChangeNodeIds: ["database", "api"],
     defaultSelection: { type: "node", id: "api" },
     height: 780,
+  },
+};
+
+export const SourceOnlyEvidence: Story = {
+  args: {
+    title: undefined,
+    description: undefined,
+    nodes: realWorldNodes,
+    edges: realWorldEdges,
+    groups: [],
+    showDetails: false,
+    height: 520,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Source-only evidence with long addresses, distinct unresolved inputs and outputs, one-dependent chains, and disconnected components. Source modified is not a plan action. Applications supply the display name, type, address, and unresolved classification.",
+      },
+    },
+  },
+};
+
+export const SourceOnlyEvidenceInspector: Story = {
+  ...SourceOnlyEvidence,
+  args: {
+    ...SourceOnlyEvidence.args,
+    showDetails: true,
+    defaultSelection: { type: "node", id: "external:backend_bucket" },
+  },
+};
+
+export const ExplicitChangeEvidence: Story = {
+  args: {
+    title: undefined,
+    groups: [],
+    nodes: [
+      {
+        id: "absent",
+        label: "No plan supplied",
+        description: "Source modified",
+      },
+      { id: "unknown", label: "Explicitly unknown", change: "unknown" },
+      { id: "unchanged", label: "Explicitly unchanged", change: "unchanged" },
+      { id: "update", label: "Planned update", change: "update" },
+    ],
+    edges: [],
+    showDetails: false,
+    height: 400,
   },
 };

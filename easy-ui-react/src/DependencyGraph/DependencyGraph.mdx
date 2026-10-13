@@ -158,3 +158,27 @@ Connections use rounded orthogonal lanes around cards and group headings. Defaul
 ```
 
 <Canvas of={Stories.AttributeDependencies} />
+
+## Source-only evidence and resource identity
+
+<Canvas of={Stories.SourceOnlyEvidence} />
+
+Use `label` for the distinguishing display name, `typeLabel` for secondary type/context,
+and `address` for the complete inspectable address. These are caller-owned strings:
+Easy UI does not parse Terraform addresses or infer plan actions from source edits.
+An unsplit long label uses middle truncation and retains its full accessible name.
+
+Omitting `change` means **not supplied**: no card badge, and “Change not supplied” in
+selection details. Explicit `unknown` and `unchanged` remain different states, with
+compact `?` and `=` markers and full accessible labels. Supplied field differences
+still expand even when no plan operation is supplied.
+
+Set `kind: "unresolved"` only for an explicitly identified evidence boundary. Give
+each reference its own stable `id` and meaningful `label`; identical display labels
+never combine nodes or edges. The compact dashed card shows “Unresolved”; its
+`description` remains available in the inspector. This is not a captured resource.
+
+Branch disclosure stays beside the selection button. Counts are shown when a
+branch is collapsed; attribute disclosure remains independent. Ungrouped graphs
+start with detail-scale spacing. Subsequent visibility and expansion changes keep
+the established resource order; expansion adds only the clearance it needs.

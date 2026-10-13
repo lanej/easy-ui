@@ -24,13 +24,19 @@ export type DependencyGraphChangePresentation = "summary" | "diff";
 export type DependencyGraphNode = {
   id: string;
   label: string;
+  /** Optional secondary type/context. Supply the display name in label; no identifier parsing is performed. */
+  typeLabel?: string;
+  /** Full caller-owned address for inspection and search; id remains the stable graph identity. */
+  address?: string;
+  /** Explicit evidence boundary. Unresolved references remain distinct nodes with their original edges. */
+  kind?: "resource" | "unresolved";
   /** Resource type, address, or other caller-owned context. */
   description?: string;
   /** Caller-supplied resource type symbol, using Easy UI's normal Icon contract. */
   icon?: IconSymbol;
   /** Accessible resource type label, such as Database or Authentication. */
   iconLabel?: string;
-  /** Omitted change information is unknown, not proof of no change. */
+  /** Omitted means not supplied and renders no card badge. Explicit unknown remains distinct from unchanged. */
   change?: DependencyGraphChange;
   /** Caller-owned explanation of this resource's proposed changes. */
   changeSummary?: string;

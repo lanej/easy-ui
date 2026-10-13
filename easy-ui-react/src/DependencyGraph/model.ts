@@ -68,7 +68,11 @@ export function createDependencyGraphOrder(
     [],
     new Map(nodes.map((node) => [node.id, NODE_HEIGHT])),
     NODE_WIDTH,
-    0.4,
+    // Only group headings need minimum-zoom clearance. Ungrouped source graphs
+    // start at detail density; preserving order must not preserve overview gaps.
+    groups.some((group) => nodes.some((node) => node.groupId === group.id))
+      ? 0.4
+      : 1,
   );
   const boxes = new Map(graph.items.map((item) => [item.key, item]));
   for (const cluster of graph.clusters) {
@@ -137,11 +141,6 @@ export function buildDependencyGraph(
   const records = new Map(nodes.map((node) => [node.id, node]));
   const groupRecords = new Map(groups.map((group) => [group.id, group]));
   const collapsed = new Set(collapsedGroupIds);
-  const branchSources = new Set(
-    edges
-      .filter((edge) => edge.source !== edge.target && records.has(edge.target))
-      .map((edge) => edge.source),
-  );
   const nodeKey = (node: DependencyGraphNode) =>
     node.groupId &&
     collapsed.has(node.groupId) &&
@@ -176,10 +175,7 @@ export function buildDependencyGraph(
           : NODE_WIDTH,
         height: key.startsWith("node:")
           ? (nodeHeights.get(node.id) ??
-            NODE_HEIGHT +
-              (hasDependencyGraphChanges(node) || branchSources.has(node.id)
-                ? 31
-                : 2))
+            NODE_HEIGHT + (hasDependencyGraphChanges(node) ? 31 : 2))
           : Math.max(GROUP_HEIGHT, 64 + 25 / zoom),
       });
   }

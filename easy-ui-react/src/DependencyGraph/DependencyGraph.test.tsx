@@ -173,7 +173,7 @@ describe("DependencyGraph interaction contract", () => {
       />,
     );
     expect(
-      screen.getByRole("button", { name: "Resource A, Change unknown" }),
+      screen.getByRole("button", { name: "Resource A" }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Unchanged")).not.toBeInTheDocument();
   });

@@ -121,18 +121,36 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
           <>
             {context.node && (
               <>
+                {context.node.kind === "unresolved" && (
+                  <p className={styles.referenceLabel}>Unresolved reference</p>
+                )}
+                {context.node.typeLabel && (
+                  <p className={styles.detailDescription}>
+                    {context.node.typeLabel}
+                  </p>
+                )}
                 <span
-                  className={styles.change}
-                  data-change={context.node.change ?? "unknown"}
+                  className={context.node.change ? styles.change : styles.muted}
+                  data-change={context.node.change}
                 >
-                  {dependencyChangeLabels[context.node.change ?? "unknown"]}
+                  {context.node.change
+                    ? dependencyChangeLabels[context.node.change]
+                    : "Change not supplied"}
                 </span>
                 {context.node.description && (
                   <p className={styles.detailDescription}>
                     {context.node.description}
                   </p>
                 )}
-                <code className={styles.identifier}>{context.node.id}</code>
+                <code className={styles.identifier}>
+                  {context.node.address ?? context.node.id}
+                </code>
+                {context.node.address &&
+                  context.node.address !== context.node.id && (
+                    <span className={styles.identifier}>
+                      Record ID: {context.node.id}
+                    </span>
+                  )}
                 <DependencyGraphChanges
                   key={context.node.id}
                   node={context.node}
@@ -161,7 +179,9 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
                     >
                       <strong>{node.label}</strong>
                       <span>
-                        {dependencyChangeLabels[node.change ?? "unknown"]}
+                        {node.change
+                          ? dependencyChangeLabels[node.change]
+                          : "Change not supplied"}
                       </span>
                     </button>
                   ))}

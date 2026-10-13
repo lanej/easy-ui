@@ -5,6 +5,7 @@
   block-size: max(1rem, calc(14px / var(--dependency-graph-zoom)));
 }
 
+.branchControls button,
 .cardControls button,
 .groupExpand button,
 .clusterHeading button {
@@ -119,6 +120,7 @@
     }
   }
 }
+.branchControls button > span:last-child,
 .cardControls button > span:last-child,
 .groupExpand button > span:last-child,
 .clusterHeading button > span:last-child {
@@ -366,6 +368,7 @@
   font-size: 0.75rem;
   cursor: pointer;
 }
+.node .branchControls button,
 .node .cardControls button,
 .node .groupExpand button {
   padding: 3px;
@@ -689,4 +692,88 @@
 }
 .linkChange[data-link-change="update"] {
   color: design-token("color.warning.800");
+}
+
+// Keep disclosure beside the header, not in a footer that repeats visible edges.
+.cardHeading {
+  display: flex;
+  align-items: stretch;
+  min-inline-size: 0;
+  .nodeSelect {
+    flex: 1;
+    min-inline-size: 0;
+  }
+}
+.node[data-group="true"] .cardHeading {
+  block-size: 100%;
+}
+.branchControls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: flex-start;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 4px 4px 4px 0;
+}
+.hiddenCount {
+  font-size: max(0.625rem, calc(10px / var(--dependency-graph-zoom)));
+  color: design-token("color.neutral.700");
+  white-space: nowrap;
+}
+.node[data-graph-resource-card] .nodeLabel {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
+.middleLabel {
+  display: flex;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.labelPrefix {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.labelSuffix {
+  flex: 0 0 auto;
+  max-inline-size: 65%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nodeMetadata {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  font-size: 0.75rem;
+  color: design-token("color.neutral.700");
+}
+.nodeType {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+.referenceLabel {
+  color: design-token("color.neutral.700");
+  font-size: 0.75rem;
+}
+.node[data-node-kind="unresolved"] {
+  border-style: dashed;
+  background: design-token("color.neutral.050");
+  box-shadow: none;
+}
+.root[data-graph-density="overview"] {
+  .nodeType {
+    display: none;
+  }
+  .referenceLabel {
+    font-size: max(0.75rem, calc(10px / var(--dependency-graph-zoom)));
+  }
 }
