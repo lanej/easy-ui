@@ -245,7 +245,7 @@ export const AttributeDependencies: Story = {
   args: {
     title: "Attribute dependencies",
     description:
-      "Links can connect visible fields. Collapse attributes to route to the resource card.",
+      "Attribute references connect fields; depends_on connects blocks. Yellow marks a modified reference.",
     nodes: attributeDependencyNodes,
     edges: attributeDependencyEdges,
     groups: [],

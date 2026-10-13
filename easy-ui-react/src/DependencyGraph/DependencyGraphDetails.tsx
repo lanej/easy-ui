@@ -199,9 +199,11 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
                         ? "Added relationship"
                         : edge.change === "remove"
                           ? "Removed relationship"
-                          : edge.change === "unchanged"
-                            ? "Unchanged relationship"
-                            : "Relationship change unknown"}
+                          : edge.change === "update"
+                            ? "Modified relationship"
+                            : edge.change === "unchanged"
+                              ? "Unchanged relationship"
+                              : "Relationship change unknown"}
                     </span>
                   </button>
                   {(!source || !target) && (

@@ -727,7 +727,7 @@ try {
     await open("attribute-dependencies", theme);
     await page.waitForFunction(
       () =>
-        document.querySelectorAll("[data-graph-target-attribute]").length === 3,
+        document.querySelectorAll("[data-graph-target-attribute]").length === 2,
     );
     const graph = page.locator("[data-dependency-graph]");
     assert.equal(
@@ -736,6 +736,44 @@ try {
         .count(),
       0,
       "Edges have no status or count badges",
+    );
+    assert.equal(
+      await graph
+        .locator('[data-graph-edge-ids][data-link-change="update"]')
+        .count(),
+      1,
+    );
+    assert.equal(
+      await graph
+        .locator(
+          '[data-graph-edge-ids]:is([data-link-change="add"], [data-link-change="remove"])',
+        )
+        .count(),
+      0,
+      "A matched modified reference renders once",
+    );
+    const block = graph.locator('[data-graph-edge-ids*="network-depends-on"]');
+    assert.equal(await block.getAttribute("data-graph-source-attribute"), null);
+    assert.equal(await block.getAttribute("data-graph-target-attribute"), null);
+    const modified = graph.locator(
+      '[data-graph-edge-ids][data-link-change="update"]',
+    );
+    assert.equal(
+      await modified.getAttribute("data-graph-source-attribute"),
+      "replica_endpoint",
+    );
+    assert.equal(
+      await modified.getAttribute("data-graph-target-attribute"),
+      "env.DATABASE_URL",
+    );
+    assert.notEqual(
+      await modified
+        .locator("path[marker-end]")
+        .evaluate((el) => getComputedStyle(el).stroke),
+      await block
+        .locator("path[marker-end]")
+        .evaluate((el) => getComputedStyle(el).stroke),
+      "Modified and unchanged links have distinct colors",
     );
     const routes = await page.evaluate(() => {
       const svg = document
@@ -769,6 +807,8 @@ try {
                   Math.min(p.x, q.x) < r.right - 1);
             });
           });
+          if (!group.dataset.graphTargetAttribute)
+            return { clear, aligned: true };
           const target = cards.find(
             (card) => card.dataset.graphResourceCard === "api",
           );
@@ -798,6 +838,24 @@ try {
       path: resolve(output, `attribute-ports-${theme}-${width}.png`),
     });
     await page
+      .getByRole("button", { name: "Hide attribute differences for Database" })
+      .click();
+    await page.waitForFunction(
+      () => !document.querySelector("[data-graph-source-attribute]"),
+    );
+    assert.equal(
+      await graph.locator("[data-graph-target-attribute]").count(),
+      2,
+    );
+    await page
+      .getByRole("button", { name: "Show attribute differences for Database" })
+      .click();
+    await page.waitForFunction(
+      () =>
+        document.querySelectorAll("[data-graph-source-attribute]").length === 2,
+    );
+
+    await page
       .getByRole("button", {
         name: "Hide attribute differences for Shipping API",
       })
@@ -813,7 +871,7 @@ try {
       .click();
     await page.waitForFunction(
       () =>
-        document.querySelectorAll("[data-graph-target-attribute]").length === 3,
+        document.querySelectorAll("[data-graph-target-attribute]").length === 2,
     );
     await page.getByRole("button", { name: "Zoom out" }).click();
     await page.waitForFunction(
@@ -822,12 +880,14 @@ try {
     await page.getByRole("button", { name: "Zoom in" }).click();
     await page.waitForFunction(
       () =>
-        document.querySelectorAll("[data-graph-target-attribute]").length === 3,
+        document.querySelectorAll("[data-graph-target-attribute]").length === 2,
     );
     assert.equal(
       await page
         .locator("[data-graph-details]")
-        .getByRole("button", { name: /Database reference.*Added relationship/ })
+        .getByRole("button", {
+          name: /Database reference.*Modified relationship/,
+        })
         .count(),
       1,
     );

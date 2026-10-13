@@ -607,7 +607,10 @@ export function DependencyGraph({
         </p>
       )}
       {edges.some(
-        (edge) => edge.change === "add" || edge.change === "remove",
+        (edge) =>
+          edge.change === "add" ||
+          edge.change === "remove" ||
+          edge.change === "update",
       ) && (
         <p
           className={styles.linkLegend}
@@ -619,6 +622,11 @@ export function DependencyGraph({
           <span className={styles.linkChange} data-link-change="remove">
             Removed link
           </span>
+          {edges.some((edge) => edge.change === "update") && (
+            <span className={styles.linkChange} data-link-change="update">
+              Modified link
+            </span>
+          )}
         </p>
       )}
       <div className={styles.toolbar}>
@@ -864,23 +872,27 @@ export function DependencyGraph({
                       aria-hidden="true"
                     >
                       <defs>
-                        {["unknown", "unchanged", "add", "remove"].map(
-                          (change) => (
-                            <marker
-                              key={change}
-                              id={`${instanceId}-arrow-${change}`}
-                              data-link-change={change}
-                              viewBox="0 0 10 10"
-                              refX="9"
-                              refY="5"
-                              markerWidth="7"
-                              markerHeight="7"
-                              orient="auto-start-reverse"
-                            >
-                              <path d="M 0 0 L 10 5 L 0 10 z" />
-                            </marker>
-                          ),
-                        )}
+                        {[
+                          "unknown",
+                          "unchanged",
+                          "add",
+                          "remove",
+                          "update",
+                        ].map((change) => (
+                          <marker
+                            key={change}
+                            id={`${instanceId}-arrow-${change}`}
+                            data-link-change={change}
+                            viewBox="0 0 10 10"
+                            refX="9"
+                            refY="5"
+                            markerWidth="7"
+                            markerHeight="7"
+                            orient="auto-start-reverse"
+                          >
+                            <path d="M 0 0 L 10 5 L 0 10 z" />
+                          </marker>
+                        ))}
                       </defs>
                       {connections.map((connection) => {
                         const ids = connection.edges.map((edge) => edge.id);
@@ -929,7 +941,7 @@ export function DependencyGraph({
                               {connection.edges
                                 .map(
                                   (edge) =>
-                                    `${edge.change === "add" ? "Added: " : edge.change === "remove" ? "Removed: " : ""}${edge.label ?? edge.id}`,
+                                    `${edge.change === "add" ? "Added: " : edge.change === "remove" ? "Removed: " : edge.change === "update" ? "Modified: " : ""}${edge.label ?? edge.id}`,
                                 )
                                 .join("; ")}
                             </title>

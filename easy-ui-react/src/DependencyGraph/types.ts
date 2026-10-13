@@ -41,7 +41,7 @@ export type DependencyGraphNode = {
 
 /** Caller-supplied relationship delta, independent of resource operations. */
 export type DependencyGraphEdgeChange =
-  "add" | "remove" | "unchanged" | "unknown";
+  "add" | "remove" | "update" | "unchanged" | "unknown";
 
 export type DependencyGraphEdge = {
   id: string;
@@ -54,9 +54,9 @@ export type DependencyGraphEdge = {
   description?: string;
   /** Presentation only. For example, use dashed for an inferred relationship. */
   variant?: "solid" | "dashed";
-  /** Omitted status is unknown. Supply both old and new links to review topology changes. */
+  /** Omitted status is unknown. Use update for a caller-matched modified relationship, rendered once. */
   change?: DependencyGraphEdgeChange;
-  /** Exact path of a visible source attribute; falls back to the card when hidden. */
+  /** Reference attribute path; omit both paths for block-level depends_on. Hidden fields fall back to the card. */
   sourceAttributePath?: string;
   /** Exact path of a visible dependent attribute; falls back to the card when hidden. */
   targetAttributePath?: string;

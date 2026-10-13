@@ -634,3 +634,13 @@
   padding: 0 16px 12px;
   font-size: 0.8125rem;
 }
+
+.connection[data-link-change="update"] .edgeLine {
+  stroke: design-token("color.warning.700");
+}
+.edges marker[data-link-change="update"] {
+  fill: design-token("color.warning.700");
+}
+.linkChange[data-link-change="update"] {
+  color: design-token("color.warning.800");
+}

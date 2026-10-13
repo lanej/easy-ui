@@ -258,7 +258,10 @@ export function visibleDependencyNodes(
           .concat(
             edges
               .filter(
-                (edge) => edge.change === "add" || edge.change === "remove",
+                (edge) =>
+                  edge.change === "add" ||
+                  edge.change === "remove" ||
+                  edge.change === "update",
               )
               .flatMap((edge) => [edge.source, edge.target])
               .filter((id) => records.has(id)),

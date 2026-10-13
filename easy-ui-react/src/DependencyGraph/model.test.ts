@@ -238,17 +238,20 @@ it("preserves separate added and removed links when collapsing endpoints into gr
       .sort(),
   ).toEqual([["new", "other-add"], ["old"]]);
 });
-it("includes both supplied endpoints of changed links in the changes view at depth zero", () => {
-  expect(
-    [
-      ...visibleDependencyNodes(
-        [
-          { id: "a", label: "A", change: "unchanged" },
-          { id: "b", label: "B", change: "unchanged" },
-        ],
-        [{ id: "link", source: "a", target: "b", change: "remove" }],
-        { scope: "changes", depth: 0 },
-      ),
-    ].sort(),
-  ).toEqual(["a", "b"]);
-});
+it.each(["add", "remove", "update"] as const)(
+  "includes endpoints of %s links in changes scope with unchanged resources",
+  (change) => {
+    expect(
+      [
+        ...visibleDependencyNodes(
+          [
+            { id: "a", label: "A", change: "unchanged" },
+            { id: "b", label: "B", change: "unchanged" },
+          ],
+          [{ id: "link", source: "a", target: "b", change }],
+          { scope: "changes", depth: 0 },
+        ),
+      ].sort(),
+    ).toEqual(["a", "b"]);
+  },
+);

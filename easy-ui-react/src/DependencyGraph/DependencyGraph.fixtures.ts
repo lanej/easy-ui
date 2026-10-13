@@ -298,7 +298,7 @@ export const relationshipChangeEdges: DependencyGraphEdge[] = [
 export const attributeDependencyNodes: DependencyGraphNode[] = [
   {
     id: "database",
-    label: "Primary database",
+    label: "Database",
     icon: DatabaseIcon,
     iconLabel: "Database",
     change: "update",
@@ -308,6 +308,12 @@ export const attributeDependencyNodes: DependencyGraphNode[] = [
         type: "change",
         before: "db-v1.internal:5432",
         after: "db-v2.internal:5432",
+      },
+      {
+        path: "replica_endpoint",
+        type: "change",
+        before: "replica-v1.internal:5432",
+        after: "replica-v2.internal:5432",
       },
       { path: "version", type: "change", before: "16.3", after: "16.4" },
     ],
@@ -336,42 +342,47 @@ export const attributeDependencyNodes: DependencyGraphNode[] = [
         path: "env.DATABASE_URL",
         type: "change",
         before: "postgres://db-v1.internal:5432/app",
-        after: "postgres://db-v2.internal:5432/app",
+        after: "postgres://replica-v2.internal:5432/app",
       },
       {
-        path: "private_network_id",
+        path: "env.HEALTHCHECK_DATABASE_ENDPOINT",
         type: "change",
-        before: "legacy-network",
-        after: "production-network",
+        before: "db-v1.internal:5432",
+        after: "db-v2.internal:5432",
       },
     ],
   },
 ];
 export const attributeDependencyEdges: DependencyGraphEdge[] = [
   {
-    id: "old-database-reference",
+    id: "database-reference",
     source: "database",
     target: "api",
-    sourceAttributePath: "endpoint",
+    sourceAttributePath: "replica_endpoint",
     targetAttributePath: "env.DATABASE_URL",
-    change: "remove",
-    label: "Previous database reference",
-  },
-  {
-    id: "new-database-reference",
-    source: "database",
-    target: "api",
-    sourceAttributePath: "endpoint",
-    targetAttributePath: "env.DATABASE_URL",
-    change: "add",
+    change: "update",
     label: "Database reference",
+    description:
+      "Reference changed from database.primary.endpoint to database.primary.replica_endpoint. The caller matches it as one modified relationship.",
   },
   {
-    id: "network-reference",
+    id: "healthcheck-reference",
+    source: "database",
+    target: "api",
+    sourceAttributePath: "endpoint",
+    targetAttributePath: "env.HEALTHCHECK_DATABASE_ENDPOINT",
+    change: "unchanged",
+    label: "Healthcheck reference",
+    description:
+      "The expression still references database.primary.endpoint. Its resolved value changes, but the relationship remains unchanged.",
+  },
+  {
+    id: "network-depends-on",
     source: "network",
     target: "api",
-    targetAttributePath: "private_network_id",
     change: "unchanged",
-    label: "Private network reference",
+    label: "Explicit depends_on",
+    description:
+      "depends_on = [network.private] creates a block-to-block dependency.",
   },
 ];

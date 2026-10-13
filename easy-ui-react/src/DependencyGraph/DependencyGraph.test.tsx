@@ -631,3 +631,45 @@ describe("DependencyGraph zoom and branch disclosures", () => {
     expect(additions[2]).toHaveTextContent("😀new");
   });
 });
+
+it("renders a caller-matched modified reference once and preserves its selection identity", () => {
+  const { container } = render(
+    <DependencyGraph
+      title="References"
+      nodes={[
+        { id: "a", label: "A", change: "unchanged" },
+        { id: "b", label: "B", change: "unchanged" },
+      ]}
+      edges={[
+        {
+          id: "reference",
+          source: "a",
+          target: "b",
+          sourceAttributePath: "endpoint",
+          targetAttributePath: "url",
+          change: "update",
+          label: "Database reference",
+        },
+      ]}
+      defaultView={{ scope: "changes", depth: 0 }}
+      defaultSelection={{ type: "node", id: "b" }}
+    />,
+  );
+  expect(container.querySelectorAll("[data-graph-edge-ids]")).toHaveLength(1);
+  const edge = container.querySelector("[data-graph-edge-ids]");
+  expect(edge).toHaveAttribute(
+    "data-graph-edge-ids",
+    JSON.stringify(["reference"]),
+  );
+  expect(edge).toHaveAttribute("data-link-change", "update");
+  expect(edge?.querySelector("path[marker-end]")).toHaveAttribute(
+    "marker-end",
+    expect.stringContaining("arrow-update"),
+  );
+  expect(screen.getByText("Modified link")).toBeInTheDocument();
+  const relationship = screen.getByRole("button", {
+    name: /Database reference.*Modified relationship/,
+  });
+  fireEvent.click(relationship);
+  expect(relationship).toHaveAttribute("aria-pressed", "true");
+});
