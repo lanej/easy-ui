@@ -36,15 +36,19 @@ async function settledCards() {
     const unit =
       parseFloat(getComputedStyle(document.documentElement).fontSize) / 16;
     return [...document.querySelectorAll("[data-graph-item-card]")].every(
-      (card) =>
+      (card) => {
+        const height =
+          card.getBoundingClientRect().height /
+          new DOMMatrix(getComputedStyle(card.parentElement).transform).a /
+          unit;
+        const layoutHeight = Number(card.dataset.graphLayoutHeight);
+        // Collapsed groups use fixed, potentially fractional CSS heights.
+        if (!card.hasAttribute("data-graph-resource-card"))
+          return Math.abs(height - layoutHeight) <= 1.1;
         // Match the ResizeObserver's rounded layout measurement before capturing
         // positions. A one-pixel tolerance could accept its previous reading.
-        Math.ceil(
-          card.getBoundingClientRect().height /
-            new DOMMatrix(getComputedStyle(card.parentElement).transform).a /
-            unit -
-            0.001,
-        ) === Number(card.dataset.graphLayoutHeight),
+        return Math.ceil(height - 0.001) === layoutHeight;
+      },
     );
   });
 }
