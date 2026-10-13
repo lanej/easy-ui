@@ -23,7 +23,9 @@ function ResourceLabel({ label }: { label: string }) {
         {characters.slice(0, -18).join("")}
       </span>
       <span className={styles.labelSuffix}>
-        <span>{characters.slice(-18).join("")}</span>
+        <span className={styles.labelSuffixText}>
+          {characters.slice(-18).join("")}
+        </span>
       </span>
     </span>
   );

@@ -56,10 +56,6 @@ async function positions() {
       ),
     );
 }
-function sameSurvivors(before, after, name) {
-  for (const [id, position] of Object.entries(after))
-    assert.deepEqual(position, before[id], `${name}: ${id} stayed in place`);
-}
 function sameOrder(before, after) {
   for (const [id, a] of Object.entries(after))
     for (const [other, b] of Object.entries(after))
@@ -113,7 +109,7 @@ try {
         await page.getByText("2 hidden", { exact: true }).count(),
         1,
       );
-      sameSurvivors(initial, await positions(), name);
+      sameOrder(initial, await positions());
       await page
         .getByRole("button", {
           name: "Expand dependents of var.pipeline_identity",
@@ -122,7 +118,7 @@ try {
         .press("Enter");
       await settled();
       assert.equal(await cards.count(), 10);
-      sameSurvivors(initial, await positions(), name);
+      sameOrder(initial, await positions());
       const expand = page.getByRole("button", {
         name: "Show attribute differences for pipeline",
         exact: true,

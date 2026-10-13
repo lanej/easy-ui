@@ -715,9 +715,9 @@
   overflow: hidden;
   display: flex;
   justify-content: flex-end;
-  > span {
-    flex-shrink: 0;
-  }
+}
+.labelSuffixText {
+  flex-shrink: 0;
 }
 .nodeMetadata {
   display: flex;
