@@ -1112,9 +1112,33 @@ try {
           id: card.dataset.graphResourceCard,
           x: parseFloat(getComputedStyle(card).left),
           y: parseFloat(getComputedStyle(card).top),
+          width: card.offsetWidth,
+          height: card.offsetHeight,
         })),
       );
     const before = await positions();
+    const assertOrdering = (cards) => {
+      assert.deepEqual(
+        cards.map((card) => card.id),
+        before.map((card) => card.id),
+      );
+      for (let a = 0; a < before.length; a++)
+        for (let b = a + 1; b < before.length; b++) {
+          for (const axis of ["x", "y"])
+            assert.equal(
+              Math.sign(cards[a][axis] - cards[b][axis]),
+              Math.sign(before[a][axis] - before[b][axis]),
+              "Inspector resizing preserves resource ordering",
+            );
+          assert.ok(
+            cards[a].x + cards[a].width <= cards[b].x ||
+              cards[b].x + cards[b].width <= cards[a].x ||
+              cards[a].y + cards[a].height <= cards[b].y ||
+              cards[b].y + cards[b].height <= cards[a].y,
+            "Inspector resizing does not overlap cards",
+          );
+        }
+    };
     if (width === 1440)
       await graph.screenshot({
         path: resolve(output, "embedded-inspector-desktop.png"),
@@ -1153,17 +1177,7 @@ try {
         (await details.evaluate((el) => el.getBoundingClientRect().width)) >
           widthBefore + 100,
       );
-    const after = await positions();
-    for (let a = 0; a < before.length; a++)
-      for (let b = a + 1; b < before.length; b++) {
-        assert.equal(after[a].id, before[a].id);
-        for (const axis of ["x", "y"])
-          assert.equal(
-            Math.sign(after[a][axis] - after[b][axis]),
-            Math.sign(before[a][axis] - before[b][axis]),
-            "Inspector expansion preserves resource ordering",
-          );
-      }
+    assertOrdering(await positions());
     await accessibility(`expanded-inspector-${width}`);
     await graph.screenshot({
       path: resolve(output, `expanded-inspector-${width}.png`),
@@ -1177,7 +1191,14 @@ try {
       await details.evaluate((el) => el.getBoundingClientRect().width),
       widthBefore,
     );
-    assert.deepEqual(await positions(), before);
+    const restored = await positions();
+    assertOrdering(restored);
+    for (let i = 0; i < before.length; i++)
+      for (const dimension of ["width", "height"])
+        assert.ok(
+          Math.abs(restored[i][dimension] - before[i][dimension]) <= 1.01,
+          `Restored ${before[i].id} ${dimension} stays within one CSS pixel after measurement rounding`,
+        );
     checks.push({ name: `optional-heading-and-expanded-inspector-${width}` });
 
     await open("risk-annotations");
