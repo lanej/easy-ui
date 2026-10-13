@@ -420,9 +420,23 @@ export async function checkJourneySections({
     check(
       `Custom-height close-up stays inside the ${width}px journey frame`,
       (await browser.evaluate(bounded)) &&
-        (await browser.evaluate(
-          () => window.journeyMaps.origin.getContainer().clientHeight < 1000,
-        )),
+        (await browser.evaluate(() => {
+          const card = document
+            .querySelector("[data-map-zoom-section]")
+            .getBoundingClientRect();
+          const navigation = document
+            .querySelector(
+              "[data-map-geography] > [data-map-state] .maplibregl-ctrl-group",
+            )
+            .getBoundingClientRect();
+          return (
+            window.journeyMaps.origin.getContainer().clientHeight < 1000 &&
+            (navigation.bottom <= card.top ||
+              navigation.top >= card.bottom ||
+              navigation.right <= card.left ||
+              navigation.left >= card.right)
+          );
+        })),
     );
     const widthsMatch = async () => {
       const main = await window.journeyMaps.overview

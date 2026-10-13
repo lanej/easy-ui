@@ -89,12 +89,23 @@ export function NetworkMapZoomSections() {
       const viewport = element
         .querySelector("[data-map-state]")
         ?.getBoundingClientRect();
+      const navigationHeight =
+        options.controls !== false && options.controls?.navigation !== false
+          ? (map
+              .getContainer()
+              .querySelector(".maplibregl-ctrl-group")
+              ?.getBoundingClientRect().height ?? 62)
+          : 0;
+      const topSpace = navigationHeight > 0 ? navigationHeight + 22 : 12;
       const maxViewportHeight =
         base.height > 0 && viewport && viewport.height > 0
           ? Math.max(
               220,
               Math.floor(
-                base.height - bottom - 12 - (bounds.height - viewport.height),
+                base.height -
+                  bottom -
+                  topSpace -
+                  (bounds.height - viewport.height),
               ),
             )
           : undefined;
@@ -161,7 +172,7 @@ export function NetworkMapZoomSections() {
       map.off("resize", update);
       frame.removeEventListener("keydown", onEscape);
     };
-  }, [active, options.facilities, mapRef, setDock, close]);
+  }, [active, options.facilities, options.controls, mapRef, setDock, close]);
   const ids = new Set<string>();
   for (const item of options.zoomSections ?? []) {
     if (!item.id || ids.has(item.id))
