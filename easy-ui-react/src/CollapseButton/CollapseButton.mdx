@@ -7,6 +7,8 @@ import * as Stories from "./CollapseButton.stories";
 
 A reusable negative (−) disclosure atom built on `IconButton`. Supply `accessibilityLabel` to name the content and `aria-controls` to identify its container. The expanded default uses the negative (−) icon and `aria-expanded={true}`. `expanded` can control the current state and switches between + and − without replacing the focused button. The caller owns disclosure state and content visibility.
 
+## Usage
+
 ```tsx
 import { CollapseButton } from "@easypost/easy-ui/CollapseButton";
 
@@ -19,7 +21,12 @@ import { CollapseButton } from "@easypost/easy-ui/CollapseButton";
 
 Use `ExpandButton` for a collapsed default and `CollapseButton` for an expanded default. Both accept the same size, color, variant, press, and disabled props as `IconButton`. When using the symbol for a zoom action, override `aria-expanded={undefined}`; zoom does not disclose content.
 
+## Props
+
+<ArgTypes />
+
+## Examples
+
 <Canvas of={Stories.Default} />
 <Canvas of={Stories.Disclosure} />
 <Canvas of={Stories.Disabled} />
-<ArgTypes />
