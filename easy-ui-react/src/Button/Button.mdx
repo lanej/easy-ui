@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Controls, ArgTypes } from "../../../.storybook/DocsApi";
 import * as ButtonStories from "./Button.stories";
 
 <Meta of={ButtonStories} />
@@ -8,17 +8,29 @@ import * as ButtonStories from "./Button.stories";
 
 A `<Button />` enables users to take an action or transition to other pages. They are designed with multiple styles to address various needs, and they are ideal for highlighting an action for the user to take in order to move forward in a flow.
 
-**Note**: Each `<Button />` variant support a subset of colors from the `color` property.
+## Usage
 
-## Filled
-
-By default, a `<Button />` renders as a filled variant.
+```tsx
+import { Button } from "@easypost/easy-ui/Button";
+```
 
 <Canvas of={ButtonStories.Filled} />
 
+## Props
+
+<ArgTypes of={ButtonStories} />
+
+## Examples
+
+**Note**: Each `<Button />` variant support a subset of colors from the `color` property.
+
+### Filled
+
+By default, a `<Button />` renders as a filled variant.
+
 <Controls of={ButtonStories.Filled} include={["color"]} />
 
-## Outlined
+### Outlined
 
 Use `variant="outlined"` to render an outlined variant.
 
@@ -26,7 +38,7 @@ Use `variant="outlined"` to render an outlined variant.
 
 <Controls of={ButtonStories.Outlined} include={["color"]} />
 
-## Link
+### Link
 
 Use `variant="link"` to render a link variant.
 
@@ -34,7 +46,7 @@ Use `variant="link"` to render a link variant.
 
 <Controls of={ButtonStories.Link} include={["color"]} />
 
-## Text
+### Text
 
 Use `variant="text"` to render a text variant.
 
@@ -42,7 +54,7 @@ Use `variant="text"` to render a text variant.
 
 <Controls of={ButtonStories.Text} include={["color"]} />
 
-## Icons
+### Icons
 
 Use `iconAtStart` or `iconAtEnd` to render an icon.
 
@@ -50,13 +62,13 @@ Use `iconAtStart` or `iconAtEnd` to render an icon.
 
 <Controls of={ButtonStories.Icons} />
 
-## Href
+### Href
 
 Use `href` to for navigation.
 
 <Canvas of={ButtonStories.Href} />
 
-### Client-side routing
+#### Client-side routing
 
 Pass a `navigate` function to `<Provider />` and a `<Button />` with an `href`
 navigates through your app's router instead of doing a full page load. Links to
@@ -109,29 +121,29 @@ through `useHref`, so each `href` in the markup is the one the router resolved.
 
 <Canvas of={ButtonStories.ClientSideRouting} />
 
-## Small
+### Small
 
 Use `size="sm"` to render a smaller `<Button />`.
 
 <Canvas of={ButtonStories.Small} />
 
-## Inverse
+### Inverse
 
 <Canvas of={ButtonStories.Inverse} />
 
-## Block
+### Block
 
 <Canvas of={ButtonStories.Block} />
 
-## Disabled
+### Disabled
 
 <Canvas of={ButtonStories.Disabled} />
 
-## Click event
+### Click event
 
 <Canvas of={ButtonStories.ClickEvent} />
 
-## Controls
+### Controls
 
 <Canvas of={ButtonStories.Controls} />
 

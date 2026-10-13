@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { PillGroup } from "./PillGroup";
 import * as PillStories from "./PillGroup.stories";
 
@@ -9,7 +9,21 @@ import * as PillStories from "./PillGroup.stories";
 
 A `<PillGroup />` displays a focusable list of labels, categories, keywords, or filters; individual pills can be dismissed as well as accompanied by an icon.
 
-### Architecture
+## Usage
+
+```tsx
+import { PillGroup } from "@easypost/easy-ui/PillGroup";
+```
+
+<Canvas of={PillStories.Default} />
+
+## Props
+
+<ArgTypes of={PillStories} />
+
+## Examples
+
+#### Architecture
 
 `<PillGroup />` is a simple compound component, use alongside `<PillGroup.Pill />` to render a group of pills.
 
@@ -23,11 +37,11 @@ import { PillGroup } from "@easypost/easy-ui/PillGroup";
 </PillGroup>;
 ```
 
-### Labels
+#### Labels
 
 Both `<PillGroup />` and `<PillGroup.Pill />` are required to have labels, and for the former, the label is visually hidden.
 
-### Flex positioning
+#### Flex positioning
 
 `<PillGroup />` exposes a `horizontalStackContainerProps` property to assist with position managment. The properties are a subset of what is exposed by the `HorizontalStack` component.
 
@@ -54,7 +68,7 @@ type horizontalStackContainerProps = {
 };
 ```
 
-### Managing state
+#### Managing state
 
 To efficiently manage the removal of pills via the keyboard and mouse while maintaining key accessibility details, the module exports the `usePillListState` hook. The hook
 is a simple wrapper around the `useListData` hook from `react-stately`.
@@ -83,55 +97,53 @@ return (
 );
 ```
 
-## Default
+### Default
 
-<Canvas of={PillStories.Default} />
-
-## Standard Icon
+### Standard Icon
 
 Use the `icon` property on `<PillGroup.Pill />` to render a pill with a left aligned icon.
 
 <Canvas of={PillStories.StandardIconSymbol} />
 
-## Image
+### Image
 
 The `icon` property directly passes the argument to the underlying `Icon` component, hence an image can also be passed to `icon`.
 
 <Canvas of={PillStories.ImageSymbol} />
 
-## Positioning
+### Positioning
 
 Use `horizontalStackContainerProps` prop of `<PillGroup />` for handling CSS flex positioning.
 
 <Canvas of={PillStories.Positioning} />
 
-## Removal
+### Removal
 
 Use `onRemove` prop of `<PillGroup />` and `usePillListState` for handling removal.
 
 <Canvas of={PillStories.Removal} />
 
-## Background
+### Background
 
 The `background` prop controls the background color for individual pills.
 
 <Canvas of={PillStories.Background} />
 
-## Border
+### Border
 
 The `isBorderless` prop controls whether or not individual pills render with a border.
 
 <Canvas of={PillStories.Border} />
 
-## Size
+### Size
 
 The `size` prop controls the size of individual pills. Supported sizes are `sm` and `md` (default).
 
 <Canvas of={PillStories.Small} />
 
-## Properties
+### Properties
 
-### PillGroup props
+#### PillGroup props
 
 ```tsx
 // onRemove (keys: Set<Key>) => void

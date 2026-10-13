@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { Disclosure } from "./Disclosure";
 import * as DisclosureStories from "./Disclosure.stories";
 
@@ -8,7 +9,19 @@ import * as DisclosureStories from "./Disclosure.stories";
 
 `Disclosure` shows supporting content on demand. Several disclosures can stay open independently, making it suitable for repeated rows with evidence that readers may compare.
 
+## Usage
+
+```tsx
+import { Disclosure } from "@easypost/easy-ui/Disclosure";
+```
+
 <Canvas of={DisclosureStories.Default} />
+
+## Props
+
+<ArgTypes of={Disclosure} />
+
+## Examples
 
 ```tsx
 import { Disclosure } from "@easypost/easy-ui/Disclosure";
@@ -21,7 +34,7 @@ import { Disclosure } from "@easypost/easy-ui/Disclosure";
 </Disclosure>;
 ```
 
-## Composition
+### Composition
 
 The root adds no DOM wrapper. Place one `Disclosure.Trigger` and one `Disclosure.Content` inside it, with the layout elements your page needs between them. Each instance creates unique, stable IDs and connects its trigger to its panel. Trigger styles, size, accessible label, and disabled state use the existing `Button` props.
 
@@ -36,7 +49,7 @@ Panels have no landmark role by default. Use `role="region"` when a panel deserv
 
 <Canvas of={DisclosureStories.IndependentPanels} />
 
-## Expansion state
+### Expansion state
 
 Disclosures start closed. `defaultExpanded` changes the initial uncontrolled state. For controlled expansion, pass both `isExpanded` and `onExpandedChange`. The callback receives the requested next boolean; the panel waits for the controlled prop to change. A controlled disclosure with no callback remains read-only. Programmatic prop changes do not call the callback.
 
@@ -44,7 +57,7 @@ Enter and Space activate the focused trigger. Closing a panel while focus is ins
 
 <Canvas of={DisclosureStories.Controlled} />
 
-## Content lifetime
+### Content lifetime
 
 `mountPolicy="preserve"` is the default. Child content is mounted even before the first opening and stays mounted while hidden. Local input values and component state survive closing; effects also remain active. Hidden content is outside normal tab navigation and the accessibility tree.
 
@@ -52,16 +65,12 @@ Use `mountPolicy="unmount"` when closed child content should be removed. Childre
 
 <Canvas of={DisclosureStories.MountPolicies} />
 
-## Properties
+#### Disclosure
 
-### Disclosure
-
-<ArgTypes of={Disclosure} />
-
-### Disclosure.Trigger
+#### Disclosure.Trigger
 
 <ArgTypes of={Disclosure.Trigger} />
 
-### Disclosure.Content
+#### Disclosure.Content
 
 <ArgTypes of={Disclosure.Content} />

@@ -1,11 +1,5 @@
-import React from "react";
-import {
-  Canvas,
-  Meta,
-  Controls,
-  ArgTypes,
-  ArgsTable,
-} from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Controls, ArgTypes } from "../../../.storybook/DocsApi";
 import { TextField } from "./TextField";
 import * as TextFieldStories from "./TextField.stories";
 
@@ -15,61 +9,73 @@ import * as TextFieldStories from "./TextField.stories";
 
 The `<TextField />` component allows users to input text on a single line and provides the essentials to be used as a form control element.
 
-## Standard
+## Usage
 
-Simple `<TextField />` with `label`, `placeholder`, and `helperText`.
+```tsx
+import { TextField } from "@easypost/easy-ui/TextField";
+```
 
 <Canvas of={TextFieldStories.Standard} />
 
-## Password
+## Props
+
+<ArgTypes of={TextFieldStories} />
+
+## Examples
+
+### Standard
+
+Simple `<TextField />` with `label`, `placeholder`, and `helperText`.
+
+### Password
 
 Setting `type="password"` yields a password input with a visibility icon button.
 
 <Canvas of={TextFieldStories.Password} />
 
-## Icon
+### Icon
 
 Use `iconAtStart` or `iconAtEnd` to add an icon.
 
 <Canvas of={TextFieldStories.Icon} />
 
-## Text Prefix and Suffix
+### Text Prefix and Suffix
 
 Use `textAtStart` or `textAtEnd` to add a text prefix or suffix.
 
 <Canvas of={TextFieldStories.PrefixAndSuffix} />
 
-## Small TextField
+### Small TextField
 
 Set `size="sm"` for a small `<TextField />`.
 
 <Canvas of={TextFieldStories.SmallTextFields} />
 
-## Large TextField
+### Large TextField
 
 Set `size="lg"` for a large `<TextField />`.
 
 <Canvas of={TextFieldStories.LargeTextFields} />
 
-## Label with emphasis
+### Label with emphasis
 
 Use `isLabelEmphasized=true` to display a label with emphasis.
 
 <Canvas of={TextFieldStories.LabelWithEmphasis} />
 
-## Error
+### Error
 
 When `validationState` is set to `invalid`, the `<TextField />` displays with error styles.
 
 <Canvas of={TextFieldStories.Error} />
 
-## Visually hidden label
+### Visually hidden label
 
-A `label` can be visually hidden by omitted the `label` property, but to main accessibility, provide an `aria-label`.
+Omit the visible `label` and provide an `aria-label` when the surrounding interface already makes the field's purpose clear.
 
 <Canvas of={TextFieldStories.VisuallyHiddenLabel} />
 
-## Controls
+### Controls
 
 <Canvas of={TextFieldStories.Controls} />
 

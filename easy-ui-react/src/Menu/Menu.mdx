@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, ArgTypes, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { Menu } from "./Menu";
 import * as MenuStories from "./Menu.stories";
 
@@ -7,23 +7,37 @@ import * as MenuStories from "./Menu.stories";
 
 # Menu
 
-## Simple Menu
+An accessible menu for choosing an action or option.
+
+## Usage
+
+```tsx
+import { Menu } from "@easypost/easy-ui/Menu";
+```
 
 <Canvas of={MenuStories.SimpleMenu} />
 
-## With Separator
+## Props
+
+<ArgTypes of={Menu} />
+
+## Examples
+
+### Simple Menu
+
+### With Separator
 
 A `<Menu />` can be divided into multiple sections, rendering a separator between each.
 
 <Canvas of={MenuStories.WithSeparator} />
 
-## With Title
+### With Title
 
 A `<Menu />` with sections can include a title
 
 <Canvas of={MenuStories.WithTitle} />
 
-## Scrolls on Max Items
+### Scrolls on Max Items
 
 When a `<Menu />` has more than five items the menu scrolls to only show those items. The number can be configured with the `maxItemsUntilScroll` property. Set the value to `Infinity` to disable scrolling.
 
@@ -34,7 +48,7 @@ When a `<Menu />` has more than five items the menu scrolls to only show those i
   include={["maxItemsUntilScroll"]}
 />
 
-## Width Options
+### Width Options
 
 By default, a `<Menu />` is the width of its trigger element and stretches to the length of its content.
 
@@ -52,13 +66,13 @@ The `width` of the `<Menu.Overlay />` can also be set to any arbitrary value bas
 
 <Canvas of={MenuStories.DefinedResponsiveWidth} />
 
-## Item Types
+### Item Types
 
 A `<Menu />` can include links by using the `href` property, and it can include disabled menu items by using the `disabledKeys` property on the `Menu.Overlay`.
 
 <Canvas of={MenuStories.MixedItemTypes} />
 
-## Client-side routing
+### Client-side routing
 
 Pass a `navigate` function to `<Provider />` and link items navigate through your app's router instead of doing a full page load. Their `href`s are resolved through the provider's `useHref`.
 
@@ -86,7 +100,7 @@ The example below is wired to a fake router. Its items are regular links with re
 
 An item with an `hrefComponent` receives the `href` as written rather than the one `useHref` resolved, since the link component resolves its own. Unlike `TabNav.Item` and `VerticalNav.Item`, though, a menu item can't opt out of the provider's router—React Aria's menu item handles links internally—so the click reaches `navigate` too. A link component that chains the `onClick` it's handed, as `next/link` does, will navigate twice; one that replaces the handler outright suppresses `navigate` and leaves the item's `onAction` unrun. Pair `hrefComponent` with a router rather than using it instead of one.
 
-## Custom Placement
+### Custom Placement
 
 A `<Menu />` can be placed on different edges of its trigger element. See the controls for valid values. Ensure any deviation from the default value is coordinated with design to prevent unexpected user experience.
 
@@ -94,7 +108,7 @@ A `<Menu />` can be placed on different edges of its trigger element. See the co
 
 <Controls of={MenuStories.CustomPlacement} include={["placement"]} />
 
-## Multiple Selection
+### Multiple Selection
 
 A `<Menu />` supports multiple selection mode by using `selectionMode` prop on `<Menu.Overlay />`. `onSelectionChange` and `selectedKeys` (controlled) are used to make selection.
 
@@ -104,24 +118,20 @@ A multiple selection `<Menu />` supports Select All checkbox with `all` as key o
 
 <Canvas of={MenuStories.MultipleSelectionWithSelectAll} />
 
-## Properties
+#### Menu
 
-### Menu
-
-<ArgTypes of={Menu} />
-
-### Menu.Trigger
+#### Menu.Trigger
 
 <ArgTypes of={Menu.Trigger} />
 
-### Menu.Overlay
+#### Menu.Overlay
 
 <ArgTypes of={Menu.Overlay} />
 
-### Menu.Section
+#### Menu.Section
 
 <ArgTypes of={Menu.Section} />
 
-### Menu.Item
+#### Menu.Item
 
 <ArgTypes of={Menu.Item} />

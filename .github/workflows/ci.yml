@@ -52,6 +52,8 @@ jobs:
           STORYBOOK_URL: http://127.0.0.1:9018
           FACILITY_REPORT_DIR: ${{ runner.temp }}/facility-summary-browser
           CHART_CATALOG_REPORT_DIR: ${{ runner.temp }}/chart-catalog-browser
+          STORYBOOK_DOCS_REPORT_DIR: ${{ runner.temp }}/storybook-docs-browser
+          TOKEN_BROWSER_REPORT_DIR: ${{ runner.temp }}/token-browser
         run: |
           python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/facility-storybook.log" 2>&1 &
           server_pid=$!
@@ -67,7 +69,9 @@ jobs:
           node scripts/check-chart-catalog.mjs
           node scripts/check-proportion-bar.mjs
           node scripts/check-dependency-graph.mjs
-      - name: Retain facility, chart, and proportion browser evidence
+          node scripts/check-storybook-docs.mjs
+          node scripts/check-token-browser.mjs
+      - name: Retain component browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -75,5 +79,7 @@ jobs:
           path: |
             ${{ runner.temp }}/facility-summary-browser
             ${{ runner.temp }}/chart-catalog-browser
+            ${{ runner.temp }}/storybook-docs-browser
+            ${{ runner.temp }}/token-browser
             ${{ runner.temp }}/facility-storybook.log
           if-no-files-found: ignore

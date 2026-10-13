@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { HealthAssessment } from "./HealthAssessment";
 import * as Stories from "./HealthAssessment.stories";
 
@@ -8,7 +9,19 @@ import * as Stories from "./HealthAssessment.stories";
 
 Keep an observation's name, value, assessment, and observation time together, with a reference alongside them. This organism coordinates the assessment summary, freshness, optional submetrics, and reference in a responsive presentation. It composes the `HealthIndicator`, `DurationValue`, and `ObservationFreshness` components with caller-supplied content such as the `DurationDistribution` molecule. Its classification follows that composition responsibility even when optional content is hidden.
 
+## Usage
+
+```tsx
+import { HealthAssessment } from "@easypost/easy-ui/HealthAssessment";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={HealthAssessment} />
+
+## Examples
 
 ```tsx
 <HealthAssessment
@@ -40,7 +53,7 @@ Keep an observation's name, value, assessment, and observation time together, wi
 />
 ```
 
-## Presentation forms
+### Presentation forms
 
 `variant` controls the amount and arrangement of supplied content, independently of `size` and the optional chart features. The `inline` variant keeps the indicator, current duration, and optional reference side by side for dense event timelines or map-adjacent layouts; it does not hide the current value when quantiles are shown.
 
@@ -59,7 +72,7 @@ The responsive form always keeps the pill and value. At 320px it adds supplied p
 
 <Canvas of={Stories.ResponsiveWidths} />
 
-## Keep value and assessment together
+### Keep value and assessment together
 
 The value carries the most visual weight. Standard assessments with a reference use the larger headline duration; compact assessments retain their smaller scale. The small pill above the headline states the supplied assessment without relying on color. A freshness status dot sits beside the supporting timestamp beneath it; the timestamp prefix is optional. At wider widths both columns share the same content height. The observation label anchors the top, the pill sits above the headline in the middle, and freshness anchors the bottom. The observation spans optional `referenceDetails` content as well, so its height follows the complete reference column. Narrow layouts stack content in reading order. `referenceLayout="compact"` keeps a horizontal comparison when the container is at least 360px wide, and stacks below that width to keep labels readable.
 
@@ -71,7 +84,7 @@ Region labels describe illustrative assessment ranges supplied by the applicatio
 
 <Canvas of={Stories.Assessments} />
 
-## Optional reference context
+### Optional reference context
 
 Choose `referenceVisualization="cumulative"`, `"histogram"`, `"both"`, or `"none"` in the story-only example. The cumulative curve is the default. `showReferenceDistribution` independently controls its histogram overlay. Both mode overlays histogram and curve directly; histogram mode shows just the histogram. `showHealthBands` independently controls background assessment ranges. None mode removes the reference column.
 
@@ -86,7 +99,7 @@ In application code, omit the optional `reference` prop for value, assessment, a
 <Canvas of={Stories.WithoutHealthBands} />
 <Canvas of={Stories.WithoutReference} />
 
-## Compare reference options
+### Compare reference options
 
 Health-band names and ranges are optional independently of the colored bands. By default, the supplied band thresholds share the duration-axis row; labeled percentiles place thresholds on a separate row to avoid overlap. Enable `showHealthBandLabels` in the story controls to restore the named header. The assessment pill continues to state health in text.
 
@@ -95,7 +108,7 @@ Each example uses the same observation and width. Column heights follow optional
 <Canvas of={Stories.ReferenceOptions} />
 <Canvas of={Stories.DistributionOptions} />
 
-## Preserve distinct data states
+### Preserve distinct data states
 
 - **Loading:** suppress the previous value, assessment, and reference while fetching.
 - **Unavailable:** a supplied observation with a null, negative, or nonfinite value cannot support a health assessment.
@@ -107,7 +120,7 @@ Each example uses the same observation and width. Column heights follow optional
 
 Omit `observation` entirely for an assessment that does not measure duration. `reference` remains an optional composition slot. `DurationDistribution` is the reusable reference molecule; these story fixtures supply its histogram, cumulative points, and quantiles from the same synthetic completed observations. Missing elapsed values omit the current marker while retaining the reference. Missing or unassessed health omits the colored ranges and uses neutral percentile marks and bars. Use `DurationQuantileMetrics` in `observationDetails` for the independently reusable percentile comparison. See [DurationDistribution](../DurationDistribution/DurationDistribution.mdx) for its data contracts, validation, and optional exact-value disclosure.
 
-## Fit the surrounding information
+### Fit the surrounding information
 
 Use `label` to name a standalone observation. In a table or another labeled context, omit it when the surrounding heading already identifies the measurement. `size="sm"` reduces emphasis and spacing for dense layouts.
 
@@ -116,10 +129,6 @@ Use `label` to name a standalone observation. In a table or another labeled cont
 Localize labels, value formatting, and timestamps through the individual atom props. Supply the timezone as part of the formatted timestamp when it matters. The visible `label` also names the containing group for assistive technology; when it is omitted, use `accessibilityLabel`. Content wraps within the available width, including at enlarged text sizes.
 
 <Canvas of={Stories.LocalizedNarrow} />
-
-## Properties
-
-<ArgTypes of={HealthAssessment} />
 
 Use `healthPlacement="label"` to place the assessment beside the observation label, including in compact form. Pair it with `health={{ ...assessment, variant: "dot" }}` for a compact status dot. In compact form, label placement puts the label, assessment, and duration on one row, wrapping only when space is limited. The default placement remains beside the headline.
 

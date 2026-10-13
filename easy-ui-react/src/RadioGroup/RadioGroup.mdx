@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { RadioGroup } from "./RadioGroup";
 import * as RadioGroupStories from "./RadioGroup.stories";
 
@@ -9,9 +9,21 @@ import * as RadioGroupStories from "./RadioGroup.stories";
 
 A `<RadioGroup />` is a form element that lets users select a single choice from a list of at least two options.
 
+## Usage
+
+```tsx
+import { RadioGroup } from "@easypost/easy-ui/RadioGroup";
+```
+
 <Canvas of={RadioGroupStories.Default} />
 
-## Selected
+## Props
+
+<ArgTypes of={RadioGroup} />
+
+## Examples
+
+### Selected
 
 A `<RadioGroup />` can control selection with `value` and `onChange`.
 
@@ -25,7 +37,7 @@ A `<RadioGroup />` can default selection with `defaultValue`.
 
 <Controls of={RadioGroupStories.DefaultValue} include={["defaultValue"]} />
 
-## Disabled
+### Disabled
 
 A `<RadioGroup />` can be disabled using `isDisabled`.
 
@@ -37,7 +49,7 @@ An item in a `<RadioGroup />` can be disabled using `isDisabled` on the item.
 
 <Canvas of={RadioGroupStories.DisabledItem} />
 
-## Standalone
+### Standalone
 
 In most cases, a `<RadioGroup />` should have a visible label.
 
@@ -47,7 +59,7 @@ If the `<RadioGroup />` does not have a visible label, an `aria-label` or `aria-
 
 <Controls of={RadioGroupStories.Standalone} include={["aria-label", "label"]} />
 
-## Errors
+### Errors
 
 An item in a `<RadioGroup />` can be marked invalid using `validationState="invalid"`.
 
@@ -60,7 +72,7 @@ Use `errorText` to provide an inline error message in a tooltip.
   include={["validationState", "errorText"]}
 />
 
-## Multiline
+### Multiline
 
 A `<RadioGroup />` will break into multiple lines on smaller screens. The radio will stay aligned to the top of the respective label.
 
@@ -68,7 +80,7 @@ A `<RadioGroup />` will break into multiple lines on smaller screens. The radio 
 
 <Controls of={RadioGroupStories.Multiline} include={["children"]} />
 
-## Composition
+### Composition
 
 Radio groups are composable. Use `<RadioGroup.Container />` and `<RadioGroup.Item />` to create complex radio groups.
 
@@ -107,12 +119,8 @@ function CustomRadioGroupItem({ value, ...restProps }: RadioGroupItemProps) {
 }
 ```
 
-## Properties
+#### RadioGroup / RadioGroup.Container
 
-### RadioGroup / RadioGroup.Container
-
-<ArgTypes of={RadioGroup} />
-
-### RadioGroup.Item
+#### RadioGroup.Item
 
 <ArgTypes of={RadioGroup.Item} />

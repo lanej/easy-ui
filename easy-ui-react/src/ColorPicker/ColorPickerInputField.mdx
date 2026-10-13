@@ -1,5 +1,6 @@
 import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { ColorPickerInputField } from "./ColorPickerInputField";
 import * as ColorPickerInputFieldStories from "./ColorPickerInputField.stories";
 
@@ -9,9 +10,21 @@ import * as ColorPickerInputFieldStories from "./ColorPickerInputField.stories";
 
 A `<ColorPickerInputField />` allows users to select a color with a color picker or as a text input.
 
+## Usage
+
+```tsx
+import { ColorPickerInputField } from "@easypost/easy-ui/ColorPicker";
+```
+
 <Canvas of={ColorPickerInputFieldStories.Default} />
 
-## Rendering
+## Props
+
+<ArgTypes of={ColorPickerInputField} exclude={["children"]} />
+
+## Examples
+
+### Rendering
 
 A `<ColorPickerInputField />` is a standalone component that matches the API of Easy UI's other `InputField`s.
 
@@ -41,42 +54,38 @@ function StandaloneColorPickerInputField() {
 }
 ```
 
-## Small
+### Small
 
 <Canvas of={ColorPickerInputFieldStories.Small} />
 
-## Large
+### Large
 
 <Canvas of={ColorPickerInputFieldStories.Large} />
 
-## Disabled
+### Disabled
 
 <Canvas of={ColorPickerInputFieldStories.Disabled} />
 
-## ReadOnly
+### ReadOnly
 
 <Canvas of={ColorPickerInputFieldStories.ReadOnly} />
 
-## Required
+### Required
 
 <Canvas of={ColorPickerInputFieldStories.Required} />
 
-## AutoFocus
+### AutoFocus
 
 <Canvas of={ColorPickerInputFieldStories.AutoFocus} />
 
-## Error
+### Error
 
 <Canvas of={ColorPickerInputFieldStories.Error} />
 
-## EmphasizedLabel
+### EmphasizedLabel
 
 <Canvas of={ColorPickerInputFieldStories.EmphasizedLabel} />
 
-## VisuallyHiddenLabel
+### VisuallyHiddenLabel
 
 <Canvas of={ColorPickerInputFieldStories.VisuallyHiddenLabel} />
-
-## Properties
-
-<ArgTypes of={ColorPickerInputField} exclude={["children"]} />

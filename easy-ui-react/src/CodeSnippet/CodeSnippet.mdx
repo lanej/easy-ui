@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { CodeSnippet } from "./CodeSnippet";
 import * as CodeSnippetStories from "./CodeSnippet.stories";
 
@@ -9,13 +9,25 @@ import * as CodeSnippetStories from "./CodeSnippet.stories";
 
 A `<CodeSnippet />` is used to improve readability of embedded code samples with syntax highlighting and automatic line numbering.
 
-Use the `code` and `language` props to control the contents of the `<CodeSnippet />`.
+## Usage
+
+```tsx
+import { CodeSnippet } from "@easypost/easy-ui/CodeSnippet";
+```
 
 <Canvas of={CodeSnippetStories.Default} />
 
+## Props
+
+<ArgTypes of={CodeSnippet} exclude={["children"]} />
+
+## Examples
+
+Use the `code` and `language` props to control the contents of the `<CodeSnippet />`.
+
 <Controls of={CodeSnippetStories.Default} include={["language"]} />
 
-## Line Numbers
+### Line Numbers
 
 A `<CodeSnippet />` can show line numbers using `showLineNumbers`.
 
@@ -23,14 +35,10 @@ A `<CodeSnippet />` can show line numbers using `showLineNumbers`.
 
 <Controls of={CodeSnippetStories.LineNumbers} include={["showLineNumbers"]} />
 
-## Max Lines
+### Max Lines
 
 A `<CodeSnippet />` can limit its height to a maximum number of lines using the `maxLines` prop.
 
 <Canvas of={CodeSnippetStories.MaxLines} />
 
 <Controls of={CodeSnippetStories.MaxLines} include={["maxLines"]} />
-
-## Properties
-
-<ArgTypes of={CodeSnippet} exclude={["children"]} />

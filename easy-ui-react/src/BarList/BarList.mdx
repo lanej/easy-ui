@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { BarList } from "./BarList";
 import * as Stories from "./BarList.stories";
 
@@ -8,7 +9,19 @@ import * as Stories from "./BarList.stories";
 
 A compact category comparison for cards, sidebars, and reports. Native HTML/CSS; no chart engine. Import from `@easypost/easy-ui/BarList`.
 
+## Usage
+
+```tsx
+import { BarList } from "@easypost/easy-ui/BarList";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={BarList} />
+
+## Examples
 
 All bars share a zero baseline and scale to the largest available value in this list. Supply finite, non-negative magnitudes and stable IDs. Order is preserved: sort in the application when showing a ranking. The exact formatted value and category are always visible and readable as a semantic list. No hover, animation, or keyboard interaction is needed to recover the data.
 
@@ -23,5 +36,3 @@ Pass the same positive finite `max` to compare separate lists on one scale. Valu
 <Canvas of={Stories.NoData} />
 
 Use `typography` to adjust numeric text sizes by role; list labels use `label` and exact values use `detail`. Use `Chart` for signed values, grouped/stacked bars, filtering, or drill-down. Applications own units, sorting, aggregation, and surrounding loading/error states.
-
-<ArgTypes of={BarList} />

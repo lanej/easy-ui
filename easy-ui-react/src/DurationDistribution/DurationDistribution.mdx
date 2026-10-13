@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./DurationDistribution.stories";
 
 <Meta of={Stories} />
@@ -7,7 +8,19 @@ import * as Stories from "./DurationDistribution.stories";
 
 Compare an ongoing elapsed duration with a caller-supplied reference of completed durations. This molecule renders a native SVG/CSS plot and composes with the `HealthAssessment` organism; it does not require a chart engine. It reuses the visualization scale and value-state utilities. `RangePlot` remains useful for named ranges, but cannot express this shared histogram/CDF overlay.
 
+## Usage
+
+```tsx
+import { DurationDistribution } from "@easypost/easy-ui/DurationDistribution";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
 
 ```tsx
 import {
@@ -30,7 +43,7 @@ import {
 />;
 ```
 
-## Supply the reference rather than infer it
+### Supply the reference rather than infer it
 
 | Source          | Contract                                                                                | Rendering                                                                        |
 | --------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
@@ -52,7 +65,7 @@ Set `showPercentileLabels` to show each percentile and its duration beneath the 
 
 Use the same cohort, unit, and observation window for sources meant to be compared. The component does not aggregate raw observations, reconcile independently computed statistics, choose a kernel-density bandwidth, or convert units. Default number formatting preserves the supplied numeric value with `String`; optional formatters are caller-owned. `formatValue` formats the number only, followed by the explicit `unit`.
 
-## Keep assessment and duration separate
+### Keep assessment and duration separate
 
 The current marker uses `currentAssessment`, never an assessment derived from its percentile. Historical landmarks use the supplied health interval containing their duration. Hiding bands preserves landmark colors. Background bands and distribution fills highlight only the region containing the actual current value by default. Set `healthRegionHighlight="all"` to color every supplied region. Missing or invalid values and gaps in the policy leave all regions neutral; clamping a marker does not change which region contains the actual value. Threshold labels and accessible policy descriptions remain available in either mode. Without policy, landmarks are neutral. Overlapping, reversed, or invalid policy intervals are explicitly identified and their historical marks become neutral. Values below the median do not automatically mean healthy. Ongoing elapsed duration is labeled separately from the completed-duration reference.
 
@@ -63,7 +76,7 @@ The axis labels both ends of supplied health ranges, including gaps, and shows s
 <Canvas of={Stories.WithoutBands} />
 <Canvas of={Stories.WithoutPolicy} />
 
-## Optional context and exact data
+### Optional context and exact data
 
 Bands, band names, percentile points, percentile labels/guides, right count axis, and visible sample count are independently optional. No percentage y-axis is shown. `description` and `cohort` provide visible application context when supplied. The sample count is included in the accessible description when supplied, and displayed only with `showSampleCount`. Synthetic data in these examples is fabricated demonstration data, not required product copy.
 
@@ -73,7 +86,7 @@ Bands, band names, percentile points, percentile labels/guides, right count axis
 <Canvas of={Stories.WithExactData} />
 <Canvas of={Stories.Minutes} />
 
-## Binned or smooth, full plot or compact concentration
+### Binned or smooth, full plot or compact concentration
 
 Choose the representation independently from the cumulative-percentile curve:
 
@@ -92,7 +105,7 @@ Smooth mode is explicitly a smoothed histogram, not a kernel density estimate or
 <Canvas of={Stories.HistogramConcentrationPreview} />
 <Canvas of={Stories.SmoothWithCumulative} />
 
-## Missing, invalid, and outside values
+### Missing, invalid, and outside values
 
 `domain` is a finite increasing nonnegative viewport. Invalid scales suppress graphical geometry. Null elapsed values are unavailable; negative and nonfinite durations are invalid. Valid reference data remains visible when elapsed duration is missing. Outside elapsed and quantile values retain their exact value and state, with marks omitted by default. `overflow="clamp"` explicitly puts their marks at a boundary without changing the exact text. Curves and bins are clipped to the viewport; an explicit message identifies references extending outside it. Loading suppresses previous data, assessment, and metadata.
 
@@ -100,7 +113,7 @@ Smooth mode is explicitly a smoothed histogram, not a kernel density estimate or
 <Canvas of={Stories.ClampedObservation} />
 <Canvas of={Stories.Loading} />
 
-## Compose with observation presentations
+### Compose with observation presentations
 
 `DurationDistribution` owns the reference comparison: the shared scale, histogram, cumulative curve, reference bands, and percentile marks. `HealthAssessment` owns the overall assessment presentation and responsive visibility. Use the molecule independently for graph-only views or compose it into the organism; both paths use the same rendering implementation.
 
@@ -109,7 +122,5 @@ Smooth mode is explicitly a smoothed histogram, not a kernel density estimate or
 <Canvas of={Stories.ComposedAssessment} />
 <Canvas of={Stories.IndependentMetrics} />
 <Canvas of={Stories.Narrow} />
-
-<ArgTypes of={Stories} />
 
 `DurationQuantileMetrics` defaults to a stacked list. Use `layout="inline"` for a wrapping row of percentile comparisons above a reference bar or curve.

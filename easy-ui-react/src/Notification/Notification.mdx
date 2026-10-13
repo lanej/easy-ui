@@ -1,5 +1,4 @@
-import React from "react";
-import { Canvas, Meta, Controls, ArgTypes } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
 import { NotificationProvider } from "./Notification";
 import * as NotificationStories from "./Notification.stories";
 
@@ -9,31 +8,15 @@ import * as NotificationStories from "./Notification.stories";
 
 **Note**: Each story below is rendered with its own `Provider`
 
-## Notification
+## Usage
 
-Notifications of type `alert` and `toast` can be displayed via Easy UI's `useNotification` hook. The hook returns a notification
-object on which methods can be invoked to display the appropriate notification. Use the `Show code` tab below for the associated code sample.
+```tsx
+import { useNotification } from "@easypost/easy-ui/Notification";
+```
 
 <Canvas of={NotificationStories.Notifications} />
 
-## Programmatic dismissal
-
-<Canvas of={NotificationStories.ProgrammaticDismissal} />
-
-## Custom placement
-
-Notifications can have custom placement on a per app basis. Use the `notificationPlacement` prop which is available on the `EasyUIProvider` component.
-
-<Canvas of={NotificationStories.CustomPlacement} />
-
-## Custom placement within container
-
-Notifications by default render into `document.body` via a portal. To render notifications into a custom container, pass a callback function
-to `getContainer` that returns a valid `HTMLElement`.
-
-<Canvas of={NotificationStories.CustomPlacementWithinContainer} />
-
-## Properties
+## Props
 
 ### Notification props
 
@@ -129,3 +112,27 @@ export interface ProviderProps {
   /** Rest of EasyUI Provider props */
 }
 ```
+
+## Examples
+
+### Notification
+
+Notifications of type `alert` and `toast` can be displayed via Easy UI's `useNotification` hook. The hook returns a notification
+object on which methods can be invoked to display the appropriate notification. Use the `Show code` tab below for the associated code sample.
+
+### Programmatic dismissal
+
+<Canvas of={NotificationStories.ProgrammaticDismissal} />
+
+### Custom placement
+
+Notifications can have custom placement on a per app basis. Use the `notificationPlacement` prop which is available on the `EasyUIProvider` component.
+
+<Canvas of={NotificationStories.CustomPlacement} />
+
+### Custom placement within container
+
+Notifications by default render into `document.body` via a portal. To render notifications into a custom container, pass a callback function
+to `getContainer` that returns a valid `HTMLElement`.
+
+<Canvas of={NotificationStories.CustomPlacementWithinContainer} />
