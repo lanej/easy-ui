@@ -89,9 +89,11 @@ describe("source-only resource graphs", () => {
     fireEvent.change(screen.getByRole("searchbox", { name: "Find resource" }), {
       target: { value: "google_cloud_run_v2_service" },
     });
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "1 matching resources",
-    );
+    expect(
+      within(
+        screen.getByRole("region", { name: "Resource search results" }),
+      ).getByRole("status"),
+    ).toHaveTextContent("1 matching resources");
     expect(
       within(
         screen.getByRole("region", { name: "Resource search results" }),

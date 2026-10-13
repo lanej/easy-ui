@@ -122,7 +122,7 @@ Tab focuses HTML node controls; arrow keys move to a resource in that direction,
 
 Supply `coverage` when the application knows whether relationship evidence is complete, partial, or unknown. Complete describes the supplied evidence scope; it does not establish complete runtime impact. Missing endpoints are exposed as unresolved relationships and remain selectable. An empty supplied relationship set is not presented as proof of isolation. Duplicate node, edge, or group IDs produce a visible input error.
 
-Use `variant="dashed"` on an edge for a caller-defined distinction and explain its meaning through `label`/`description`. Use `highlightedEdgeIds` for a caller-computed path. Missing change metadata is displayed as unknown. Create, update, replace, delete, and unchanged have explicit labels as well as theme-aware colors; change kinds are not risk scores.
+Use `variant="dashed"` on an edge for a caller-defined distinction and explain its meaning through `label`/`description`. Use `highlightedEdgeIds` for a caller-computed path. Missing resource change metadata is not supplied and renders no card badge; explicitly unknown resource operations retain a labeled marker. Create, update, replace, delete, and unchanged have explicit labels as well as theme-aware colors; change kinds are not risk scores.
 
 <Canvas of={Stories.PartialEvidence} />
 <Canvas of={Stories.CyclicRelationships} />

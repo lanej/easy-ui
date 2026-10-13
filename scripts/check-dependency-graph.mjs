@@ -770,7 +770,7 @@ try {
           return {
             id: card.dataset.graphResourceCard,
             height: card.getBoundingClientRect().height,
-            sameRow: Math.abs((l.top + l.bottom - s.top - s.bottom) / 2) < 1,
+            identityFirst: s.top >= l.bottom - 1,
             controls: [...card.querySelectorAll("button")].every((button) => {
               const r = button.getBoundingClientRect();
               return r.width >= 24 && r.height >= 24;
@@ -792,12 +792,12 @@ try {
     assert.ok(
       compactCards.every(
         (card) =>
-          card.sameRow &&
+          card.identityFirst &&
           card.controls &&
           card.compactControls &&
           card.readableValues,
       ),
-      "Dense cards preserve single-row identity/status, readable values and usable targets",
+      "Dense cards prioritize identity above status while preserving readable values and usable targets",
     );
     assert.ok(
       compactCards.find((card) => card.id === "api").height > 224,
@@ -1371,3 +1371,5 @@ try {
   );
   await browser.close();
 }
+
+await import("./check-dependency-graph-source.mjs");

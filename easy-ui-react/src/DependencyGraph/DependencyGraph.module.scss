@@ -257,6 +257,15 @@
     background: design-token("color.primary.050");
   }
 }
+.cardHeading {
+  display: flex;
+  align-items: stretch;
+  min-inline-size: 0;
+  .nodeSelect {
+    flex: 1;
+    min-inline-size: 0;
+  }
+}
 .node[data-graph-resource-card] .nodeSelect {
   block-size: auto;
   min-block-size: max(2rem, calc(25px / var(--dependency-graph-zoom)));
@@ -299,6 +308,12 @@
   flex: 1;
   min-inline-size: 0;
   inline-size: auto;
+}
+.node[data-graph-resource-card] .nodeLabel {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
 }
 .nodeDescription {
   display: block;
@@ -665,51 +680,13 @@
   }
 }
 
-.root[data-graph-density="overview"] {
-  .nodeDescription,
-  .controlCaption {
-    display: none;
-  }
-  .node[data-graph-resource-card] .nodeLabel {
-    font-size: max(0.875rem, calc(11px / var(--dependency-graph-zoom)));
-  }
-  .change {
-    font-size: max(0.75rem, calc(10px / var(--dependency-graph-zoom)));
-  }
-}
-
-.controlPair {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.connection[data-link-change="update"] .edgeLine {
-  stroke: design-token("color.warning.700");
-}
-.edges marker[data-link-change="update"] {
-  fill: design-token("color.warning.700");
-}
-.linkChange[data-link-change="update"] {
-  color: design-token("color.warning.800");
-}
-
 // Keep disclosure beside the header, not in a footer that repeats visible edges.
-.cardHeading {
-  display: flex;
-  align-items: stretch;
-  min-inline-size: 0;
-  .nodeSelect {
-    flex: 1;
-    min-inline-size: 0;
-  }
-}
 .node[data-group="true"] .cardHeading {
   block-size: 100%;
 }
 .branchControls {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   align-self: flex-start;
   gap: 2px;
@@ -720,12 +697,6 @@
   font-size: max(0.625rem, calc(10px / var(--dependency-graph-zoom)));
   color: design-token("color.neutral.700");
   white-space: nowrap;
-}
-.node[data-graph-resource-card] .nodeLabel {
-  display: block;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow-wrap: normal;
 }
 .middleLabel {
   display: flex;
@@ -742,7 +713,11 @@
   flex: 0 0 auto;
   max-inline-size: 65%;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  justify-content: flex-end;
+  > span {
+    flex-shrink: 0;
+  }
 }
 .nodeMetadata {
   display: flex;
@@ -769,6 +744,7 @@
   background: design-token("color.neutral.050");
   box-shadow: none;
 }
+
 .root[data-graph-density="overview"] {
   .nodeType {
     display: none;
@@ -776,4 +752,31 @@
   .referenceLabel {
     font-size: max(0.75rem, calc(10px / var(--dependency-graph-zoom)));
   }
+
+  .nodeDescription,
+  .controlCaption {
+    display: none;
+  }
+  .node[data-graph-resource-card] .nodeLabel {
+    font-size: max(0.875rem, calc(11px / var(--dependency-graph-zoom)));
+  }
+  .change {
+    font-size: max(0.75rem, calc(10px / var(--dependency-graph-zoom)));
+  }
+}
+
+.controlPair {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.connection[data-link-change="update"] .edgeLine {
+  stroke: design-token("color.warning.700");
+}
+.edges marker[data-link-change="update"] {
+  fill: design-token("color.warning.700");
+}
+.linkChange[data-link-change="update"] {
+  color: design-token("color.warning.800");
 }

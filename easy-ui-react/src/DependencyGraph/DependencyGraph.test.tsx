@@ -563,7 +563,9 @@ describe("DependencyGraph per-resource changes", () => {
     );
     expect(screen.getByText("No field changes supplied.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Summary" }));
-    expect(screen.getByText("Resource change is unknown.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Resource change was not supplied."),
+    ).toBeInTheDocument();
     expect(
       screen.queryByText("No resource change planned."),
     ).not.toBeInTheDocument();
@@ -626,13 +628,9 @@ describe("DependencyGraph zoom and branch disclosures", () => {
       screen.getByRole("button", { name: "Collapse dependents of A" }),
     );
     expect(change).toHaveBeenCalledWith(["a"]);
-    expect(
-      screen.getByRole("button", { name: "B, Change unknown" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "B" })).toBeInTheDocument();
     rerender(<DependencyGraph {...props} collapsedNodeIds={["a"]} />);
-    expect(
-      screen.queryByRole("button", { name: "B, Change unknown" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "B" })).not.toBeInTheDocument();
     expect(screen.getByText("2 hidden")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Expand all branches" }),
@@ -648,9 +646,9 @@ describe("DependencyGraph zoom and branch disclosures", () => {
         edges={[]}
       />,
     );
-    expect(
-      screen.getByRole("button", { name: "A, Change unknown, Storage" }),
-    ).toContainElement(screen.getByTestId("custom-type"));
+    expect(screen.getByRole("button", { name: "A, Storage" })).toContainElement(
+      screen.getByTestId("custom-type"),
+    );
   });
   it("keeps absent values and empty strings distinct in responsive diffs", () => {
     render(

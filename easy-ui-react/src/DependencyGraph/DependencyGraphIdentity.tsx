@@ -18,12 +18,12 @@ function ResourceLabel({ label }: { label: string }) {
   const characters = Array.from(label);
   if (characters.length <= 32) return <>{label}</>;
   return (
-    <span className={styles.middleLabel} aria-label={label}>
-      <span className={styles.labelPrefix} aria-hidden="true">
+    <span className={styles.middleLabel}>
+      <span className={styles.labelPrefix}>
         {characters.slice(0, -18).join("")}
       </span>
-      <span className={styles.labelSuffix} aria-hidden="true">
-        {characters.slice(-18).join("")}
+      <span className={styles.labelSuffix}>
+        <span>{characters.slice(-18).join("")}</span>
       </span>
     </span>
   );
@@ -69,6 +69,7 @@ export function DependencyGraphIdentity({
               className={styles.change}
               data-change={node.change}
               title={dependencyChangeLabels[node.change]}
+              role="img"
               aria-label={dependencyChangeLabels[node.change]}
             >
               {overview ||
