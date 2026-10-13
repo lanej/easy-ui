@@ -32,6 +32,13 @@ async function open(story, theme = "light") {
   await settledCards();
 }
 async function settledCards() {
+  // Viewport resizing can schedule card-width and then card-height updates.
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
   await page.waitForFunction(() => {
     const unit =
       parseFloat(getComputedStyle(document.documentElement).fontSize) / 16;
@@ -1117,6 +1124,17 @@ try {
         })),
       );
     const before = await positions();
+    const expandedCards = () =>
+      graph
+        .locator("[data-graph-card-diff]")
+        .evaluateAll((diffs) =>
+          diffs.map(
+            (diff) =>
+              diff.closest("[data-graph-resource-card]").dataset
+                .graphResourceCard,
+          ),
+        );
+    const expandedBefore = await expandedCards();
     const assertOrdering = (cards) => {
       assert.deepEqual(
         cards.map((card) => card.id),
@@ -1193,12 +1211,18 @@ try {
     );
     const restored = await positions();
     assertOrdering(restored);
-    for (let i = 0; i < before.length; i++)
-      for (const dimension of ["width", "height"])
-        assert.ok(
-          Math.abs(restored[i][dimension] - before[i][dimension]) <= 1.01,
-          `Restored ${before[i].id} ${dimension} stays within one CSS pixel after measurement rounding`,
-        );
+    assert.deepEqual(
+      await expandedCards(),
+      expandedBefore,
+      "Inspector resizing preserves card expansion",
+    );
+    assert.equal(await details.locator("h3").innerText(), "Shipping API");
+    assert.equal(
+      await details
+        .getByRole("button", { name: "Specific changes" })
+        .getAttribute("aria-pressed"),
+      "true",
+    );
     checks.push({ name: `optional-heading-and-expanded-inspector-${width}` });
 
     await open("risk-annotations");
