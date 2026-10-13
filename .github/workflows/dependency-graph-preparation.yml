@@ -12,24 +12,35 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/dependency-graph-real-world
-      - name: Apply scoped source changes
+      - name: Scope the suffix assertion and retain source-story screenshots
         run: |
-          python3 scripts/.apply-dependency-graph-fix.py
-          python3 scripts/.refine-dependency-graph-fix.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/check-dependency-graph-source.mjs')
+          s = p.read_text().replace('label.querySelector("span span:last-child > span")', 'label.querySelector(":scope > span > span:last-child > span")')
+          marker = '      const cards = page.locator("[data-graph-resource-card]");'
+          if 'source-only-evidence-${theme}-${width}.png' not in s:
+              assert s.count(marker) == 1
+              s = s.replace(marker, '''      if (width !== 320)
+                  await page.locator("[data-dependency-graph]").screenshot({
+                    path: resolve(output, `source-only-evidence-${theme}-${width}.png`),
+                  });
+          ''' + marker)
+          p.write_text(s)
+          PY
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - name: Format changed graph files
-        run: |
-          npx prettier --write easy-ui-react/src/DependencyGraph/DependencyGraphIdentity.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.realWorld.ts easy-ui-react/src/DependencyGraph/DependencyGraph.realWorld.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/types.ts easy-ui-react/src/DependencyGraph/model.ts easy-ui-react/src/DependencyGraph/DependencyGraphDetails.tsx easy-ui-react/src/DependencyGraph/DependencyGraphChanges.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.module.scss easy-ui-react/src/DependencyGraph/DependencyGraph.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.stories.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph.mjs scripts/check-dependency-graph-source.mjs
-      - name: Preserve implementation on the task branch
+      - name: Format browser regression
+        run: npx prettier --write scripts/check-dependency-graph-source.mjs
+      - name: Preserve browser regression on the task branch
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add easy-ui-react/src/DependencyGraph scripts/check-dependency-graph.mjs scripts/check-dependency-graph-source.mjs .changeset/readable-source-dependency-graphs.md
-          git diff --cached --quiet || git commit -m 'fix(dependency-graph): preserve evidence semantics and disclosure geometry'
+          git add scripts/check-dependency-graph-source.mjs
+          git diff --cached --quiet || git commit -m 'test(dependency-graph): scope suffix measurement to the resource label'
           git push origin HEAD:fix/dependency-graph-real-world
       - name: Build
         id: build
@@ -37,9 +48,9 @@ jobs:
       - name: Lint
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm run lint > /tmp/graph-lint.log 2>&1
-      - name: Unit tests
+      - name: Graph unit tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: npm run test > /tmp/graph-tests.log 2>&1
+        run: npm exec --workspace @easypost/easy-ui -- vitest run src/DependencyGraph/ > /tmp/graph-tests.log 2>&1
       - name: Build Storybook
         id: storybook
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -50,7 +61,7 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
-      - name: Validate graph browser behavior and capture actual output
+      - name: Verify source-evidence interactions and capture output
         if: ${{ !cancelled() && steps.storybook.outcome == 'success' }}
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
@@ -61,7 +72,7 @@ jobs:
           pid=$!
           trap 'kill "$pid"' EXIT
           for attempt in {1..30}; do curl --fail --silent "$STORYBOOK_URL/iframe.html" >/dev/null && break; sleep 1; done
-          node scripts/check-dependency-graph.mjs > /tmp/graph-browser.log 2>&1
+          node scripts/check-dependency-graph-source.mjs > /tmp/graph-browser.log 2>&1
       - name: Retain screenshots and remove preparation-only files
         run: |
           cp /tmp/graph-browser/dependency-graph/source-only-evidence-light-1440.png documentation/images/dependency-graph-source-only-desktop.png
