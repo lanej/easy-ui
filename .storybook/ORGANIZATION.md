@@ -115,6 +115,10 @@ the catalog. Their source is retained for standalone examples and tests.
 New stories must demonstrate a reusable component, not reintroduce a workflow
 category.
 
+The investigation browser workflow sets `STORYBOOK_TEST_RECIPES=true` for its
+private test build. This adds recipe stories solely for interaction coverage;
+normal builds and published previews continue to exclude them.
+
 Use one `Data Display` subgroup for generic metrics and distributions. Reserve
 `Feedback` for assessments, alerts, and status. Preserve IDs when moving entries.
 

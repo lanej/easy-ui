@@ -28,6 +28,9 @@ const config: StorybookConfig = {
     "../easy-ui-react/src/!(examples)/*.mdx",
     "../easy-ui-react/src/!(examples)/*.stories.tsx",
     "../easy-ui-react/src/examples/NetworkInvestigationMap.stories.tsx",
+    ...(process.env.STORYBOOK_TEST_RECIPES === "true"
+      ? ["../easy-ui-react/src/InvestigationWorkspace/recipes/*.stories.tsx"]
+      : []),
   ],
 
   async viteFinal(config) {
