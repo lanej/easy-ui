@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useId } from "react-aria";
 import { Button } from "../Button";
 import type {
@@ -39,6 +45,7 @@ import {
   resolveVisualizationTypography,
 } from "../visualization/typography";
 import styles from "./NetworkMap.module.scss";
+import { NetworkMapRouteContext } from "./NetworkMapRouteContext";
 
 /** Rendering and engine lifecycle only. Compose under NetworkMapProvider to share state with companions,
  * or supply mapStyle/workerUrl and data directly for a standalone surface. Attribution is retained.
@@ -61,6 +68,9 @@ export function NetworkMapSurface(
 }
 
 function NetworkMapSurfaceView() {
+  const routeFacilities = useContext(NetworkMapRouteContext);
+  const routeContext = useRef(routeFacilities);
+  routeContext.current = routeFacilities;
   const {
     props: options,
     mapInspection,
@@ -228,6 +238,7 @@ function NetworkMapSurfaceView() {
     // "sourcedata" indefinitely.
     let lastClusterFacilities: typeof facilities | undefined;
     let lastFacilities: typeof facilities | undefined;
+    let lastRouteFacilities: typeof routeFacilities | undefined;
     let lastSegments: typeof segments | undefined;
     let lastAreas: typeof areas | undefined;
     let lastSurface: typeof surface;
@@ -582,12 +593,22 @@ function NetworkMapSurfaceView() {
           }
           const blue = css.getPropertyValue("--map-route").trim() || "#113abf";
           const muted = css.getPropertyValue("--map-muted").trim() || "#6a7e9d";
-          if (p.facilities !== lastFacilities || p.segments !== lastSegments) {
+          if (
+            p.facilities !== lastFacilities ||
+            p.segments !== lastSegments ||
+            routeContext.current !== lastRouteFacilities
+          ) {
             (map.getSource("easy-ui-transfers") as GeoJSONSource).setData(
-              segmentData(p.facilities, p.segments),
+              segmentData(
+                routeContext.current.length
+                  ? [...p.facilities, ...routeContext.current]
+                  : p.facilities,
+                p.segments,
+              ),
             );
             lastFacilities = p.facilities;
             lastSegments = p.segments;
+            lastRouteFacilities = routeContext.current;
           }
           if (p.areas !== lastAreas) {
             (map.getSource("easy-ui-weather") as GeoJSONSource).setData(
@@ -797,7 +818,9 @@ function NetworkMapSurfaceView() {
           map.addSource("easy-ui-transfers", {
             type: "geojson",
             data: segmentData(
-              latest.current.facilities,
+              routeContext.current.length
+                ? [...latest.current.facilities, ...routeContext.current]
+                : latest.current.facilities,
               latest.current.segments,
             ),
           });
@@ -1094,6 +1117,7 @@ function NetworkMapSurfaceView() {
           }
           lastFacilities = latest.current.facilities;
           lastSegments = latest.current.segments;
+          lastRouteFacilities = routeContext.current;
           lastAreas = latest.current.areas;
           lastSurface = latest.current.surface;
           lastClusterFacilities = latest.current.facilities;
@@ -1274,6 +1298,7 @@ function NetworkMapSurfaceView() {
     refresh.current?.();
   }, [
     facilities,
+    routeFacilities,
     segments,
     areas,
     surface,
@@ -1361,7 +1386,7 @@ function NetworkMapSurfaceView() {
           height:
             height === "fill"
               ? "100%"
-              : Math.max(options.zoomSections?.length ? 660 : 220, height),
+              : Math.max(options.zoomSections?.length ? 700 : 220, height),
         }}
       />
       {featureInspection && hasOverlayContent && (

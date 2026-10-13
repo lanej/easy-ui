@@ -166,7 +166,8 @@ it("opens only the clicked crowded group and preserves the supplied local eviden
   openOrigin();
   const origin = seen.get(originName)!;
   expect(origin.facilities?.map((facility) => facility.id)).toEqual(["a", "b"]);
-  expect(origin.segments).toEqual([records.segments![0]]);
+  expect(origin.segments).toEqual(records.segments!.slice(0, 2));
+  expect(origin.focus?.facilityIds).toEqual(["a", "b"]);
   expect(origin.segments![0]).toBe(records.segments![0]);
   expect(origin.initialView).toBeUndefined();
   expect(origin.focus?.maxZoom).toBe(14);
@@ -230,7 +231,12 @@ it("keeps only one inset when choosing another crowded node", () => {
   expect(container.querySelectorAll("[data-map-zoom-section]")).toHaveLength(1);
   expect(screen.queryByTestId(originName)).not.toBeInTheDocument();
   expect(screen.getByTestId(destinationName)).toBeInTheDocument();
-  expect(seen.get(destinationName)?.segments![0].evidence).toBe("planned");
+  expect(seen.get(destinationName)?.segments).toEqual(
+    records.segments!.slice(1),
+  );
+  expect(
+    screen.getByRole("button", { name: "Select Acceptance in journey" }),
+  ).toHaveTextContent("From Acceptance");
   expect(mounts.get("Journey")).toBe(1);
 });
 it("closes with Escape or Close and returns focus to the source node", () => {
@@ -304,4 +310,71 @@ it("measures crowding in screen pixels and excludes far, missing and invalid mem
   expect(crowded.has("invalid")).toBe(false);
   scale = 5000;
   expect(crowdedInsetNodes(records, map).size).toBe(0);
+});
+
+it("links an off-inset facility to shared selection while keeping the local focus and surface", () => {
+  function LinkedJourney() {
+    const [selected, setSelected] = useState("a");
+    return (
+      <NetworkMap
+        {...records}
+        selectedFacilityId={selected}
+        onFacilitySelect={setSelected}
+      />
+    );
+  }
+  render(<LinkedJourney />);
+  openOrigin();
+  const original = seen.get(originName)!.focus!.revision;
+  fireEvent.click(
+    screen.getByRole("button", { name: "Select Regional sort in journey" }),
+  );
+  expect(seen.get("Journey")?.selectedFacilityId).toBe("c");
+  expect(seen.get(originName)?.selectedFacilityId).toBe("c");
+  expect(seen.get(originName)?.focus?.revision).toBe(original);
+  expect(seen.get(originName)?.facilities?.map((f) => f.id)).toEqual([
+    "a",
+    "b",
+  ]);
+  expect([...mounts.values()]).toEqual([1, 1]);
+});
+it("deduplicates continuation links and omits missing or unmapped endpoints", () => {
+  render(
+    <NetworkMap
+      {...records}
+      segments={[
+        ...records.segments!,
+        {
+          id: "another",
+          label: "Another transfer",
+          from: "a",
+          to: "c",
+          evidence: "planned",
+        },
+        {
+          id: "missing",
+          label: "Missing",
+          from: "a",
+          to: "absent",
+          evidence: "planned",
+        },
+        {
+          id: "invalid",
+          label: "Invalid",
+          from: "a",
+          to: "invalid",
+          evidence: "planned",
+        },
+      ]}
+    />,
+  );
+  openOrigin();
+  expect(
+    screen.getAllByRole("button", { name: "Select Regional sort in journey" }),
+  ).toHaveLength(1);
+  expect(seen.get(originName)?.segments?.map((s) => s.id)).toEqual([
+    "first",
+    "long",
+    "another",
+  ]);
 });

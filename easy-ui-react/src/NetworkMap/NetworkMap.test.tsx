@@ -11,13 +11,18 @@ import {
 import { NetworkMap } from "./NetworkMap";
 import { NetworkMapProvider } from "./NetworkMapContext";
 import { NetworkMapSurface } from "./NetworkMapSurface";
+import { NetworkMapRouteContext } from "./NetworkMapRouteContext";
 import {
   NetworkMapControlPanel,
   NetworkMapDataView,
 } from "./NetworkMapCompanions";
 import { loadMapEngine } from "./engine";
 import { surfaceData } from "./geometry";
-import type { MapOverlayDetailsContext, NetworkMapProps } from "./types";
+import type {
+  MapFacility,
+  MapOverlayDetailsContext,
+  NetworkMapProps,
+} from "./types";
 vi.mock("./engine", () => ({ loadMapEngine: vi.fn() }));
 const fitBounds = vi.fn(),
   easeTo = vi.fn(),
@@ -2922,4 +2927,65 @@ it("leaves enough geographic space for labels inside a compact close-up", async 
       padding: expect.objectContaining({ top: 16, bottom: 84 }),
     }),
   );
+});
+
+it("renders route continuations using outside coordinates while preserving local markers and fitting", async () => {
+  const local = props.facilities.slice(0, 1);
+  const remote = {
+    ...props.facilities[1],
+    id: "outside",
+    coordinates: [-100, 40] as const,
+  };
+  const segments = [
+    {
+      id: "continuation",
+      from: local[0].id,
+      to: remote.id,
+      evidence: "transfer" as const,
+      label: "Continue journey",
+    },
+  ];
+  const renderMap = (outside: MapFacility) => (
+    <NetworkMapProvider {...props} facilities={local} segments={segments}>
+      <NetworkMapRouteContext.Provider value={[outside]}>
+        <NetworkMapSurface />
+      </NetworkMapRouteContext.Provider>
+    </NetworkMapProvider>
+  );
+  const view = render(renderMap(remote));
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  act(() => listeners.load());
+  expect(sourceDefs.get("easy-ui-transfers")?.data).toEqual(
+    expect.objectContaining({
+      features: [
+        expect.objectContaining({
+          geometry: {
+            type: "LineString",
+            coordinates: [local[0].coordinates, remote.coordinates],
+          },
+        }),
+      ],
+    }),
+  );
+  expect(
+    view.container.querySelectorAll("[data-map-facility-id]"),
+  ).toHaveLength(1);
+  const fits = fitBounds.mock.calls.length;
+  setData.mockClear();
+  const updated = { ...remote, coordinates: [-101, 41] as const };
+  view.rerender(renderMap(updated));
+  expect(setData).toHaveBeenCalledWith(
+    expect.objectContaining({
+      features: [
+        expect.objectContaining({
+          geometry: {
+            type: "LineString",
+            coordinates: [local[0].coordinates, updated.coordinates],
+          },
+        }),
+      ],
+    }),
+  );
+  expect(constructor).toHaveBeenCalledOnce();
+  expect(fitBounds).toHaveBeenCalledTimes(fits);
 });

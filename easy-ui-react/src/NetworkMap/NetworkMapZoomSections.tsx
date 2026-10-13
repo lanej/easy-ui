@@ -4,9 +4,12 @@ import { Button } from "../Button";
 import { NetworkMapProvider, useNetworkMap } from "./NetworkMapContext";
 import { NetworkMapSurface } from "./NetworkMapSurface";
 import { validCoordinate } from "./geometry";
-import type { NetworkMapZoomSection } from "./types";
+import { NetworkMapRouteContext } from "./NetworkMapRouteContext";
+import type { MapFacility, NetworkMapZoomSection } from "./types";
 import { visualizationTypographyStyle } from "../visualization/typography";
 import styles from "./NetworkMapZoomSections.module.scss";
+
+type JourneyConnection = { facility: MapFacility; direction: "from" | "to" };
 
 type Placement = {
   left: number;
@@ -213,12 +216,33 @@ function ZoomSection({
         ids.has(facility.id) && validCoordinate(facility.coordinates),
     );
   }, [options.facilities, section.facilityIds]);
-  const segments = useMemo(() => {
+  const { segments, connections, routeFacilities } = useMemo(() => {
     const ids = new Set(facilities.map((facility) => facility.id));
-    return options.segments.filter(
-      (segment) => ids.has(segment.from) && ids.has(segment.to),
+    const mapped = new Map(
+      options.facilities
+        .filter((facility) => validCoordinate(facility.coordinates))
+        .map((facility) => [facility.id, facility]),
     );
-  }, [options.segments, facilities]);
+    const links = new Map<string, JourneyConnection>();
+    const endpoints = new Map<string, MapFacility>();
+    const segments = options.segments.filter((segment) => {
+      const from = ids.has(segment.from);
+      const to = ids.has(segment.to);
+      if (from && to) return true;
+      if (from === to) return false;
+      const direction = from ? "to" : "from";
+      const facility = mapped.get(from ? segment.to : segment.from);
+      if (!facility) return false;
+      links.set(`${direction}:${facility.id}`, { direction, facility });
+      endpoints.set(facility.id, facility);
+      return true;
+    });
+    return {
+      segments,
+      connections: [...links.values()],
+      routeFacilities: [...endpoints.values()],
+    };
+  }, [options.segments, options.facilities, facilities]);
   const focus = useMemo(
     () => ({
       revision: JSON.stringify([section.focusRevision ?? section.id, requests]),
@@ -287,8 +311,11 @@ function ZoomSection({
             heading={heading}
             onFit={() => setRequests((value) => value + 1)}
             onClose={onClose}
+            connections={connections}
           />
-          <NetworkMapSurface />
+          <NetworkMapRouteContext.Provider value={routeFacilities}>
+            <NetworkMapSurface />
+          </NetworkMapRouteContext.Provider>
         </NetworkMapProvider>
       ) : (
         <>
@@ -306,17 +333,41 @@ function InsetHeader({
   heading,
   onFit,
   onClose,
+  connections,
 }: {
   heading: React.ReactNode;
   onFit: () => void;
   onClose: () => void;
+  connections: JourneyConnection[];
 }) {
   const { props: options, state } = useNetworkMap();
   return (
     <header className={styles.header}>
       <div className={styles.metadata} tabIndex={0}>
         {heading}
-        {options.description && <p>{options.description}</p>}
+        {connections.length ? (
+          <p className={styles.connections}>
+            {connections.map(({ facility, direction }) => (
+              <Button
+                key={`${direction}:${facility.id}`}
+                variant="link"
+                size="sm"
+                type="button"
+                aria-label={`Select ${facility.label} in journey`}
+                isDisabled={!options.onFacilitySelect}
+                data-map-journey-link={facility.id}
+                data-map-journey-direction={direction}
+                onPress={() => options.onFacilitySelect?.(facility.id)}
+              >
+                {direction === "from"
+                  ? `← From ${facility.label}`
+                  : `To ${facility.label} →`}
+              </Button>
+            ))}
+          </p>
+        ) : options.description ? (
+          <p>{options.description}</p>
+        ) : null}
       </div>
       <div className={styles.actions}>
         {options.controls !== false && (

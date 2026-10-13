@@ -134,7 +134,7 @@ export function JourneyZoomExample({
         latestFacilityId="dbn"
         primaryFacilityIds={["oak", "slc", "chi", "dtw"]}
         clusterFacilities={clustered ? { radius: 50, maxZoom: 8 } : undefined}
-        height={largeText ? 780 : 660}
+        height={largeText ? 780 : 700}
         controls={{ risk: false, latestEvent: false, selectedSegment: false }}
         controlLabels={{ fitAll: "Entire journey" }}
         layerVisibility={{ risk }}

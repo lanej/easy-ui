@@ -108,14 +108,15 @@ export async function checkJourneySections({
           JSON.stringify(opened.overview) === JSON.stringify(initial.overview),
       );
       check(
-        `${name}: origin retains only its nearby stops and local evidence`,
+        `${name}: origin retains local evidence and its outbound journey connection`,
         await browser.evaluate(async () => {
           const data = await window.journeyMaps.origin
             .getSource("easy-ui-transfers")
             .getData();
           return (
-            data.features.length === 2 &&
-            data.features.every((f) => f.properties.evidence === "transfer")
+            data.features.length === 3 &&
+            data.features.every((f) => f.properties.evidence === "transfer") &&
+            data.features.some((f) => f.properties.id === "origin-sort-slc")
           );
         }),
       );
@@ -135,6 +136,32 @@ export async function checkJourneySections({
               ),
             ].every((n) => n.style.visibility === "visible"),
         ),
+      );
+      check(
+        `${name}: the outbound continuation names the next off-inset facility`,
+        await browser.evaluate(() => {
+          const link = document.querySelector('[data-map-journey-link="slc"]');
+          return (
+            link?.textContent.includes("To Salt Lake City hub") &&
+            link.dataset.mapJourneyDirection === "to" &&
+            !document.querySelector(
+              '[data-map-zoom-section] [data-map-facility-id="slc"]',
+            )
+          );
+        }),
+      );
+      await browser.key('[data-map-journey-link="slc"]', "Enter");
+      await browser.wait(() =>
+        Boolean(
+          document.querySelector(
+            '[data-map-geography] > [data-map-state] [data-map-facility-id="slc"][data-selected="true"]',
+          ),
+        ),
+      );
+      check(
+        `${name}: selecting the continuation preserves the requested inset and both cameras`,
+        JSON.stringify(await browser.evaluate(cameras)) ===
+          JSON.stringify(opened),
       );
       await browser.evaluate(() => {
         window.journeyBefore = { ...window.journeyMaps };
@@ -223,8 +250,19 @@ export async function checkJourneySections({
             .getSource("easy-ui-transfers")
             .getData();
           return (
-            data.features.length === 2 &&
-            data.features.some((f) => f.properties.evidence === "planned")
+            data.features.length === 3 &&
+            data.features.some((f) => f.properties.evidence === "planned") &&
+            data.features.some((f) => f.properties.id === "chi-dtw")
+          );
+        }),
+      );
+      check(
+        `${name}: the destination names its incoming off-inset facility`,
+        await browser.evaluate(() => {
+          const link = document.querySelector('[data-map-journey-link="chi"]');
+          return (
+            link?.textContent.includes("From Chicago sort hub") &&
+            link.dataset.mapJourneyDirection === "from"
           );
         }),
       );

@@ -399,7 +399,7 @@
   margin-top: 16px;
   table {
     border-collapse: collapse;
-    min-width: 680px;
+    min-width: 700px;
     width: 100%;
     text-align: left;
     font-size: var(--ezui-viz-detail-size, 12px);
@@ -511,7 +511,7 @@
   }
 }
 .geography[data-has-insets="true"] .viewport[data-fill-height="true"] {
-  min-block-size: 660px;
+  min-block-size: 700px;
 }
 .overMapControls {
   position: absolute;

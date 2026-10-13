@@ -159,9 +159,11 @@ The caller defines valid journey groups; screen proximity does not establish mem
 
 Zooming or panning the overview dismisses the inset. At a scale where the local nodes are separated, the badge disappears and selecting them does not open a redundant close-up. Returning to **Entire journey** closes any inset and restores availability indicators without reopening it. **Close**, Escape, or clicking ordinary map background also dismisses it. Escape and Close return focus to the source stop or map canvas. External selection changes do not automatically open an inset.
 
+Incoming and outgoing journey segments continue to the close-up’s edge, retaining their evidence styling. Its header links the off-inset facility with **From** or **To**; selecting that link updates the shared selection and keeps both cameras. Only nearby stops receive local markers, and **Fit** continues to frame the local group. Invalid or missing remote coordinates are omitted.
+
 The requested inset shares controlled facility selection, evidence styling, resolved layers, overlays and inspection renderers. Selecting a stop inside it or refreshing immutable records keeps both cameras. Its native navigation and **Fit** control affect only that close-up. `focusRevision` requests an explicit local refit; `maxZoom` defaults to 13. The viewport defaults to 260px on desktop and with larger annotation text, or 240px in narrow frames with standard text, with a 220px minimum. Dismissal remains available when `controls={false}` hides camera controls.
 
-The inset chooses a corner that avoids its source and nearby overview stops. Main navigation moves to the other vertical corner when needed. The main viewport has a minimum height of 660px when close-ups are enabled; use more height for large text. One legend, selection detail and optional data disclosure serve the journey.
+The inset chooses a corner that avoids its source and nearby overview stops. Main navigation moves to the other vertical corner when needed. The main viewport has a minimum height of 700px when close-ups are enabled; use more height for large text. One legend, selection detail and optional data disclosure serve the journey.
 
 Use `NetworkMapViewport` under `NetworkMapProvider` to compose the same behavior in custom layouts. The exported `NetworkMapZoomSections` belongs inside a relative geographic frame alongside `NetworkMapSurface`. Only a requested close-up creates an additional MapLibre surface with provider attribution, so this interaction uses one overview plus at most one inset.
 
