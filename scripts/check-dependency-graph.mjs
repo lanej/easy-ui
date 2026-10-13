@@ -252,6 +252,12 @@ try {
       }),
     ),
   );
+  // Native wheel updates are batched; the previous layout may still be settled.
+  await page.waitForFunction(
+    () =>
+      document.querySelector("[data-dependency-graph]").dataset.graphDensity ===
+      "overview",
+  );
   await settledCards();
   assert.equal(await graph.getAttribute("data-graph-density"), "overview");
   const targets = await page
