@@ -2906,7 +2906,7 @@ it("keeps enough viewport height for an on-demand close-up", async () => {
   );
   await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
   expect(container.querySelector("[data-map-state] > div")).toHaveStyle({
-    height: "660px",
+    height: "700px",
   });
 });
 
