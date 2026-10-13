@@ -101,6 +101,7 @@ export function DependencyGraph({
   );
   const [zoom, setZoom] = useState(1);
   const viewport = useRef<HTMLDivElement>(null);
+  const [canvasWidth, setCanvasWidth] = useState<number | null>(null);
   const firstFit = useRef(false);
   const instanceId = useId().replace(/:/g, "");
   const selection =
@@ -173,6 +174,18 @@ export function DependencyGraph({
           !stops.has(edge.source)),
     );
   }, [nodes, edges, branches, collapsedNodes]);
+  useEffect(() => {
+    const element = viewport.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      const unit =
+        (parseFloat(getComputedStyle(document.documentElement).fontSize) ||
+          16) / 16;
+      setCanvasWidth(Math.floor(element.clientWidth / unit));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [status, duplicate, projectedNodes.length]);
   const model = useMemo(
     () =>
       duplicate
@@ -183,16 +196,28 @@ export function DependencyGraph({
             groups,
             collapsed,
             nodeHeights,
-            density === "overview" ? 192 : 256,
+            new Map(
+              nodes.map((node) => [
+                node.id,
+                density === "overview"
+                  ? 192
+                  : density === "detail" && expandedChanges.includes(node.id)
+                    ? Math.min(352, Math.max(240, (canvasWidth ?? 400) - 48))
+                    : 256,
+              ]),
+            ),
             zoom,
           ),
     [
+      nodes,
       projectedNodes,
       projectedEdges,
       groups,
       collapsed,
       duplicate,
       nodeHeights,
+      expandedChanges,
+      canvasWidth,
       density,
       zoom,
     ],
@@ -479,6 +504,21 @@ export function DependencyGraph({
           {coverage.description && <span>{coverage.description}</span>}
         </p>
       )}
+      {edges.some(
+        (edge) => edge.change === "add" || edge.change === "remove",
+      ) && (
+        <p
+          className={styles.linkLegend}
+          aria-label="Relationship changes legend"
+        >
+          <span className={styles.linkChange} data-link-change="add">
+            + Added link
+          </span>
+          <span className={styles.linkChange} data-link-change="remove">
+            − Removed link
+          </span>
+        </p>
+      )}
       <div className={styles.toolbar}>
         <div className={styles.search}>
           <TextField
@@ -722,20 +762,33 @@ export function DependencyGraph({
                       aria-hidden="true"
                     >
                       <defs>
-                        <marker
-                          id={`${instanceId}-arrow`}
-                          viewBox="0 0 10 10"
-                          refX="9"
-                          refY="5"
-                          markerWidth="7"
-                          markerHeight="7"
-                          orient="auto-start-reverse"
-                        >
-                          <path d="M 0 0 L 10 5 L 0 10 z" />
-                        </marker>
+                        {["unknown", "unchanged", "add", "remove"].map(
+                          (change) => (
+                            <marker
+                              key={change}
+                              id={`${instanceId}-arrow-${change}`}
+                              data-link-change={change}
+                              viewBox="0 0 10 10"
+                              refX="9"
+                              refY="5"
+                              markerWidth="7"
+                              markerHeight="7"
+                              orient="auto-start-reverse"
+                            >
+                              <path d="M 0 0 L 10 5 L 0 10 z" />
+                            </marker>
+                          ),
+                        )}
                       </defs>
                       {connections.map((connection) => {
                         const ids = connection.edges.map((edge) => edge.id);
+                        const change = connection.edges[0].change ?? "unknown";
+                        const linkSymbol =
+                          change === "add"
+                            ? "+"
+                            : change === "remove"
+                              ? "−"
+                              : "";
                         const selected = sameEdgeSelection(selection, ids);
                         const midpoint =
                           connection.points[
@@ -760,6 +813,7 @@ export function DependencyGraph({
                                 (edge) => edge.variant === "dashed",
                               ) || undefined
                             }
+                            data-link-change={change}
                             data-graph-edge-ids={JSON.stringify(ids)}
                             onClick={() =>
                               select(
@@ -773,14 +827,17 @@ export function DependencyGraph({
                             <path
                               className={styles.edgeLine}
                               d={path}
-                              markerEnd={`url(#${instanceId}-arrow)`}
+                              markerEnd={`url(#${instanceId}-arrow-${change})`}
                             />
                             <title>
                               {connection.edges
-                                .map((edge) => edge.label ?? edge.id)
+                                .map(
+                                  (edge) =>
+                                    `${edge.change === "add" ? "Added: " : edge.change === "remove" ? "Removed: " : ""}${edge.label ?? edge.id}`,
+                                )
                                 .join("; ")}
                             </title>
-                            {ids.length > 1 && midpoint && (
+                            {(ids.length > 1 || linkSymbol) && midpoint && (
                               <g className={styles.bundleLabel}>
                                 <rect
                                   x={midpoint.x - 14}
@@ -795,7 +852,8 @@ export function DependencyGraph({
                                   dominantBaseline="central"
                                   textAnchor="middle"
                                 >
-                                  {ids.length}
+                                  {linkSymbol}
+                                  {ids.length > 1 ? ids.length : ""}
                                 </text>
                               </g>
                             )}

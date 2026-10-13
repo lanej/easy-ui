@@ -39,6 +39,10 @@ export type DependencyGraphNode = {
   groupId?: string;
 };
 
+/** Caller-supplied relationship delta, independent of resource operations. */
+export type DependencyGraphEdgeChange =
+  "add" | "remove" | "unchanged" | "unknown";
+
 export type DependencyGraphEdge = {
   id: string;
   /** Prerequisite. Arrows run from this dependency to its dependent. */
@@ -50,6 +54,8 @@ export type DependencyGraphEdge = {
   description?: string;
   /** Presentation only. For example, use dashed for an inferred relationship. */
   variant?: "solid" | "dashed";
+  /** Omitted status is unknown. Supply both old and new links to review topology changes. */
+  change?: DependencyGraphEdgeChange;
 };
 
 export type DependencyGraphGroup = {
@@ -101,7 +107,7 @@ export type DependencyGraphProps = {
   collapsedNodeIds?: readonly string[];
   defaultCollapsedNodeIds?: readonly string[];
   onCollapsedNodeIdsChange?: (ids: readonly string[]) => void;
-  /** Resources whose cards show attribute differences inline. */
+  /** Resources whose cards show side-by-side attribute differences. */
   expandedChangeNodeIds?: readonly string[];
   defaultExpandedChangeNodeIds?: readonly string[];
   onExpandedChangeNodeIdsChange?: (ids: readonly string[]) => void;

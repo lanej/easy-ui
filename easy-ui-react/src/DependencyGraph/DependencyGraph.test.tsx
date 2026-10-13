@@ -502,7 +502,77 @@ describe("DependencyGraph zoom and branch disclosures", () => {
       screen.getByRole("button", { name: "A, Change unknown, Storage" }),
     ).toContainElement(screen.getByTestId("custom-type"));
   });
-  it("shares string fragments visually while keeping full accessible before/after values", () => {
+  it("keeps additions, removals and empty strings distinct in aligned cells", () => {
+    render(
+      <DependencyGraphChanges
+        presentation="diff"
+        node={{
+          id: "a",
+          label: "A",
+          changes: [
+            { path: "new", type: "add", after: "" },
+            { path: "old", type: "remove", before: "old value" },
+          ],
+        }}
+      />,
+    );
+    const rows = screen.getByRole("table").querySelectorAll("tbody");
+    expect(rows[0].querySelectorAll("td")[0]).toHaveTextContent("Not present");
+    expect(rows[0].querySelectorAll("td")[1]).toHaveTextContent('""');
+    expect(rows[1].querySelectorAll("td")[0]).toHaveTextContent("old value");
+    expect(rows[1].querySelectorAll("td")[1]).toHaveTextContent("Not present");
+  });
+  it("keeps added and removed relationships individually selectable with unchanged endpoints", () => {
+    const { container } = render(
+      <DependencyGraph
+        title="Links"
+        nodes={[
+          { id: "a", label: "A", change: "unchanged" },
+          { id: "b", label: "B", change: "unchanged" },
+        ]}
+        edges={[
+          {
+            id: "old",
+            source: "a",
+            target: "b",
+            change: "remove",
+            label: "Old connection",
+          },
+          {
+            id: "new",
+            source: "a",
+            target: "b",
+            change: "add",
+            label: "New connection",
+          },
+        ]}
+        defaultSelection={{ type: "node", id: "a" }}
+        defaultView={{ scope: "changes", depth: 0 }}
+      />,
+    );
+    expect(container.querySelectorAll("[data-graph-edge-ids]")).toHaveLength(2);
+    expect(
+      container.querySelector(
+        '[data-link-change="remove"][data-graph-edge-ids]',
+      ),
+    ).toHaveAttribute("data-link-change", "remove");
+    expect(
+      screen.getByRole("button", {
+        name: /Old connection.*Removed relationship/,
+      }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /New connection.*Added relationship/,
+      }),
+    );
+    expect(
+      screen.getByRole("button", {
+        name: /New connection.*Added relationship/,
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+  it("aligns full before and after values per resource without eliding shared text", () => {
     const { container } = render(
       <DependencyGraphChanges
         presentation="diff"
@@ -534,6 +604,15 @@ describe("DependencyGraph zoom and branch disclosures", () => {
         }}
       />,
     );
+    expect(
+      screen.getByRole("table", { name: "A attribute differences" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Before" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "After" }),
+    ).toBeInTheDocument();
     const removals = container.querySelectorAll('[data-diff="removal"] code');
     const additions = container.querySelectorAll('[data-diff="addition"] code');
     expect(removals[0]).toHaveTextContent("registry/app:1.8");

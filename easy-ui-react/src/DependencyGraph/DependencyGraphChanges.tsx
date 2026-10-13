@@ -16,7 +16,7 @@ export type DependencyGraphChangesProps = {
   ) => void;
   /** Hide the summary/diff switch when embedding a fixed diff inside a card. */
   showPresentationControls?: boolean;
-  /** Inline changed fragments with shared text shown once. */
+  /** Omit the heading when embedding inside a resource card. */
   compact?: boolean;
 };
 
@@ -38,49 +38,31 @@ const formatValue = (value: DependencyGraphChangeValue) =>
       ? "Redacted value"
       : "Unknown value";
 
-function DiffLine({
+function DiffValue({
   kind,
   value,
-  prefix = "",
-  suffix = "",
 }: {
   kind: "addition" | "removal";
-  value: DependencyGraphChangeValue;
-  prefix?: string;
-  suffix?: string;
+  value?: DependencyGraphChangeValue;
 }) {
-  const text = formatValue(value);
-  const fragment = text.slice(prefix.length, text.length - suffix.length);
   return (
-    <span className={styles.diffLine} data-diff={kind}>
-      <span aria-hidden="true">{kind === "addition" ? "+" : "−"}</span>
-      <span className={styles.visuallyHidden}>
-        {kind === "addition" ? "Added: " : "Removed: "}
-      </span>
-      <code>
-        {prefix && <span className={styles.visuallyHidden}>{prefix}</span>}
-        {fragment || <span aria-hidden="true">∅</span>}
-        {suffix && <span className={styles.visuallyHidden}>{suffix}</span>}
-      </code>
+    <span
+      className={styles.diffLine}
+      data-diff={value === undefined ? "absent" : kind}
+    >
+      {value === undefined ? (
+        <span className={styles.muted}>Not present</span>
+      ) : (
+        <>
+          <span aria-hidden="true">{kind === "addition" ? "+" : "−"}</span>
+          <span className={styles.visuallyHidden}>
+            {kind === "addition" ? "Added: " : "Removed: "}
+          </span>
+          <code>{formatValue(value)}</code>
+        </>
+      )}
     </span>
   );
-}
-
-function sharedText(before: string, after: string) {
-  const a = Array.from(before),
-    b = Array.from(after);
-  let start = 0,
-    end = 0;
-  while (start < Math.min(a.length, b.length) && a[start] === b[start]) start++;
-  while (
-    end < Math.min(a.length, b.length) - start &&
-    a[a.length - end - 1] === b[b.length - end - 1]
-  )
-    end++;
-  return {
-    prefix: a.slice(0, start).join(""),
-    suffix: end ? a.slice(-end).join("") : "",
-  };
 }
 
 /** Summary or exact field diff for one resource, including missing/redacted values. */
@@ -149,50 +131,40 @@ export function DependencyGraphChanges({
           )}
         </>
       ) : changes.length ? (
-        <dl className={styles.fieldChanges}>
-          {changes.map((change, index) => {
-            const shared =
-              compact &&
-              change.type === "change" &&
-              typeof change.before === "string" &&
-              typeof change.after === "string" &&
-              change.before !== change.after
-                ? sharedText(
-                    formatValue(change.before),
-                    formatValue(change.after),
-                  )
-                : { prefix: "", suffix: "" };
-            return (
-              <div key={`${change.path}:${index}`}>
-                <dt>
+        <table
+          className={styles.fieldChanges}
+          aria-label={`${node.label} attribute differences`}
+        >
+          <thead>
+            <tr>
+              <th scope="col">Before</th>
+              <th scope="col">After</th>
+            </tr>
+          </thead>
+          {changes.map((change, index) => (
+            <tbody key={`${change.path}:${index}`}>
+              <tr>
+                <th colSpan={2} scope="rowgroup">
                   <code>{change.path}</code>
-                </dt>
-                <dd>
-                  {shared.prefix && (
-                    <code aria-hidden="true">{shared.prefix}</code>
-                  )}
-                  {change.type !== "add" && (
-                    <DiffLine
-                      kind="removal"
-                      value={change.before}
-                      {...shared}
-                    />
-                  )}
-                  {change.type !== "remove" && (
-                    <DiffLine
-                      kind="addition"
-                      value={change.after}
-                      {...shared}
-                    />
-                  )}
-                  {shared.suffix && (
-                    <code aria-hidden="true">{shared.suffix}</code>
-                  )}
-                </dd>
-              </div>
-            );
-          })}
-        </dl>
+                </th>
+              </tr>
+              <tr>
+                <td>
+                  <DiffValue
+                    kind="removal"
+                    value={change.type === "add" ? undefined : change.before}
+                  />
+                </td>
+                <td>
+                  <DiffValue
+                    kind="addition"
+                    value={change.type === "remove" ? undefined : change.after}
+                  />
+                </td>
+              </tr>
+            </tbody>
+          ))}
+        </table>
       ) : null}
       {!changes.length && (
         <p className={styles.muted}>

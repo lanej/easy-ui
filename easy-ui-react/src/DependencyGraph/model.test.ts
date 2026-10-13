@@ -223,3 +223,32 @@ describe("DependencyGraph branch folding", () => {
     expect(folded.hiddenCounts.get("api")).toBe(1);
   });
 });
+
+it("preserves separate added and removed links when collapsing endpoints into groups", () => {
+  const links: DependencyGraphEdge[] = [
+    { id: "old", source: "subnet", target: "api", change: "remove" },
+    { id: "new", source: "subnet", target: "api", change: "add" },
+    { id: "other-add", source: "subnet", target: "worker", change: "add" },
+  ];
+  const graph = buildDependencyGraph(nodes, links, groups, ["net", "app"]);
+  expect(graph.connections).toHaveLength(2);
+  expect(
+    graph.connections
+      .map((connection) => connection.edges.map((edge) => edge.id).sort())
+      .sort(),
+  ).toEqual([["new", "other-add"], ["old"]]);
+});
+it("includes both supplied endpoints of changed links in the changes view at depth zero", () => {
+  expect(
+    [
+      ...visibleDependencyNodes(
+        [
+          { id: "a", label: "A", change: "unchanged" },
+          { id: "b", label: "B", change: "unchanged" },
+        ],
+        [{ id: "link", source: "a", target: "b", change: "remove" }],
+        { scope: "changes", depth: 0 },
+      ),
+    ].sort(),
+  ).toEqual(["a", "b"]);
+});

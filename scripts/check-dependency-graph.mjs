@@ -81,6 +81,7 @@ try {
         "replacement-review",
         "change-summary",
         "specific-changes",
+        "relationship-changes",
         "expanded-attribute-differences",
         "collapsed-modules",
         "collapsible-branches",
@@ -146,6 +147,7 @@ try {
           [
             "replacement-review",
             "specific-changes",
+            "relationship-changes",
             "expanded-attribute-differences",
             "collapsible-branches",
           ].includes(story) &&
@@ -543,6 +545,102 @@ try {
     .locator("[data-dependency-graph]")
     .screenshot({ path: resolve(output, "enlarged-text-dark-320.png") });
   checks.push({ name: "enlarged-text-dark-320" });
+
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await open("relationship-changes", width === 390 ? "dark" : "light");
+    const table = page.locator("[data-graph-resource-card] table");
+    assert.equal(
+      await table
+        .getByRole("columnheader", { name: "Before", exact: true })
+        .count(),
+      1,
+    );
+    assert.equal(
+      await table
+        .getByRole("columnheader", { name: "After", exact: true })
+        .count(),
+      1,
+    );
+    const alignment = await table.evaluate((table) =>
+      [...table.querySelectorAll("tbody")].every((row) => {
+        const cells = [...row.querySelectorAll("td")].map((cell) =>
+          cell.getBoundingClientRect(),
+        );
+        return (
+          cells.length === 2 &&
+          Math.abs(cells[0].top - cells[1].top) <= 1 &&
+          Math.abs(cells[0].bottom - cells[1].bottom) <= 1 &&
+          cells[0].right <= cells[1].left + 1
+        );
+      }),
+    );
+    assert.ok(
+      alignment,
+      "Every resource attribute has aligned before/after cells",
+    );
+    assert.equal(
+      await page
+        .locator('[data-graph-edge-ids][data-link-change="add"]')
+        .count(),
+      1,
+    );
+    assert.equal(
+      await page
+        .locator('[data-graph-edge-ids][data-link-change="remove"]')
+        .count(),
+      1,
+    );
+    const strokes = await page
+      .locator(
+        '[data-graph-edge-ids]:is([data-link-change="add"], [data-link-change="remove"]) path',
+      )
+      .evaluateAll((paths) =>
+        paths
+          .filter(
+            (path) => getComputedStyle(path).stroke !== "rgba(0, 0, 0, 0)",
+          )
+          .map((path) => getComputedStyle(path).stroke),
+      );
+    assert.equal(
+      new Set(strokes).size,
+      2,
+      "Added and removed links have distinct strokes",
+    );
+    const details = page.locator("[data-graph-details]");
+    await details
+      .getByRole("button", {
+        name: /Previous database connection.*Removed relationship/,
+      })
+      .click();
+    assert.equal(
+      await details
+        .getByRole("button", {
+          name: /Previous database connection.*Removed relationship/,
+        })
+        .getAttribute("aria-pressed"),
+      "true",
+    );
+    await details
+      .getByRole("button", { name: "Inspect dependent", exact: true })
+      .click();
+    await details
+      .getByRole("button", {
+        name: /New database connection.*Added relationship/,
+      })
+      .click();
+    assert.equal(
+      await details
+        .getByRole("button", {
+          name: /New database connection.*Added relationship/,
+        })
+        .getAttribute("aria-pressed"),
+      "true",
+    );
+    checks.push({
+      name: `aligned-columns-and-independent-link-changes-${width}`,
+    });
+  }
   assert.deepEqual(errors, [], "Runtime diagnostics");
   console.log(`DependencyGraph: ${checks.length} browser cases passed.`);
 } catch (error) {

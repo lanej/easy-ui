@@ -167,6 +167,12 @@
       "path": "/dependency-graph.html?folded=1",
       "ready": "[data-dependency-graph] [data-graph-node]",
       "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-links",
+      "path": "/dependency-graph.html?links=1",
+      "ready": "[data-graph-edge-ids][data-link-change=\"add\"]",
+      "viewports": ["desktop", "mobile"]
     }
   ],
   "viewports": [

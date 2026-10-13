@@ -159,6 +159,7 @@ export const dependencyEdges: DependencyGraphEdge[] = [
   },
   {
     id: "subnet-api",
+    change: "add",
     source: subnetId,
     target: dependencyNodes[2].id,
     label: "Network attachment",
@@ -191,6 +192,7 @@ export const dependencyEdges: DependencyGraphEdge[] = [
   },
   {
     id: "network-bastion",
+    change: "remove",
     source: dependencyNodes[0].id,
     target: dependencyNodes[6].id,
     label: "Network attachment",
@@ -198,6 +200,7 @@ export const dependencyEdges: DependencyGraphEdge[] = [
   },
   {
     id: "api-alert",
+    change: "add",
     source: dependencyNodes[2].id,
     target: dependencyNodes[7].id,
     label: "Monitored resource",
@@ -206,6 +209,7 @@ export const dependencyEdges: DependencyGraphEdge[] = [
   },
   {
     id: "database-api",
+    change: "remove",
     source: dependencyNodes[4].id,
     target: dependencyNodes[2].id,
     label: "Connection configuration",
@@ -259,3 +263,34 @@ export function largeDependencyFixture(size = 1000) {
   }));
   return { nodes, edges, groups };
 }
+
+export const relationshipChangeNodes = dependencyNodes.filter((node) =>
+  [
+    "azurerm_container_app.api",
+    "azurerm_postgresql_flexible_server.primary",
+    "azurerm_container_app.worker",
+  ].includes(node.id),
+);
+export const relationshipChangeEdges: DependencyGraphEdge[] = [
+  {
+    id: "old-connection",
+    source: "azurerm_postgresql_flexible_server.primary",
+    target: "azurerm_container_app.api",
+    label: "Previous database connection",
+    change: "remove",
+  },
+  {
+    id: "new-connection",
+    source: "azurerm_postgresql_flexible_server.primary",
+    target: "azurerm_container_app.api",
+    label: "New database connection",
+    change: "add",
+  },
+  {
+    id: "worker-connection",
+    source: "azurerm_container_app.worker",
+    target: "azurerm_container_app.api",
+    label: "Worker connection",
+    change: "unchanged",
+  },
+];

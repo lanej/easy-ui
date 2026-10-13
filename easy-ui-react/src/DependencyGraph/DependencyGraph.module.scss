@@ -422,36 +422,78 @@
   margin-block-end: 12px;
 }
 .fieldChanges {
-  display: grid;
-  gap: 12px;
+  inline-size: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
   margin: 0;
-  dt {
-    margin-block-end: 4px;
-    font-size: 0.8125rem;
+  text-align: start;
+  font-size: 0.8125rem;
+  th {
+    text-align: start;
     font-weight: 600;
   }
-  dd {
-    margin: 0;
+  thead th {
+    color: design-token("color.neutral.700");
+    padding: 0 8px 6px;
+  }
+  tbody th {
+    padding: 12px 0 4px;
+    overflow-wrap: anywhere;
+  }
+  td {
+    padding: 0;
+    vertical-align: top;
+    background: design-token("color.neutral.100");
+  }
+  td + td {
+    border-inline-start: 4px solid design-token("color.neutral.000");
+  }
+  td:has([data-diff="removal"]) {
+    background: design-token("color.negative.100");
+  }
+  td:has([data-diff="addition"]) {
+    background: design-token("color.positive.100");
   }
 }
 .diffLine {
-  display: grid;
-  grid-template-columns: 1ch minmax(0, 1fr);
-  gap: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
   padding: 6px 8px;
   font-size: 0.8125rem;
   code {
+    min-inline-size: 0;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
   &[data-diff="addition"] {
-    background: design-token("color.positive.100");
     color: design-token("color.positive.800");
   }
   &[data-diff="removal"] {
-    background: design-token("color.negative.100");
     color: design-token("color.negative.800");
   }
+}
+.connection[data-link-change="add"] .edgeLine {
+  stroke: design-token("color.positive.700");
+}
+.connection[data-link-change="remove"] .edgeLine {
+  stroke: design-token("color.negative.700");
+}
+.edges marker[data-link-change="add"] {
+  fill: design-token("color.positive.700");
+}
+.edges marker[data-link-change="remove"] {
+  fill: design-token("color.negative.700");
+}
+.connection[data-link-change="add"] .bundleLabel text,
+.linkChange[data-link-change="add"] {
+  fill: design-token("color.positive.800");
+  color: design-token("color.positive.800");
+}
+.connection[data-link-change="remove"] .bundleLabel text,
+.linkChange[data-link-change="remove"] {
+  fill: design-token("color.negative.800");
+  color: design-token("color.negative.800");
 }
 .relationships {
   list-style: none;
@@ -579,31 +621,6 @@
   }
 }
 
-.resourceChanges[data-compact="true"] {
-  .fieldChanges {
-    gap: 8px;
-    dt {
-      font-size: 0.75rem;
-      overflow-wrap: anywhere;
-    }
-    dd {
-      font-size: 0.8125rem;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-  }
-  .diffLine {
-    display: inline;
-    border-radius: 3px;
-    padding: 1px 3px;
-    margin-inline: 1px;
-    > span:first-child {
-      margin-inline-end: 2px;
-    }
-  }
-}
-
 .root[data-graph-density="overview"] {
   .nodeDescription,
   .controlCaption {
@@ -621,4 +638,12 @@
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+.linkLegend {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 0 16px 12px;
+  font-size: 0.8125rem;
 }

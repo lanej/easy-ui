@@ -11,6 +11,8 @@ import {
   DependencyGraphLinkedInspectorExample,
 } from "./DependencyGraph.examples";
 import {
+  relationshipChangeNodes,
+  relationshipChangeEdges,
   dependencyNodes,
   dependencyEdges,
   dependencyGroups,
@@ -128,7 +130,7 @@ export const ExpandedAttributeDifferences: Story = {
     defaultCollapsedGroupIds: ["data", "observability"],
     showDetails: false,
     description:
-      "Expand individual cards to inspect attribute differences inline.",
+      "Expand individual cards to inspect attribute differences side by side.",
   },
 };
 export const CollapsedModules: Story = {
@@ -206,5 +208,19 @@ export const Error: Story = {
   args: {
     status: "error",
     message: "Relationship evidence is unavailable for this plan.",
+  },
+};
+
+/** Resource operations and relationship deltas are independent. */
+export const RelationshipChanges: Story = {
+  args: {
+    title: "Connection changes",
+    description: "Review old and new links independently of resource changes.",
+    nodes: relationshipChangeNodes,
+    groups: [],
+    edges: relationshipChangeEdges,
+    defaultExpandedChangeNodeIds: ["azurerm_container_app.api"],
+    defaultSelection: { type: "node", id: "azurerm_container_app.api" },
+    height: 720,
   },
 };

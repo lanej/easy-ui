@@ -5,6 +5,8 @@ import { ThemeProvider } from "../../easy-ui-react/src/Theme";
 import { DependencyGraphReviewExample } from "../../easy-ui-react/src/DependencyGraph/DependencyGraph.examples";
 import { DependencyGraph } from "../../easy-ui-react/src/DependencyGraph";
 import {
+  relationshipChangeNodes,
+  relationshipChangeEdges,
   dependencyNodes,
   dependencyEdges,
   dependencyGroups,
@@ -27,7 +29,16 @@ createRoot(document.getElementById("root")!).render(
         minHeight: "100vh",
       }}
     >
-      {query.get("inline") === "1" ? (
+      {query.get("links") === "1" ? (
+        <DependencyGraph
+          title="Connection changes"
+          nodes={relationshipChangeNodes}
+          edges={relationshipChangeEdges}
+          defaultExpandedChangeNodeIds={["azurerm_container_app.api"]}
+          defaultSelection={{ type: "node", id: "azurerm_container_app.api" }}
+          height={720}
+        />
+      ) : query.get("inline") === "1" ? (
         <DependencyGraph
           height={720}
           title="Resource dependencies"

@@ -40,7 +40,7 @@ export function buildDependencyGraph(
   groups: readonly DependencyGraphGroup[],
   collapsedGroupIds: readonly string[],
   nodeHeights: ReadonlyMap<string, number> = new Map(),
-  nodeWidth = NODE_WIDTH,
+  nodeWidth: number | ReadonlyMap<string, number> = NODE_WIDTH,
   zoom = 1,
 ) {
   const records = new Map(nodes.map((node) => [node.id, node]));
@@ -78,7 +78,11 @@ export function buildDependencyGraph(
         members: [node],
         x: 0,
         y: 0,
-        width: key.startsWith("node:") ? nodeWidth : NODE_WIDTH,
+        width: key.startsWith("node:")
+          ? typeof nodeWidth === "number"
+            ? nodeWidth
+            : (nodeWidth.get(node.id) ?? NODE_WIDTH)
+          : NODE_WIDTH,
         height: key.startsWith("node:")
           ? (nodeHeights.get(node.id) ??
             NODE_HEIGHT +
@@ -101,7 +105,7 @@ export function buildDependencyGraph(
     const target = nodeKey(targetNode);
     // Connections within a collapsed group remain in its selection details.
     if (source === target && source.startsWith("group:")) continue;
-    const key = JSON.stringify([source, target]);
+    const key = JSON.stringify([source, target, edge.change ?? "unknown"]);
     const previous = connections.get(key);
     if (previous) previous.edges.push(edge);
     else
@@ -245,6 +249,14 @@ export function visibleDependencyNodes(
               node.change !== "unknown",
           )
           .map((node) => node.id)
+          .concat(
+            edges
+              .filter(
+                (edge) => edge.change === "add" || edge.change === "remove",
+              )
+              .flatMap((edge) => [edge.source, edge.target])
+              .filter((id) => records.has(id)),
+          )
       : records.has(view.nodeId)
         ? [view.nodeId]
         : [];

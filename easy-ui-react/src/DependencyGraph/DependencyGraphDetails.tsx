@@ -169,6 +169,7 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
                   <button
                     type="button"
                     className={styles.relationship}
+                    data-link-change={edge.change}
                     aria-pressed={current}
                     onClick={() =>
                       onSelectionChange({ type: "edge", id: edge.id })
@@ -184,6 +185,18 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
                       {target?.label ?? edge.target}
                     </span>
                     <strong>{edge.label ?? "Dependency"}</strong>
+                    <span
+                      className={styles.linkChange}
+                      data-link-change={edge.change ?? "unknown"}
+                    >
+                      {edge.change === "add"
+                        ? "+ Added relationship"
+                        : edge.change === "remove"
+                          ? "− Removed relationship"
+                          : edge.change === "unchanged"
+                            ? "Unchanged relationship"
+                            : "Relationship change unknown"}
+                    </span>
                   </button>
                   {(!source || !target) && (
                     <span className={styles.unavailable}>
