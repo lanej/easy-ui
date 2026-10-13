@@ -320,6 +320,39 @@ try {
     await accessibility(`${atom}-disclosure`);
     checks.push({ name: `${atom}-keyboard-disclosure` });
   }
+  await page.setViewportSize({ width: 390, height: 1000 });
+  await open("expanded-attribute-differences");
+  await page.getByRole("button", { name: "Zoom out graph" }).click();
+  await page.getByRole("button", { name: "Zoom out graph" }).click();
+  await settledCards();
+  await card
+    .getByRole("button", {
+      name: "Show attribute differences for Shipping API",
+    })
+    .click();
+  await settledCards();
+  await page.waitForFunction(() => {
+    const control = document.querySelector(
+      '[data-graph-resource-card="azurerm_container_app.api"] button[aria-controls*="-diff-"]',
+    );
+    const box = control.getBoundingClientRect();
+    const viewport = document
+      .querySelector("[data-graph-canvas]")
+      .getBoundingClientRect();
+    return (
+      box.left >= viewport.left &&
+      box.right <= viewport.right &&
+      box.top >= viewport.top &&
+      box.bottom <= viewport.bottom
+    );
+  });
+  assert.equal(await graph.getAttribute("data-graph-density"), "detail");
+  assert.equal(await card.locator('[data-diff="addition"]').count(), 4);
+  await graph.screenshot({
+    path: resolve(output, "mobile-overview-expansion.png"),
+  });
+  checks.push({ name: "mobile-overview-disclosure-keeps-resource-in-view" });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await open("replacement-review");
   const resourceChanges = page.locator(
     "[data-graph-details] [data-resource-changes]",

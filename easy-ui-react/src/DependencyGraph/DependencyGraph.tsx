@@ -921,7 +921,13 @@ export function DependencyGraph({
                                       accessibilityLabel={`${diffShown ? "Hide" : "Show"} attribute differences for ${label}`}
                                       expanded={diffShown}
                                       aria-controls={`${instanceId}-diff-${items.indexOf(item)}`}
-                                      onPress={() => {
+                                      onPress={(event) => {
+                                        const reveal =
+                                          !diffShown && zoom < 1
+                                            ? event.target.closest<HTMLElement>(
+                                                "[data-graph-resource-card]",
+                                              )
+                                            : null;
                                         if (!diffShown && zoom < 1) setZoom(1);
                                         changeExpandedChanges(
                                           diffShown
@@ -932,6 +938,15 @@ export function DependencyGraph({
                                               ? expandedChanges
                                               : [...expandedChanges, node.id],
                                         );
+                                        if (reveal)
+                                          requestAnimationFrame(() =>
+                                            requestAnimationFrame(() =>
+                                              reveal.scrollIntoView({
+                                                block: "nearest",
+                                                inline: "nearest",
+                                              }),
+                                            ),
+                                          );
                                       }}
                                     />
                                     <span className={styles.controlCaption}>
