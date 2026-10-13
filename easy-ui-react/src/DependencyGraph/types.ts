@@ -56,6 +56,10 @@ export type DependencyGraphEdge = {
   variant?: "solid" | "dashed";
   /** Omitted status is unknown. Supply both old and new links to review topology changes. */
   change?: DependencyGraphEdgeChange;
+  /** Exact path of a visible source attribute; falls back to the card when hidden. */
+  sourceAttributePath?: string;
+  /** Exact path of a visible dependent attribute; falls back to the card when hidden. */
+  targetAttributePath?: string;
 };
 
 export type DependencyGraphGroup = {

@@ -294,3 +294,84 @@ export const relationshipChangeEdges: DependencyGraphEdge[] = [
     change: "unchanged",
   },
 ];
+
+export const attributeDependencyNodes: DependencyGraphNode[] = [
+  {
+    id: "database",
+    label: "Primary database",
+    icon: DatabaseIcon,
+    iconLabel: "Database",
+    change: "update",
+    changes: [
+      {
+        path: "endpoint",
+        type: "change",
+        before: "db-v1.internal:5432",
+        after: "db-v2.internal:5432",
+      },
+      { path: "version", type: "change", before: "16.3", after: "16.4" },
+    ],
+  },
+  {
+    id: "network",
+    label: "Private network",
+    icon: HubIcon,
+    iconLabel: "Network",
+    change: "unchanged",
+  },
+  {
+    id: "api",
+    label: "Shipping API",
+    icon: dependencyNodes[2].icon,
+    iconLabel: "Application",
+    change: "update",
+    changes: [
+      {
+        path: "image",
+        type: "change",
+        before: "registry.example.com/shipping:1.8",
+        after: "registry.example.com/shipping:1.9",
+      },
+      {
+        path: "env.DATABASE_URL",
+        type: "change",
+        before: "postgres://db-v1.internal:5432/app",
+        after: "postgres://db-v2.internal:5432/app",
+      },
+      {
+        path: "private_network_id",
+        type: "change",
+        before: "legacy-network",
+        after: "production-network",
+      },
+    ],
+  },
+];
+export const attributeDependencyEdges: DependencyGraphEdge[] = [
+  {
+    id: "old-database-reference",
+    source: "database",
+    target: "api",
+    sourceAttributePath: "endpoint",
+    targetAttributePath: "env.DATABASE_URL",
+    change: "remove",
+    label: "Previous database reference",
+  },
+  {
+    id: "new-database-reference",
+    source: "database",
+    target: "api",
+    sourceAttributePath: "endpoint",
+    targetAttributePath: "env.DATABASE_URL",
+    change: "add",
+    label: "Database reference",
+  },
+  {
+    id: "network-reference",
+    source: "network",
+    target: "api",
+    targetAttributePath: "private_network_id",
+    change: "unchanged",
+    label: "Private network reference",
+  },
+];

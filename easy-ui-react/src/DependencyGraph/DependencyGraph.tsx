@@ -16,6 +16,11 @@ import {
   visibleDependencyNodes,
 } from "./model";
 import type { GraphItem } from "./model";
+import {
+  attributePortKey,
+  routeDependencyConnections,
+  roundedConnectionPath,
+} from "./routing";
 import type {
   DependencyGraphGroup,
   DependencyGraphProps,
@@ -99,6 +104,9 @@ export function DependencyGraph({
   const [nodeHeights, setNodeHeights] = useState<ReadonlyMap<string, number>>(
     () => new Map(),
   );
+  const [attributePorts, setAttributePorts] = useState<
+    ReadonlyMap<string, number>
+  >(() => new Map());
   const [zoom, setZoom] = useState(1);
   const viewport = useRef<HTMLDivElement>(null);
   const [canvasWidth, setCanvasWidth] = useState<number | null>(null);
@@ -231,16 +239,57 @@ export function DependencyGraph({
       ),
     [nodes, edges, view, branches],
   );
-  const items =
-    model?.items.filter((item) =>
-      item.members.some((node) => visible.has(node.id)),
-    ) ?? [];
+  const items = useMemo(
+    () =>
+      model?.items.filter((item) =>
+        item.members.some((node) => visible.has(node.id)),
+      ) ?? [],
+    [model, visible],
+  );
   const renderedNodeIds = items
     .filter((item) => item.node)
     .map((item) => item.node!.id)
     .join("\0");
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
+    const measurePorts = () => {
+      const next = new Map<string, number>();
+      const unit =
+        (parseFloat(getComputedStyle(document.documentElement).fontSize) ||
+          16) / 16;
+      viewport.current
+        ?.querySelectorAll<HTMLElement>("[data-graph-resource-card]")
+        .forEach((card) => {
+          const rect = card.getBoundingClientRect();
+          const scale =
+            new DOMMatrix(getComputedStyle(card.parentElement!).transform).a *
+            unit;
+          card
+            .querySelectorAll<HTMLElement>("[data-field-change]")
+            .forEach((field) => {
+              const heading = field
+                .querySelector("dt")
+                ?.getBoundingClientRect();
+              const key = attributePortKey(
+                card.dataset.graphResourceCard!,
+                field.dataset.fieldChange!,
+              );
+              if (heading && !next.has(key))
+                next.set(
+                  key,
+                  Math.round(
+                    ((heading.top + heading.height / 2 - rect.top) / scale) * 2,
+                  ) / 2,
+                );
+            });
+        });
+      setAttributePorts((previous) =>
+        previous.size === next.size &&
+        [...next].every(([key, value]) => previous.get(key) === value)
+          ? previous
+          : next,
+      );
+    };
     const observer = new ResizeObserver((entries) => {
       const rootSize =
         parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -262,40 +311,82 @@ export function DependencyGraph({
         }
         return changed ? next : previous;
       });
+      measurePorts();
     });
     viewport.current
       ?.querySelectorAll("[data-graph-resource-card]")
       .forEach((element) => observer.observe(element));
+    viewport.current
+      ?.querySelectorAll("[data-graph-resource-card] [data-field-change]")
+      .forEach((element) => observer.observe(element));
+    measurePorts();
     return () => observer.disconnect();
-  }, [renderedNodeIds, status, duplicate]);
-  const clusters = (model?.clusters ?? []).flatMap((cluster) => {
-    const members = items.filter(
-      (item) => item.node?.groupId === cluster.group.id,
-    );
-    if (!members.length) return [];
-    const x = Math.min(...members.map((item) => item.x)) - 16;
-    const y =
-      Math.min(...members.map((item) => item.y)) - Math.max(44, 25 / zoom + 8);
-    return [
-      {
-        ...cluster,
-        x,
-        y,
-        width: Math.max(...members.map((item) => item.x + item.width)) - x + 16,
-        height:
-          Math.max(...members.map((item) => item.y + item.height)) - y + 16,
-      },
-    ];
-  });
-  const connections =
-    model?.connections
-      .map((connection) => ({
-        ...connection,
-        edges: connection.edges.filter(
-          (edge) => visible.has(edge.source) && visible.has(edge.target),
-        ),
-      }))
-      .filter((connection) => connection.edges.length) ?? [];
+  }, [renderedNodeIds, status, duplicate, nodes, expandedChanges, density]);
+  const clusters = useMemo(
+    () =>
+      (model?.clusters ?? []).flatMap((cluster) => {
+        const members = items.filter(
+          (item) => item.node?.groupId === cluster.group.id,
+        );
+        if (!members.length) return [];
+        const x = Math.min(...members.map((item) => item.x)) - 16;
+        const y =
+          Math.min(...members.map((item) => item.y)) -
+          Math.max(44, 25 / zoom + 8);
+        return [
+          {
+            ...cluster,
+            x,
+            y,
+            width:
+              Math.max(...members.map((item) => item.x + item.width)) - x + 16,
+            height:
+              Math.max(...members.map((item) => item.y + item.height)) - y + 16,
+          },
+        ];
+      }),
+    [model, items, zoom],
+  );
+  const rawConnections = useMemo(
+    () =>
+      model?.connections
+        .map((connection) => ({
+          ...connection,
+          edges: connection.edges.filter(
+            (edge) => visible.has(edge.source) && visible.has(edge.target),
+          ),
+        }))
+        .filter((connection) => connection.edges.length) ?? [],
+    [model, visible],
+  );
+  const connections = useMemo(
+    () =>
+      routeDependencyConnections(
+        items,
+        rawConnections,
+        attributePorts,
+        clusters.map((cluster) => ({
+          x: cluster.x,
+          y: cluster.y,
+          width: cluster.width,
+          height: Math.max(36, 25 / zoom + 4),
+        })),
+        zoom,
+      ),
+    [items, rawConnections, attributePorts, clusters, zoom],
+  );
+  const sceneWidth = Math.max(
+    model?.width ?? 0,
+    ...connections.flatMap((connection) =>
+      connection.points.map((point) => point.x + 16),
+    ),
+  );
+  const sceneHeight = Math.max(
+    model?.height ?? 0,
+    ...connections.flatMap((connection) =>
+      connection.points.map((point) => point.y + 16),
+    ),
+  );
   const selectedNode =
     selection?.type === "node"
       ? nodes.find((node) => node.id === selection.id)
@@ -354,7 +445,18 @@ export function DependencyGraph({
     );
     const unit =
       (Number.isFinite(rootSize) && rootSize > 0 ? rootSize : 16) / 16;
-    const boxes = [...items, ...clusters];
+    const boxes = [
+      ...items,
+      ...clusters,
+      ...connections.flatMap((connection) =>
+        connection.points.map((point) => ({
+          x: point.x,
+          y: point.y,
+          width: 0,
+          height: 0,
+        })),
+      ),
+    ];
     const x = Math.min(...boxes.map((item) => item.x));
     const y = Math.min(...boxes.map((item) => item.y));
     const right = Math.max(...boxes.map((item) => item.x + item.width));
@@ -512,10 +614,10 @@ export function DependencyGraph({
           aria-label="Relationship changes legend"
         >
           <span className={styles.linkChange} data-link-change="add">
-            + Added link
+            Added link
           </span>
           <span className={styles.linkChange} data-link-change="remove">
-            − Removed link
+            Removed link
           </span>
         </p>
       )}
@@ -713,15 +815,15 @@ export function DependencyGraph({
                 <div
                   className={styles.scrollArea}
                   style={{
-                    width: rem(model!.width * zoom),
-                    height: rem(model!.height * zoom),
+                    width: rem(sceneWidth * zoom),
+                    height: rem(sceneHeight * zoom),
                   }}
                 >
                   <div
                     className={styles.canvas}
                     style={{
-                      width: rem(model!.width),
-                      height: rem(model!.height),
+                      width: rem(sceneWidth),
+                      height: rem(sceneHeight),
                       transform: `scale(${zoom})`,
                     }}
                   >
@@ -758,7 +860,7 @@ export function DependencyGraph({
                     ))}
                     <svg
                       className={styles.edges}
-                      viewBox={`0 0 ${model!.width} ${model!.height}`}
+                      viewBox={`0 0 ${sceneWidth} ${sceneHeight}`}
                       aria-hidden="true"
                     >
                       <defs>
@@ -783,23 +885,8 @@ export function DependencyGraph({
                       {connections.map((connection) => {
                         const ids = connection.edges.map((edge) => edge.id);
                         const change = connection.edges[0].change ?? "unknown";
-                        const linkSymbol =
-                          change === "add"
-                            ? "+"
-                            : change === "remove"
-                              ? "−"
-                              : "";
                         const selected = sameEdgeSelection(selection, ids);
-                        const midpoint =
-                          connection.points[
-                            Math.floor(connection.points.length / 2)
-                          ];
-                        const path = connection.points
-                          .map(
-                            (point, index) =>
-                              `${index ? "L" : "M"} ${point.x} ${point.y}`,
-                          )
-                          .join(" ");
+                        const path = roundedConnectionPath(connection.points);
                         return (
                           <g
                             key={connection.key}
@@ -814,6 +901,15 @@ export function DependencyGraph({
                               ) || undefined
                             }
                             data-link-change={change}
+                            data-graph-source-attribute={
+                              connection.sourceAttribute
+                            }
+                            data-graph-target-attribute={
+                              connection.targetAttribute
+                            }
+                            data-graph-route-points={JSON.stringify(
+                              connection.points,
+                            )}
                             data-graph-edge-ids={JSON.stringify(ids)}
                             onClick={() =>
                               select(
@@ -837,26 +933,6 @@ export function DependencyGraph({
                                 )
                                 .join("; ")}
                             </title>
-                            {(ids.length > 1 || linkSymbol) && midpoint && (
-                              <g className={styles.bundleLabel}>
-                                <rect
-                                  x={midpoint.x - 14}
-                                  y={midpoint.y - 12}
-                                  width="28"
-                                  height="24"
-                                  rx="6"
-                                />
-                                <text
-                                  x={midpoint.x}
-                                  y={midpoint.y}
-                                  dominantBaseline="central"
-                                  textAnchor="middle"
-                                >
-                                  {linkSymbol}
-                                  {ids.length > 1 ? ids.length : ""}
-                                </text>
-                              </g>
-                            )}
                           </g>
                         );
                       })}

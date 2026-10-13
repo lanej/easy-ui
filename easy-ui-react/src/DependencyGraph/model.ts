@@ -105,7 +105,13 @@ export function buildDependencyGraph(
     const target = nodeKey(targetNode);
     // Connections within a collapsed group remain in its selection details.
     if (source === target && source.startsWith("group:")) continue;
-    const key = JSON.stringify([source, target, edge.change ?? "unknown"]);
+    const key = JSON.stringify([
+      source,
+      target,
+      edge.change ?? "unknown",
+      source.startsWith("node:") ? (edge.sourceAttributePath ?? null) : null,
+      target.startsWith("node:") ? (edge.targetAttributePath ?? null) : null,
+    ]);
     const previous = connections.get(key);
     if (previous) previous.edges.push(edge);
     else

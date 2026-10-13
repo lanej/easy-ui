@@ -179,6 +179,12 @@
       "path": "/dependency-graph.html?responsive=1",
       "ready": "[data-field-values]",
       "viewports": ["desktop", "mobile"]
+    },
+    {
+      "name": "dependency-graph-attributes",
+      "path": "/dependency-graph.html?anchors=1",
+      "ready": "[data-graph-target-attribute]",
+      "viewports": ["desktop", "mobile"]
     }
   ],
   "viewports": [

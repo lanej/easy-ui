@@ -325,7 +325,8 @@
       "dependency-graph-inline-large-dark",
       "dependency-graph-overview",
       "dependency-graph-folded",
-      "dependency-graph-links"
+      "dependency-graph-links",
+      "dependency-graph-attributes"
     ]
   },
   {
@@ -345,7 +346,8 @@
       "dependency-graph-inline-large-dark",
       "dependency-graph-overview",
       "dependency-graph-folded",
-      "dependency-graph-links"
+      "dependency-graph-links",
+      "dependency-graph-attributes"
     ]
   }
 ]

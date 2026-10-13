@@ -107,8 +107,22 @@ Use `variant="dashed"` on an edge for a caller-defined distinction and explain i
 
 ### Relationship changes
 
-Supply `edge.change` as `"add"`, `"remove"`, `"unchanged"`, or `"unknown"`. Omission means unknown. Link changes are independent of resource operations: an unchanged resource can gain or lose relationships. Supply the union of before and after links, retaining removed links with their original IDs. Added links use green arrows and `+`; removed links use red arrows and `−`. Relationship details include textual status labels. Added and removed links between the same endpoints stay separate, including when endpoints are collapsed into groups; same-status links may bundle and retain all IDs. The **Changes** view includes both supplied endpoints of added/removed links. Neighborhood and branch traversal follow all supplied links, including removed links, to support comparison of old and new topology.
+Supply `edge.change` as `"add"`, `"remove"`, `"unchanged"`, or `"unknown"`. Omission means unknown. Link changes are independent of resource operations: an unchanged resource can gain or lose relationships. Supply the union of before and after links, retaining removed links with their original IDs. Added links use green arrows; removed links use red arrows. The connections have no status symbols or bundle badges. Relationship details include textual status labels. Added and removed links between the same endpoints stay separate, including when endpoints are collapsed into groups; same-status links with matching visible endpoint paths may bundle and retain all IDs. The **Changes** view includes both supplied endpoints of added/removed links. Neighborhood and branch traversal follow all supplied links, including removed links, to support comparison of old and new topology.
 
 <Canvas of={Stories.RelationshipChanges} />
 
 <Canvas of={Stories.ResponsiveAttributeDifferences} />
+
+### Attribute endpoints and routing
+
+Optionally supply `sourceAttributePath` and/or `targetAttributePath` on a relationship. Paths match exact supplied attribute-change paths. A visible expanded field receives the arrow at its row; hidden or missing fields, collapsed groups, and overview cards fall back to resource-level endpoints. Relationship details retain the supplied paths regardless of presentation. Easy UI does not infer which attribute creates a dependency.
+
+Connections use rounded orthogonal lanes around cards and group headings. Default ports follow neighboring resources' vertical order; parallel changes use separate ports/lanes. Cycles and self-links use exterior corridors. Reordering caller arrays does not change routes.
+
+```tsx
+{ id: "database-reference", source: "database", target: "api",
+  sourceAttributePath: "endpoint", targetAttributePath: "env.DATABASE_URL",
+  change: "add" }
+```
+
+<Canvas of={Stories.AttributeDependencies} />

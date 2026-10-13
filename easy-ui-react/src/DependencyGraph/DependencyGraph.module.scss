@@ -211,6 +211,8 @@
   fill: none;
   stroke: design-token("color.neutral.500");
   stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
   pointer-events: none;
 }
 .edges marker {
@@ -224,17 +226,6 @@
 .connection[data-highlighted="true"] .edgeLine {
   stroke: design-token("color.primary.500");
   stroke-width: 3;
-}
-.bundleLabel {
-  pointer-events: all;
-  rect {
-    fill: design-token("color.neutral.000");
-    stroke: design-token("color.neutral.300");
-  }
-  text {
-    fill: design-token("color.neutral.900");
-    font-size: 14px;
-  }
 }
 .node {
   position: absolute;
@@ -483,12 +474,10 @@
 .edges marker[data-link-change="remove"] {
   fill: design-token("color.negative.700");
 }
-.connection[data-link-change="add"] .bundleLabel text,
 .linkChange[data-link-change="add"] {
   fill: design-token("color.positive.800");
   color: design-token("color.positive.800");
 }
-.connection[data-link-change="remove"] .bundleLabel text,
 .linkChange[data-link-change="remove"] {
   fill: design-token("color.negative.800");
   color: design-token("color.negative.800");

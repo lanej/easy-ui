@@ -82,6 +82,7 @@ try {
         "change-summary",
         "specific-changes",
         "relationship-changes",
+        "attribute-dependencies",
         "expanded-attribute-differences",
         "collapsed-modules",
         "collapsible-branches",
@@ -148,6 +149,7 @@ try {
             "replacement-review",
             "specific-changes",
             "relationship-changes",
+            "attribute-dependencies",
             "expanded-attribute-differences",
             "collapsible-branches",
           ].includes(story) &&
@@ -715,6 +717,123 @@ try {
       checks.push({ name: "responsive-diff-container-width-on-wide-page" });
     }
     checks.push({ name: `responsive-diff-${theme}-${width}` });
+  }
+
+  for (const [width, theme] of [
+    [1440, "light"],
+    [390, "dark"],
+  ]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await open("attribute-dependencies", theme);
+    await page.waitForFunction(
+      () =>
+        document.querySelectorAll("[data-graph-target-attribute]").length === 3,
+    );
+    const graph = page.locator("[data-dependency-graph]");
+    assert.equal(
+      await graph
+        .locator("[data-graph-edge-ids] text, [data-graph-edge-ids] rect")
+        .count(),
+      0,
+      "Edges have no status or count badges",
+    );
+    const routes = await page.evaluate(() => {
+      const svg = document
+          .querySelector("[data-graph-edge-ids]")
+          .closest("svg"),
+        matrix = svg.getScreenCTM();
+      const cards = [
+        ...document.querySelectorAll("[data-graph-resource-card]"),
+      ];
+      return [...document.querySelectorAll("[data-graph-edge-ids]")].map(
+        (group) => {
+          const points = JSON.parse(group.dataset.graphRoutePoints);
+          const pixels = points.map((point) =>
+            new DOMPoint(point.x, point.y).matrixTransform(matrix),
+          );
+          const clear = points.slice(1).every((b, i) => {
+            const a = points[i];
+            if (a.x !== b.x && a.y !== b.y) return false;
+            const p = pixels[i],
+              q = pixels[i + 1];
+            return cards.every((card) => {
+              const r = card.getBoundingClientRect();
+              return !(a.x === b.x
+                ? p.x > r.left + 1 &&
+                  p.x < r.right - 1 &&
+                  Math.max(p.y, q.y) > r.top + 1 &&
+                  Math.min(p.y, q.y) < r.bottom - 1
+                : p.y > r.top + 1 &&
+                  p.y < r.bottom - 1 &&
+                  Math.max(p.x, q.x) > r.left + 1 &&
+                  Math.min(p.x, q.x) < r.right - 1);
+            });
+          });
+          const target = cards.find(
+            (card) => card.dataset.graphResourceCard === "api",
+          );
+          const field = [
+            ...target.querySelectorAll("[data-field-change]"),
+          ].find(
+            (field) =>
+              field.dataset.fieldChange === group.dataset.graphTargetAttribute,
+          );
+          const rect = field.querySelector("dt").getBoundingClientRect(),
+            end = pixels[pixels.length - 1];
+          return {
+            clear,
+            aligned:
+              Math.abs(end.x - target.getBoundingClientRect().left) < 2 &&
+              Math.abs(end.y - (rect.top + rect.height / 2)) <=
+                7 * Math.abs(matrix.a),
+          };
+        },
+      );
+    });
+    assert.ok(
+      routes.every((route) => route.clear && route.aligned),
+      "Orthogonal routes avoid cards and land at the requested field rows",
+    );
+    await graph.screenshot({
+      path: resolve(output, `attribute-ports-${theme}-${width}.png`),
+    });
+    await page
+      .getByRole("button", {
+        name: "Hide attribute differences for Shipping API",
+      })
+      .click();
+    await page.waitForFunction(
+      () => !document.querySelector("[data-graph-target-attribute]"),
+    );
+    await settledCards();
+    await page
+      .getByRole("button", {
+        name: "Show attribute differences for Shipping API",
+      })
+      .click();
+    await page.waitForFunction(
+      () =>
+        document.querySelectorAll("[data-graph-target-attribute]").length === 3,
+    );
+    await page.getByRole("button", { name: "Zoom out" }).click();
+    await page.waitForFunction(
+      () => !document.querySelector("[data-graph-target-attribute]"),
+    );
+    await page.getByRole("button", { name: "Zoom in" }).click();
+    await page.waitForFunction(
+      () =>
+        document.querySelectorAll("[data-graph-target-attribute]").length === 3,
+    );
+    assert.equal(
+      await page
+        .locator("[data-graph-details]")
+        .getByRole("button", { name: /Database reference.*Added relationship/ })
+        .count(),
+      1,
+    );
+    checks.push({
+      name: `attribute-ports-routing-and-collapse-zoom-fallback-${width}`,
+    });
   }
   assert.deepEqual(errors, [], "Runtime diagnostics");
   console.log(`DependencyGraph: ${checks.length} browser cases passed.`);

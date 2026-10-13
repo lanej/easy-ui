@@ -176,13 +176,19 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
                     }
                   >
                     <span>
-                      {source?.label ?? edge.source}{" "}
+                      {source?.label ?? edge.source}
+                      {edge.sourceAttributePath !== undefined && (
+                        <code> · {edge.sourceAttributePath}</code>
+                      )}{" "}
                       <span aria-hidden="true">→</span>
                       <span className={styles.visuallyHidden}>
                         {" "}
                         is a dependency of{" "}
                       </span>{" "}
                       {target?.label ?? edge.target}
+                      {edge.targetAttributePath !== undefined && (
+                        <code> · {edge.targetAttributePath}</code>
+                      )}
                     </span>
                     <strong>{edge.label ?? "Dependency"}</strong>
                     <span
@@ -190,9 +196,9 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
                       data-link-change={edge.change ?? "unknown"}
                     >
                       {edge.change === "add"
-                        ? "+ Added relationship"
+                        ? "Added relationship"
                         : edge.change === "remove"
-                          ? "− Removed relationship"
+                          ? "Removed relationship"
                           : edge.change === "unchanged"
                             ? "Unchanged relationship"
                             : "Relationship change unknown"}

@@ -14,6 +14,8 @@ import {
 import {
   relationshipChangeNodes,
   relationshipChangeEdges,
+  attributeDependencyNodes,
+  attributeDependencyEdges,
   dependencyNodes,
   dependencyEdges,
   dependencyGroups,
@@ -237,4 +239,18 @@ export const ResponsiveAttributeDifferences: Story = {
       />
     </div>
   ),
+};
+
+export const AttributeDependencies: Story = {
+  args: {
+    title: "Attribute dependencies",
+    description:
+      "Links can connect visible fields. Collapse attributes to route to the resource card.",
+    nodes: attributeDependencyNodes,
+    edges: attributeDependencyEdges,
+    groups: [],
+    defaultExpandedChangeNodeIds: ["database", "api"],
+    defaultSelection: { type: "node", id: "api" },
+    height: 780,
+  },
 };
