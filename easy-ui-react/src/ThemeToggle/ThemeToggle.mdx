@@ -1,0 +1,49 @@
+import React from "react";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as ThemeToggleStories from "./ThemeToggle.stories";
+
+<Meta of={ThemeToggleStories} />
+
+# ThemeToggle
+
+A sun/moon button that requests a change between light and dark mode.
+The sun requests light mode; the moon requests dark mode.
+
+## Usage
+
+```tsx
+import { ThemeToggle } from "@easypost/easy-ui/ThemeToggle";
+```
+
+<Canvas of={ThemeToggleStories.Default} />
+
+## Props
+
+<ArgTypes of={ThemeToggleStories} />
+
+## Examples
+
+### Controlled mode
+
+Pass the current mode and update it through `onModeChange`.
+Use the same value for your provider's `colorScheme`.
+
+```tsx
+import { useState } from "react";
+import { ThemeProvider } from "@easypost/easy-ui/Theme";
+import { ThemeToggle } from "@easypost/easy-ui/ThemeToggle";
+
+function ThemeSelector() {
+  const [mode, setMode] = useState<"light" | "dark">("light");
+
+  return (
+    <ThemeProvider colorScheme={mode}>
+      <ThemeToggle mode={mode} onModeChange={setMode} />
+    </ThemeProvider>
+  );
+}
+```
+
+`mode` accepts `"light"` or `"dark"`. Your application resolves system preferences
+and owns persistence.
