@@ -12,6 +12,14 @@ import {
   subnetId,
 } from "./DependencyGraph.fixtures";
 
+beforeAll(() => {
+  const original = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = vi.fn();
+  return () => {
+    Element.prototype.scrollIntoView = original;
+  };
+});
+
 describe("DependencyGraph interaction contract", () => {
   it("does not label absent change evidence as unchanged", () => {
     render(
@@ -672,4 +680,92 @@ it("renders a caller-matched modified reference once and preserves its selection
   });
   fireEvent.click(relationship);
   expect(relationship).toHaveAttribute("aria-pressed", "true");
+});
+
+describe("DependencyGraph stable resource positions", () => {
+  const positions = (container: HTMLElement) =>
+    Object.fromEntries(
+      [
+        ...container.querySelectorAll<HTMLElement>(
+          "[data-graph-resource-card]",
+        ),
+      ].map((card) => [
+        card.dataset.graphResourceCard!,
+        [card.style.left, card.style.top],
+      ]),
+    );
+  const props = { title: "Graph", nodes, edges, groups, showDetails: false };
+
+  it("keeps resource anchors when callers hide and restore relationships", () => {
+    const { container, rerender } = render(<DependencyGraph {...props} />);
+    const initial = positions(container);
+    rerender(<DependencyGraph {...props} edges={[]} />);
+    expect(positions(container)).toEqual(initial);
+    rerender(
+      <DependencyGraph
+        {...props}
+        edges={[...edges].reverse()}
+        nodes={[...nodes].reverse()}
+      />,
+    );
+    expect(positions(container)).toEqual(initial);
+  });
+
+  it("keeps surviving resources fixed through card, branch and group disclosure", () => {
+    const { container, rerender } = render(<DependencyGraph {...props} />);
+    const initial = positions(container);
+    const assertAnchors = () => {
+      for (const [id, position] of Object.entries(positions(container)))
+        expect(position, id).toEqual(initial[id]);
+    };
+    rerender(
+      <DependencyGraph
+        {...props}
+        expandedChangeNodeIds={[subnetId, "azurerm_container_app.api"]}
+      />,
+    );
+    assertAnchors();
+    rerender(<DependencyGraph {...props} collapsedNodeIds={[subnetId]} />);
+    assertAnchors();
+    rerender(
+      <DependencyGraph {...props} collapsedGroupIds={["services", "data"]} />,
+    );
+    assertAnchors();
+    rerender(<DependencyGraph {...props} />);
+    expect(positions(container)).toEqual(initial);
+  });
+
+  it("hides lines without losing evidence and only relayouts the same IDs on an explicit revision", () => {
+    const { container, rerender } = render(<DependencyGraph {...props} />);
+    const initial = positions(container);
+    rerender(
+      <DependencyGraph
+        {...props}
+        hiddenEdgeIds={edges.map((edge) => edge.id)}
+      />,
+    );
+    expect(container.querySelectorAll("[data-graph-edge-ids]")).toHaveLength(0);
+    expect(positions(container)).toEqual(initial);
+    expect(
+      screen.getByRole("button", {
+        name: "Collapse dependents of Application subnet",
+      }),
+    ).toBeInTheDocument();
+    rerender(<DependencyGraph {...props} edges={[]} layoutRevision={1} />);
+    expect(positions(container)).not.toEqual(initial);
+    rerender(
+      <DependencyGraph
+        {...props}
+        edges={[]}
+        nodes={nodes.map((node) => ({
+          ...node,
+          label: `Updated ${node.label}`,
+        }))}
+        layoutRevision={1}
+      />,
+    );
+    const revised = positions(container);
+    rerender(<DependencyGraph {...props} edges={edges} layoutRevision={1} />);
+    expect(positions(container)).toEqual(revised);
+  });
 });

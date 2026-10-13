@@ -85,6 +85,7 @@ try {
         "attribute-dependencies",
         "expanded-attribute-differences",
         "collapsed-modules",
+        "stable-resource-positions",
         "collapsible-branches",
         "partial-evidence",
         "cyclic-relationships",
@@ -727,7 +728,7 @@ try {
     await open("attribute-dependencies", theme);
     await page.waitForFunction(
       () =>
-        document.querySelectorAll("[data-graph-target-attribute]").length === 2,
+        document.querySelectorAll("[data-graph-target-attribute]").length === 1,
     );
     const graph = page.locator("[data-dependency-graph]");
     const compactCards = await graph
@@ -772,13 +773,12 @@ try {
       "Dense cards preserve single-row identity/status, readable values and usable targets",
     );
     assert.ok(
-      compactCards.find((card) => card.id === "api").height <=
-        (width === 1440 ? 370 : 430),
-      "Expanded cards use less vertical space",
+      compactCards.find((card) => card.id === "api").height <= 224,
+      "Expanded cards stay within the 224px height budget",
     );
     assert.ok(
-      compactCards.find((card) => card.id === "network").height <= 96,
-      "Summary cards have no empty minimum-height region",
+      compactCards.find((card) => card.id === "network").height <= 64,
+      "Summary cards omit redundant IDs and empty header space",
     );
     assert.equal(
       await graph
@@ -895,7 +895,7 @@ try {
     );
     assert.equal(
       await graph.locator("[data-graph-target-attribute]").count(),
-      2,
+      1,
     );
     await page
       .getByRole("button", { name: "Show attribute differences for Database" })
@@ -921,7 +921,7 @@ try {
       .click();
     await page.waitForFunction(
       () =>
-        document.querySelectorAll("[data-graph-target-attribute]").length === 2,
+        document.querySelectorAll("[data-graph-target-attribute]").length === 1,
     );
     await page.getByRole("button", { name: "Zoom out" }).click();
     await page.waitForFunction(
@@ -930,7 +930,7 @@ try {
     await page.getByRole("button", { name: "Zoom in" }).click();
     await page.waitForFunction(
       () =>
-        document.querySelectorAll("[data-graph-target-attribute]").length === 2,
+        document.querySelectorAll("[data-graph-target-attribute]").length === 1,
     );
     assert.equal(
       await page
@@ -943,6 +943,144 @@ try {
     );
     checks.push({
       name: `attribute-ports-routing-and-collapse-zoom-fallback-${width}`,
+    });
+  }
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await open("stable-resource-positions");
+    const anchors = () =>
+      page
+        .locator("[data-graph-resource-card]")
+        .evaluateAll((cards) =>
+          Object.fromEntries(
+            cards.map((card) => [
+              card.dataset.graphResourceCard,
+              [card.style.left, card.style.top],
+            ]),
+          ),
+        );
+    const initial = await anchors();
+    const viewport = page.locator("[data-graph-canvas]");
+    const camera = () =>
+      viewport.evaluate((element) => [element.scrollLeft, element.scrollTop]);
+    const scene = () =>
+      viewport.evaluate((element) => [
+        element.scrollWidth,
+        element.scrollHeight,
+      ]);
+    const originalCamera = await camera();
+    const originalScene = await scene();
+    const assertAnchors = async (transition) => {
+      await settledCards();
+      for (const [id, position] of Object.entries(await anchors()))
+        assert.deepEqual(
+          position,
+          initial[id],
+          `${width}: ${transition} preserves ${id}`,
+        );
+      assert.deepEqual(
+        await camera(),
+        originalCamera,
+        `${width}: ${transition} preserves pan`,
+      );
+      assert.deepEqual(
+        await scene(),
+        originalScene,
+        `${width}: ${transition} preserves scroll extent`,
+      );
+    };
+    for (const transition of [
+      "Hide all edges",
+      "Show all edges",
+      "Collapse attribute differences",
+      "Expand attribute differences",
+      "Collapse database group",
+      "Expand database group",
+    ]) {
+      await page.getByRole("button", { name: transition, exact: true }).click();
+      await assertAnchors(transition);
+      if (transition === "Hide all edges")
+        assert.equal(await page.locator("[data-graph-edge-ids]").count(), 0);
+      if (transition === "Show all edges")
+        assert.equal(await page.locator("[data-graph-edge-ids]").count(), 3);
+    }
+    assert.deepEqual(
+      await anchors(),
+      initial,
+      "Restored resources return to their original anchors",
+    );
+    const diff = page.locator('[data-graph-card-diff="api"]');
+    assert.ok(
+      await diff.evaluate(
+        (element) => element.scrollHeight > element.clientHeight,
+      ),
+      "Long differences scroll inside the card",
+    );
+    await diff.focus();
+    await diff.press("End");
+    await page.waitForFunction(() => {
+      const edge = document.querySelector(
+        '[data-graph-edge-ids*="healthcheck-reference"]',
+      );
+      return (
+        edge?.dataset.graphTargetAttribute ===
+        "env.HEALTHCHECK_DATABASE_ENDPOINT"
+      );
+    });
+    assert.equal(
+      await page
+        .locator('[data-graph-edge-ids*="healthcheck-reference"]')
+        .getAttribute("data-graph-target-attribute"),
+      "env.HEALTHCHECK_DATABASE_ENDPOINT",
+    );
+    const sourceDiff = page.locator('[data-graph-card-diff="database"]');
+    await sourceDiff.focus();
+    await sourceDiff.press("End");
+    await page.waitForFunction(
+      () =>
+        !document.querySelector(
+          '[data-graph-edge-ids*="healthcheck-reference"][data-graph-source-attribute]',
+        ),
+    );
+    assert.equal(
+      await page
+        .locator('[data-graph-edge-ids*="healthcheck-reference"]')
+        .getAttribute("data-graph-source-attribute"),
+      null,
+      "A scrolled-out source attribute falls back to the block",
+    );
+    assert.deepEqual(
+      await anchors(),
+      initial,
+      "Diff scrolling never moves resource anchors",
+    );
+    const bottomValueVisible = await diff.evaluate((element) => {
+      const viewport = element.getBoundingClientRect();
+      const last = element
+        .querySelector(
+          '[data-field-change="env.HEALTHCHECK_DATABASE_ENDPOINT"] [data-diff="addition"]',
+        )
+        .getBoundingClientRect();
+      return last.top >= viewport.top && last.bottom <= viewport.bottom + 1;
+    });
+    assert.ok(
+      bottomValueVisible,
+      "The final full value is reachable with the keyboard",
+    );
+    await diff.press("Home");
+    await page.waitForFunction(
+      () =>
+        !document.querySelector(
+          '[data-graph-edge-ids*="healthcheck-reference"][data-graph-target-attribute]',
+        ),
+    );
+    await accessibility(`stable-resource-positions-${width}`);
+    await page
+      .locator("[data-dependency-graph]")
+      .screenshot({ path: resolve(output, `stable-positions-${width}.png`) });
+    checks.push({
+      name: `stable-anchors-edge-card-group-and-keyboard-diff-scroll-${width}`,
+      positions: initial,
     });
   }
   assert.deepEqual(errors, [], "Runtime diagnostics");

@@ -8,6 +8,8 @@ import type {
 
 export const NODE_WIDTH = 256;
 export const NODE_HEIGHT = 52;
+export const CARD_MAX_HEIGHT = 224;
+export const CARD_MAX_WIDTH = 352;
 const GROUP_HEIGHT = 96;
 export const hasDependencyGraphChanges = (node: DependencyGraphNode) =>
   !!node.changes?.length ||
@@ -33,6 +35,56 @@ export type GraphConnection = {
   points: { x: number; y: number }[];
 };
 
+export type GraphLayoutAnchors = {
+  positions: ReadonlyMap<string, { x: number; y: number }>;
+  width: number;
+  height: number;
+};
+
+/** Presentation changes keep this identity; a new resource set can get a new layout. */
+export function dependencyGraphLayoutKey(
+  nodes: readonly DependencyGraphNode[],
+  groups: readonly DependencyGraphGroup[],
+  revision?: string | number,
+) {
+  return JSON.stringify([
+    revision ?? null,
+    [...nodes].sort(compare).map((node) => [node.id, node.groupId ?? null]),
+    [...groups].sort(compare).map((group) => group.id),
+  ]);
+}
+
+/** Reserve bounded card space once, including resources initially hidden by disclosure. */
+export function createDependencyGraphAnchors(
+  nodes: readonly DependencyGraphNode[],
+  edges: readonly DependencyGraphEdge[],
+  groups: readonly DependencyGraphGroup[],
+): GraphLayoutAnchors {
+  const graph = buildDependencyGraph(
+    nodes,
+    edges,
+    groups,
+    [],
+    new Map(nodes.map((node) => [node.id, CARD_MAX_HEIGHT])),
+    CARD_MAX_WIDTH,
+    0.4,
+  );
+  const positions = new Map(
+    graph.items.map((item) => [item.key, { x: item.x, y: item.y }]),
+  );
+  for (const cluster of graph.clusters) {
+    const members = graph.items.filter(
+      (item) => item.node?.groupId === cluster.group.id,
+    );
+    positions.set(`group:${cluster.group.id}`, {
+      x: Math.min(...members.map((item) => item.x)),
+      y: Math.min(...members.map((item) => item.y)),
+    });
+  }
+  // Perimeter routes retain scrollable space even when relationships disappear.
+  return { positions, width: graph.width + 64, height: graph.height + 64 };
+}
+
 /** Sort stable IDs before layout so caller reordering cannot move the graph. */
 export function buildDependencyGraph(
   nodes: readonly DependencyGraphNode[],
@@ -42,6 +94,7 @@ export function buildDependencyGraph(
   nodeHeights: ReadonlyMap<string, number> = new Map(),
   nodeWidth: number | ReadonlyMap<string, number> = NODE_WIDTH,
   zoom = 1,
+  anchors?: GraphLayoutAnchors,
 ) {
   const records = new Map(nodes.map((node) => [node.id, node]));
   const groupRecords = new Map(groups.map((group) => [group.id, group]));
@@ -116,6 +169,41 @@ export function buildDependencyGraph(
     if (previous) previous.edges.push(edge);
     else
       connections.set(key, { key, source, target, edges: [edge], points: [] });
+  }
+  if (anchors) {
+    for (const item of items.values()) {
+      const point = anchors.positions.get(item.key)!;
+      item.x = point.x;
+      item.y = point.y;
+    }
+    const clusters = [...groupRecords.values()]
+      .sort(compare)
+      .filter((group) => !collapsed.has(group.id) && memberships.has(group.id))
+      .map((group) => {
+        const members = [...items.values()].filter(
+          (item) => item.node?.groupId === group.id,
+        );
+        const x = Math.min(...members.map((item) => item.x)) - 16;
+        const y = Math.min(...members.map((item) => item.y)) - 44;
+        return {
+          group,
+          members: memberships.get(group.id)!,
+          x,
+          y,
+          width:
+            Math.max(...members.map((item) => item.x + item.width)) - x + 16,
+          height:
+            Math.max(...members.map((item) => item.y + item.height)) - y + 16,
+        };
+      });
+    return {
+      items: [...items.values()],
+      connections: [...connections.values()],
+      clusters,
+      unavailable,
+      width: anchors.width,
+      height: anchors.height,
+    };
   }
   const graph = new graphlib.Graph({ compound: true, multigraph: true });
   graph.setGraph({

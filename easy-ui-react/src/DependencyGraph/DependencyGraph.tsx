@@ -10,6 +10,8 @@ import { DependencyGraphDetails } from "./DependencyGraphDetails";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
 import {
   buildDependencyGraph,
+  createDependencyGraphAnchors,
+  dependencyGraphLayoutKey,
   dependencyChangeLabels,
   hasDependencyGraphChanges,
   foldDependencyBranches,
@@ -80,6 +82,8 @@ export function DependencyGraph({
   defaultExpandedChangeNodeIds = [],
   onExpandedChangeNodeIdsChange,
   highlightedEdgeIds = [],
+  hiddenEdgeIds = [],
+  layoutRevision,
   coverage,
   status = "ready",
   message,
@@ -155,7 +159,22 @@ export function DependencyGraph({
       })
       .map((record) => `Duplicate ${kind} ID: ${record.id}`);
   })[0];
-  // Selection/search never participate in layout. Local exploration preserves coordinates.
+  const layoutKey = dependencyGraphLayoutKey(nodes, groups, layoutRevision);
+  const newLayout = () => ({
+    key: layoutKey,
+    error: duplicate,
+    anchors: duplicate
+      ? null
+      : createDependencyGraphAnchors(nodes, edges, groups),
+  });
+  const [layout, setLayout] = useState(newLayout);
+  // Only a new resource/group identity or explicit revision starts a fresh layout.
+  // Store the initial topology: callers may hide edges by filtering the edges prop.
+  let currentLayout = layout;
+  if (layout.key !== layoutKey || layout.error !== duplicate) {
+    currentLayout = newLayout();
+    setLayout(currentLayout);
+  }
   const branches = useMemo(
     () =>
       foldDependencyBranches(
@@ -215,6 +234,7 @@ export function DependencyGraph({
               ]),
             ),
             zoom,
+            currentLayout.anchors ?? undefined,
           ),
     [
       nodes,
@@ -228,6 +248,7 @@ export function DependencyGraph({
       canvasWidth,
       density,
       zoom,
+      currentLayout.anchors,
     ],
   );
   const visible = useMemo(
@@ -261,6 +282,9 @@ export function DependencyGraph({
         ?.querySelectorAll<HTMLElement>("[data-graph-resource-card]")
         .forEach((card) => {
           const rect = card.getBoundingClientRect();
+          const diff = card
+            .querySelector("[data-graph-card-diff]")
+            ?.getBoundingClientRect();
           const scale =
             new DOMMatrix(getComputedStyle(card.parentElement!).transform).a *
             unit;
@@ -274,7 +298,14 @@ export function DependencyGraph({
                 card.dataset.graphResourceCard!,
                 field.dataset.fieldChange!,
               );
-              if (heading && !next.has(key))
+              if (
+                heading &&
+                diff &&
+                heading.height > 0 &&
+                heading.top >= diff.top &&
+                heading.bottom <= diff.bottom &&
+                !next.has(key)
+              )
                 next.set(
                   key,
                   Math.round(
@@ -320,7 +351,12 @@ export function DependencyGraph({
       ?.querySelectorAll("[data-graph-resource-card] [data-field-change]")
       .forEach((element) => observer.observe(element));
     measurePorts();
-    return () => observer.disconnect();
+    const element = viewport.current;
+    element?.addEventListener("scroll", measurePorts, true);
+    return () => {
+      observer.disconnect();
+      element?.removeEventListener("scroll", measurePorts, true);
+    };
   }, [renderedNodeIds, status, duplicate, nodes, expandedChanges, density]);
   const clusters = useMemo(
     () =>
@@ -353,11 +389,14 @@ export function DependencyGraph({
         .map((connection) => ({
           ...connection,
           edges: connection.edges.filter(
-            (edge) => visible.has(edge.source) && visible.has(edge.target),
+            (edge) =>
+              visible.has(edge.source) &&
+              visible.has(edge.target) &&
+              !hiddenEdgeIds.includes(edge.id),
           ),
         }))
         .filter((connection) => connection.edges.length) ?? [],
-    [model, visible],
+    [model, visible, hiddenEdgeIds],
   );
   const connections = useMemo(
     () =>
@@ -959,6 +998,10 @@ export function DependencyGraph({
                           member.change !== "unknown",
                       ).length;
                       const label = node?.label ?? item.group!.label;
+                      const cardDescription =
+                        node?.changeSummary ??
+                        node?.description ??
+                        item.group?.description;
                       const diffShown =
                         !!node &&
                         density === "detail" &&
@@ -1050,19 +1093,14 @@ export function DependencyGraph({
                                 {label}
                               </strong>
                             )}
-                            <span
-                              className={styles.nodeDescription}
-                              title={
-                                node?.changeSummary ??
-                                node?.description ??
-                                item.group?.description
-                              }
-                            >
-                              {node?.changeSummary ??
-                                node?.description ??
-                                item.group?.description ??
-                                node?.id}
-                            </span>
+                            {cardDescription && (
+                              <span
+                                className={styles.nodeDescription}
+                                title={cardDescription}
+                              >
+                                {cardDescription}
+                              </span>
+                            )}
                           </button>
                           {node &&
                             (hasDependencyGraphChanges(node) ||
@@ -1093,12 +1131,13 @@ export function DependencyGraph({
                                         );
                                         if (reveal)
                                           requestAnimationFrame(() =>
-                                            requestAnimationFrame(() =>
-                                              reveal.scrollIntoView({
-                                                block: "nearest",
-                                                inline: "nearest",
-                                              }),
-                                            ),
+                                            requestAnimationFrame(() => {
+                                              if (reveal.isConnected)
+                                                reveal.scrollIntoView({
+                                                  block: "nearest",
+                                                  inline: "nearest",
+                                                });
+                                            }),
                                           );
                                       }}
                                     />
@@ -1140,6 +1179,9 @@ export function DependencyGraph({
                               hidden={!diffShown}
                               className={styles.nodeChanges}
                               data-graph-card-diff={node.id}
+                              role="region"
+                              aria-label={`${label} attribute differences`}
+                              tabIndex={diffShown ? 0 : undefined}
                             >
                               {diffShown && (
                                 <DependencyGraphChanges

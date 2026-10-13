@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { DependencyGraph } from "./DependencyGraph";
 import { DependencyGraphDetails } from "./DependencyGraphDetails";
+import { Button } from "../Button";
 import {
   dependencyNodes,
   dependencyEdges,
   dependencyGroups,
   subnetId,
+  attributeDependencyNodes,
+  attributeDependencyEdges,
 } from "./DependencyGraph.fixtures";
 import type {
   DependencyGraphDetailsContext,
@@ -13,6 +16,73 @@ import type {
   DependencyGraphSelection,
 } from "./types";
 import styles from "./DependencyGraph.examples.module.scss";
+
+const stableNodes = attributeDependencyNodes.map((node) => ({
+  ...node,
+  groupId: node.id === "database" || node.id === "storage" ? "data" : undefined,
+}));
+const stableGroups = [{ id: "data", label: "Database resources" }];
+const stableExpandedIds = ["database", "api"];
+
+export function DependencyGraphStableLayoutExample() {
+  const [hideEdges, setHideEdges] = useState(false);
+  const [expandedIds, setExpandedIds] =
+    useState<readonly string[]>(stableExpandedIds);
+  const [collapseGroup, setCollapseGroup] = useState(false);
+  return (
+    <>
+      <div
+        className={styles.layoutControls}
+        role="group"
+        aria-label="Resource graph presentation"
+      >
+        <Button
+          size="sm"
+          variant="outlined"
+          onPress={() => setHideEdges(!hideEdges)}
+        >
+          {hideEdges ? "Show all edges" : "Hide all edges"}
+        </Button>
+        <Button
+          size="sm"
+          variant="outlined"
+          onPress={() =>
+            setExpandedIds(expandedIds.length ? [] : stableExpandedIds)
+          }
+        >
+          {expandedIds.length
+            ? "Collapse attribute differences"
+            : "Expand attribute differences"}
+        </Button>
+        <Button
+          size="sm"
+          variant="outlined"
+          onPress={() => setCollapseGroup(!collapseGroup)}
+        >
+          {collapseGroup ? "Expand database group" : "Collapse database group"}
+        </Button>
+      </div>
+      <DependencyGraph
+        title="Stable resource positions"
+        description="Hide edges, expand differences, or fold resource groups. Resource anchors stay in place; long differences scroll within the card."
+        nodes={stableNodes}
+        edges={attributeDependencyEdges}
+        groups={stableGroups}
+        hiddenEdgeIds={
+          hideEdges ? attributeDependencyEdges.map((edge) => edge.id) : []
+        }
+        expandedChangeNodeIds={expandedIds}
+        onExpandedChangeNodeIdsChange={setExpandedIds}
+        collapsedGroupIds={collapseGroup ? ["data"] : []}
+        onCollapsedGroupIdsChange={(ids) =>
+          setCollapseGroup(ids.includes("data"))
+        }
+        showDetails={false}
+        height={650}
+      />
+    </>
+  );
+}
 
 function ReplacementEvidence({ node }: DependencyGraphDetailsContext) {
   if (node?.id !== subnetId) return null;

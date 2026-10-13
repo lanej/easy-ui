@@ -151,6 +151,7 @@
   position: relative;
   overflow: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   border: 1px solid design-token("color.neutral.300");
   border-radius: 10px;
   background: design-token("color.neutral.050");
@@ -243,10 +244,10 @@
   display: flex;
   flex-direction: column;
   align-items: start;
-  gap: 3px;
+  gap: 2px;
   inline-size: 100%;
   block-size: 100%;
-  padding: 6px 8px;
+  padding: 4px 6px;
   border: 0;
   border-radius: 7px;
   text-align: start;
@@ -260,13 +261,20 @@
 }
 .node[data-graph-resource-card] .nodeSelect {
   block-size: auto;
-  min-block-size: max(3.25rem, calc(25px / var(--dependency-graph-zoom)));
+  min-block-size: max(2rem, calc(25px / var(--dependency-graph-zoom)));
+  flex-shrink: 0;
+}
+.node[data-graph-resource-card] {
+  display: flex;
+  flex-direction: column;
+  max-block-size: 14rem;
 }
 .cardControls {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 8px 5px;
+  padding: 0 6px 3px;
+  flex-shrink: 0;
   font-size: 0.75rem;
   color: design-token("color.neutral.700");
 }
@@ -614,23 +622,32 @@
 }
 
 .nodeChanges {
-  padding: 0 8px 8px;
+  min-block-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0 6px 6px;
   .resourceChanges {
     margin-block-start: 0;
-    padding-block-start: 6px;
+    padding-block-start: 4px;
   }
   .fieldChanges {
-    gap: 6px;
+    gap: 4px;
+    line-height: 1.4;
     dt {
-      margin-block-end: 2px;
+      margin-block-end: 1px;
     }
   }
   .diffLine {
-    padding: 3px 6px;
+    padding: 2px 4px;
+    line-height: 1.4;
   }
   h4 {
     font-size: 0.8125rem;
   }
+}
+.nodeChanges:focus-visible {
+  outline: 2px solid design-token("color.primary.500");
+  outline-offset: -2px;
 }
 
 .root[data-graph-density="overview"] {

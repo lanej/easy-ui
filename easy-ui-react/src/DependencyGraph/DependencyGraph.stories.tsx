@@ -10,6 +10,7 @@ import { DependencyGraphChanges } from "./DependencyGraphChanges";
 import {
   DependencyGraphReviewExample,
   DependencyGraphLinkedInspectorExample,
+  DependencyGraphStableLayoutExample,
 } from "./DependencyGraph.examples";
 import {
   relationshipChangeNodes,
@@ -59,6 +60,9 @@ export const SpecificChanges: Story = {
   },
 };
 export const AllResources: Story = {};
+export const StableResourcePositions: Story = {
+  render: () => <DependencyGraphStableLayoutExample />,
+};
 export const CollapsibleBranches: Story = {
   args: {
     title: "Resource branches",
