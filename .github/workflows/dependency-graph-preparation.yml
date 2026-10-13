@@ -13,7 +13,9 @@ jobs:
         with:
           ref: fix/dependency-graph-real-world
       - name: Apply scoped source changes
-        run: python3 scripts/.apply-dependency-graph-fix.py
+        run: |
+          python3 scripts/.apply-dependency-graph-fix.py
+          python3 scripts/.refine-dependency-graph-fix.py
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -21,28 +23,35 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Format changed graph files
         run: |
-          npx prettier --write easy-ui-react/src/DependencyGraph/DependencyGraphIdentity.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.realWorld.ts easy-ui-react/src/DependencyGraph/DependencyGraph.realWorld.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/types.ts easy-ui-react/src/DependencyGraph/model.ts easy-ui-react/src/DependencyGraph/DependencyGraphDetails.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.module.scss easy-ui-react/src/DependencyGraph/DependencyGraph.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.stories.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph.mjs
+          npx prettier --write easy-ui-react/src/DependencyGraph/DependencyGraphIdentity.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.realWorld.ts easy-ui-react/src/DependencyGraph/DependencyGraph.realWorld.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/types.ts easy-ui-react/src/DependencyGraph/model.ts easy-ui-react/src/DependencyGraph/DependencyGraphDetails.tsx easy-ui-react/src/DependencyGraph/DependencyGraphChanges.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.module.scss easy-ui-react/src/DependencyGraph/DependencyGraph.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.stories.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph.mjs scripts/check-dependency-graph-source.mjs
       - name: Preserve implementation on the task branch
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add easy-ui-react/src/DependencyGraph scripts/check-dependency-graph.mjs .changeset/readable-source-dependency-graphs.md
-          git diff --cached --quiet || git commit -m 'fix(dependency-graph): prioritize identity and compact source evidence'
+          git add easy-ui-react/src/DependencyGraph scripts/check-dependency-graph.mjs scripts/check-dependency-graph-source.mjs .changeset/readable-source-dependency-graphs.md
+          git diff --cached --quiet || git commit -m 'fix(dependency-graph): preserve evidence semantics and disclosure geometry'
           git push origin HEAD:fix/dependency-graph-real-world
       - name: Build
+        id: build
         run: npm run build > /tmp/graph-build.log 2>&1
       - name: Lint
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm run lint > /tmp/graph-lint.log 2>&1
       - name: Unit tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm run test > /tmp/graph-tests.log 2>&1
       - name: Build Storybook
+        id: storybook
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm run build:storybook > /tmp/graph-storybook.log 2>&1
       - name: Install browser dependencies
+        if: ${{ !cancelled() && steps.storybook.outcome == 'success' }}
         working-directory: scripts/preview-metrics
         run: |
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: Validate graph browser behavior and capture actual output
+        if: ${{ !cancelled() && steps.storybook.outcome == 'success' }}
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
           STORYBOOK_URL: http://127.0.0.1:9018
@@ -57,7 +66,7 @@ jobs:
         run: |
           cp /tmp/graph-browser/dependency-graph/source-only-evidence-light-1440.png documentation/images/dependency-graph-source-only-desktop.png
           cp /tmp/graph-browser/dependency-graph/source-only-evidence-dark-390.png documentation/images/dependency-graph-source-only-mobile.png
-          git rm scripts/.apply-dependency-graph-fix.py .github/workflows/dependency-graph-preparation.yml
+          git rm scripts/.apply-dependency-graph-fix.py scripts/.refine-dependency-graph-fix.py .github/workflows/dependency-graph-preparation.yml
           git add documentation/images/dependency-graph-source-only-desktop.png documentation/images/dependency-graph-source-only-mobile.png
           git commit -m 'test(dependency-graph): retain real-world browser evidence'
           git push origin HEAD:fix/dependency-graph-real-world
@@ -71,4 +80,5 @@ jobs:
             /tmp/graph-browser
             easy-ui-react/src/DependencyGraph
             scripts/check-dependency-graph.mjs
+            scripts/check-dependency-graph-source.mjs
           include-hidden-files: true
