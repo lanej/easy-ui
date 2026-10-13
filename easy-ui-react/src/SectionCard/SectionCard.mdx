@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { SectionCard } from "./SectionCard";
 import * as SectionCardStories from "./SectionCard.stories";
 
@@ -9,17 +9,29 @@ import * as SectionCardStories from "./SectionCard.stories";
 
 A `SectionCard` is a styled container for grouping section content on a page.
 
-`SectionCard` is designed for composability. It can be deconstructed and reassembled as needed.
+## Usage
+
+```tsx
+import { SectionCard } from "@easypost/easy-ui/SectionCard";
+```
 
 <Canvas of={SectionCardStories.WithTabPanels} />
 
-## Basic
+## Props
+
+<ArgTypes of={SectionCard} />
+
+## Examples
+
+`SectionCard` is designed for composability. It can be deconstructed and reassembled as needed.
+
+### Basic
 
 A basic `SectionCard` renders a stylized `Card` for page sections.
 
 <Canvas of={SectionCardStories.Basic} />
 
-## With Header
+### With Header
 
 Use a `SectionCard.Header` to render a header.
 
@@ -27,46 +39,42 @@ Use a `SectionCard.Header` to render a header.
 
 <Canvas of={SectionCardStories.WithHeader} />
 
-## With Tabs
+### With Tabs
 
 Use the `SectionCard.Tabs` helper to wrap `TabPanels` or `TabNav`.
 
-### TabNav
+#### TabNav
 
 <Canvas of={SectionCardStories.WithTabNav} />
 
-### TabPanels
+#### TabPanels
 
 <Canvas of={SectionCardStories.WithTabPanels} />
 
-## With Adjustable Card Properties
+### With Adjustable Card Properties
 
 `SectionCard` can be customized with any `Card` props.
 
 <Canvas of={SectionCardStories.WithAdjustableCardProps} />
 
-## Properties
+#### SectionCard
 
-### SectionCard
-
-<ArgTypes of={SectionCard} />
-
-### SectionCard.Container
+#### SectionCard.Container
 
 <ArgTypes of={SectionCard.Container} />
 
-### SectionCard.Area
+#### SectionCard.Area
 
 <ArgTypes of={SectionCard.Area} />
 
-### SectionCard.Header
+#### SectionCard.Header
 
 <ArgTypes of={SectionCard.Header} />
 
-### SectionCard.Title
+#### SectionCard.Title
 
 <ArgTypes of={SectionCard.Title} />
 
-### SectionCard.Tabs
+#### SectionCard.Tabs
 
 <ArgTypes of={SectionCard.Tabs} />

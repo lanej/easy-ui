@@ -1,52 +1,66 @@
-import React from "react";
-import { Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Controls, ArgTypes } from "../../../.storybook/DocsApi";
 import * as TooltipStories from "./Tooltip.stories";
 
 <Meta of={TooltipStories} />
 
 # Tooltip
 
-## Default
+Show a short explanation when its trigger is hovered or focused.
+
+## Usage
+
+```tsx
+import { Tooltip } from "@easypost/easy-ui/Tooltip";
+```
 
 <Canvas of={TooltipStories.Default} />
 
-## Placement
+## Props
+
+<ArgTypes of={TooltipStories} />
+
+## Examples
+
+### Default
+
+### Placement
 
 Tooltips can be placed around various edges of a trigger element. See the controls below for valid values.
 
 <Canvas of={TooltipStories.Placement} />
 
-## Immediate
+### Immediate
 
 Tooltips can be defined to show immediately with the `isImmediate` prop.
 
 <Canvas of={TooltipStories.Immediate} />
 
-## Disabled
+### Disabled
 
 Tooltips can be disabled independent of the disabling of their trigger element with `isDisabled`.
 
 <Canvas of={TooltipStories.Disabled} />
 
-## Trigger on Focus Only
+### Trigger on Focus Only
 
 By default, tooltips show on mouse hover and keyboard focus. They can be set to only trigger on keyboard focus.
 
 <Canvas of={TooltipStories.FocusOnly} />
 
-## Long Text
+### Long Text
 
 Tooltips will wrap long lines of text.
 
 <Canvas of={TooltipStories.LongText} />
 
-## Button as Trigger
+### Button as Trigger
 
 Tooltips can be attached to focusable Easy UI elements.
 
 <Canvas of={TooltipStories.ButtonTrigger} />
 
-## Controls
+### Controls
 
 <Canvas of={TooltipStories.Controls} />
 

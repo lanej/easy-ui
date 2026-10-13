@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { CheckableCard } from "./CheckableCard";
 import * as CheckableCardStories from "./CheckableCard.stories";
 
@@ -7,4 +7,30 @@ import * as CheckableCardStories from "./CheckableCard.stories";
 
 # CheckableCard
 
+A selectable card combining a form control with a label and supporting content.
+
+## Usage
+
+```tsx
+import { CheckableCard } from "@easypost/easy-ui/CheckableCard";
+```
+
 <Canvas of={CheckableCardStories.Default} />
+
+## Props
+
+<ArgTypes of={CheckableCardStories} />
+
+## Examples
+
+### Selected
+
+Use `isSelected` for a controlled selection or `defaultSelected` for an initial uncontrolled selection.
+
+<Canvas of={CheckableCardStories.Selected} />
+
+### Disabled
+
+Use `isDisabled` to show an unavailable choice.
+
+<Canvas of={CheckableCardStories.Disabled} />

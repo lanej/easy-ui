@@ -7,7 +7,7 @@ import { ProportionBar } from "./ProportionBar";
 
 const meta: Meta<typeof ProportionBar> = {
   id: "components-proportionbar",
-  title: "Molecules/Feedback/ProportionBar",
+  title: "Molecules/Data Display/ProportionBar",
   component: ProportionBar,
   decorators: [
     (Story) => (

@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, ArgTypes } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { KebabButton } from "./KebabButton";
 import * as KebabButtonStories from "./KebabButton.stories";
 
@@ -9,12 +9,20 @@ import * as KebabButtonStories from "./KebabButton.stories";
 
 A `<KebabButton />` is a kebab menu icon button. The icon represents an overflow menu that reveals a list of options or actions related to the current context when clicked.
 
-## Use with Menu
+## Usage
 
-A `<KebabButton />` is designed to used as trigger for `<Menu />`.
+```tsx
+import { KebabButton } from "@easypost/easy-ui/KebabButton";
+```
 
 <Canvas of={KebabButtonStories.WithMenu} />
 
-## Properties
+## Props
 
 <ArgTypes of={KebabButtonStories} />
+
+## Examples
+
+### Use with Menu
+
+A `<KebabButton />` is designed to used as trigger for `<Menu />`.

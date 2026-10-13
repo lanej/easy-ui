@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { CompactTimeSeries } from "./CompactTimeSeries";
 import * as Stories from "./CompactTimeSeries.stories";
 
@@ -8,9 +9,22 @@ import * as Stories from "./CompactTimeSeries.stories";
 
 Set `showDataTable={false}` to omit the raw-data disclosure while keeping the plot, legend, and reference. It remains enabled by default.
 
-A native SVG time series with sparse axes, optional observation markers and a labeled reference. Import from `@easypost/easy-ui/CompactTimeSeries`. No ECharts dependency.
+## Usage
+
+```tsx
+import { CompactTimeSeries } from "@easypost/easy-ui/CompactTimeSeries";
+```
 
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={CompactTimeSeries} />
+
+## Examples
+
+A native SVG time series with sparse axes, optional observation markers and a labeled reference. Import from `@easypost/easy-ui/CompactTimeSeries`. No ECharts dependency.
+
 <Canvas of={Stories.Comparison} />
 
 Supply one to three series with unique IDs and strictly increasing timestamps in milliseconds. Elapsed spacing is preserved. `null` and non-finite values create gaps; isolated observations remain visible. Zero is an observation. `domain` defines the vertical scale; `timeDomain` can define a shared horizontal scale. Values and references must fit the displayed domains. Invalid domains, ordering, or out-of-range observations suppress the plot with `invalidDataLabel`; exact supplied values remain in the data disclosure.
@@ -31,5 +45,3 @@ Linear interpolation is the default. `step-after` retains the previous value unt
 <Canvas of={Stories.NoData} />
 
 Use the same value and time domains for panels intended for comparison. The component owns no brushing, zoom, or shared selection machinery. Use `Chart` for more series, dense inspection, uncertainty bands, and analytical interactions. Resize observers are released on unmount; SSR starts with deterministic geometry before measuring the container.
-
-<ArgTypes of={CompactTimeSeries} />

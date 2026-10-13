@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, ArgTypes, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { Select } from "./Select";
 import { SelectButton } from "./SelectButton";
 import * as SelectStories from "./Select.stories";
@@ -10,80 +10,92 @@ import * as SelectStories from "./Select.stories";
 
 The `<Select />` component allows users to select a value from a set of options.
 
-## Standard
+## Usage
 
-Simple `<Select />` with `label`, `placeholder`, and `helperText`.
+```tsx
+import { Select } from "@easypost/easy-ui/Select";
+```
 
 <Canvas of={SelectStories.Standard} />
 
-## Icon
+## Props
+
+<ArgTypes of={SelectButton} />
+
+## Examples
+
+### Standard
+
+Simple `<Select />` with `label`, `placeholder`, and `helperText`.
+
+### Icon
 
 Use `iconAtStart` to add a left aligned icon.
 
 <Canvas of={SelectStories.Icon} />
 
-## Small Select
+### Small Select
 
 Set `size="sm"` for a small `<Select />`.
 
 <Canvas of={SelectStories.SmallSelect} />
 
-## Large Select
+### Large Select
 
 Set `size="lg"` for a large `<Select />`.
 
 <Canvas of={SelectStories.LargeSelect} />
 
-## Label with emphasis
+### Label with emphasis
 
 Use `isLabelEmphasized=true` to display a label with emphasis.
 
 <Canvas of={SelectStories.LabelWithEmphasis} />
 
-## Error
+### Error
 
 When `validationState` is set to `invalid`, the `<Select />` field displays with error styles. If provided,
 `errorText` will be displayed as well and override `helperText`.
 
 <Canvas of={SelectStories.Error} />
 
-## Visually hidden label
+### Visually hidden label
 
 A `label` can be visually hidden by omitted the `label` property, but to main accessibility, provide an `aria-label`.
 
 <Canvas of={SelectStories.VisuallyHiddenLabel} />
 
-## With Separator
+### With Separator
 
 Options can be divided into sections via `<Select.Section />`
 
 <Canvas of={SelectStories.WithSeparator} />
 
-## Controlled Selection
+### Controlled Selection
 
 For controlled selection, use `selectedKey` and `onSelectionChange`. Uncontrolled selection is possible with `defaultSelectedKey`. See associated code snippet.
 
 <Canvas of={SelectStories.ControlledSelection} />
 
-## Disabled Options
+### Disabled Options
 
 Options can be disabled via the `disabledKeys` prop.
 
 <Canvas of={SelectStories.DisabledOptions} />
 
-## Disabled Select
+### Disabled Select
 
 Use `isDisabled` to disabled the field entirely.
 
 <Canvas of={SelectStories.DisabledSelect} />
 
-## With Secondary Text
+### With Secondary Text
 
 Each option can render a secondary description. The selected value in the closed field also shows the same secondary text.
 
 <Canvas of={SelectStories.WithSecondaryText} />
 
-## Standalone trigger
+### Standalone trigger
 
 `<SelectButton />` is the field visual `<Select />` renders for its own trigger, exported on its own so an overlay that isn't a listbox can be attached to a field-shaped trigger. It's purely presentational—it holds no open state and owns no overlay—so it works as the child of `<Popover.Trigger />` or `<Menu.Trigger />`, both of which clone their child with the props that open the overlay.
 
@@ -109,9 +121,7 @@ export function Component() {
 
 Reach for `<Select />` instead when the overlay holds selectable options—it supplies the `listbox` role, typeahead, and arrow-key navigation that a bare trigger doesn't.
 
-## Properties
-
-### Select
+#### Select
 
 ```tsx
 export type SelectSize = "sm" | "md" | "lg";
@@ -179,6 +189,4 @@ export type BaseSelectFieldProps = {
 };
 ```
 
-### SelectButton
-
-<ArgTypes of={SelectButton} />
+#### SelectButton

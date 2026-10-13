@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, ArgTypes, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { TabNav } from "./TabNav";
 import * as TabNavStories from "./TabNav.stories";
 
@@ -8,6 +8,20 @@ import * as TabNavStories from "./TabNav.stories";
 # TabNav
 
 A `TabNav` is a set of styled links that lets users navigate between related pages.
+
+## Usage
+
+```tsx
+import { TabNav } from "@easypost/easy-ui/TabNav";
+```
+
+<Canvas of={TabNavStories.Default} />
+
+## Props
+
+<ArgTypes of={TabNav} />
+
+## Examples
 
 `TabNav` accepts a list of `TabNav.Item`s that function as links. Use the `href` prop to denote the URL for the tab. Use `isCurrentPage` to denote what tab is the current page.
 
@@ -27,9 +41,7 @@ Each `TabNav` should have a unique label. To add the label, add the `aria-label`
 </TabNav>
 ```
 
-<Canvas of={TabNavStories.Default} />
-
-## Client-side routing
+### Client-side routing
 
 Pass a `navigate` function to `<Provider />` and `TabNav.Item`s navigate through your app's router instead of doing a full page load:
 
@@ -49,7 +61,7 @@ regular `href`s—the router is what keeps them from loading a new page.
 
 <Canvas of={TabNavStories.ClientSideRouting} />
 
-## Custom Link Component
+### Custom Link Component
 
 A `TabNav` can render custom link components for use in apps that have client-side navigation components, such as Next's `Link` component. Use this when an item needs a specific link component rather than the router configured on `<Provider />`.
 
@@ -65,18 +77,14 @@ The example below uses a custom link component to mimic client-side routing.
 
 <Canvas of={TabNavStories.CustomLink} />
 
-## Responsive
+### Responsive
 
 A `TabNav` scrolls horizontally when it's wider than the width of its container.
 
 <Canvas of={TabNavStories.Responsive} />
 
-## Properties
+#### TabNav
 
-### TabNav
-
-<ArgTypes of={TabNav} />
-
-### TabNav.Item
+#### TabNav.Item
 
 <ArgTypes of={TabNav.Item} />

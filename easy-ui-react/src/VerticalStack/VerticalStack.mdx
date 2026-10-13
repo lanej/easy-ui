@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { VerticalStack } from "./VerticalStack";
 import * as VerticalStackStories from "./VerticalStack.stories";
 
@@ -9,9 +9,21 @@ import * as VerticalStackStories from "./VerticalStack.stories";
 
 A `<VerticalStack />` is used to display children vertically based on CSS flexbox.
 
+## Usage
+
+```tsx
+import { VerticalStack } from "@easypost/easy-ui/VerticalStack";
+```
+
 <Canvas of={VerticalStackStories.Default} />
 
-## Gap
+## Props
+
+<ArgTypes of={VerticalStack} />
+
+## Examples
+
+### Gap
 
 A `<VerticalStack />` can have a custom gap between elements using Easy UI's space scale.
 
@@ -27,7 +39,7 @@ A `<VerticalStack />` can have a custom gap between elements using Easy UI's spa
 </VerticalStack>
 ```
 
-## Align
+### Align
 
 A `<VerticalStack />` can align its children vertically using the `align` prop.
 
@@ -35,7 +47,7 @@ A `<VerticalStack />` can align its children vertically using the `align` prop.
 
 <Controls of={VerticalStackStories.Align} include={["align"]} />
 
-## Inline Align
+### Inline Align
 
 A `<VerticalStack />` can align its children horizontally using the `inlineAlign` prop.
 
@@ -43,7 +55,7 @@ A `<VerticalStack />` can align its children horizontally using the `inlineAlign
 
 <Controls of={VerticalStackStories.InlineAlign} include={["inlineAlign"]} />
 
-## Inline
+### Inline
 
 A `<VerticalStack />` can be rendered as an inline element using the `inline` prop.
 
@@ -51,14 +63,10 @@ A `<VerticalStack />` can be rendered as an inline element using the `inline` pr
 
 <Controls of={VerticalStackStories.Inline} include={["inline"]} />
 
-## Reverse Order
+### Reverse Order
 
 A `<VerticalStack />` can reverse its children using the `reverseOrder` prop.
 
 <Canvas of={VerticalStackStories.ReverseOrder} />
 
 <Controls of={VerticalStackStories.ReverseOrder} include={["reverseOrder"]} />
-
-## Properties
-
-<ArgTypes of={VerticalStack} />

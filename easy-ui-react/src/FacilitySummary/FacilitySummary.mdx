@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./FacilitySummary.stories";
 
 <Meta of={Stories} />
@@ -6,6 +7,20 @@ import * as Stories from "./FacilitySummary.stories";
 # FacilitySummary
 
 An organism composing facility identity, caller-owned type and location labels, and independent `HealthAssessment` observations. It never aggregates a facility health score, calculates dwell time, or chooses a reference cohort.
+
+## Usage
+
+```tsx
+import { FacilitySummary } from "@easypost/easy-ui/FacilitySummary";
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
 
 <Canvas of={Stories.Comparison} />
 
@@ -47,7 +62,6 @@ References reuse DurationDistribution, including quantiles-only bars, concentrat
 <Canvas of={Stories.FreshnessOptions} />
 <Canvas of={Stories.MissingObservation} />
 <Canvas of={Stories.Loading} />
-<ArgTypes of={Stories} />
 
 The compact dot represents the observation's health. Default and detailed forms use the supplied health presentation, with optional freshness in separate context after the value and assessment. Freshness shows its localized state label by default. Set `freshness.showStateLabel` to `false` for just the fresh-state dot, retaining its accessible name and hover hint. Omit `freshness` to hide the entire freshness group. Stale data retains a visible label. Supply `DurationQuantileMetrics layout="inline"` as `observationDetails` to place comparisons in the observation row above the reference.
 

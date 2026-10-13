@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, ArgTypes, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { SearchNav } from "./SearchNav";
 import * as SearchNavStories from "./SearchNav.stories";
 
@@ -8,6 +8,20 @@ import * as SearchNavStories from "./SearchNav.stories";
 # SearchNav
 
 A `SearchNav` is a navigation bar focused on handling dense information interactions.
+
+## Usage
+
+```tsx
+import { SearchNav } from "@easypost/easy-ui/SearchNav";
+```
+
+<Canvas of={SearchNavStories.Simple} />
+
+## Props
+
+<ArgTypes of={SearchNav.LogoGroup} />
+
+## Examples
 
 The `SearchNav.LogoGroup` and `SearchNav.Logo` components are required.
 
@@ -21,51 +35,47 @@ The `menuOverlayProps` prop can be used to control menu interactions. Note, on s
 `menuOverlayProps` has no bearing on `SearchNav.Select` since the data representation only collapses at screen sizes
 less than `640px`.
 
-## Simple
+### Simple
 
-<Canvas of={SearchNavStories.Simple} />
-
-## Title
+### Title
 
 <Canvas of={SearchNavStories.Title} />
 
-## Selector
+### Selector
 
 `SearchNav.Selector` can be controlled with `onSelectionChange`.
 
 <Canvas of={SearchNavStories.Selector} />
 
-## Secondary CTAs
+### Secondary CTAs
 
 `SearchNav.CTAGroup` can render multiple `SearchNav.SecondaryCTAItem` components
 
 <Canvas of={SearchNavStories.SecondaryCTA} />
 
-## Primary CTA
+### Primary CTA
 
 `SearchNav.CTAGroup` can render at **most** one `SearchNav.PrimaryCTAItem` component
 
 <Canvas of={SearchNavStories.PrimaryCTA} />
 
-## Search
+### Search
 
 `SearchNav.Search` is unopinionated with respect to the search input itself.
 
 <Canvas of={SearchNavStories.Search} />
 
-## Full Bar
+### Full Bar
 
 <Canvas of={SearchNavStories.FullBar} />
 
-## Preserve Logo on Small Screens
+### Preserve Logo on Small Screens
 
 `<SearchNav />` can preserve its logo instead of collapsing to a menu on small screens by specifying `condensedBehavior="preserve-logo"`.
 
 <Canvas of={SearchNavStories.PreserveLogoWhenCondensed} />
 
-## Properties
-
-### SearchNav
+#### SearchNav
 
 ```ts
 export type SearchNavProps<T> = {
@@ -95,35 +105,33 @@ export type SearchNavOverlayMenuProps<T> = {
 };
 ```
 
-### SearchNav.LogoGroup
+#### SearchNav.LogoGroup
 
-<ArgTypes of={SearchNav.LogoGroup} />
-
-### SearchNav.Logo
+#### SearchNav.Logo
 
 <ArgTypes of={SearchNav.Logo} />
 
-### SearchNav.Title
+#### SearchNav.Title
 
 <ArgTypes of={SearchNav.Title} />
 
-### SearchNav.Search
+#### SearchNav.Search
 
 <ArgTypes of={SearchNav.Search} />
 
-### SearchNav.CTAGroup
+#### SearchNav.CTAGroup
 
 <ArgTypes of={SearchNav.CTAGroup} />
 
-### SearchNav.PrimaryCTAItem
+#### SearchNav.PrimaryCTAItem
 
 <ArgTypes of={SearchNav.PrimaryCTAItem} />
 
-### SearchNav.SecondaryCTAItem
+#### SearchNav.SecondaryCTAItem
 
 <ArgTypes of={SearchNav.SecondaryCTAItem} />
 
-### SearchNav.Selector
+#### SearchNav.Selector
 
 ```ts
 export type SelectorProps<T> = {

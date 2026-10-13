@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { Spinner } from "./Spinner";
 import * as SpinnerStories from "./Spinner.stories";
 
@@ -9,9 +9,21 @@ import * as SpinnerStories from "./Spinner.stories";
 
 A `<Spinner />` is an indicator for loading state of a component or page.
 
+## Usage
+
+```tsx
+import { Spinner } from "@easypost/easy-ui/Spinner";
+```
+
 <Canvas of={SpinnerStories.Default} />
 
-## Indeterminate
+## Props
+
+<ArgTypes of={Spinner} />
+
+## Examples
+
+### Indeterminate
 
 A `<Spinner />` can be marked indeterminate using `isIndeterminate` when progress is unknown.
 
@@ -21,20 +33,16 @@ A `<Spinner />` can be marked indeterminate using `isIndeterminate` when progres
   include={["isIndeterminate", "value"]}
 />
 
-## Progress
+### Progress
 
 A `<Spinner />` can display progress of the loading state when `value` is provided.
 
 <Canvas of={SpinnerStories.Progress} />
 <Controls of={SpinnerStories.Progress} include={["value"]} />
 
-## Appearance
+### Appearance
 
 A `<Spinner />` supports all icon sizes and various colors.
 
 <Canvas of={SpinnerStories.Size} />
 <Controls of={SpinnerStories.Size} include={["size", "color"]} />
-
-## Properties
-
-<ArgTypes of={Spinner} />

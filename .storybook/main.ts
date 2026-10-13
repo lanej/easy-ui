@@ -1,7 +1,18 @@
 import { StorybookConfig } from "@storybook/react-vite";
+import remarkGfm from "remark-gfm";
 
 const config: StorybookConfig = {
-  addons: ["@storybook/addon-a11y", "@storybook/addon-docs"],
+  addons: [
+    "@storybook/addon-a11y",
+    {
+      name: "@storybook/addon-docs",
+      options: {
+        mdxPluginOptions: {
+          mdxCompileOptions: { remarkPlugins: [remarkGfm] },
+        },
+      },
+    },
+  ],
 
   docs: {},
 
@@ -13,9 +24,9 @@ const config: StorybookConfig = {
   staticDirs: ["./public"],
 
   stories: [
-    "../easy-ui-react/src/**/*.mdx",
-    "../easy-ui-react/src/!(examples)/**/*.stories.tsx",
-    "../easy-ui-react/src/examples/*Chart.stories.tsx",
+    "../easy-ui-react/src/*.mdx",
+    "../easy-ui-react/src/!(examples)/*.mdx",
+    "../easy-ui-react/src/!(examples)/*.stories.tsx",
     "../easy-ui-react/src/examples/NetworkInvestigationMap.stories.tsx",
   ],
 

@@ -1,0 +1,31 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as Stories from "./DrawerRow.stories";
+
+<Meta of={Stories} />
+
+# DrawerRow
+
+An expandable row that keeps its summary visible while revealing supporting details.
+
+## Usage
+
+```tsx
+import { DrawerRow } from "@easypost/easy-ui/DrawerTable";
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
+
+### With Actions
+
+<Canvas of={Stories.WithActions} />
+
+### Disabled
+
+<Canvas of={Stories.Disabled} />

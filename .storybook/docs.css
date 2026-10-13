@@ -1,0 +1,47 @@
+.easy-ui-docs-table {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-block: 1rem;
+}
+
+.easy-ui-docs-table:focus-visible {
+  outline: 2px solid var(--ezui-color-primary-500);
+  outline-offset: 2px;
+}
+
+.easy-ui-docs-table-hint {
+  margin-top: 0.5rem;
+  color: var(--ezui-color-neutral-600);
+  font-size: 0.875rem;
+}
+
+.easy-ui-docs-table > table {
+  width: 100%;
+  min-width: 32rem;
+  margin: 0;
+  table-layout: auto;
+}
+
+.easy-ui-docs-table--api > table {
+  min-width: 48rem;
+}
+
+.easy-ui-docs-table--api td:first-child {
+  white-space: nowrap;
+}
+
+.easy-ui-docs-table th,
+.easy-ui-docs-table td {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.easy-ui-docs-table th,
+.easy-ui-docs-table a,
+.easy-ui-docs-table code {
+  white-space: nowrap;
+}
+
+.easy-ui-docs-table > table a {
+  color: var(--ezui-color-primary-800);
+}

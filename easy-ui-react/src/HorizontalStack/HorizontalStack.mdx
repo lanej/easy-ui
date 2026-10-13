@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { HorizontalStack } from "./HorizontalStack";
 import * as HorizontalStackStories from "./HorizontalStack.stories";
 
@@ -9,9 +9,21 @@ import * as HorizontalStackStories from "./HorizontalStack.stories";
 
 A `<HorizontalStack />` is used to display children horizontally based on CSS flexbox.
 
+## Usage
+
+```tsx
+import { HorizontalStack } from "@easypost/easy-ui/HorizontalStack";
+```
+
 <Canvas of={HorizontalStackStories.Default} />
 
-## Gap
+## Props
+
+<ArgTypes of={HorizontalStack} />
+
+## Examples
+
+### Gap
 
 A `<HorizontalStack />` can have a custom gap between elements using Easy UI's space scale.
 
@@ -27,7 +39,7 @@ A `<HorizontalStack />` can have a custom gap between elements using Easy UI's s
 </HorizontalStack>
 ```
 
-## Align
+### Align
 
 A `<HorizontalStack />` can align its children horizontally using the `align` prop.
 
@@ -35,7 +47,7 @@ A `<HorizontalStack />` can align its children horizontally using the `align` pr
 
 <Controls of={HorizontalStackStories.Align} include={["align"]} />
 
-## Block Align
+### Block Align
 
 A `<HorizontalStack />` can align its children vertically using the `blockAlign` prop.
 
@@ -43,7 +55,7 @@ A `<HorizontalStack />` can align its children vertically using the `blockAlign`
 
 <Controls of={HorizontalStackStories.BlockAlign} include={["blockAlign"]} />
 
-## Inline
+### Inline
 
 A `<HorizontalStack />` can be rendered as an inline element using the `inline` prop.
 
@@ -51,7 +63,7 @@ A `<HorizontalStack />` can be rendered as an inline element using the `inline` 
 
 <Controls of={HorizontalStackStories.Inline} include={["inline"]} />
 
-## Wrap
+### Wrap
 
 A `<HorizontalStack />` can wrap its children using the `wrap` prop.
 
@@ -60,7 +72,3 @@ _Resize the story window to see the wrapping behavior._
 <Canvas of={HorizontalStackStories.Wrap} />
 
 <Controls of={HorizontalStackStories.Wrap} include={["wrap"]} />
-
-## Properties
-
-<ArgTypes of={HorizontalStack} />

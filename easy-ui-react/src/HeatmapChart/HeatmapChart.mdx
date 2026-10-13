@@ -1,4 +1,5 @@
-import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./HeatmapChart.stories";
 
 <Meta of={Stories} />
@@ -7,7 +8,19 @@ import * as Stories from "./HeatmapChart.stories";
 
 Compare a supplied matrix through a native visualMap. Keep missing cells and sample policy explicit.
 
+## Usage
+
+```tsx
+import { HeatmapChart } from "@easypost/easy-ui/HeatmapChart";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes />
+
+## Examples
 
 `option` is required: supply the coordinate system and application-owned `visualMap` rather than relying on an inferred matrix or color scale.
 
@@ -22,5 +35,3 @@ Use `dataTable` from the same records for exact values and keyboard drill-down. 
 <Canvas of={Stories.WithoutDataTable} />
 
 Use `showDataTable={false}` to omit the built-in data disclosure while retaining the plot. All analytical charts share the presentation options in the [chart catalog](?path=/docs/organisms-charts-choosing-a-chart--docs).
-
-<ArgTypes />

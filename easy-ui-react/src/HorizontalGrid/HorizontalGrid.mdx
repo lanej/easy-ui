@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { HorizontalGrid } from "./HorizontalGrid";
 import * as HorizontalGridStories from "./HorizontalGrid.stories";
 
@@ -9,9 +9,21 @@ import * as HorizontalGridStories from "./HorizontalGrid.stories";
 
 A `<HorizontalGrid />` is used to display children horizontally on a grid using CSS grid.
 
+## Usage
+
+```tsx
+import { HorizontalGrid } from "@easypost/easy-ui/HorizontalGrid";
+```
+
 <Canvas of={HorizontalGridStories.Default} />
 
-## Columns
+## Props
+
+<ArgTypes of={HorizontalGrid} />
+
+## Examples
+
+### Columns
 
 A `<HorizontalGrid />` specifies the number of columns to display with the `columns` prop.
 
@@ -31,25 +43,25 @@ Column values can be a number, or one of `oneFourth`, `oneThird`, `oneHalf`, `tw
 
 <Controls of={HorizontalGridStories.Columns4} include={["columns"]} />
 
-### Fractional Columns
+#### Fractional Columns
 
 `<HorizontalGrid />` comes with keywords for up to fourth fractionals to make common layouts easier.
 
 <Canvas of={HorizontalGridStories.ColumnsFractional} />
 
-### Custom Columns
+#### Custom Columns
 
 `columns` accepts any value accepted by `grid-template-columns` for custom layouts.
 
 <Canvas of={HorizontalGridStories.ColumnsCustom} />
 
-### Responsive Columns
+#### Responsive Columns
 
 `columns` can be adjusted per breakpoint.
 
 <Canvas of={HorizontalGridStories.ColumnsResponsive} />
 
-## Gap
+### Gap
 
 A `<HorizontalGrid />` can have a custom gap between elements using Easy UI's space scale.
 
@@ -65,7 +77,7 @@ A `<HorizontalGrid />` can have a custom gap between elements using Easy UI's sp
 </HorizontalGrid>
 ```
 
-## Align Items
+### Align Items
 
 A `<HorizontalGrid />` can adjust the vertical alignment of its children with the `alignItems` prop. If not set, inline elements will stretch to the height of the parent.
 
@@ -73,14 +85,10 @@ A `<HorizontalGrid />` can adjust the vertical alignment of its children with th
 
 <Controls of={HorizontalGridStories.AlignItems} include={["alignItems"]} />
 
-## Inline
+### Inline
 
 A `<HorizontalGrid />` can be rendered as an inline element using the `inline` prop.
 
 <Canvas of={HorizontalGridStories.Inline} />
 
 <Controls of={HorizontalGridStories.Inline} include={["inline"]} />
-
-## Properties
-
-<ArgTypes of={HorizontalGrid} />

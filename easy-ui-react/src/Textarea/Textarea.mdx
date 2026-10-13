@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Controls, ArgTypes } from "../../../.storybook/DocsApi";
 import { Textarea } from "./Textarea";
 import * as TextareaStories from "./Textarea.stories";
 
@@ -9,43 +9,55 @@ import * as TextareaStories from "./Textarea.stories";
 
 The `<Textarea />` component allows users to input text on multiple lines.
 
-## Standard
+## Usage
 
-Simple `<Textarea />` with `label`, `placeholder`, and `helperText`.
+```tsx
+import { Textarea } from "@easypost/easy-ui/Textarea";
+```
 
 <Canvas of={TextareaStories.Standard} />
 
-## Custom row height
+## Props
+
+<ArgTypes of={TextareaStories} />
+
+## Examples
+
+### Standard
+
+Simple `<Textarea />` with `label`, `placeholder`, and `helperText`.
+
+### Custom row height
 
 To specify the visible height of a text area in lines, use the `rows` property.
 
 <Canvas of={TextareaStories.CustomRowHeight} />
 
-## Large Textarea
+### Large Textarea
 
 Set `size="lg"` for a large `<Textarea />`.
 
 <Canvas of={TextareaStories.LargeTextarea} />
 
-## Label with emphasis
+### Label with emphasis
 
 Use `isLabelEmphasized=true` to display a label with emphasis.
 
 <Canvas of={TextareaStories.LabelWithEmphasis} />
 
-## Error
+### Error
 
 When `validationState` is set to `invalid`, the `<Textarea />` displays with error styles.
 
 <Canvas of={TextareaStories.Error} />
 
-## Visually hidden label
+### Visually hidden label
 
 A `label` can be visually hidden by omitted the `label` property, but to main accessibility, provide an `aria-label`.
 
 <Canvas of={TextareaStories.VisuallyHiddenLabel} />
 
-## Controls
+### Controls
 
 <Canvas of={TextareaStories.Controls} />
 

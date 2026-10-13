@@ -57,7 +57,8 @@ const defaults: DurationDistributionProps = {
   currentAssessment: "healthy",
 };
 const meta: Meta<typeof DurationDistribution> = {
-  title: "Molecules/Data visualization/DurationDistribution",
+  id: "molecules-data-visualization-durationdistribution",
+  title: "Molecules/Data Display/DurationDistribution",
   component: DurationDistribution,
   parameters: { layout: "padded" },
   args: defaults,
