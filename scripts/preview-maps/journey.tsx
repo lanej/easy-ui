@@ -16,6 +16,8 @@ createRoot(document.getElementById("root")!).render(
         narrow={query.has("narrow")}
         emptySection={query.has("empty")}
         clustered={query.has("clustered")}
+        sectionHeight={query.has("tall") ? 1000 : undefined}
+        weighted={query.has("weighted")}
       />
     </main>
   </ThemeProvider>,

@@ -11,6 +11,38 @@ import type { MapArea, MapFacility, MapSegment, MapSurfaceCell } from "./types";
 import { networkSegments, facilityMetrics } from "./NetworkMap.fixtures";
 import { GeoJSONVT } from "@maplibre/geojson-vt";
 
+it("keeps local connection widths on the original cohort's volume scale", () => {
+  const facilities: MapFacility[] = [
+    { id: "a", label: "A", kind: "hub", coordinates: [0, 0] },
+    { id: "b", label: "B", kind: "hub", coordinates: [1, 1] },
+    { id: "c", label: "C", kind: "hub", coordinates: [2, 2] },
+  ];
+  const segments: MapSegment[] = [
+    {
+      id: "local",
+      from: "a",
+      to: "b",
+      label: "Local",
+      evidence: "transfer",
+      volume: 20,
+    },
+    {
+      id: "remote",
+      from: "b",
+      to: "c",
+      label: "Remote",
+      evidence: "transfer",
+      volume: 10000,
+    },
+  ];
+  const overview = segmentData(facilities, segments);
+  const local = segmentData(facilities, segments.slice(0, 1), segments);
+  expect(local.features[0].properties?.width).toBe(
+    overview.features[0].properties?.width,
+  );
+  expect(local.features[0].properties?.width).toBeCloseTo(2.2236068);
+});
+
 it("fits dateline and ordinary journeys using the shortest longitude interval", () => {
   expect(
     geographicBounds([

@@ -2947,7 +2947,7 @@ it("renders route continuations using outside coordinates while preserving local
   ];
   const renderMap = (outside: MapFacility) => (
     <NetworkMapProvider {...props} facilities={local} segments={segments}>
-      <NetworkMapRouteContext.Provider value={[outside]}>
+      <NetworkMapRouteContext.Provider value={{ facilities: [outside] }}>
         <NetworkMapSurface />
       </NetworkMapRouteContext.Provider>
     </NetworkMapProvider>
@@ -2988,4 +2988,71 @@ it("renders route continuations using outside coordinates while preserving local
   );
   expect(constructor).toHaveBeenCalledOnce();
   expect(fitBounds).toHaveBeenCalledTimes(fits);
+});
+
+it("updates the inset width scale when only the overview cohort changes", async () => {
+  const local = props.facilities.slice(0, 1);
+  const remote = {
+    ...props.facilities[0],
+    id: "outside",
+    coordinates: [-100, 40] as const,
+  };
+  const segments = [
+    {
+      id: "local",
+      from: local[0].id,
+      to: remote.id,
+      evidence: "transfer" as const,
+      label: "Local",
+      volume: 20,
+    },
+  ];
+  const renderMap = (maximum: number) => (
+    <NetworkMapProvider {...props} facilities={local} segments={segments}>
+      <NetworkMapRouteContext.Provider
+        value={{
+          facilities: [remote],
+          volumeSegments: [
+            ...segments,
+            { ...segments[0], id: "remote", volume: maximum },
+          ],
+        }}
+      >
+        <NetworkMapSurface />
+      </NetworkMapRouteContext.Provider>
+    </NetworkMapProvider>
+  );
+  const view = render(renderMap(10000));
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  act(() => listeners.load());
+  expect(sourceDefs.get("easy-ui-transfers")?.data).toEqual(
+    expect.objectContaining({
+      features: [
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            width: 2 + Math.sqrt(20 / 10000) * 5,
+          }),
+        }),
+      ],
+    }),
+  );
+  const fits = fitBounds.mock.calls.length;
+  setData.mockClear();
+  view.rerender(renderMap(100));
+  expect(setData).toHaveBeenCalledWith(
+    expect.objectContaining({
+      features: [
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            width: 2 + Math.sqrt(0.2) * 5,
+          }),
+        }),
+      ],
+    }),
+  );
+  expect(constructor).toHaveBeenCalledOnce();
+  expect(fitBounds).toHaveBeenCalledTimes(fits);
+  expect(
+    view.container.querySelectorAll("[data-map-facility-id]"),
+  ).toHaveLength(1);
 });

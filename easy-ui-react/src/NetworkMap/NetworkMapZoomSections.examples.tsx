@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { NetworkMap } from "./NetworkMap";
 import { Select } from "../Select";
@@ -60,16 +60,31 @@ export function JourneyZoomExample({
   localBasemap = false,
   emptySection = false,
   clustered = false,
+  sectionHeight,
+  weighted = false,
 }: {
   narrow?: boolean;
   largeText?: boolean;
   localBasemap?: boolean;
   emptySection?: boolean;
   clustered?: boolean;
+  sectionHeight?: number;
+  weighted?: boolean;
 }) {
   const [selected, setSelected] = useState("dbn");
   const [revision, setRevision] = useState(0);
   const [risk, setRisk] = useState(false);
+  const segments = useMemo(
+    () =>
+      weighted
+        ? zoomJourneySegments.map((segment, index) => ({
+            ...segment,
+            volume:
+              index === 3 ? 10000 * (revision + 1) : index === 1 ? 20 : 10,
+          }))
+        : zoomJourneySegments,
+    [weighted, revision],
+  );
   const sections = emptySection
     ? [
         ...journeyZoomSections,
@@ -122,9 +137,10 @@ export function JourneyZoomExample({
         mapStyle={localBasemap ? emptyBasemap : exampleBasemap}
         workerUrl={workerUrl}
         facilities={revision ? refreshed : zoomJourneyFacilities}
-        segments={zoomJourneySegments}
+        segments={segments}
         zoomSections={sections.map((section) => ({
           ...section,
+          height: sectionHeight,
           onMapReady: localBasemap
             ? (map) => recordMap(section.id, map)
             : undefined,

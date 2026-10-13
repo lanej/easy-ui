@@ -68,9 +68,9 @@ export function NetworkMapSurface(
 }
 
 function NetworkMapSurfaceView() {
-  const routeFacilities = useContext(NetworkMapRouteContext);
-  const routeContext = useRef(routeFacilities);
-  routeContext.current = routeFacilities;
+  const routeData = useContext(NetworkMapRouteContext);
+  const routeContext = useRef(routeData);
+  routeContext.current = routeData;
   const {
     props: options,
     mapInspection,
@@ -238,7 +238,7 @@ function NetworkMapSurfaceView() {
     // "sourcedata" indefinitely.
     let lastClusterFacilities: typeof facilities | undefined;
     let lastFacilities: typeof facilities | undefined;
-    let lastRouteFacilities: typeof routeFacilities | undefined;
+    let lastRouteData: typeof routeData | undefined;
     let lastSegments: typeof segments | undefined;
     let lastAreas: typeof areas | undefined;
     let lastSurface: typeof surface;
@@ -596,19 +596,20 @@ function NetworkMapSurfaceView() {
           if (
             p.facilities !== lastFacilities ||
             p.segments !== lastSegments ||
-            routeContext.current !== lastRouteFacilities
+            routeContext.current !== lastRouteData
           ) {
             (map.getSource("easy-ui-transfers") as GeoJSONSource).setData(
               segmentData(
-                routeContext.current.length
-                  ? [...p.facilities, ...routeContext.current]
+                routeContext.current.facilities.length
+                  ? [...p.facilities, ...routeContext.current.facilities]
                   : p.facilities,
                 p.segments,
+                routeContext.current.volumeSegments,
               ),
             );
             lastFacilities = p.facilities;
             lastSegments = p.segments;
-            lastRouteFacilities = routeContext.current;
+            lastRouteData = routeContext.current;
           }
           if (p.areas !== lastAreas) {
             (map.getSource("easy-ui-weather") as GeoJSONSource).setData(
@@ -818,10 +819,14 @@ function NetworkMapSurfaceView() {
           map.addSource("easy-ui-transfers", {
             type: "geojson",
             data: segmentData(
-              routeContext.current.length
-                ? [...latest.current.facilities, ...routeContext.current]
+              routeContext.current.facilities.length
+                ? [
+                    ...latest.current.facilities,
+                    ...routeContext.current.facilities,
+                  ]
                 : latest.current.facilities,
               latest.current.segments,
+              routeContext.current.volumeSegments,
             ),
           });
           map.addSource("easy-ui-weather", {
@@ -1117,7 +1122,7 @@ function NetworkMapSurfaceView() {
           }
           lastFacilities = latest.current.facilities;
           lastSegments = latest.current.segments;
-          lastRouteFacilities = routeContext.current;
+          lastRouteData = routeContext.current;
           lastAreas = latest.current.areas;
           lastSurface = latest.current.surface;
           lastClusterFacilities = latest.current.facilities;
@@ -1298,7 +1303,7 @@ function NetworkMapSurfaceView() {
     refresh.current?.();
   }, [
     facilities,
-    routeFacilities,
+    routeData,
     segments,
     areas,
     surface,

@@ -78,11 +78,12 @@ export function splitAntimeridian(
 export function segmentData(
   facilities: readonly MapFacility[],
   segments: readonly MapSegment[],
+  volumeSegments: readonly MapSegment[] = segments,
 ): FeatureCollection<Geometry> {
   const byId = new Map(facilities.map((f) => [f.id, f]));
   const maxVolume = Math.max(
     1,
-    ...segments.map((s) =>
+    ...volumeSegments.map((s) =>
       Number.isFinite(s.volume) ? Math.max(0, s.volume ?? 0) : 0,
     ),
   );

@@ -1,5 +1,8 @@
 import { createContext } from "react";
-import type { MapFacility } from "./types";
+import type { MapFacility, MapSegment } from "./types";
 
-/** Coordinates for route continuations beyond the displayed local facilities. */
-export const NetworkMapRouteContext = createContext<readonly MapFacility[]>([]);
+/** Route endpoints and the original cohort's flow scale for a local close-up. */
+export const NetworkMapRouteContext = createContext<{
+  facilities: readonly MapFacility[];
+  volumeSegments?: readonly MapSegment[];
+}>({ facilities: [] });

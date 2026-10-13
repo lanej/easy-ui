@@ -411,6 +411,79 @@ export async function checkJourneySections({
   );
   await capture("journey-sections-large-text-empty-mobile");
   await scan("journey-sections-large-text-empty-mobile");
+  for (const width of [1440, 390]) {
+    await browser.resize(width, 1100);
+    await browser.open(`${base}/journey.html?tall=1&weighted=1`);
+    await browser.wait(overviewReady);
+    await browser.key(marker("oak"), "Enter");
+    await browser.wait(insetReady);
+    check(
+      `Custom-height close-up stays inside the ${width}px journey frame`,
+      (await browser.evaluate(bounded)) &&
+        (await browser.evaluate(
+          () => window.journeyMaps.origin.getContainer().clientHeight < 1000,
+        )),
+    );
+    const widthsMatch = async () => {
+      const main = await window.journeyMaps.overview
+        .getSource("easy-ui-transfers")
+        .getData();
+      const local = await window.journeyMaps.origin
+        .getSource("easy-ui-transfers")
+        .getData();
+      return (
+        local.features.length === 3 &&
+        local.features.every(
+          (feature) =>
+            feature.properties.width ===
+            main.features.find((other) => other.id === feature.id)?.properties
+              .width,
+        )
+      );
+    };
+    check(
+      `Local flow widths share the overview scale at ${width}px`,
+      await browser.evaluate(widthsMatch),
+    );
+    const before = await browser.evaluate(cameras);
+    const initialWidth = await browser.evaluate(async () => {
+      window.journeyBefore = { ...window.journeyMaps };
+      const data = await window.journeyMaps.origin
+        .getSource("easy-ui-transfers")
+        .getData();
+      return data.features[0].properties.width;
+    });
+    await browser.clickNamed("button", "Refresh records");
+    await browser.wait(() =>
+      document
+        .querySelector(
+          '[data-map-zoom-section] [data-map-facility-id="acceptance"]',
+        )
+        ?.getAttribute("aria-label")
+        ?.includes("Updated"),
+    );
+    await browser.wait(insetReady);
+    check(
+      `Off-inset flow changes update the shared width scale at ${width}px`,
+      (await browser.evaluate(widthsMatch)) &&
+        (await browser.evaluate(async (previous) => {
+          const data = await window.journeyMaps.origin
+            .getSource("easy-ui-transfers")
+            .getData();
+          return data.features[0].properties.width < previous;
+        }, initialWidth)),
+    );
+    check(
+      `Flow refresh preserves both maps and cameras at ${width}px`,
+      JSON.stringify(await browser.evaluate(cameras)) ===
+        JSON.stringify(before) &&
+        (await browser.evaluate(() =>
+          Object.entries(window.journeyMaps).every(
+            ([id, map]) => window.journeyBefore[id] === map,
+          ),
+        )),
+    );
+  }
   await browser.resize(1440, 1100);
   await browser.open(`${base}/journey.html?clustered=1`);
   await browser.wait(overviewReady);

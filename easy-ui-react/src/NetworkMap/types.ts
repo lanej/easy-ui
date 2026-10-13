@@ -266,9 +266,9 @@ export type NetworkMapZoomSection = {
   id: string;
   title: string;
   description?: string;
-  /** Only these facilities and connections with both endpoints in this group are shown. */
+  /** Local markers; connections to mapped off-inset facilities continue to the edge. */
   facilityIds: readonly string[];
-  /** Inset viewport height in CSS pixels. Defaults to 260 (240 in narrow frames); minimum 220. */
+  /** Inset viewport height in CSS pixels. Defaults to 260 (240 in narrow frames); minimum 220, capped to fit the geographic frame. */
   height?: number;
   /** Upper zoom bound when fitting this section. Defaults to 13. */
   maxZoom?: number;

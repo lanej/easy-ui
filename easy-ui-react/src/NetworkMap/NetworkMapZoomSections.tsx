@@ -15,6 +15,7 @@ type Placement = {
   left: number;
   top: number;
   narrow: boolean;
+  maxViewportHeight?: number;
   x: number;
   y: number;
   endX: number;
@@ -85,6 +86,18 @@ export function NetworkMapZoomSections() {
           ? base.bottom - attribution.top + 12
           : 44,
       );
+      const viewport = element
+        .querySelector("[data-map-state]")
+        ?.getBoundingClientRect();
+      const maxViewportHeight =
+        base.height > 0 && viewport && viewport.height > 0
+          ? Math.max(
+              220,
+              Math.floor(
+                base.height - bottom - 12 - (bounds.height - viewport.height),
+              ),
+            )
+          : undefined;
       const candidates = [
         { left: 12, top: Math.max(12, base.height - bottom - bounds.height) },
         {
@@ -120,6 +133,7 @@ export function NetworkMapZoomSections() {
       setPlacement({
         ...position,
         narrow: frame.clientWidth <= 700,
+        maxViewportHeight,
         ...source,
         endX,
         endY,
@@ -186,6 +200,7 @@ export function NetworkMapZoomSections() {
         section={activeSection}
         element={card}
         narrow={placement.narrow}
+        maxViewportHeight={placement.maxViewportHeight}
         position={{ left: placement.left, top: placement.top }}
         onClose={() => insets.close(true)}
       />
@@ -196,12 +211,14 @@ export function NetworkMapZoomSections() {
 function ZoomSection({
   section,
   narrow,
+  maxViewportHeight,
   element,
   position,
   onClose,
 }: {
   section: NetworkMapZoomSection;
   narrow: boolean;
+  maxViewportHeight?: number;
   element: React.RefObject<HTMLElement | null>;
   position: { left: number; top: number };
   onClose: () => void;
@@ -243,6 +260,17 @@ function ZoomSection({
       routeFacilities: [...endpoints.values()],
     };
   }, [options.segments, options.facilities, facilities]);
+  const routeContext = useMemo(
+    () => ({ facilities: routeFacilities, volumeSegments: options.segments }),
+    [routeFacilities, options.segments],
+  );
+  const requestedHeight =
+    section.height ??
+    (narrow && (options.typography?.label ?? 12) <= 14 ? 240 : 260);
+  const viewportHeight = Math.min(
+    Math.max(220, requestedHeight),
+    maxViewportHeight ?? Infinity,
+  );
   const focus = useMemo(
     () => ({
       revision: JSON.stringify([section.focusRevision ?? section.id, requests]),
@@ -285,10 +313,7 @@ function ZoomSection({
           zoomSections={undefined}
           initialView={undefined}
           focus={focus}
-          height={
-            section.height ??
-            (narrow && (options.typography?.label ?? 12) <= 14 ? 240 : 260)
-          }
+          height={viewportHeight}
           primaryFacilityIds={section.facilityIds}
           clusterFacilities={undefined}
           layerVisibility={visibility}
@@ -313,7 +338,7 @@ function ZoomSection({
             onClose={onClose}
             connections={connections}
           />
-          <NetworkMapRouteContext.Provider value={routeFacilities}>
+          <NetworkMapRouteContext.Provider value={routeContext}>
             <NetworkMapSurface />
           </NetworkMapRouteContext.Provider>
         </NetworkMapProvider>
