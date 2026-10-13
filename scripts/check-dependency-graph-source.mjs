@@ -77,6 +77,10 @@ try {
       await page.locator("[data-dependency-graph]").waitFor();
       await page.evaluate(() => document.fonts.ready);
       await settled();
+      if (width !== 320)
+        await page.locator("[data-dependency-graph]").screenshot({
+          path: resolve(output, `source-only-evidence-${theme}-${width}.png`),
+        });
       const cards = page.locator("[data-graph-resource-card]");
       assert.equal(await cards.count(), 10);
       assert.equal(
@@ -178,7 +182,9 @@ try {
           '[data-graph-resource-card="module.observability.module.database.google_sql_user.audit_pipeline"] [data-graph-resource-label]',
         )
         .evaluate((label) => {
-          const inner = label.querySelector("span span:last-child > span");
+          const inner = label.querySelector(
+            ":scope > span > span:last-child > span",
+          );
           const text = inner.getBoundingClientRect();
           const clip = inner.parentElement.getBoundingClientRect();
           return {
