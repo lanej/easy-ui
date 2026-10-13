@@ -29,6 +29,11 @@ type MapCommands = {
   latestEvent: () => void;
 };
 
+/** The overview supplies its metric selection to close-ups that share its legend. */
+export const NetworkMapMetricContext = createContext<ReturnType<
+  typeof useSurfaceMetric
+> | null>(null);
+
 function useMapState(input: NetworkMapProps) {
   const { resolvedOverlays, changeOverlayVisibility } =
     useOverlayVisibility(input);
@@ -42,9 +47,9 @@ function useMapState(input: NetworkMapProps) {
   const mapInspection = useMapInspection(props);
   const insets = useMapInsets(props);
   const { visibility, changeVisibility } = useLayerVisibility(props);
-  const { activeMetric, setActiveMetric } = useSurfaceMetric(
-    props.surface?.metrics,
-  );
+  const localMetric = useSurfaceMetric(props.surface?.metrics);
+  const { activeMetric, setActiveMetric } =
+    useContext(NetworkMapMetricContext) ?? localMetric;
   const [state, setState] = useState<MapState>("loading");
   const [zoom, setZoom] = useState(0);
   const surfaceOwner = useRef<symbol | null>(null);

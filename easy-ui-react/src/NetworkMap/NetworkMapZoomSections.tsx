@@ -1,7 +1,11 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useId } from "react-aria";
 import { Button } from "../Button";
-import { NetworkMapProvider, useNetworkMap } from "./NetworkMapContext";
+import {
+  NetworkMapMetricContext,
+  NetworkMapProvider,
+  useNetworkMap,
+} from "./NetworkMapContext";
 import { NetworkMapSurface } from "./NetworkMapSurface";
 import { validCoordinate } from "./geometry";
 import { NetworkMapRouteContext } from "./NetworkMapRouteContext";
@@ -234,7 +238,13 @@ function ZoomSection({
   position: { left: number; top: number };
   onClose: () => void;
 }) {
-  const { props: options, visibility, accessibleName } = useNetworkMap();
+  const {
+    props: options,
+    visibility,
+    accessibleName,
+    activeMetric,
+    setActiveMetric,
+  } = useNetworkMap();
   const [requests, setRequests] = useState(0);
   const headingId = useId();
   const facilities = useMemo(() => {
@@ -313,46 +323,50 @@ function ZoomSection({
       aria-labelledby={headingId}
     >
       {facilities.length ? (
-        <NetworkMapProvider
-          {...options}
-          title={section.title}
-          description={section.description}
-          aria-label={`${accessibleName} · ${section.title}`}
-          aria-labelledby={undefined}
-          facilities={facilities}
-          segments={segments}
-          zoomSections={undefined}
-          initialView={undefined}
-          focus={focus}
-          height={viewportHeight}
-          primaryFacilityIds={section.facilityIds}
-          clusterFacilities={undefined}
-          layerVisibility={visibility}
-          controlPlacement="toolbar"
-          controls={
-            options.controls === false
-              ? false
-              : {
-                  navigation: options.controls?.navigation,
-                  scale: options.controls?.scale,
-                }
-          }
-          toolbarControls={undefined}
-          showLegend={false}
-          showSelectionDetails={false}
-          showDataTable={false}
-          onMapReady={section.onMapReady}
+        <NetworkMapMetricContext.Provider
+          value={{ activeMetric, setActiveMetric }}
         >
-          <InsetHeader
-            heading={heading}
-            onFit={() => setRequests((value) => value + 1)}
-            onClose={onClose}
-            connections={connections}
-          />
-          <NetworkMapRouteContext.Provider value={routeContext}>
-            <NetworkMapSurface />
-          </NetworkMapRouteContext.Provider>
-        </NetworkMapProvider>
+          <NetworkMapProvider
+            {...options}
+            title={section.title}
+            description={section.description}
+            aria-label={`${accessibleName} · ${section.title}`}
+            aria-labelledby={undefined}
+            facilities={facilities}
+            segments={segments}
+            zoomSections={undefined}
+            initialView={undefined}
+            focus={focus}
+            height={viewportHeight}
+            primaryFacilityIds={section.facilityIds}
+            clusterFacilities={undefined}
+            layerVisibility={visibility}
+            controlPlacement="toolbar"
+            controls={
+              options.controls === false
+                ? false
+                : {
+                    navigation: options.controls?.navigation,
+                    scale: options.controls?.scale,
+                  }
+            }
+            toolbarControls={undefined}
+            showLegend={false}
+            showSelectionDetails={false}
+            showDataTable={false}
+            onMapReady={section.onMapReady}
+          >
+            <InsetHeader
+              heading={heading}
+              onFit={() => setRequests((value) => value + 1)}
+              onClose={onClose}
+              connections={connections}
+            />
+            <NetworkMapRouteContext.Provider value={routeContext}>
+              <NetworkMapSurface />
+            </NetworkMapRouteContext.Provider>
+          </NetworkMapProvider>
+        </NetworkMapMetricContext.Provider>
       ) : (
         <>
           <header className={styles.header}>{heading}</header>

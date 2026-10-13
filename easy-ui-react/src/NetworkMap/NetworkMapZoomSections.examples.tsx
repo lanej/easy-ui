@@ -7,6 +7,7 @@ import { exampleBasemap, parcelFacilities } from "./NetworkMap.fixtures";
 import type {
   MapFacility,
   MapSegment,
+  MapSurface,
   NetworkMapProps,
   NetworkMapZoomSection,
 } from "./types";
@@ -54,6 +55,52 @@ export const journeyZoomSections: NetworkMapZoomSection[] = [
   },
 ];
 
+const journeySurface: MapSurface = {
+  asOf: "2026-10-13T00:00:00Z",
+  source: "Synthetic journey estimates",
+  cells: [
+    {
+      lonMin: -122.25,
+      lonMax: -122.23,
+      latMin: 37.74,
+      latMax: 37.79,
+      medianMinutes: 30,
+      iqrMinutes: 10,
+      n: 100,
+    },
+    {
+      lonMin: -122.23,
+      lonMax: -122.2,
+      latMin: 37.74,
+      latMax: 37.79,
+      medianMinutes: 60,
+      iqrMinutes: 25,
+      n: 500,
+    },
+  ],
+  metrics: [
+    { key: "median", label: "Median delivery time", field: "medianMinutes" },
+    {
+      key: "spread",
+      label: "Delivery-time spread",
+      field: "iqrMinutes",
+      colorScale: [
+        { value: 0, color: "#eff3ff" },
+        { value: 30, color: "#54278f" },
+      ],
+    },
+    {
+      key: "count",
+      label: "Observations",
+      field: "n",
+      colorScale: [
+        { value: 0, color: "#eff3ff" },
+        { value: 1000, color: "#08519c" },
+      ],
+    },
+  ],
+};
+
 export function JourneyZoomExample({
   narrow = false,
   largeText = false,
@@ -62,6 +109,7 @@ export function JourneyZoomExample({
   clustered = false,
   sectionHeight,
   weighted = false,
+  surfaceMetrics = false,
 }: {
   narrow?: boolean;
   largeText?: boolean;
@@ -70,6 +118,7 @@ export function JourneyZoomExample({
   clustered?: boolean;
   sectionHeight?: number;
   weighted?: boolean;
+  surfaceMetrics?: boolean;
 }) {
   const [selected, setSelected] = useState("dbn");
   const [revision, setRevision] = useState(0);
@@ -84,6 +133,23 @@ export function JourneyZoomExample({
           }))
         : zoomJourneySegments,
     [weighted, revision],
+  );
+  const surface = useMemo(
+    () =>
+      surfaceMetrics
+        ? {
+            ...journeySurface,
+            cells: journeySurface.cells.map((cell) => ({
+              ...cell,
+              n: cell.n + revision,
+            })),
+            metrics: journeySurface.metrics!.map((metric) => ({
+              ...metric,
+              colorScale: metric.colorScale?.map((stop) => ({ ...stop })),
+            })),
+          }
+        : undefined,
+    [surfaceMetrics, revision],
   );
   const sections = emptySection
     ? [
@@ -154,6 +220,8 @@ export function JourneyZoomExample({
         controls={{ risk: false, latestEvent: false, selectedSegment: false }}
         controlLabels={{ fitAll: "Entire journey" }}
         layerVisibility={{ risk }}
+        surface={surface}
+        defaultLayerVisibility={{ deliverySurface: surfaceMetrics }}
         showDataTable={false}
         typography={
           largeText

@@ -5,9 +5,10 @@ import { NetworkMap } from "./NetworkMap";
 import { NetworkMapProvider, useNetworkMap } from "./NetworkMapContext";
 import { NetworkMapViewport } from "./NetworkMapViewport";
 import { crowdedInsetNodes } from "./useMapInsets";
-import type { NetworkMapProps } from "./types";
+import type { MapSurfaceMetric, NetworkMapProps } from "./types";
 
 const seen = new Map<string, NetworkMapProps>();
+const seenMetrics = new Map<string, MapSurfaceMetric | undefined>();
 const mounts = new Map<string, number>();
 let scale = 14;
 const project = ([longitude, latitude]: number[]) => ({
@@ -16,11 +17,18 @@ const project = ([longitude, latitude]: number[]) => ({
 });
 vi.mock("./NetworkMapSurface", () => ({
   NetworkMapSurface: function TestSurface() {
-    const { props: options, setState, mapRef, insets } = useNetworkMap();
+    const {
+      props: options,
+      activeMetric,
+      setState,
+      mapRef,
+      insets,
+    } = useNetworkMap();
     const { update } = insets;
     const element = useRef<HTMLDivElement>(null);
     const name = options["aria-label"] ?? options.title ?? "Map";
     seen.set(name, options);
+    seenMetrics.set(name, activeMetric);
     useEffect(() => {
       mounts.set(name, (mounts.get(name) ?? 0) + 1);
       setState("ready");
@@ -142,9 +150,83 @@ const overview = () => within(screen.getByTestId("Journey"));
 const openOrigin = () => fireEvent.click(overview().getByText("Origin"));
 beforeEach(() => {
   seen.clear();
+  seenMetrics.clear();
   mounts.clear();
   scale = 14;
 });
+
+it.each(["before", "after"] as const)(
+  "shares the overview metric when switched %s opening a close-up, including refreshed and removed metrics",
+  (order) => {
+    const surface = {
+      asOf: "2026-10-13T00:00:00Z",
+      source: "Synthetic",
+      cells: [
+        {
+          lonMin: -122.3,
+          lonMax: -122.1,
+          latMin: 37.7,
+          latMax: 37.9,
+          medianMinutes: 30,
+          iqrMinutes: 10,
+          n: 100,
+        },
+      ],
+      metrics: [
+        { key: "median", label: "Median", field: "medianMinutes" },
+        { key: "spread", label: "Spread", field: "iqrMinutes" },
+      ] as MapSurfaceMetric[],
+    };
+    const props = {
+      ...records,
+      surface,
+      defaultLayerVisibility: { deliverySurface: true },
+    };
+    const view = render(<NetworkMap {...props} />);
+    if (order === "after") openOrigin();
+    fireEvent.click(screen.getByRole("radio", { name: "Spread" }));
+    if (order === "before") openOrigin();
+    expect(seenMetrics.get("Journey")).toBe(surface.metrics[1]);
+    expect(seenMetrics.get(originName)).toBe(surface.metrics[1]);
+    expect(
+      screen.getByRole("group", { name: "Delivery time surface legend" }),
+    ).toHaveTextContent("Spread:");
+    const focusRevision = seen.get(originName)!.focus!.revision;
+
+    const refreshed = surface.metrics.map((metric) => ({
+      ...metric,
+      colorScale: [
+        { value: 0, color: "#000000" },
+        { value: 120, color: "#ffffff" },
+      ],
+    }));
+    view.rerender(
+      <NetworkMap {...props} surface={{ ...surface, metrics: refreshed }} />,
+    );
+    expect(seenMetrics.get("Journey")).toBe(refreshed[1]);
+    expect(seenMetrics.get(originName)).toBe(refreshed[1]);
+
+    view.rerender(
+      <NetworkMap
+        {...props}
+        surface={{ ...surface, metrics: [refreshed[0]] }}
+      />,
+    );
+    expect(seenMetrics.get("Journey")).toBe(refreshed[0]);
+    expect(seenMetrics.get(originName)).toBe(refreshed[0]);
+
+    view.rerender(
+      <NetworkMap {...props} surface={{ ...surface, metrics: undefined }} />,
+    );
+    expect(seenMetrics.get("Journey")).toBeUndefined();
+    expect(seenMetrics.get(originName)).toBeUndefined();
+    expect(
+      screen.getByRole("group", { name: "Delivery time surface legend" }),
+    ).toHaveTextContent("Median minutes:");
+    expect(seen.get(originName)!.focus!.revision).toBe(focusRevision);
+    expect([...mounts.values()]).toEqual([1, 1]);
+  },
+);
 
 it("starts with only the overview even when a crowded facility is already selected", () => {
   const { container } = render(

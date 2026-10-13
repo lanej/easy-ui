@@ -18,6 +18,7 @@ createRoot(document.getElementById("root")!).render(
         clustered={query.has("clustered")}
         sectionHeight={query.has("tall") ? 1000 : undefined}
         weighted={query.has("weighted")}
+        surfaceMetrics={query.has("metrics")}
       />
     </main>
   </ThemeProvider>,

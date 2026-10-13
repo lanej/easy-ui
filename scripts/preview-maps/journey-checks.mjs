@@ -498,6 +498,86 @@ export async function checkJourneySections({
         )),
     );
   }
+  for (const width of [1440, 390]) {
+    await browser.resize(width, 1100);
+    await browser.open(`${base}/journey.html?metrics=1`);
+    await browser.wait(overviewReady);
+    await browser.clickNamed("radio", "Delivery-time spread");
+    await browser.key(marker("oak"), "Enter");
+    await browser.wait(insetReady);
+    const before = await browser.evaluate(cameras);
+    await browser.evaluate(() => {
+      window.journeyBefore = { ...window.journeyMaps };
+    });
+    const paintsMatch = (field) => {
+      const maps = Object.values(window.journeyMaps);
+      const paints = maps.map((map) =>
+        JSON.stringify(
+          map.getPaintProperty("easy-ui-delivery-surface-fill", "fill-color"),
+        ),
+      );
+      const filters = maps.map((map) =>
+        JSON.stringify(map.getFilter("easy-ui-delivery-surface-fill")),
+      );
+      return (
+        maps.length === 2 &&
+        paints[0] === paints[1] &&
+        paints[0].includes(JSON.stringify(["get", field])) &&
+        filters[0] === filters[1]
+      );
+    };
+    check(
+      `Opening a close-up inherits the selected spread metric at ${width}px`,
+      await browser.evaluate(paintsMatch, "iqrMinutes"),
+    );
+    check(
+      `The shared legend describes spread at ${width}px`,
+      await browser.evaluate(() =>
+        document
+          .querySelector('[aria-label="Delivery time surface legend"]')
+          .textContent.includes("Delivery-time spread:"),
+      ),
+    );
+    await capture(`journey-metrics-spread-${width}`);
+    await scan(`journey-metrics-spread-${width}`);
+    for (const [label, field] of [
+      ["Observations", "n"],
+      ["Median delivery time", "medianMinutes"],
+      ["Delivery-time spread", "iqrMinutes"],
+    ]) {
+      await browser.clickNamed("radio", label);
+      await browser.wait(insetReady);
+      check(
+        `Switching to ${label} updates both surfaces at ${width}px`,
+        await browser.evaluate(paintsMatch, field),
+      );
+    }
+    await browser.clickNamed("button", "Refresh records");
+    await browser.wait(() =>
+      document
+        .querySelector(
+          '[data-map-zoom-section] [data-map-facility-id="acceptance"]',
+        )
+        ?.getAttribute("aria-label")
+        ?.includes("Updated"),
+    );
+    await browser.wait(insetReady);
+    check(
+      `Refreshed metric definitions stay synchronized at ${width}px`,
+      await browser.evaluate(paintsMatch, "iqrMinutes"),
+    );
+    check(
+      `Metric switches and refreshes preserve both cameras and map instances at ${width}px`,
+      JSON.stringify(await browser.evaluate(cameras)) ===
+        JSON.stringify(before) &&
+        (await browser.evaluate(() =>
+          Object.entries(window.journeyMaps).every(
+            ([id, map]) => window.journeyBefore[id] === map,
+          ),
+        )),
+    );
+    if (clean) await clean(`journey-metrics-${width}`);
+  }
   await browser.resize(1440, 1100);
   await browser.open(`${base}/journey.html?clustered=1`);
   await browser.wait(overviewReady);
