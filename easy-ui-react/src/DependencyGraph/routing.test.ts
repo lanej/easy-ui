@@ -60,8 +60,8 @@ it("keeps straight endpoints and avoids an intervening card with orthogonal lane
     item("barrier", 350, 20, 240, 260),
   ];
   const route = routeDependencyConnections(nodes, [edge("a-b", "a", "b")])[0];
-  expect(route.points[0]).toEqual({ x: 268, y: 124 });
-  expect(route.points[route.points.length - 1]).toEqual({ x: 700, y: 124 });
+  expect(route.points[0]).toEqual({ x: 268, y: 106 });
+  expect(route.points[route.points.length - 1]).toEqual({ x: 700, y: 106 });
   expectClear(route.points, nodes);
   expect(roundedConnectionPath(route.points)).toContain("Q");
 });
@@ -87,7 +87,7 @@ it("anchors to supplied visible fields, then falls back to the card when fields 
   expectClear(anchored.points, nodes);
   const hidden = routeDependencyConnections(nodes, links)[0];
   expect(hidden.targetAttribute).toBeUndefined();
-  expect(hidden.points[hidden.points.length - 1].y).toBe(124);
+  expect(hidden.points[hidden.points.length - 1].y).toBe(106);
 });
 it("routes backward cycles and self-links around cards and group headings", () => {
   const nodes = [item("a", 28, 100), item("b", 400, 100), item("c", 780, 100)];

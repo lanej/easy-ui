@@ -239,12 +239,12 @@ export function routeDependencyConnections(
           bItem = records.get(b[opposite])!;
         return (
           aItem.y +
-            (offset(a, opposite) ?? 44) -
-            (bItem.y + (offset(b, opposite) ?? 44)) ||
+            (offset(a, opposite) ?? 26) -
+            (bItem.y + (offset(b, opposite) ?? 26)) ||
           (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)
         );
       });
-    const center = item.node ? Math.min(44, item.height / 2) : item.height / 2;
+    const center = item.node ? Math.min(26, item.height / 2) : item.height / 2;
     return (
       item.y +
       center +

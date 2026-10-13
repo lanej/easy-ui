@@ -7,8 +7,8 @@ import type {
 } from "./types";
 
 export const NODE_WIDTH = 256;
-export const NODE_HEIGHT = 88;
-const GROUP_HEIGHT = 112;
+export const NODE_HEIGHT = 52;
+const GROUP_HEIGHT = 96;
 export const hasDependencyGraphChanges = (node: DependencyGraphNode) =>
   !!node.changes?.length ||
   (!!node.change && node.change !== "unchanged" && node.change !== "unknown");
@@ -87,9 +87,9 @@ export function buildDependencyGraph(
           ? (nodeHeights.get(node.id) ??
             NODE_HEIGHT +
               (hasDependencyGraphChanges(node) || branchSources.has(node.id)
-                ? 42
+                ? 31
                 : 2))
-          : GROUP_HEIGHT,
+          : Math.max(GROUP_HEIGHT, 64 + 25 / zoom),
       });
   }
   const connections = new Map<string, GraphConnection>();

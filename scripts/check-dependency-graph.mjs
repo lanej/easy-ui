@@ -730,6 +730,56 @@ try {
         document.querySelectorAll("[data-graph-target-attribute]").length === 2,
     );
     const graph = page.locator("[data-dependency-graph]");
+    const compactCards = await graph
+      .locator("[data-graph-resource-card]")
+      .evaluateAll((cards) =>
+        cards.map((card) => {
+          const select = card.querySelector("[data-graph-node]"),
+            label = select.querySelector("strong"),
+            status = select.querySelector("[data-change]"),
+            l = label.getBoundingClientRect(),
+            s = status.getBoundingClientRect();
+          return {
+            id: card.dataset.graphResourceCard,
+            height: card.getBoundingClientRect().height,
+            sameRow: Math.abs((l.top + l.bottom - s.top - s.bottom) / 2) < 1,
+            controls: [...card.querySelectorAll("button")].every((button) => {
+              const r = button.getBoundingClientRect();
+              return r.width >= 24 && r.height >= 24;
+            }),
+            compactControls: [
+              ...card.querySelectorAll("button[aria-expanded]"),
+            ].every((button) => {
+              const r = button.getBoundingClientRect();
+              return r.width <= 26 && r.height <= 26;
+            }),
+            readableValues: [
+              ...card.querySelectorAll("[data-diff] code"),
+            ].every(
+              (code) => parseFloat(getComputedStyle(code).fontSize) >= 13,
+            ),
+          };
+        }),
+      );
+    assert.ok(
+      compactCards.every(
+        (card) =>
+          card.sameRow &&
+          card.controls &&
+          card.compactControls &&
+          card.readableValues,
+      ),
+      "Dense cards preserve single-row identity/status, readable values and usable targets",
+    );
+    assert.ok(
+      compactCards.find((card) => card.id === "api").height <=
+        (width === 1440 ? 370 : 430),
+      "Expanded cards use less vertical space",
+    );
+    assert.ok(
+      compactCards.find((card) => card.id === "network").height <= 96,
+      "Summary cards have no empty minimum-height region",
+    );
     assert.equal(
       await graph
         .locator("[data-graph-edge-ids] text, [data-graph-edge-ids] rect")

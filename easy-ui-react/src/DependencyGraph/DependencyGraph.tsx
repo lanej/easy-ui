@@ -1013,6 +1013,11 @@ export function DependencyGraph({
                                   <Icon symbol={node.icon} size="sm" />
                                 </span>
                               )}
+                              {node && (
+                                <strong className={styles.nodeLabel}>
+                                  {label}
+                                </strong>
+                              )}
                               {node ? (
                                 <span
                                   className={styles.change}
@@ -1040,9 +1045,11 @@ export function DependencyGraph({
                                 </span>
                               )}
                             </span>
-                            <strong className={styles.nodeLabel}>
-                              {label}
-                            </strong>
+                            {!node && (
+                              <strong className={styles.nodeLabel}>
+                                {label}
+                              </strong>
+                            )}
                             <span
                               className={styles.nodeDescription}
                               title={

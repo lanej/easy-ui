@@ -105,6 +105,8 @@ Use `variant="dashed"` on an edge for a caller-defined distinction and explain i
 
 <ArgTypes />
 
+Resource cards use a compact identity/status row, 25px disclosure controls (preserved while zooming out), and tighter attribute spacing. Values keep their existing readable type size and responsive stacked/paired layout. Measured card heights and attribute ports follow the compact content.
+
 ### Relationship changes
 
 Supply `edge.change` as `"add"`, `"remove"`, `"update"`, `"unchanged"`, or `"unknown"`. Omission means unknown. Link changes are independent of resource operations: an unchanged resource can gain or lose relationships. Supply the union of before and after links, retaining removed links with their original IDs. Added links use green arrows; removed links use red arrows; caller-matched modified links (`"update"`) use one yellow arrow. Matching belongs to the application: Easy UI does not infer that two red/green edges are one relationship. A changed resolved attribute value alone does not imply a changed reference. Omit both attribute paths for explicit block-level `depends_on`; supply attribute paths for references. The connections have no status symbols or bundle badges. Relationship details include textual status labels. Added and removed links between the same endpoints stay separate, including when endpoints are collapsed into groups; same-status links with matching visible endpoint paths may bundle and retain all IDs. The **Changes** view includes both supplied endpoints of added/removed/modified links. Neighborhood and branch traversal follow all supplied links, including removed links, to support comparison of old and new topology.
