@@ -1,8 +1,9 @@
-import React, { CSSProperties } from "react";
+import React, { CSSProperties, ReactNode } from "react";
 import { useId } from "react-aria";
 import { Button } from "../Button";
 import { Checkbox } from "../Checkbox";
 import { RadioGroup } from "../RadioGroup";
+import { Select } from "../Select";
 import { defaultControlLabels } from "./controls";
 import type {
   MapSurfaceMetric,
@@ -15,6 +16,7 @@ import type {
 import styles from "./NetworkMap.module.scss";
 
 type NetworkMapToolbarProps = {
+  children?: ReactNode;
   style?: CSSProperties;
   accessibleName: string;
   labelledBy?: string;
@@ -40,6 +42,7 @@ type NetworkMapToolbarProps = {
 
 /** Only renders relevant controls; engine-owned navigation and scale are managed separately. */
 export function NetworkMapToolbar({
+  children,
   style,
   accessibleName,
   labelledBy,
@@ -91,11 +94,12 @@ export function NetworkMapToolbar({
     }
   });
   if (
-    configured
+    React.Children.toArray(children).length === 0 &&
+    (configured
       ? !configured.length
       : !visibleActions.length &&
         !visibleLayers.length &&
-        !visibleMetrics.length
+        !visibleMetrics.length)
   )
     return null;
   if (configured) {
@@ -111,38 +115,69 @@ export function NetworkMapToolbar({
     label: string,
     disabled: boolean,
     useExternalLabel = false,
-  ) => (
-    <RadioGroup.Container
-      key={id}
-      name={`${suffixId}-surface-metric-${id}`}
-      value={activeMetricKey}
-      isDisabled={disabled}
-      onChange={onMetricChange}
-      aria-label={useExternalLabel && externalLabel ? undefined : label}
-      aria-labelledby={
+    presentation: "select" | "radio" = "select",
+  ) => {
+    const naming = {
+      "aria-label": label,
+      "aria-labelledby":
         useExternalLabel && externalLabel
           ? `${externalLabel} ${metricSuffixId}`
-          : undefined
-      }
-    >
-      {useExternalLabel && externalLabel && (
-        <span id={metricSuffixId} hidden>
-          delivery surface metric
-        </span>
-      )}
-      <div className={styles.buttons}>
-        {visibleMetrics.map((metric) => (
-          <RadioGroup.Item key={metric.key} value={metric.key}>
-            <span className={styles.controlLabel}>{metric.label}</span>
-          </RadioGroup.Item>
-        ))}
-      </div>
-    </RadioGroup.Container>
-  );
+          : undefined,
+    };
+    return (
+      <React.Fragment key={id}>
+        {useExternalLabel && externalLabel && (
+          <span id={metricSuffixId} hidden>
+            delivery surface metric
+          </span>
+        )}
+        {presentation === "select" ? (
+          <div className={styles.metricControl} data-map-surface-metric>
+            <Select
+              {...naming}
+              size="sm"
+              selectedKey={activeMetricKey}
+              isDisabled={disabled}
+              onSelectionChange={(key) => onMetricChange?.(String(key))}
+            >
+              {visibleMetrics.map((metric) => (
+                <Select.Option key={metric.key} textValue={metric.label}>
+                  <span className={styles.controlLabel}>{metric.label}</span>
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+        ) : (
+          <RadioGroup.Container
+            {...naming}
+            key={id}
+            name={`${suffixId}-surface-metric-${id}`}
+            value={activeMetricKey}
+            isDisabled={disabled}
+            onChange={onMetricChange}
+          >
+            <div className={styles.buttons}>
+              {visibleMetrics.map((metric) => (
+                <RadioGroup.Item key={metric.key} value={metric.key}>
+                  <span className={styles.controlLabel}>{metric.label}</span>
+                </RadioGroup.Item>
+              ))}
+            </div>
+          </RadioGroup.Container>
+        )}
+      </React.Fragment>
+    );
+  };
   const configuredControl = (control: NetworkMapToolbarControl) => {
     const disabled = !ready || control.disabled === true;
     if (control.type === "surfaceMetrics")
-      return metricControls(control.id, control.label, disabled);
+      return metricControls(
+        control.id,
+        control.label,
+        disabled,
+        false,
+        control.presentation,
+      );
     if (control.type === "action" || control.type === "button") {
       const onClick =
         control.type === "button"
@@ -197,13 +232,10 @@ export function NetworkMapToolbar({
           camera and layers
         </span>
       )}
-      {configured && (
-        <div className={styles.buttons}>
-          {configured.map(configuredControl)}
-        </div>
-      )}
+      {children}
+      {configured?.map(configuredControl)}
       {!configured && visibleActions.length > 0 && (
-        <div className={styles.buttons}>
+        <>
           {visibleActions.map(({ key, onClick }) => (
             <Button
               key={key}
@@ -218,10 +250,10 @@ export function NetworkMapToolbar({
               </span>
             </Button>
           ))}
-        </div>
+        </>
       )}
       {!configured && visibleLayers.length > 0 && (
-        <div className={styles.buttons}>
+        <>
           {visibleLayers.map((key) => (
             <Checkbox
               key={key}
@@ -234,7 +266,7 @@ export function NetworkMapToolbar({
               </span>
             </Checkbox>
           ))}
-        </div>
+        </>
       )}
       {!configured &&
         visibleMetrics.length > 0 &&

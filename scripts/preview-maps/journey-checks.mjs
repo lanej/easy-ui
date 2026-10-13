@@ -47,12 +47,63 @@ export async function checkJourneySections({
   scan,
   clean,
 }) {
+  const selectMetric = async (label) => {
+    await browser.click("[data-map-surface-metric] button");
+    await browser.wait(() => document.querySelector('[role="option"]'));
+    await browser.clickNamed("option", label);
+  };
   for (const theme of ["light", "dark"])
     for (const width of [1440, 390]) {
       const name = `${theme}/${width}`;
       await browser.resize(width, 1100);
       await browser.open(`${base}/journey.html?local=1&theme=${theme}`);
       await browser.wait(overviewReady);
+      await browser.wait(() => document.fonts.status === "loaded");
+      check(
+        `${name}: the shared toolbar retains Select borders after loading map styles`,
+        await browser.evaluate(() =>
+          [
+            ...document.querySelectorAll(
+              '[aria-label$="camera and layers"] button[aria-haspopup="listbox"]',
+            ),
+          ].every((button) => {
+            const styles = getComputedStyle(button);
+            return (
+              parseFloat(styles.borderTopWidth) > 0 &&
+              styles.borderTopStyle !== "none" &&
+              button.getBoundingClientRect().height >= 30
+            );
+          }),
+        ),
+      );
+      check(
+        `${name}: filters and map actions share one compact wrapping toolbar`,
+        await browser.evaluate(() => {
+          const toolbars = document.querySelectorAll(
+            '[aria-label$="camera and layers"]',
+          );
+          if (toolbars.length !== 1) return false;
+          const toolbar = toolbars[0];
+          const controls = [
+            ...toolbar.querySelectorAll("button, input[type=checkbox]"),
+          ];
+          const rows = controls.map((control) => {
+            const rect = (
+              control.closest("label") ?? control
+            ).getBoundingClientRect();
+            return Math.round((rect.top + rect.bottom) / 2);
+          });
+          return (
+            controls.length === 4 &&
+            toolbar.textContent.includes("Refresh records") &&
+            toolbar.textContent.includes("Facility risk") &&
+            toolbar.textContent.includes("Entire journey") &&
+            Math.max(...rows) - Math.min(...rows) <=
+              (innerWidth > 800 ? 12 : 52) &&
+            document.documentElement.scrollWidth <= innerWidth + 1
+          );
+        }),
+      );
       const initial = await browser.evaluate(cameras);
       check(
         `${name}: zoomed-out journey starts with one map and no inset`,
@@ -502,7 +553,7 @@ export async function checkJourneySections({
     await browser.resize(width, 1100);
     await browser.open(`${base}/journey.html?local=1&metrics=1`);
     await browser.wait(overviewReady);
-    await browser.clickNamed("radio", "Delivery-time spread");
+    await selectMetric("Delivery-time spread");
     await browser.key(marker("oak"), "Enter");
     await browser.wait(insetReady);
     const before = await browser.evaluate(cameras);
@@ -545,7 +596,7 @@ export async function checkJourneySections({
       ["Median delivery time", "medianMinutes"],
       ["Delivery-time spread", "iqrMinutes"],
     ]) {
-      await browser.clickNamed("radio", label);
+      await selectMetric(label);
       await browser.wait(insetReady);
       check(
         `Switching to ${label} updates both surfaces at ${width}px`,
@@ -577,6 +628,41 @@ export async function checkJourneySections({
         )),
     );
     if (clean) await clean(`journey-metrics-${width}`);
+  }
+  for (const width of [1440, 390]) {
+    await browser.resize(width, 1100);
+    for (const heading of ["none", "title", "description"]) {
+      await browser.open(
+        `${base}/journey.html?local=1&metrics=1&heading=${heading}`,
+      );
+      await browser.wait(overviewReady);
+      check(
+        `Optional ${heading} heading retains working filters and map actions at ${width}px`,
+        await browser.evaluate((heading) => {
+          const example = document.querySelector("[data-journey-zoom-example]");
+          const toolbar = example.querySelector(
+            '[aria-label$="camera and layers"]',
+          );
+          const header = example.querySelector("[data-journey-heading]");
+          return (
+            Boolean(header?.querySelector("h1")) === (heading === "title") &&
+            Boolean(header?.querySelector("p")) ===
+              (heading === "description") &&
+            Boolean(header) === (heading !== "none") &&
+            toolbar.textContent.includes("Refresh records") &&
+            toolbar.textContent.includes("Entire journey") &&
+            toolbar.querySelector("[data-map-surface-metric]") &&
+            document.documentElement.scrollWidth <= innerWidth + 1
+          );
+        }, heading),
+      );
+      await browser.clickNamed("button", "Entire journey");
+      await browser.wait(overviewReady);
+      if (heading === "none") {
+        await capture(`journey-controls-only-${width}`);
+        await scan(`journey-controls-only-${width}`);
+      }
+    }
   }
   await browser.resize(1440, 1100);
   await browser.open(`${base}/journey.html?local=1&clustered=1`);

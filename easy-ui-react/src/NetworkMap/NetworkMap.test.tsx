@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import userEvent from "@testing-library/user-event";
 import type { Feature, Point } from "geojson";
 import {
   act,
@@ -220,6 +221,7 @@ beforeEach(() => {
     "ResizeObserver",
     class {
       observe() {}
+      unobserve() {}
       disconnect() {}
     },
   );
@@ -1530,26 +1532,27 @@ describe("delivery surface metric switcher", () => {
     },
   };
 
-  it("renders a radio per metric, defaulting to the first one, without disturbing the legacy checkbox toggle", async () => {
+  it("defaults the compact metric selector to the first metric without disturbing the legacy checkbox toggle", async () => {
     render(<NetworkMap {...metricsProps} />);
     await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
     act(() => listeners.load());
     expect(
-      screen.getByRole("radio", { name: "Median delivery time" }),
-    ).toBeChecked();
-    expect(
-      screen.getByRole("radio", { name: "Observation count" }),
-    ).not.toBeChecked();
+      screen.getByRole("button", { name: /delivery surface metric/ }),
+    ).toHaveTextContent("Median delivery time");
     expect(
       screen.getByRole("checkbox", { name: "Delivery time surface" }),
     ).toBeInTheDocument();
   });
 
   it("switches the fill layer's paint to the selected metric's own field and colorScale", async () => {
+    const user = userEvent.setup();
     render(<NetworkMap {...metricsProps} />);
     await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
     act(() => listeners.load());
-    fireEvent.click(screen.getByRole("radio", { name: "Observation count" }));
+    await user.click(
+      screen.getByRole("button", { name: /delivery surface metric/ }),
+    );
+    await user.click(screen.getByRole("option", { name: "Observation count" }));
     const fillColor = JSON.stringify(
       paintProperties.get("easy-ui-delivery-surface-fill")?.get("fill-color"),
     );
@@ -1577,7 +1580,7 @@ describe("delivery surface metric switcher", () => {
     await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
     act(() => listeners.load());
     expect(
-      screen.queryByRole("radiogroup", { name: /delivery surface metric/i }),
+      screen.queryByRole("button", { name: /delivery surface metric/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("group", { name: "Delivery time surface legend" }),
@@ -1896,6 +1899,7 @@ describe("delivery surface inspection", () => {
   });
 
   it("clears an inspected cell when switching to a metric that has no value for it", async () => {
+    const user = userEvent.setup();
     await ready({
       surface: {
         ...surface,
@@ -1908,7 +1912,10 @@ describe("delivery surface inspection", () => {
     });
     click();
     expect(card()).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: "Spread" }));
+    await user.click(
+      screen.getByRole("button", { name: /delivery surface metric/ }),
+    );
+    await user.click(screen.getByRole("option", { name: "Spread" }));
     expect(card()).not.toBeInTheDocument();
     expect(
       JSON.stringify(layerDefs.get("easy-ui-delivery-surface-fill")?.filter),
@@ -2498,12 +2505,17 @@ describe("independent map composition", () => {
         title={null}
         description={null}
         aria-label="Custom network"
+        controls={false}
+        toolbarContent={<button type="button">Refresh records</button>}
       />,
     );
     expect(
       screen.getByRole("region", { name: "Custom network" }),
     ).toBeInTheDocument();
     expect(document.querySelector("h3")).toBeNull();
+    expect(
+      screen.getByRole("group", { name: "Custom network camera and layers" }),
+    ).toContainElement(screen.getByRole("button", { name: "Refresh records" }));
     expect(constructor).toHaveBeenCalledTimes(1);
   });
 

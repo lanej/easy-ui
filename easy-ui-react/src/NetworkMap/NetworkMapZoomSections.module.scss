@@ -45,7 +45,7 @@
 .header {
   position: relative;
   padding: 8px 10px;
-  h3 {
+  h2 {
     margin: 0;
     margin-inline-end: 80px;
     font-size: var(--ezui-viz-control-size, 14px);
@@ -116,42 +116,29 @@
   background: design-token("color.neutral.000");
   color: design-token("color.neutral.900");
 }
-.exampleControls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: design-token("space.1");
-  align-items: center;
-  margin-block-end: 12px;
-  > :first-child {
-    inline-size: 240px;
-    max-inline-size: 100%;
-  }
+.exampleLocation {
+  inline-size: 200px;
 }
 .exampleHeader {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 4px 12px;
-  margin-block-end: 4px;
+  margin-block-end: 8px;
 }
 .exampleHeading {
   margin: 0;
   color: design-token("color.neutral.900");
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.4;
 }
-.exampleRoute {
-  margin: 0;
-  color: design-token("color.neutral.900");
-  font-size: 16px;
-  font-weight: 600;
-}
-
 .exampleHint {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 12px;
-  margin: 0 0 10px;
+  margin: 0;
   color: design-token("color.neutral.700");
   font-size: 13px;
+}
+@media (max-width: 640px) {
+  .example {
+    padding: 12px;
+  }
 }

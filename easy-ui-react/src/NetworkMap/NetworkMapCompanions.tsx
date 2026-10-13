@@ -113,7 +113,9 @@ export function NetworkMapControlPanel() {
       activeMetricKey={activeMetric?.key}
       onMetricChange={setActiveMetric}
       style={visualizationTypographyStyle(options.typography)}
-    />
+    >
+      {options.toolbarContent}
+    </NetworkMapToolbar>
   );
 }
 

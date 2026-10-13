@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import userEvent from "@testing-library/user-event";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { Map as MapInstance } from "maplibre-gl";
 import { NetworkMap } from "./NetworkMap";
@@ -157,7 +158,8 @@ beforeEach(() => {
 
 it.each(["before", "after"] as const)(
   "shares the overview metric when switched %s opening a close-up, including refreshed and removed metrics",
-  (order) => {
+  async (order) => {
+    const user = userEvent.setup();
     const surface = {
       asOf: "2026-10-13T00:00:00Z",
       source: "Synthetic",
@@ -184,7 +186,10 @@ it.each(["before", "after"] as const)(
     };
     const view = render(<NetworkMap {...props} />);
     if (order === "after") openOrigin();
-    fireEvent.click(screen.getByRole("radio", { name: "Spread" }));
+    await user.click(
+      screen.getByRole("button", { name: /delivery surface metric/ }),
+    );
+    await user.click(screen.getByRole("option", { name: "Spread" }));
     if (order === "before") openOrigin();
     expect(seenMetrics.get("Journey")).toBe(surface.metrics[1]);
     expect(seenMetrics.get(originName)).toBe(surface.metrics[1]);

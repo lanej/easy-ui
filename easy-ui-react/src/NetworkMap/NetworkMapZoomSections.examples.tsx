@@ -103,6 +103,8 @@ const journeySurface: MapSurface = {
 };
 
 export function JourneyZoomExample({
+  title = "Oakland → Dearborn",
+  description = "EP-104 · Ground · Synthetic journey",
   narrow = false,
   largeText = false,
   localBasemap = false,
@@ -112,6 +114,8 @@ export function JourneyZoomExample({
   weighted = false,
   surfaceMetrics = false,
 }: {
+  title?: string | null;
+  description?: string | null;
   narrow?: boolean;
   largeText?: boolean;
   localBasemap?: boolean;
@@ -170,37 +174,41 @@ export function JourneyZoomExample({
       data-journey-zoom-example
       style={{ maxWidth: narrow ? 540 : 1120 }}
     >
-      <div className={styles.exampleHeader}>
-        <h1 className={styles.exampleHeading}>Tracking path</h1>
-        <h2 className={styles.exampleRoute}>Oakland → Dearborn</h2>
-      </div>
-      <p className={styles.exampleHint}>
-        <span>EP-104 · Ground · Synthetic journey</span>
-        <span>Select +n for nearby handoffs.</span>
-      </p>
-      <div className={styles.exampleControls}>
-        <Select
-          aria-label="Selected location"
-          selectedKey={selected}
-          onSelectionChange={(id) => setSelected(String(id))}
-          size="sm"
-        >
-          {zoomJourneyFacilities.map((facility) => (
-            <Select.Option key={facility.id}>{facility.label}</Select.Option>
-          ))}
-        </Select>
-        <Button
-          size="sm"
-          variant="outlined"
-          onPress={() => setRevision((value) => value + 1)}
-        >
-          Refresh records
-        </Button>
-        <Checkbox isSelected={risk} onChange={setRisk}>
-          <span className={styles.controlLabel}>Facility risk</span>
-        </Checkbox>
-      </div>
+      {(title || description) && (
+        <div className={styles.exampleHeader} data-journey-heading>
+          {title && <h1 className={styles.exampleHeading}>{title}</h1>}
+          {description && <p className={styles.exampleHint}>{description}</p>}
+        </div>
+      )}
       <NetworkMap
+        toolbarContent={
+          <>
+            <div className={styles.exampleLocation}>
+              <Select
+                aria-label="Selected location"
+                selectedKey={selected}
+                onSelectionChange={(id) => setSelected(String(id))}
+                size="sm"
+              >
+                {zoomJourneyFacilities.map((facility) => (
+                  <Select.Option key={facility.id}>
+                    {facility.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+            <Button
+              size="sm"
+              variant="outlined"
+              onPress={() => setRevision((value) => value + 1)}
+            >
+              Refresh records
+            </Button>
+            <Checkbox isSelected={risk} onChange={setRisk}>
+              <span className={styles.controlLabel}>Facility risk</span>
+            </Checkbox>
+          </>
+        }
         aria-label="Oakland → Dearborn"
         mapStyle={localBasemap ? emptyBasemap : exampleBasemap}
         workerUrl={workerUrl}
@@ -220,7 +228,10 @@ export function JourneyZoomExample({
         clusterFacilities={clustered ? { radius: 50, maxZoom: 8 } : undefined}
         height={largeText ? 780 : 700}
         controls={{ risk: false, latestEvent: false, selectedSegment: false }}
-        controlLabels={{ fitAll: "Entire journey" }}
+        controlLabels={{
+          fitAll: "Entire journey",
+          deliverySurface: "Surface",
+        }}
         layerVisibility={{ risk }}
         surface={surface}
         defaultLayerVisibility={{ deliverySurface: surfaceMetrics }}

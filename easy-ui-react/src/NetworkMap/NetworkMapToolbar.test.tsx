@@ -156,7 +156,8 @@ it("disables all configured controls while the engine initializes", () => {
   expect(screen.getByRole("checkbox", { name: "Coverage" })).toBeDisabled();
 });
 
-it("can explicitly include the surface metric selector with a custom name", () => {
+it("can explicitly include the compact surface metric selector with a custom name", async () => {
+  const user = userEvent.setup();
   const metrics: MapSurfaceMetric[] = [
     { key: "median", label: "Median", field: "medianMinutes", colorScale: [] },
     { key: "count", label: "Count", field: "n", colorScale: [] },
@@ -173,10 +174,8 @@ it("can explicitly include the surface metric selector with a custom name", () =
       ]}
     />,
   );
-  expect(
-    screen.getByRole("radiogroup", { name: "Observation measure" }),
-  ).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("radio", { name: "Count" }));
+  await user.click(screen.getByRole("button", { name: /Observation measure/ }));
+  await user.click(screen.getByRole("option", { name: "Count" }));
   expect(onMetricChange).toHaveBeenCalledWith("count");
 });
 
@@ -195,9 +194,9 @@ it("prefers external metric group labels over a conflicting fallback", () => {
       />
     </>,
   );
-  expect(screen.getByRole("radiogroup")).toHaveAccessibleName(
-    "Warehouse context September delivery surface metric",
-  );
+  expect(
+    screen.getByRole("button", { name: /delivery surface metric/ }),
+  ).toHaveAccessibleName(/Warehouse context September delivery surface metric/);
 });
 
 it("activates composed buttons and checkboxes exactly once from the keyboard", async () => {
@@ -245,7 +244,12 @@ it("keeps controlled metric groups isolated when using arrow keys", async () => 
         activeMetricKey={metric}
         onMetricChange={setMetric}
         toolbarControls={[
-          { id: "metrics", type: "surfaceMetrics", label: name },
+          {
+            id: "metrics",
+            type: "surfaceMetrics",
+            label: name,
+            presentation: "radio",
+          },
         ]}
       />
     );

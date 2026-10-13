@@ -54,6 +54,16 @@ try {
                   ).trim() === name,
               );
             }
+            if (role === "option") {
+              return Array.from(
+                document.querySelectorAll('[role="option"]'),
+              ).find(
+                (option) =>
+                  (
+                    option.getAttribute("aria-label") ?? option.textContent
+                  ).trim() === name,
+              );
+            }
             return Array.from(
               document.querySelectorAll(
                 role === "radio"

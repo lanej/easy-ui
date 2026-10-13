@@ -327,7 +327,7 @@ export type NetworkMapToolbarControl = ToolbarControlBase &
     | { type: "button"; onPress: () => void }
     | { type: "layer"; layer: keyof NetworkMapLayerVisibility }
     | { type: "overlay"; overlayId: string }
-    | { type: "surfaceMetrics" }
+    | { type: "surfaceMetrics"; presentation?: "select" | "radio" }
   );
 
 /** Presentation and controlled selection contract for an optional geographic map. */
@@ -423,6 +423,8 @@ export type NetworkMapProps = {
   /** Place controls over the map to avoid a separate toolbar row. Defaults to toolbar. */
   controlPlacement?: "toolbar" | "map";
   toolbarControls?: readonly NetworkMapToolbarControl[];
+  /** Application filters and actions placed before the map controls in the same wrapping toolbar. */
+  toolbarContent?: ReactNode;
   /** Override toolbar labels; fitAll defaults to "Fit all locations" for every map. */
   controlLabels?: Partial<NetworkMapControlLabels>;
   /**

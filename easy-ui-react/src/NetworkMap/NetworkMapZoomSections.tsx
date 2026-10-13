@@ -306,7 +306,7 @@ function ZoomSection({
       requests,
     ],
   );
-  const heading = <h3 id={headingId}>{section.title}</h3>;
+  const heading = <h2 id={headingId}>{section.title}</h2>;
   return (
     <section
       ref={element}

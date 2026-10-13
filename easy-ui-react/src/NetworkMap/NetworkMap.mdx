@@ -299,12 +299,44 @@ Use `height="fill"` in a flex or grid slot to let the map occupy the available h
 
 Use `controlLabels` to replace any toolbar label: `fitAll`, `selectedSegment`, `latestEvent`, `risk`, `weather`, or `deliverySurface`. The default fit label is "Fit all locations"; the parcel journey examples explicitly use `controlLabels={{ fitAll: "Entire journey" }}`.
 
+Use `toolbarContent` to put application filters, refresh actions, and other controls in the same wrapping row as the map actions and layer toggles. The toolbar packs individual controls into the available width instead of reserving a separate row for each group. `title` and `description` remain independently optional; omitting both leaves the shared toolbar directly above the map. Application controls remain available with `controls={false}`, which hides only the map's built-in controls.
+
+```tsx
+<NetworkMap
+  aria-label="Oakland → Dearborn"
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  facilities={facilities}
+  selectedFacilityId={selected}
+  onFacilitySelect={setSelected}
+  toolbarContent={
+    <>
+      <Select
+        aria-label="Selected location"
+        size="sm"
+        selectedKey={selected}
+        onSelectionChange={(key) => setSelected(String(key))}
+      >
+        {facilities.map((facility) => (
+          <Select.Option key={facility.id}>{facility.label}</Select.Option>
+        ))}
+      </Select>
+      <Button size="sm" variant="outlined" onPress={refresh}>
+        Refresh records
+      </Button>
+    </>
+  }
+/>
+```
+
+Surface metrics use a compact Select by default. All metric labels remain available in its menu, and selection still updates the overview, open close-up, inspection details, and legend together. An explicit `surfaceMetrics` entry can use `presentation: "radio"` when inline choices suit the surrounding layout.
+
 #### Caller-defined toolbar controls
 
 `toolbarControls` replaces the default toolbar with an ordered list of
 `NetworkMapToolbarControl` definitions. Names such as Facility risk and Weather
 are defaults, not required control types or labels. Include only the controls
-your application needs; `toolbarControls={[]}` omits the toolbar without hiding
+your application needs; `toolbarControls={[]}` omits built-in toolbar items without hiding
 overlays, navigation, scale, or attribution. `controls={false}` remains the
 master opt-out for all built-in controls, including the configured toolbar.
 
@@ -364,8 +396,8 @@ The available types are:
           <code>surfaceMetrics</code>
         </th>
         <td>
-          The supplied surface metric radio choices; <code>label</code> names
-          their group
+          The supplied surface metric Select; <code>label</code> names it. Use{" "}
+          <code>presentation: "radio"</code> for inline radio choices.
         </td>
       </tr>
     </tbody>

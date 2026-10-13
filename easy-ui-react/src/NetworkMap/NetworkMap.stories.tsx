@@ -45,6 +45,11 @@ export const ZoomedJourneyLargeText: Story = {
 export const ZoomedJourneyMetrics: Story = {
   render: () => <JourneyZoomExample surfaceMetrics />,
 };
+export const ZoomedJourneyControlsOnly: Story = {
+  render: () => (
+    <JourneyZoomExample title={null} description={null} surfaceMetrics />
+  ),
+};
 export const ZoomedJourneyUnmapped: Story = {
   render: () => <JourneyZoomExample emptySection />,
 };

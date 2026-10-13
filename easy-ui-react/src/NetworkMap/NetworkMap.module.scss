@@ -46,6 +46,13 @@
   align-items: center;
   justify-content: flex-start;
   padding: 0 16px 10px;
+  > * {
+    max-inline-size: 100%;
+    min-inline-size: 0;
+  }
+}
+.metricControl {
+  inline-size: calc(var(--ezui-viz-control-size, 14px) * 14);
 }
 .buttons {
   display: flex;
