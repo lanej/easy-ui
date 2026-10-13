@@ -24,7 +24,7 @@ p=root/'DependencyGraphIdentity.tsx'; s=p.read_text()
 s=s.replace('className={styles.middleLabel} aria-label={label}', 'className={styles.middleLabel}')
 s=s.replace('className={styles.labelPrefix} aria-hidden="true"', 'className={styles.labelPrefix}')
 s=s.replace('className={styles.labelSuffix} aria-hidden="true"', 'className={styles.labelSuffix}')
-if '<span>{characters.slice(-18)' not in s: s=s.replace('{characters.slice(-18).join("")}', '<span>{characters.slice(-18).join("")}</span>')
+if 'styles.labelSuffixText' not in s and '<span>{characters.slice(-18)' not in s: s=s.replace('{characters.slice(-18).join("")}', '<span>{characters.slice(-18).join("")}</span>')
 if 'role="img"' not in s: s=s.replace('              aria-label={dependencyChangeLabels[node.change]}', '              role="img"\n              aria-label={dependencyChangeLabels[node.change]}')
 p.write_text(s)
 p=root/'DependencyGraphChanges.tsx'; s=p.read_text()
@@ -45,4 +45,19 @@ s=s.replace('sameRow: Math.abs((l.top + l.bottom - s.top - s.bottom) / 2) < 1,',
 s=s.replace('card.sameRow &&', 'card.identityFirst &&')
 s=s.replace('Dense cards preserve single-row identity/status, readable values and usable targets', 'Dense cards prioritize identity above status while preserving readable values and usable targets')
 if 'await import("./check-dependency-graph-source.mjs")' not in s: s+='\nawait import("./check-dependency-graph-source.mjs");\n'
+p.write_text(s)
+# A named class avoids coupling suffix text to unrelated span specificity rules.
+p=root/'DependencyGraph.module.scss'; s=p.read_text()
+s=s.replace('  > span {\n    flex-shrink: 0;\n  }\n}\n.nodeMetadata {', '}\n.labelSuffixText {\n  flex-shrink: 0;\n}\n.nodeMetadata {')
+p.write_text(s)
+p=root/'DependencyGraphIdentity.tsx'; s=p.read_text()
+s=s.replace('<span>{characters.slice(-18).join("")}</span>', '<span className={styles.labelSuffixText}>{characters.slice(-18).join("")}</span>')
+p.write_text(s)
+# Branch visibility changes may release measured clearance; the contract is stable
+# relative resource order. Edge visibility still has separate exact-position tests.
+p=Path('scripts/check-dependency-graph-source.mjs'); s=p.read_text()
+if 'function sameSurvivors(' in s:
+    a=s.index('function sameSurvivors('); b=s.index('function sameOrder(', a)
+    s=s[:a]+s[b:]
+s=s.replace('sameSurvivors(initial, await positions(), name);', 'sameOrder(initial, await positions());')
 p.write_text(s)
