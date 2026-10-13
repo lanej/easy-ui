@@ -81,6 +81,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^3.1.1",
     "@easypost/easy-ui-icons": "1.0.0-alpha.61",
     "@easypost/easy-ui-tokens": "1.0.0-alpha.17",
     "@react-aria/overlays": "^3.32.1",
@@ -102,10 +103,10 @@
     "use-clipboard-copy": "^0.2.0"
   },
   "peerDependencies": {
+    "echarts": "^6.1.0",
     "react": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
     "react-dom": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
-    "react-is": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
-    "echarts": "^6.1.0"
+    "react-is": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -119,14 +120,14 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/react-transition-group": "^4.4.12",
     "@vitejs/plugin-react": "^4.6.0",
+    "echarts": "6.1.0",
     "glob": "^10.2.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-is": "^19.0.0",
     "sass": "^1.89.2",
     "vite-plugin-react-remove-attributes": "^1.0.3",
-    "vite-plugin-static-copy": "^3.1.2",
-    "echarts": "6.1.0"
+    "vite-plugin-static-copy": "^3.1.2"
   },
   "peerDependenciesMeta": {
     "echarts": {

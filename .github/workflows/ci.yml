@@ -68,9 +68,10 @@ jobs:
           node scripts/check-facility-summary.mjs
           node scripts/check-chart-catalog.mjs
           node scripts/check-proportion-bar.mjs
+          node scripts/check-dependency-graph.mjs
           node scripts/check-storybook-docs.mjs
           node scripts/check-token-browser.mjs
-      - name: Retain facility, chart, proportion, and token browser evidence
+      - name: Retain component browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
