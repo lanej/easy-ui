@@ -31,7 +31,7 @@ import {
   validAreaCoordinates,
   validSurfaceBounds,
 } from "./geometry";
-import type { MapFacility, NetworkMapProps } from "./types";
+import type { MapFacility, MapFocus, NetworkMapProps } from "./types";
 import { NetworkMapCellDetails } from "./NetworkMapCellDetails";
 import { NetworkMapCellPopover } from "./NetworkMapCellPopover";
 import { useSurfaceInspection } from "./useSurfaceInspection";
@@ -170,6 +170,20 @@ function NetworkMapSurfaceView() {
     },
     [flyToBounds],
   );
+  const focusView = useCallback(
+    ({ bounds, facilityIds, maxZoom }: MapFocus) => {
+      if (bounds) {
+        flyToBounds(
+          [
+            [bounds.minLon, bounds.minLat],
+            [bounds.maxLon, bounds.maxLat],
+          ],
+          maxZoom,
+        );
+      } else fit(facilityIds, maxZoom);
+    },
+    [fit, flyToBounds],
+  );
 
   useEffect(() => {
     if (surfaceOwner.current && surfaceOwner.current !== owner.current)
@@ -179,6 +193,10 @@ function NetworkMapSurfaceView() {
     // commands with the engine lifecycle so its initial fit and toolbar work
     // after every setup, while reading current data from the stable ref.
     commands.current = {
+      focus: (target) => {
+        insetState.current.close();
+        focusView(target);
+      },
       fitAll: () => {
         insetState.current.close();
         const p = latest.current;
@@ -316,16 +334,7 @@ function NetworkMapSurfaceView() {
           map.resize();
           initialFitPending = false;
           const requested = latest.current.focus;
-          if (requested?.bounds) {
-            const { minLon, minLat, maxLon, maxLat } = requested.bounds;
-            flyToBounds(
-              [
-                [minLon, minLat],
-                [maxLon, maxLat],
-              ],
-              requested.maxZoom,
-            );
-          } else if (requested) fit(requested.facilityIds, requested.maxZoom);
+          if (requested) focusView(requested);
           else commands.current.fitAll();
           element.dataset.initialViewReady = "true";
         };
@@ -1234,6 +1243,7 @@ function NetworkMapSurfaceView() {
       delete element.dataset.initialViewReady;
       setState("loading");
       commands.current = {
+        focus() {},
         fitAll() {},
         selectedSegment() {},
         latestEvent() {},
@@ -1268,6 +1278,7 @@ function NetworkMapSurfaceView() {
     mapRef,
     fit,
     flyToBounds,
+    focusView,
     inspectionEvents,
     overlayInspectionEvents,
   ]);
@@ -1326,18 +1337,7 @@ function NetworkMapSurfaceView() {
   ]);
   useEffect(() => {
     if (state !== "ready" || !options.focus) return;
-    const { bounds, facilityIds, maxZoom } = options.focus;
-    if (bounds) {
-      flyToBounds(
-        [
-          [bounds.minLon, bounds.minLat],
-          [bounds.maxLon, bounds.maxLat],
-        ],
-        maxZoom ?? 12,
-      );
-    } else {
-      fit(facilityIds, maxZoom);
-    }
+    focusView(options.focus);
     // A camera request is keyed by revision. Data updates do not recenter the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.focus?.revision, state]);

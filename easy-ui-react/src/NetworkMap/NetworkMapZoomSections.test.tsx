@@ -6,11 +6,12 @@ import { NetworkMap } from "./NetworkMap";
 import { NetworkMapProvider, useNetworkMap } from "./NetworkMapContext";
 import { NetworkMapViewport } from "./NetworkMapViewport";
 import { crowdedInsetNodes } from "./useMapInsets";
-import type { MapSurfaceMetric, NetworkMapProps } from "./types";
+import type { MapFocus, MapSurfaceMetric, NetworkMapProps } from "./types";
 
 const seen = new Map<string, NetworkMapProps>();
 const seenMetrics = new Map<string, MapSurfaceMetric | undefined>();
 const mounts = new Map<string, number>();
+const focusRequests = vi.fn<(name: string, target: MapFocus) => void>();
 let scale = 14;
 const project = ([longitude, latitude]: number[]) => ({
   x: 400 + (longitude + 122.2) * scale,
@@ -24,8 +25,9 @@ vi.mock("./NetworkMapSurface", () => ({
       setState,
       mapRef,
       insets,
+      commands,
     } = useNetworkMap();
-    const { update } = insets;
+    const { update, close } = insets;
     const element = useRef<HTMLDivElement>(null);
     const name = options["aria-label"] ?? options.title ?? "Map";
     seen.set(name, options);
@@ -42,6 +44,7 @@ vi.mock("./NetworkMapSurface", () => ({
       });
       const map = {
         getContainer: () => container,
+        getCanvas: () => container,
         getCenter: () => ({ lng: -96 }),
         project,
         isMoving: () => false,
@@ -49,10 +52,22 @@ vi.mock("./NetworkMapSurface", () => ({
         off() {},
       } as unknown as MapInstance;
       mapRef.current = map;
+      commands.current.focus = (target) => {
+        close();
+        focusRequests(name, target);
+      };
       update(map);
-    }, [mapRef, update, options.facilities, options.zoomSections]);
+    }, [
+      mapRef,
+      commands,
+      close,
+      name,
+      update,
+      options.facilities,
+      options.zoomSections,
+    ]);
     return (
-      <div ref={element} data-testid={name}>
+      <div ref={element} data-testid={name} tabIndex={-1}>
         {options.facilities?.map((facility) => (
           <button
             key={facility.id}
@@ -153,6 +168,7 @@ beforeEach(() => {
   seen.clear();
   seenMetrics.clear();
   mounts.clear();
+  focusRequests.mockClear();
   scale = 14;
 });
 
@@ -298,18 +314,79 @@ it("retains the requested inset through immutable refreshes and explicit local r
   const { rerender } = render(<NetworkMap {...records} />);
   openOrigin();
   const original = seen.get(originName)!.focus!.revision;
-  fireEvent.click(screen.getByRole("button", { name: "Fit" }));
+  rerender(
+    <NetworkMap
+      {...records}
+      zoomSections={records.zoomSections!.map((section) => ({
+        ...section,
+        focusRevision: "refit",
+      }))}
+    />,
+  );
   const fitted = seen.get(originName)!.focus!.revision;
   expect(fitted).not.toBe(original);
   rerender(
     <NetworkMap
       {...records}
       facilities={records.facilities!.map((f) => ({ ...f, detail: "Updated" }))}
-      zoomSections={[...records.zoomSections!].reverse()}
+      zoomSections={[...records.zoomSections!].reverse().map((section) => ({
+        ...section,
+        focusRevision: "refit",
+      }))}
     />,
   );
   expect(seen.get(originName)?.focus?.revision).toBe(fitted);
   expect([...mounts.values()]).toEqual([1, 1]);
+});
+it("zooms the overview to the inset's local group, dismisses the inset and restores map focus", async () => {
+  const user = userEvent.setup();
+  const onSelect = vi.fn();
+  const { container } = render(
+    <NetworkMap
+      {...records}
+      selectedFacilityId="b"
+      onFacilitySelect={onSelect}
+    />,
+  );
+  openOrigin();
+  onSelect.mockClear();
+  const zoom = screen.getByRole("button", { name: "Zoom to area" });
+  zoom.focus();
+  await user.keyboard("{Enter}");
+  expect(focusRequests).toHaveBeenCalledExactlyOnceWith("Journey", {
+    revision: "origin",
+    facilityIds: ["a", "b"],
+    maxZoom: 14,
+  });
+  expect(
+    container.querySelector("[data-map-zoom-section]"),
+  ).not.toBeInTheDocument();
+  expect(screen.getByTestId("Journey")).toHaveFocus();
+  expect(onSelect).not.toHaveBeenCalled();
+  expect(mounts.get("Journey")).toBe(1);
+});
+it("keeps rich inspectors and hover callbacks on the overview while omitting them from close-ups", () => {
+  const inspectors = {
+    renderFacilityDetails: vi.fn(() => "Facility detail"),
+    renderOverlayHoverDetails: vi.fn(() => "Overlay detail"),
+    renderOverlayDetails: vi.fn(() => "Selected overlay detail"),
+    onCellHover: vi.fn(),
+    onCellSelect: vi.fn(),
+    onOverlaySelect: vi.fn(),
+    onFacilitySelect: vi.fn(),
+  };
+  render(<NetworkMap {...records} {...inspectors} />);
+  openOrigin();
+  expect(seen.get("Journey")).toMatchObject(inspectors);
+  const inset = seen.get(originName)!;
+  expect(inset.showCellDetails).toBe(false);
+  expect(inset.onCellHover).toBeUndefined();
+  expect(inset.renderFacilityDetails).toBeUndefined();
+  expect(inset.renderOverlayHoverDetails).toBeUndefined();
+  expect(inset.renderOverlayDetails).toBeUndefined();
+  expect(inset.onCellSelect).toBe(inspectors.onCellSelect);
+  expect(inset.onOverlaySelect).toBe(inspectors.onOverlaySelect);
+  expect(inset.onFacilitySelect).toBe(inspectors.onFacilitySelect);
 });
 it("keeps only one inset when choosing another crowded node", () => {
   const { container } = render(<NetworkMap {...records} />);
@@ -366,7 +443,9 @@ it("shares resolved layers and retains dismissal when camera controls are disabl
     weather: true,
     deliverySurface: false,
   });
-  expect(screen.queryByRole("button", { name: "Fit" })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Zoom to area" }),
+  ).not.toBeInTheDocument();
   expect(
     screen.getByRole("button", { name: "Close close-up" }),
   ).toBeInTheDocument();

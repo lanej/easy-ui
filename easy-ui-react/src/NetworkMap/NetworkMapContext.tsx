@@ -15,6 +15,7 @@ import type { Map as MapInstance } from "maplibre-gl";
 import type {
   MapArea,
   MapFacility,
+  MapFocus,
   MapSegment,
   NetworkMapProps,
 } from "./types";
@@ -24,6 +25,7 @@ const emptySegments: readonly MapSegment[] = [];
 const emptyAreas: readonly MapArea[] = [];
 type MapState = "loading" | "ready" | "error";
 type MapCommands = {
+  focus: (target: MapFocus) => void;
   fitAll: () => void;
   selectedSegment: () => void;
   latestEvent: () => void;
@@ -55,6 +57,7 @@ function useMapState(input: NetworkMapProps) {
   const surfaceOwner = useRef<symbol | null>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const commands = useRef<MapCommands>({
+    focus() {},
     fitAll() {},
     selectedSegment() {},
     latestEvent() {},

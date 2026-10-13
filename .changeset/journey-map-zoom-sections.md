@@ -8,7 +8,9 @@ Keep incoming and outgoing journey connections in the requested close-up, with l
 
 Keep flow widths on the overview cohort's scale and cap custom inset heights to the available geographic frame.
 
-Keep the selected delivery-surface metric, its colors and inspection details synchronized between the overview and close-up.
+Keep the selected delivery-surface metric and its colors synchronized between the overview and close-up.
+
+Keep close-ups free of cell, facility and overlay inspection cards. Replace local Fit with Zoom to area, which closes the inset and frames its group on the main map for detailed inspection while preserving shared selection.
 
 Compact journey headings, shipment context, and filters; align map controls with tighter padding while retaining readable text, accessible names, and responsive wrapping. Geographic journey previews load their basemap by default, with tile-free fixtures reserved for explicit browser tests.
 

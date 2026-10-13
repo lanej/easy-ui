@@ -52,6 +52,41 @@ export async function checkJourneySections({
     await browser.wait(() => document.querySelector('[role="option"]'));
     await browser.clickNamed("option", label);
   };
+  const hoverSurface = async (mapId) => {
+    const point = await browser.evaluate((id) => {
+      const map = window.journeyMaps[id];
+      const canvas = map.getCanvas();
+      const rect = canvas.getBoundingClientRect();
+      for (const longitude of [-122.245, -122.235, -122.22, -122.205]) {
+        for (const latitude of [37.785, 37.775, 37.755, 37.745]) {
+          const point = map.project([longitude, latitude]);
+          const x = rect.left + point.x;
+          const y = rect.top + point.y;
+          if (
+            document.elementFromPoint(x, y) !== canvas ||
+            !map.queryRenderedFeatures(point, {
+              layers: ["easy-ui-delivery-surface-fill"],
+            }).length
+          )
+            continue;
+          window.journeyHoveredMap = null;
+          const hovered = () => {
+            window.journeyHoveredMap = id;
+            map.off("mousemove", "easy-ui-delivery-surface-fill", hovered);
+          };
+          map.on("mousemove", "easy-ui-delivery-surface-fill", hovered);
+          return { x, y };
+        }
+      }
+    }, mapId);
+    check(
+      `${mapId}: a visible surface cell is available for pointer inspection`,
+      Boolean(point),
+    );
+    await browser.move(point.x, point.y);
+    await browser.wait(() => window.journeyHoveredMap !== null);
+    return point;
+  };
   for (const theme of ["light", "dark"])
     for (const width of [1440, 390]) {
       const name = `${theme}/${width}`;
@@ -276,13 +311,10 @@ export async function checkJourneySections({
         zoomed.origin.zoom > opened.origin.zoom &&
           JSON.stringify(zoomed.overview) === JSON.stringify(initial.overview),
       );
-      await browser.key(
-        `${section("origin")} header button:not([aria-label])`,
-        "Enter",
-      );
+      await browser.click(`${section("origin")} .maplibregl-ctrl-zoom-out`);
       await browser.wait(insetReady);
       check(
-        `${name}: local Fit restores the close-up without moving the journey`,
+        `${name}: native inset zoom can return to its original scale without moving the journey`,
         Math.abs(
           (await browser.evaluate(cameras)).origin.zoom - opened.origin.zoom,
         ) < 0.001,
@@ -385,21 +417,20 @@ export async function checkJourneySections({
       );
       await browser.key(marker("oak"), "Enter");
       await browser.wait(insetReady);
-      await browser.evaluate(() => {
-        window.journeyMaps.overview.fitBounds(
-          [
-            [-122.24, 37.741],
-            [-122.212, 37.79],
-          ],
-          { padding: 80, maxZoom: 13, duration: 0 },
-        );
-      });
+      await browser.key(
+        `${section("origin")} header button:not([aria-label])`,
+        "Enter",
+      );
       await browser.wait(overviewReady);
       check(
-        `${name}: zooming the main view to readable local stops removes the inset and indicator`,
+        `${name}: Zoom to area frames readable local stops, closes the inset and focuses the main canvas`,
         await browser.evaluate(
           () =>
             !document.querySelector("[data-map-zoom-section]") &&
+            document.activeElement ===
+              window.journeyMaps.overview.getCanvas() &&
+            window.journeyMaps.overview.getZoom() > 10 &&
+            window.journeyMaps.overview.getZoom() <= 13 &&
             [...document.querySelectorAll("[data-map-inset-available]")].filter(
               (n) =>
                 ["oak", "acceptance", "origin-sort"].includes(
@@ -647,6 +678,40 @@ export async function checkJourneySections({
           ),
         )),
     );
+    const hovered = await hoverSurface("origin");
+    check(
+      `Surface hover leaves the inset unobscured at ${width}px`,
+      await browser.evaluate(
+        () => !document.querySelector('[aria-label="Delivery cell details"]'),
+      ),
+    );
+    await browser.clickPoint(hovered.x, hovered.y);
+    check(
+      `Surface click does not pin a covering card in the inset at ${width}px`,
+      await browser.evaluate(
+        () => !document.querySelector('[aria-label="Delivery cell details"]'),
+      ),
+    );
+    await browser.key(
+      `${section("origin")} header button:not([aria-label])`,
+      "Enter",
+    );
+    await browser.wait(overviewReady);
+    await hoverSurface("overview");
+    await browser.wait(() =>
+      document.querySelector('[aria-label="Delivery cell details"]'),
+    );
+    check(
+      `Zoom to area makes full cell inspection available on the main map at ${width}px`,
+      await browser.evaluate(
+        () =>
+          !document.querySelector("[data-map-zoom-section]") &&
+          document.querySelector('[aria-label="Delivery cell details"]') &&
+          window.journeyMaps.overview === window.journeyBefore.overview,
+      ),
+    );
+    await capture(`journey-main-area-inspection-${width}`);
+    await scan(`journey-main-area-inspection-${width}`);
     if (clean) await clean(`journey-metrics-${width}`);
   }
   for (const width of [1440, 390]) {

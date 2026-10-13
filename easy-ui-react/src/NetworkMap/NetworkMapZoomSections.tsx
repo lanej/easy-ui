@@ -244,8 +244,9 @@ function ZoomSection({
     accessibleName,
     activeMetric,
     setActiveMetric,
+    commands,
+    mapRef,
   } = useNetworkMap();
-  const [requests, setRequests] = useState(0);
   const headingId = useId();
   const facilities = useMemo(() => {
     const ids = new Set(section.facilityIds);
@@ -294,17 +295,11 @@ function ZoomSection({
   );
   const focus = useMemo(
     () => ({
-      revision: JSON.stringify([section.focusRevision ?? section.id, requests]),
+      revision: section.focusRevision ?? section.id,
       facilityIds: section.facilityIds,
       maxZoom: section.maxZoom ?? 13,
     }),
-    [
-      section.focusRevision,
-      section.id,
-      section.facilityIds,
-      section.maxZoom,
-      requests,
-    ],
+    [section.focusRevision, section.id, section.facilityIds, section.maxZoom],
   );
   const heading = <h2 id={headingId}>{section.title}</h2>;
   return (
@@ -354,11 +349,19 @@ function ZoomSection({
             showLegend={false}
             showSelectionDetails={false}
             showDataTable={false}
+            showCellDetails={false}
+            onCellHover={undefined}
+            renderFacilityDetails={undefined}
+            renderOverlayHoverDetails={undefined}
+            renderOverlayDetails={undefined}
             onMapReady={section.onMapReady}
           >
             <InsetHeader
               heading={heading}
-              onFit={() => setRequests((value) => value + 1)}
+              onZoom={() => {
+                commands.current.focus(focus);
+                mapRef.current?.getCanvas().focus({ preventScroll: true });
+              }}
               onClose={onClose}
               connections={connections}
             />
@@ -381,20 +384,46 @@ function ZoomSection({
 
 function InsetHeader({
   heading,
-  onFit,
+  onZoom,
   onClose,
   connections,
 }: {
   heading: React.ReactNode;
-  onFit: () => void;
+  onZoom: () => void;
   onClose: () => void;
   connections: JourneyConnection[];
 }) {
   const { props: options, state } = useNetworkMap();
   return (
     <header className={styles.header}>
-      <div className={styles.metadata} tabIndex={0}>
+      <div className={styles.headingRow}>
         {heading}
+        <div className={styles.actions}>
+          {options.controls !== false && (
+            <Button
+              size="sm"
+              variant="text"
+              type="button"
+              isDisabled={state !== "ready"}
+              onPress={onZoom}
+            >
+              <span className={styles.controlLabel}>Zoom to area</span>
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="text"
+            type="button"
+            aria-label="Close close-up"
+            onPress={onClose}
+          >
+            <span className={styles.closeIcon} aria-hidden="true">
+              ×
+            </span>
+          </Button>
+        </div>
+      </div>
+      <div className={styles.metadata} tabIndex={0}>
         {connections.length ? (
           <p className={styles.connections}>
             {connections.map(({ facility, direction }) => (
@@ -418,30 +447,6 @@ function InsetHeader({
         ) : options.description ? (
           <p>{options.description}</p>
         ) : null}
-      </div>
-      <div className={styles.actions}>
-        {options.controls !== false && (
-          <Button
-            size="sm"
-            variant="text"
-            type="button"
-            isDisabled={state !== "ready"}
-            onPress={onFit}
-          >
-            <span className={styles.controlLabel}>Fit</span>
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="text"
-          type="button"
-          aria-label="Close close-up"
-          onPress={onClose}
-        >
-          <span className={styles.closeIcon} aria-hidden="true">
-            ×
-          </span>
-        </Button>
       </div>
     </header>
   );
