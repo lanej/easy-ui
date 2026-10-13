@@ -55,7 +55,11 @@ try {
               );
             }
             return Array.from(
-              document.querySelectorAll('input[type="checkbox"]'),
+              document.querySelectorAll(
+                role === "radio"
+                  ? 'input[type="radio"]'
+                  : 'input[type="checkbox"]',
+              ),
             ).find((input) =>
               Array.from(input.labels ?? []).some(
                 (label) => label.textContent.trim() === name,
