@@ -192,7 +192,7 @@ const riskEdges = [
   },
 ];
 const riskFor = (id: string) =>
-  Object.hasOwn(riskFindings, id)
+  Object.prototype.hasOwnProperty.call(riskFindings, id)
     ? riskFindings[id as keyof typeof riskFindings]
     : undefined;
 function RiskLabel({ severity }: { severity: "high" | "medium" }) {
