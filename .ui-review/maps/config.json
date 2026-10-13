@@ -20,6 +20,16 @@
       "name": "large-text",
       "path": "/composition.html?large=1",
       "ready": "[data-map-idle=\"true\"]"
+    },
+    {
+      "name": "journey-sections",
+      "path": "/journey.html",
+      "ready": "[data-map-idle=\"true\"]"
+    },
+    {
+      "name": "journey-sections-large-text",
+      "path": "/journey.html?large=1&theme=dark",
+      "ready": "[data-map-idle=\"true\"]"
     }
   ],
   "viewports": [

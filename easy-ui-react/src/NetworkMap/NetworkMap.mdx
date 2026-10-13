@@ -139,6 +139,52 @@ Three warehouses feed a delivery network. The origin filter updates the full dai
 
 Regional throughput, expected volume, operating capacity, dwell, backlog and conditional exception risk. Current, stale and unavailable facility scores remain distinct. A forecast polygon carries its source and valid interval. Weather exposure does not establish the cause of a delay.
 
+### Zoomed journey sections
+
+<Canvas of={NetworkMapStories.ZoomedJourney} />
+
+Use `zoomSections` to make close-ups available for crowded tracking stops. The journey starts with its overview alone. A small **+n** badge marks stops with additional nearby locations that overlap at the current screen scale. Clicking such a node opens one inset inside the same map frame without changing the overview camera. Clicking a readable node only selects it.
+
+```tsx
+<NetworkMap
+  title="Tracking path"
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  facilities={facilities}
+  segments={segments}
+  selectedFacilityId={selected}
+  onFacilitySelect={setSelected}
+  showDataTable={false}
+  controlLabels={{ fitAll: "Entire journey" }}
+  zoomSections={[
+    {
+      id: "origin",
+      title: "Origin · Oakland",
+      facilityIds: ["warehouse", "acceptance", "origin-sort"],
+    },
+    {
+      id: "destination",
+      title: "Destination · Dearborn",
+      facilityIds: ["regional-sort", "delivery-unit", "destination"],
+    },
+  ]}
+/>
+```
+
+The caller defines valid journey groups; screen proximity does not establish membership. Use stable, unique section IDs and the same facility IDs as the overview. Within a group, connected marker centers less than 48 screen pixels apart make a close-up available. Its contents are that local component, with local connections and mapped incoming/outgoing continuations. Unknown IDs, invalid coordinates and isolated or off-screen nodes offer no inset. A native cluster wholly contained in an available local component can open that close-up; broader clusters retain their normal expand-to-zoom behavior.
+
+Zooming or panning the overview dismisses the inset. At a scale where the local nodes are separated, the badge disappears and selecting them does not open a redundant close-up. Returning to **Entire journey** closes any inset and restores availability indicators without reopening it. **Close**, Escape, or clicking ordinary map background also dismisses it. Escape and Close return focus to the source stop or map canvas. External selection changes do not automatically open an inset.
+
+Incoming and outgoing journey segments continue to the close-up’s edge, retaining their evidence styling and the overview cohort’s flow-width scale. Its header links the off-inset facility with **From** or **To**; selecting that link updates the shared selection and keeps both cameras. Only nearby stops receive local markers. **Zoom to area** closes the inset, fits the main map to those stops and moves keyboard focus to its canvas. Invalid or missing remote coordinates are omitted.
+
+The requested inset shares controlled facility selection, evidence styling, resolved layers, overlays and the selected delivery-surface metric. It omits cell, facility and overlay inspection cards, and does not forward cell hover callbacks, so details cannot obscure the close-up. Selection callbacks remain available. Use **Zoom to area** to inspect the group on the main map, where rich hover and pinned details remain available. Switching metrics updates both surfaces and the shared legend without moving either camera. Selecting a stop inside it or refreshing immutable records keeps both cameras. Native inset navigation affects only that close-up. `focusRevision` requests an explicit local refit; `maxZoom` defaults to 13 and applies to both the inset fit and **Zoom to area**. The viewport defaults to 260px on desktop and with larger annotation text, or 240px in narrow frames with standard text, with a 220px minimum. Custom heights are capped to the space left inside the geographic frame after the header, navigation and attribution. Dismissal remains available when `controls={false}` hides camera controls.
+
+The inset chooses a corner that avoids its source and nearby overview stops. Main navigation moves to the other vertical corner when needed. The main viewport has a minimum height of 700px when close-ups are enabled; use more height for large text. One legend, selection detail and optional data disclosure serve the journey.
+
+Use `NetworkMapViewport` under `NetworkMapProvider` to compose the same behavior in custom layouts. The exported `NetworkMapZoomSections` belongs inside a relative geographic frame alongside `NetworkMapSurface`. Only a requested close-up creates an additional MapLibre surface with provider attribution, so this interaction uses one overview plus at most one inset.
+
+<Canvas of={NetworkMapStories.ZoomedJourneyMetrics} />
+
 ### Camera, selection and labels
 
 Facilities have stable IDs; segments reference their endpoints. `selectedFacilityId` and `onFacilitySelect` control selection across markers and table rows. Provide the callback to enable selection. `selectedSegmentId` emphasizes a connection and makes Selected leg available when its geometry can be fitted. `latestFacilityId` identifies the last observed facility, never an interpolated position.
@@ -253,12 +299,44 @@ Use `height="fill"` in a flex or grid slot to let the map occupy the available h
 
 Use `controlLabels` to replace any toolbar label: `fitAll`, `selectedSegment`, `latestEvent`, `risk`, `weather`, or `deliverySurface`. The default fit label is "Fit all locations"; the parcel journey examples explicitly use `controlLabels={{ fitAll: "Entire journey" }}`.
 
+Use `toolbarContent` to put application filters, refresh actions, and other controls in the same wrapping row as the map actions and layer toggles. The toolbar packs individual controls into the available width instead of reserving a separate row for each group. `title` and `description` remain independently optional; omitting both leaves the shared toolbar directly above the map. Application controls remain available with `controls={false}`, which hides only the map's built-in controls.
+
+```tsx
+<NetworkMap
+  aria-label="Oakland → Dearborn"
+  mapStyle={mapStyle}
+  workerUrl={workerUrl}
+  facilities={facilities}
+  selectedFacilityId={selected}
+  onFacilitySelect={setSelected}
+  toolbarContent={
+    <>
+      <Select
+        aria-label="Selected location"
+        size="sm"
+        selectedKey={selected}
+        onSelectionChange={(key) => setSelected(String(key))}
+      >
+        {facilities.map((facility) => (
+          <Select.Option key={facility.id}>{facility.label}</Select.Option>
+        ))}
+      </Select>
+      <Button size="sm" variant="outlined" onPress={refresh}>
+        Refresh records
+      </Button>
+    </>
+  }
+/>
+```
+
+Surface metrics use a compact Select by default. All metric labels remain available in its menu, and selection still updates the overview, open close-up, inspection details, and legend together. An explicit `surfaceMetrics` entry can use `presentation: "radio"` when inline choices suit the surrounding layout.
+
 #### Caller-defined toolbar controls
 
 `toolbarControls` replaces the default toolbar with an ordered list of
 `NetworkMapToolbarControl` definitions. Names such as Facility risk and Weather
 are defaults, not required control types or labels. Include only the controls
-your application needs; `toolbarControls={[]}` omits the toolbar without hiding
+your application needs; `toolbarControls={[]}` omits built-in toolbar items without hiding
 overlays, navigation, scale, or attribution. `controls={false}` remains the
 master opt-out for all built-in controls, including the configured toolbar.
 
@@ -318,8 +396,8 @@ The available types are:
           <code>surfaceMetrics</code>
         </th>
         <td>
-          The supplied surface metric radio choices; <code>label</code> names
-          their group
+          The supplied surface metric Select; <code>label</code> names it. Use{" "}
+          <code>presentation: "radio"</code> for inline radio choices.
         </td>
       </tr>
     </tbody>

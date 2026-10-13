@@ -18,15 +18,15 @@
   display: flex;
   justify-content: space-between;
   align-items: start;
-  gap: 16px;
-  padding: 20px 24px 14px;
+  gap: 8px;
+  padding: 12px 16px 8px;
   h3 {
     margin: 0;
     font-size: var(--ezui-viz-title-size, 18px);
     line-height: 1.4;
   }
   p {
-    margin: 6px 0 0;
+    margin: 4px 0 0;
     font-size: var(--ezui-viz-description-size, 14px);
     color: design-token("color.neutral.700");
   }
@@ -42,10 +42,17 @@
 .toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 24px 16px;
+  justify-content: flex-start;
+  padding: 0 16px 10px;
+  > * {
+    max-inline-size: 100%;
+    min-inline-size: 0;
+  }
+}
+.metricControl {
+  inline-size: calc(var(--ezui-viz-control-size, 14px) * 14);
 }
 .buttons {
   display: flex;
@@ -175,6 +182,22 @@
   &[data-latest="true"] {
     z-index: 4;
   }
+}
+// A compact count advertises additional nearby stops without opening a close-up.
+.marker[data-map-inset-count]::after {
+  content: "+" attr(data-map-inset-count);
+  position: absolute;
+  inset-inline-start: calc(50% + 8px);
+  inset-block-end: calc(50% + 8px);
+  min-inline-size: 24px;
+  padding: 1px 4px;
+  border: 1px solid design-token("color.primary.600");
+  border-radius: 12px;
+  background: design-token("color.neutral.000");
+  color: design-token("color.primary.600");
+  font-size: var(--ezui-viz-label-size, 12px);
+  line-height: 1.4;
+  white-space: nowrap;
 }
 .pin {
   display: grid;
@@ -383,7 +406,7 @@
   margin-top: 16px;
   table {
     border-collapse: collapse;
-    min-width: 680px;
+    min-width: 700px;
     width: 100%;
     text-align: left;
     font-size: var(--ezui-viz-detail-size, 12px);
@@ -410,10 +433,10 @@
 }
 @media (max-width: 640px) {
   .heading {
-    padding: 16px;
+    padding: 10px 12px 6px;
   }
   .toolbar {
-    padding: 0 16px 12px;
+    padding: 0 12px 10px;
   }
   .scale {
     display: none;
@@ -458,6 +481,12 @@
 .mapFrame {
   position: relative;
 }
+.geography {
+  position: relative;
+  container-name: network-map;
+  container-type: inline-size;
+  min-inline-size: 0;
+}
 .root[data-fill-height="true"] {
   block-size: 100%;
   display: flex;
@@ -470,6 +499,15 @@
     flex: 1 1 0;
     min-block-size: 220px;
   }
+  .geography {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-block-size: 220px;
+  }
+  &[data-has-insets="true"] {
+    min-block-size: min-content;
+  }
 }
 .viewport[data-fill-height="true"] {
   flex: 1 1 0;
@@ -478,6 +516,9 @@
     position: absolute;
     inset: 0;
   }
+}
+.geography[data-has-insets="true"] .viewport[data-fill-height="true"] {
+  min-block-size: 700px;
 }
 .overMapControls {
   position: absolute;
@@ -499,4 +540,8 @@
     pointer-events: auto;
     background: design-token("color.neutral.000");
   }
+}
+
+.root > .mapFrame:first-child > :not([data-map-controls]) .toolbar {
+  padding-block-start: 10px;
 }

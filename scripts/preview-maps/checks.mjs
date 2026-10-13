@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { checkMapComposition } from "./composition-checks.mjs";
 import { checkRichInspection } from "./rich-inspection-checks.mjs";
 import { checkSurfaceInspection } from "./inspection-checks.mjs";
+import { checkJourneySections } from "./journey-checks.mjs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 const zoom = () =>
   Number(document.querySelector("[data-map-zoom]")?.dataset.mapZoom);
@@ -117,6 +118,7 @@ export async function auditMaps(browser, identity, base, output) {
   }
   try {
     console.log(`Starting ${identity.name} audit`);
+    await checkJourneySections({ browser, base, check, capture, scan, clean });
     await checkSurfaceInspection({
       browser,
       base,

@@ -30,6 +30,7 @@
   },
   {
     "id": "map-composed-parts",
+    "pages": ["composition", "large-text"],
     "type": "required-elements",
     "selector": ".composition-page",
     "required": [
@@ -44,6 +45,7 @@
   },
   {
     "id": "map-selection-outside-surface",
+    "pages": ["composition", "large-text"],
     "type": "relative-position",
     "selector": ".composition-page",
     "from": "[data-map-state]",
@@ -55,5 +57,30 @@
     "severity": "error",
     "reason": "Selected-record content follows the viewport without covering geography, navigation or attribution.",
     "designRules": ["DR-006", "DR-015"]
+  },
+  {
+    "id": "journey-map-on-demand",
+    "pages": ["journey-sections", "journey-sections-large-text"],
+    "type": "required-elements",
+    "selector": "[data-journey-zoom-example]",
+    "required": [
+      "[data-map-geography] > [data-map-state]",
+      "[data-map-inset-count]"
+    ],
+    "severity": "error",
+    "reason": "The default journey shows its overview and crowded-node availability indicators without opening a close-up.",
+    "designRules": ["DR-006", "DR-007"]
+  },
+  {
+    "id": "journey-section-bounds",
+    "pages": ["journey-sections", "journey-sections-large-text"],
+    "type": "within-bounds",
+    "selector": "[data-map-zoom-section]",
+    "container": "[data-map-geography]",
+    "tolerance": 1,
+    "severity": "error",
+    "reason": "A requested close-up stays within the geographic frame; initial overviews need no inset.",
+    "designRules": ["DR-007"],
+    "optional": true
   }
 ]

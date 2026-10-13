@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import userEvent from "@testing-library/user-event";
 import type { Feature, Point } from "geojson";
 import {
   act,
@@ -11,13 +12,18 @@ import {
 import { NetworkMap } from "./NetworkMap";
 import { NetworkMapProvider } from "./NetworkMapContext";
 import { NetworkMapSurface } from "./NetworkMapSurface";
+import { NetworkMapRouteContext } from "./NetworkMapRouteContext";
 import {
   NetworkMapControlPanel,
   NetworkMapDataView,
 } from "./NetworkMapCompanions";
 import { loadMapEngine } from "./engine";
 import { surfaceData } from "./geometry";
-import type { MapOverlayDetailsContext, NetworkMapProps } from "./types";
+import type {
+  MapFacility,
+  MapOverlayDetailsContext,
+  NetworkMapProps,
+} from "./types";
 vi.mock("./engine", () => ({ loadMapEngine: vi.fn() }));
 const fitBounds = vi.fn(),
   easeTo = vi.fn(),
@@ -151,6 +157,9 @@ class FakeMap {
   getZoom() {
     return 9;
   }
+  getCenter() {
+    return { lng: -96, lat: 38 };
+  }
   project() {
     return { x: 200, y: 100 };
   }
@@ -212,6 +221,7 @@ beforeEach(() => {
     "ResizeObserver",
     class {
       observe() {}
+      unobserve() {}
       disconnect() {}
     },
   );
@@ -522,6 +532,42 @@ it("moves controls without replacing the map, canvas, or camera", async () => {
     expect(canvas).toBeInTheDocument();
     expect(fitBounds).toHaveBeenCalledTimes(fits);
   }
+});
+
+it("names the native canvas distinctly and updates external heading associations without replacing the map", async () => {
+  const view = render(
+    <>
+      <h2 id="route-heading">Tracking path</h2>
+      <NetworkMap {...props} />
+    </>,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+  act(() => listeners.load());
+  const instance = constructor.mock.calls[0][0];
+  const canvas = instance.getCanvas();
+  expect(canvas).toHaveAttribute("aria-label", "Network interactive map");
+  view.rerender(
+    <>
+      <h2 id="route-heading">Tracking path</h2>
+      <NetworkMap {...props} aria-labelledby="route-heading" />
+    </>,
+  );
+  const ids = canvas.getAttribute("aria-labelledby")!.split(" ");
+  expect(ids[0]).toBe("route-heading");
+  expect(document.getElementById(ids[1])).toHaveTextContent("interactive map");
+  expect(canvas).not.toHaveAttribute("aria-label");
+  view.rerender(
+    <>
+      <h2 id="route-heading">Tracking path</h2>
+      <NetworkMap {...props} aria-label="Updated journey" />
+    </>,
+  );
+  expect(canvas).toHaveAttribute(
+    "aria-label",
+    "Updated journey interactive map",
+  );
+  expect(canvas).not.toHaveAttribute("aria-labelledby");
+  expect(constructor).toHaveBeenCalledTimes(1);
 });
 
 it("calls onMapReady exactly once, with the live map instance, only after the component's own layer setup", async () => {
@@ -1486,26 +1532,27 @@ describe("delivery surface metric switcher", () => {
     },
   };
 
-  it("renders a radio per metric, defaulting to the first one, without disturbing the legacy checkbox toggle", async () => {
+  it("defaults the compact metric selector to the first metric without disturbing the legacy checkbox toggle", async () => {
     render(<NetworkMap {...metricsProps} />);
     await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
     act(() => listeners.load());
     expect(
-      screen.getByRole("radio", { name: "Median delivery time" }),
-    ).toBeChecked();
-    expect(
-      screen.getByRole("radio", { name: "Observation count" }),
-    ).not.toBeChecked();
+      screen.getByRole("button", { name: /delivery surface metric/ }),
+    ).toHaveTextContent("Median delivery time");
     expect(
       screen.getByRole("checkbox", { name: "Delivery time surface" }),
     ).toBeInTheDocument();
   });
 
   it("switches the fill layer's paint to the selected metric's own field and colorScale", async () => {
+    const user = userEvent.setup();
     render(<NetworkMap {...metricsProps} />);
     await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
     act(() => listeners.load());
-    fireEvent.click(screen.getByRole("radio", { name: "Observation count" }));
+    await user.click(
+      screen.getByRole("button", { name: /delivery surface metric/ }),
+    );
+    await user.click(screen.getByRole("option", { name: "Observation count" }));
     const fillColor = JSON.stringify(
       paintProperties.get("easy-ui-delivery-surface-fill")?.get("fill-color"),
     );
@@ -1533,7 +1580,7 @@ describe("delivery surface metric switcher", () => {
     await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
     act(() => listeners.load());
     expect(
-      screen.queryByRole("radiogroup", { name: /delivery surface metric/i }),
+      screen.queryByRole("button", { name: /delivery surface metric/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("group", { name: "Delivery time surface legend" }),
@@ -1852,6 +1899,7 @@ describe("delivery surface inspection", () => {
   });
 
   it("clears an inspected cell when switching to a metric that has no value for it", async () => {
+    const user = userEvent.setup();
     await ready({
       surface: {
         ...surface,
@@ -1864,7 +1912,10 @@ describe("delivery surface inspection", () => {
     });
     click();
     expect(card()).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: "Spread" }));
+    await user.click(
+      screen.getByRole("button", { name: /delivery surface metric/ }),
+    );
+    await user.click(screen.getByRole("option", { name: "Spread" }));
     expect(card()).not.toBeInTheDocument();
     expect(
       JSON.stringify(layerDefs.get("easy-ui-delivery-surface-fill")?.filter),
@@ -2454,12 +2505,17 @@ describe("independent map composition", () => {
         title={null}
         description={null}
         aria-label="Custom network"
+        controls={false}
+        toolbarContent={<button type="button">Refresh records</button>}
       />,
     );
     expect(
       screen.getByRole("region", { name: "Custom network" }),
     ).toBeInTheDocument();
     expect(document.querySelector("h3")).toBeNull();
+    expect(
+      screen.getByRole("group", { name: "Custom network camera and layers" }),
+    ).toContainElement(screen.getByRole("button", { name: "Refresh records" }));
     expect(constructor).toHaveBeenCalledTimes(1);
   });
 
@@ -2814,4 +2870,201 @@ it("retains exact low probabilities and encoded connection values when the engin
   expect(transfers).toHaveTextContent("origin-id");
   expect(transfers).toHaveTextContent("destination-id");
   expect(transfers).toHaveTextContent("1, 2; 3, 4");
+});
+
+it("fits the full viewport without reserving space for unopened insets", async () => {
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(660);
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+    function (this: HTMLElement) {
+      return this.hasAttribute("data-map-zoom-sections")
+        ? new DOMRect(12, 340, 776, 276)
+        : new DOMRect(0, 0, 800, 660);
+    },
+  );
+  render(
+    <NetworkMapProvider
+      {...props}
+      height={660}
+      zoomSections={[{ id: "origin", title: "Origin", facilityIds: ["one"] }]}
+    >
+      <div data-map-geography>
+        <NetworkMapSurface />
+        <div data-map-zoom-sections />
+      </div>
+    </NetworkMapProvider>,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  act(() => listeners.load());
+  expect(fitBounds).toHaveBeenLastCalledWith(
+    [
+      [-122, 38],
+      [-122, 38],
+    ],
+    expect.objectContaining({
+      padding: expect.objectContaining({ bottom: 65 }),
+    }),
+  );
+});
+
+it("keeps enough viewport height for an on-demand close-up", async () => {
+  const { container } = render(
+    <NetworkMap
+      {...props}
+      height={80}
+      zoomSections={[
+        { id: "empty", title: "Unmapped", facilityIds: ["missing"] },
+      ]}
+    />,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  expect(container.querySelector("[data-map-state] > div")).toHaveStyle({
+    height: "700px",
+  });
+});
+
+it("leaves enough geographic space for labels inside a compact close-up", async () => {
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(220);
+  render(
+    <NetworkMapProvider {...props} height={220}>
+      <section data-map-zoom-section="local">
+        <NetworkMapSurface />
+      </section>
+    </NetworkMapProvider>,
+  );
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  act(() => listeners.load());
+  expect(fitBounds).toHaveBeenLastCalledWith(
+    expect.any(Array),
+    expect.objectContaining({
+      padding: expect.objectContaining({ top: 16, bottom: 84 }),
+    }),
+  );
+});
+
+it("renders route continuations using outside coordinates while preserving local markers and fitting", async () => {
+  const local = props.facilities.slice(0, 1);
+  const remote = {
+    ...props.facilities[1],
+    id: "outside",
+    coordinates: [-100, 40] as const,
+  };
+  const segments = [
+    {
+      id: "continuation",
+      from: local[0].id,
+      to: remote.id,
+      evidence: "transfer" as const,
+      label: "Continue journey",
+    },
+  ];
+  const renderMap = (outside: MapFacility) => (
+    <NetworkMapProvider {...props} facilities={local} segments={segments}>
+      <NetworkMapRouteContext.Provider value={{ facilities: [outside] }}>
+        <NetworkMapSurface />
+      </NetworkMapRouteContext.Provider>
+    </NetworkMapProvider>
+  );
+  const view = render(renderMap(remote));
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  act(() => listeners.load());
+  expect(sourceDefs.get("easy-ui-transfers")?.data).toEqual(
+    expect.objectContaining({
+      features: [
+        expect.objectContaining({
+          geometry: {
+            type: "LineString",
+            coordinates: [local[0].coordinates, remote.coordinates],
+          },
+        }),
+      ],
+    }),
+  );
+  expect(
+    view.container.querySelectorAll("[data-map-facility-id]"),
+  ).toHaveLength(1);
+  const fits = fitBounds.mock.calls.length;
+  setData.mockClear();
+  const updated = { ...remote, coordinates: [-101, 41] as const };
+  view.rerender(renderMap(updated));
+  expect(setData).toHaveBeenCalledWith(
+    expect.objectContaining({
+      features: [
+        expect.objectContaining({
+          geometry: {
+            type: "LineString",
+            coordinates: [local[0].coordinates, updated.coordinates],
+          },
+        }),
+      ],
+    }),
+  );
+  expect(constructor).toHaveBeenCalledOnce();
+  expect(fitBounds).toHaveBeenCalledTimes(fits);
+});
+
+it("updates the inset width scale when only the overview cohort changes", async () => {
+  const local = props.facilities.slice(0, 1);
+  const remote = {
+    ...props.facilities[0],
+    id: "outside",
+    coordinates: [-100, 40] as const,
+  };
+  const segments = [
+    {
+      id: "local",
+      from: local[0].id,
+      to: remote.id,
+      evidence: "transfer" as const,
+      label: "Local",
+      volume: 20,
+    },
+  ];
+  const renderMap = (maximum: number) => (
+    <NetworkMapProvider {...props} facilities={local} segments={segments}>
+      <NetworkMapRouteContext.Provider
+        value={{
+          facilities: [remote],
+          volumeSegments: [
+            ...segments,
+            { ...segments[0], id: "remote", volume: maximum },
+          ],
+        }}
+      >
+        <NetworkMapSurface />
+      </NetworkMapRouteContext.Provider>
+    </NetworkMapProvider>
+  );
+  const view = render(renderMap(10000));
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  act(() => listeners.load());
+  expect(sourceDefs.get("easy-ui-transfers")?.data).toEqual(
+    expect.objectContaining({
+      features: [
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            width: 2 + Math.sqrt(20 / 10000) * 5,
+          }),
+        }),
+      ],
+    }),
+  );
+  const fits = fitBounds.mock.calls.length;
+  setData.mockClear();
+  view.rerender(renderMap(100));
+  expect(setData).toHaveBeenCalledWith(
+    expect.objectContaining({
+      features: [
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            width: 2 + Math.sqrt(0.2) * 5,
+          }),
+        }),
+      ],
+    }),
+  );
+  expect(constructor).toHaveBeenCalledOnce();
+  expect(fitBounds).toHaveBeenCalledTimes(fits);
+  expect(
+    view.container.querySelectorAll("[data-map-facility-id]"),
+  ).toHaveLength(1);
 });

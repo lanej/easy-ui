@@ -54,8 +54,22 @@ try {
                   ).trim() === name,
               );
             }
+            if (role === "option") {
+              return Array.from(
+                document.querySelectorAll('[role="option"]'),
+              ).find(
+                (option) =>
+                  (
+                    option.getAttribute("aria-label") ?? option.textContent
+                  ).trim() === name,
+              );
+            }
             return Array.from(
-              document.querySelectorAll('input[type="checkbox"]'),
+              document.querySelectorAll(
+                role === "radio"
+                  ? 'input[type="radio"]'
+                  : 'input[type="checkbox"]',
+              ),
             ).find((input) =>
               Array.from(input.labels ?? []).some(
                 (label) => label.textContent.trim() === name,

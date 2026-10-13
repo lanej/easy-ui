@@ -260,6 +260,24 @@ export type MapFocus = {
   maxZoom?: number;
 };
 
+/** A caller-defined journey group eligible for an on-demand close-up when its nodes crowd together. */
+export type NetworkMapZoomSection = {
+  /** Stable, unique ID. Keeps this section's map and camera across record updates. */
+  id: string;
+  title: string;
+  description?: string;
+  /** Local markers; connections to mapped off-inset facilities continue to the edge. */
+  facilityIds: readonly string[];
+  /** Inset viewport height in CSS pixels. Defaults to 260 (240 in narrow frames); minimum 220, capped to fit the geographic frame. */
+  height?: number;
+  /** Upper zoom bound when fitting this section. Defaults to 13. */
+  maxZoom?: number;
+  /** Change to explicitly refit after updating the section's locations. Data alone preserves pan/zoom. */
+  focusRevision?: string | number;
+  /** Receives this section's initialized map, separately from the overview's onMapReady. */
+  onMapReady?: NetworkMapProps["onMapReady"];
+};
+
 /** Built-in controls. An omitted or true flag shows a control only when it is applicable. */
 export type NetworkMapControls = {
   /** Fit all valid facility locations. */
@@ -309,7 +327,7 @@ export type NetworkMapToolbarControl = ToolbarControlBase &
     | { type: "button"; onPress: () => void }
     | { type: "layer"; layer: keyof NetworkMapLayerVisibility }
     | { type: "overlay"; overlayId: string }
-    | { type: "surfaceMetrics" }
+    | { type: "surfaceMetrics"; presentation?: "select" | "radio" }
   );
 
 /** Presentation and controlled selection contract for an optional geographic map. */
@@ -334,6 +352,8 @@ export type NetworkMapProps = {
   facilities?: readonly MapFacility[];
   /** Ordered connections in that cohort. */
   segments?: readonly MapSegment[];
+  /** Local groups that offer a close-up after clicking crowded nodes; insets stay closed initially. */
+  zoomSections?: readonly NetworkMapZoomSection[];
   /** Optional time-filtered weather/disruption polygons. */
   areas?: readonly MapArea[];
   overlays?: readonly MapOverlay[];
@@ -403,6 +423,8 @@ export type NetworkMapProps = {
   /** Place controls over the map to avoid a separate toolbar row. Defaults to toolbar. */
   controlPlacement?: "toolbar" | "map";
   toolbarControls?: readonly NetworkMapToolbarControl[];
+  /** Application filters and actions placed before the map controls in the same wrapping toolbar. */
+  toolbarContent?: ReactNode;
   /** Override toolbar labels; fitAll defaults to "Fit all locations" for every map. */
   controlLabels?: Partial<NetworkMapControlLabels>;
   /**
