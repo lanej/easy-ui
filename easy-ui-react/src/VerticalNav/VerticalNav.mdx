@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, ArgTypes, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { VerticalNav, ExpandableVerticalNav } from "./VerticalNav";
 import * as VerticalNavStories from "./VerticalNav.stories";
 
@@ -9,7 +9,19 @@ import * as VerticalNavStories from "./VerticalNav.stories";
 
 `VerticalNav` renders a vertical list of navigation links.
 
+## Usage
+
+```tsx
+import { VerticalNav } from "@easypost/easy-ui/VerticalNav";
+```
+
 <Canvas of={VerticalNavStories.Simple} />
+
+## Props
+
+<ArgTypes of={VerticalNav} />
+
+## Examples
 
 `VerticalNav` is a compound component consisting of either `VerticalNav` or `ExpandableVerticalNav`, `VerticalNav.Item`, `VerticalNav.Subnav`, and optionally `VerticalNav.SupplementaryAction`.
 
@@ -31,7 +43,7 @@ _Example simple structure_:
 </VerticalNav>
 ```
 
-## Nested navigation
+### Nested navigation
 
 `VerticalNav` can contain nested navigation by using a `VerticalNav.Subnav` within a `VerticalNav.Item`.
 
@@ -51,7 +63,7 @@ _Example structure_:
 
 <Canvas of={VerticalNavStories.Nested} />
 
-## Expandable navigation
+### Expandable navigation
 
 `ExpandableVerticalNav` can be used to create a list of links that are expandable at the root.
 
@@ -84,7 +96,7 @@ _Example structure_:
 
 <Canvas of={VerticalNavStories.Expandable} />
 
-## With supplementary action
+### With supplementary action
 
 `VerticalNav` can be rendered with an additional action at the bottom using the `supplementaryAction` prop.
 
@@ -118,7 +130,7 @@ _Example structure_:
 
 <Canvas of={VerticalNavStories.WithSupplementaryAction} />
 
-## With banner
+### With banner
 
 `VerticalNav` can be rendered with a banner using the `renderBanner` prop.
 
@@ -132,13 +144,13 @@ _Example structure_:
 
 <Canvas of={VerticalNavStories.WithBanner} />
 
-## Customizing the container
+### Customizing the container
 
 `VerticalNav` can be rendered in a container and it will respect its constraints.
 
 <Canvas of={VerticalNavStories.WithinACard} />
 
-## Client-side routing
+### Client-side routing
 
 Pass a `navigate` function to `<Provider />` and `VerticalNav.Item`s navigate
 through your app's router instead of doing a full page load:
@@ -159,7 +171,7 @@ regular `href`s—the router is what keeps them from loading a new page.
 
 <Canvas of={VerticalNavStories.ClientSideRouting} />
 
-## Polymorphic items
+### Polymorphic items
 
 `VerticalNav.Item` are polymorphic items. Use the `as` prop when an item needs a
 specific link component rather than the router configured on `<Provider />`:
@@ -172,24 +184,20 @@ import Link from "next/link";
 <VerticalNav.Item key="1" as={Link} href="/1" label="Item 1" />;
 ```
 
-## Properties
+#### VerticalNav
 
-### VerticalNav
-
-<ArgTypes of={VerticalNav} />
-
-### ExpandableVerticalNav
+#### ExpandableVerticalNav
 
 <ArgTypes of={ExpandableVerticalNav} />
 
-### VerticalNav.Item
+#### VerticalNav.Item
 
 <ArgTypes of={VerticalNav.Item} />
 
-### VerticalNav.Subnav
+#### VerticalNav.Subnav
 
 <ArgTypes of={VerticalNav.Subnav} />
 
-### VerticalNav.SupplementaryAction
+#### VerticalNav.SupplementaryAction
 
 <ArgTypes of={VerticalNav.SupplementaryAction} />

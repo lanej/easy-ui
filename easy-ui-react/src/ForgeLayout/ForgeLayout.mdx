@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, ArgTypes, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { ForgeLayout } from "./ForgeLayout";
 import * as ForgeLayoutStories from "./ForgeLayout.stories";
 
@@ -9,7 +9,19 @@ import * as ForgeLayoutStories from "./ForgeLayout.stories";
 
 `ForgeLayout` defines the header, main content, and multipage content areas of a Nexus product page.
 
+## Usage
+
+```tsx
+import { ForgeLayout } from "@easypost/easy-ui/ForgeLayout";
+```
+
 <Canvas of={ForgeLayoutStories.Default} />
+
+## Props
+
+<ArgTypes of={ForgeLayout} />
+
+## Examples
 
 `ForgeLayout` is a compound component consisting of `ForgeLayout`, `ForgeLayout.Nav`, `ForgeLayout.Header`, and `ForgeLayout.Content`.
 
@@ -17,7 +29,7 @@ import * as ForgeLayoutStories from "./ForgeLayout.stories";
 
 `ForgeLayout` is highly composable. Subcomponents within a `ForgeLayout` can be replaced as needed. Subcomponents are simple lightweight wrappers with built-in styles and constraints.
 
-## Test Mode
+### Test Mode
 
 `ForgeLayout` supports an obvious visual indicator for test mode with the `mode="test"` prop.
 
@@ -25,7 +37,7 @@ import * as ForgeLayoutStories from "./ForgeLayout.stories";
 
 <Controls of={ForgeLayoutStories.TestMode} include={["mode"]} />
 
-## Collapsed Navigation
+### Collapsed Navigation
 
 `ForgeLayout` supports a distraction-free content mode with the `navState="collapsed"` prop.
 
@@ -33,7 +45,7 @@ import * as ForgeLayoutStories from "./ForgeLayout.stories";
 
 <Controls of={ForgeLayoutStories.Collapsed} include={["navState"]} />
 
-## Railed Navigation
+### Railed Navigation
 
 `ForgeLayout` supports a narrow, icon-only nav with the `navState="rail"` prop.
 
@@ -53,7 +65,7 @@ Railed links hide their labels, so each one gets a tooltip. `ForgeLayout.NavLink
 
 <Controls of={ForgeLayoutStories.Rail} include={["defaultNavState"]} />
 
-### Toggling the nav
+#### Toggling the nav
 
 `ForgeLayout.NavToggle` is a standalone control, so it can go wherever a product needs it—typically at the start of a `ForgeLayout.Controls`. It renders nothing when the nav is `collapsed`, since there is no nav to toggle.
 
@@ -102,7 +114,7 @@ Pass `navState` to control the state, or `defaultNavState` to leave it uncontrol
 </ForgeLayout>
 ```
 
-### Adding a rail to an existing layout
+#### Adding a rail to an existing layout
 
 This story mirrors the Forge app's layout, including the four places adding a rail needs care. Switch pages within the story to see each one.
 
@@ -113,8 +125,4 @@ This story mirrors the Forge app's layout, including the four places adding a ra
 
 <Canvas of={ForgeLayoutStories.ForgeApp} />
 
-## Properties
-
-### ForgeLayout
-
-<ArgTypes of={ForgeLayout} />
+#### ForgeLayout

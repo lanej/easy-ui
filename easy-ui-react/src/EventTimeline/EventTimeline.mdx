@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./EventTimeline.stories";
 
 <Meta of={Stories} />
@@ -7,7 +8,21 @@ import * as Stories from "./EventTimeline.stories";
 
 A reusable selectable chronology. The caller owns ordering, interpretation, identifiers, and whether events belong to the same path. The timeline does not deduplicate events or infer physical histories.
 
-## Event identity and independent metrics
+## Usage
+
+```tsx
+import { EventTimeline } from "@easypost/easy-ui/EventTimeline";
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
+
+### Event identity and independent metrics
 
 The event's time, label, facility type, and location form its identity. Minimal presentation puts the event label, facility icon and type, location, and metric pills in one wrapping flow within the selected event surface. Compact and expanded measurements sit beneath event identity. Every pill contains both the metric label and its current value. The event-selection dot is independent of metric health: an arrival can have a healthy dwell time and an elevated exception rate at the same time.
 
@@ -19,13 +34,11 @@ The three presentations below use identical synthetic observations at a **420px 
 - **Compact:** visible facility type and location, followed by one row per metric. Each pill contains its label and current value, with a concentration reference alongside when it fits.
 - **Expanded:** the same event identity and labeled metric pills, with a larger distribution beneath each headline. The current value is not repeated in a second summary.
 
-<Canvas of={Stories.PresentationModes} />
-
 The reference shows one indicator for the current value. Percentile dots and tiny percentile labels are omitted. Distribution intensity describes the supplied reference, and only the policy interval containing the current value receives an assessment color. Other ranges remain visible in neutral color. Both the dwell-time and exception-rate examples have their own reference and assessment.
 
 The example data is synthetic. The dwell reference contains completed durations; the exception reference contains percentage rates from comparable facility windows. Neither the component nor the example derives a percentage distribution from binary outcomes or treats a percentile as a health threshold.
 
-## Compose metrics
+### Compose metrics
 
 ```tsx
 import { EventTimeline } from "@easypost/easy-ui/EventTimeline";
@@ -51,7 +64,7 @@ For **minimal**, use `size="compact"`, `metricsPlacement="inline"`, and `renderM
 
 `locationIcon` accepts a caller-supplied icon. Inline placement displays the facility type and location at every event size. In the default layout, compact event size keeps the icon and location while retaining the facility type for assistive technology; default and detailed sizes also display the facility type. Keep the metric presentation independent of the event's size.
 
-## Narrow and map-adjacent views
+### Narrow and map-adjacent views
 
 The 360px view lets references yield before labels or current values become unreadable.
 
@@ -61,7 +74,7 @@ This **420px timeline column** sits beside an application-owned map slot. Select
 
 <Canvas of={Stories.MapAdjacent} />
 
-## Selection and context
+### Selection and context
 
 Supply `selectedId` and `onSelectedIdChange` to coordinate selection with an external map or details panel. A separate `onLocationSelect` callback exposes the location and event IDs; map pan and zoom remain application-owned.
 
@@ -73,9 +86,9 @@ Keyboard navigation supports Up/Down and Home/End while retaining native button 
 
 <Canvas of={Stories.ControlledMapCoordination} />
 
-## Individual states
+### Individual states
 
-<Canvas of={Stories.Default} />
+<Canvas of={Stories.PresentationModes} />
 <Canvas of={Stories.Compact} />
 <Canvas of={Stories.Detailed} />
 <Canvas of={Stories.MissingData} />
@@ -83,5 +96,3 @@ Keyboard navigation supports Up/Down and Home/End while retaining native button 
 <Canvas of={Stories.MinimalMetrics} />
 <Canvas of={Stories.CompactMetrics} />
 <Canvas of={Stories.ExpandedMetrics} />
-
-<ArgTypes of={Stories} />

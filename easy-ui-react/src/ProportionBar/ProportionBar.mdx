@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { ProportionBar } from "./ProportionBar";
 import * as Stories from "./ProportionBar.stories";
 
@@ -7,6 +8,20 @@ import * as Stories from "./ProportionBar.stories";
 # ProportionBar
 
 An unframed part-to-whole metric: percentage, exact numerator/denominator, label, and proportional fill. Import from `@easypost/easy-ui/ProportionBar`. Native HTML/CSS; no chart engine or Card dependency.
+
+## Usage
+
+```tsx
+import { ProportionBar } from "@easypost/easy-ui/ProportionBar";
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={ProportionBar} />
+
+## Examples
 
 ```tsx
 <ProportionBar
@@ -17,9 +32,7 @@ An unframed part-to-whole metric: percentage, exact numerator/denominator, label
 />
 ```
 
-<Canvas of={Stories.Default} />
-
-## Layout, not framing
+### Layout, not framing
 
 `compact` keeps the label, percentage, and counts on one row when space permits. `expanded` emphasizes the percentage beside the label and counts on a shared baseline. The label/count group moves below the percentage only when the available container width cannot fit them together; this responds to content and text size, not the viewport. Both layouts preserve the denominator when wrapping. Neither adds a background, border, padding, or card. This is a focused metric molecule, not an application-specific report or a full comparison chart.
 
@@ -33,7 +46,7 @@ The fill is rendered by the shared `MeterBar` atom, also used by `RiskScore`. `P
 
 <Canvas of={Stories.Presentations} />
 
-## Meaning and precision
+### Meaning and precision
 
 This measures a subset of a supplied population, not progress toward completing a task. Its accessible role is `meter`, with a name, zero minimum, exact numerator/denominator, and a percentage in `aria-valuetext`. It has no keyboard interaction, target marker, completion animation, or automatic success state.
 
@@ -45,7 +58,7 @@ Default count formatting groups English numbers. `formatValue` changes both coun
 
 <Canvas of={Stories.LargeText} />
 
-## Loading, missing, and invalid data
+### Loading, missing, and invalid data
 
 Zero with a positive total is an observed 0%; equal positive values are 100%. `null` means unavailable. `0 / 0` shows `emptyTotalLabel` ("No population"), not 0%. Negative/non-finite inputs or a numerator exceeding its denominator show `invalidValueLabel` ("Invalid proportion"). These non-valid states have no filled track or meter role; exact finite counts remain visible. Counts that are missing or non-finite use an em dash. Invalid proportions are never silently clamped or reinterpreted as progress.
 
@@ -57,7 +70,3 @@ Zero with a positive total is an observed 0%; equal positive values are 100%. `n
 <Canvas of={Stories.EmptyPopulation} />
 <Canvas of={Stories.InvalidData} />
 <Canvas of={Stories.Loading} />
-
-## Properties
-
-<ArgTypes of={ProportionBar} />

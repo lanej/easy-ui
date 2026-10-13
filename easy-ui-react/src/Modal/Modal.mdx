@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { Modal, ModalContainer } from "./Modal";
 import * as ModalStories from "./Modal.stories";
 
@@ -9,7 +9,21 @@ import * as ModalStories from "./Modal.stories";
 
 A `<Modal />` is a page overlay that displays information and blocks interaction with the page until an action is taken or the `Modal` is dismissed.
 
-### Modal architecture
+## Usage
+
+```tsx
+import { Modal } from "@easypost/easy-ui/Modal";
+```
+
+<Canvas of={ModalStories.Simple} />
+
+## Props
+
+<ArgTypes of={Modal.Trigger} />
+
+## Examples
+
+#### Modal architecture
 
 `<Modal />` is a compound component. Use `<Modal.Trigger />`, `<Modal />`, `<Modal.Header />`, `<Modal.Body />`, and `<Modal.Footer />` to construct a modal, plus `<Modal.Title />` and `<Modal.CloseButton />` to compose a custom header.
 
@@ -33,7 +47,7 @@ A `<Modal />` is a page overlay that displays information and blocks interaction
 </Modal.Trigger>
 ```
 
-### Triggering the modal
+#### Triggering the modal
 
 `<Modal.Trigger />` must contain exactly two direct children.
 
@@ -71,7 +85,7 @@ _Modal with close function injected:_
 </Modal.Trigger>
 ```
 
-### State management
+#### State management
 
 By default, a `<Modal />` manages its own open state.
 
@@ -81,17 +95,15 @@ It can be made to open by default using the `defaultOpen` prop on `<Modal.Trigge
 
 Use the `useModalTrigger()` hook inside a Modal component to access the modal state. Use the modal trigger state to determine if the modal `isOpen`. The modal trigger state can also be used to programmatically `close()` the modal.
 
-### Focus containment
+#### Focus containment
 
 A `<Modal />` traps focus until it's closed. When a modal is closed, it returns focus to the element that triggered the modal.
 
-## Simple Example
+### Simple Example
 
 In its simplest form, a `<Modal />` requires a triggering element and a `<Modal />` that renders a header, body, and footer.
 
-<Canvas of={ModalStories.Simple} />
-
-## Complete Example
+### Complete Example
 
 A `<Modal />` has several options across its components to customize the experience. The example below showcases the different available options.
 
@@ -99,7 +111,7 @@ Refer to the property tables at the bottom of the page for full documentation on
 
 <Canvas of={ModalStories.Complete} />
 
-## Custom header
+### Custom header
 
 Set `layout="custom"` on `<Modal.Header />` to own the header's layout entirely. `children` is then rendered as-is instead of being treated as the title, so you can place a badge beside the title, a stepper, or any other composition the preset props can't express.
 
@@ -112,13 +124,13 @@ Two subcomponents are provided for the pieces that need to stay wired to the mod
 
 <Canvas of={ModalStories.WithCustomHeaderInOwnComponent} />
 
-## Legacy title API
+### Legacy title API
 
 For a simple header, `<Modal.Header />` also accepts `children` as the title text alongside `as`, `subtitle`, `iconAtStart`, and `iconAtEnd`—the form shown in the [Complete Example](#complete-example) above. This is the default (`layout="title"`) and remains supported, but new work should prefer `layout="custom"`: the next major version will make `children` always mean the custom slot and remove these props.
 
 Note that in this form, setting `iconAtEnd` replaces the close icon, so a dismissable modal loses its X. A custom header has no such conflict—render an icon and `<Modal.CloseButton />` side by side.
 
-## Nondismissable
+### Nondismissable
 
 By default, `<Modal />`s are dismissable, meaning a user can exit the modal without performing an action. Exiting can be done by clicking on the underlay behind the modal, pressing the `Esc` key, or clicking the close icon in the header. In a custom header the close icon appears only where you render `<Modal.CloseButton />`.
 
@@ -128,7 +140,7 @@ To override that behavior, set `isDismissable` to `false` on the `<Modal.Trigger
 
 <Controls of={ModalStories.Nondismissable} />
 
-## Size
+### Size
 
 A `<Modal />` comes in five sizes—`sm`, `md`, `lg`, `xl`, or `2xl`—which governs the width of the modal. Use the `size` prop on `<Modal />` to change its size. Modals default to `lg`.
 
@@ -136,7 +148,7 @@ A `<Modal />` comes in five sizes—`sm`, `md`, `lg`, `xl`, or `2xl`—which gov
 
 <Controls of={ModalStories.Size} />
 
-## Custom Triggers
+### Custom Triggers
 
 A `<Modal />` can be wrapped in a `<ModalContainer />` to entirely control the triggering process.
 
@@ -144,7 +156,7 @@ A `<ModalContainer />` accepts a single `<Modal />` as a child. If no child is p
 
 <Canvas of={ModalStories.MenuTrigger} />
 
-## Third-party overlays
+### Third-party overlays
 
 By default, a `<Modal />` traps focus and hides the rest of the page from assistive technologies (via `aria-hidden`/`inert`) while it's open. This is the correct behavior for most modals, but it breaks third-party widgets that inject their own overlays into the document _outside_ the modal—e.g. Stripe Link/autofill or reCAPTCHA. Those overlays get `inert`'d (making them unclickable) and lose focus back to the modal.
 
@@ -162,7 +174,7 @@ Use this sparingly. It trades away the modal's focus containment and background 
 </Modal.Trigger>
 ```
 
-### Nesting a third-party overlay under another modal
+#### Nesting a third-party overlay under another modal
 
 A modal with `allowsThirdPartyOverlays` doesn't run focus trapping or background hiding itself, but a **surrounding** focus-trapping modal would — and react-aria keeps the surrounding modal's page-hiding active even while the nested one is open, which would re-`inert` the third-party overlay (e.g. Stripe Link) and steal focus back.
 
@@ -189,7 +201,7 @@ This is handled automatically: a focus-trapping modal relaxes its focus trap and
 </Modal.Trigger>;
 ```
 
-## Nesting behavior
+### Nesting behavior
 
 When modals nest, the connection between a parent modal and its nested child can present in one of two ways:
 
@@ -216,7 +228,7 @@ You configure that connection from either end, on `<Modal.Trigger />` or `<Modal
 </Modal.Trigger>;
 ```
 
-### Configuring a single nested modal
+#### Configuring a single nested modal
 
 When you can't (or don't want to) change the parent — for example one nested modal deep in a larger tree of modals that should take over its parent — set `selfNestingBehavior` on the nested modal instead. It changes only that modal's connection to its parent, without touching the parent's configuration.
 
@@ -239,36 +251,32 @@ When you can't (or don't want to) change the parent — for example one nested m
 </Modal.Trigger>
 ```
 
-## Properties
+#### Modal.Trigger
 
-### Modal.Trigger
-
-<ArgTypes of={Modal.Trigger} />
-
-### Modal
+#### Modal
 
 <ArgTypes of={Modal} />
 
-### Modal.Header
+#### Modal.Header
 
 <ArgTypes of={Modal.Header} />
 
-### Modal.Title
+#### Modal.Title
 
 <ArgTypes of={Modal.Title} />
 
-### Modal.CloseButton
+#### Modal.CloseButton
 
 <ArgTypes of={Modal.CloseButton} />
 
-### Modal.Body
+#### Modal.Body
 
 <ArgTypes of={Modal.Body} />
 
-### Modal.Footer
+#### Modal.Footer
 
 <ArgTypes of={Modal.Footer} />
 
-### ModalContainer
+#### ModalContainer
 
 <ArgTypes of={ModalContainer} />

@@ -1,4 +1,5 @@
-import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./PredictionBandChart.stories";
 
 <Meta of={Stories} />
@@ -7,7 +8,19 @@ import * as Stories from "./PredictionBandChart.stories";
 
 Show observed and predicted values with supplied lower and upper bounds. The component does not fit a model or assign confidence; disconnected bounds remain gaps.
 
+## Usage
+
+```tsx
+import { PredictionBandChart } from "@easypost/easy-ui/PredictionBandChart";
+```
+
 <Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes />
+
+## Examples
 
 Import `{ PredictionBandChart }` from `@easypost/easy-ui/PredictionBandChart` with the optional `echarts@^6.1.0` peer installed.
 
@@ -33,5 +46,3 @@ toggles its line and band together.
 Supplied zoom components default to `filterMode="weakFilter"` so prediction segments overlapping the visible window remain shaded; an explicit filter mode overrides this default.
 
 <Canvas of={Stories.ZoomedSpan} />
-
-<ArgTypes />

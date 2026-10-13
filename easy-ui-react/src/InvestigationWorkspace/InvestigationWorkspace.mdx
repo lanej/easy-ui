@@ -1,4 +1,5 @@
 import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as Stories from "./InvestigationWorkspace.stories";
 
 <Meta of={Stories} />
@@ -7,9 +8,21 @@ import * as Stories from "./InvestigationWorkspace.stories";
 
 An organism composing `EventTimeline`, `NetworkMap`, and a persistent detail panel. One controlled selection links observations, locations, candidate histories, and shared connections. Applications supply the records and their relationships; the component never chooses a true history or infers parcel identity.
 
+## Usage
+
+```tsx
+import { InvestigationWorkspace } from "@easypost/easy-ui/InvestigationWorkspace";
+```
+
 <Canvas of={Stories.LinkedSelection} />
 
-## Controlled selection
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
+
+### Controlled selection
 
 ```tsx
 import {
@@ -39,7 +52,7 @@ Events use the timeline's stable IDs, `locationId`, and optional `pathIds`. Cand
 
 Hovering the map previews its existing inspection card without changing the persistent panel. Changing the workspace selection dismisses map previews so they cannot obscure its navigation controls. Click, tap, Enter, and Space select. Timeline arrow keys, Home/End, and previous/next controls select events. The map's markers and the “Browse locations and connections” disclosure provide keyboard selection and remain usable if the engine fails. Unknown or invalid coordinates are left to the map's existing validation; unlocated events remain selectable. Removed selected records show an unavailable state instead of silently choosing another observation.
 
-## Composition and layout
+### Composition and layout
 
 `map` accepts the existing `NetworkMap` options except its location/segment selection and data, which the workspace coordinates. Basemap, worker, camera policy, additional overlays, inspection renderers, legend, and exact data remain available. Selection does not automatically move the camera. The workspace omits duplicate map selection details, legend, and full raw-data tables by default. Controls sit over the map by default; pass `map.controlPlacement="toolbar"` to use a separate toolbar row. Individual location inspection is required, so clustered markers are not exposed by this composition.
 
@@ -55,7 +68,7 @@ Change control placement without resetting a chosen map view:
 
 <Canvas of={Stories.ControlPlacement} />
 
-## Ambiguity and missing data
+### Ambiguity and missing data
 
 <Canvas of={Stories.SharedConnection} />
 <Canvas of={Stories.MultipleEventsAtLocation} />

@@ -1,5 +1,5 @@
-import React from "react";
-import { Canvas, Meta, ArgTypes, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { FocusedProductLayout } from "./FocusedProductLayout";
 import * as FocusedProductLayoutStories from "./FocusedProductLayout.stories";
 
@@ -9,7 +9,19 @@ import * as FocusedProductLayoutStories from "./FocusedProductLayout.stories";
 
 `FocusedProductLayout` defines the areas of a product page in a focused state.
 
+## Usage
+
+```tsx
+import { FocusedProductLayout } from "@easypost/easy-ui/FocusedProductLayout";
+```
+
 <Canvas of={FocusedProductLayoutStories.EmptyContent} />
+
+## Props
+
+<ArgTypes of={FocusedProductLayout} />
+
+## Examples
 
 `FocusedProductLayout` is a compound component consisting of `FocusedProductLayout`, either `FocusedProductLayout.Content` or `FocusedProductLayout.WizardContent`, and optionally `FocusedProductLayout.SidePanel`.
 
@@ -53,7 +65,7 @@ _Example structure_:
 />
 ```
 
-## With Side panel
+### With Side panel
 
 `FocusedProductLayout` can optionally render a side panel next to the main content.
 
@@ -84,13 +96,13 @@ appropriate foreground/background pairs rather than assuming a light page.
 
 <Canvas of={FocusedProductLayoutStories.WithSidePanel} />
 
-### Side panel position
+#### Side panel position
 
 A side panel can be positioned to be at the start (left) or the end (right) of the main content. Use the `sidePanelPosition` prop on `FocusedProductLayout` to specify the position.
 
 <Canvas of={FocusedProductLayoutStories.WithSidePanelAtStart} />
 
-### Side panel width
+#### Side panel width
 
 By default, a side panel will expand to the size of its content.
 
@@ -98,7 +110,7 @@ A custom width can be specified with the `width` prop on `FocusedProductLayout.S
 
 <Canvas of={FocusedProductLayoutStories.WithSidePanelWidth} />
 
-## Wizard
+### Wizard
 
 `FocusedProductLayout` can contain a wizard as its content. Use the `FocusedProductLayout.WizardContent` component to provide this content.
 
@@ -144,7 +156,7 @@ Steps can be supplied to `FocusedProductLayout.WizardContent` through the `steps
 
 <Canvas of={FocusedProductLayoutStories.WizardContent} />
 
-## Back functionality
+### Back functionality
 
 While `FocusedProductLayout` controls the rendering of the back arrow, it doesn't provide any functionality for it since this is dependent on the consuming application.
 
@@ -176,20 +188,16 @@ To render the back arrow as a button:
 />
 ```
 
-## Properties
+#### FocusedProductLayout
 
-### FocusedProductLayout
-
-<ArgTypes of={FocusedProductLayout} />
-
-### FocusedProductLayout.SidePanel
+#### FocusedProductLayout.SidePanel
 
 <ArgTypes of={FocusedProductLayout.SidePanel} />
 
-### FocusedProductLayout.Content
+#### FocusedProductLayout.Content
 
 <ArgTypes of={FocusedProductLayout.Content} />
 
-### FocusedProductLayout.WizardContent
+#### FocusedProductLayout.WizardContent
 
 <ArgTypes of={FocusedProductLayout.WizardContent} />

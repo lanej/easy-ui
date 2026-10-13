@@ -21,3 +21,13 @@ export const Default: Story = {
     children: "Content",
   },
 };
+
+export const Selected: Story = {
+  render: Template,
+  args: { ...Default.args, isSelected: true },
+};
+
+export const Disabled: Story = {
+  render: Template,
+  args: { ...Default.args, isDisabled: true },
+};

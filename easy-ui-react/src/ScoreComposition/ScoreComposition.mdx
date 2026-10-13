@@ -1,4 +1,5 @@
-import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { ScoreComposition } from "./ScoreComposition";
 import * as Stories from "./ScoreComposition.stories";
 
@@ -8,9 +9,21 @@ import * as Stories from "./ScoreComposition.stories";
 
 Explain why observed signals contribute to a supplied score and outcome. Use this native visualization when the question is “what produced this score?” Applications own weights, caps, aggregation, decisions, units, and provenance. Easy UI renders those facts without recalculating them.
 
+## Usage
+
+```tsx
+import { ScoreComposition } from "@easypost/easy-ui/ScoreComposition";
+```
+
 <Canvas of={Stories.Default} />
 
-## Supply the explanation
+## Props
+
+<ArgTypes of={ScoreComposition} />
+
+## Examples
+
+### Supply the explanation
 
 Import the composition and its primitives from `@easypost/easy-ui/ScoreComposition`. The package uses its existing CSS entry, `@easypost/easy-ui/style.css`.
 
@@ -48,7 +61,7 @@ The result is always supplied independently, including an optional maximum. It m
 
 <Canvas of={Stories.SharedSignals} />
 
-## Give signal values meaning
+### Give signal values meaning
 
 Set a signal's `sentiment` to `positive`, `warning`, or `negative` to tint its value and status. The default is `neutral`. Applications choose these meanings explicitly: a true flag, a high number, or a negative value does not determine whether an observation is favorable.
 
@@ -69,7 +82,7 @@ Missing and invalid observations suppress supplied sentiment and status labels a
 
 <Canvas of={Stories.SignalSentiments} />
 
-## Unfold signal details
+### Unfold signal details
 
 Supply `signal.description` to add supporting details beneath the signal's title when expanded. The title row uses the same chevron and shared Disclosure as contribution explanations. Its exact value and status stay visible when closed and are included in the control's accessible description. Signals without a description remain plain rows.
 
@@ -85,7 +98,7 @@ Descriptions can contain application-owned text, links, or controls. Each signal
 />
 ```
 
-## Put a chart inside the expanded card
+### Put a chart inside the expanded card
 
 The compact card retains its exact observation or score and progress meter. Its title reveals richer content supplied through `signal.description` or `contribution.explanation`. These existing slots accept React content, including `Chart`, its independent `ChartSurface` / `ChartDataView` companions, or native plots such as `RangePlot` and `CompactTimeSeries`.
 
@@ -114,7 +127,7 @@ Use the existing `ChartOption` series `markPoint` for an observed coordinate, `m
 
 Bands describe application rules, not statistical confidence. The application supplies evaluations, thresholds, units, and interpretations. Lines join supplied points without fitting a new curve. Applications can compose other graph and chart types using the same slots; ScoreComposition has no chart-specific grammar or engine dependency. The optional Chart engine loads when a chart is mounted. Closing a node unmounts its details; collapsing an entire column keeps open chart content mounted and restores it on return. Use controlled chart state when it must survive a node's close/reopen cycle.
 
-## Read contribution fullness
+### Read contribution fullness
 
 A contribution's fill is relative to its own maximum: `1 / 1` shows “Full · 100%”, while `1 / 2` shows “Partial · 50%”. Zero shows “None · 0%”. The meter and exact fraction remain visible alongside this status, so color is never the only way to distinguish these states. Localize the state words through `labels.fullContribution`, `labels.partialContribution`, and `labels.noContribution`.
 
@@ -134,7 +147,7 @@ Fullness uses exact supplied values: only a score equal to its cap is full. Perc
 
 <Canvas of={Stories.ContributionFullness} />
 
-## Lead with the decision
+### Lead with the decision
 
 When supplied, `result.disposition` leads the result card before the exact score. The card uses the application's explicit `result.sentiment`: `negative` emphasizes an adverse decision, `positive` a favorable decision, and the default `neutral` avoids implying either. A decorative icon reinforces the visual treatment; the disposition text carries the decision for everyone, including assistive technology.
 
@@ -142,7 +155,7 @@ The score never determines the decision or its sentiment. The same score may be 
 
 <Canvas of={Stories.ResultDecisions} />
 
-## Layout and access
+### Layout and access
 
 Signals, contributions, and result are ordinary DOM content in reading order. CSS Grid places them in three columns when the component's content area is at least 48rem wide. Below that it stacks the columns, preserving exact values, source labels, and explanations. This responds to the container, including side panels on wide screens.
 
@@ -155,7 +168,7 @@ Contribution meters expose their label, exact score, and maximum. Source labels 
 <Canvas of={Stories.Narrow} />
 <Canvas of={Stories.LargerText} />
 
-## Collapse a column
+### Collapse a column
 
 Select the Signals or Contributions header to collapse that entire column. Its compact handle keeps the name and record count visible, and the remaining columns take the freed space. On narrow layouts, the same controls fold their sections vertically. The result always remains visible; empty columns keep their empty-state message without a collapse control.
 
@@ -178,7 +191,7 @@ const [collapsedColumns, setCollapsedColumns] = useState<
 <Canvas of={Stories.FocusOnContributions} />
 <Canvas of={Stories.FocusOnResult} />
 
-## Values and scales
+### Values and scales
 
 `null` means unavailable. Zero and false remain real observations. Non-finite values are labelled invalid and never passed to `formatScore`. `displayValue` formats valid, available signal observations, including booleans. Interface text is localizable through `labels`; use `result.label` for “Total score”.
 
@@ -188,7 +201,7 @@ A meter requires a positive finite maximum and a finite score within `[0, maxSco
 <Canvas of={Stories.OutsideScale} />
 <Canvas of={Stories.NoData} />
 
-## Compose in an application
+### Compose in an application
 
 Visible `title`, `description`, `metadata`, and `footer` are optional. Use `variant="bare"` inside your own card, and standard `aria-label`, `aria-labelledby`, and `aria-describedby` to associate surrounding content. Without a supplied name or title, the region is named “Score composition”. `typography` follows the shared visualization text roles and propagates to the primitives.
 
@@ -196,7 +209,3 @@ Visible `title`, `description`, `metadata`, and `footer` are optional. Use `vari
 
 <Canvas of={Stories.ExternalHeading} />
 <Canvas of={Stories.IndependentPrimitives} />
-
-## Properties
-
-<ArgTypes of={ScoreComposition} />

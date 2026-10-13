@@ -1,5 +1,5 @@
-import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { Calendar } from "./Calendar";
 import * as CalendarStories from "./Calendar.stories";
 
@@ -9,21 +9,33 @@ import * as CalendarStories from "./Calendar.stories";
 
 Calendar displays a grid of days and allows users to select a single date.
 
+## Usage
+
+```tsx
+import { Calendar } from "@easypost/easy-ui/Calendar";
+```
+
 <Canvas of={CalendarStories.Default} />
 
-## Default Value
+## Props
+
+<ArgTypes of={Calendar} />
+
+## Examples
+
+### Default Value
 
 A `<Calendar />` component allows users to set default selected date (uncontrolled).
 
 <Canvas of={CalendarStories.DefaultValue} />
 
-## Set minimum and maximum value
+### Set minimum and maximum value
 
 Set minimum and maximum allowed date that a user may select. Dates outside the minimum and maximum value are disabled and unreachable.
 
 <Canvas of={CalendarStories.LimitAvailableDates} />
 
-## Show days outside of current month
+### Show days outside of current month
 
 Display the days falling into the other months.
 
@@ -34,13 +46,13 @@ Display the days falling into the other months.
   include={["showDaysOutsideCurrentMonth"]}
 />
 
-## Set Date Availability
+### Set Date Availability
 
 Callback that is called for each date of the calendar. If it returns `true`, then the date is unavailable.
 
 <Canvas of={CalendarStories.DatesAvailability} />
 
-## Disabled Calendar
+### Disabled Calendar
 
 Use `isDisabled` to disabled the calendar entirely.
 
@@ -51,7 +63,7 @@ Use `isDisabled` to disabled the calendar entirely.
   include={["isDisabled", "showDaysOutsideCurrentMonth"]}
 />
 
-## Read-Only Calendar
+### Read-Only Calendar
 
 Use `isReadOnly` to make the calendar immutable.
 
@@ -62,18 +74,14 @@ Use `isReadOnly` to make the calendar immutable.
   include={["isReadOnly", "showDaysOutsideCurrentMonth"]}
 />
 
-## Controlled Selection
+### Controlled Selection
 
 For controlled selection, use `onChange` and `value`. Uncontrolled selection is possible with `defaultValue`. See associated code snippet.
 
 <Canvas of={CalendarStories.ControlledSelection} />
 
-## Invalid Selection
+### Invalid Selection
 
 An error message is displayed when the selected value is invalid according to application logic. Select a weekend date to see an invalid selection.
 
 <Canvas of={CalendarStories.InvalidSelection} />
-
-## Properties
-
-<ArgTypes of={Calendar} />

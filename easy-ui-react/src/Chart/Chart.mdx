@@ -1,4 +1,5 @@
-import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import * as ChartStories from "./Chart.stories";
 
 <Meta of={ChartStories} />
@@ -6,6 +7,20 @@ import * as ChartStories from "./Chart.stories";
 # Chart
 
 Full analytical charts using Apache ECharts, with Easy UI typography, colors, a responsive frame, status handling, and an exact-value data table. `MetricCard` complements these analytical views with exact KPI content.
+
+## Usage
+
+```tsx
+import { Chart } from "@easypost/easy-ui/Chart";
+```
+
+<Canvas of={ChartStories.Sankey} />
+
+## Props
+
+<ArgTypes of={ChartStories.TimeSeries} />
+
+## Examples
 
 Install the optional chart peer when using this entry point:
 
@@ -39,15 +54,14 @@ const option: ChartOption = {
 />;
 ```
 
-## Separate chart components
+### Separate chart components
 
 Use the [chart catalog](?path=/docs/organisms-charts-choosing-a-chart--docs) to select a separately exported component such as `LineChart`, `BarChart`, `SankeyChart`, `HistogramChart`, or `GraphChart`. Each owns its chart-specific series and has an independent API and Storybook page. `Chart` remains the shared composition and the entry for mixed-series options. The galleries below compose the extracted public components and retain their existing story links.
 
-## Analytical examples
+### Analytical examples
 
 The native `ChartOption` retains ECharts' documented configuration rather than creating a second chart grammar. It supports line/area, grouped/stacked bars, scatter/bubble, heatmap, Sankey, pie/donut, treemap, and the engine's other built-in series. These examples all use synthetic shipping data.
 
-<Canvas of={ChartStories.Sankey} />
 <Canvas of={ChartStories.TimeSeries} />
 <Canvas of={ChartStories.Area} />
 <Canvas of={ChartStories.GroupedBars} />
@@ -57,7 +71,7 @@ The native `ChartOption` retains ECharts' documented configuration rather than c
 <Canvas of={ChartStories.Donut} />
 <Canvas of={ChartStories.Treemap} />
 
-## Additional analytical patterns
+### Additional analytical patterns
 
 These additions retain the original gallery and use the same optional engine. Direct bar labels and labeled references make the comparison readable without hover. Thresholds and event markers have explicit meanings; neither implies causation.
 
@@ -79,7 +93,7 @@ Histogram and cumulative distribution share the same 1,000 parcels. The box plot
 
 The waterfall reconciles each signed ledger item to its running balance. The periodic matrix preserves sample counts in the table and suppresses rates with fewer than 50 observations in this synthetic example. That minimum is an example policy, not a statistical guarantee or a library default.
 
-## Interaction and data access
+### Interaction and data access
 
 The raw-data table is optional. Omit `dataTable` to render just the chart, or set `showDataTable={false}` to hide a supplied table. Supplied tables remain visible by default. Without a table, chart status defaults to ready; pass an explicit `status` for loading, empty, or error states. Applications can supply an alternative exact-value view using `ChartDataView` or their own accessible UI.
 
@@ -99,7 +113,7 @@ When the effective engine option has data zoom, including `baseOption.dataZoom`,
 
 The rendered plot is an image with the supplied description; its underlying SVG/canvas is hidden from screen readers. Exact values and drill-down are available through the semantic HTML table. The automatic HTML legend supports keyboard selection. Native engine legends and individual marks remain pointer interactions; provide application controls through `actions` or `ChartLegend` for those layouts. The ECharts ARIA switch alone does not establish accessibility compliance.
 
-## Mobile layout
+### Mobile layout
 
 `Chart` and `ChartSurface` default to `layout="auto"`. Ordinary named bar, line,
 and scatter series with one Cartesian axis pair and an unpositioned plain legend
@@ -128,7 +142,7 @@ calendar-day subtitle instead of repeating them across nested cards.
 
 <Canvas of={ChartStories.MobileLayout} />
 
-## Rich content inside “View data table”
+### Rich content inside “View data table”
 
 The chart's built-in data disclosure can contain formatted amounts, comparison
 badges, links, or native plots. Configure that existing view through `dataTable`;
@@ -224,7 +238,7 @@ preserving local state. Plain exact values remain available before it mounts.
 Standalone `ChartDataView` uses the same options and renders rich content
 immediately when no `disclosureLabel` is supplied.
 
-## States, scales, and themes
+### States, scales, and themes
 
 - Use `variant` to choose the surrounding frame. `"card"` (the default) renders Easy UI's own bordered `Card` with padding. Use `"bare"` when a consumer already supplies its own surrounding Card and wants Chart's heading, description, plot, and data-table disclosure to render directly inside it, without nesting a second bordered Card. `aria-label`/`aria-busy` semantics on the chart region are identical in both variants.
 - Use `status` for loading, empty, and error. These states suppress stale plots and tables; `onRetry` delegates retry to the application. `notice` explains partial coverage or stale-but-intentionally-visible data.
@@ -236,7 +250,7 @@ immediately when no `disclosureLabel` is supplied.
 
 If ECharts 6.1.0 throws while initializing an inside-zoom view, its own disposal can also throw. Chart contains that secondary error, releases the public renderer, and retries with a fresh engine. ECharts may retain the disposed instance in its internal registry on this exceptional path; Chart does not modify the engine's private registry.
 
-## Compose the surface and companions
+### Compose the surface and companions
 
 `Chart` remains the convenient complete composition. Its `title` and `description` are independently optional; an omitted value creates no empty heading or reserved gap. Set `aria-label` or `aria-labelledby` when the application supplies the visible heading, and `aria-describedby` to associate external explanatory content. Standard ARIA naming precedence applies.
 
@@ -266,14 +280,12 @@ The application is responsible for supplying an equivalent data view and keyboar
 
 The `typography` prop uses the shared numeric roles `title`, `description`, `label`, `control`, `legend`, and `detail`, in CSS pixels. Defaults are 18/14/12/14/12/12. Pass the same values to independent companions when composing them. Role defaults reach HTML, SVG, and canvas, including analytical labels, legends, tooltips, and data views. Explicit engine-native text options override the corresponding defaults. Typography and font loading trigger engine layout updates; the component does not reduce consumer-supplied font sizes to fit.
 
-## Loading and package cost
+### Loading and package cost
 
 ECharts is an optional peer, dynamically imported only when a ready chart mounts. It is external to the Easy UI package output, so importing buttons or KPI cards does not import a chart engine. SSR emits the frame, loading label, and exact table; rendering initializes on the client. The ESM and CommonJS entry points use the same lazy loading path.
 
 The isolated production gallery measured the full engine chunk at approximately 1.14 MB minified / 382 KB gzip. This deliberate breadth supports specialist charts through one engine. Route-level lazy loading remains appropriate for analytical screens. The standalone SVG Sparkline component has been removed; compose a compact `Chart` for trends instead.
 
-<ArgTypes of={ChartStories.TimeSeries} />
-
-## Lightweight alternatives
+### Lightweight alternatives
 
 Use `MetricCard` for KPI summaries, `Chart` for compact trends, `BarList` for category comparisons, or `BulletChart` for a measure against a target. `MetricCard`, `BarList`, and `BulletChart` use native HTML/CSS and never import ECharts. Trends use the same ECharts engine as analytical views. See `documentation/specs/DataVisualization.md` for reproducible bundle measurements and their limits.

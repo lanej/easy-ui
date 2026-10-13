@@ -1,5 +1,6 @@
 import React from "react";
-import { ArgTypes, Canvas, Meta, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Controls } from "../../../.storybook/DocsApi";
 import { ColorPicker } from "./ColorPicker";
 import * as ColorPickerStories from "./ColorPicker.stories";
 
@@ -9,11 +10,23 @@ import * as ColorPickerStories from "./ColorPicker.stories";
 
 A `<ColorPicker />` allows users to select a color with a color picker.
 
+## Usage
+
+```tsx
+import { ColorPicker } from "@easypost/easy-ui/ColorPicker";
+```
+
 <Canvas of={ColorPickerStories.Default} />
+
+## Props
+
+<ArgTypes of={ColorPicker} exclude={["children"]} />
+
+## Examples
 
 <Controls of={ColorPickerStories.Default} />
 
-## Rendering
+### Rendering
 
 A `<ColorPicker >` can be attached to any pressable element through `<ColorPicker.Trigger />`.
 
@@ -25,9 +38,9 @@ A `<ColorPicker >` can be attached to any pressable element through `<ColorPicke
 </ColorPicker>
 ```
 
-## Retrieving a Selected Color
+### Retrieving a Selected Color
 
-### Controlled Component
+#### Controlled Component
 
 You can retrieve the selected color through `value` and `onChange` props by making the component controlled.
 
@@ -50,7 +63,7 @@ function ControlledColorPicker() {
 }
 ```
 
-### useColorPickerState Hook
+#### useColorPickerState Hook
 
 You can also retrieve the selected color using the `useColorPickerState` hook.
 
@@ -76,7 +89,7 @@ function AppColorPicker() {
 }
 ```
 
-### Render Prop
+#### Render Prop
 
 You can also retrieve the selected color using the render prop pattern.
 
@@ -94,7 +107,3 @@ You can also retrieve the selected color using the render prop pattern.
   )}
 </ColorPicker>
 ```
-
-## Properties
-
-<ArgTypes of={ColorPicker} exclude={["children"]} />

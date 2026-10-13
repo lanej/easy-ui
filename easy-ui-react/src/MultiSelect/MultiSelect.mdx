@@ -1,4 +1,5 @@
-import { Canvas, Meta, ArgTypes, Controls } from "@storybook/addon-docs/blocks";
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
 import { MultiSelect } from "./MultiSelect";
 import * as MultiSelectStories from "./MultiSelect.stories";
 
@@ -8,81 +9,89 @@ import * as MultiSelectStories from "./MultiSelect.stories";
 
 The `<MultiSelect />` component is an input with a dropdown that allows users to select multiple options from a list. It's customizable with various props such as `placeholder`, `maxItemsUntilScroll`, and `onSelectionChange`.
 
+## Usage
+
+```tsx
+import { MultiSelect } from "@easypost/easy-ui/MultiSelect";
+```
+
 <Canvas of={MultiSelectStories.StandardDropdown} />
 
-## Async Dropdown
+## Props
+
+<ArgTypes of={MultiSelect} />
+
+## Examples
+
+### Async Dropdown
 
 The `<MultiSelect />` component can also support asynchronous loading of dropdown items. This is useful for fetching items from a server or a large dataset.
 
 <Canvas of={MultiSelectStories.AsyncDropdown} />
 
-## With Icons
+### With Icons
 
 This variant of the `<MultiSelect />` includes icons next to each option. It uses the `renderPill` prop to customize how selected items are displayed, and it can render custom content in the dropdown items.
 
 <Canvas of={MultiSelectStories.WithIcons} />
 
-## Start Icon
+### Start Icon
 
 Use `iconAtStart` to add a left aligned icon.
 
 <Canvas of={MultiSelectStories.WithStartIcon} />
 
-## Small MultiSelect
+### Small MultiSelect
 
 Set `size="sm"` for a small `<MultiSelect />`.
 
 <Canvas of={MultiSelectStories.SmallMultiSelect} />
 
-## Large MultiSelect
+### Large MultiSelect
 
 Set `size="lg"` for a large `<MultiSelect />`.
 
 <Canvas of={MultiSelectStories.LargeMultiSelect} />
 
-## Disabled Keys
+### Disabled Keys
 
 You can disable specific items from being selected by using the `disabledKeys` prop. This is useful when some options should be unselectable.
 
 <Canvas of={MultiSelectStories.DisabledKeys} />
 
-## Max Items Until Scroll
+### Max Items Until Scroll
 
 When there are too many items to fit in the dropdown, you can set a maximum number of items to display before the dropdown becomes scrollable. The `maxItemsUntilScroll` prop controls this behavior.
 
 <Canvas of={MultiSelectStories.MaxItemsUntilScroll} />
 
-## Pill Background
+### Pill Background
 
 The `pillBackground` prop controls the background color for individual pills.
 
 <Canvas of={MultiSelectStories.PillBackground} />
 
-## Pill Border
+### Pill Border
 
 The `isPillBorderless` prop controls whether or not individual pills render with a border.
 
 <Canvas of={MultiSelectStories.PillBorder} />
 
-## Properties
+#### MultiSelect
 
-### MultiSelect
-
-<ArgTypes of={MultiSelect} />
-
-### MultiSelect.Pill
+#### MultiSelect.Pill
 
 The `MultiSelect.Pill` component represents a selected item in the multi-select dropdown. It's used to display each selected item as a "pill" or tag.
 
 <ArgTypes of={MultiSelect.Pill} />
 
-### MultiSelect.Option
+#### MultiSelect.Option
 
 The `MultiSelect.Option` component represents a single option in the dropdown.
 
 <ArgTypes of={MultiSelect.Option} />
 
-### MultiSelect.OptionText
+#### MultiSelect.OptionText
 
 The `MultiSelect.OptionText` component represents the default text inside a dropdown option.
 
