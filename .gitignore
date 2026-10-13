@@ -29,6 +29,9 @@ scripts/preview-metrics/dist-guide/
 .preview-tokens/
 .preview-icons/
 
+# Local drafts and preserved housekeeping evidence.
+/.local-artifacts/
+
 # Agent skill links created by Easy UI's workspace postinstall.
 /.agents/skills/easy-ui
 /.claude/skills/easy-ui
