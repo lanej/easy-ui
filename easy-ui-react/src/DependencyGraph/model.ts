@@ -1,4 +1,9 @@
 import { graphlib, layout } from "@dagrejs/dagre";
+import {
+  collapsedDependencyGroup,
+  dependencyGraphClusters,
+  dependencyGroupHierarchy,
+} from "./groups";
 import type {
   DependencyGraphEdge,
   DependencyGraphGroup,
@@ -51,7 +56,9 @@ export function dependencyGraphLayoutKey(
   return JSON.stringify([
     revision ?? null,
     [...nodes].sort(compare).map((node) => [node.id, node.groupId ?? null]),
-    [...groups].sort(compare).map((group) => group.id),
+    [...groups]
+      .sort(compare)
+      .map((group) => [group.id, group.parentId ?? null]),
   ]);
 }
 
@@ -76,9 +83,8 @@ export function createDependencyGraphOrder(
   );
   const boxes = new Map(graph.items.map((item) => [item.key, item]));
   for (const cluster of graph.clusters) {
-    const members = graph.items.filter(
-      (item) => item.node?.groupId === cluster.group.id,
-    );
+    const memberIds = new Set(cluster.members.map((node) => node.id));
+    const members = graph.items.filter((item) => memberIds.has(item.node!.id));
     const x = Math.min(...members.map((item) => item.x));
     const y = Math.min(...members.map((item) => item.y));
     boxes.set(`group:${cluster.group.id}`, {
@@ -139,22 +145,15 @@ export function buildDependencyGraph(
   order?: GraphLayoutOrder,
 ) {
   const records = new Map(nodes.map((node) => [node.id, node]));
-  const groupRecords = new Map(groups.map((group) => [group.id, group]));
+  const hierarchy = dependencyGroupHierarchy(nodes, groups);
+  const groupRecords = hierarchy.records;
   const collapsed = new Set(collapsedGroupIds);
-  const nodeKey = (node: DependencyGraphNode) =>
-    node.groupId &&
-    collapsed.has(node.groupId) &&
-    groupRecords.has(node.groupId)
-      ? `group:${node.groupId}`
-      : `node:${node.id}`;
+  const nodeKey = (node: DependencyGraphNode) => {
+    const groupId = collapsedDependencyGroup(node, hierarchy, collapsed);
+    return groupId === undefined ? `node:${node.id}` : `group:${groupId}`;
+  };
   const items = new Map<string, GraphItem>();
-  const memberships = new Map<string, DependencyGraphNode[]>();
   for (const node of [...records.values()].sort(compare)) {
-    if (node.groupId && groupRecords.has(node.groupId)) {
-      const members = memberships.get(node.groupId) ?? [];
-      members.push(node);
-      memberships.set(node.groupId, members);
-    }
     const key = nodeKey(node);
     const previous = items.get(key);
     if (previous) (previous.members as DependencyGraphNode[]).push(node);
@@ -163,7 +162,9 @@ export function buildDependencyGraph(
         key,
         node: key.startsWith("node:") ? node : undefined,
         group: key.startsWith("group:")
-          ? groupRecords.get(node.groupId!)
+          ? groupRecords.get(
+              collapsedDependencyGroup(node, hierarchy, collapsed)!,
+            )
           : undefined,
         members: [node],
         x: 0,
@@ -221,17 +222,25 @@ export function buildDependencyGraph(
       for (const lower of current) {
         const b = order.boxes.get(lower.key)!;
         if (a.y + a.height > b.y) continue;
-        const upperGroup = upper.node?.groupId ?? upper.group?.id;
-        const lowerGroup = lower.node?.groupId ?? lower.group?.id;
-        // Separate whole group boundaries from other groups/resources as well.
+        const upperPath =
+          hierarchy.paths.get(
+            (upper.node ? upper.node.groupId : upper.group?.id)!,
+          ) ?? [];
+        const lowerPath =
+          hierarchy.paths.get(
+            (lower.node ? lower.node.groupId : lower.group?.id)!,
+          ) ?? [];
+        // Separate the outermost non-shared containers, not only immediate groups.
+        const upperGroup = upperPath.find((id) => !lowerPath.includes(id));
+        const lowerGroup = lowerPath.find((id) => !upperPath.includes(id));
         const left =
-          upperGroup !== lowerGroup && upperGroup
-            ? (order.groupBounds.get(upperGroup) ?? a)
-            : a;
+          upperGroup === undefined
+            ? a
+            : (order.groupBounds.get(upperGroup) ?? a);
         const right =
-          upperGroup !== lowerGroup && lowerGroup
-            ? (order.groupBounds.get(lowerGroup) ?? b)
-            : b;
+          lowerGroup === undefined
+            ? b
+            : (order.groupBounds.get(lowerGroup) ?? b);
         if (left.x < right.x + right.width && right.x < left.x + left.width)
           constraints.push({
             start: a.y,
@@ -249,26 +258,12 @@ export function buildDependencyGraph(
       item.x = x.get(box.x)!;
       item.y = y.get(box.y)!;
     }
-    const clusters = [...groupRecords.values()]
-      .sort(compare)
-      .filter((group) => !collapsed.has(group.id) && memberships.has(group.id))
-      .map((group) => {
-        const members = [...items.values()].filter(
-          (item) => item.node?.groupId === group.id,
-        );
-        const x = Math.min(...members.map((item) => item.x)) - 16;
-        const y = Math.min(...members.map((item) => item.y)) - 44;
-        return {
-          group,
-          members: memberships.get(group.id)!,
-          x,
-          y,
-          width:
-            Math.max(...members.map((item) => item.x + item.width)) - x + 16,
-          height:
-            Math.max(...members.map((item) => item.y + item.height)) - y + 16,
-        };
-      });
+    const clusters = dependencyGraphClusters(
+      current,
+      hierarchy,
+      collapsed,
+      zoom,
+    );
     return {
       items: [...items.values()],
       connections: [...connections.values()],
@@ -276,11 +271,11 @@ export function buildDependencyGraph(
       unavailable,
       width: Math.max(
         order.width,
-        ...current.map((item) => item.x + item.width + 64),
+        ...[...current, ...clusters].map((item) => item.x + item.width + 64),
       ),
       height: Math.max(
         order.height,
-        ...current.map((item) => item.y + item.height + 64),
+        ...[...current, ...clusters].map((item) => item.y + item.height + 64),
       ),
     };
   }
@@ -295,13 +290,25 @@ export function buildDependencyGraph(
   });
   graph.setDefaultEdgeLabel(() => ({}));
   for (const group of [...groupRecords.values()].sort(compare)) {
-    if (!collapsed.has(group.id) && memberships.has(group.id))
+    if (
+      !hierarchy.paths.get(group.id)!.some((id) => collapsed.has(id)) &&
+      hierarchy.members.has(group.id)
+    )
       graph.setNode(`cluster:${group.id}`, { label: group.label });
+  }
+  for (const group of [...groupRecords.values()].sort(compare)) {
+    if (
+      graph.hasNode(`cluster:${group.id}`) &&
+      group.parentId !== undefined &&
+      graph.hasNode(`cluster:${group.parentId}`)
+    )
+      graph.setParent(`cluster:${group.id}`, `cluster:${group.parentId}`);
   }
   for (const item of items.values()) {
     graph.setNode(item.key, { width: item.width, height: item.height });
-    if (item.node?.groupId && graph.hasNode(`cluster:${item.node.groupId}`))
-      graph.setParent(item.key, `cluster:${item.node.groupId}`);
+    const parentId = item.node ? item.node.groupId : item.group?.parentId;
+    if (parentId !== undefined && graph.hasNode(`cluster:${parentId}`))
+      graph.setParent(item.key, `cluster:${parentId}`);
   }
   for (const connection of connections.values())
     graph.setEdge(connection.source, connection.target, {}, connection.key);
@@ -317,27 +324,39 @@ export function buildDependencyGraph(
       w: connection.target,
       name: connection.key,
     }).points;
-  const clusters = [...groupRecords.values()]
-    .sort(compare)
-    .filter((group) => graph.hasNode(`cluster:${group.id}`))
-    .map((group) => {
-      const box = graph.node(`cluster:${group.id}`);
-      return {
-        group,
-        members: memberships.get(group.id)!,
-        x: box.x - box.width / 2,
-        y: box.y - box.height / 2,
-        width: box.width,
-        height: box.height,
-      };
-    });
+  const clusters = dependencyGraphClusters(
+    [...items.values()],
+    hierarchy,
+    collapsed,
+    zoom,
+  );
+  // Nested headings may extend above Dagre's leaf boxes. Reserve their full
+  // bounds in the initial coordinate system, before that order is frozen.
+  const dx = Math.max(0, 28 - Math.min(...clusters.map((box) => box.x)));
+  const dy = Math.max(0, 28 - Math.min(...clusters.map((box) => box.y)));
+  for (const box of [...items.values(), ...clusters]) {
+    box.x += dx;
+    box.y += dy;
+  }
+  for (const connection of connections.values())
+    connection.points = connection.points.map((point) => ({
+      x: point.x + dx,
+      y: point.y + dy,
+    }));
+
   return {
     items: [...items.values()],
     connections: [...connections.values()],
     clusters,
     unavailable,
-    width: graph.graph().width ?? 0,
-    height: graph.graph().height ?? 0,
+    width: Math.max(
+      graph.graph().width ?? 0,
+      ...[...items.values(), ...clusters].map((box) => box.x + box.width + 28),
+    ),
+    height: Math.max(
+      graph.graph().height ?? 0,
+      ...[...items.values(), ...clusters].map((box) => box.y + box.height + 28),
+    ),
   };
 }
 

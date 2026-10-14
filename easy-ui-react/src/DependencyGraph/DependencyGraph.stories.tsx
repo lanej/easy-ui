@@ -1,5 +1,10 @@
 import { realWorldNodes, realWorldEdges } from "./DependencyGraph.realWorld";
 import React from "react";
+import {
+  subgraphGroups,
+  subgraphNodes,
+  subgraphEdges,
+} from "./DependencyGraph.groups.fixtures";
 import DatabaseIcon from "@easypost/easy-ui-icons/Database";
 import StorageIcon from "@easypost/easy-ui-icons/Storage";
 import HubIcon from "@easypost/easy-ui-icons/Hub";
@@ -389,5 +394,30 @@ export const CategoryPalette: Story = {
     groups: [],
     defaultSelection: { type: "node", id: "palette" },
     height: 280,
+  },
+};
+
+export const GroupedSubgraphs: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Grouped source dependencies",
+    nodes: subgraphNodes,
+    edges: subgraphEdges,
+    groups: subgraphGroups
+      .filter((group) => group.id !== "production")
+      .map(({ id, label, description }) => ({ id, label, description })),
+    showDetails: false,
+    height: 650,
+  },
+};
+export const NestedSubgraphs: Story = {
+  args: { ...GroupedSubgraphs.args, groups: subgraphGroups },
+};
+export const CollapsedSubgraphs: Story = {
+  args: {
+    ...NestedSubgraphs.args,
+    defaultCollapsedGroupIds: ["production", "runtime"],
+    showDetails: true,
+    defaultSelection: { type: "group", id: "production" },
   },
 };

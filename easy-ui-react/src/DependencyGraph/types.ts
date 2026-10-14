@@ -51,6 +51,7 @@ export type DependencyGraphNode = {
   changeSummary?: string;
   /** Exact supplied field changes. Easy UI does not compute a diff from snapshots. */
   changes?: readonly DependencyGraphPropertyChange[];
+  /** Explicit containing group. Nodes without a supplied group definition remain ungrouped. */
   groupId?: string;
 };
 
@@ -77,10 +78,13 @@ export type DependencyGraphEdge = {
   targetAttributePath?: string;
 };
 
+/** A labeled subgraph. Containment does not imply dependency or execution order. */
 export type DependencyGraphGroup = {
   id: string;
   label: string;
   description?: string;
+  /** Optional containing group. Parents must exist and containment must be acyclic. */
+  parentId?: string;
 };
 
 export type DependencyGraphSelection =
@@ -113,7 +117,7 @@ export type DependencyGraphProps = {
   accessibilityLabel?: string;
   nodes: readonly DependencyGraphNode[];
   edges: readonly DependencyGraphEdge[];
-  /** Flat visual groups; applications choose root/module boundaries and labels. */
+  /** Explicit, optionally nested subgraphs; applications choose boundaries and membership. */
   groups?: readonly DependencyGraphGroup[];
   selection?: DependencyGraphSelection;
   defaultSelection?: DependencyGraphSelection;

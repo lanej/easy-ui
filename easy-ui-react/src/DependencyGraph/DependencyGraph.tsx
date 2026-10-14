@@ -32,6 +32,12 @@ import type {
   DependencyGraphView,
 } from "./types";
 import styles from "./DependencyGraph.module.scss";
+import {
+  collapsedDependencyGroup,
+  dependencyGraphClusters,
+  dependencyGroupError,
+  dependencyGroupHierarchy,
+} from "./groups";
 
 const EMPTY_GROUPS: readonly DependencyGraphGroup[] = [];
 
@@ -154,20 +160,25 @@ export function DependencyGraph({
     if (controlledCollapsed === undefined) setLocalCollapsed([...next]);
     onCollapsedGroupIdsChange?.(next);
   };
-  const duplicate = [
-    ["resource", nodes],
-    ["relationship", edges],
-    ["group", groups],
-  ].flatMap(([kind, records]) => {
-    const seen = new Set<string>();
-    return (records as readonly { id: string }[])
-      .filter((record) => {
-        const exists = seen.has(record.id);
-        seen.add(record.id);
-        return exists;
-      })
-      .map((record) => `Duplicate ${kind} ID: ${record.id}`);
-  })[0];
+  const duplicate =
+    [
+      ["resource", nodes],
+      ["relationship", edges],
+      ["group", groups],
+    ].flatMap(([kind, records]) => {
+      const seen = new Set<string>();
+      return (records as readonly { id: string }[])
+        .filter((record) => {
+          const exists = seen.has(record.id);
+          seen.add(record.id);
+          return exists;
+        })
+        .map((record) => `Duplicate ${kind} ID: ${record.id}`);
+    })[0] ?? dependencyGroupError(groups);
+  const hierarchy = useMemo(
+    () => dependencyGroupHierarchy(nodes, duplicate ? [] : groups),
+    [nodes, groups, duplicate],
+  );
   const layoutKey = dependencyGraphLayoutKey(nodes, groups, layoutRevision);
   const newLayout = () => ({
     key: layoutKey,
@@ -361,29 +372,8 @@ export function DependencyGraph({
     return () => observer.disconnect();
   }, [renderedNodeIds, status, duplicate, nodes, expandedChanges, density]);
   const clusters = useMemo(
-    () =>
-      (model?.clusters ?? []).flatMap((cluster) => {
-        const members = items.filter(
-          (item) => item.node?.groupId === cluster.group.id,
-        );
-        if (!members.length) return [];
-        const x = Math.min(...members.map((item) => item.x)) - 16;
-        const y =
-          Math.min(...members.map((item) => item.y)) -
-          Math.max(44, 25 / zoom + 8);
-        return [
-          {
-            ...cluster,
-            x,
-            y,
-            width:
-              Math.max(...members.map((item) => item.x + item.width)) - x + 16,
-            height:
-              Math.max(...members.map((item) => item.y + item.height)) - y + 16,
-          },
-        ];
-      }),
-    [model, items, zoom],
+    () => dependencyGraphClusters(items, hierarchy, new Set(collapsed), zoom),
+    [items, hierarchy, collapsed, zoom],
   );
   const rawConnections = useMemo(
     () =>
@@ -544,8 +534,11 @@ export function DependencyGraph({
     const node = nodes.find((record) => record.id === id);
     if (!node) return;
     if (!branches.visible.has(id)) changeCollapsedNodes([]);
-    if (node.groupId && collapsed.includes(node.groupId))
-      changeCollapsed(collapsed.filter((groupId) => groupId !== node.groupId));
+    const ancestors = hierarchy.paths.get(node.groupId!) ?? [];
+    if (ancestors.some((groupId) => collapsed.includes(groupId)))
+      changeCollapsed(
+        collapsed.filter((groupId) => !ancestors.includes(groupId)),
+      );
     changeView({ scope: "neighbors", nodeId: id, depth: 1 });
     select({ type: "node", id });
     setQuery("");
@@ -856,6 +849,7 @@ export function DependencyGraph({
                     {clusters.map((cluster) => (
                       <div
                         key={cluster.group.id}
+                        data-graph-group={cluster.group.id}
                         className={styles.cluster}
                         style={{
                           left: rem(cluster.x),
@@ -1017,6 +1011,7 @@ export function DependencyGraph({
                           data-change={node?.change}
                           data-node-kind={node?.kind}
                           data-group={!!item.group || undefined}
+                          data-graph-collapsed-group={item.group?.id}
                           data-selected={selected || undefined}
                           data-graph-item-card={item.key}
                           data-graph-resource-card={node?.id}
@@ -1239,8 +1234,11 @@ export function DependencyGraph({
           )}
           {selectedNode &&
             (!visible.has(selectedNode.id) ||
-              (selectedNode.groupId &&
-                collapsed.includes(selectedNode.groupId))) && (
+              collapsedDependencyGroup(
+                selectedNode,
+                hierarchy,
+                new Set(collapsed),
+              ) !== undefined) && (
               <button
                 type="button"
                 className={styles.textButton}
@@ -1250,7 +1248,7 @@ export function DependencyGraph({
               </button>
             )}
         </div>
-        {showDetails && (
+        {showDetails && !duplicate && (
           <DependencyGraphDetails
             nodes={nodes}
             edges={edges}
