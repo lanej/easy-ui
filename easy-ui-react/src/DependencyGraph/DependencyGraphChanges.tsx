@@ -129,7 +129,12 @@ export function DependencyGraphChanges({
       )}
       {presentation === "summary" ? (
         <>
-          <p>{node.changeSummary ?? summaries[node.change ?? "unknown"]}</p>
+          <p>
+            {node.changeSummary ??
+              (node.change
+                ? summaries[node.change]
+                : "Resource change was not supplied.")}
+          </p>
           {!!counts.length && (
             <p className={styles.muted}>{counts.join(" · ")}</p>
           )}

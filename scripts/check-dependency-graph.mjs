@@ -102,6 +102,9 @@ try {
         "embedded-inspector",
         "risk-annotations",
         "collapsible-branches",
+        "source-only-evidence",
+        "source-only-evidence-inspector",
+        "explicit-change-evidence",
         "partial-evidence",
         "cyclic-relationships",
         "thousand-resources",
@@ -168,6 +171,9 @@ try {
             "attribute-dependencies",
             "expanded-attribute-differences",
             "collapsible-branches",
+            "source-only-evidence",
+            "source-only-evidence-inspector",
+            "explicit-change-evidence",
           ].includes(story) &&
           width !== 320
         )
@@ -764,7 +770,7 @@ try {
           return {
             id: card.dataset.graphResourceCard,
             height: card.getBoundingClientRect().height,
-            sameRow: Math.abs((l.top + l.bottom - s.top - s.bottom) / 2) < 1,
+            identityFirst: s.top >= l.bottom - 1,
             controls: [...card.querySelectorAll("button")].every((button) => {
               const r = button.getBoundingClientRect();
               return r.width >= 24 && r.height >= 24;
@@ -786,12 +792,12 @@ try {
     assert.ok(
       compactCards.every(
         (card) =>
-          card.sameRow &&
+          card.identityFirst &&
           card.controls &&
           card.compactControls &&
           card.readableValues,
       ),
-      "Dense cards preserve single-row identity/status, readable values and usable targets",
+      "Dense cards prioritize identity above status while preserving readable values and usable targets",
     );
     assert.ok(
       compactCards.find((card) => card.id === "api").height > 224,
@@ -839,10 +845,10 @@ try {
     );
     assert.notEqual(
       await modified
-        .locator("path[marker-end]")
+        .locator("path:last-of-type")
         .evaluate((el) => getComputedStyle(el).stroke),
       await block
-        .locator("path[marker-end]")
+        .locator("path:last-of-type")
         .evaluate((el) => getComputedStyle(el).stroke),
       "Modified and unchanged links have distinct colors",
     );
@@ -1365,3 +1371,6 @@ try {
   );
   await browser.close();
 }
+
+await import("./check-dependency-graph-source.mjs");
+await import("./check-dependency-graph-heading-routing.mjs");

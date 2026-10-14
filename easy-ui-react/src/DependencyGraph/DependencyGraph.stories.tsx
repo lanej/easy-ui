@@ -1,4 +1,10 @@
+import { realWorldNodes, realWorldEdges } from "./DependencyGraph.realWorld";
 import React from "react";
+import {
+  subgraphGroups,
+  subgraphNodes,
+  subgraphEdges,
+} from "./DependencyGraph.groups.fixtures";
 import DatabaseIcon from "@easypost/easy-ui-icons/Database";
 import StorageIcon from "@easypost/easy-ui-icons/Storage";
 import HubIcon from "@easypost/easy-ui-icons/Hub";
@@ -281,5 +287,137 @@ export const AttributeDependencies: Story = {
     defaultExpandedChangeNodeIds: ["database", "api"],
     defaultSelection: { type: "node", id: "api" },
     height: 780,
+  },
+};
+
+export const SourceOnlyEvidence: Story = {
+  args: {
+    title: undefined,
+    description: undefined,
+    nodes: realWorldNodes,
+    edges: realWorldEdges,
+    groups: [],
+    showDetails: false,
+    height: 520,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Source-only evidence with long addresses, distinct unresolved inputs and outputs, one-dependent chains, and disconnected components. Source modified is not a plan action. Applications supply the display name, type, address, and unresolved classification.",
+      },
+    },
+  },
+};
+
+export const SourceOnlyEvidenceInspector: Story = {
+  ...SourceOnlyEvidence,
+  args: {
+    ...SourceOnlyEvidence.args,
+    showDetails: true,
+    defaultSelection: { type: "node", id: "external:backend_bucket" },
+  },
+};
+
+export const ExplicitChangeEvidence: Story = {
+  args: {
+    title: undefined,
+    groups: [],
+    nodes: [
+      {
+        id: "absent",
+        label: "No plan supplied",
+        categories: [{ label: "Source modified" }],
+      },
+      {
+        id: "unknown",
+        label: "Explicitly unknown",
+        change: "unknown",
+        categories: [{ label: "Source unchanged" }],
+      },
+      { id: "unchanged", label: "Explicitly unchanged", change: "unchanged" },
+      { id: "update", label: "Planned update", change: "update" },
+    ],
+    edges: [],
+    showDetails: false,
+    height: 400,
+  },
+};
+
+/** The application chooses these colors; the graph does not interpret labels. */
+export const CategoryColors: Story = {
+  ...SourceOnlyEvidence,
+  args: {
+    ...SourceOnlyEvidence.args,
+    nodes: realWorldNodes.map((node) => ({
+      ...node,
+      categories: node.categories?.map((category) =>
+        category.label === "Source modified"
+          ? { ...category, variant: "primary" as const }
+          : category,
+      ),
+    })),
+    showDetails: true,
+    defaultSelection: { type: "node", id: "google_sql_user.pipeline" },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Caller-selected blue for Source modified; categories without a variant, such as Source unchanged, remain neutral. Colors are repeated in the inspector and do not imply plan actions or risk.",
+      },
+    },
+  },
+};
+
+export const CategoryPalette: Story = {
+  args: {
+    title: undefined,
+    nodes: [
+      {
+        id: "palette",
+        label: "Caller-selected categories",
+        categories: [
+          { label: "Neutral" },
+          { label: "Primary", variant: "primary" },
+          { label: "Secondary", variant: "secondary" },
+          { label: "Success", variant: "success" },
+          { label: "Warning", variant: "warning" },
+          { label: "Danger", variant: "danger" },
+          { label: "Gray", variant: "gray" },
+          { label: "Black", variant: "black" },
+          { label: "Inverse", variant: "inverse" },
+        ],
+      },
+    ],
+    edges: [],
+    groups: [],
+    defaultSelection: { type: "node", id: "palette" },
+    height: 280,
+  },
+};
+
+export const GroupedSubgraphs: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Grouped source dependencies",
+    nodes: subgraphNodes,
+    edges: subgraphEdges,
+    groups: subgraphGroups
+      .filter((group) => group.id !== "production")
+      .map(({ id, label, description }) => ({ id, label, description })),
+    showDetails: false,
+    height: 650,
+  },
+};
+export const NestedSubgraphs: Story = {
+  args: { ...GroupedSubgraphs.args, groups: subgraphGroups },
+};
+export const CollapsedSubgraphs: Story = {
+  args: {
+    ...NestedSubgraphs.args,
+    defaultCollapsedGroupIds: ["production", "runtime"],
+    showDetails: true,
+    defaultSelection: { type: "group", id: "production" },
   },
 };

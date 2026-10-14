@@ -11,7 +11,9 @@ import type {
 } from "./types";
 import { dependencyChangeLabels } from "./model";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
+import { DependencyGraphCategories } from "./DependencyGraphCategories";
 import styles from "./DependencyGraph.module.scss";
+import { dependencyGroupHierarchy } from "./groups";
 
 export type DependencyGraphDetailsProps = {
   nodes: readonly DependencyGraphNode[];
@@ -46,9 +48,9 @@ export function dependencyGraphDetailsContext({
       : undefined;
   const members = new Set(
     group
-      ? nodes
-          .filter((record) => record.groupId === group.id)
-          .map((record) => record.id)
+      ? (
+          dependencyGroupHierarchy(nodes, groups).members.get(group.id) ?? []
+        ).map((record) => record.id)
       : [],
   );
   const relationships = edges.filter((edge) =>
@@ -67,7 +69,13 @@ export function dependencyGraphDetailsContext({
 
 /** Can live beside an application-owned inspector using the same controlled selection. */
 export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
-  const { selection, nodes, onSelectionChange, renderDetails } = props;
+  const {
+    selection,
+    nodes,
+    groups = [],
+    onSelectionChange,
+    renderDetails,
+  } = props;
   const contentId = useId();
   const context = dependencyGraphDetailsContext(props);
   const records = new Map(nodes.map((node) => [node.id, node]));
@@ -121,18 +129,43 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
           <>
             {context.node && (
               <>
-                <span
-                  className={styles.change}
-                  data-change={context.node.change ?? "unknown"}
-                >
-                  {dependencyChangeLabels[context.node.change ?? "unknown"]}
-                </span>
+                {context.node.kind === "unresolved" && (
+                  <p className={styles.referenceLabel}>Unresolved reference</p>
+                )}
+                {context.node.typeLabel && (
+                  <p className={styles.detailDescription}>
+                    {context.node.typeLabel}
+                  </p>
+                )}
+                <div className={styles.nodeMetadata}>
+                  <span
+                    className={
+                      context.node.change ? styles.change : styles.muted
+                    }
+                    data-change={context.node.change}
+                  >
+                    {context.node.change
+                      ? dependencyChangeLabels[context.node.change]
+                      : "Change not supplied"}
+                  </span>
+                  <DependencyGraphCategories
+                    categories={context.node.categories}
+                  />
+                </div>
                 {context.node.description && (
                   <p className={styles.detailDescription}>
                     {context.node.description}
                   </p>
                 )}
-                <code className={styles.identifier}>{context.node.id}</code>
+                <code className={styles.identifier}>
+                  {context.node.address ?? context.node.id}
+                </code>
+                {context.node.address &&
+                  context.node.address !== context.node.id && (
+                    <span className={styles.identifier}>
+                      Record ID: {context.node.id}
+                    </span>
+                  )}
                 <DependencyGraphChanges
                   key={context.node.id}
                   node={context.node}
@@ -148,23 +181,27 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
             )}
             {context.group && (
               <div className={styles.members}>
-                {nodes
-                  .filter((node) => node.groupId === context.group!.id)
-                  .map((node) => (
-                    <button
-                      key={node.id}
-                      type="button"
-                      className={styles.relationship}
-                      onClick={() =>
-                        onSelectionChange({ type: "node", id: node.id })
-                      }
-                    >
-                      <strong>{node.label}</strong>
-                      <span>
-                        {dependencyChangeLabels[node.change ?? "unknown"]}
-                      </span>
-                    </button>
-                  ))}
+                {(
+                  dependencyGroupHierarchy(nodes, groups).members.get(
+                    context.group.id,
+                  ) ?? []
+                ).map((node) => (
+                  <button
+                    key={node.id}
+                    type="button"
+                    className={styles.relationship}
+                    onClick={() =>
+                      onSelectionChange({ type: "node", id: node.id })
+                    }
+                  >
+                    <strong>{node.label}</strong>
+                    <span>
+                      {node.change
+                        ? dependencyChangeLabels[node.change]
+                        : "Change not supplied"}
+                    </span>
+                  </button>
+                ))}
               </div>
             )}
             {renderDetails?.(context)}

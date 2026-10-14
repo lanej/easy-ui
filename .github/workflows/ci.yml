@@ -70,6 +70,8 @@ jobs:
           node scripts/check-chart-catalog.mjs
           node scripts/check-proportion-bar.mjs
           node scripts/check-dependency-graph.mjs
+          node scripts/check-dependency-graph-arrowheads.mjs
+          node scripts/check-dependency-graph-groups.mjs
           node scripts/check-storybook-docs.mjs
           node scripts/check-token-browser.mjs
           node scripts/check-theme-toggle.mjs

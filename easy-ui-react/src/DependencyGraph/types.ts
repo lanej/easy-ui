@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { BadgeVariant } from "../Badge/Badge";
 import type { IconSymbol } from "../types";
 
 export type DependencyGraphChange =
@@ -21,21 +22,36 @@ export type DependencyGraphPropertyChange = { path: string } & (
 
 export type DependencyGraphChangePresentation = "summary" | "diff";
 
+/** A caller-owned label with an optional theme variant. Omitted variants are neutral. */
+export type DependencyGraphCategory = {
+  readonly label: string;
+  readonly variant?: "neutral" | BadgeVariant;
+};
+
 export type DependencyGraphNode = {
   id: string;
   label: string;
+  /** Optional secondary type/context. Supply the display name in label; no identifier parsing is performed. */
+  typeLabel?: string;
+  /** Full caller-owned address for inspection and search; id remains the stable graph identity. */
+  address?: string;
+  /** Explicit evidence boundary. Unresolved references remain distinct nodes with their original edges. */
+  kind?: "resource" | "unresolved";
   /** Resource type, address, or other caller-owned context. */
   description?: string;
+  /** Caller-owned category labels and optional theme variants. Never interpreted as plan actions or risk. */
+  categories?: readonly DependencyGraphCategory[];
   /** Caller-supplied resource type symbol, using Easy UI's normal Icon contract. */
   icon?: IconSymbol;
   /** Accessible resource type label, such as Database or Authentication. */
   iconLabel?: string;
-  /** Omitted change information is unknown, not proof of no change. */
+  /** Omitted means not supplied and renders no card badge. Explicit unknown remains distinct from unchanged. */
   change?: DependencyGraphChange;
   /** Caller-owned explanation of this resource's proposed changes. */
   changeSummary?: string;
   /** Exact supplied field changes. Easy UI does not compute a diff from snapshots. */
   changes?: readonly DependencyGraphPropertyChange[];
+  /** Explicit containing group. Nodes without a supplied group definition remain ungrouped. */
   groupId?: string;
 };
 
@@ -62,10 +78,13 @@ export type DependencyGraphEdge = {
   targetAttributePath?: string;
 };
 
+/** A labeled subgraph. Containment does not imply dependency or execution order. */
 export type DependencyGraphGroup = {
   id: string;
   label: string;
   description?: string;
+  /** Optional containing group. Parents must exist and containment must be acyclic. */
+  parentId?: string;
 };
 
 export type DependencyGraphSelection =
@@ -98,7 +117,7 @@ export type DependencyGraphProps = {
   accessibilityLabel?: string;
   nodes: readonly DependencyGraphNode[];
   edges: readonly DependencyGraphEdge[];
-  /** Flat visual groups; applications choose root/module boundaries and labels. */
+  /** Explicit, optionally nested subgraphs; applications choose boundaries and membership. */
   groups?: readonly DependencyGraphGroup[];
   selection?: DependencyGraphSelection;
   defaultSelection?: DependencyGraphSelection;

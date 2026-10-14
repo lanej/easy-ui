@@ -1,10 +1,15 @@
 @use "../styles/common" as *;
 
+.clusterHeading > button {
+  pointer-events: auto;
+}
+
 .resourceIcon > span {
   inline-size: max(1rem, calc(14px / var(--dependency-graph-zoom)));
   block-size: max(1rem, calc(14px / var(--dependency-graph-zoom)));
 }
 
+.branchControls button,
 .cardControls button,
 .groupExpand button,
 .clusterHeading button {
@@ -119,6 +124,7 @@
     }
   }
 }
+.branchControls button > span:last-child,
 .cardControls button > span:last-child,
 .groupExpand button > span:last-child,
 .clusterHeading button > span:last-child {
@@ -165,10 +171,15 @@
   transform-origin: top left;
 }
 .cluster {
+  --dependency-graph-group-surface: #{design-token("color.neutral.100")};
   position: absolute;
-  border: 1px dashed design-token("color.neutral.300");
+  border: round(up, max(1px, calc(1px / var(--dependency-graph-zoom, 1))), 1px)
+    dashed design-token("color.neutral.600");
   border-radius: 8px;
-  background: design-token("color.neutral.100");
+  background: var(--dependency-graph-group-surface);
+  &[data-graph-group-layer="1"] {
+    --dependency-graph-group-surface: #{design-token("color.neutral.050")};
+  }
 }
 .clusterHeading {
   position: absolute;
@@ -181,7 +192,9 @@
   gap: 12px;
   white-space: nowrap;
   font-size: 0.8125rem;
-  background: design-token("color.neutral.100");
+  // Empty heading space is a routing corridor, not an opaque input overlay.
+  background: transparent;
+  pointer-events: none;
   > button:first-child {
     min-inline-size: 0;
     overflow: hidden;
@@ -206,14 +219,14 @@
 }
 .edgeLine {
   fill: none;
-  stroke: design-token("color.neutral.500");
+  stroke: design-token("color.neutral.600");
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
   pointer-events: none;
 }
 .edges marker {
-  fill: design-token("color.neutral.500");
+  fill: design-token("color.neutral.600");
 }
 .connection[data-dashed="true"] .edgeLine {
   stroke-dasharray: 6 5;
@@ -224,16 +237,20 @@
   stroke: design-token("color.primary.500");
   stroke-width: 3;
 }
+// Round up before scaling: browsers snap fractional CSS borders down, which
+// otherwise makes resource/group outlines thinner than one screen pixel.
 .node {
   position: absolute;
-  border: 1px solid design-token("color.neutral.300");
+  border: round(up, max(1px, calc(1px / var(--dependency-graph-zoom, 1))), 1px)
+    solid design-token("color.neutral.600");
   border-radius: 8px;
   background: design-token("color.neutral.000");
   box-shadow: 0 2px 4px rgb(0 0 0 / 4%);
   overflow: visible;
   &[data-selected="true"] {
     border-color: design-token("color.primary.500");
-    box-shadow: 0 0 0 2px design-token("color.primary.500");
+    box-shadow: 0 0 0 max(2px, calc(2px / var(--dependency-graph-zoom, 1)))
+      design-token("color.primary.500");
   }
 }
 .nodeSelect {
@@ -253,6 +270,15 @@
   cursor: pointer;
   &:hover {
     background: design-token("color.primary.050");
+  }
+}
+.cardHeading {
+  display: flex;
+  align-items: stretch;
+  min-inline-size: 0;
+  .nodeSelect {
+    flex: 1;
+    min-inline-size: 0;
   }
 }
 .node[data-graph-resource-card] .nodeSelect {
@@ -298,6 +324,12 @@
   min-inline-size: 0;
   inline-size: auto;
 }
+.node[data-graph-resource-card] .nodeLabel {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
 .nodeDescription {
   display: block;
   inline-size: 100%;
@@ -307,14 +339,21 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.change {
+.change,
+.category,
+.referenceLabel {
   display: inline-block;
-  border-radius: 4px;
+  border-radius: 999px;
   padding: 1px 6px;
   background: design-token("color.neutral.100");
   color: design-token("color.neutral.700");
   font-size: 0.75rem;
   font-weight: 600;
+  line-height: 1.4;
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+}
+.change {
   white-space: nowrap;
   &[data-change="create"] {
     background: design-token("color.positive.100");
@@ -366,6 +405,7 @@
   font-size: 0.75rem;
   cursor: pointer;
 }
+.node .branchControls button,
 .node .cardControls button,
 .node .groupExpand button {
   padding: 3px;
@@ -612,6 +652,14 @@
   }
 }
 @media (forced-colors: active) {
+  .node,
+  .cluster {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+  .clusterHeading {
+    background: Canvas;
+  }
   .node[data-selected="true"] {
     outline: 2px solid Highlight;
   }
@@ -662,7 +710,82 @@
   }
 }
 
+// Keep disclosure beside the header, not in a footer that repeats visible edges.
+.node[data-group="true"] .cardHeading {
+  block-size: 100%;
+}
+.branchControls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  align-self: flex-start;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 4px 4px 4px 0;
+}
+.hiddenCount {
+  font-size: max(0.75rem, calc(12px / var(--dependency-graph-zoom)));
+  color: design-token("color.neutral.700");
+  white-space: nowrap;
+}
+.middleLabel {
+  display: flex;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.labelPrefix {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.labelSuffix {
+  flex: 0 0 auto;
+  max-inline-size: 65%;
+  overflow: hidden;
+  display: flex;
+  justify-content: flex-end;
+}
+.labelSuffixText {
+  flex-shrink: 0;
+}
+.nodeMetadata {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  font-size: 0.75rem;
+  color: design-token("color.neutral.700");
+}
+.nodeType {
+  display: block;
+  max-inline-size: 100%;
+  font-size: 0.75rem;
+  color: design-token("color.neutral.700");
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+.referenceLabel {
+  color: design-token("color.neutral.700");
+  font-size: 0.75rem;
+}
+.node[data-node-kind="unresolved"] {
+  // Evidence boundaries use a dashed outline, not a canvas-colored card.
+  border-style: dashed;
+}
+
 .root[data-graph-density="overview"] {
+  .nodeType {
+    display: none;
+  }
+  .referenceLabel {
+    font-size: max(0.75rem, calc(10px / var(--dependency-graph-zoom)));
+  }
+
   .nodeDescription,
   .controlCaption {
     display: none;
@@ -670,7 +793,8 @@
   .node[data-graph-resource-card] .nodeLabel {
     font-size: max(0.875rem, calc(11px / var(--dependency-graph-zoom)));
   }
-  .change {
+  .change,
+  .category {
     font-size: max(0.75rem, calc(10px / var(--dependency-graph-zoom)));
   }
 }

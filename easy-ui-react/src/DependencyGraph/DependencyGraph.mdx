@@ -28,6 +28,54 @@ import { DependencyGraph } from "@easypost/easy-ui/DependencyGraph";
 
 An arrow runs **from a dependency to its dependent**: `subnet → api` means the API depends on the subnet. Translate reverse-oriented Terraform/OpenTofu relationships in the application. Easy UI does not infer resources, edges, risk, execution order, or operational blast radius.
 
+## Explicit subgraphs
+
+Supply `groups` and each resource's `groupId` to place related resources in a
+labeled subgraph. Membership constrains layout; it is not a category label and
+never creates dependency edges. Nodes can have cross-group edges or no edges.
+Resources without a supplied group definition remain ungrouped. Empty groups
+are omitted.
+
+```tsx
+<DependencyGraph
+  groups={[
+    { id: "production", label: "Production" },
+    { id: "runtime", label: "Runtime module", parentId: "production" },
+    { id: "database", label: "Database module", parentId: "production" },
+  ]}
+  nodes={[
+    { id: "api", label: "API service", groupId: "runtime" },
+    { id: "db", label: "Database", groupId: "database" },
+    { id: "image", label: "Image input" },
+  ]}
+  edges={[
+    { id: "db-api", source: "db", target: "api" },
+    { id: "image-api", source: "image", target: "api" },
+  ]}
+/>
+```
+
+`parentId` optionally nests a group. Each group has at most one parent, which
+must be supplied; self-parenting and parent cycles produce a visible input
+error. Nodes have one direct group. Parent groups include all descendant
+resources, even when they have no direct members. Easy UI does not parse group
+membership from resource addresses.
+
+Collapsing a parent replaces its entire subtree with one group card. A nonzero change count reflects supplied operations or field differences; missing change data never becomes a zero-change claim. Internal
+relationships remain in group details; crossing relationships retain their
+original IDs, directions, states, and attribute evidence. Child disclosure state
+survives a parent collapse/expand cycle. Search and **Reveal selected resource**
+open every collapsed ancestor needed to show the resource.
+
+Changing group membership or `parentId` establishes a new layout. Disclosure,
+attribute expansion, and hidden edges preserve relative resource order; cards
+and boundaries may grow and adjust spacing to avoid overlap. Groups do not
+promise an execution order or imply operational risk.
+
+<Canvas of={Stories.GroupedSubgraphs} />
+<Canvas of={Stories.NestedSubgraphs} />
+<Canvas of={Stories.CollapsedSubgraphs} />
+
 ## Props
 
 <ArgTypes />
@@ -62,7 +110,7 @@ The following example uses illustrative caller-supplied findings. High risk is a
 
 <Canvas of={Stories.RiskAnnotations} />
 
-Groups are flat visual boundaries. The caller chooses root/module membership using `groupId`; expanded groups have a labeled boundary. Collapse replaces the member nodes with a summary. Connections between collapsed groups bundle the original edge IDs; selecting a bundle lists every supplied relationship separately. Relationships inside a collapsed group remain available in group details. Grouping never turns a module into a resource or fabricates an edge.
+Groups are explicit, optionally nested visual boundaries. The caller chooses root/module membership using `groupId`; expanded groups have a labeled boundary. Collapse replaces the member nodes with a summary. Connections between collapsed groups bundle the original edge IDs; selecting a bundle lists every supplied relationship separately. Relationships inside a collapsed group remain available in group details. Grouping never turns a module into a resource or fabricates an edge.
 
 <Canvas of={Stories.CollapsedModules} />
 
@@ -122,7 +170,7 @@ Tab focuses HTML node controls; arrow keys move to a resource in that direction,
 
 Supply `coverage` when the application knows whether relationship evidence is complete, partial, or unknown. Complete describes the supplied evidence scope; it does not establish complete runtime impact. Missing endpoints are exposed as unresolved relationships and remain selectable. An empty supplied relationship set is not presented as proof of isolation. Duplicate node, edge, or group IDs produce a visible input error.
 
-Use `variant="dashed"` on an edge for a caller-defined distinction and explain its meaning through `label`/`description`. Use `highlightedEdgeIds` for a caller-computed path. Missing change metadata is displayed as unknown. Create, update, replace, delete, and unchanged have explicit labels as well as theme-aware colors; change kinds are not risk scores.
+Use `variant="dashed"` on an edge for a caller-defined distinction and explain its meaning through `label`/`description`. Use `highlightedEdgeIds` for a caller-computed path. Missing resource change metadata is not supplied and renders no card badge; explicitly unknown resource operations retain a labeled marker. Create, update, replace, delete, and unchanged have explicit labels as well as theme-aware colors; change kinds are not risk scores.
 
 <Canvas of={Stories.PartialEvidence} />
 <Canvas of={Stories.CyclicRelationships} />
@@ -149,7 +197,7 @@ Supply `edge.change` as `"add"`, `"remove"`, `"update"`, `"unchanged"`, or `"unk
 
 Optionally supply `sourceAttributePath` and/or `targetAttributePath` on a relationship. Paths match exact supplied attribute-change paths. A visible expanded field receives the arrow at its row; hidden or missing fields, collapsed groups, and overview cards fall back to resource-level endpoints. Relationship details retain the supplied paths regardless of presentation. Easy UI does not infer which attribute creates a dependency.
 
-Connections use rounded orthogonal lanes around cards and group headings. Default ports follow neighboring resources' vertical order; parallel changes use separate ports/lanes. Cycles and self-links use exterior corridors. Reordering caller arrays does not change routes.
+Connections use rounded orthogonal lanes around cards and the measured group labels and disclosure controls. Empty space between a group label and its control remains a visible, selectable routing corridor; it is not treated as a wall across the subgraph. Label, font, zoom, and group-disclosure changes refresh those obstacles without moving the resource layout. Default ports follow neighboring resources' vertical order; parallel changes use separate ports/lanes. Cycles and self-links use exterior corridors. Reordering caller arrays does not change routes.
 
 ```tsx
 { id: "database-reference", source: "database", target: "api",
@@ -158,3 +206,87 @@ Connections use rounded orthogonal lanes around cards and group headings. Defaul
 ```
 
 <Canvas of={Stories.AttributeDependencies} />
+
+## Source-only evidence and resource identity
+
+<Canvas of={Stories.SourceOnlyEvidence} />
+
+Use `label` for the distinguishing display name, `typeLabel` for secondary type/context,
+and `address` for the complete inspectable address. These are caller-owned strings:
+Easy UI does not parse Terraform addresses or infer plan actions from source edits.
+An unsplit long label uses middle truncation and retains its full accessible name.
+
+Omitting `change` means **not supplied**: no card badge, and “Change not supplied” in
+selection details. Explicit `unknown` and `unchanged` remain different states, with
+labeled pills at detail zoom and compact `?` and `=` markers in the overview.
+Full accessible labels remain available at every zoom. Supplied field differences
+still expand even when no plan operation is supplied.
+
+Supply categories as objects with a required `label` and optional `variant`:
+`categories: [{ label: "Source unchanged" }]` is neutral by default.
+Use `{ label: "Source modified", variant: "primary" }` to choose a theme-aware color.
+Categories stay below the resource identity, remain searchable and accessible by
+label, and appear with the same color in selection details.
+They are independent of `change`: a source edit is not an inferred plan action,
+and a neutral category does not assert risk or safety. Text is never parsed from
+`description` or `changeSummary` to create a category. Keep labels short; multiple
+or longer categories wrap without taking width away from the resource name.
+
+Set `kind: "unresolved"` only for an explicitly identified evidence boundary. Give
+each reference its own stable `id` and meaningful `label`; identical display labels
+never combine nodes or edges. The compact dashed card shows “Unresolved”; its
+`description` remains available in the inspector. This is not a captured resource.
+
+Branch disclosure stays beside the selection button. Counts are shown when a
+branch is collapsed; attribute disclosure remains independent. Ungrouped graphs
+start with detail-scale spacing. Subsequent visibility and expansion changes keep
+the established resource order; expansion adds only the clearance it needs.
+
+### Converging relationships
+
+Paths reaching the same visible destination share their approach and one arrowhead,
+rather than occupying adjacent arrival lanes. Click a distinct branch to inspect
+that relationship; click the shared arrow to inspect all contributing relationships.
+Different visible attribute rows retain separate arrivals. Collapsing attributes
+can combine their arrivals at the resource header without changing resource order.
+Branch colors and dashed styles remain independent; a mixed-change shared arrow
+is neutral rather than inheriting the last-painted relationship's status.
+
+### Caller-selected category colors
+
+```tsx
+categories: [
+  { label: "Source unchanged" }, // Neutral by default.
+  { label: "Source modified", variant: "primary" },
+  { label: "Review requested", variant: "warning" },
+];
+```
+
+Categories accept `neutral` and the shared Badge variants: `primary`,
+`secondary`, `success`, `warning`, `danger`, `gray`, `black`, and `inverse`.
+Omitting `variant` remains neutral. Variants use the existing theme tokens;
+arbitrary CSS colors are not accepted. The application chooses the meaning:
+no label-to-color mapping, plan action, or risk assessment is inferred. Labels
+remain visible at every zoom and are used for search and accessible names.
+
+<Canvas of={Stories.CategoryColors} />
+<Canvas of={Stories.CategoryPalette} />
+
+### Surface contrast
+
+Every resource, including unresolved and unselected resources, has an opaque card
+surface and a contrasting boundary. Unresolved references retain their dashed
+outline and label; they do not disappear into the canvas. Nested groups alternate
+neutral surfaces with matching header backgrounds. Resource and group outlines
+retain at least one screen pixel at overview zoom. Selection adds emphasis without
+fading other resources. Browser checks cover text, pills, resource/group boundaries,
+hover, focus, selection, and minimum zoom in both themes, including forced colors.
+
+### Arrow approaches
+
+Arrowheads meet their destination boundary at the tip and use graph-space dimensions,
+so hover and selection do not enlarge the head. Routing reserves a straight approach
+for the head and visible shaft after the last rounded corner. Convergent arrivals
+paint that common shaft once; mixed relationship states remain neutral there.
+Near-level resource headers connect horizontally without a small terminal jog.
+Visible attribute ports and parallel relationship ports remain exact.
