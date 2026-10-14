@@ -1,0 +1,105 @@
+name: Verify collapsed group summaries
+on:
+  push:
+    branches: [fix/dependency-graph-real-world]
+    paths: [.github/workflows/dependency-group-summary-review.yml]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/dependency-graph-real-world
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Correct summary semantics
+        run: |
+          mkdir -p /tmp/group-summary
+          python3 - <<'PY'
+          from pathlib import Path
+          base = Path('easy-ui-react/src/DependencyGraph')
+          path = base / 'DependencyGraph.tsx'
+          text = path.read_text()
+          edits = [
+              ('                        (member) =>\n                          member.change &&\n                          member.change !== "unchanged" &&\n                          member.change !== "unknown",', '                        hasDependencyGraphChanges,'),
+              (': `${label}, ${item.members.length} resources, ${changed} changed`', ': `${label}, ${item.members.length} resources${changed ? `, ${changed} with supplied changes` : ""}`'),
+              ('                                    resources · {changed} changed', '                                    resources\n                                    {changed > 0 && ` · ${changed} with changes`}'),
+          ]
+          for old, new in edits:
+              assert text.count(old) == 1, old
+              text = text.replace(old, new)
+          path.write_text(text)
+          path = base / 'DependencyGraph.groups.test.tsx'
+          path.write_text(path.read_text() + '''
+          describe("DependencyGraph collapsed group change evidence", () => {
+            it("counts supplied field differences without inventing a plan operation", () => {
+              render(<DependencyGraph nodes={nodes} edges={edges} groups={groups} defaultCollapsedGroupIds={["production"]} />);
+              const group = screen.getByRole("button", { name: "Production, 4 resources, 1 with supplied changes" });
+              expect(within(group).getByText("4 resources · 1 with changes")).toBeVisible();
+            });
+            it.each([undefined, "unknown"] as const)("does not turn %s change metadata into zero changed resources", (change) => {
+              const records = nodes.map((node) => ({ ...node, change, changes: undefined }));
+              render(<DependencyGraph nodes={records} edges={edges} groups={groups} defaultCollapsedGroupIds={["production"]} />);
+              const group = screen.getByRole("button", { name: "Production, 4 resources" });
+              expect(within(group).getByText("4 resources")).toBeVisible();
+              expect(screen.queryByText(/0 changed/)).not.toBeInTheDocument();
+            });
+          });
+          ''')
+          path = base / 'DependencyGraph.mdx'
+          text = path.read_text()
+          old = 'Collapsing a parent replaces its entire subtree with one group card.'
+          assert text.count(old) == 1
+          path.write_text(text.replace(old, old + ' A nonzero change count reflects supplied operations or field differences; missing change data never becomes a zero-change claim.'))
+          PY
+      - name: Install
+        run: npm ci --no-audit --no-fund > /tmp/group-summary/install.log 2>&1
+      - name: Format
+        run: npx prettier --write easy-ui-react/src/DependencyGraph/{DependencyGraph.tsx,DependencyGraph.groups.test.tsx,DependencyGraph.mdx}
+      - name: Build and lint
+        run: |
+          npm run build > /tmp/group-summary/build.log 2>&1
+          npm run lint > /tmp/group-summary/lint.log 2>&1
+      - name: Dependency graph regression tests
+        run: npm run test --workspace @easypost/easy-ui -- src/DependencyGraph > /tmp/group-summary/test.log 2>&1
+      - name: Storybook
+        run: npm run build:storybook > /tmp/group-summary/storybook.log 2>&1
+      - name: Browser dependencies
+        run: |
+          npm ci --no-audit --no-fund --prefix scripts/preview-metrics
+          cd scripts/preview-metrics
+          npx playwright install --with-deps chromium
+      - name: Browser group regressions
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9018
+          FACILITY_REPORT_DIR: /tmp/group-summary/browser
+        run: |
+          python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > /tmp/group-summary/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null && break; sleep 1; done
+          node scripts/check-dependency-graph-groups.mjs > /tmp/group-summary/browser.log 2>&1
+      - name: Commit verified sources and screenshot
+        run: |
+          expected=$(git rev-parse HEAD)
+          remote=$(git ls-remote origin refs/heads/fix/dependency-graph-real-world | cut -f1)
+          test "$expected" = "$remote"
+          cp /tmp/group-summary/browser/dependency-subgraphs/collapsed-subgraphs-light-1440.png documentation/images/dependency-subgraphs-collapsed.png
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.groups.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx documentation/images/dependency-subgraphs-collapsed.png
+          git commit -m 'fix(dependency-graph): retain missing change semantics in groups'
+          git push origin HEAD:fix/dependency-graph-real-world
+      - name: Retain evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-group-summary-review
+          path: /tmp/group-summary
+          if-no-files-found: ignore
