@@ -1,6 +1,9 @@
 import React from "react";
 import { Icon } from "../Icon";
-import { DependencyGraphCategories } from "./DependencyGraphCategories";
+import {
+  DependencyGraphCategories,
+  dependencyGraphCategoryLabels,
+} from "./DependencyGraphCategories";
 import { dependencyChangeLabels } from "./model";
 import type { DependencyGraphNode } from "./types";
 import styles from "./DependencyGraph.module.scss";
@@ -62,7 +65,7 @@ export function DependencyGraphIdentity({
           {node.typeLabel}
         </span>
       )}
-      {(node.categories?.some((label) => label.trim()) ||
+      {(dependencyGraphCategoryLabels(node.categories).length > 0 ||
         node.kind === "unresolved" ||
         node.change) && (
         <span className={styles.nodeMetadata}>

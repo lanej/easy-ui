@@ -338,3 +338,56 @@ export const ExplicitChangeEvidence: Story = {
     height: 400,
   },
 };
+
+/** The application chooses these colors; the graph does not interpret labels. */
+export const CategoryColors: Story = {
+  ...SourceOnlyEvidence,
+  args: {
+    ...SourceOnlyEvidence.args,
+    nodes: realWorldNodes.map((node) => ({
+      ...node,
+      categories: node.categories?.map((category) =>
+        category === "Source modified"
+          ? { label: category, variant: "primary" as const }
+          : category,
+      ),
+    })),
+    showDetails: true,
+    defaultSelection: { type: "node", id: "google_sql_user.pipeline" },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Caller-selected blue for Source modified; strings such as Source unchanged remain neutral. Colors are repeated in the inspector and do not imply plan actions or risk.",
+      },
+    },
+  },
+};
+
+export const CategoryPalette: Story = {
+  args: {
+    title: undefined,
+    nodes: [
+      {
+        id: "palette",
+        label: "Caller-selected categories",
+        categories: [
+          "Neutral",
+          { label: "Primary", variant: "primary" },
+          { label: "Secondary", variant: "secondary" },
+          { label: "Success", variant: "success" },
+          { label: "Warning", variant: "warning" },
+          { label: "Danger", variant: "danger" },
+          { label: "Gray", variant: "gray" },
+          { label: "Black", variant: "black" },
+          { label: "Inverse", variant: "inverse" },
+        ],
+      },
+    ],
+    edges: [],
+    groups: [],
+    defaultSelection: { type: "node", id: "palette" },
+    height: 280,
+  },
+};

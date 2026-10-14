@@ -269,6 +269,120 @@ try {
       );
       checks.push({ name });
     }
+  for (const theme of ["light", "dark"])
+    for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: 1100 });
+      await page.goto(
+        `${base}/iframe.html?id=components-dependencygraph--category-palette&viewMode=story&globals=colorScheme:${theme}`,
+      );
+      await page.locator("[data-dependency-graph]").waitFor();
+      await page.evaluate(() => document.fonts.ready);
+      await settled();
+      const card = page.locator('[data-graph-resource-card="palette"]');
+      assert.equal(await card.locator("[data-graph-category]").count(), 9);
+      assert.equal(await card.locator("[data-change]").count(), 0);
+      await card.locator("[data-graph-node]").press("Enter");
+      const palette = await card
+        .locator("[data-graph-category]")
+        .evaluateAll((pills) => {
+          const luminance = (css) => {
+            const rgb = css
+              .match(/[\d.]+/g)
+              .slice(0, 3)
+              .map(Number)
+              .map((v) => {
+                const s = v / 255;
+                return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+              });
+            return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+          };
+          return pills.map((pill) => {
+            const style = getComputedStyle(pill);
+            const fg = luminance(style.color);
+            const bg = luminance(style.backgroundColor);
+            const box = pill.getBoundingClientRect();
+            const owner = pill
+              .closest("[data-graph-resource-card]")
+              .getBoundingClientRect();
+            return {
+              label: pill.textContent,
+              variant: pill.dataset.categoryVariant,
+              foreground: style.color,
+              background: style.backgroundColor,
+              contrast: (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05),
+              inside: box.left >= owner.left && box.right <= owner.right + 1,
+            };
+          });
+        });
+      for (const pill of palette) {
+        assert.ok(
+          pill.inside,
+          `${theme}/${width}/${pill.label}: card containment`,
+        );
+        assert.ok(
+          pill.contrast >= 4.5,
+          `${theme}/${width}/${pill.label}: text contrast ${pill.contrast}`,
+        );
+        const detail = page.locator(
+          `[data-graph-details] [data-category-variant="${pill.variant}"]`,
+        );
+        assert.equal(await detail.textContent(), pill.label);
+        const colors = await detail.evaluate((element) => {
+          const style = getComputedStyle(element);
+          return [style.color, style.backgroundColor];
+        });
+        assert.deepEqual(colors, [pill.foreground, pill.background]);
+      }
+      const neutral = palette.find((pill) => pill.variant === "neutral");
+      for (const variant of [
+        "primary",
+        "secondary",
+        "success",
+        "warning",
+        "danger",
+      ])
+        assert.notEqual(
+          palette.find((pill) => pill.variant === variant).background,
+          neutral.background,
+          `${theme}: ${variant} must actually be colored`,
+        );
+      checks.push({ name: `category-palette-${theme}-${width}`, palette });
+      await page.goto(
+        `${base}/iframe.html?id=components-dependencygraph--category-colors&viewMode=story&globals=colorScheme:${theme}`,
+      );
+      await page.locator("[data-dependency-graph]").waitFor();
+      await page.evaluate(() => document.fonts.ready);
+      await settled();
+      const modified = page.locator(
+        '[data-graph-resource-card="google_sql_user.pipeline"] [data-graph-category]',
+      );
+      assert.equal(await modified.textContent(), "Source modified");
+      assert.equal(
+        await modified.getAttribute("data-category-variant"),
+        "primary",
+      );
+      assert.equal(
+        await page.locator("[data-graph-resource-card] [data-change]").count(),
+        0,
+      );
+      if (width !== 320)
+        await page
+          .locator("[data-dependency-graph]")
+          .screenshot({
+            path: resolve(output, `category-colors-${theme}-${width}.png`),
+          });
+      await page
+        .getByRole("searchbox", { name: "Find resource" })
+        .fill("Source modified");
+      assert.equal(
+        await page
+          .getByRole("region", { name: "Resource search results" })
+          .getByRole("status")
+          .textContent(),
+        "1 matching resources",
+      );
+      checks.push({ name: `category-colors-${theme}-${width}` });
+    }
   assert.deepEqual(errors, []);
 } finally {
   await writeFile(

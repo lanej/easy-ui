@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { BadgeVariant } from "../Badge/Badge";
 import type { IconSymbol } from "../types";
 
 export type DependencyGraphChange =
@@ -21,6 +22,14 @@ export type DependencyGraphPropertyChange = { path: string } & (
 
 export type DependencyGraphChangePresentation = "summary" | "diff";
 
+/** A label with an optional caller-selected theme variant. Strings remain neutral. */
+export type DependencyGraphCategory =
+  | string
+  | {
+      readonly label: string;
+      readonly variant?: "neutral" | BadgeVariant;
+    };
+
 export type DependencyGraphNode = {
   id: string;
   label: string;
@@ -32,8 +41,8 @@ export type DependencyGraphNode = {
   kind?: "resource" | "unresolved";
   /** Resource type, address, or other caller-owned context. */
   description?: string;
-  /** Caller-owned categorical metadata, rendered as neutral pills. Never interpreted as plan actions or risk. */
-  categories?: readonly string[];
+  /** Caller-owned category labels and optional theme variants. Never interpreted as plan actions or risk. */
+  categories?: readonly DependencyGraphCategory[];
   /** Caller-supplied resource type symbol, using Easy UI's normal Icon contract. */
   icon?: IconSymbol;
   /** Accessible resource type label, such as Database or Authentication. */

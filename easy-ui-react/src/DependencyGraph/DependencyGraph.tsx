@@ -4,6 +4,7 @@ import { Button } from "../Button";
 import { ExpandButton } from "../ExpandButton";
 import { CollapseButton } from "../CollapseButton";
 import { DependencyGraphIdentity } from "./DependencyGraphIdentity";
+import { dependencyGraphCategoryLabels } from "./DependencyGraphCategories";
 import { DependencyGraphConvergence } from "./DependencyGraphConvergence";
 import { Select } from "../Select";
 import { TextField } from "../TextField";
@@ -438,7 +439,7 @@ export function DependencyGraph({
   const search = query.trim().toLowerCase();
   const matches = search
     ? nodes.filter((node) =>
-        `${node.label} ${node.id} ${node.typeLabel ?? ""} ${node.address ?? ""} ${node.description ?? ""} ${(node.categories ?? []).join(" ")}`
+        `${node.label} ${node.id} ${node.typeLabel ?? ""} ${node.address ?? ""} ${node.description ?? ""} ${dependencyGraphCategoryLabels(node.categories).join(" ")}`
           .toLowerCase()
           .includes(search),
       )
@@ -1048,7 +1049,9 @@ export function DependencyGraph({
                                         ? dependencyChangeLabels[node.change]
                                         : null,
                                       node.typeLabel,
-                                      ...(node.categories ?? []),
+                                      ...dependencyGraphCategoryLabels(
+                                        node.categories,
+                                      ),
                                       node.description,
                                       node.iconLabel,
                                     ]
