@@ -14,6 +14,27 @@
   overflow: hidden;
   background: design-token("color.neutral.100");
 
+  &[data-color="primary"] {
+    @include component-token(
+      "meter-bar",
+      "color.fill",
+      design-token("color.primary.500")
+    );
+  }
+  &[data-color="secondary"] {
+    @include component-token(
+      "meter-bar",
+      "color.fill",
+      design-token("color.secondary.500")
+    );
+  }
+  &[data-color="tertiary"] {
+    @include component-token(
+      "meter-bar",
+      "color.fill",
+      design-token("color.tertiary.500")
+    );
+  }
   &[data-tone="success"] {
     @include component-token(
       "meter-bar",

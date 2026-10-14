@@ -1,12 +1,16 @@
 import React from "react";
 import styles from "./MeterBar.module.scss";
 
+/** Series identity, without an assessment or alert meaning. */
+export type MeterBarColor = "primary" | "secondary" | "tertiary";
 export type MeterBarTone = "neutral" | "success" | "warning" | "danger";
 
 type MeterBarSharedProps = {
   /** Finite, positive maximum shared by every bar. Does not imply a population. */
   max: number;
-  /** Supplied visual meaning; never inferred from the value. */
+  /** Ordinary palette color. Comparisons default to primary. */
+  color?: MeterBarColor;
+  /** Caller-supplied meaning; overrides color and is never inferred. */
   tone?: MeterBarTone;
   /** Track thickness: sm = 4px, md = 8px, lg = 12px. */
   thickness?: "sm" | "md" | "lg";
@@ -28,7 +32,9 @@ export type MeterBarDatum = {
   label: string;
   /** Null or invalid values remain visible as unavailable, not zero. */
   value: number | null;
-  /** Optional row tone; falls back to the MeterBar tone. */
+  /** Row color overrides group styling unless this row also supplies a tone. */
+  color?: MeterBarColor;
+  /** Row tone overrides both row color and group styling. */
   tone?: MeterBarTone;
 };
 
@@ -61,7 +67,8 @@ function isValidValue(value: number | null, max: number): value is number {
 function MeterBarTrack({
   value,
   max,
-  tone = "neutral",
+  color,
+  tone,
   thickness = "md",
 }: MeterBarValueProps) {
   if (!isValidValue(value, max)) {
@@ -72,7 +79,8 @@ function MeterBarTrack({
     <span
       className={styles.track}
       data-meter-bar=""
-      data-tone={tone}
+      data-color={tone === undefined ? color : undefined}
+      data-tone={tone ?? (color === undefined ? "neutral" : undefined)}
       data-thickness={thickness}
       aria-hidden="true"
     >
@@ -88,7 +96,8 @@ function MeterBarTrack({
 function MeterBarComparison({
   data,
   max,
-  tone = "neutral",
+  color = "primary",
+  tone,
   thickness = "md",
   formatValue = String,
   accessibilityLabel,
@@ -129,7 +138,8 @@ function MeterBarComparison({
                 <MeterBarTrack
                   value={value}
                   max={max}
-                  tone={datum.tone ?? tone}
+                  color={datum.color ?? color}
+                  tone={datum.tone ?? (datum.color !== undefined ? undefined : tone)}
                   thickness={thickness}
                 />
               )}
@@ -147,6 +157,7 @@ function MeterBarComparison({
 /**
  * A single value is visual-only, preserving existing metric compositions.
  * A data array renders unframed, labeled comparisons with one meter per valid row.
+ * Neither mode computes assessments, renders alerts, or adds status UI.
  */
 export function MeterBar(props: MeterBarProps) {
   return props.data !== undefined ? (

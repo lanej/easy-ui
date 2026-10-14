@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import console from "node:console";
 import { createRequire } from "node:module";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import process from "node:process";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE ?? "playwright");
@@ -21,6 +23,19 @@ const checks = [];
 page.on("pageerror", (error) => errors.push(error.message));
 
 try {
+  const indexResponse = await page.request.get(`${base}/index.json`);
+  assert.ok(indexResponse.ok(), "Storybook index is available");
+  const { entries } = await indexResponse.json();
+  const fixtures = Object.values(entries).filter((entry) =>
+    entry.id.startsWith("test-meterbar--"),
+  );
+  assert.equal(fixtures.length, 8, "all regression fixtures remain indexed");
+  for (const fixture of fixtures) {
+    assert.equal(fixture.tags.includes("dev"), false, "fixture hidden from sidebar");
+    assert.equal(fixture.tags.includes("autodocs"), false, "fixture hidden from docs");
+  }
+  checks.push("regression-fixtures-hidden");
+
   for (const theme of ["light", "dark"]) {
     await page.emulateMedia({ colorScheme: theme });
     for (const width of [1040, 320]) {
@@ -33,8 +48,10 @@ try {
         "comparison-large-text",
       ]) {
         const name = `${story}-${theme}-${width}`;
+        const fixture = ["comparison-right-to-left", "comparison-large-text"].includes(story);
+        const prefix = fixture ? "test-meterbar" : "components-meterbar";
         await page.goto(
-          `${base}/iframe.html?id=components-meterbar--${story}&viewMode=story&globals=colorScheme:${theme}`,
+          `${base}/iframe.html?id=${prefix}--${story}&viewMode=story&globals=colorScheme:${theme}`,
         );
         const group = page.locator("[data-meter-comparison]");
         await group.waitFor();
@@ -42,7 +59,9 @@ try {
         const result = await group.evaluate((root) => {
           const rows = [...root.querySelectorAll("[data-meter-row]")];
           return {
-            overflow: root.scrollWidth > root.clientWidth + 1,
+            overflow: root.scrollWidth > root.clientWidth + 1 ||
+              rows.some((row) => row.scrollWidth > row.clientWidth + 1),
+            alerts: root.querySelectorAll('[role="alert"], [role="status"]').length,
             keyboardStops: root.querySelectorAll(
               "[tabindex], button, input, select, textarea, a[href]",
             ).length,
@@ -59,18 +78,23 @@ try {
                 text: row.getAttribute("aria-valuetext"),
                 nestedMeters: row.querySelectorAll('[role="meter"]').length,
                 hiddenTrack: track?.getAttribute("aria-hidden"),
+                color: track?.getAttribute("data-color"),
+                tone: track?.getAttribute("data-tone"),
+                fillColor: fill ? window.getComputedStyle(fill).backgroundColor : null,
+                trackColor: track ? window.getComputedStyle(track).backgroundColor : null,
                 trackWidth: box?.width,
                 trackLeft: box?.left,
                 fillWidth: fill?.getBoundingClientRect().width,
                 fillLeft: fill?.getBoundingClientRect().left,
                 fillRight: fill?.getBoundingClientRect().right,
                 trackRight: box?.right,
-                direction: getComputedStyle(row).direction,
+                direction: window.getComputedStyle(row).direction,
               };
             }),
           };
         });
         assert.equal(result.overflow, false, `${name}: no horizontal overflow`);
+        assert.equal(result.alerts, 0, `${name}: no alert or status UI`);
         assert.equal(result.keyboardStops, 0, `${name}: no keyboard stops`);
         const valid = result.meters.filter((row) => row.state === "valid");
         assert.ok(valid.length > 0, `${name}: contains measurements`);
@@ -87,6 +111,8 @@ try {
           assert.equal(row.max, "12", `${name}: shared maximum`);
           assert.equal(row.hiddenTrack, "true", `${name}: visual-only fill`);
           assert.ok(row.trackWidth > 1, `${name}: bar has visible width`);
+          assert.notEqual(row.fillColor, row.trackColor, `${name}: visible color`);
+          assert.notEqual(row.fillColor, "rgba(0, 0, 0, 0)", `${name}: opaque fill`);
           const expected = (Number(row.value) / Number(row.max)) * row.trackWidth;
           assert.ok(
             Math.abs(row.fillWidth - expected) < 0.6,
@@ -102,6 +128,12 @@ try {
               ? row.trackRight - row.fillRight
               : row.fillLeft - row.trackLeft;
           assert.ok(Math.abs(startDifference) < 0.6, `${name}: inline start`);
+        }
+        if (story === "comparison" || story === "comparison-narrow") {
+          assert.deepEqual(valid.map((row) => row.name), ["Sacramento", "Oakland", "San Jose"], `${name}: input order`);
+          assert.deepEqual(valid.map((row) => row.color), ["primary", "secondary", "tertiary"], `${name}: palette identity`);
+          assert.ok(valid.every((row) => row.tone === null), `${name}: no invented status`);
+          assert.equal(new Set(valid.map((row) => row.fillColor)).size, 3, `${name}: distinct series colors`);
         }
         await page.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
         const violations = await page.evaluate(async () => {
@@ -142,8 +174,8 @@ try {
     if (fill === null) {
       throw new Error("Expected a meter fill");
     }
-    const trackStyle = getComputedStyle(track);
-    const fillStyle = getComputedStyle(fill);
+    const trackStyle = window.getComputedStyle(track);
+    const fillStyle = window.getComputedStyle(fill);
     return {
       outline: trackStyle.outlineWidth,
       track: trackStyle.backgroundColor,

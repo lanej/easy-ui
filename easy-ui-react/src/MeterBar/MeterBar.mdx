@@ -1,72 +1,98 @@
-import { Canvas, Meta } from "@storybook/addon-docs/blocks";
-import { ArgTypes } from "../../../.storybook/DocsApi";
-import { MeterBar } from "./MeterBar";
-import * as Stories from "./MeterBar.stories";
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as MeterBarStories from "./MeterBar.stories";
 
-<Meta of={Stories} />
+<Meta of={MeterBarStories} />
 
 # MeterBar
 
-A bounded-value bar with two explicit modes. `value` keeps the visual-only atom; `data` compares labeled measurements on one shared scale. Import from `@easypost/easy-ui/MeterBar`. Neither mode adds a card, heading, chart engine, inferred assessment, or percentage conversion.
+Display a bounded measurement or compare several measurements on a shared scale.
+MeterBar adds no card, title, assessment, or alert. Labels and exact values are
+included when using the comparison API.
 
-## Usage
+## Compare measurements
 
-```tsx
-import { MeterBar } from "@easypost/easy-ui/MeterBar";
-```
+All rows use the same units and the same explicit maximum. Color identifies a
+series; it does not say whether that series is good, bad, or risky.
 
-<Canvas of={Stories.Default} />
-
-## Props
-
-<ArgTypes of={MeterBar} />
-
-## Examples
-
-### Compare measurements
-
-Pass `data` instead of `value`. All rows share the required `max` and therefore the same scale; adding, removing, or reordering rows never rescales the remaining bars. Compare values with the same units, such as dwell hours across facilities. Do not combine hours, percentages, and counts on this scale. Separate comparisons can use the same `max` to remain comparable.
+<Canvas of={MeterBarStories.Comparison} />
 
 ```tsx
 <MeterBar
   data={[
-    { id: "sac", label: "Sacramento", value: 4.2 },
-    { id: "oak", label: "Oakland", value: 7.8 },
-    { id: "sjc", label: "San Jose", value: 3.1 },
+    { id: "sac", label: "Sacramento", value: 4.2, color: "primary" },
+    { id: "oak", label: "Oakland", value: 7.8, color: "secondary" },
+    { id: "sjc", label: "San Jose", value: 3.1, color: "tertiary" },
   ]}
   max={12}
+  thickness="lg"
   formatValue={(hours) => `${hours.toFixed(1)} h`}
   accessibilityLabel="Average dwell time by facility, 0 to 12 hours"
 />
 ```
 
-Rows preserve input order and require unique, stable `id` values. Each valid row owns one accessible meter; the underlying fill stays hidden from assistive technology. `formatValue` supplies both visible and accessible value text, while geometry and `aria-valuenow` retain the original measurement. The optional `accessibilityLabel` names the group without adding a visible title.
+Keep `max` fixed across comparable lists. Removing a row does not rescale the
+remaining measurements. Input order is preserved. Do not combine hours, counts,
+and percentages on one scale.
 
-Each row may supply a `tone`, falling back to the component tone. Missing, non-finite, negative, or out-of-range values keep their labels and display `unavailableLabel` (default: “Unavailable”) without drawing a track or exposing a numeric meter. An invalid shared maximum makes every row unavailable. Empty `data` draws nothing. Zero remains a valid observation with an empty track, not a missing value.
+## Compact comparison
 
-Labels, bars, and values align in compact rows. Below 18rem of available width, each row places its label and value above a full-width bar. Text wraps rather than truncating measurements; inherited RTL direction and forced-color rendering are preserved. The original single-value API remains unchanged for `ProportionBar`, `RiskScore`, and custom metric compositions.
+At narrow widths, each label and value share a row above its bar. No surrounding
+card or heading is required.
 
-<Canvas of={Stories.Comparison} />
-<Canvas of={Stories.ComparisonNarrow} />
-<Canvas of={Stories.ComparisonStates} />
-<Canvas of={Stories.ComparisonRightToLeft} />
-<Canvas of={Stories.ComparisonLargeText} />
+<Canvas of={MeterBarStories.ComparisonNarrow} />
 
-### Compose meaning, share rendering
+## Color and meaning
 
-`ProportionBar` and `RiskScore` both compose this atom. A proportion owns its percentage and population counts; a risk score owns its score/maximum and supplied assessment. A score of 72 out of 100 must not become a claim of 72% probability.
+`color` accepts `primary`, `secondary`, and `tertiary` from the theme palette.
+Comparisons default to `primary`; an unstyled single-value bar remains neutral.
+Set one group color or give individual rows their own colors.
 
-The single-value atom is always `aria-hidden` and adds no meter role or keyboard stop. The owning molecule exposes one accessible meter with its exact value, range, name, and value description. When using the atom directly, supply equivalent accessible information in the surrounding composition; do not use the bar as the sole representation of data.
+<Canvas of={MeterBarStories.Colors} />
 
-<Canvas of={Stories.Compositions} />
+`tone` remains available for caller-supplied `neutral`, `success`, `warning`, or
+`danger` meaning. It only selects a fill color: MeterBar never calculates a risk
+assessment, applies thresholds, or renders alert UI.
 
-### Geometry and presentation
+Row styling overrides group styling. A row's `tone` takes precedence over its
+`color`; otherwise its `color` takes precedence over a group tone. Without row
+styling, the group tone takes precedence over the group color. Explicit
+`tone="neutral"` is neutral, not the default comparison blue.
 
-`value` must be finite and within `[0, max]`; `max` must be finite and positive. Invalid input draws nothing rather than clamping it to a believable score. Zero draws an empty track, and a value equal to its maximum fills the track. Geometry uses the unrounded `value / max`, without an invented minimum fill. The caller handles unavailable, invalid, empty-population, and loading states before rendering this atom.
+Components such as RiskScore can supply a tone to a single bar, but their
+assessment UI and examples belong to those components, not to MeterBar.
 
-Tone is supplied, never inferred from magnitude. `thickness` is `sm` (4px), `md` (8px, default), or `lg` (12px). The shared design-token colors and high-contrast rendering apply to both molecules. Fill starts at the inherited inline start, including RTL. No motion or completion behavior is added.
+## Single measurement
 
-<Canvas of={Stories.TonesAndThicknesses} />
-<Canvas of={Stories.Narrow} />
-<Canvas of={Stories.RightToLeft} />
-<Canvas of={Stories.States} />
+The single-value API draws only the track and fill. Its owner supplies the label,
+value text, and accessible meter semantics, as demonstrated here.
+
+<Canvas of={MeterBarStories.Default} />
+
+## Thickness
+
+Use `sm` for 4 px, `md` for 8 px, or `lg` for 12 px tracks.
+
+<Canvas of={MeterBarStories.Thicknesses} />
+
+## Zero and missing values
+
+Zero is a measured value. Missing, nonfinite, negative, and out-of-range values
+are unavailable, not zero. A valid scale has a finite maximum greater than zero.
+Invalid single values draw nothing; invalid comparison rows retain their label
+and the configurable `unavailableLabel`, without a misleading meter.
+
+<Canvas of={MeterBarStories.ComparisonStates} />
+
+## Accessibility
+
+Comparisons expose one accessible meter per valid row. `formatValue` controls
+visible and accessible value text without changing geometry. The group can have
+an `accessibilityLabel` without adding a visible heading. Labels, units, and
+numeric values remain available independently of color.
+
+RTL, localized numbers, large-text reflow, forced colors, and composed-component
+states are regression fixtures, not additional usage patterns in this showcase.
+
+## Properties
+
+<Controls of={MeterBarStories.Default} />

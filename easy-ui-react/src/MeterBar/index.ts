@@ -1,8 +1,9 @@
 export { MeterBar } from "./MeterBar";
 export type {
-  MeterBarComparisonProps,
-  MeterBarDatum,
   MeterBarProps,
+  MeterBarColor,
   MeterBarTone,
   MeterBarValueProps,
+  MeterBarComparisonProps,
+  MeterBarDatum,
 } from "./MeterBar";

@@ -12,7 +12,7 @@ export async function checkMeterBar({
 }) {
   async function open(story, theme) {
     await page.goto(
-      `${base}/iframe.html?id=components-meterbar--${story}&viewMode=story&globals=colorScheme:${theme}`,
+      `${base}/iframe.html?id=test-meterbar--${story}&viewMode=story&globals=colorScheme:${theme}`,
     );
     await page
       .locator(story === "states" ? '[role="meter"]' : "[data-meter-bar]")
@@ -38,7 +38,7 @@ export async function checkMeterBar({
           const root = document.querySelector("#storybook-root");
           const meters = [...root.querySelectorAll('[role="meter"]')];
           return {
-            overflow: document.documentElement.scrollWidth - innerWidth,
+            overflow: document.documentElement.scrollWidth - window.innerWidth,
             nestedMeters: root.querySelectorAll('[role="meter"] [role="meter"]')
               .length,
             meters: meters.map((meter) => ({
@@ -53,7 +53,7 @@ export async function checkMeterBar({
                 const meter = track.closest('[role="meter"]');
                 const trackBox = track.getBoundingClientRect();
                 const fillBox = fill.getBoundingClientRect();
-                const direction = getComputedStyle(track).direction;
+                const direction = window.getComputedStyle(track).direction;
                 return {
                   hidden: track.getAttribute("aria-hidden"),
                   role: track.getAttribute("role"),
@@ -71,8 +71,8 @@ export async function checkMeterBar({
                       : fillBox.left - trackBox.left,
                   tone: track.dataset.tone,
                   assessment: meter?.getAttribute("data-assessment"),
-                  outline: getComputedStyle(track).outlineStyle,
-                  adjustment: getComputedStyle(fill).forcedColorAdjust,
+                  outline: window.getComputedStyle(track).outlineStyle,
+                  adjustment: window.getComputedStyle(fill).forcedColorAdjust,
                 };
               },
             ),
@@ -140,8 +140,8 @@ export async function checkMeterBar({
   await open("compositions", "light");
   const forced = await page.locator("[data-meter-bar]").evaluateAll((tracks) =>
     tracks.map((track) => ({
-      outline: getComputedStyle(track).outlineStyle,
-      adjustment: getComputedStyle(track.firstElementChild).forcedColorAdjust,
+      outline: window.getComputedStyle(track).outlineStyle,
+      adjustment: window.getComputedStyle(track.firstElementChild).forcedColorAdjust,
     })),
   );
   assert.equal(forced.length, 4);
@@ -220,7 +220,7 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
       const scores = await page
         .locator('[role="meter"][data-size="sm"]')
         .evaluateAll((meters) => {
-          const darkScheme = getComputedStyle(meters[0]).colorScheme === "dark";
+          const darkScheme = window.getComputedStyle(meters[0]).colorScheme === "dark";
           const expectedTokens = {
             low: darkScheme ? "positive-500" : "positive-700",
             medium: darkScheme ? "warning-500" : "warning-800",
@@ -253,19 +253,19 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
             const probe = document.createElement("span");
             meter.append(probe);
             probe.style.color = `var(--ezui-color-${expectedTokens[meter.dataset.assessment]})`;
-            const expected = getComputedStyle(probe).color;
+            const expected = window.getComputedStyle(probe).color;
             probe.style.color = "var(--ezui-color-neutral-600)";
-            const neutral = getComputedStyle(probe).color;
+            const neutral = window.getComputedStyle(probe).color;
             probe.remove();
             let ancestor = meter,
               background = "rgba(0, 0, 0, 0)";
             while (ancestor && background === "rgba(0, 0, 0, 0)") {
-              background = getComputedStyle(ancestor).backgroundColor;
+              background = window.getComputedStyle(ancestor).backgroundColor;
               ancestor = ancestor.parentElement;
             }
             if (background === "rgba(0, 0, 0, 0)")
               background = "rgb(255, 255, 255)";
-            const color = getComputedStyle(value).color;
+            const color = window.getComputedStyle(value).color;
             const high = Math.max(luminance(color), luminance(background));
             const low = Math.min(luminance(color), luminance(background));
             const label = meter.querySelector(
@@ -274,12 +274,12 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
             return {
               color,
               expected,
-              maximum: getComputedStyle(maximum).color,
+              maximum: window.getComputedStyle(maximum).color,
               neutral,
               contrast: (high + 0.05) / (low + 0.05),
               title: meter.title,
               description: meter.getAttribute("aria-valuetext"),
-              hiddenLabel: getComputedStyle(label).display === "none",
+              hiddenLabel: window.getComputedStyle(label).display === "none",
               pillCount: meter.querySelectorAll('[class*="_pill_"]').length,
             };
           });
@@ -305,7 +305,7 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
       }
       assert.ok(
         await page.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth + 1,
+          () => document.documentElement.scrollWidth <= window.innerWidth + 1,
         ),
         `${name}: overflow`,
       );
