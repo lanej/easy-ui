@@ -19,7 +19,7 @@ replace(css, '''.cluster {
 }''', '''.cluster {
   --dependency-graph-group-surface: #{design-token("color.neutral.100")};
   position: absolute;
-  border: max(1px, calc(1px / var(--dependency-graph-zoom, 1))) dashed design-token("color.neutral.600");
+  border: round(up, max(1px, calc(1px / var(--dependency-graph-zoom, 1))), 1px) dashed design-token("color.neutral.600");
   border-radius: 8px;
   background: var(--dependency-graph-group-surface);
   &[data-graph-group-layer="1"] {
@@ -33,11 +33,11 @@ replace(css, '''  font-size: 0.8125rem;
   > button:first-child''')
 replace(css, '''.node {
   position: absolute;
-  border: 1px solid design-token("color.neutral.300");''', '''// Boundaries must remain visible on the canvas and every group surface, even
-// for unselected/unchanged resources and at the minimum graph zoom.
+  border: 1px solid design-token("color.neutral.300");''', '''// Round up before scaling: browsers snap fractional CSS borders down, which
+// otherwise makes resource/group outlines thinner than one screen pixel.
 .node {
   position: absolute;
-  border: max(1px, calc(1px / var(--dependency-graph-zoom, 1))) solid design-token("color.neutral.600");''')
+  border: round(up, max(1px, calc(1px / var(--dependency-graph-zoom, 1))), 1px) solid design-token("color.neutral.600");''')
 replace(css, '''    box-shadow: 0 0 0 2px design-token("color.primary.500");''', '''    box-shadow: 0 0 0 max(2px, calc(2px / var(--dependency-graph-zoom, 1))) design-token("color.primary.500");''')
 replace(css, '''.node[data-node-kind="unresolved"] {
   border-style: dashed;
