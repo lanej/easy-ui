@@ -234,9 +234,8 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
           return meters.map((meter) => {
             const value =
               meter.querySelector("[data-risk-score-value]").firstElementChild;
-            const expression = meter.querySelector(
-              "[data-risk-score-expression]",
-            );
+            const expressionSelector = "[data-risk-score-expression]";
+            const expression = meter.querySelector(expressionSelector);
             const maximum = expression.lastElementChild.firstElementChild;
             const probe = document.createElement("span");
             meter.append(probe);
@@ -251,8 +250,9 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
               background = window.getComputedStyle(ancestor).backgroundColor;
               ancestor = ancestor.parentElement;
             }
-            if (background === "rgba(0, 0, 0, 0)")
+            if (background === "rgba(0, 0, 0, 0)") {
               background = "rgb(255, 255, 255)";
+            }
             const color = window.getComputedStyle(value).color;
             const high = Math.max(luminance(color), luminance(background));
             const low = Math.min(luminance(color), luminance(background));
