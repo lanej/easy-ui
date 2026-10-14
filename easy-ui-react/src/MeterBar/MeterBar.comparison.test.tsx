@@ -93,7 +93,8 @@ it("preserves zero and the maximum without inferring tones", () => {
   expect(fills[0].style.inlineSize).toBe("0%");
   expect(fills[1].style.inlineSize).toBe("100%");
   container.querySelectorAll("[data-meter-bar]").forEach((track) => {
-    expect(track).toHaveAttribute("data-tone", "neutral");
+    expect(track).toHaveAttribute("data-color", "primary");
+    expect(track).not.toHaveAttribute("data-tone");
   });
 });
 
