@@ -60,7 +60,7 @@ describe("visible, aligned arrow approaches", () => {
       );
       for (const route of routes) {
         const arrival = dependencyConnectionArrival(route.points)!;
-        const end = route.points.at(-1)!;
+        const end = route.points[route.points.length - 1]!;
         expect(arrival).toBeDefined();
         expect(arrival.y).toBe(end.y);
         expect(end.x - arrival.x - dependencyArrowSize).toBeGreaterThanOrEqual(
@@ -95,7 +95,7 @@ describe("visible, aligned arrow approaches", () => {
       ports,
     )[0];
     expect(route.points[0].y).toBe(200);
-    expect(route.points.at(-1)!.y).toBe(204);
+    expect(route.points[route.points.length - 1]!.y).toBe(204);
     const parallel = routeDependencyConnections(pair, [
       edge("old", "a", "b"),
       edge("new", "a", "b"),
