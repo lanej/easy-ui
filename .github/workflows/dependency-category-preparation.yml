@@ -1,0 +1,93 @@
+name: Dependency category preparation
+on:
+  pull_request:
+    paths:
+      - .github/workflows/dependency-category-preparation.yml
+      - scripts/prepare-dependency-category-colors.py
+permissions:
+  contents: write
+jobs:
+  prepare:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/dependency-graph-real-world'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Apply guarded category changes
+        run: python3 scripts/prepare-dependency-category-colors.py
+      - run: npm ci --no-audit --no-fund
+      - name: Format changed sources
+        run: npx prettier --write easy-ui-react/src/DependencyGraph/DependencyGraphCategories.tsx easy-ui-react/src/DependencyGraph/DependencyGraphCategories.module.scss easy-ui-react/src/DependencyGraph/DependencyGraph.categoryColors.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraphIdentity.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/types.ts easy-ui-react/src/DependencyGraph/DependencyGraph.stories.tsx scripts/check-dependency-graph-source.mjs
+      - name: Build
+        run: npm run build > /tmp/category-build.log 2>&1
+      - name: Lint
+        run: npm run lint > /tmp/category-lint.log 2>&1
+      - name: Unit tests
+        run: npm run test > /tmp/category-tests.log 2>&1
+      - name: Storybook
+        run: npm run build:storybook > /tmp/category-storybook.log 2>&1
+      - name: Browser dependencies
+        working-directory: scripts/preview-metrics
+        run: npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: Verify source and colored categories
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9018
+          FACILITY_REPORT_DIR: /tmp/category-evidence
+        run: |
+          python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > /tmp/category-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/check-dependency-graph-source.mjs > /tmp/category-browser.log 2>&1
+          cp /tmp/category-evidence/dependency-graph/category-colors-light-1440.png documentation/images/dependency-graph-category-colors-desktop.png
+          cp /tmp/category-evidence/dependency-graph/category-colors-dark-390.png documentation/images/dependency-graph-category-colors-mobile.png
+      - name: Prepare candidate Git objects without changing any branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const cp = require('child_process');
+            const run = (args) => cp.execFileSync('git', args, {encoding: 'utf8'}).trim();
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const parent = run(['rev-parse', 'HEAD']);
+            if (parent !== context.payload.pull_request.head.sha) throw new Error('Unexpected checkout');
+            run(['add', '--', 'easy-ui-react/src/DependencyGraph', 'scripts/check-dependency-graph-source.mjs', '.changeset/readable-source-dependency-graphs.md', '.github/workflows/dependency-category-preparation.yml', 'scripts/prepare-dependency-category-colors.py', 'documentation/images/dependency-graph-category-colors-desktop.png', 'documentation/images/dependency-graph-category-colors-mobile.png']);
+            fs.mkdirSync('/tmp/category-evidence/source', {recursive: true});
+            fs.writeFileSync('/tmp/category-evidence/candidate.patch', cp.execFileSync('git', ['diff', '--cached', '--binary']));
+            const paths = run(['diff', '--cached', '--name-only']).split('\n');
+            const tree = [];
+            for (const path of paths) {
+              if (!fs.existsSync(path)) { tree.push({path, mode: '100644', type: 'blob', sha: null}); continue; }
+              const content = fs.readFileSync(path);
+              const blob = await github.rest.git.createBlob({owner, repo, content: content.toString('base64'), encoding: 'base64'});
+              tree.push({path, mode: '100644', type: 'blob', sha: blob.data.sha});
+              if (!path.endsWith('.png')) {
+                const dest = '/tmp/category-evidence/source/' + path;
+                fs.mkdirSync(require('path').dirname(dest), {recursive: true});
+                fs.writeFileSync(dest, content);
+              }
+            }
+            const result = await github.rest.git.createTree({owner, repo, base_tree: run(['rev-parse', 'HEAD^{tree}']), tree});
+            const commit = await github.rest.git.createCommit({owner, repo, message: 'feat(dependency-graph): support caller-selected category pill colors', tree: result.data.sha, parents: [parent]});
+            fs.writeFileSync('/tmp/category-evidence/candidate.json', JSON.stringify({parent, tree: result.data.sha, sha: commit.data.sha, paths}, null, 2));
+            core.info('Prepared candidate ' + commit.data.sha + '; no branch updated.');
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-category-color-evidence
+          path: |
+            /tmp/category-evidence
+            /tmp/category-*.log
+          if-no-files-found: error
