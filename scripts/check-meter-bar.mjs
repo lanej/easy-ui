@@ -91,10 +91,7 @@ export async function checkMeterBar({
             Math.abs(bar.ratio - bar.expected) <= 0.001,
             `${name}: exact geometry`,
           );
-          assert.ok(
-            Math.abs(bar.startDifference) <= 0.1,
-            `${name}: inline start`,
-          );
+          assert.ok(Math.abs(bar.startDifference) <= 0.1, `${name}: inline start`);
           if (story.endsWith("right-to-left")) assert.equal(bar.direction, "rtl");
           if (bar.assessment) {
             assert.equal(
