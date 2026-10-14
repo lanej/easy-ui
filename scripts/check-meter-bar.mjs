@@ -239,9 +239,9 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
                 0,
               );
           return meters.map((meter) => {
-            const value = meter.querySelector(
-              "[data-risk-score-value]",
-            ).firstElementChild;
+            const valueSelector = "[data-risk-score-value]";
+            const valueElement = meter.querySelector(valueSelector);
+            const value = valueElement.firstElementChild;
             const selector = "[data-risk-score-expression]";
             const score = meter.querySelector(selector);
             const maximum = score.lastElementChild.firstElementChild;
