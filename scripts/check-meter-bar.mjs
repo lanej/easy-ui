@@ -37,10 +37,11 @@ export async function checkMeterBar({
         const result = await page.evaluate(() => {
           const root = document.querySelector("#storybook-root");
           const meters = [...root.querySelectorAll('[role="meter"]')];
+          const nestedSelector = '[role="meter"] [role="meter"]';
+          const nestedMeters = root.querySelectorAll(nestedSelector).length;
           return {
             overflow: document.documentElement.scrollWidth - window.innerWidth,
-            nestedMeters: root.querySelectorAll('[role="meter"] [role="meter"]')
-              .length,
+            nestedMeters,
             meters: meters.map((meter) => ({
               value: meter.getAttribute("aria-valuenow"),
               description: meter.getAttribute("aria-valuetext"),
