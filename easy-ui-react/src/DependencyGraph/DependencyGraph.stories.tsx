@@ -322,9 +322,14 @@ export const ExplicitChangeEvidence: Story = {
       {
         id: "absent",
         label: "No plan supplied",
-        description: "Source modified",
+        categories: ["Source modified"],
       },
-      { id: "unknown", label: "Explicitly unknown", change: "unknown" },
+      {
+        id: "unknown",
+        label: "Explicitly unknown",
+        change: "unknown",
+        categories: ["Source unchanged"],
+      },
       { id: "unchanged", label: "Explicitly unchanged", change: "unchanged" },
       { id: "update", label: "Planned update", change: "update" },
     ],

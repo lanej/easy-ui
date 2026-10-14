@@ -14,7 +14,7 @@ export const realWorldNodes: readonly DependencyGraphNode[] = [
     label: "bootstrap",
     typeLabel: "data.terraform_remote_state",
     address: "data.terraform_remote_state.bootstrap",
-    description: "Source unchanged",
+    categories: ["Source unchanged"],
   },
   {
     id: "external:runtime_image",
@@ -27,14 +27,14 @@ export const realWorldNodes: readonly DependencyGraphNode[] = [
     label: "runtime",
     typeLabel: "module",
     address: "module.runtime",
-    description: "Source unchanged",
+    categories: ["Source unchanged"],
   },
   {
     id: "google_cloud_run_v2_service.runtime",
     label: "runtime",
     typeLabel: "google_cloud_run_v2_service",
     address: "google_cloud_run_v2_service.runtime",
-    description: "Source unchanged",
+    categories: ["Source unchanged"],
   },
   {
     id: "external:runtime_url",
@@ -55,16 +55,14 @@ export const realWorldNodes: readonly DependencyGraphNode[] = [
     label: "pipeline",
     typeLabel: "data.google_service_account",
     address: "data.google_service_account.pipeline",
-    description: "Source unchanged",
+    categories: ["Source unchanged"],
   },
   {
     id: "google_sql_user.pipeline",
     label: "pipeline",
     typeLabel: "google_sql_user",
     address: "google_sql_user.pipeline",
-    changeSummary: "Source modified",
-    description:
-      "A source edit was observed. No captured plan action was supplied.",
+    categories: ["Source modified"],
     changes: [
       {
         path: "name",

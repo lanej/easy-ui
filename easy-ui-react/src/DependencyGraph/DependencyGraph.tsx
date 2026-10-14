@@ -437,7 +437,7 @@ export function DependencyGraph({
   const search = query.trim().toLowerCase();
   const matches = search
     ? nodes.filter((node) =>
-        `${node.label} ${node.id} ${node.typeLabel ?? ""} ${node.address ?? ""} ${node.description ?? ""}`
+        `${node.label} ${node.id} ${node.typeLabel ?? ""} ${node.address ?? ""} ${node.description ?? ""} ${(node.categories ?? []).join(" ")}`
           .toLowerCase()
           .includes(search),
       )
@@ -1036,6 +1036,7 @@ export function DependencyGraph({
                                         ? dependencyChangeLabels[node.change]
                                         : null,
                                       node.typeLabel,
+                                      ...(node.categories ?? []),
                                       node.description,
                                       node.iconLabel,
                                     ]

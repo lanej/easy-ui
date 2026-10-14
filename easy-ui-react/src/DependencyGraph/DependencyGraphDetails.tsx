@@ -11,6 +11,7 @@ import type {
 } from "./types";
 import { dependencyChangeLabels } from "./model";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
+import { DependencyGraphCategories } from "./DependencyGraphCategories";
 import styles from "./DependencyGraph.module.scss";
 
 export type DependencyGraphDetailsProps = {
@@ -129,14 +130,21 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
                     {context.node.typeLabel}
                   </p>
                 )}
-                <span
-                  className={context.node.change ? styles.change : styles.muted}
-                  data-change={context.node.change}
-                >
-                  {context.node.change
-                    ? dependencyChangeLabels[context.node.change]
-                    : "Change not supplied"}
-                </span>
+                <div className={styles.nodeMetadata}>
+                  <span
+                    className={
+                      context.node.change ? styles.change : styles.muted
+                    }
+                    data-change={context.node.change}
+                  >
+                    {context.node.change
+                      ? dependencyChangeLabels[context.node.change]
+                      : "Change not supplied"}
+                  </span>
+                  <DependencyGraphCategories
+                    categories={context.node.categories}
+                  />
+                </div>
                 {context.node.description && (
                   <p className={styles.detailDescription}>
                     {context.node.description}

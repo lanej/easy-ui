@@ -1,5 +1,6 @@
 import React from "react";
 import { Icon } from "../Icon";
+import { DependencyGraphCategories } from "./DependencyGraphCategories";
 import { dependencyChangeLabels } from "./model";
 import type { DependencyGraphNode } from "./types";
 import styles from "./DependencyGraph.module.scss";
@@ -56,15 +57,17 @@ export function DependencyGraphIdentity({
           <ResourceLabel label={node.label} />
         </strong>
       </span>
-      {(node.typeLabel || node.kind === "unresolved" || node.change) && (
+      {node.typeLabel && (
+        <span className={styles.nodeType} title={node.typeLabel}>
+          {node.typeLabel}
+        </span>
+      )}
+      {(node.categories?.some((label) => label.trim()) ||
+        node.kind === "unresolved" ||
+        node.change) && (
         <span className={styles.nodeMetadata}>
           {node.kind === "unresolved" && (
             <span className={styles.referenceLabel}>Unresolved</span>
-          )}
-          {node.typeLabel && (
-            <span className={styles.nodeType} title={node.typeLabel}>
-              {node.typeLabel}
-            </span>
           )}
           {node.change && (
             <span
@@ -74,13 +77,12 @@ export function DependencyGraphIdentity({
               role="img"
               aria-label={dependencyChangeLabels[node.change]}
             >
-              {overview ||
-              node.change === "unknown" ||
-              node.change === "unchanged"
+              {overview
                 ? compactChanges[node.change]
                 : dependencyChangeLabels[node.change]}
             </span>
           )}
+          <DependencyGraphCategories categories={node.categories} />
         </span>
       )}
       {summary && node.kind !== "unresolved" && (

@@ -100,6 +100,41 @@ try {
         await page.locator("[data-graph-attribute-controls]").count(),
         1,
       );
+      const categoryPills = cards.locator("[data-graph-category]");
+      assert.equal(await categoryPills.count(), 5);
+      assert.equal(
+        await categoryPills.filter({ hasText: "Source unchanged" }).count(),
+        4,
+      );
+      assert.equal(
+        await categoryPills.filter({ hasText: "Source modified" }).count(),
+        1,
+      );
+      const categories = await categoryPills.evaluateAll((pills) =>
+        pills.map((pill) => {
+          const box = pill.getBoundingClientRect();
+          const card = pill
+            .closest("[data-graph-resource-card]")
+            .getBoundingClientRect();
+          const identity = pill
+            .closest("[data-graph-resource-card]")
+            .querySelector("[data-graph-resource-label]")
+            .getBoundingClientRect();
+          return {
+            inside: box.left >= card.left && box.right <= card.right + 1,
+            belowIdentity: box.top >= identity.bottom - 1,
+            radius: parseFloat(getComputedStyle(pill).borderRadius),
+          };
+        }),
+      );
+      for (const pill of categories) {
+        assert.ok(pill.inside, `${name}: category stays inside the card`);
+        assert.ok(
+          pill.belowIdentity,
+          `${name}: category does not compete with identity`,
+        );
+        assert.ok(pill.radius >= 999, `${name}: category has pill geometry`);
+      }
       const initial = await positions();
       await page
         .getByRole("button", {

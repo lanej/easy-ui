@@ -32,6 +32,8 @@ export type DependencyGraphNode = {
   kind?: "resource" | "unresolved";
   /** Resource type, address, or other caller-owned context. */
   description?: string;
+  /** Caller-owned categorical metadata, rendered as neutral pills. Never interpreted as plan actions or risk. */
+  categories?: readonly string[];
   /** Caller-supplied resource type symbol, using Easy UI's normal Icon contract. */
   icon?: IconSymbol;
   /** Accessible resource type label, such as Database or Authentication. */
