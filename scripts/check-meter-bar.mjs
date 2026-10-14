@@ -241,8 +241,8 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
             const value = meter.querySelector(
               "[data-risk-score-value]",
             ).firstElementChild;
-            const expression = meter.querySelector("[data-risk-score-expression]");
-            const maximum = expression.lastElementChild.firstElementChild;
+            const score = meter.querySelector("[data-risk-score-expression]");
+            const maximum = score.lastElementChild.firstElementChild;
             const probe = document.createElement("span");
             meter.append(probe);
             probe.style.color = `var(--ezui-color-${expectedTokens[meter.dataset.assessment]})`;
