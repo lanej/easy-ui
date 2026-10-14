@@ -26,7 +26,8 @@ it("takes the clear internal corridor rather than circling the runtime subgraph"
   const { points } = routes.find((route) => route.key === "db-api")!;
   expect(points.length).toBeGreaterThan(1);
   expect(points.length).toBeLessThanOrEqual(4);
-  expect(routeLength(points)).toBe(Math.abs(points.at(-1)!.x - points[0].x) + Math.abs(points.at(-1)!.y - points[0].y));
+  const last = points[points.length - 1];
+  expect(routeLength(points)).toBe(Math.abs(last.x - points[0].x) + Math.abs(last.y - points[0].y));
   expect(points.every((p) => p.x >= 356 && p.x <= 440)).toBe(true);
   expect(items).toEqual(original);
   expect(routes.find((route) => route.key === "db-api")!.convergenceKey).toBe(routes.find((route) => route.key === "module-api")!.convergenceKey);
