@@ -1,0 +1,56 @@
+name: Dependency arrow browser
+on:
+  pull_request:
+    paths:
+      - "easy-ui-react/src/DependencyGraph/**"
+      - "easy-ui-react/src/styles/**"
+      - "easy-ui-tokens/**"
+      - "scripts/check-dependency-graph-arrowheads.mjs"
+      - "scripts/preview-metrics/**"
+      - ".github/workflows/dependency-arrow-browser.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: dependency-arrow-browser-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Build native dependency fixture
+        working-directory: scripts/preview-metrics
+        run: |
+          npm ci --no-audit --no-fund
+          node ../preview-tokens.mjs
+          node ../preview-icons.mjs
+          npx vite build --config dependency-arrow.config.mjs
+          ln -s dependency-arrow.html dist-dependency-arrow/iframe.html
+          npx playwright install --with-deps chromium
+      - name: Verify arrow geometry and interaction
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9018
+          FACILITY_REPORT_DIR: ${{ runner.temp }}/dependency-arrow-browser
+        run: |
+          python3 -m http.server 9018 --bind 127.0.0.1 --directory scripts/preview-metrics/dist-dependency-arrow > "$RUNNER_TEMP/dependency-arrow-browser-server.log" 2>&1 &
+          server=$!
+          trap 'kill "$server"' EXIT
+          for attempt in {1..30}; do
+            if curl -fs "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/check-dependency-graph-arrowheads.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-arrow-browser
+          path: |
+            ${{ runner.temp }}/dependency-arrow-browser
+            ${{ runner.temp }}/dependency-arrow-browser-server.log
+          if-no-files-found: warn
