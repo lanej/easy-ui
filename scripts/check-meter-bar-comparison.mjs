@@ -73,7 +73,8 @@ try {
             overflow:
               root.scrollWidth > root.clientWidth + 1 ||
               rows.some((row) => row.scrollWidth > row.clientWidth + 1),
-            alerts: root.querySelectorAll('[role="alert"], [role="status"]').length,
+            alerts: root.querySelectorAll('[role="alert"], [role="status"]')
+              .length,
             keyboardStops: root.querySelectorAll(
               "[tabindex], button, input, select, textarea, a[href]",
             ).length,
@@ -119,7 +120,11 @@ try {
           if (row.state === "unavailable") {
             assert.equal(row.role, null, `${name}: unavailable is not a meter`);
             assert.equal(row.value, null, `${name}: no invented missing value`);
-            assert.equal(row.trackWidth, undefined, `${name}: no missing track`);
+            assert.equal(
+              row.trackWidth,
+              undefined,
+              `${name}: no missing track`,
+            );
             continue;
           }
           assert.equal(row.role, "meter", `${name}: one meter per valid row`);
@@ -127,9 +132,18 @@ try {
           assert.equal(row.max, "12", `${name}: shared maximum`);
           assert.equal(row.hiddenTrack, "true", `${name}: visual-only fill`);
           assert.ok(row.trackWidth > 1, `${name}: bar has visible width`);
-          assert.notEqual(row.fillColor, row.trackColor, `${name}: visible color`);
-          assert.notEqual(row.fillColor, "rgba(0, 0, 0, 0)", `${name}: opaque fill`);
-          const expected = (Number(row.value) / Number(row.max)) * row.trackWidth;
+          assert.notEqual(
+            row.fillColor,
+            row.trackColor,
+            `${name}: visible color`,
+          );
+          assert.notEqual(
+            row.fillColor,
+            "rgba(0, 0, 0, 0)",
+            `${name}: opaque fill`,
+          );
+          const expected =
+            (Number(row.value) / Number(row.max)) * row.trackWidth;
           assert.ok(
             Math.abs(row.fillWidth - expected) < 0.6,
             `${name}: exact geometry for ${row.name}`,
@@ -166,7 +180,9 @@ try {
             `${name}: distinct series colors`,
           );
         }
-        await page.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
+        await page.addScriptTag({
+          path: require.resolve("axe-core/axe.min.js"),
+        });
         const violations = await page.evaluate(async () => {
           for (let attempt = 0; ; attempt++) {
             try {
@@ -181,7 +197,10 @@ try {
               );
               return result.violations.map(({ id }) => id);
             } catch (error) {
-              if (!String(error).includes("already running") || attempt === 39) {
+              if (
+                !String(error).includes("already running") ||
+                attempt === 39
+              ) {
                 throw error;
               }
               await new Promise((resolve) => setTimeout(resolve, 50));

@@ -48,33 +48,35 @@ export async function checkMeterBar({
               risk: meter.hasAttribute("data-assessment"),
               bars: meter.querySelectorAll("[data-meter-bar]").length,
             })),
-            bars: [...root.querySelectorAll("[data-meter-bar]")].map((track) => {
-              const fill = track.querySelector("[data-meter-fill]");
-              const meter = track.closest('[role="meter"]');
-              const trackBox = track.getBoundingClientRect();
-              const fillBox = fill.getBoundingClientRect();
-              const direction = window.getComputedStyle(track).direction;
-              return {
-                hidden: track.getAttribute("aria-hidden"),
-                role: track.getAttribute("role"),
-                height: trackBox.height,
-                thickness: track.dataset.thickness,
-                ratio: fillBox.width / trackBox.width,
-                expected: meter
-                  ? Number(meter.getAttribute("aria-valuenow")) /
-                    Number(meter.getAttribute("aria-valuemax"))
-                  : 0.72,
-                direction,
-                startDifference:
-                  direction === "rtl"
-                    ? trackBox.right - fillBox.right
-                    : fillBox.left - trackBox.left,
-                tone: track.dataset.tone,
-                assessment: meter?.getAttribute("data-assessment"),
-                outline: window.getComputedStyle(track).outlineStyle,
-                adjustment: window.getComputedStyle(fill).forcedColorAdjust,
-              };
-            }),
+            bars: [...root.querySelectorAll("[data-meter-bar]")].map(
+              (track) => {
+                const fill = track.querySelector("[data-meter-fill]");
+                const meter = track.closest('[role="meter"]');
+                const trackBox = track.getBoundingClientRect();
+                const fillBox = fill.getBoundingClientRect();
+                const direction = window.getComputedStyle(track).direction;
+                return {
+                  hidden: track.getAttribute("aria-hidden"),
+                  role: track.getAttribute("role"),
+                  height: trackBox.height,
+                  thickness: track.dataset.thickness,
+                  ratio: fillBox.width / trackBox.width,
+                  expected: meter
+                    ? Number(meter.getAttribute("aria-valuenow")) /
+                      Number(meter.getAttribute("aria-valuemax"))
+                    : 0.72,
+                  direction,
+                  startDifference:
+                    direction === "rtl"
+                      ? trackBox.right - fillBox.right
+                      : fillBox.left - trackBox.left,
+                  tone: track.dataset.tone,
+                  assessment: meter?.getAttribute("data-assessment"),
+                  outline: window.getComputedStyle(track).outlineStyle,
+                  adjustment: window.getComputedStyle(fill).forcedColorAdjust,
+                };
+              },
+            ),
           };
         });
         assert.ok(result.overflow <= 1, `${name}: overflow`);
@@ -94,7 +96,8 @@ export async function checkMeterBar({
           );
           const startsAtEdge = Math.abs(bar.startDifference) <= 0.1;
           assert.ok(startsAtEdge, `${name}: inline start`);
-          if (story.endsWith("right-to-left")) assert.equal(bar.direction, "rtl");
+          if (story.endsWith("right-to-left"))
+            assert.equal(bar.direction, "rtl");
           if (bar.assessment) {
             assert.equal(
               bar.tone,
@@ -236,7 +239,8 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
                   : ((value + 0.055) / 1.055) ** 2.4;
               })
               .reduce(
-                (sum, channel, i) => sum + channel * [0.2126, 0.7152, 0.0722][i],
+                (sum, channel, i) =>
+                  sum + channel * [0.2126, 0.7152, 0.0722][i],
                 0,
               );
           return meters.map((meter) => {
@@ -264,7 +268,9 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
             const color = window.getComputedStyle(value).color;
             const high = Math.max(luminance(color), luminance(background));
             const low = Math.min(luminance(color), luminance(background));
-            const label = meter.querySelector("[data-risk-score-compact-label]");
+            const label = meter.querySelector(
+              "[data-risk-score-compact-label]",
+            );
             return {
               color,
               expected,

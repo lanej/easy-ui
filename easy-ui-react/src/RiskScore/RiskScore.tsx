@@ -83,7 +83,10 @@ const assessmentLabels = {
   high: "High risk",
   unassessed: "Not assessed",
 };
-const assessmentTones: Record<RiskScoreAssessment | "unassessed", MeterBarTone> = {
+const assessmentTones: Record<
+  RiskScoreAssessment | "unassessed",
+  MeterBarTone
+> = {
   low: "success",
   medium: "warning",
   high: "danger",

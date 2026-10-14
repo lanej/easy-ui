@@ -123,14 +123,20 @@ it.each([0, -1, NaN, Infinity, -Infinity])(
     const { container } = render(<MeterBar data={data} max={max} />);
     expect(screen.getAllByText("Unavailable")).toHaveLength(3);
     expect(screen.queryByRole("meter")).toBeNull();
-    expect(container.querySelector("[data-meter-bar], [aria-valuenow]")).toBeNull();
+    expect(
+      container.querySelector("[data-meter-bar], [aria-valuenow]"),
+    ).toBeNull();
   },
 );
 
 it("keeps missing rows in place between valid observations", () => {
   const { container } = render(
     <MeterBar
-      data={[data[0], { id: "missing", label: "Missing", value: null }, data[2]]}
+      data={[
+        data[0],
+        { id: "missing", label: "Missing", value: null },
+        data[2],
+      ]}
       max={12}
     />,
   );
