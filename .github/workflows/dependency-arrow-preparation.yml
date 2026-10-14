@@ -20,7 +20,9 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - name: Apply guarded arrow geometry correction
-        run: python3 scripts/prepare-dependency-arrowheads.py
+        run: |
+          sed -i 's/check-dependency-graph-heading-routing.mjs/check-dependency-graph.mjs/g' scripts/prepare-dependency-arrowheads.py
+          python3 scripts/prepare-dependency-arrowheads.py
       - run: npm ci --no-audit --no-fund
       - name: Format changed sources
         run: npx prettier --write easy-ui-react/src/DependencyGraph/routing.ts easy-ui-react/src/DependencyGraph/routing.arrowheads.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/DependencyGraphConvergence.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph-arrowheads.mjs
@@ -47,6 +49,7 @@ jobs:
           for attempt in {1..30}; do curl -fs "$STORYBOOK_URL/iframe.html" >/dev/null && break; sleep 1; done
           node scripts/check-dependency-graph-arrowheads.mjs
           node scripts/check-dependency-graph.mjs
+          node scripts/check-dependency-graph-groups.mjs
           node scripts/check-dependency-graph-heading-routing.mjs
       - name: Prepare candidate tree without moving any branch
         env:
