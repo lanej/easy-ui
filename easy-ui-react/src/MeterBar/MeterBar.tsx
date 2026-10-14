@@ -139,7 +139,9 @@ function MeterBarComparison({
                   value={value}
                   max={max}
                   color={datum.color ?? color}
-                  tone={datum.tone ?? (datum.color !== undefined ? undefined : tone)}
+                  tone={
+                    datum.tone ?? (datum.color !== undefined ? undefined : tone)
+                  }
                   thickness={thickness}
                 />
               )}
