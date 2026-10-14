@@ -3,13 +3,7 @@ import { resolve } from "node:path";
 
 // Reuse the existing ProportionBar browser session, accessibility audit,
 // reporting, and CI artifact rather than creating another workflow.
-export async function checkMeterBar({
-  page,
-  base,
-  output,
-  checks,
-  accessibility,
-}) {
+export async function checkMeterBar({ page, base, output, checks, accessibility }) {
   async function open(story, theme) {
     await page.goto(
       `${base}/iframe.html?id=test-meterbar--${story}&viewMode=story&globals=colorScheme:${theme}`,
@@ -91,10 +85,7 @@ export async function checkMeterBar({
             Math.abs(bar.ratio - bar.expected) <= 0.001,
             `${name}: exact geometry`,
           );
-          assert.ok(
-            Math.abs(bar.startDifference) <= 0.1,
-            `${name}: inline start`,
-          );
+          assert.ok(Math.abs(bar.startDifference) <= 0.1, `${name}: inline start`);
           if (story.endsWith("right-to-left")) assert.equal(bar.direction, "rtl");
           if (bar.assessment) {
             assert.equal(
@@ -241,8 +232,8 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
                 0,
               );
           return meters.map((meter) => {
-            const value = meter.querySelector("[data-risk-score-value]")
-              .firstElementChild;
+            const value =
+              meter.querySelector("[data-risk-score-value]").firstElementChild;
             const expression = meter.querySelector(
               "[data-risk-score-expression]",
             );
