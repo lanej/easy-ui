@@ -142,7 +142,8 @@ try {
     .evaluate((track) => ({
       outline: getComputedStyle(track).outlineWidth,
       track: getComputedStyle(track).backgroundColor,
-      fill: getComputedStyle(track.querySelector("[data-meter-fill]")).backgroundColor,
+      fill: getComputedStyle(track.querySelector("[data-meter-fill]"))
+        .backgroundColor,
     }));
   assert.notEqual(contrast.outline, "0px", "forced colors: track outline");
   assert.notEqual(contrast.fill, contrast.track, "forced colors: visible fill");

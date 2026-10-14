@@ -5,11 +5,19 @@ import { render } from "../utilities/test";
 import { MeterBar } from "./MeterBar";
 import type { MeterBarDatum, MeterBarProps } from "./MeterBar";
 
-const data: readonly MeterBarDatum[] = [
+const data = [
   { id: "sac", label: "Sacramento", value: 4.2 },
   { id: "oak", label: "Oakland", value: 7.8, tone: "warning" },
   { id: "sjc", label: "San Jose", value: 3.1 },
-];
+] satisfies readonly MeterBarDatum[];
+
+function getFill(element: Element): HTMLElement {
+  const fill = element.querySelector<HTMLElement>("[data-meter-fill]");
+  if (fill === null) {
+    throw new Error("Expected a meter fill");
+  }
+  return fill;
+}
 
 it("compares labeled values on one supplied scale without nested meters", () => {
   const { container } = render(
@@ -29,9 +37,9 @@ it("compares labeled values on one supplied scale without nested meters", () => 
     expect(meter).toHaveAttribute("aria-valuenow", String(datum.value));
     expect(meter).toHaveAttribute("aria-valuetext", `${datum.value} h`);
     expect(within(meter).queryByRole("meter")).toBeNull();
-    const fill = meter.querySelector<HTMLElement>("[data-meter-fill]");
-    expect(parseFloat(fill!.style.inlineSize)).toBeCloseTo(
-      (datum.value! / 12) * 100,
+    const fill = getFill(meter);
+    expect(parseFloat(fill.style.inlineSize)).toBeCloseTo(
+      (datum.value / 12) * 100,
       10,
     );
   });
@@ -42,11 +50,11 @@ it("compares labeled values on one supplied scale without nested meters", () => 
 it("does not rescale remaining bars when the largest value is removed", () => {
   const { rerender } = render(<MeterBar data={data} max={12} />);
   const first = screen.getByRole("meter", { name: "Sacramento" });
-  const fill = first.querySelector<HTMLElement>("[data-meter-fill]");
-  const width = fill!.style.inlineSize;
+  const fill = getFill(first);
+  const width = fill.style.inlineSize;
   rerender(<MeterBar data={[data[2], data[0]]} max={12} />);
   expect(screen.getByRole("meter", { name: "Sacramento" })).toBe(first);
-  expect(fill!.style.inlineSize).toBe(width);
+  expect(fill.style.inlineSize).toBe(width);
   expect(screen.getAllByRole("meter")[0]).toHaveAccessibleName("San Jose");
 });
 
@@ -62,8 +70,8 @@ it("uses exact geometry rather than rounded display values", () => {
   expect(meter).toHaveTextContent("0.19");
   expect(meter).toHaveAttribute("aria-valuenow", "0.18765");
   expect(meter).toHaveAttribute("aria-valuetext", "0.19");
-  const fill = meter.querySelector<HTMLElement>("[data-meter-fill]");
-  expect(parseFloat(fill!.style.inlineSize)).toBeCloseTo(18.765, 10);
+  const fill = getFill(meter);
+  expect(parseFloat(fill.style.inlineSize)).toBeCloseTo(18.765, 10);
 });
 
 it("preserves zero and the maximum without inferring tones", () => {
