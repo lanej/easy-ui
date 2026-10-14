@@ -23,8 +23,13 @@ jobs:
           mkdir -p /tmp/arrow-review
           sed -i 's/check-dependency-graph-heading-routing.mjs/check-dependency-graph.mjs/g' scripts/prepare-dependency-arrowheads.py
           python3 scripts/prepare-dependency-arrowheads.py
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install dependencies with preparation-only npm version
+        run: |
+          ulimit -n "$(ulimit -Hn)"
+          ulimit -a | tee /tmp/arrow-review/limits.txt
+          npm install --global npm@10.9.2 --no-audit --no-fund
+          npm --version
+          npm ci --no-audit --no-fund --maxsockets=4
       - name: Format changed sources
         run: |
           npx prettier --write easy-ui-react/src/DependencyGraph/routing.ts easy-ui-react/src/DependencyGraph/routing.arrowheads.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/DependencyGraphConvergence.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph-arrowheads.mjs
@@ -43,7 +48,11 @@ jobs:
       - name: Storybook
         run: npm run build:storybook
       - name: Browser dependencies
-        run: cd scripts/preview-metrics && npm install --no-audit --no-fund && npx playwright install --with-deps chromium
+        run: |
+          ulimit -n "$(ulimit -Hn)"
+          cd scripts/preview-metrics
+          npm ci --no-audit --no-fund --maxsockets=4
+          npx playwright install --with-deps chromium
       - name: Verify actual arrows and dependency regressions
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
@@ -91,6 +100,9 @@ jobs:
           Path('/tmp/arrow-review/candidate.json').write_text(json.dumps({'parent':head,'tree':tree['sha'],'files':[e['path'] for e in elements]},indent=2))
           print('Candidate tree:',tree['sha'])
           PY
+      - name: Preserve installation diagnostics
+        if: failure()
+        run: cp -r "$HOME/.npm/_logs" /tmp/arrow-review/npm-logs || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
