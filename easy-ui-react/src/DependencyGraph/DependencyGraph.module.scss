@@ -694,7 +694,7 @@
   padding: 4px 4px 4px 0;
 }
 .hiddenCount {
-  font-size: max(0.625rem, calc(10px / var(--dependency-graph-zoom)));
+  font-size: max(0.75rem, calc(12px / var(--dependency-graph-zoom)));
   color: design-token("color.neutral.700");
   white-space: nowrap;
 }

@@ -109,10 +109,12 @@ try {
         .press("Enter");
       await settled();
       assert.equal(await cards.count(), 8);
-      assert.equal(
-        await page.getByText("2 hidden", { exact: true }).count(),
-        1,
+      const hiddenCount = page.getByText("2 hidden", { exact: true });
+      assert.equal(await hiddenCount.count(), 1);
+      const countFontSize = await hiddenCount.evaluate((element) =>
+        parseFloat(getComputedStyle(element).fontSize),
       );
+      assert.ok(countFontSize >= 12, `${name}: hidden count is readable`);
       sameOrder(initial, await positions());
       await page
         .getByRole("button", {
