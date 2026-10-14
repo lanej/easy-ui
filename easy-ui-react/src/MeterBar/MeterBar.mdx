@@ -9,14 +9,16 @@ Display a bounded measurement or compare several measurements on a shared scale.
 MeterBar adds no card, title, assessment, or alert. Labels and exact values are
 included when using the comparison API.
 
-## Compare measurements
+## Usage
 
-All rows use the same units and the same explicit maximum. Color identifies a
-series; it does not say whether that series is good, bad, or risky.
+All comparison rows use the same units and the same explicit maximum. Color
+identifies a series; it does not imply that a measurement is good, bad, or risky.
 
 <Canvas of={MeterBarStories.Comparison} />
 
 ```tsx
+import { MeterBar } from "@easypost/easy-ui/MeterBar";
+
 <MeterBar
   data={[
     { id: "sac", label: "Sacramento", value: 4.2, color: "primary" },
@@ -34,23 +36,19 @@ Keep `max` fixed across comparable lists. Removing a row does not rescale the
 remaining measurements. Input order is preserved. Do not combine hours, counts,
 and percentages on one scale.
 
-## Compact comparison
+## Props
 
-At narrow widths, each label and value share a row above its bar. No surrounding
-card or heading is required.
+<Controls of={MeterBarStories.Comparison} />
 
-<Canvas of={MeterBarStories.ComparisonNarrow} />
-
-## Color and meaning
+Use `value` for a visual-only single bar or `data` for labeled comparison rows.
+Both modes require a finite `max` greater than zero.
 
 `color` accepts `primary`, `secondary`, and `tertiary` from the theme palette.
 Comparisons default to `primary`; an unstyled single-value bar remains neutral.
 Set one group color or give individual rows their own colors.
 
-<Canvas of={MeterBarStories.Colors} />
-
 `tone` remains available for caller-supplied `neutral`, `success`, `warning`, or
-`danger` meaning. It only selects a fill color: MeterBar never calculates a risk
+`danger` meaning. It only selects a fill color: MeterBar never calculates an
 assessment, applies thresholds, or renders alert UI.
 
 Row styling overrides group styling. A row's `tone` takes precedence over its
@@ -58,41 +56,49 @@ Row styling overrides group styling. A row's `tone` takes precedence over its
 styling, the group tone takes precedence over the group color. Explicit
 `tone="neutral"` is neutral, not the default comparison blue.
 
-Components such as RiskScore can supply a tone to a single bar, but their
-assessment UI and examples belong to those components, not to MeterBar.
+`formatValue` controls visible and accessible value text without changing
+geometry. `accessibilityLabel` names the comparison group without adding a
+visible heading. `unavailableLabel` customizes missing-value text.
 
-## Single measurement
+## Examples
+
+### Compact comparison
+
+At narrow widths, each label and value share a row above its bar. No surrounding
+card or heading is required.
+
+<Canvas of={MeterBarStories.ComparisonNarrow} />
+
+### Palette colors
+
+These colors identify measurements without supplying an assessment.
+
+<Canvas of={MeterBarStories.Colors} />
+
+### Single measurement
 
 The single-value API draws only the track and fill. Its owner supplies the label,
 value text, and accessible meter semantics, as demonstrated here.
 
 <Canvas of={MeterBarStories.Default} />
 
-## Thickness
+### Thickness
 
 Use `sm` for 4 px, `md` for 8 px, or `lg` for 12 px tracks.
 
 <Canvas of={MeterBarStories.Thicknesses} />
 
-## Zero and missing values
+### Zero and missing values
 
 Zero is a measured value. Missing, nonfinite, negative, and out-of-range values
-are unavailable, not zero. A valid scale has a finite maximum greater than zero.
-Invalid single values draw nothing; invalid comparison rows retain their label
-and the configurable `unavailableLabel`, without a misleading meter.
+are unavailable, not zero. Invalid single values draw nothing; invalid comparison
+rows retain their label and `unavailableLabel`, without a misleading meter.
 
 <Canvas of={MeterBarStories.ComparisonStates} />
 
-## Accessibility
+### Accessibility
 
-Comparisons expose one accessible meter per valid row. `formatValue` controls
-visible and accessible value text without changing geometry. The group can have
-an `accessibilityLabel` without adding a visible heading. Labels, units, and
-numeric values remain available independently of color.
-
-RTL, localized numbers, large-text reflow, forced colors, and composed-component
-states are regression fixtures, not additional usage patterns in this showcase.
-
-## Properties
-
-<Controls of={MeterBarStories.Default} />
+Comparisons expose one accessible meter per valid row. Labels, units, and numeric
+values remain available independently of color. RTL, localized numbers,
+large-text reflow, forced colors, and composed-component states are covered by
+regression fixtures rather than additional usage examples in this showcase.
