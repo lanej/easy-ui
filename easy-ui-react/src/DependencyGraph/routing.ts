@@ -219,6 +219,13 @@ export function routeDependencyConnections(
   const port = (connection: GraphConnection, side: "source" | "target") => {
     const item = records.get(connection[side])!;
     const field = offset(connection, side);
+    // Converging relationships share the actual destination port. Only outgoing
+    // branches fan out; visible attribute rows still have distinct destinations.
+    if (side === "target")
+      return (
+        item.y +
+        (field ?? (item.node ? Math.min(26, item.height / 2) : item.height / 2))
+      );
     if (field !== undefined) {
       const matching = ordered.filter(
         (other) =>
@@ -252,19 +259,29 @@ export function routeDependencyConnections(
         Math.min(8, 48 / Math.max(1, peers.length - 1))
     );
   };
-  const occupied: Point[][] = [];
-  return ordered.map((connection) => {
+  const occupied: { destination: string; points: Point[] }[] = [];
+  const routed = ordered.map((connection) => {
     const source = records.get(connection.source)!,
       target = records.get(connection.target)!;
     const start = { x: source.x + source.width, y: port(connection, "source") },
       end = { x: target.x, y: port(connection, "target") };
     const a = { x: start.x + clearance, y: start.y },
       b = { x: end.x - clearance, y: end.y };
-    const middle = routeBetween(a, b, boxes, occupied);
+    const destination = JSON.stringify([connection.target, end.y]);
+    // Sharing a destination is intentional bundling, not lane congestion. Do not
+    // push these paths into parallel lanes merely to avoid their shared trunk.
+    const middle = routeBetween(
+      a,
+      b,
+      boxes,
+      occupied
+        .filter((route) => route.destination !== destination)
+        .map((route) => route.points),
+    );
     const points = middle.length
       ? simplify([start, ...middle, end])
       : connection.points;
-    occupied.push(points);
+    occupied.push({ destination, points });
     return {
       ...connection,
       points,
@@ -278,6 +295,27 @@ export function routeDependencyConnections(
           : undefined,
     };
   });
+  // Key the rendered arrival, rather than just the resource: expanded attributes
+  // must never acquire a shared arrow at the wrong field. A failed route also
+  // cannot masquerade as a successful convergence at its requested port.
+  const destinationKey = (route: (typeof routed)[number]) =>
+    JSON.stringify([
+      route.target,
+      route.targetAttribute ?? null,
+      route.points[route.points.length - 1] ?? null,
+    ]);
+  const counts = new Map<string, number>();
+  for (const route of routed) {
+    const key = destinationKey(route);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return routed.map((route) => ({
+    ...route,
+    convergenceKey:
+      route.points.length > 1 && counts.get(destinationKey(route))! > 1
+        ? destinationKey(route)
+        : undefined,
+  }));
 }
 
 /** Round orthogonal bends without moving endpoints or diagonally cutting across cards. */

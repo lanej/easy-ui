@@ -4,6 +4,7 @@ import { Button } from "../Button";
 import { ExpandButton } from "../ExpandButton";
 import { CollapseButton } from "../CollapseButton";
 import { DependencyGraphIdentity } from "./DependencyGraphIdentity";
+import { DependencyGraphConvergence } from "./DependencyGraphConvergence";
 import { Select } from "../Select";
 import { TextField } from "../TextField";
 import { DependencyGraphDetails } from "./DependencyGraphDetails";
@@ -951,7 +952,11 @@ export function DependencyGraph({
                             <path
                               className={styles.edgeLine}
                               d={path}
-                              markerEnd={`url(#${instanceId}-arrow-${change})`}
+                              markerEnd={
+                                connection.convergenceKey === undefined
+                                  ? `url(#${instanceId}-arrow-${change})`
+                                  : undefined
+                              }
                             />
                             <title>
                               {connection.edges
@@ -964,6 +969,13 @@ export function DependencyGraph({
                           </g>
                         );
                       })}
+                      <DependencyGraphConvergence
+                        connections={connections}
+                        instanceId={instanceId}
+                        selection={selection}
+                        highlighted={highlighted}
+                        onSelect={select}
+                      />
                     </svg>
                     {items.map((item) => {
                       const selected = isSelected(item);

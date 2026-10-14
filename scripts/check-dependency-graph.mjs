@@ -845,10 +845,10 @@ try {
     );
     assert.notEqual(
       await modified
-        .locator("path[marker-end]")
+        .locator("path:last-of-type")
         .evaluate((el) => getComputedStyle(el).stroke),
       await block
-        .locator("path[marker-end]")
+        .locator("path:last-of-type")
         .evaluate((el) => getComputedStyle(el).stroke),
       "Modified and unchanged links have distinct colors",
     );

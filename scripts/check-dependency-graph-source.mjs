@@ -135,6 +135,38 @@ try {
         );
         assert.ok(pill.radius >= 999, `${name}: category has pill geometry`);
       }
+      const arrivals = await page
+        .locator("[data-graph-edge-ids]")
+        .evaluateAll((groups) =>
+          groups.map((group) => ({
+            ids: JSON.parse(group.dataset.graphEdgeIds),
+            points: JSON.parse(group.dataset.graphRoutePoints),
+          })),
+        );
+      const runtime = arrivals.filter((route) =>
+        route.ids.some((id) =>
+          ["image-runtime", "module-runtime"].includes(id),
+        ),
+      );
+      assert.equal(runtime.length, 2);
+      assert.deepEqual(
+        runtime[0].points.at(-1),
+        runtime[1].points.at(-1),
+        "Converging paths have one arrival",
+      );
+      assert.equal(
+        await page.locator("path[marker-end]").count(),
+        5,
+        "Six relationships render five arrival arrows",
+      );
+      const convergence = page.locator("[data-graph-convergence]");
+      assert.equal(await convergence.count(), 1);
+      assert.deepEqual(
+        JSON.parse(
+          await convergence.getAttribute("data-graph-convergence-edge-ids"),
+        ).sort(),
+        ["image-runtime", "module-runtime"],
+      );
       const initial = await positions();
       await page
         .getByRole("button", {
