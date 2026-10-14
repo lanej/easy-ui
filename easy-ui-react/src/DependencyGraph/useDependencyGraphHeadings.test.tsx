@@ -15,7 +15,11 @@ const rect = (x: number, y: number, w: number, h: number) =>
     toJSON: () => ({}),
   }) as DOMRect;
 
-function Probe({ zoom = 1, visible = true, layout = clusters }) {
+function Probe({ zoom = 1, visible = true, layout = clusters }: {
+  zoom?: number;
+  visible?: boolean;
+  layout?: typeof clusters;
+}) {
   const viewport = useRef<HTMLDivElement>(null);
   const obstacles = useDependencyGraphHeadings(viewport, layout, zoom, "ready");
   return (
