@@ -242,7 +242,8 @@ async function checkCompactRisk({ page, base, output, checks, accessibility }) {
             const value = meter.querySelector(
               "[data-risk-score-value]",
             ).firstElementChild;
-            const score = meter.querySelector("[data-risk-score-expression]");
+            const selector = "[data-risk-score-expression]";
+            const score = meter.querySelector(selector);
             const maximum = score.lastElementChild.firstElementChild;
             const probe = document.createElement("span");
             meter.append(probe);
