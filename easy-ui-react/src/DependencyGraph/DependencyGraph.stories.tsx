@@ -322,13 +322,13 @@ export const ExplicitChangeEvidence: Story = {
       {
         id: "absent",
         label: "No plan supplied",
-        categories: ["Source modified"],
+        categories: [{ label: "Source modified" }],
       },
       {
         id: "unknown",
         label: "Explicitly unknown",
         change: "unknown",
-        categories: ["Source unchanged"],
+        categories: [{ label: "Source unchanged" }],
       },
       { id: "unchanged", label: "Explicitly unchanged", change: "unchanged" },
       { id: "update", label: "Planned update", change: "update" },
@@ -347,8 +347,8 @@ export const CategoryColors: Story = {
     nodes: realWorldNodes.map((node) => ({
       ...node,
       categories: node.categories?.map((category) =>
-        category === "Source modified"
-          ? { label: category, variant: "primary" as const }
+        category.label === "Source modified"
+          ? { ...category, variant: "primary" as const }
           : category,
       ),
     })),
@@ -359,7 +359,7 @@ export const CategoryColors: Story = {
     docs: {
       description: {
         story:
-          "Caller-selected blue for Source modified; strings such as Source unchanged remain neutral. Colors are repeated in the inspector and do not imply plan actions or risk.",
+          "Caller-selected blue for Source modified; categories without a variant, such as Source unchanged, remain neutral. Colors are repeated in the inspector and do not imply plan actions or risk.",
       },
     },
   },
@@ -373,7 +373,7 @@ export const CategoryPalette: Story = {
         id: "palette",
         label: "Caller-selected categories",
         categories: [
-          "Neutral",
+          { label: "Neutral" },
           { label: "Primary", variant: "primary" },
           { label: "Secondary", variant: "secondary" },
           { label: "Success", variant: "success" },

@@ -8,9 +8,7 @@ export function dependencyGraphCategoryLabels(
   categories: DependencyGraphNode["categories"],
 ): string[] {
   return (categories ?? [])
-    .map((category) =>
-      typeof category === "string" ? category : category.label,
-    )
+    .map(({ label }) => label)
     .filter((label) => label.trim().length > 0);
 }
 
@@ -20,13 +18,8 @@ export function DependencyGraphCategories({
 }: Pick<DependencyGraphNode, "categories">) {
   return (
     <>
-      {categories?.map((category, index) => {
-        const label = typeof category === "string" ? category : category.label;
+      {categories?.map(({ label, variant = "neutral" }, index) => {
         if (!label.trim()) return null;
-        const variant =
-          typeof category === "string"
-            ? "neutral"
-            : (category.variant ?? "neutral");
         return (
           <span
             key={`${index}:${label}`}

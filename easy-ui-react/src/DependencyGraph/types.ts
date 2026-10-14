@@ -22,13 +22,11 @@ export type DependencyGraphPropertyChange = { path: string } & (
 
 export type DependencyGraphChangePresentation = "summary" | "diff";
 
-/** A label with an optional caller-selected theme variant. Strings remain neutral. */
-export type DependencyGraphCategory =
-  | string
-  | {
-      readonly label: string;
-      readonly variant?: "neutral" | BadgeVariant;
-    };
+/** A caller-owned label with an optional theme variant. Omitted variants are neutral. */
+export type DependencyGraphCategory = {
+  readonly label: string;
+  readonly variant?: "neutral" | BadgeVariant;
+};
 
 export type DependencyGraphNode = {
   id: string;

@@ -5,12 +5,16 @@ import { DependencyGraph } from "./DependencyGraph";
 import { DependencyGraphIdentity } from "./DependencyGraphIdentity";
 import type { DependencyGraphNode } from "./types";
 const nodes: readonly DependencyGraphNode[] = [
-  { id: "source", label: "Source edit", categories: ["Source modified"] },
+  {
+    id: "source",
+    label: "Source edit",
+    categories: [{ label: "Source modified" }],
+  },
   {
     id: "unknown",
     label: "Unknown plan",
     change: "unknown",
-    categories: ["Source unchanged"],
+    categories: [{ label: "Source unchanged" }],
   },
   { id: "unchanged", label: "No-op plan", change: "unchanged" },
 ];
@@ -70,7 +74,7 @@ describe("resource category pills", () => {
           id: "prose",
           label: "Resource",
           description: "Source unchanged",
-          categories: ["", "  "],
+          categories: [{ label: "" }, { label: "  " }],
         }}
         overview={false}
       />,

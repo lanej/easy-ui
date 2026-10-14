@@ -10,7 +10,7 @@ const colored: DependencyGraphNode = {
   id: "source",
   label: "Source edit",
   categories: [
-    "Source unchanged",
+    { label: "Source unchanged", variant: "neutral" },
     { label: "Source modified", variant: "primary" },
     { label: "Review requested", variant: "warning" },
     { label: "No variant supplied" },
@@ -18,7 +18,7 @@ const colored: DependencyGraphNode = {
 };
 
 describe("caller-selected category colors", () => {
-  it("keeps strings and omitted variants neutral without inferring a plan", () => {
+  it("keeps explicit and omitted neutral variants independent of plan actions", () => {
     const { container } = render(
       <DependencyGraphIdentity node={colored} overview={false} />,
     );
@@ -71,7 +71,7 @@ describe("caller-selected category colors", () => {
 
   it("omits empty object labels and preserves the category label in the overview", () => {
     const categories = [
-      "",
+      { label: "" },
       { label: "  ", variant: "danger" },
       { label: "Owner", variant: "secondary" },
     ] as const;
@@ -98,7 +98,7 @@ describe("caller-selected category colors", () => {
           id: "same",
           label: "Service",
           change: "unchanged",
-          categories: ["Owner"],
+          categories: [{ label: "Owner" }],
         }}
         overview={false}
       />,

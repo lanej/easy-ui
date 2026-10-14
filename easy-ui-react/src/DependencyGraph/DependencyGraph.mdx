@@ -174,9 +174,9 @@ labeled pills at detail zoom and compact `?` and `=` markers in the overview.
 Full accessible labels remain available at every zoom. Supplied field differences
 still expand even when no plan operation is supplied.
 
-Use `categories: ["Source unchanged"]` or `categories: ["Source modified"]` for
-caller-owned categorical metadata. Strings remain neutral. Supply an object such as
-`{ label: "Source modified", variant: "primary" }` to choose a theme-aware color.
+Supply categories as objects with a required `label` and optional `variant`:
+`categories: [{ label: "Source unchanged" }]` is neutral by default.
+Use `{ label: "Source modified", variant: "primary" }` to choose a theme-aware color.
 Categories stay below the resource identity, remain searchable and accessible by
 label, and appear with the same color in selection details.
 They are independent of `change`: a source edit is not an inferred plan action,
@@ -208,13 +208,13 @@ is neutral rather than inheriting the last-painted relationship's status.
 
 ```tsx
 categories: [
-  "Source unchanged", // Neutral; existing string categories remain supported.
+  { label: "Source unchanged" }, // Neutral by default.
   { label: "Source modified", variant: "primary" },
   { label: "Review requested", variant: "warning" },
 ]
 ```
 
-Object categories accept `neutral` and the shared Badge variants: `primary`,
+Categories accept `neutral` and the shared Badge variants: `primary`,
 `secondary`, `success`, `warning`, `danger`, `gray`, `black`, and `inverse`.
 Omitting `variant` remains neutral. Variants use the existing theme tokens;
 arbitrary CSS colors are not accepted. The application chooses the meaning:
