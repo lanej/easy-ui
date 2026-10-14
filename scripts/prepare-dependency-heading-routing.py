@@ -39,6 +39,15 @@ replace(docs, 'Connections use rounded orthogonal lanes around cards and group h
 checks = Path('scripts/check-dependency-graph.mjs')
 replace(checks, 'await import("./check-dependency-graph-source.mjs");', 'await import("./check-dependency-graph-source.mjs");\nawait import("./check-dependency-graph-heading-routing.mjs");')
 browser = Path('scripts/check-dependency-graph-heading-routing.mjs')
+replace(browser, '      const before = data.positions;', '''      // A fully revealed card can leave its approach just outside a 320px
+      // viewport. Pan to the edge itself before exercising its real hit target.
+      await page.locator("[data-graph-canvas]").evaluate((element, point) => {
+        const rect = element.getBoundingClientRect();
+        element.scrollLeft += point.x - (rect.left + rect.width / 2);
+        element.scrollTop += point.y - (rect.top + rect.height / 2);
+      }, data.crossing);
+      data = await geometry();
+      const before = data.positions;''')
 replace(browser, '} finally {\n  await writeFile', '''} catch (error) {
   errors.push(error.stack ?? String(error));
   await page.screenshot({ path: resolve(output, "failure.png"), fullPage: true });
