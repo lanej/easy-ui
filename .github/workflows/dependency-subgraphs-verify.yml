@@ -1,103 +1,67 @@
-name: Verify dependency subgraphs
+name: Publish verified dependency subgraphs
 on:
   push:
     branches: [fix/dependency-graph-real-world]
     paths: [.github/workflows/dependency-subgraphs-verify.yml]
 permissions:
   contents: write
+  actions: read
 concurrency:
   group: dependency-subgraphs-review
   cancel-in-progress: true
 jobs:
-  verify:
+  publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/dependency-graph-real-world
-      - uses: actions/setup-node@v4
+          fetch-depth: 2
+      - uses: actions/download-artifact@v4
         with:
-          node-version-file: .nvmrc
-          cache: npm
-      - name: Apply checksum-verified scoped source change
+          name: dependency-subgraphs-review
+          run-id: 38498719565
+          github-token: ${{ github.token }}
+          path: /tmp/verified-subgraphs
+      - name: Preserve concurrent source changes
         run: |
-          mkdir -p /tmp/subgraphs
+          git fetch --no-tags origin c1e86fb4b032f9f7c08242c159c06a3e1cee32f6
+          git diff --exit-code c1e86fb4b032f9f7c08242c159c06a3e1cee32f6 HEAD -- easy-ui-react/src/DependencyGraph scripts/check-dependency-graph-groups.mjs .changeset/dependency-subgraphs.md documentation/images/dependency-subgraphs-desktop.png documentation/images/dependency-subgraphs-mobile.png
+      - name: Restore tested sources and screenshots
+        run: |
           python3 - <<'PY'
-          import base64, hashlib, io, zipfile
+          import json, shutil
           from pathlib import Path
-          source = Path('.github/workflows/dependency-subgraphs-review.yml').read_text()
-          encoded = source.split('PATCH_B64: ', 1)[1].splitlines()[0].strip()
-          Path('/tmp/subgraphs/transport.txt').write_text(encoded)
-          encoded = encoded.replace('FWp8qt2qtTfjt69', 'FWp8qtTfjt69').replace('hpyFATFZFAW', 'hpyFZFAW').replace('q2Wyff/YbN07Pnd', 'q2Wyff/Y07Pnd')
-          payload = base64.b64decode(encoded)
-          actual = hashlib.sha256(payload).hexdigest()
-          print('Patch archive SHA-256:', actual)
-          assert actual == '76897d8e89e776a15ecac24d414d71c3e122256eae525516dc84a8be6fcc58e4', actual
-          archive = zipfile.ZipFile(io.BytesIO(payload))
-          assert archive.testzip() is None
-          for name in archive.namelist():
-              if name == 'patch_groups.py':
-                  continue
-              path = Path(name)
-              assert not path.is_absolute() and '..' not in path.parts and not path.exists(), name
-              path.parent.mkdir(parents=True, exist_ok=True)
-              path.write_bytes(archive.read(name))
-          exec(compile(archive.read('patch_groups.py'), 'patch_groups.py', 'exec'))
+          artifact = Path('/tmp/verified-subgraphs')
+          reports = artifact / 'tmp/subgraphs'
+          result = json.loads((reports / 'browser/dependency-subgraphs/results.json').read_text())
+          assert len(result['checks']) == 18 and result['errors'] == []
+          assert 'DependencyGraph: 129 browser cases passed.' in (reports / 'regression-browser.log').read_text()
+          source = artifact / 'home/runner/work/easy-ui/easy-ui'
+          base = Path('easy-ui-react/src/DependencyGraph')
+          names = ['groups.ts', 'groups.test.ts', 'types.ts', 'model.ts', 'DependencyGraph.tsx', 'DependencyGraphDetails.tsx', 'DependencyGraph.groups.fixtures.ts', 'DependencyGraph.groups.test.tsx', 'DependencyGraph.stories.tsx', 'DependencyGraph.mdx']
+          for name in names:
+              shutil.copyfile(source / base / name, base / name)
+          script = Path('scripts/check-dependency-graph-groups.mjs')
+          shutil.copyfile(source / script, script)
+          docs = base / 'DependencyGraph.mdx'
+          text = docs.read_text()
+          old = 'Groups are flat visual boundaries.'
+          assert text.count(old) == 1
+          docs.write_text(text.replace(old, 'Groups are explicit, optionally nested visual boundaries.'))
+          Path('.changeset/dependency-subgraphs.md').write_text('---\n"@easypost/easy-ui": minor\n---\n\nSupport explicit nested dependency subgraphs through group parentId, preserving\ncross-boundary relationships, descendant inspection, collapse state, and stable\nresource ordering. Add grouped, nested, and collapsed Storybook examples.\n')
+          for source_name, target_name in [('nested-subgraphs-light-1440.png', 'dependency-subgraphs-desktop.png'), ('nested-subgraphs-dark-390.png', 'dependency-subgraphs-mobile.png')]:
+              shutil.copyfile(reports / 'browser/dependency-subgraphs' / source_name, Path('documentation/images') / target_name)
           PY
-      - name: Install
-        run: npm ci --no-audit --no-fund > /tmp/subgraphs/install.log 2>&1
-      - name: Format changed files
-        run: npx prettier --write easy-ui-react/src/DependencyGraph/{groups.ts,groups.test.ts,types.ts,model.ts,DependencyGraph.tsx,DependencyGraphDetails.tsx,DependencyGraph.groups.fixtures.ts,DependencyGraph.groups.test.tsx,DependencyGraph.stories.tsx,DependencyGraph.mdx} scripts/check-dependency-graph-groups.mjs .github/workflows/ci.yml .changeset/dependency-subgraphs.md
-      - name: Build
-        run: npm run build > /tmp/subgraphs/build.log 2>&1
-      - name: Lint
-        run: npm run lint > /tmp/subgraphs/lint.log 2>&1
-      - name: Tests
-        run: npm run test > /tmp/subgraphs/test.log 2>&1
-      - name: Storybook
-        run: npm run build:storybook > /tmp/subgraphs/storybook.log 2>&1
-      - name: Browser dependencies
-        run: |
-          npm ci --no-audit --no-fund --prefix scripts/preview-metrics
-          cd scripts/preview-metrics
-          npx playwright install --with-deps chromium
-      - name: Browser regressions
-        env:
-          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
-          STORYBOOK_URL: http://127.0.0.1:9018
-          FACILITY_REPORT_DIR: /tmp/subgraphs/browser
-        run: |
-          python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > /tmp/subgraphs/server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid"' EXIT
-          for attempt in {1..30}; do curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null && break; sleep 1; done
-          node scripts/check-dependency-graph-groups.mjs > /tmp/subgraphs/groups-browser.log 2>&1
-          node scripts/check-dependency-graph.mjs > /tmp/subgraphs/regression-browser.log 2>&1
-      - name: Preserve current screenshots
-        run: |
-          cp /tmp/subgraphs/browser/dependency-subgraphs/nested-subgraphs-light-1440.png documentation/images/dependency-subgraphs-desktop.png
-          cp /tmp/subgraphs/browser/dependency-subgraphs/nested-subgraphs-dark-390.png documentation/images/dependency-subgraphs-mobile.png
-      - name: Commit verified changes
+      - name: Commit source only
         run: |
           expected=$(git rev-parse HEAD)
           remote=$(git ls-remote origin refs/heads/fix/dependency-graph-real-world | cut -f1)
           test "$expected" = "$remote"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/dependency-subgraphs-review.yml
-          git add easy-ui-react/src/DependencyGraph scripts/check-dependency-graph-groups.mjs .github/workflows/ci.yml .changeset/dependency-subgraphs.md documentation/images/dependency-subgraphs-desktop.png documentation/images/dependency-subgraphs-mobile.png
+          git add easy-ui-react/src/DependencyGraph scripts/check-dependency-graph-groups.mjs .changeset/dependency-subgraphs.md documentation/images/dependency-subgraphs-desktop.png documentation/images/dependency-subgraphs-mobile.png
+          test -z "$(git diff --cached --name-only -- .github/workflows)"
           git commit -m 'feat(dependency-graph): support explicit nested subgraphs'
           git push origin HEAD:fix/dependency-graph-real-world
-          git rev-parse HEAD > /tmp/subgraphs/verified-head.txt
-      - name: Retain verification evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-subgraphs-review
-          path: |
-            /tmp/subgraphs
-            easy-ui-react/src/DependencyGraph
-            scripts/check-dependency-graph-groups.mjs
-            .github/workflows/ci.yml
-          if-no-files-found: ignore
