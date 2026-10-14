@@ -850,6 +850,10 @@ export function DependencyGraph({
                       <div
                         key={cluster.group.id}
                         data-graph-group={cluster.group.id}
+                        data-graph-group-layer={
+                          (hierarchy.paths.get(cluster.group.id)!.length - 1) %
+                          2
+                        }
                         className={styles.cluster}
                         style={{
                           left: rem(cluster.x),

@@ -167,10 +167,15 @@
   transform-origin: top left;
 }
 .cluster {
+  --dependency-graph-group-surface: #{design-token("color.neutral.100")};
   position: absolute;
-  border: 1px dashed design-token("color.neutral.300");
+  border: round(up, max(1px, calc(1px / var(--dependency-graph-zoom, 1))), 1px)
+    dashed design-token("color.neutral.600");
   border-radius: 8px;
-  background: design-token("color.neutral.100");
+  background: var(--dependency-graph-group-surface);
+  &[data-graph-group-layer="1"] {
+    --dependency-graph-group-surface: #{design-token("color.neutral.050")};
+  }
 }
 .clusterHeading {
   position: absolute;
@@ -183,7 +188,7 @@
   gap: 12px;
   white-space: nowrap;
   font-size: 0.8125rem;
-  background: design-token("color.neutral.100");
+  background: var(--dependency-graph-group-surface);
   > button:first-child {
     min-inline-size: 0;
     overflow: hidden;
@@ -208,14 +213,14 @@
 }
 .edgeLine {
   fill: none;
-  stroke: design-token("color.neutral.500");
+  stroke: design-token("color.neutral.600");
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
   pointer-events: none;
 }
 .edges marker {
-  fill: design-token("color.neutral.500");
+  fill: design-token("color.neutral.600");
 }
 .connection[data-dashed="true"] .edgeLine {
   stroke-dasharray: 6 5;
@@ -226,16 +231,20 @@
   stroke: design-token("color.primary.500");
   stroke-width: 3;
 }
+// Round up before scaling: browsers snap fractional CSS borders down, which
+// otherwise makes resource/group outlines thinner than one screen pixel.
 .node {
   position: absolute;
-  border: 1px solid design-token("color.neutral.300");
+  border: round(up, max(1px, calc(1px / var(--dependency-graph-zoom, 1))), 1px)
+    solid design-token("color.neutral.600");
   border-radius: 8px;
   background: design-token("color.neutral.000");
   box-shadow: 0 2px 4px rgb(0 0 0 / 4%);
   overflow: visible;
   &[data-selected="true"] {
     border-color: design-token("color.primary.500");
-    box-shadow: 0 0 0 2px design-token("color.primary.500");
+    box-shadow: 0 0 0 max(2px, calc(2px / var(--dependency-graph-zoom, 1)))
+      design-token("color.primary.500");
   }
 }
 .nodeSelect {
@@ -637,6 +646,14 @@
   }
 }
 @media (forced-colors: active) {
+  .node,
+  .cluster {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+  .clusterHeading {
+    background: Canvas;
+  }
   .node[data-selected="true"] {
     outline: 2px solid Highlight;
   }
@@ -751,9 +768,8 @@
   font-size: 0.75rem;
 }
 .node[data-node-kind="unresolved"] {
+  // Evidence boundaries use a dashed outline, not a canvas-colored card.
   border-style: dashed;
-  background: design-token("color.neutral.050");
-  box-shadow: none;
 }
 
 .root[data-graph-density="overview"] {

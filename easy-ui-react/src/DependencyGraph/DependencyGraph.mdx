@@ -271,3 +271,13 @@ remain visible at every zoom and are used for search and accessible names.
 
 <Canvas of={Stories.CategoryColors} />
 <Canvas of={Stories.CategoryPalette} />
+
+### Surface contrast
+
+Every resource, including unresolved and unselected resources, has an opaque card
+surface and a contrasting boundary. Unresolved references retain their dashed
+outline and label; they do not disappear into the canvas. Nested groups alternate
+neutral surfaces with matching header backgrounds. Resource and group outlines
+retain at least one screen pixel at overview zoom. Selection adds emphasis without
+fading other resources. Browser checks cover text, pills, resource/group boundaries,
+hover, focus, selection, and minimum zoom in both themes, including forced colors.

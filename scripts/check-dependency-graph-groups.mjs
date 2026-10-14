@@ -238,3 +238,6 @@ try {
 } finally {
   await browser.close();
 }
+
+// Contrast is checked against the actual containing subgraph, not the DOM parent.
+await import("./check-dependency-graph-contrast.mjs");
