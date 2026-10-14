@@ -1,0 +1,72 @@
+name: Prepare dependency convergence
+on:
+  push:
+    branches: [fix/dependency-graph-real-world]
+    paths: [.github/workflows/prepare-dependency-convergence.yml, scripts/prepare-dependency-convergence.py]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Apply convergence revision
+        run: python3 scripts/prepare-dependency-convergence.py
+      - name: Install dependencies and format changed files
+        run: |
+          npm i --no-audit --no-fund > /tmp/convergence-install.log 2>&1
+          npx prettier --write easy-ui-react/src/DependencyGraph/routing.ts easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/DependencyGraphConvergence.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.convergence.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph.mjs scripts/check-dependency-graph-source.mjs
+      - name: Build, lint, and graph regressions
+        run: |
+          npm run build > /tmp/convergence-build.log 2>&1
+          npm run lint > /tmp/convergence-lint.log 2>&1
+          (cd easy-ui-react && npx vitest run src/DependencyGraph) > /tmp/convergence-tests.log 2>&1
+          npm run build:storybook > /tmp/convergence-storybook.log 2>&1
+      - name: Install browser
+        working-directory: scripts/preview-metrics
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Verify actual browser geometry, interactions, and themes
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9018
+          FACILITY_REPORT_DIR: /tmp/convergence-browser
+        run: |
+          python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > /tmp/convergence-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/check-dependency-graph.mjs > /tmp/convergence-browser.log 2>&1
+          node scripts/check-dependency-graph-source.mjs >> /tmp/convergence-browser.log 2>&1
+          cp /tmp/convergence-browser/dependency-graph/source-only-evidence-light-1440.png documentation/images/dependency-graph-source-only-desktop.png
+          cp /tmp/convergence-browser/dependency-graph/source-only-evidence-dark-390.png documentation/images/dependency-graph-source-only-mobile.png
+      - name: Commit verified revision to existing PR branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add easy-ui-react/src/DependencyGraph/routing.ts easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/DependencyGraphConvergence.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.convergence.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph.mjs scripts/check-dependency-graph-source.mjs documentation/images/dependency-graph-source-only-desktop.png documentation/images/dependency-graph-source-only-mobile.png
+          git diff --cached --check
+          git commit -m 'fix(dependency-graph): stack converging paths behind one arrow'
+          git push origin HEAD:refs/heads/fix/dependency-graph-real-world
+      - name: Retain verification evidence and exact sources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-convergence-evidence
+          path: |
+            /tmp/convergence-*.log
+            /tmp/convergence-browser
+            easy-ui-react/src/DependencyGraph
+            scripts/check-dependency-graph.mjs
+            scripts/check-dependency-graph-source.mjs
+          if-no-files-found: error
