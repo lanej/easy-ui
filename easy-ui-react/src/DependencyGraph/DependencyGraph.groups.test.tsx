@@ -137,3 +137,45 @@ describe("DependencyGraph nested group interaction", () => {
     ).toBeVisible();
   });
 });
+
+describe("DependencyGraph collapsed group change evidence", () => {
+  it("counts supplied field differences without inventing a plan operation", () => {
+    render(
+      <DependencyGraph
+        nodes={nodes}
+        edges={edges}
+        groups={groups}
+        defaultCollapsedGroupIds={["production"]}
+      />,
+    );
+    const group = screen.getByRole("button", {
+      name: "Production, 4 resources, 1 with supplied changes",
+    });
+    expect(
+      within(group).getByText("4 resources · 1 with changes"),
+    ).toBeVisible();
+  });
+  it.each([undefined, "unknown"] as const)(
+    "does not turn %s change metadata into zero changed resources",
+    (change) => {
+      const records = nodes.map((node) => ({
+        ...node,
+        change,
+        changes: undefined,
+      }));
+      render(
+        <DependencyGraph
+          nodes={records}
+          edges={edges}
+          groups={groups}
+          defaultCollapsedGroupIds={["production"]}
+        />,
+      );
+      const group = screen.getByRole("button", {
+        name: "Production, 4 resources",
+      });
+      expect(within(group).getByText("4 resources")).toBeVisible();
+      expect(screen.queryByText(/0 changed/)).not.toBeInTheDocument();
+    },
+  );
+});

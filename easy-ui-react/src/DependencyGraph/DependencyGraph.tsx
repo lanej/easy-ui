@@ -976,10 +976,7 @@ export function DependencyGraph({
                       const selected = isSelected(item);
                       const node = item.node;
                       const changed = item.members.filter(
-                        (member) =>
-                          member.change &&
-                          member.change !== "unchanged" &&
-                          member.change !== "unknown",
+                        hasDependencyGraphChanges,
                       ).length;
                       const label = node?.label ?? item.group!.label;
                       const cardDescription =
@@ -1052,7 +1049,7 @@ export function DependencyGraph({
                                     ]
                                       .filter(Boolean)
                                       .join(", ")
-                                  : `${label}, ${item.members.length} resources, ${changed} changed`
+                                  : `${label}, ${item.members.length} resources${changed ? `, ${changed} with supplied changes` : ""}`
                               }
                               onKeyDown={(event) => navigate(event, item)}
                               onClick={() =>
@@ -1073,7 +1070,9 @@ export function DependencyGraph({
                                     {shown === item.members.length
                                       ? shown
                                       : `${shown} of ${item.members.length}`}{" "}
-                                    resources · {changed} changed
+                                    resources
+                                    {changed > 0 &&
+                                      ` · ${changed} with changes`}
                                   </span>
                                   <strong className={styles.nodeLabel}>
                                     {label}
