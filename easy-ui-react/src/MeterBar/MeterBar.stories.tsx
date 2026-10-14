@@ -170,3 +170,84 @@ export const LocalizedRightToLeft: Story = {
     );
   },
 };
+
+const comparisonData = [
+  { id: "sac", label: "Sacramento", value: 4.2 },
+  { id: "oak", label: "Oakland", value: 7.8 },
+  { id: "sjc", label: "San Jose", value: 3.1 },
+];
+const formatHours = (value: number) => `${value.toFixed(1)} h`;
+
+export const Comparison: Story = {
+  args: {
+    data: comparisonData,
+    max: 12,
+    accessibilityLabel: "Average dwell time by facility, 0 to 12 hours",
+    formatValue: formatHours,
+  },
+};
+
+export const ComparisonNarrow: Story = {
+  render: () => (
+    <div style={{ inlineSize: 280, maxInlineSize: "100%" }}>
+      <MeterBar
+        data={comparisonData}
+        max={12}
+        accessibilityLabel="Average dwell time by facility"
+        formatValue={formatHours}
+      />
+    </div>
+  ),
+};
+
+export const ComparisonStates: Story = {
+  render: () => (
+    <MeterBar
+      data={[
+        { id: "zero", label: "Observed zero", value: 0 },
+        { id: "full", label: "At maximum", value: 12 },
+        { id: "missing", label: "No observation", value: null },
+        { id: "invalid", label: "Outside supplied scale", value: 14 },
+        {
+          id: "warning",
+          label: "Caller-supplied warning",
+          value: 7.8,
+          tone: "warning",
+        },
+      ]}
+      max={12}
+      formatValue={formatHours}
+    />
+  ),
+};
+
+export const ComparisonRightToLeft: Story = {
+  render: () => (
+    <div dir="rtl" lang="ar">
+      <MeterBar
+        data={[
+          { id: "sac", label: "ساكرامنتو", value: 4.2 },
+          { id: "oak", label: "أوكلاند", value: 7.8 },
+          { id: "sjc", label: "سان خوسيه", value: 3.1 },
+        ]}
+        max={12}
+        formatValue={(value) => new Intl.NumberFormat("ar-EG").format(value)}
+      />
+    </div>
+  ),
+};
+
+export const ComparisonLargeText: Story = {
+  render: () => (
+    <div style={{ inlineSize: 320, maxInlineSize: "100%", fontSize: "200%" }}>
+      <MeterBar
+        data={[
+          { id: "a", label: "Regional processing facility", value: 4.2 },
+          { id: "b", label: "Missing observation", value: null },
+        ]}
+        max={12}
+        formatValue={formatHours}
+      />
+    </div>
+  ),
+};

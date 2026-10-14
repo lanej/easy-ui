@@ -7,7 +7,7 @@ import * as Stories from "./MeterBar.stories";
 
 # MeterBar
 
-A visual-only atom for a bounded value: one track and one proportional fill. Import from `@easypost/easy-ui/MeterBar`. No card, chart engine, labels, percentage formatting, assessments, or loading policy.
+A bounded-value bar with two explicit modes. `value` keeps the visual-only atom; `data` compares labeled measurements on one shared scale. Import from `@easypost/easy-ui/MeterBar`. Neither mode adds a card, heading, chart engine, inferred assessment, or percentage conversion.
 
 ## Usage
 
@@ -23,11 +23,40 @@ import { MeterBar } from "@easypost/easy-ui/MeterBar";
 
 ## Examples
 
+### Compare measurements
+
+Pass `data` instead of `value`. All rows share the required `max` and therefore the same scale; adding, removing, or reordering rows never rescales the remaining bars. Compare values with the same units, such as dwell hours across facilities. Do not combine hours, percentages, and counts on this scale. Separate comparisons can use the same `max` to remain comparable.
+
+```tsx
+<MeterBar
+  data={[
+    { id: "sac", label: "Sacramento", value: 4.2 },
+    { id: "oak", label: "Oakland", value: 7.8 },
+    { id: "sjc", label: "San Jose", value: 3.1 },
+  ]}
+  max={12}
+  formatValue={(hours) => `${hours.toFixed(1)} h`}
+  accessibilityLabel="Average dwell time by facility, 0 to 12 hours"
+/>
+```
+
+Rows preserve input order and require unique, stable `id` values. Each valid row owns one accessible meter; the underlying fill stays hidden from assistive technology. `formatValue` supplies both visible and accessible value text, while geometry and `aria-valuenow` retain the original measurement. The optional `accessibilityLabel` names the group without adding a visible title.
+
+Each row may supply a `tone`, falling back to the component tone. Missing, non-finite, negative, or out-of-range values keep their labels and display `unavailableLabel` (default: “Unavailable”) without drawing a track or exposing a numeric meter. An invalid shared maximum makes every row unavailable. Empty `data` draws nothing. Zero remains a valid observation with an empty track, not a missing value.
+
+Labels, bars, and values align in compact rows. Below 18rem of available width, each row places its label and value above a full-width bar. Text wraps rather than truncating measurements; inherited RTL direction and forced-color rendering are preserved. The original single-value API remains unchanged for `ProportionBar`, `RiskScore`, and custom metric compositions.
+
+<Canvas of={Stories.Comparison} />
+<Canvas of={Stories.ComparisonNarrow} />
+<Canvas of={Stories.ComparisonStates} />
+<Canvas of={Stories.ComparisonRightToLeft} />
+<Canvas of={Stories.ComparisonLargeText} />
+
 ### Compose meaning, share rendering
 
 `ProportionBar` and `RiskScore` both compose this atom. A proportion owns its percentage and population counts; a risk score owns its score/maximum and supplied assessment. A score of 72 out of 100 must not become a claim of 72% probability.
 
-The atom is always `aria-hidden` and adds no meter role or keyboard stop. The owning molecule exposes one accessible meter with its exact value, range, name, and value description. When using the atom directly, supply equivalent accessible information in the surrounding composition; do not use the bar as the sole representation of data.
+The single-value atom is always `aria-hidden` and adds no meter role or keyboard stop. The owning molecule exposes one accessible meter with its exact value, range, name, and value description. When using the atom directly, supply equivalent accessible information in the surrounding composition; do not use the bar as the sole representation of data.
 
 <Canvas of={Stories.Compositions} />
 

@@ -69,6 +69,7 @@ jobs:
           node scripts/check-facility-summary.mjs
           node scripts/check-chart-catalog.mjs
           node scripts/check-proportion-bar.mjs
+          node scripts/check-meter-bar-comparison.mjs
           node scripts/check-dependency-graph.mjs
           node scripts/check-dependency-graph-arrowheads.mjs
           node scripts/check-dependency-graph-groups.mjs
