@@ -136,22 +136,20 @@ try {
     `${base}/iframe.html?id=components-meterbar--comparison&viewMode=story`,
   );
   await page.locator("[data-meter-comparison]").waitFor();
-  const contrast = await page
-    .locator("[data-meter-bar]")
-    .first()
-    .evaluate((track) => {
-      const fill = track.querySelector("[data-meter-fill]");
-      if (fill === null) {
-        throw new Error("Expected a meter fill");
-      }
-      const trackStyle = getComputedStyle(track);
-      const fillStyle = getComputedStyle(fill);
-      return {
-        outline: trackStyle.outlineWidth,
-        track: trackStyle.backgroundColor,
-        fill: fillStyle.backgroundColor,
-      };
-    });
+  const firstTrack = page.locator("[data-meter-bar]").first();
+  const contrast = await firstTrack.evaluate((track) => {
+    const fill = track.querySelector("[data-meter-fill]");
+    if (fill === null) {
+      throw new Error("Expected a meter fill");
+    }
+    const trackStyle = getComputedStyle(track);
+    const fillStyle = getComputedStyle(fill);
+    return {
+      outline: trackStyle.outlineWidth,
+      track: trackStyle.backgroundColor,
+      fill: fillStyle.backgroundColor,
+    };
+  });
   assert.notEqual(contrast.outline, "0px", "forced colors: track outline");
   assert.notEqual(contrast.fill, contrast.track, "forced colors: visible fill");
   checks.push("forced-colors");
