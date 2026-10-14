@@ -11,10 +11,6 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      npm_config_maxsockets: 4
-      npm_config_fetch_retries: 5
-      UV_THREADPOOL_SIZE: 4
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,9 +24,7 @@ jobs:
           sed -i 's/check-dependency-graph-heading-routing.mjs/check-dependency-graph.mjs/g' scripts/prepare-dependency-arrowheads.py
           python3 scripts/prepare-dependency-arrowheads.py
       - name: Install dependencies
-        run: |
-          ulimit -n 65536
-          npm ci --no-audit --no-fund --cache /tmp/arrow-npm-cache || npm ci --no-audit --no-fund --cache /tmp/arrow-npm-cache
+        run: npm install --no-audit --no-fund
       - name: Format changed sources
         run: |
           npx prettier --write easy-ui-react/src/DependencyGraph/routing.ts easy-ui-react/src/DependencyGraph/routing.arrowheads.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/DependencyGraphConvergence.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph-arrowheads.mjs
@@ -49,11 +43,7 @@ jobs:
       - name: Storybook
         run: npm run build:storybook
       - name: Browser dependencies
-        run: |
-          ulimit -n 65536
-          cd scripts/preview-metrics
-          npm ci --no-audit --no-fund --cache /tmp/arrow-npm-cache
-          npx playwright install --with-deps chromium
+        run: cd scripts/preview-metrics && npm install --no-audit --no-fund && npx playwright install --with-deps chromium
       - name: Verify actual arrows and dependency regressions
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
