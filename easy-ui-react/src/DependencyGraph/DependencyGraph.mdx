@@ -197,7 +197,7 @@ Supply `edge.change` as `"add"`, `"remove"`, `"update"`, `"unchanged"`, or `"unk
 
 Optionally supply `sourceAttributePath` and/or `targetAttributePath` on a relationship. Paths match exact supplied attribute-change paths. A visible expanded field receives the arrow at its row; hidden or missing fields, collapsed groups, and overview cards fall back to resource-level endpoints. Relationship details retain the supplied paths regardless of presentation. Easy UI does not infer which attribute creates a dependency.
 
-Connections use rounded orthogonal lanes around cards and group headings. Default ports follow neighboring resources' vertical order; parallel changes use separate ports/lanes. Cycles and self-links use exterior corridors. Reordering caller arrays does not change routes.
+Connections use rounded orthogonal lanes around cards and the measured group labels and disclosure controls. Empty space between a group label and its control remains a visible, selectable routing corridor; it is not treated as a wall across the subgraph. Label, font, zoom, and group-disclosure changes refresh those obstacles without moving the resource layout. Default ports follow neighboring resources' vertical order; parallel changes use separate ports/lanes. Cycles and self-links use exterior corridors. Reordering caller arrays does not change routes.
 
 ```tsx
 { id: "database-reference", source: "database", target: "api",

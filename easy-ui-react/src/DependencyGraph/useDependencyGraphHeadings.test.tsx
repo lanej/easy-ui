@@ -11,11 +11,22 @@ let resize: () => void;
 let disconnected: ReturnType<typeof vi.fn>;
 const rect = (x: number, y: number, w: number, h: number) =>
   ({
-    x, y, left: x, top: y, right: x + w, bottom: y + h, width: w, height: h,
+    x,
+    y,
+    left: x,
+    top: y,
+    right: x + w,
+    bottom: y + h,
+    width: w,
+    height: h,
     toJSON: () => ({}),
   }) as DOMRect;
 
-function Probe({ zoom = 1, visible = true, layout = clusters }: {
+function Probe({
+  zoom = 1,
+  visible = true,
+  layout = clusters,
+}: {
   zoom?: number;
   visible?: boolean;
   layout?: typeof clusters;
@@ -25,10 +36,12 @@ function Probe({ zoom = 1, visible = true, layout = clusters }: {
   return (
     <div ref={viewport}>
       <div data-graph-scene>
-        {visible && <div data-graph-group-heading="runtime">
-          <button data-label>Runtime module</button>
-          <button data-collapse>Collapse</button>
-        </div>}
+        {visible && (
+          <div data-graph-group-heading="runtime">
+            <button data-label>Runtime module</button>
+            <button data-collapse>Collapse</button>
+          </div>
+        )}
       </div>
       <output data-testid="obstacles">{JSON.stringify(obstacles)}</output>
     </div>
@@ -39,17 +52,32 @@ beforeEach(() => {
   width = 140;
   scale = 1;
   disconnected = vi.fn();
-  vi.stubGlobal("ResizeObserver", class {
-    constructor(callback: () => void) { resize = callback; }
-    observe() {}
-    disconnect = disconnected;
-  });
-  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
-    if (this.hasAttribute("data-graph-scene")) return rect(31, 47, 900 * scale, 600 * scale);
-    if (this.hasAttribute("data-label")) return rect(31 + 96 * scale, 47 + 244 * scale, width * scale, 32 * scale);
-    if (this.hasAttribute("data-collapse")) return rect(31 + 656 * scale, 47 + 244 * scale, 25 * scale, 25 * scale);
-    return rect(0, 0, 0, 0);
-  });
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(callback: () => void) {
+        resize = callback;
+      }
+      observe() {}
+      disconnect = disconnected;
+    },
+  );
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+    function (this: Element) {
+      if (this.hasAttribute("data-graph-scene"))
+        return rect(31, 47, 900 * scale, 600 * scale);
+      if (this.hasAttribute("data-label"))
+        return rect(
+          31 + 96 * scale,
+          47 + 244 * scale,
+          width * scale,
+          32 * scale,
+        );
+      if (this.hasAttribute("data-collapse"))
+        return rect(31 + 656 * scale, 47 + 244 * scale, 25 * scale, 25 * scale);
+      return rect(0, 0, 0, 0);
+    },
+  );
 });
 afterEach(() => {
   document.documentElement.style.removeProperty("font-size");
@@ -68,7 +96,13 @@ it("remeasures resized labels without replacing the graph layout", () => {
   width = 420;
   act(() => resize());
   expect(read()[0].width).toBe(420);
-  expect(clusters[0]).toEqual({ group: { id: "runtime" }, x: 80, y: 240, width: 620, height: 160 });
+  expect(clusters[0]).toEqual({
+    group: { id: "runtime" },
+    x: 80,
+    y: 240,
+    width: 620,
+    height: 160,
+  });
   unmount();
   expect(disconnected).toHaveBeenCalled();
 });

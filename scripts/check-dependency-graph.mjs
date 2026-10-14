@@ -1373,3 +1373,4 @@ try {
 }
 
 await import("./check-dependency-graph-source.mjs");
+await import("./check-dependency-graph-heading-routing.mjs");

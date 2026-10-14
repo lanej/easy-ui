@@ -4,6 +4,7 @@ import { Button } from "../Button";
 import { ExpandButton } from "../ExpandButton";
 import { CollapseButton } from "../CollapseButton";
 import { DependencyGraphIdentity } from "./DependencyGraphIdentity";
+import { useDependencyGraphHeadings } from "./useDependencyGraphHeadings";
 import { dependencyGraphCategoryLabels } from "./DependencyGraphCategories";
 import { DependencyGraphConvergence } from "./DependencyGraphConvergence";
 import { Select } from "../Select";
@@ -375,6 +376,12 @@ export function DependencyGraph({
     () => dependencyGraphClusters(items, hierarchy, new Set(collapsed), zoom),
     [items, hierarchy, collapsed, zoom],
   );
+  const headingObstacles = useDependencyGraphHeadings(
+    viewport,
+    clusters,
+    zoom,
+    status,
+  );
   const rawConnections = useMemo(
     () =>
       model?.connections
@@ -396,15 +403,10 @@ export function DependencyGraph({
         items,
         rawConnections,
         attributePorts,
-        clusters.map((cluster) => ({
-          x: cluster.x,
-          y: cluster.y,
-          width: cluster.width,
-          height: Math.max(36, 25 / zoom + 4),
-        })),
+        headingObstacles,
         zoom,
       ),
-    [items, rawConnections, attributePorts, clusters, zoom],
+    [items, rawConnections, attributePorts, headingObstacles, zoom],
   );
   const sceneWidth = Math.max(
     model?.width ?? 0,
@@ -840,6 +842,7 @@ export function DependencyGraph({
                 >
                   <div
                     className={styles.canvas}
+                    data-graph-scene
                     style={{
                       width: rem(sceneWidth),
                       height: rem(sceneHeight),
@@ -862,7 +865,10 @@ export function DependencyGraph({
                           height: rem(cluster.height),
                         }}
                       >
-                        <div className={styles.clusterHeading}>
+                        <div
+                          className={styles.clusterHeading}
+                          data-graph-group-heading={cluster.group.id}
+                        >
                           <button
                             type="button"
                             className={styles.textButton}

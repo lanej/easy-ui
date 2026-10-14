@@ -1,5 +1,9 @@
 @use "../styles/common" as *;
 
+.clusterHeading > button {
+  pointer-events: auto;
+}
+
 .resourceIcon > span {
   inline-size: max(1rem, calc(14px / var(--dependency-graph-zoom)));
   block-size: max(1rem, calc(14px / var(--dependency-graph-zoom)));
@@ -188,7 +192,9 @@
   gap: 12px;
   white-space: nowrap;
   font-size: 0.8125rem;
-  background: var(--dependency-graph-group-surface);
+  // Empty heading space is a routing corridor, not an opaque input overlay.
+  background: transparent;
+  pointer-events: none;
   > button:first-child {
     min-inline-size: 0;
     overflow: hidden;

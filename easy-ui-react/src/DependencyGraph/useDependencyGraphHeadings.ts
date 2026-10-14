@@ -26,9 +26,8 @@ export function useDependencyGraphHeadings(
 ) {
   const [measurement, setMeasurement] = useState<Measurement>();
   useLayoutEffect(() => {
-    const canvas = viewport.current?.querySelector<HTMLElement>(
-      "[data-graph-scene]",
-    );
+    const canvas =
+      viewport.current?.querySelector<HTMLElement>("[data-graph-scene]");
     if (!canvas || !clusters.length) return;
     const headings = [
       ...canvas.querySelectorAll<HTMLElement>("[data-graph-group-heading]"),
@@ -72,7 +71,8 @@ export function useDependencyGraphHeadings(
       typeof ResizeObserver === "undefined"
         ? undefined
         : new ResizeObserver(measure);
-    for (const element of [...headings, ...controls]) observer?.observe(element);
+    for (const element of [...headings, ...controls])
+      observer?.observe(element);
     // A font can change label geometry without changing any graph input.
     void document.fonts?.ready.then(measure);
     return () => {

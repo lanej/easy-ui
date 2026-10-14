@@ -7,3 +7,5 @@ Make DependencyGraph source-only evidence readable with optional caller-owned ty
 Category pills use a single object shape with a required label and optional caller-selected, theme-aware variant. Omitted variants are neutral; labels remain searchable and independent of plan actions and risk.
 
 Keep resource and subgraph boundaries visible in both themes and at overview zoom; preserve opaque unresolved cards and distinguish nested group surfaces.
+
+Route cross-group relationships through empty heading space while avoiding measured labels and controls, instead of sending short dependencies around an entire subgraph.
