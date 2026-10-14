@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
+import process from "node:process";
 import { checkHealthObservationLayout } from "./check-health-observation-layout.mjs";
 
 const require = createRequire(

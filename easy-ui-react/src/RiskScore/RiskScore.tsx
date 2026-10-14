@@ -83,10 +83,7 @@ const assessmentLabels = {
   high: "High risk",
   unassessed: "Not assessed",
 };
-const assessmentTones: Record<
-  RiskScoreAssessment | "unassessed",
-  MeterBarTone
-> = {
+const assessmentTones: Record<RiskScoreAssessment | "unassessed", MeterBarTone> = {
   low: "success",
   medium: "warning",
   high: "danger",
@@ -118,8 +115,7 @@ export function RiskScore({
   loadingLabel = "Scoring…",
   emptyLabel = "Not scored",
 }: RiskScoreProps) {
-  const hasValue =
-    !isLoading &&
+  const valid =
     typeof value === "number" &&
     Number.isFinite(value) &&
     Number.isFinite(max) &&
@@ -127,58 +123,33 @@ export function RiskScore({
     value >= 0 &&
     value <= max;
 
-  if (!hasValue) {
+  if (isLoading || !valid) {
     return (
       <span
         className={styles.root}
+        data-state={isLoading ? "loading" : "empty"}
         data-size={size}
-        data-assessment="unavailable"
-        role="group"
-        aria-label={accessibilityLabel}
-        aria-busy={isLoading}
+        role={isLoading ? "status" : undefined}
+        aria-busy={isLoading || undefined}
       >
-        <span className={styles.summary}>
-          <span className={styles.value} aria-hidden="true">
-            <Text
-              as="span"
-              variant={size === "sm" ? "subtitle1" : "heading4"}
-              color="neutral.900"
-              breakWord
-            >
-              —
-            </Text>
-          </span>
-          <span
-            className={styles.assessment}
-            role={isLoading ? "status" : undefined}
-          >
-            {size === "sm" ? (
-              <Text as="span" color="neutral.600" breakWord>
-                {isLoading ? loadingLabel : emptyLabel}
-              </Text>
-            ) : (
-              <Pill size={size}>{isLoading ? loadingLabel : emptyLabel}</Pill>
-            )}
-          </span>
-        </span>
+        <Text variant="caption" color="subdued">
+          {isLoading ? loadingLabel : emptyLabel}
+        </Text>
       </span>
     );
   }
 
-  const level =
-    assessment === "low" || assessment === "medium" || assessment === "high"
-      ? assessment
-      : "unassessed";
-  const label = assessmentLabel ?? assessmentLabels[level];
-  const formattedValue = formatValue(value);
-  const formattedMax = formatValue(max);
+  const effectiveAssessment = assessment ?? "unassessed";
+  const label = assessmentLabel ?? assessmentLabels[effectiveAssessment];
+  const tone = assessmentTones[effectiveAssessment];
+  const displayValue = formatValue(value);
+  const displayMaximum = formatValue(max);
 
   return (
     <span
       className={styles.root}
       data-size={size}
-      data-assessment={level}
-      title={size === "sm" ? label : undefined}
+      data-assessment={effectiveAssessment}
       role="meter"
       aria-label={accessibilityLabel}
       aria-valuemin={0}
@@ -186,48 +157,63 @@ export function RiskScore({
       aria-valuenow={value}
       aria-valuetext={
         accessibilityValueText ??
-        `${formattedValue} out of ${formattedMax}; ${label}. Higher scores mean higher risk.`
+        `${displayValue} out of ${displayMaximum}; ${label}; higher means greater risk`
       }
+      title={size === "sm" ? label : undefined}
     >
-      <span className={styles.summary} aria-hidden="true">
-        <span className={styles.score} dir="ltr" data-risk-score-expression="">
-          <span className={styles.value} data-risk-score-value="">
-            <Text
-              as="span"
-              variant={size === "sm" ? "subtitle1" : "heading4"}
-              color={size === "sm" ? undefined : "neutral.900"}
-              breakWord
-            >
-              {formattedValue}
+      <span className={styles.valueRow}>
+        <bdi
+          className={styles.score}
+          dir="ltr"
+          data-risk-score-expression=""
+        >
+          <span
+            className={styles.value}
+            dir="ltr"
+            data-risk-score-value=""
+          >
+            <Text variant={size === "sm" ? "body2" : "heading5"}>
+              {displayValue}
             </Text>
           </span>
-          <span className={styles.maximum}>
-            <Text as="span" color="neutral.600" breakWord>
-              / {formattedMax}
+          <span className={styles.scale} aria-hidden="true" dir="ltr">
+            <Text variant="caption" color="subdued">
+              {" / "}
+              {displayMaximum}
             </Text>
           </span>
-        </span>
+        </bdi>
         {size === "sm" ? (
           <span
             className={styles.compactAssessment}
             data-risk-score-compact-label=""
+            aria-hidden="true"
           >
-            {label}
+            <Text variant="caption">{label}</Text>
           </span>
         ) : (
-          <span className={styles.assessment}>
-            <Pill tone={assessmentTones[level]} size={size}>
-              {label}
-            </Pill>
-          </span>
+          <Pill
+            background={
+              tone === "danger"
+                ? "danger"
+                : tone === "warning"
+                  ? "warning"
+                  : tone === "success"
+                    ? "success"
+                    : "info"
+            }
+            variant="muted"
+          >
+            {label}
+          </Pill>
         )}
       </span>
       {showBar && (
         <MeterBar
           value={value}
           max={max}
-          tone={assessmentTones[level]}
-          thickness="sm"
+          tone={tone}
+          thickness={size === "sm" ? "sm" : "md"}
         />
       )}
     </span>
