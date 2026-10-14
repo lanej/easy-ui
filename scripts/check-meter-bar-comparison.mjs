@@ -139,13 +139,19 @@ try {
   const contrast = await page
     .locator("[data-meter-bar]")
     .first()
-    .evaluate((track) => ({
-      outline: getComputedStyle(track).outlineWidth,
-      track: getComputedStyle(track).backgroundColor,
-      fill: getComputedStyle(
-        track.querySelector("[data-meter-fill]"),
-      ).backgroundColor,
-    }));
+    .evaluate((track) => {
+      const fill = track.querySelector("[data-meter-fill]");
+      if (fill === null) {
+        throw new Error("Expected a meter fill");
+      }
+      const trackStyle = getComputedStyle(track);
+      const fillStyle = getComputedStyle(fill);
+      return {
+        outline: trackStyle.outlineWidth,
+        track: trackStyle.backgroundColor,
+        fill: fillStyle.backgroundColor,
+      };
+    });
   assert.notEqual(contrast.outline, "0px", "forced colors: track outline");
   assert.notEqual(contrast.fill, contrast.track, "forced colors: visible fill");
   checks.push("forced-colors");
