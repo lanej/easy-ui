@@ -1,0 +1,92 @@
+name: MeterBar geometry diagnostic
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/meterbar-geometry-diagnostic.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  inspect:
+    if: github.head_ref == 'fix/meterbar-risk-score-repair'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: scripts/preview-metrics/package-lock.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: easy-ui-documentation-site
+          run-id: 38611002005
+          github-token: ${{ github.token }}
+          path: diagnostic-site
+      - run: npm ci --no-audit --no-fund
+        working-directory: scripts/preview-metrics
+      - run: npx playwright install --with-deps chromium
+        working-directory: scripts/preview-metrics
+      - name: Measure all comparison rows before and after layout settles
+        run: |
+          mkdir -p geometry-evidence
+          python3 -m http.server 9018 --bind 127.0.0.1 --directory diagnostic-site > geometry-evidence/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:9018/storybook/iframe.html > /dev/null; then break; fi
+            sleep 1
+          done
+          node --input-type=module <<'NODE'
+          import { createRequire } from 'node:module';
+          import { writeFile } from 'node:fs/promises';
+          const require = createRequire(import.meta.url);
+          const { chromium } = require('./scripts/preview-metrics/node_modules/playwright');
+          const browser = await chromium.launch();
+          const page = await browser.newPage({ viewport: { width: 1040, height: 900 } });
+          const errors = [];
+          page.on('pageerror', error => errors.push(error.message));
+          const samples = [];
+          for (const theme of ['light', 'dark']) {
+            await page.emulateMedia({ colorScheme: theme });
+            await page.goto(`http://127.0.0.1:9018/storybook/iframe.html?id=components-meterbar--comparison&viewMode=story&globals=colorScheme:${theme}`);
+            const group = page.locator('[data-meter-comparison]');
+            await group.waitFor();
+            await page.evaluate(() => document.fonts.ready);
+            for (const delay of [0, 300]) {
+              if (delay) await page.waitForTimeout(delay);
+              const rows = await group.evaluate(root => [...root.querySelectorAll('[data-meter-row]')].map(row => {
+                const track = row.querySelector('[data-meter-bar]');
+                const fill = row.querySelector('[data-meter-fill]');
+                const style = getComputedStyle(fill);
+                const trackStyle = getComputedStyle(track);
+                return {
+                  name: row.getAttribute('aria-label'), value: row.getAttribute('aria-valuenow'), max: row.getAttribute('aria-valuemax'),
+                  inlineStyle: fill.getAttribute('style'),
+                  track: track.getBoundingClientRect().toJSON(), fill: fill.getBoundingClientRect().toJSON(),
+                  computed: { width: style.width, inlineSize: style.inlineSize, minWidth: style.minWidth, maxWidth: style.maxWidth, flex: style.flex, boxSizing: style.boxSizing, padding: style.padding, border: style.border, transform: style.transform, transition: style.transition, animation: style.animation },
+                  trackComputed: { width: trackStyle.width, padding: trackStyle.padding, border: trackStyle.border, boxSizing: trackStyle.boxSizing, transform: trackStyle.transform },
+                  html: row.outerHTML
+                };
+              }));
+              samples.push({theme, delay, rows});
+              await group.screenshot({path:`geometry-evidence/comparison-${theme}-${delay}.png`});
+            }
+          }
+          await writeFile('geometry-evidence/report.json', JSON.stringify({samples, errors}, null, 2));
+          console.log(JSON.stringify({samples, errors}, null, 2));
+          await browser.close();
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: meterbar-geometry-evidence
+          path: geometry-evidence
+          if-no-files-found: error
