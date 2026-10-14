@@ -31,8 +31,16 @@ try {
   );
   assert.equal(fixtures.length, 8, "all regression fixtures remain indexed");
   for (const fixture of fixtures) {
-    assert.equal(fixture.tags.includes("dev"), false, "fixture hidden from sidebar");
-    assert.equal(fixture.tags.includes("autodocs"), false, "fixture hidden from docs");
+    assert.equal(
+      fixture.tags.includes("dev"),
+      false,
+      "fixture hidden from sidebar",
+    );
+    assert.equal(
+      fixture.tags.includes("autodocs"),
+      false,
+      "fixture hidden from docs",
+    );
   }
   checks.push("regression-fixtures-hidden");
 
@@ -48,7 +56,10 @@ try {
         "comparison-large-text",
       ]) {
         const name = `${story}-${theme}-${width}`;
-        const fixture = ["comparison-right-to-left", "comparison-large-text"].includes(story);
+        const fixture = [
+          "comparison-right-to-left",
+          "comparison-large-text",
+        ].includes(story);
         const prefix = fixture ? "test-meterbar" : "components-meterbar";
         await page.goto(
           `${base}/iframe.html?id=${prefix}--${story}&viewMode=story&globals=colorScheme:${theme}`,
@@ -59,7 +70,8 @@ try {
         const result = await group.evaluate((root) => {
           const rows = [...root.querySelectorAll("[data-meter-row]")];
           return {
-            overflow: root.scrollWidth > root.clientWidth + 1 ||
+            overflow:
+              root.scrollWidth > root.clientWidth + 1 ||
               rows.some((row) => row.scrollWidth > row.clientWidth + 1),
             alerts: root.querySelectorAll('[role="alert"], [role="status"]').length,
             keyboardStops: root.querySelectorAll(
@@ -80,8 +92,12 @@ try {
                 hiddenTrack: track?.getAttribute("aria-hidden"),
                 color: track?.getAttribute("data-color"),
                 tone: track?.getAttribute("data-tone"),
-                fillColor: fill ? window.getComputedStyle(fill).backgroundColor : null,
-                trackColor: track ? window.getComputedStyle(track).backgroundColor : null,
+                fillColor: fill
+                  ? window.getComputedStyle(fill).backgroundColor
+                  : null,
+                trackColor: track
+                  ? window.getComputedStyle(track).backgroundColor
+                  : null,
                 trackWidth: box?.width,
                 trackLeft: box?.left,
                 fillWidth: fill?.getBoundingClientRect().width,
@@ -130,10 +146,25 @@ try {
           assert.ok(Math.abs(startDifference) < 0.6, `${name}: inline start`);
         }
         if (story === "comparison" || story === "comparison-narrow") {
-          assert.deepEqual(valid.map((row) => row.name), ["Sacramento", "Oakland", "San Jose"], `${name}: input order`);
-          assert.deepEqual(valid.map((row) => row.color), ["primary", "secondary", "tertiary"], `${name}: palette identity`);
-          assert.ok(valid.every((row) => row.tone === null), `${name}: no invented status`);
-          assert.equal(new Set(valid.map((row) => row.fillColor)).size, 3, `${name}: distinct series colors`);
+          assert.deepEqual(
+            valid.map((row) => row.name),
+            ["Sacramento", "Oakland", "San Jose"],
+            `${name}: input order`,
+          );
+          assert.deepEqual(
+            valid.map((row) => row.color),
+            ["primary", "secondary", "tertiary"],
+            `${name}: palette identity`,
+          );
+          assert.ok(
+            valid.every((row) => row.tone === null),
+            `${name}: no invented status`,
+          );
+          assert.equal(
+            new Set(valid.map((row) => row.fillColor)).size,
+            3,
+            `${name}: distinct series colors`,
+          );
         }
         await page.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
         const violations = await page.evaluate(async () => {

@@ -82,7 +82,9 @@ function ComposedMetrics() {
   );
 }
 
-export const Compositions: Story = { render: () => <ComposedMetrics /> };
+export const Compositions: Story = {
+  render: () => <ComposedMetrics />,
+};
 export const Narrow: Story = {
   render: () => (
     <div style={{ inlineSize: 280, maxInlineSize: "100%" }}>

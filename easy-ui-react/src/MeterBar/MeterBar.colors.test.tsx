@@ -28,9 +28,7 @@ describe("MeterBar palette colors", () => {
   it.each(["primary", "secondary", "tertiary"] as const)(
     "renders the %s palette color without status meaning",
     (color) => {
-      const { container } = render(
-        <MeterBar value={4} max={12} color={color} />,
-      );
+      const { container } = render(<MeterBar value={4} max={12} color={color} />);
       expect(stylesOf(container)).toEqual([{ color, tone: null }]);
       expect(screen.queryByRole("alert")).toBeNull();
       expect(screen.queryByRole("status")).toBeNull();
