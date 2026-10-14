@@ -23,6 +23,7 @@ import {
 import type { GraphItem } from "./model";
 import {
   attributePortKey,
+  dependencyArrowSize,
   routeDependencyConnections,
   roundedConnectionPath,
 } from "./routing";
@@ -906,10 +907,11 @@ export function DependencyGraph({
                             id={`${instanceId}-arrow-${change}`}
                             data-link-change={change}
                             viewBox="0 0 10 10"
-                            refX="9"
+                            refX="10"
                             refY="5"
-                            markerWidth="7"
-                            markerHeight="7"
+                            markerUnits="userSpaceOnUse"
+                            markerWidth={dependencyArrowSize}
+                            markerHeight={dependencyArrowSize}
                             orient="auto-start-reverse"
                           >
                             <path d="M 0 0 L 10 5 L 0 10 z" />

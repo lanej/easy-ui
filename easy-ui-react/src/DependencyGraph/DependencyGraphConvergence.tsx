@@ -1,4 +1,5 @@
 import React from "react";
+import { dependencyConnectionArrival } from "./routing";
 import type { routeDependencyConnections } from "./routing";
 import type { DependencyGraphSelection } from "./types";
 import styles from "./DependencyGraph.module.scss";
@@ -38,6 +39,14 @@ export function DependencyGraphConvergence({
           changes.size === 1 ? (edges[0].change ?? "unknown") : "unknown";
         const points = members[0].points;
         const end = points[points.length - 1];
+        // Paint the actual common straight approach, not a one-pixel carrier
+        // for the marker. Start after every contributing rounded corner.
+        const startX = Math.max(
+          ...members.map(
+            (member) => dependencyConnectionArrival(member.points)!.x,
+          ),
+        );
+        const arrivalPath = `M ${startX} ${end.y} L ${end.x} ${end.y}`;
         const selected =
           selection?.type === "edge"
             ? ids.includes(selection.id)
@@ -51,19 +60,19 @@ export function DependencyGraphConvergence({
             data-graph-convergence={key}
             data-graph-convergence-edge-ids={JSON.stringify(ids)}
             data-link-change={change}
+            data-dashed={
+              edges.every((edge) => edge.variant === "dashed") || undefined
+            }
             data-selected={selected || undefined}
             data-highlighted={
               ids.some((id) => highlighted.has(id)) || undefined
             }
             onClick={() => onSelect({ type: "edges", ids })}
           >
-            <path
-              className={styles.edgeHitArea}
-              d={`M ${end.x - 16} ${end.y} L ${end.x} ${end.y}`}
-            />
+            <path className={styles.edgeHitArea} d={arrivalPath} />
             <path
               className={styles.edgeLine}
-              d={`M ${end.x - 1} ${end.y} L ${end.x} ${end.y}`}
+              d={arrivalPath}
               markerEnd={`url(#${instanceId}-arrow-${change})`}
             />
             <title>

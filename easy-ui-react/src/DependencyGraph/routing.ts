@@ -1,6 +1,27 @@
 import type { GraphConnection, GraphItem } from "./model";
 
 type Point = { x: number; y: number };
+
+// SVG markers use graph units, not stroke-width units: interaction emphasis
+// must not enlarge the head or consume the visible shaft.
+export const dependencyArrowSize = 12;
+export const dependencyArrowShaft = 16;
+const bendRadius = 8;
+
+/** Start of the final straight segment after rounded-corner trimming. */
+export function dependencyConnectionArrival(
+  points: Point[],
+  radius = bendRadius,
+) {
+  const end = points[points.length - 1];
+  const bend = points[points.length - 2];
+  if (!end || !bend || bend.y !== end.y || bend.x >= end.x) return undefined;
+  const before = points[points.length - 3];
+  const trim = before
+    ? Math.min(radius, distance(before, bend) / 2, distance(bend, end) / 2)
+    : 0;
+  return { x: bend.x + trim, y: end.y };
+}
 export type RoutingObstacle = {
   x: number;
   y: number;
@@ -265,15 +286,52 @@ export function routeDependencyConnections(
       target = records.get(connection.target)!;
     const start = { x: source.x + source.width, y: port(connection, "source") },
       end = { x: target.x, y: port(connection, "target") };
+    // Slightly offset header rows should have one horizontal connection, not
+    // a tiny jog underneath the arrowhead. Keep field ports and parallel
+    // relationships exact and independently inspectable.
+    if (
+      source.node &&
+      target.node &&
+      start.x < end.x &&
+      offset(connection, "source") === undefined &&
+      offset(connection, "target") === undefined &&
+      Math.abs(start.y - end.y) <= 8 &&
+      end.y >= source.y + 8 &&
+      end.y <= source.y + source.height - 8 &&
+      ordered.filter(
+        (other) =>
+          other.source === connection.source &&
+          other.target === connection.target,
+      ).length === 1
+    )
+      start.y = end.y;
+    const approach = Math.min(
+      Math.max(
+        clearance,
+        dependencyArrowSize + dependencyArrowShaft + bendRadius,
+      ),
+      Math.max(clearance, end.x - 8),
+    );
     const a = { x: start.x + clearance, y: start.y },
-      b = { x: end.x - clearance, y: end.y };
+      b = { x: end.x - approach, y: end.y };
+    // Reserve the landing corridor as well as its endpoint. Otherwise the
+    // shortest-path search can turn or double back inside the arrow's shaft.
+    const routeBoxes = boxes.map((box, index) =>
+      items[index]?.key === connection.target
+        ? {
+            ...box,
+            x: box.x - (approach - clearance),
+            width: box.width + approach - clearance,
+          }
+        : box,
+    );
     const destination = JSON.stringify([connection.target, end.y]);
     // Sharing a destination is intentional bundling, not lane congestion. Do not
     // push these paths into parallel lanes merely to avoid their shared trunk.
     const middle = routeBetween(
       a,
       b,
-      boxes,
+      routeBoxes,
       occupied
         .filter((route) => route.destination !== destination)
         .map((route) => route.points),
@@ -312,14 +370,15 @@ export function routeDependencyConnections(
   return routed.map((route) => ({
     ...route,
     convergenceKey:
-      route.points.length > 1 && counts.get(destinationKey(route))! > 1
+      dependencyConnectionArrival(route.points) !== undefined &&
+      counts.get(destinationKey(route))! > 1
         ? destinationKey(route)
         : undefined,
   }));
 }
 
 /** Round orthogonal bends without moving endpoints or diagonally cutting across cards. */
-export function roundedConnectionPath(points: Point[], radius = 8) {
+export function roundedConnectionPath(points: Point[], radius = bendRadius) {
   if (!points.length) return "";
   let path = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length - 1; i++) {
