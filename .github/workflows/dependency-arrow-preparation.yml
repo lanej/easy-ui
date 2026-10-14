@@ -1,0 +1,89 @@
+name: Dependency arrow preparation
+on:
+  pull_request:
+    paths:
+      - scripts/prepare-dependency-arrowheads.py
+      - scripts/check-dependency-graph-arrowheads.mjs
+      - .github/workflows/dependency-arrow-preparation.yml
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Apply guarded arrow geometry correction
+        run: python3 scripts/prepare-dependency-arrowheads.py
+      - run: npm ci --no-audit --no-fund
+      - name: Format changed sources
+        run: npx prettier --write easy-ui-react/src/DependencyGraph/routing.ts easy-ui-react/src/DependencyGraph/routing.arrowheads.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/DependencyGraphConvergence.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph-arrowheads.mjs
+      - name: Build
+        run: npm run build
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests
+        run: npm run test
+      - name: Storybook
+        run: npm run build:storybook
+      - name: Browser dependencies
+        run: cd scripts/preview-metrics && npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: Verify actual arrows and dependency regressions
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9018
+          FACILITY_REPORT_DIR: /tmp/arrow-review/browser
+        run: |
+          mkdir -p /tmp/arrow-review
+          python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static >/tmp/arrow-review/storybook.log 2>&1 &
+          server=$!
+          trap 'kill "$server"' EXIT
+          for attempt in {1..30}; do curl -fs "$STORYBOOK_URL/iframe.html" >/dev/null && break; sleep 1; done
+          node scripts/check-dependency-graph-arrowheads.mjs
+          node scripts/check-dependency-graph.mjs
+          node scripts/check-dependency-graph-heading-routing.mjs
+      - name: Prepare candidate tree without moving any branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp /tmp/arrow-review/browser/dependency-arrowheads/nested-subgraphs-dark-1440.png documentation/images/dependency-arrowheads-dark.png
+          cp /tmp/arrow-review/browser/dependency-arrowheads/nested-subgraphs-light-1440.png documentation/images/dependency-arrowheads-light.png
+          cp /tmp/arrow-review/browser/dependency-arrowheads/nested-subgraphs-dark-390.png documentation/images/dependency-arrowheads-mobile.png
+          git add easy-ui-react/src/DependencyGraph scripts/check-dependency-graph-arrowheads.mjs .changeset/readable-source-dependency-graphs.md .github/workflows/ci.yml documentation/images/dependency-arrowheads-*.png
+          git rm --cached scripts/prepare-dependency-arrowheads.py .github/workflows/dependency-arrow-preparation.yml
+          git diff --cached > /tmp/arrow-review/changes.patch
+          python3 - <<'PY'
+          import base64, json, os, subprocess, urllib.request
+          from pathlib import Path
+          def git(*args):
+              return subprocess.check_output(['git', *args]).decode().strip()
+          def api(path, body=None):
+              request = urllib.request.Request('https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']+'/'+path, data=None if body is None else json.dumps(body).encode(), headers={'Authorization': 'Bearer '+os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'})
+              with urllib.request.urlopen(request) as response:
+                  return json.load(response)
+          head = git('rev-parse','HEAD')
+          elements = []
+          for name in git('diff','--cached','--name-only').splitlines():
+              entry = git('ls-files','--stage','--',name)
+              if not entry:
+                  elements.append({'path':name,'mode':'100644','type':'blob','sha':None})
+              else:
+                  content = subprocess.check_output(['git','show',':'+name])
+                  blob = api('git/blobs', {'content':base64.b64encode(content).decode(),'encoding':'base64'})
+                  elements.append({'path':name,'mode':'100644','type':'blob','sha':blob['sha']})
+          tree = api('git/trees',{'base_tree':api('git/commits/'+head)['tree']['sha'],'tree':elements})
+          Path('/tmp/arrow-review/candidate.json').write_text(json.dumps({'parent':head,'tree':tree['sha'],'files':[e['path'] for e in elements]},indent=2))
+          print('Candidate tree:',tree['sha'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-arrow-review
+          path: /tmp/arrow-review
+          if-no-files-found: ignore
