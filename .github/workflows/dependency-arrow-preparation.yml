@@ -21,11 +21,19 @@ jobs:
           cache: npm
       - name: Apply guarded arrow geometry correction
         run: |
+          mkdir -p /tmp/arrow-review
           sed -i 's/check-dependency-graph-heading-routing.mjs/check-dependency-graph.mjs/g' scripts/prepare-dependency-arrowheads.py
           python3 scripts/prepare-dependency-arrowheads.py
       - run: npm ci --no-audit --no-fund
       - name: Format changed sources
-        run: npx prettier --write easy-ui-react/src/DependencyGraph/routing.ts easy-ui-react/src/DependencyGraph/routing.arrowheads.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/DependencyGraphConvergence.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph-arrowheads.mjs
+        run: |
+          npx prettier --write easy-ui-react/src/DependencyGraph/routing.ts easy-ui-react/src/DependencyGraph/routing.arrowheads.test.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.tsx easy-ui-react/src/DependencyGraph/DependencyGraphConvergence.tsx easy-ui-react/src/DependencyGraph/DependencyGraph.mdx scripts/check-dependency-graph-arrowheads.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('easy-ui-react/src/DependencyGraph/routing.ts')
+          p.write_text(p.read_text().rstrip('\n') + '\n')
+          PY
+          git diff > /tmp/arrow-review/applied.patch
       - name: Build
         run: npm run build
       - name: Lint
@@ -42,7 +50,6 @@ jobs:
           STORYBOOK_URL: http://127.0.0.1:9018
           FACILITY_REPORT_DIR: /tmp/arrow-review/browser
         run: |
-          mkdir -p /tmp/arrow-review
           python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static >/tmp/arrow-review/storybook.log 2>&1 &
           server=$!
           trap 'kill "$server"' EXIT
