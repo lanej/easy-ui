@@ -36,7 +36,7 @@ declare global {
 const params = new URLSearchParams(location.search);
 const dark = params.get("theme") === "dark";
 const stableFacilityDetails = (
-  <div style={{ padding: 12 }}>
+  <div>
     <Text variant="body2">
       Shared facility · synthetic reference coordinates
     </Text>
@@ -137,7 +137,7 @@ function Fixture() {
               }}
               renderFacilityDetails={() => stableFacilityDetails}
               renderOverlayHoverDetails={({ selections }) => (
-                <div style={{ padding: 12 }}>
+                <div>
                   {selections.map(({ overlay, feature }) => (
                     <article key={overlay.id}>
                       <h2>{overlay.label}</h2>
