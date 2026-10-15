@@ -280,7 +280,14 @@ export function NetworkMapCellPopover({
           <span className={styles.controlLabel}>Close</span>
         </Button>
       </div>
-      <div className={styles.cellPopoverBody}>{children}</div>
+      <div
+        className={styles.cellPopoverBody}
+        role="group"
+        aria-label={`${label} content`}
+        tabIndex={0}
+      >
+        {children}
+      </div>
     </div>
   );
   return positioning === "viewport"

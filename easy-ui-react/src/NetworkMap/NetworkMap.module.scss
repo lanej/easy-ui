@@ -367,6 +367,11 @@
   overscroll-behavior: contain;
   overflow-wrap: anywhere;
 
+  &:focus-visible {
+    outline: 2px solid design-token("color.primary.600");
+    outline-offset: -2px;
+  }
+
   .cellDetails {
     padding: 0;
   }
