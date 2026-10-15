@@ -133,6 +133,43 @@ function spaceLayoutAxis(coordinates: number[], constraints: LayoutSpacing[]) {
   return positions;
 }
 
+/** Spend spare viewport width on readable diffs, keeping the original edge gaps. */
+export function dependencyGraphExpandedWidth(
+  order: GraphLayoutOrder,
+  nodes: readonly DependencyGraphNode[],
+  canvasWidth: number,
+) {
+  if (!Number.isFinite(canvasWidth)) return 352;
+  // Deep graphs still scroll; fitting must not squeeze readable cards or text.
+  const minimum = Math.min(352, Math.max(240, canvasWidth - 48));
+  const expandable = nodes.filter(hasDependencyGraphChanges);
+  if (!expandable.length) return minimum;
+  const coordinates = [
+    order.width,
+    ...[...order.boxes.values()].flatMap((box) => [box.x, box.x + box.width]),
+  ];
+  const widthAt = (width: number) =>
+    spaceLayoutAxis(
+      coordinates,
+      expandable.flatMap((node) => {
+        const box = order.boxes.get(`node:${node.id}`);
+        return box
+          ? [{ start: box.x, end: box.x + box.width, span: width }]
+          : [];
+      }),
+    ).get(order.width)!;
+  // Budget for every expandable resource, even folded ones. Disclosure, edge
+  // visibility, selection, and zoom must not redistribute width between cards.
+  let low = minimum;
+  let high = Math.max(minimum, Math.min(960, canvasWidth - 48));
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if (widthAt(middle) <= canvasWidth) low = middle;
+    else high = middle - 1;
+  }
+  return low;
+}
+
 /** Sort stable IDs before layout so caller reordering cannot move the graph. */
 export function buildDependencyGraph(
   nodes: readonly DependencyGraphNode[],

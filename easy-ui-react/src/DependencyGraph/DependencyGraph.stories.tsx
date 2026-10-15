@@ -14,6 +14,11 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DependencyGraph } from "./DependencyGraph";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
 import {
+  wideDependencyNodes,
+  wideDependencyEdges,
+  deepDependencyEdges,
+} from "./DependencyGraph.responsive.fixtures";
+import {
   DependencyGraphReviewExample,
   DependencyGraphLinkedInspectorExample,
   DependencyGraphStableLayoutExample,
@@ -93,6 +98,48 @@ export const RiskAnnotations: Story = {
 };
 export const StableResourceOrder: Story = {
   render: () => <DependencyGraphStableLayoutExample />,
+};
+export const WideAttributeInspection: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Application attribute changes",
+    nodes: wideDependencyNodes,
+    edges: wideDependencyEdges,
+    groups: [],
+    showDetails: false,
+    defaultExpandedChangeNodeIds: wideDependencyNodes.map((node) => node.id),
+    height: 1400,
+  },
+};
+export const DeepAttributeInspection: Story = {
+  ...WideAttributeInspection,
+  args: { ...WideAttributeInspection.args, edges: deepDependencyEdges },
+};
+export const CyclicAttributeInspection: Story = {
+  ...WideAttributeInspection,
+  args: {
+    ...WideAttributeInspection.args,
+    edges: [
+      ...wideDependencyEdges,
+      { id: "feedback", source: "service-1", target: "network" },
+      { id: "self", source: "service-2", target: "service-2" },
+    ],
+  },
+};
+export const GroupedAttributeInspection: Story = {
+  ...WideAttributeInspection,
+  args: {
+    ...WideAttributeInspection.args,
+    groups: [
+      { id: "platform", label: "Platform root" },
+      { id: "applications", label: "Applications root" },
+      { id: "services", label: "Services module", parentId: "applications" },
+    ],
+    nodes: wideDependencyNodes.map((node) => ({
+      ...node,
+      groupId: node.id === "network" ? "platform" : "services",
+    })),
+  },
 };
 export const CollapsibleBranches: Story = {
   args: {
