@@ -130,6 +130,31 @@ export async function checkSurfaceInspection({
       return parseFloat(getComputedStyle(plot).fontSize) >= 16;
     }),
   );
+  const body = `${selector} [role="group"][aria-label="Delivery cell details content"]`;
+  await browser.key(
+    `${selector} button[aria-label="Close cell details"]`,
+    "Tab",
+  );
+  check(
+    "the scrolling body is reachable from the header by keyboard",
+    await browser.evaluate(
+      () =>
+        document.activeElement?.getAttribute("aria-label") ===
+        "Delivery cell details content",
+    ),
+  );
+  await browser.key(body, " ");
+  await browser.wait(
+    () =>
+      document.querySelector('[aria-label="Delivery cell details content"]')
+        .scrollTop > 0,
+  );
+  check("keyboard users can scroll the inspector content", true);
+  await browser.evaluate(() => {
+    document.querySelector(
+      '[aria-label="Delivery cell details content"]',
+    ).scrollTop = 0;
+  });
   await capture("cell-inspection-mobile");
   await scan("cell-inspection-mobile");
   await browser.clickNamed("button", "Close cell details");

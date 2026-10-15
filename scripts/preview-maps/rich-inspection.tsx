@@ -17,6 +17,17 @@ import { ThemeProvider } from "../../easy-ui-react/src/Theme";
 import { PillButton } from "../../easy-ui-react/src/Pill";
 import { Button } from "../../easy-ui-react/src/Button";
 import { Text } from "../../easy-ui-react/src/Text";
+import { CompactTimeSeries } from "../../easy-ui-react/src/CompactTimeSeries";
+const routeVolumes: Record<string, number[]> = {
+  a: [840, 1120, 960, 1380, 1240, 1600, 1480],
+  b: [620, 780, 710, 920, 880, 1100, 980],
+};
+const formatDate = (time: number) =>
+  new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(time);
 const style: StyleSpecification = {
   version: 8,
   sources: {},
@@ -36,7 +47,7 @@ declare global {
 const params = new URLSearchParams(location.search);
 const dark = params.get("theme") === "dark";
 const stableFacilityDetails = (
-  <div style={{ padding: 12 }}>
+  <div>
     <Text variant="body2">
       Shared facility · synthetic reference coordinates
     </Text>
@@ -137,7 +148,7 @@ function Fixture() {
               }}
               renderFacilityDetails={() => stableFacilityDetails}
               renderOverlayHoverDetails={({ selections }) => (
-                <div style={{ padding: 12 }}>
+                <div>
                   {selections.map(({ overlay, feature }) => (
                     <article key={overlay.id}>
                       <h2>{overlay.label}</h2>
@@ -150,12 +161,28 @@ function Fixture() {
                   <p>
                     Routes share this connection. These are synthetic records.
                   </p>
-                  {Array.from({ length: 4 }, (_, i) => (
-                    <p key={i}>
-                      Exact sequence and source metadata remain available within
-                      the viewport.
-                    </p>
-                  ))}
+                  <CompactTimeSeries
+                    label="Daily parcel volume"
+                    description="Synthetic daily counts · Oct 1–7, 2026 (UTC)"
+                    series={selections.map(({ overlay }) => ({
+                      id: overlay.id,
+                      label: overlay.label ?? overlay.id,
+                      points: (routeVolumes[overlay.id] ?? []).map(
+                        (value, index) => ({
+                          time: Date.UTC(2026, 9, index + 1),
+                          value,
+                        }),
+                      ),
+                    }))}
+                    domain={[0, 2000]}
+                    formatTime={formatDate}
+                    formatValue={(value) =>
+                      `${value.toLocaleString("en-US")} parcels`
+                    }
+                    formatAxisValue={(value) => value.toLocaleString("en-US")}
+                    markers="all"
+                    columnLabels={["Route", "Day (UTC)", "Parcels"]}
+                  />
                 </div>
               )}
             >
