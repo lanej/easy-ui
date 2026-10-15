@@ -1,0 +1,62 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as Stories from "./Tabs.stories";
+
+<Meta of={Stories} />
+
+# Tabs
+
+The shared presentation primitive behind `TabNav` and `TabPanels`. It provides
+the selected indicator, horizontal scrolling, and edge shadows. Its caller owns
+selection state, element semantics, and keyboard behavior. Use `TabNav` for page
+navigation or `TabPanels` for an accessible tabbed panel.
+
+## Usage
+
+```tsx
+import { Tabs } from "@easypost/easy-ui/Tabs";
+
+<Tabs
+  containerComponent="nav"
+  containerProps={{ "aria-label": "Account sections" }}
+  listComponent="ul"
+  listProps={{}}
+>
+  <Tabs.Item
+    containerComponent="li"
+    tabComponent="a"
+    href="/account/overview"
+    aria-current="page"
+    isSelected
+  >
+    Overview
+  </Tabs.Item>
+  <Tabs.Item containerComponent="li" tabComponent="a" href="/account/billing">
+    Billing
+  </Tabs.Item>
+</Tabs>;
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+`Tabs.Item` accepts `containerComponent`, `tabComponent`, `isSelected`, and
+`isDisabled`, plus props for the chosen element. Set native attributes such as
+`aria-current` or `disabled` as appropriate; visual state alone does not provide
+navigation or disabled behavior.
+
+## Examples
+
+### Navigation and selection
+
+The examples simulate navigation locally. Links use ordinary Tab and Enter
+keyboard behavior; they are not ARIA tab panels.
+
+### Overflow
+
+Focus the links with the keyboard to bring items into view in a narrow container.
+
+<Canvas of={Stories.Overflow} />

@@ -1,0 +1,45 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as Stories from "./UnstyledButton.stories";
+
+<Meta of={Stories} />
+
+# UnstyledButton
+
+The button behavior primitive used by `Button` and other controls. It supports
+pointer and keyboard activation, disabled state, and links without prescribing
+visual styling. Use `Button` when the standard appearance fits; supply a class
+and visible focus styling when building a custom control.
+
+## Usage
+
+```tsx
+import { UnstyledButton } from "@easypost/easy-ui/UnstyledButton";
+
+<UnstyledButton onPress={() => console.log("Activated")}>
+  Activate button
+</UnstyledButton>;
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
+
+### Keyboard activation
+
+Focus the default example and press Enter or Space. The counter also responds to
+pointer activation.
+
+### Disabled
+
+<Canvas of={Stories.Disabled} />
+
+### Link
+
+Supplying `href` renders an anchor and uses the router configured on `Provider`.
+
+<Canvas of={Stories.AsLink} />

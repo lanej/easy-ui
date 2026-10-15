@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { cp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { checkStorybookCoverage } from "./check-storybook-coverage.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const site = resolve(root, "docs-site");
@@ -16,6 +17,7 @@ function run(args, env = {}) {
 run(["run", "build:tokens"]);
 run(["run", "build:icons"]);
 run(["run", "build:storybook", "--", "--output-dir", "docs-site/storybook"]);
+await checkStorybookCoverage(resolve(site, "storybook/index.json"));
 run(["run", "build:typedoc"]);
 
 // TypeDoc emits navigationLinks verbatim, even on nested component pages.

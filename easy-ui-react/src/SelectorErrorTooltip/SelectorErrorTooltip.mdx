@@ -1,0 +1,46 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as Stories from "./SelectorErrorTooltip.stories";
+
+<Meta of={Stories} />
+
+# SelectorErrorTooltip
+
+A focusable error icon with a tooltip. Checkbox and other selection controls use
+this helper to display validation details. It supplies an accessible “Error”
+label and shares the behavior of `Tooltip`.
+
+## Usage
+
+```tsx
+import { SelectorErrorTooltip } from "@easypost/easy-ui/SelectorErrorTooltip";
+
+<SelectorErrorTooltip
+  content="Select an option before continuing."
+  isImmediate
+/>;
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+Accepts the `Tooltip` props except `children`; the trigger is the error icon.
+
+## Examples
+
+### Open tooltip
+
+<Canvas of={Stories.Open} />
+
+### Keyboard focus
+
+Press Tab to focus the icon and show its message. Press Escape to dismiss it.
+
+<Canvas of={Stories.FocusOnly} />
+
+### Long validation message
+
+<Canvas of={Stories.LongMessage} />
