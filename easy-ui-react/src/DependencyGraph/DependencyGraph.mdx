@@ -188,15 +188,19 @@ Resource cards use a compact identity/status row, 25px disclosure controls (pres
 ### Wide attribute inspection
 
 Expanded attribute cards share spare canvas width across the existing dependency
-columns, up to 60rem per card. Wider before/after values wrap less; edge gaps and
-text size stay unchanged. Parallel dependents remain stacked in their dependency
-column, preserving the graph's direction and convergence. Width allocation
+columns, up to 60rem per card. Once a card has 52rem of content width, its
+expanded attribute comparisons sit beside the resource summary. Narrower cards
+keep the comparisons below it. This responds to the card’s own width, including
+when the graph is embedded in a smaller panel. Before/after values still adapt
+to the comparison area’s width; edge gaps and text size stay unchanged. Parallel
+dependents remain stacked in their dependency column, preserving the graph's direction and convergence. Width allocation
 reserves room for every expandable resource, including folded
 resources, so selection and disclosure do not redistribute that room. Resizing
 the canvas updates card widths while preserving relative resource order and the
 chosen zoom. Deep graphs retain readable cards and scroll horizontally; narrow
 screens keep a card within the available reading width.
 
+<Canvas of={Stories.ResponsiveResourceCard} />
 <Canvas of={Stories.WideAttributeInspection} />
 
 ### Relationship changes

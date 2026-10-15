@@ -74,13 +74,25 @@ async function geometry() {
           box.bottom > viewportBox.top
         );
       }).length,
-      cards: cards.map((card) => ({
-        id: card.dataset.graphResourceCard,
-        x: parseFloat(card.style.left) * 16,
-        y: parseFloat(card.style.top) * 16,
-        width: card.offsetWidth / unit,
-        height: card.offsetHeight / unit,
-      })),
+      cards: cards.map((card) => {
+        const summary = card.firstElementChild.getBoundingClientRect();
+        const diff = card
+          .querySelector("[data-graph-card-diff]:not([hidden])")
+          ?.getBoundingClientRect();
+        return {
+          id: card.dataset.graphResourceCard,
+          x: parseFloat(card.style.left) * 16,
+          y: parseFloat(card.style.top) * 16,
+          width: card.offsetWidth / unit,
+          height: card.offsetHeight / unit,
+          wide: card.clientWidth / unit >= 832,
+          comparisonBeside: diff
+            ? diff.left >= summary.right - 1 &&
+              Math.abs(diff.top - summary.top) < 1
+            : undefined,
+          comparisonBelow: diff ? diff.top >= summary.bottom - 1 : undefined,
+        };
+      }),
       values: [...document.querySelectorAll("[data-diff] code")].map(
         (value) => ({
           fontSize: parseFloat(getComputedStyle(value).fontSize) / unit,
@@ -109,6 +121,11 @@ function checkGeometry(state, expectedEdges) {
     "Every supplied relationship is retained",
   );
   for (const a of state.cards) {
+    assert.equal(
+      a.wide ? a.comparisonBeside : a.comparisonBelow,
+      true,
+      `${a.id} places comparisons beside a wide summary and below a narrow one`,
+    );
     assert.ok(
       Object.values(a).every(
         (value) => typeof value !== "number" || Number.isFinite(value),
@@ -148,6 +165,32 @@ function sameOrder(before, after) {
 }
 
 try {
+  for (const theme of ["light", "dark"]) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open("responsive-resource-card", theme);
+    const wide = await geometry();
+    checkGeometry(wide, 0);
+    assert.equal(wide.cards[0].comparisonBeside, true);
+    await page.locator("[data-dependency-graph]").screenshot({
+      path: resolve(output, `resource-card-${theme}-wide.png`),
+    });
+    // A narrow embedding must stack even on a wide browser window.
+    await page.locator("[data-dependency-graph]").evaluate((graph) => {
+      graph.style.maxWidth = "640px";
+    });
+    await settle();
+    const embedded = await geometry();
+    checkGeometry(embedded, 0);
+    assert.equal(embedded.cards[0].comparisonBelow, true);
+    assert.ok(wide.cards[0].height < embedded.cards[0].height);
+    await page.setViewportSize({ width: 390, height: 900 });
+    await settle();
+    checkGeometry(await geometry(), 0);
+    await page.locator("[data-dependency-graph]").screenshot({
+      path: resolve(output, `resource-card-${theme}-narrow.png`),
+    });
+    checks.push({ name: `resource-card-wide-embedded-narrow-${theme}` });
+  }
   for (const theme of ["light", "dark"])
     for (const width of [2048, 390, 320])
       for (const scenario of ["wide", "deep", "cyclic", "grouped"]) {

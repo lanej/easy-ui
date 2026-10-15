@@ -287,8 +287,13 @@
   flex-shrink: 0;
 }
 .node[data-graph-resource-card] {
+  container: resource-card / inline-size;
   display: flex;
-  flex-direction: column;
+  flex-flow: row wrap;
+}
+.cardSummary {
+  flex: 1 0 100%;
+  min-inline-size: 0;
 }
 .cardControls {
   display: flex;
@@ -689,6 +694,9 @@
 }
 
 .nodeChanges {
+  box-sizing: border-box;
+  flex: 1 0 100%;
+  min-inline-size: 0;
   padding: 0 6px 6px;
   .resourceChanges {
     margin-block-start: 0;
@@ -708,6 +716,27 @@
   h4 {
     font-size: 0.8125rem;
   }
+}
+
+// Reserve readable space for both the summary and paired before/after values.
+// Query the unscaled card, so zoom and unrelated viewport space do not reflow it.
+@container resource-card (min-width: 52rem) {
+  .cardSummary:has(+ .nodeChanges:not([hidden])) {
+    flex: 0 0 14rem;
+  }
+  .nodeChanges {
+    flex: 1 1 0;
+    padding: 6px 8px;
+    border-inline-start: 1px solid design-token("color.neutral.200");
+    .resourceChanges {
+      padding-block-start: 0;
+      border-block-start: 0;
+    }
+  }
+}
+
+.node[data-group="true"] .cardSummary {
+  block-size: 100%;
 }
 
 // Keep disclosure beside the header, not in a footer that repeats visible edges.

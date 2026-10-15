@@ -99,6 +99,34 @@ export const RiskAnnotations: Story = {
 export const StableResourceOrder: Story = {
   render: () => <DependencyGraphStableLayoutExample />,
 };
+export const ResponsiveResourceCard: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Application user changes",
+    nodes: [
+      {
+        id: "application-user",
+        label: "application_user",
+        typeLabel: "SQL user",
+        categories: [{ label: "Source modified", variant: "primary" }],
+        changeSummary: "Captured attributes",
+        changes: [
+          {
+            path: "configuration.name",
+            type: "change",
+            before: '"application-old"',
+            after: "service_account.application.email",
+          },
+        ],
+      },
+    ],
+    edges: [],
+    groups: [],
+    showDetails: false,
+    defaultExpandedChangeNodeIds: ["application-user"],
+    height: 320,
+  },
+};
 export const WideAttributeInspection: Story = {
   args: {
     title: undefined,
