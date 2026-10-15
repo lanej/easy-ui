@@ -1042,157 +1042,159 @@ export function DependencyGraph({
                             height: node ? undefined : rem(item.height),
                           }}
                         >
-                          <div className={styles.cardHeading}>
-                            <button
-                              type="button"
-                              className={styles.nodeSelect}
-                              data-graph-node={node?.id}
-                              data-graph-item={item.key}
-                              aria-pressed={selected}
-                              aria-describedby={
-                                hasAnnotation ? annotationId : undefined
-                              }
-                              aria-label={
-                                node
-                                  ? [
-                                      label,
-                                      node.kind === "unresolved"
-                                        ? "Unresolved"
-                                        : null,
-                                      node.change
-                                        ? dependencyChangeLabels[node.change]
-                                        : null,
-                                      node.typeLabel,
-                                      ...dependencyGraphCategoryLabels(
-                                        node.categories,
-                                      ),
-                                      node.description,
-                                      node.iconLabel,
-                                    ]
-                                      .filter(Boolean)
-                                      .join(", ")
-                                  : `${label}, ${item.members.length} resources${changed ? `, ${changed} with supplied changes` : ""}`
-                              }
-                              onKeyDown={(event) => navigate(event, item)}
-                              onClick={() =>
-                                select({
-                                  type: node ? "node" : "group",
-                                  id: node?.id ?? item.group!.id,
-                                })
-                              }
-                            >
-                              {node ? (
-                                <DependencyGraphIdentity
-                                  node={node}
-                                  overview={density === "overview"}
-                                />
-                              ) : (
-                                <>
-                                  <span className={styles.muted}>
-                                    {shown === item.members.length
-                                      ? shown
-                                      : `${shown} of ${item.members.length}`}{" "}
-                                    resources
-                                    {changed > 0 &&
-                                      ` · ${changed} with changes`}
-                                  </span>
-                                  <strong className={styles.nodeLabel}>
-                                    {label}
-                                  </strong>
-                                  {cardDescription && (
-                                    <span
-                                      className={styles.nodeDescription}
-                                      title={cardDescription}
-                                    >
-                                      {cardDescription}
+                          <div className={styles.cardSummary}>
+                            <div className={styles.cardHeading}>
+                              <button
+                                type="button"
+                                className={styles.nodeSelect}
+                                data-graph-node={node?.id}
+                                data-graph-item={item.key}
+                                aria-pressed={selected}
+                                aria-describedby={
+                                  hasAnnotation ? annotationId : undefined
+                                }
+                                aria-label={
+                                  node
+                                    ? [
+                                        label,
+                                        node.kind === "unresolved"
+                                          ? "Unresolved"
+                                          : null,
+                                        node.change
+                                          ? dependencyChangeLabels[node.change]
+                                          : null,
+                                        node.typeLabel,
+                                        ...dependencyGraphCategoryLabels(
+                                          node.categories,
+                                        ),
+                                        node.description,
+                                        node.iconLabel,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(", ")
+                                    : `${label}, ${item.members.length} resources${changed ? `, ${changed} with supplied changes` : ""}`
+                                }
+                                onKeyDown={(event) => navigate(event, item)}
+                                onClick={() =>
+                                  select({
+                                    type: node ? "node" : "group",
+                                    id: node?.id ?? item.group!.id,
+                                  })
+                                }
+                              >
+                                {node ? (
+                                  <DependencyGraphIdentity
+                                    node={node}
+                                    overview={density === "overview"}
+                                  />
+                                ) : (
+                                  <>
+                                    <span className={styles.muted}>
+                                      {shown === item.members.length
+                                        ? shown
+                                        : `${shown} of ${item.members.length}`}{" "}
+                                      resources
+                                      {changed > 0 &&
+                                        ` · ${changed} with changes`}
                                     </span>
-                                  )}
-                                </>
-                              )}
-                            </button>
-                            {node && dependents > 0 && (
-                              <span className={styles.branchControls}>
-                                <CollapseButton
-                                  accessibilityLabel={`${branchCollapsed ? "Expand" : "Collapse"} dependents of ${label}`}
-                                  expanded={!branchCollapsed}
-                                  aria-controls={`${instanceId}-canvas`}
-                                  onPress={() =>
-                                    changeCollapsedNodes(
-                                      branchCollapsed
-                                        ? collapsedNodes.filter(
-                                            (id) => id !== node.id,
-                                          )
-                                        : [...collapsedNodes, node.id],
-                                    )
-                                  }
-                                />
-                                {branchCollapsed && (
-                                  <span className={styles.hiddenCount}>
-                                    {branches.hiddenCounts.get(node.id) ?? 0}{" "}
-                                    hidden
-                                  </span>
+                                    <strong className={styles.nodeLabel}>
+                                      {label}
+                                    </strong>
+                                    {cardDescription && (
+                                      <span
+                                        className={styles.nodeDescription}
+                                        title={cardDescription}
+                                      >
+                                        {cardDescription}
+                                      </span>
+                                    )}
+                                  </>
                                 )}
-                              </span>
-                            )}
-                          </div>
-                          {hasAnnotation && (
-                            <div
-                              id={annotationId}
-                              className={styles.nodeAnnotation}
-                              data-graph-node-annotation
-                            >
-                              {annotation}
-                            </div>
-                          )}
-                          {node && hasDependencyGraphChanges(node) && (
-                            <div
-                              className={styles.cardControls}
-                              data-graph-attribute-controls
-                            >
-                              {hasDependencyGraphChanges(node) && (
-                                <span className={styles.controlPair}>
-                                  <ExpandButton
-                                    accessibilityLabel={`${diffShown ? "Hide" : "Show"} attribute differences for ${label}`}
-                                    expanded={diffShown}
-                                    aria-controls={`${instanceId}-diff-${items.indexOf(item)}`}
-                                    onPress={(event) => {
-                                      const reveal =
-                                        !diffShown && zoom < 1
-                                          ? event.target.closest<HTMLElement>(
-                                              "[data-graph-resource-card]",
-                                            )
-                                          : null;
-                                      if (!diffShown && zoom < 1) setZoom(1);
-                                      changeExpandedChanges(
-                                        diffShown
-                                          ? expandedChanges.filter(
+                              </button>
+                              {node && dependents > 0 && (
+                                <span className={styles.branchControls}>
+                                  <CollapseButton
+                                    accessibilityLabel={`${branchCollapsed ? "Expand" : "Collapse"} dependents of ${label}`}
+                                    expanded={!branchCollapsed}
+                                    aria-controls={`${instanceId}-canvas`}
+                                    onPress={() =>
+                                      changeCollapsedNodes(
+                                        branchCollapsed
+                                          ? collapsedNodes.filter(
                                               (id) => id !== node.id,
                                             )
-                                          : expandedChanges.includes(node.id)
-                                            ? expandedChanges
-                                            : [...expandedChanges, node.id],
-                                      );
-                                      if (reveal)
-                                        requestAnimationFrame(() =>
-                                          requestAnimationFrame(() => {
-                                            if (reveal.isConnected)
-                                              reveal.scrollIntoView({
-                                                block: "nearest",
-                                                inline: "nearest",
-                                              });
-                                          }),
-                                        );
-                                    }}
+                                          : [...collapsedNodes, node.id],
+                                      )
+                                    }
                                   />
-                                  <span className={styles.controlCaption}>
-                                    {node.changes?.length
-                                      ? `${node.changes.length} ${node.changes.length === 1 ? "field" : "fields"}`
-                                      : "Changes"}
-                                  </span>
+                                  {branchCollapsed && (
+                                    <span className={styles.hiddenCount}>
+                                      {branches.hiddenCounts.get(node.id) ?? 0}{" "}
+                                      hidden
+                                    </span>
+                                  )}
                                 </span>
                               )}
                             </div>
-                          )}
+                            {hasAnnotation && (
+                              <div
+                                id={annotationId}
+                                className={styles.nodeAnnotation}
+                                data-graph-node-annotation
+                              >
+                                {annotation}
+                              </div>
+                            )}
+                            {node && hasDependencyGraphChanges(node) && (
+                              <div
+                                className={styles.cardControls}
+                                data-graph-attribute-controls
+                              >
+                                {hasDependencyGraphChanges(node) && (
+                                  <span className={styles.controlPair}>
+                                    <ExpandButton
+                                      accessibilityLabel={`${diffShown ? "Hide" : "Show"} attribute differences for ${label}`}
+                                      expanded={diffShown}
+                                      aria-controls={`${instanceId}-diff-${items.indexOf(item)}`}
+                                      onPress={(event) => {
+                                        const reveal =
+                                          !diffShown && zoom < 1
+                                            ? event.target.closest<HTMLElement>(
+                                                "[data-graph-resource-card]",
+                                              )
+                                            : null;
+                                        if (!diffShown && zoom < 1) setZoom(1);
+                                        changeExpandedChanges(
+                                          diffShown
+                                            ? expandedChanges.filter(
+                                                (id) => id !== node.id,
+                                              )
+                                            : expandedChanges.includes(node.id)
+                                              ? expandedChanges
+                                              : [...expandedChanges, node.id],
+                                        );
+                                        if (reveal)
+                                          requestAnimationFrame(() =>
+                                            requestAnimationFrame(() => {
+                                              if (reveal.isConnected)
+                                                reveal.scrollIntoView({
+                                                  block: "nearest",
+                                                  inline: "nearest",
+                                                });
+                                            }),
+                                          );
+                                      }}
+                                    />
+                                    <span className={styles.controlCaption}>
+                                      {node.changes?.length
+                                        ? `${node.changes.length} ${node.changes.length === 1 ? "field" : "fields"}`
+                                        : "Changes"}
+                                    </span>
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                           {node && hasDependencyGraphChanges(node) && (
                             <div
                               id={`${instanceId}-diff-${items.indexOf(item)}`}
