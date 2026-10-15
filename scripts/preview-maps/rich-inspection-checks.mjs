@@ -287,8 +287,49 @@ export async function checkRichInspection({
         `${theme}/${width}: shared route card contained`,
         await browser.evaluate(contained),
       );
+      await browser.wait(() => {
+        const plot = document.querySelector(
+          '[aria-label="Daily parcel volume"] svg',
+        );
+        return plot?.querySelectorAll("path").length === 2;
+      });
+      check(
+        `${theme}/${width}: chart fits padded body without horizontal scrolling`,
+        await browser.evaluate(() => {
+          const body = document.querySelector(
+            '[aria-label="Overlay feature details content"]',
+          );
+          const chart = body.querySelector("figure").getBoundingClientRect();
+          const bounds = body.getBoundingClientRect();
+          const css = getComputedStyle(body);
+          return (
+            body.scrollWidth <= body.clientWidth &&
+            chart.left >= bounds.left + parseFloat(css.paddingLeft) - 1 &&
+            chart.right <= bounds.right - parseFloat(css.paddingRight) + 1 &&
+            (window.innerHeight < 1100 ||
+              body.scrollHeight <= body.clientHeight)
+          );
+        }),
+      );
       await capture(`rich-overlap-${theme}-${width}`);
       await scan(`rich-overlap-${theme}-${width}`);
+      await browser.key(`${overlay} summary`, "Enter");
+      check(
+        `${theme}/${width}: keyboard opens both routes' exact chart values`,
+        await browser.evaluate(() => {
+          const body = document.querySelector(
+            '[aria-label="Overlay feature details content"]',
+          );
+          const data = body.querySelector("details[open]");
+          return (
+            data?.querySelectorAll("tbody tr").length === 14 &&
+            data.textContent.includes("1,480 parcels") &&
+            body.scrollWidth <= body.clientWidth
+          );
+        }),
+      );
+      await scan(`rich-overlap-data-${theme}-${width}`);
+      await browser.key(`${overlay} summary`, "Enter");
       await action("Refresh records");
       await browser.wait(() =>
         document
