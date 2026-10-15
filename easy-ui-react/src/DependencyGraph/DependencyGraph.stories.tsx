@@ -74,6 +74,28 @@ export const SpecificChanges: Story = {
   },
 };
 export const AllResources: Story = {};
+export const CompactTree: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Resource change review",
+    nodes: subgraphNodes,
+    edges: subgraphEdges,
+    groups: subgraphGroups,
+    defaultPresentation: "tree",
+    defaultSelection: { type: "node", id: "api" },
+    defaultChangePresentation: "diff",
+    height: 560,
+  },
+};
+export const TreeWithoutInspector: Story = {
+  ...CompactTree,
+  args: {
+    ...CompactTree.args,
+    showDetails: false,
+    defaultExpandedChangeNodeIds: ["api"],
+    defaultCollapsedGroupIds: ["database"],
+  },
+};
 export const EmbeddedInspector: Story = {
   args: {
     title: undefined,
@@ -233,6 +255,27 @@ export const CollapsibleBranches: Story = {
     groups: [],
     showDetails: false,
     height: 600,
+  },
+};
+export const DependencyTree: Story = {
+  args: {
+    ...CollapsibleBranches.args,
+    title: undefined,
+    description: undefined,
+    defaultPresentation: "tree",
+    treeHierarchy: "dependencies",
+    showDetails: true,
+    defaultSelection: { type: "node", id: "database" },
+    defaultChangePresentation: "diff",
+    edges: [
+      ...CollapsibleBranches.args!.edges!,
+      {
+        id: "storage-db",
+        source: "storage",
+        target: "database",
+        variant: "dashed",
+      },
+    ],
   },
 };
 export const ExpandedAttributeDifferences: Story = {

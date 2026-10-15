@@ -124,6 +124,35 @@
     }
   }
 }
+.presentation {
+  display: flex;
+  padding: 2px;
+  border: 1px solid design-token("color.neutral.300");
+  border-radius: 6px;
+  background: design-token("color.neutral.050");
+}
+.presentationButton {
+  border: 0;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font: inherit;
+  color: design-token("color.neutral.700");
+  background: transparent;
+  cursor: pointer;
+  &[aria-pressed="true"] {
+    color: design-token("color.primary.800");
+    background: design-token("color.primary.100");
+    font-weight: 600;
+  }
+  &:focus-visible {
+    outline: 2px solid design-token("color.primary.500");
+  }
+}
+.treeControls {
+  display: flex;
+  gap: 4px;
+  margin-inline-start: auto;
+}
 .branchControls button > span:last-child,
 .cardControls button > span:last-child,
 .groupExpand button > span:last-child,
@@ -161,6 +190,9 @@
     outline: 2px solid design-token("color.primary.500");
     outline-offset: 2px;
   }
+}
+.viewport[data-tree-viewport] {
+  scrollbar-gutter: auto;
 }
 .scrollArea {
   min-inline-size: 100%;
@@ -654,6 +686,18 @@
   }
   .cameraControls {
     margin-inline-start: 0;
+  }
+  .root[data-presentation="tree"] {
+    .search {
+      flex-basis: 140px;
+    }
+    .scope {
+      flex: 1 1 140px;
+      min-inline-size: 140px;
+    }
+    .treeControls {
+      margin-inline-start: 0;
+    }
   }
 }
 @media (forced-colors: active) {
