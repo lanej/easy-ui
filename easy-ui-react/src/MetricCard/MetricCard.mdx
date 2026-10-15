@@ -7,12 +7,15 @@ import * as MetricCardStories from "./MetricCard.stories";
 
 # MetricCard
 
-Show a metric and its comparison baseline. Compose `Chart` alongside metric content when a trend is needed. Values and comparisons are formatted by the application, which owns the metric definition, locale, time zone, and aggregation.
-
-## Usage
+Show a formatted metric with a secondary unit and an optional comparison. Applications own aggregation, units, reporting periods, calculations, and business meaning.
 
 ```tsx
-import { MetricCard } from "@easypost/easy-ui/MetricCard";
+import {
+  MetricCard,
+  MetricContent,
+  MetricComparisonContent,
+  MetricGroup,
+} from "@easypost/easy-ui/MetricCard";
 ```
 
 <Canvas of={MetricCardStories.Default} />
@@ -21,49 +24,95 @@ import { MetricCard } from "@easypost/easy-ui/MetricCard";
 
 <ArgTypes of={MetricCard} />
 
-## Examples
+## Summary and row are different compositions
 
-### Comparison meaning
+The default `layout="summary"` always places the label above the value and its comparison, aligned to the start edge. Extra width does not move the number away from its label. The pill stays centered beside the reading; oversized content wraps without clipping. `MetricCard` adds a frame; `MetricContent` does not.
 
-Specify the comparison period and units. A change from 96.6% to 97.8% is **1.2 percentage points**, not 1.2 percent. Direction does not determine sentiment: decreasing cost can be positive, while increasing volume can be neutral. Only set sentiment when the application can justify that interpretation. Use text that makes the direction clear without color.
+`layout="row"` is a label/value/change row. Use direct `MetricContent` children inside `MetricGroup layout="row"` to align numeric endpoints and comparison starts across the entire list. These are shared CSS grid columns, not manually sized pills or floating values. Long labels and values can wrap within their columns. The group does not add a heading, card, or landmark.
 
-Positive comparisons use dark text on the success background to preserve text contrast. Give cards distinct labels when multiple metrics or states appear together so their accessible regions can be distinguished.
+<Canvas of={MetricCardStories.Row} />
+<Canvas of={MetricCardStories.ShippingRows} />
+
+## One section, not a card around every number
+
+Use one caller-owned Card with `MetricGroup` and unframed metrics. The summary group adapts its column count to its actual container width. Every metric retains the same label-above-reading composition on mobile and desktop.
+
+Reporting and comparison periods belong in the group header. Currency belongs to the cost metric, not to the shared context for counts, percentages, and durations. Keep metric-specific qualifications visible.
 
 <Canvas of={MetricCardStories.ShippingOverview} />
-
-### Reusing content
-
-`MetricContent` exposes the same value, comparison, loading and missing-data behavior without a Card or region wrapper. Place it in a caller-owned Card, section, or report layout. `MetricComparisonContent` is independently usable when a comparison and its explicit baseline belong elsewhere. Both are available from the MetricCard entry.
-
-`MetricCard` retains its existing framed recipe. `typography` configures text-role sizes in CSS pixels; `valueSize` controls the emphasized value separately (28 by default). Comparison sentiment remains explicit and neutral by default in every composition.
-
-<Canvas of={MetricCardStories.CallerOwnedFrame} />
-
-### Compact KPI summaries
-
-Use the same `MetricContent` API when a metric belongs inside an existing page section rather than another card. The compact example uses smaller typography and responsive grid columns, without decorative icons or an implied status for a point-in-time value.
-
 <Canvas of={MetricCardStories.CompactSummary} />
 
-### Migrating from `KpiTile`
+## Hierarchy and typography
 
-`KpiTile` was a duplicate wrapper and is removed from Easy UI. Use `MetricCard` for independent framed metrics or `MetricContent` inside an existing frame. Map `metric.label` to `label` and `metric.displayValue` to `value`. Convert `metric.deltaDisplay` into `comparison.label`, and supply the required `comparison.baseline` (for example, `vs previous 30 days`). Assign `comparison.sentiment` only when the business interpretation is known; change direction alone does not establish sentiment.
+`size` is independent of layout and framing. `sm` uses a 20px value, `md` 24px, and `lg` 28px. Labels remain 14–15px; units and comparisons use 13–14px text. `MetricGroup` supplies the size and layout defaults for its children; individual metrics can override them.
 
-For a metric without a comparison, omit `comparison`. Do not replace the obsolete `Point-in-time` pill. The old `icon`, `accent`, `bare`, `compact`, and `hideUnavailableLabel` switches do not map to new props: compose framing and typography explicitly using `MetricContent`, `valueSize`, and `typography`.
+Use `unit="days"` with `value="2.4"` to keep the suffix secondary and on the number's baseline. Values can also remain fully formatted strings such as `"97.8%"`. The component never parses a value to discover its units. Both the unit and comparison are suppressed for missing or loading values.
 
+Custom `valueSize` and `typography` remain available. Invalid `valueSize` falls back to the selected preset. The passive comparison uses a compact tinted `Pill`; interactive pills retain their existing sizes.
 
-Values also accept a React element, allowing `SignedValue` atoms or separately colored range endpoints to compose into the same metric molecule. Sign colors remain opt-in; metric content does not infer business sentiment from a formatted string. Smaller `valueSize` settings scale the value row without retaining a card-sized empty height.
+<Canvas of={MetricCardStories.TypographyPresets} />
+<Canvas of={MetricCardStories.ValueAlignment} />
 
-<Canvas of={MetricCardStories.SignedValues} />
+## Direction is not sentiment
 
-### Loading and unavailable values
+Supply `direction` with an unsigned, formatted comparison magnitude to show a compact arrow, for example `label: "4.2%", direction: "decrease"`. Increase and decrease use up and down arrows; unchanged uses an equals sign. Direction stays visible without color. `accessibilityLabel` can supply a localized description of the complete change.
 
-Pass `isLoading` while a query is loading. The previous value and comparison are suppressed. Pass `null` for an unavailable value and a formatted `"0"` for an observed zero. For query failures, compose an existing `Banner` with a retry action; do not present a failed query as zero or an empty successful result. Loading and empty labels can be localized.
+`sentiment` is independent: lower cost may be positive, a higher exception rate negative, and increased volume neutral. No sign or sentiment is inferred from the value string. Omitting `direction` preserves a complete text label such as `"4.2% lower"`.
+
+A change from 96.6% to 97.8% is **1.2 percentage points**, not 1.2 percent. Applications calculate and format comparisons. Pill owns its muted text/background pair in both themes; metric text must not override it.
+
+<Canvas of={MetricCardStories.Sentiments} />
+
+## Shared context without repetition
+
+Comparisons require exactly one of `baseline` (displayed locally) or `baselineId` (referencing a visible baseline in the same document with `aria-describedby`). Use a unique ID, such as React's `useId()`, and keep the referenced text mounted and visible. Independently embedded metrics need their own local baseline.
+
+```tsx
+const baselineId = useId();
+
+<Card as="section" aria-label="Shipping overview" padding="2">
+  <p id={baselineId}>June 1–30 · vs previous 30 days</p>
+  <MetricGroup>
+    <MetricContent
+      label="Average rated cost"
+      value="$5.20"
+      unit="USD"
+      comparison={{
+        label: "4.2%",
+        direction: "decrease",
+        sentiment: "positive",
+        baselineId,
+      }}
+    />
+    <MetricContent label="Labels purchased" value="24,810" />
+  </MetricGroup>
+</Card>;
+```
+
+When a comparison describes a value, supply `comparison` to keep them grouped. Use `MetricComparisonContent` independently only when the comparison itself is the content.
+
+<Canvas of={MetricCardStories.CallerOwnedFrame} />
+<Canvas of={MetricCardStories.ComparisonOnly} />
+
+## Narrow and large-text layouts
+
+<Canvas of={MetricCardStories.Narrow} />
+<Canvas of={MetricCardStories.LargeText} />
+<Canvas of={MetricCardStories.RowLongContent} />
+
+## Loading, unavailable, and composed values
+
+Use `isLoading` to suppress stale readings. Use `null` for unavailable data; an observed zero remains `"0"`. Loading and empty labels can be localized. For a failed query, compose a Banner and retry action rather than presenting zero. React-element values can contain SignedValue atoms without losing the surrounding metric's hierarchy.
 
 <Canvas of={MetricCardStories.Loading} />
 <Canvas of={MetricCardStories.NoData} />
 <Canvas of={MetricCardStories.Zero} />
+<Canvas of={MetricCardStories.SignedValues} />
 
-### Trends
+## Migration
 
-Use the Apache ECharts-backed `Chart` component for trends, with labelled axes, an explicit domain, and exact observations in its data disclosure. `MetricCard` and `MetricContent` no longer accept a `trend` prop; place a `Chart` in a caller-owned layout instead.
+`KpiTile` was a duplicate wrapper and remains removed. Use MetricCard for standalone framing or MetricContent inside an existing section. Map metric label/value to `label`/`value`; provide an explicit comparison baseline. Do not restore the decorative icon chip or Point-in-time pill.
+
+The earlier draft's `compact`/`stacked` layout names are replaced by `row`/`summary`. Typography is now a separate `size` choice; a summary does not imply larger text or extra padding.
+
+For trends, compose a Chart in the caller-owned layout with labelled axes, an explicit domain, and exact observations in its data disclosure. MetricCard does not accept a trend prop.

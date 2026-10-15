@@ -36,7 +36,10 @@ describe("<MetricCard />", () => {
         comparison={{ label: "10% higher", baseline: "vs May" }}
       />,
     );
-    expect(screen.getByTestId("root").className).toContain("variantGray");
+    expect(
+      screen.getByRole("group").querySelector("[data-metric-pill] > span")
+        ?.className,
+    ).toContain("toneNeutral");
   });
 
   it("can represent a decrease as an improvement", () => {
@@ -51,7 +54,10 @@ describe("<MetricCard />", () => {
         }}
       />,
     );
-    expect(screen.getByTestId("root").className).toContain("variantSuccess");
+    expect(
+      screen.getByRole("group").querySelector("[data-metric-pill] > span")
+        ?.className,
+    ).toContain("toneSuccess");
   });
 
   it("distinguishes a real zero from unavailable data", () => {
@@ -132,7 +138,10 @@ it("renders comparison content independently with its explicit baseline and neut
   render(<MetricComparisonContent label="10% higher" baseline="vs May" />);
   expect(screen.getByText("10% higher")).toBeInTheDocument();
   expect(screen.getByText("vs May")).toBeInTheDocument();
-  expect(screen.getByTestId("root").className).toContain("variantGray");
+  expect(
+    screen.getByRole("group").querySelector("[data-metric-pill] > span")
+      ?.className,
+  ).toContain("toneNeutral");
   expect(screen.queryByRole("region")).toBeNull();
 });
 

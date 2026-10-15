@@ -1,0 +1,89 @@
+name: Metric summary evidence
+on:
+  pull_request:
+    paths:
+      - 'easy-ui-react/src/MetricCard/**'
+      - 'easy-ui-react/src/Pill/**'
+      - 'easy-ui-react/src/RiskScore/**'
+      - 'scripts/check-metric-*.mjs'
+      - '.github/workflows/metric-summary-evidence.yml'
+permissions:
+  contents: read
+concurrency:
+  group: metric-summary-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  capture:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --no-audit --no-fund > /tmp/install.log 2>&1 || { tail -80 /tmp/install.log; exit 1; }
+      - name: Check formatting
+        run: npx prettier --check easy-ui-react/src/MetricCard easy-ui-react/src/Pill/Pill.tsx easy-ui-react/src/Pill/Pill.module.scss easy-ui-react/src/Pill/Pill.compact.test.tsx easy-ui-react/src/RiskScore/RiskScore.tsx scripts/check-metric-card.mjs scripts/check-metric-row-labels.mjs
+      - name: Build
+        run: npm run build > /tmp/build.log 2>&1 || { grep -E 'error TS|Error:|ERROR|failed' /tmp/build.log | tail -50; exit 1; }
+      - run: npx eslint src/MetricCard src/Pill src/RiskScore --ext .ts,.tsx
+        working-directory: easy-ui-react
+      - run: npx stylelint 'src/MetricCard/*.scss' 'src/Pill/*.scss' 'src/RiskScore/*.scss'
+        working-directory: easy-ui-react
+      - run: npx vitest run src/MetricCard src/Pill src/RiskScore
+        working-directory: easy-ui-react
+      - name: Build Storybook
+        run: npm run build:storybook > /tmp/storybook.log 2>&1 || { tail -80 /tmp/storybook.log; exit 1; }
+      - run: npm ci --prefix scripts/preview-metrics --no-audit --no-fund > /tmp/browser-install.log 2>&1 || { tail -60 /tmp/browser-install.log; exit 1; }
+      - run: npx --prefix scripts/preview-metrics playwright install --with-deps chromium > /tmp/chromium.log 2>&1 || { tail -60 /tmp/chromium.log; exit 1; }
+      - name: Check and capture metric compositions
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9018
+          FACILITY_REPORT_DIR: ${{ runner.temp }}/metric-summary
+        run: |
+          python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > /tmp/metric-summary.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/check-metric-card.mjs
+          node scripts/check-metric-row-labels.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: metric-summary-evidence
+          path: ${{ runner.temp }}/metric-summary/metric-card
+  prepare-images:
+    needs: capture
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: metric-summary-evidence
+          path: evidence
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs');
+            const entries = [];
+            for (const name of ['shipping-overview-light-390','shipping-overview-dark-390','shipping-overview-dark-1040','shipping-rows-dark-390','shipping-rows-dark-1040','typography-presets-dark-390','row-long-content-dark-320']) {
+              const content = fs.readFileSync(`evidence/${name}.png`).toString('base64');
+              const {data} = await github.rest.git.createBlob({...context.repo, content, encoding: 'base64'});
+              entries.push({path:`documentation/images/metric-card-${name}.png`,sha:data.sha,mode:'100644',type:'blob'});
+            }
+            const manifest = {source_sha: context.payload.pull_request.head.sha, entries};
+            fs.writeFileSync('metric-summary-blobs.json', JSON.stringify(manifest, null, 2));
+            console.log('METRIC_SUMMARY_BLOBS=' + JSON.stringify(manifest));
+      - uses: actions/upload-artifact@v4
+        with:
+          name: metric-summary-blobs
+          path: metric-summary-blobs.json

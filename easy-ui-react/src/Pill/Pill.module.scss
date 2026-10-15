@@ -13,6 +13,14 @@
   font-weight: 500;
 }
 
+.sizeXs {
+  min-width: 0;
+  max-width: 100%;
+  padding: 2px 6px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
 .sizeSm {
   padding: 4px 10px;
   font-size: 12px;
@@ -72,12 +80,10 @@
     opacity: 0.5;
     cursor: default;
   }
-
   &:hover:not(:disabled) {
     border-color: design-token("color.primary.500");
     color: design-token("color.neutral.900");
   }
-
   &:focus-visible {
     @include native-focus-ring;
   }
@@ -87,7 +93,6 @@
   background: design-token("color.primary.500");
   border-color: design-token("color.primary.500");
   color: design-token("color.neutral.000");
-
   &:hover:not(:disabled) {
     color: design-token("color.neutral.000");
   }

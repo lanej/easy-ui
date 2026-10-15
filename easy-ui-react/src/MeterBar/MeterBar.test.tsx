@@ -13,7 +13,10 @@ it.each([
 ])("draws the exact geometry for %s / %s", (value, max, expected) => {
   const { container } = render(<MeterBar value={value} max={max} />);
   const fill = container.querySelector<HTMLElement>("[data-meter-fill]");
-  expect(parseFloat(fill!.style.inlineSize)).toBeCloseTo(expected, 10);
+  if (fill === null) {
+    throw new Error("Expected a meter fill");
+  }
+  expect(parseFloat(fill.style.inlineSize)).toBeCloseTo(expected, 10);
 });
 
 it.each([
@@ -35,12 +38,14 @@ it.each([
 it("is visual only and does not create duplicate semantics or text", () => {
   const { container } = render(<MeterBar value={72} max={100} />);
   const track = container.querySelector("[data-meter-bar]");
-  expect(track?.tagName).toBe("SPAN");
+  expect(track).toBeInTheDocument();
   expect(track).toHaveAttribute("aria-hidden", "true");
+  expect(track).not.toHaveAttribute("data-color");
   expect(track).toHaveAttribute("data-tone", "neutral");
   expect(track).toHaveAttribute("data-thickness", "md");
   expect(track).toHaveTextContent("");
   expect(container.querySelector("[role], [tabindex]")).toBeNull();
+  expect(container.querySelector("[aria-label]")).toBeNull();
   expect(screen.queryByRole("meter")).toBeNull();
   expect(screen.queryByRole("progressbar")).toBeNull();
 });
@@ -55,14 +60,14 @@ it.each(["neutral", "success", "warning", "danger"] as const)(
       "data-tone",
       tone,
     );
-    rerender(<MeterBar value={100} max={100} tone={tone} thickness="lg" />);
+    rerender(<MeterBar value={100} max={100} tone={tone} thickness="md" />);
     expect(container.querySelector("[data-meter-bar]")).toHaveAttribute(
       "data-tone",
       tone,
     );
     expect(container.querySelector("[data-meter-bar]")).toHaveAttribute(
       "data-thickness",
-      "lg",
+      "md",
     );
   },
 );
