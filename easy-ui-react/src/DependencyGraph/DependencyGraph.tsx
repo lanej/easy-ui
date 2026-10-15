@@ -10,6 +10,7 @@ import { CollapseButton } from "../CollapseButton";
 import { DependencyGraphIdentity } from "./DependencyGraphIdentity";
 import { useDependencyGraphHeadings } from "./useDependencyGraphHeadings";
 import { useDependencyGraphFullscreen } from "./useDependencyGraphFullscreen";
+import { DependencyGraphFullscreenControl } from "./DependencyGraphFullscreenControl";
 import { dependencyGraphCategoryLabels } from "./DependencyGraphCategories";
 import { DependencyGraphConvergence } from "./DependencyGraphConvergence";
 import { Select } from "../Select";
@@ -766,18 +767,10 @@ export function DependencyGraph({
             Fit visible
           </Button>
           {fullscreen.available && (
-            <Button
-              size="sm"
-              variant="outlined"
-              data-graph-fullscreen-toggle
-              aria-label={
-                fullscreen.active ? "Exit full screen" : "Enter full screen"
-              }
-              aria-pressed={fullscreen.active}
+            <DependencyGraphFullscreenControl
+              active={fullscreen.active}
               onPress={fullscreen.toggle}
-            >
-              {fullscreen.active ? "Exit full screen" : "Full screen"}
-            </Button>
+            />
           )}
         </div>
       </div>

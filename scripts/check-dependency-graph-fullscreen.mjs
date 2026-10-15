@@ -31,6 +31,15 @@ try {
         exact: true,
       });
       await enter.waitFor();
+      assert.equal(
+        await enter.locator("svg").count(),
+        1,
+        "Fullscreen is an icon control",
+      );
+      assert.ok(
+        (await enter.boundingBox()).width <= 36,
+        "Fullscreen stays compact beside zoom and fit",
+      );
       await page.evaluate(() => document.fonts.ready);
       await page.getByRole("button", { name: /Graph scope/ }).click();
       await page.getByRole("listbox").waitFor();
