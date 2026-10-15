@@ -73,6 +73,7 @@
 }
 .cameraControls {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   margin-inline-start: auto;
@@ -631,6 +632,42 @@
 }
 .visuallyHidden {
   @include visually-hidden;
+}
+
+.root:fullscreen {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  inline-size: 100%;
+  block-size: 100%;
+  padding: 16px;
+  overflow: auto;
+  background: design-token("color.neutral.000");
+  .workspace {
+    flex: 1;
+    min-block-size: 240px;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .graphColumn {
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+  }
+  .viewport {
+    flex: 1;
+    min-block-size: 120px;
+  }
+  .details {
+    min-block-size: 0;
+    max-block-size: none;
+  }
+}
+
+@container (max-width: 959px) {
+  .root:fullscreen .workspace[data-has-details="true"] {
+    min-block-size: 400px;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 0.6fr);
+  }
 }
 
 @container (min-width: 960px) {

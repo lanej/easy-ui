@@ -155,6 +155,16 @@ Values are caller-formatted strings, so format numbers, booleans, and explicit `
 
 ### Layout, scale, and accessibility
 
+**Full screen** expands the resource graph, toolbar, and selection inspector to
+the screen. Selection, zoom, scope, and expanded cards stay in place. Use
+**Exit full screen** or the browser's Escape action to return to the embedded
+graph; focus returns to the full-screen button. Menus stay available inside the
+full-screen graph. The control appears when the browser permits the Fullscreen
+API; embedded applications must allow fullscreen on their iframe. If a request
+is rejected, an accessible message lets the user retry.
+
+<Canvas of={Stories.FullscreenInspection} />
+
 Dagre establishes the initial directed resource order from the full topology, including folded resources. Hiding/showing edges, expanding/collapsing differences, folding branches or groups, and responsive card measurements preserve each card's relative horizontal and vertical order. Expanded cards grow to show their full content; measured widths and heights adjust spacing and routing so neighbors can move without swapping order or overlapping. There is no card height cap or nested diff scroller. A different resource set or group membership starts a new layout; increment `layoutRevision` to deliberately recompute the order after relationship topology changes with the same IDs. Filtering `edges` preserves the order; `hiddenEdgeIds` hides lines while retaining complete relationship evidence for traversal and details. Zoom ranges from 40% to 200% and changes the card presentation automatically: below 70%, an overview shows icons, labels, actions, and compact disclosure controls; from 70% to below 100%, cards show summaries; at 100% and above, expanded cards show attribute diffs. Expanded-card state survives zooming out and returns when zooming in. Opening an attribute control zooms to at least 100% and keeps that resource in view. Use the toolbar +/− controls, Ctrl/⌘ plus wheel or pinch, or focus the canvas and press +/−. Press 0 or **Fit visible** to fit the current view. Ordinary wheel and trackpad movement scrolls. Initial fitting keeps expanded cards and narrow canvases at 100%; an explicit fit can use the overview.
 
 Card and group disclosure controls use the reusable `ExpandButton` (+) and `CollapseButton` (−) atoms.
