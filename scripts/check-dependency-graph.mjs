@@ -584,19 +584,22 @@ try {
     );
     assert.equal(await diff.getByRole("columnheader").count(), 0);
     assert.ok(
-      await diff.locator("[data-field-values]").evaluateAll((rows) =>
-        rows.every((row) => {
-          const [before, after] = [...row.children].map((cell) =>
-            cell.getBoundingClientRect(),
-          );
-          return (
-            after.top >= before.bottom - 1 &&
-            Math.abs(before.left - after.left) <= 1 &&
-            Math.abs(before.right - after.right) <= 1
-          );
-        }),
+      await diff.locator("[data-field-values]").evaluateAll(
+        (rows, wide) =>
+          rows.every((row) => {
+            const [before, after] = [...row.children].map((cell) =>
+              cell.getBoundingClientRect(),
+            );
+            return wide
+              ? after.left >= before.right - 1 &&
+                  Math.abs(before.top - after.top) <= 1
+              : after.top >= before.bottom - 1 &&
+                  Math.abs(before.left - after.left) <= 1 &&
+                  Math.abs(before.right - after.right) <= 1;
+          }),
+        width === 1440,
       ),
-      "Narrow graph cards stack full-width values",
+      "Wide graph cards pair values; narrow cards stack full-width values",
     );
     assert.equal(
       await page
@@ -1374,3 +1377,4 @@ try {
 
 await import("./check-dependency-graph-source.mjs");
 await import("./check-dependency-graph-heading-routing.mjs");
+await import("./check-dependency-graph-responsive.mjs");

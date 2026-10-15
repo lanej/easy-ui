@@ -15,6 +15,7 @@ import {
   buildDependencyGraph,
   createDependencyGraphOrder,
   dependencyGraphLayoutKey,
+  dependencyGraphExpandedWidth,
   dependencyChangeLabels,
   hasDependencyGraphChanges,
   foldDependencyBranches,
@@ -233,6 +234,13 @@ export function DependencyGraph({
     observer.observe(element);
     return () => observer.disconnect();
   }, [status, duplicate, projectedNodes.length]);
+  const expandedWidth = useMemo(
+    () =>
+      currentLayout.order && canvasWidth !== null
+        ? dependencyGraphExpandedWidth(currentLayout.order, nodes, canvasWidth)
+        : 352,
+    [currentLayout.order, nodes, canvasWidth],
+  );
   const model = useMemo(
     () =>
       duplicate
@@ -248,8 +256,10 @@ export function DependencyGraph({
                 node.id,
                 density === "overview"
                   ? 192
-                  : density === "detail" && expandedChanges.includes(node.id)
-                    ? Math.min(352, Math.max(240, (canvasWidth ?? 400) - 48))
+                  : density === "detail" &&
+                      hasDependencyGraphChanges(node) &&
+                      expandedChanges.includes(node.id)
+                    ? expandedWidth
                     : 256,
               ]),
             ),
@@ -265,7 +275,7 @@ export function DependencyGraph({
       duplicate,
       nodeHeights,
       expandedChanges,
-      canvasWidth,
+      expandedWidth,
       density,
       zoom,
       currentLayout.order,
@@ -514,10 +524,10 @@ export function DependencyGraph({
     setZoom(scale);
     const anchorId = selectedNode?.id ?? focusNode?.id;
     const anchor =
-      element.clientWidth < 600 && anchorId
-        ? items.find((item) =>
+      element.clientWidth < 600
+        ? (items.find((item) =>
             item.members.some((node) => node.id === anchorId),
-          )
+          ) ?? (initial ? items[0] : undefined))
         : undefined;
     requestAnimationFrame(() => {
       element.scrollLeft = Math.max(0, (anchor?.x ?? x) * unit * scale - 24);
