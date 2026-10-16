@@ -207,6 +207,33 @@ it("shows inline diffs and annotations without an inspector", () => {
   expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
 });
 
+it("keeps branch differences independently reachable through the field count", () => {
+  const { container } = render(
+    <DependencyGraph
+      nodes={nodes}
+      edges={edges}
+      defaultPresentation="tree"
+      showDetails={false}
+    />,
+  );
+  const fields = screen.getByRole("button", {
+    name: "Show attribute differences for api",
+  });
+  expect(fields).toHaveTextContent("1 field");
+  fireEvent.click(fields);
+  expect(screen.getByText("app:v2")).toBeVisible();
+  expect(container.querySelector('[data-tree-node="output"]')).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: /^Collapse api/ }));
+  expect(
+    container.querySelector('[data-tree-node="output"]'),
+  ).not.toBeInTheDocument();
+  expect(screen.getByText("app:v2")).toBeVisible();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Hide attribute differences for api" }),
+  );
+  expect(screen.queryByText("app:v2")).not.toBeInTheDocument();
+});
+
 it("uses normal tree density while retaining the graph zoom", () => {
   const { container } = render(<DependencyGraph nodes={nodes} edges={edges} />);
   fireEvent.click(screen.getByRole("button", { name: "Zoom out graph" }));
@@ -239,7 +266,7 @@ it("opens complete inspector content in a row drawer and keeps its resource icon
   );
   expect(renderDetails).not.toHaveBeenCalled();
   const row = container.querySelector('[data-tree-node="api"]')!;
-  const icon = row.querySelector("[data-tree-row-header] svg");
+  const icon = row.querySelector("[data-tree-row-header] > span > svg");
   expect(icon).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Show details for api" }));
   const drawer = screen.getByRole("region", { name: "Details for api" });

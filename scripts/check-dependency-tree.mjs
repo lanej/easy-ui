@@ -127,18 +127,54 @@ try {
     "production",
   );
   checks.push("arrow-home-end-keyboard-navigation");
+  const productionDrawer = production.getByRole("region", {
+    name: "Details for Production",
+  });
+  assert(
+    await productionDrawer.isVisible(),
+    "Moving to a row selects it and opens its drawer",
+  );
+  await page.keyboard.press("Enter");
+  assert.equal(await productionDrawer.count(), 0);
+  await page.keyboard.press("Enter");
+  assert(await productionDrawer.isVisible(), "Enter reopens the group drawer");
+  assert.equal(
+    await production
+      .locator("[data-tree-row-header]")
+      .first()
+      .getByRole("button")
+      .count(),
+    1,
+    "Branches keep one chevron while their row opens group details",
+  );
+  checks.push("group-drawer-with-one-left-chevron");
 
   await open("compact-tree");
   const apiRow = page.locator('[data-tree-node="api"]');
   const apiDrawer = apiRow.getByRole("region", { name: "Details for api" });
   assert(await apiDrawer.isVisible());
+  const apiDisclosure = apiRow.getByRole("button", {
+    name: "Hide details for api",
+    exact: true,
+  });
+  assert.equal(await apiDisclosure.getAttribute("aria-expanded"), "true");
+  assert(
+    await apiDisclosure.evaluate(
+      (el) => el.parentElement.firstElementChild === el,
+    ),
+    "The drawer chevron is the first item on the left",
+  );
+  assert.equal(
+    await apiRow.locator("[data-tree-row-header] button").count(),
+    1,
+  );
   assert.equal(await page.getByRole("complementary").count(), 0);
   const treeWidth = await page
     .locator("[data-tree-viewport]")
     .evaluate((el) => el.clientWidth);
   const drawerWidth = await apiDrawer.evaluate((el) => el.clientWidth);
   assert(drawerWidth >= treeWidth - 50, "Drawer uses full tree width");
-  const apiIcon = apiRow.locator("[data-tree-row-header] svg").first();
+  const apiIcon = apiRow.locator("[data-tree-row-header] > span > svg");
   assert(await apiIcon.isVisible());
   await apiDrawer.getByRole("button", { name: "Summary", exact: true }).focus();
   await page.keyboard.press("Enter");
@@ -161,6 +197,20 @@ try {
   );
   assert(await apiIcon.isVisible());
   assert.equal(await apiDrawer.count(), 0);
+  const closedDisclosure = apiRow.getByRole("button", {
+    name: "Show details for api",
+    exact: true,
+  });
+  assert.equal(await closedDisclosure.getAttribute("aria-expanded"), "false");
+  await closedDisclosure.focus();
+  await page.keyboard.press("Enter");
+  assert(
+    await apiDrawer.isVisible(),
+    "Enter on the left chevron opens the drawer",
+  );
+  await page.keyboard.press("Enter");
+  assert.equal(await apiDrawer.count(), 0);
+  await apiRow.focus();
   await page.keyboard.press("Enter");
   assert(await apiDrawer.isVisible(), "Enter opens row drawer");
   await page.keyboard.press("Enter");
@@ -384,7 +434,7 @@ try {
   await open("dependency-tree", "dark");
   await page
     .getByRole("button", {
-      name: "Hide details for Primary database",
+      name: "Close details for Primary database",
       exact: true,
     })
     .click();

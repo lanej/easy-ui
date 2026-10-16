@@ -7,7 +7,6 @@ import {
   TreeItemContent,
 } from "react-aria-components";
 import { Icon } from "../Icon";
-import { ExpandButton } from "../ExpandButton";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
 import { DependencyGraphDetails } from "./DependencyGraphDetails";
 import {
@@ -185,6 +184,28 @@ export function DependencyGraphTree({
     const detailId = `${instanceId}-tree-diff-${encodeURIComponent(entry.key)}`;
     const drawerId = `${instanceId}-tree-details-${encodeURIComponent(entry.key)}`;
     const annotationId = `${instanceId}-tree-annotation-${encodeURIComponent(entry.key)}`;
+    const contentShown = showDetails ? detailsShown : diffShown;
+    const contentId = showDetails ? drawerId : detailId;
+    const contentLabel = `${contentShown ? "Hide" : "Show"} ${showDetails ? "details" : "attribute differences"} for ${label}`;
+    const toggleContent = () => {
+      if (showDetails) {
+        onSelect(
+          detailsShown
+            ? null
+            : { type: node ? "node" : "group", id: node?.id ?? group!.id },
+        );
+        if (detailsShown) restoreRowFocus(entry.key);
+      } else if (node) {
+        onExpandedChangesChange(
+          diffShown
+            ? expandedChanges.filter((id) => id !== node.id)
+            : [...expandedChanges, node.id],
+        );
+      }
+    };
+    const fieldCount = node?.changes?.length
+      ? `${node.changes.length} ${node.changes.length === 1 ? "field" : "fields"}`
+      : "Changes";
     const accessibleName = [
       label,
       node?.iconLabel,
@@ -231,6 +252,17 @@ export function DependencyGraphTree({
                     className={styles.disclosure}
                     aria-label={isExpanded ? "Collapse" : "Expand"}
                     data-expanded={isExpanded || undefined}
+                  >
+                    <Icon symbol={ChevronRightIcon} size="sm" />
+                  </AriaButton>
+                ) : !reference && (showDetails || changed) ? (
+                  <AriaButton
+                    className={styles.disclosure}
+                    aria-label={contentLabel}
+                    aria-controls={contentId}
+                    aria-expanded={contentShown}
+                    data-expanded={contentShown || undefined}
+                    onPress={toggleContent}
                   >
                     <Icon symbol={ChevronRightIcon} size="sm" />
                   </AriaButton>
@@ -291,53 +323,26 @@ export function DependencyGraphTree({
                       <span aria-hidden="true">↗</span>
                     </AriaButton>
                   )}
-                  {showDetails && !reference && (
-                    <span className={styles.fields}>
-                      <ExpandButton
-                        expanded={detailsShown}
-                        accessibilityLabel={`${detailsShown ? "Hide" : "Show"} details for ${label}`}
-                        aria-controls={drawerId}
-                        onPress={() => {
-                          onSelect(
-                            detailsShown
-                              ? null
-                              : {
-                                  type: node ? "node" : "group",
-                                  id: node?.id ?? group!.id,
-                                },
-                          );
-                          if (detailsShown) restoreRowFocus(entry.key);
-                        }}
-                      />
-                      {!!node?.changes?.length && (
-                        <span>
-                          {node.changes.length}{" "}
-                          {node.changes.length === 1 ? "field" : "fields"}
-                        </span>
-                      )}
-                    </span>
+                  {showDetails && !reference && !!node?.changes?.length && (
+                    <span className={styles.fields}>{fieldCount}</span>
                   )}
-                  {!showDetails && node && changed && !reference && (
-                    <span className={styles.fields}>
-                      <ExpandButton
-                        expanded={diffShown}
-                        accessibilityLabel={`${diffShown ? "Hide" : "Show"} attribute differences for ${label}`}
-                        aria-controls={detailId}
-                        onPress={() =>
-                          onExpandedChangesChange(
-                            diffShown
-                              ? expandedChanges.filter((id) => id !== node.id)
-                              : [...expandedChanges, node.id],
-                          )
-                        }
-                      />
-                      <span>
-                        {node.changes?.length
-                          ? `${node.changes.length} ${node.changes.length === 1 ? "field" : "fields"}`
-                          : "Changes"}
-                      </span>
-                    </span>
-                  )}
+                  {!showDetails &&
+                    node &&
+                    changed &&
+                    !reference &&
+                    (hasChildItems ? (
+                      <AriaButton
+                        className={styles.reference}
+                        aria-label={contentLabel}
+                        aria-controls={contentId}
+                        aria-expanded={contentShown}
+                        onPress={toggleContent}
+                      >
+                        {fieldCount}
+                      </AriaButton>
+                    ) : (
+                      <span className={styles.fields}>{fieldCount}</span>
+                    ))}
                 </div>
               </div>
               {showDetails && !reference && (

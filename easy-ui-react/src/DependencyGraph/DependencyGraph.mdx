@@ -57,12 +57,13 @@ missing change data does not become a zero-change claim. Group folds share
 `collapsedGroupIds`; dependency folds share `collapsedNodeIds`. Child folds survive
 parent folding, and references reveal only the ancestors needed for their target.
 
-Use arrow keys to move, Right/Left to expand/collapse, Home/End to reach the first
-or last visible row, and type a resource name to jump to it. Select a row or use its
-**Show details** control to open its drawer. The selected resource or group owns
-the open drawer; selecting another row moves the details there. Close it with
-**Hide details**, **Close**, or by clearing selection. Branch chevrons only fold
-children. Resource icons and annotations remain in the row header in either state.
+Use arrow keys to move, Right/Left to expand/collapse branches, Home/End to reach
+the first or last visible row, and type a resource name to jump to it. Select a
+row to open its drawer; selecting another row moves the details there. Expandable
+rows use one chevron on the left: branch chevrons fold children, while leaf
+chevrons open or close details. Close a drawer with **Close**, the leaf chevron,
+or by clearing selection. Resource icons and annotations remain in the row header
+in either state.
 
 Drawers include the complete identity, change summary and exact differences,
 attribute annotations, `renderDetails` content, group members, and connected
@@ -70,9 +71,10 @@ relationships. Inspecting a relationship keeps its details in the originating
 drawer; its endpoint actions reveal the corresponding resource row. On wider
 rows, resource details and relationships sit side by side; narrow rows stack them.
 Drawer content mounts when opened. `showDetails={false}` disables these drawers
-and retains the separate +/− control for inline attribute differences, allowing
-an application to place its own inspector. `expandedChangeNodeIds` still controls
-these differences and graph card expansion independently of selection.
+and uses the leaf chevron for inline attribute differences, allowing an
+application to place its own inspector. On branches, the field-count control
+opens differences independently of folding children. `expandedChangeNodeIds`
+still controls these differences and graph card expansion independently of selection.
 
 <Canvas of={Stories.CompactTree} />
 <Canvas of={Stories.DependencyTree} />
