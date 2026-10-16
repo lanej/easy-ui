@@ -591,6 +591,10 @@ try {
             const [before, after] = [...row.children].map((cell) =>
               cell.getBoundingClientRect(),
             );
+            if (!after)
+              return (
+                Math.abs(before.width - row.getBoundingClientRect().width) <= 1
+              );
             return wide
               ? after.left >= before.right - 1 &&
                   Math.abs(before.top - after.top) <= 1
