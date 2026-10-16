@@ -20,8 +20,15 @@ export async function checkStorybookCoverage(indexPath) {
     .map((entry) => entry.name)
     .sort();
   const { entries } = JSON.parse(await readFile(indexPath, "utf8"));
+  const reference = await readFile(
+    resolve(root, "easy-ui-react/skills/easy-ui/references/components.md"),
+    "utf8",
+  );
   const missing = [];
   for (const name of modules) {
+    if (!reference.includes(`\`${name}\``)) {
+      missing.push(`${name}: missing skill reference entry`);
+    }
     const prefix = `easy-ui-react/src/${name}/`;
     const componentEntries = Object.values(entries).filter((entry) =>
       entry.importPath
@@ -35,13 +42,19 @@ export async function checkStorybookCoverage(indexPath) {
       }
     }
   }
+  const links = [...reference.matchAll(/\?path=\/(story|docs)\/([\w-]+)/g)];
+  for (const [, type, id] of links) {
+    if (entries[id]?.type !== type) {
+      missing.push(`${id}: missing ${type} linked from the skill reference`);
+    }
+  }
   assert.equal(
     missing.length,
     0,
     `Incomplete Storybook catalog:\n${missing.join("\n")}`,
   );
   console.log(
-    `Storybook coverage: ${modules.length}/${modules.length} component modules have stories and docs.`,
+    `Storybook coverage: ${modules.length}/${modules.length} component modules have stories, docs, and skill entries; ${links.length} skill links resolve.`,
   );
 }
 

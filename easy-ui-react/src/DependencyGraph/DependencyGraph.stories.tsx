@@ -15,6 +15,8 @@ import CodeIcon from "@easypost/easy-ui-icons/Code";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DependencyGraph } from "./DependencyGraph";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
+import { Text } from "../Text";
+import { VerticalStack } from "../VerticalStack";
 import {
   wideDependencyNodes,
   wideDependencyEdges,
@@ -181,6 +183,29 @@ export const TreeWithoutInspector: Story = {
     showDetails: false,
     defaultExpandedChangeNodeIds: ["api"],
     defaultCollapsedGroupIds: ["database"],
+  },
+};
+export const CustomTreeDetails: Story = {
+  args: {
+    ...CompactTree.args,
+    accessibilityLabel: "Resources with custom review notes",
+    renderDetailsMode: "replace",
+    renderDetails: ({ node }) => (
+      <VerticalStack gap="1">
+        <Text as="h4" variant="heading4">
+          Review notes
+        </Text>
+        <Text as="p">
+          {node?.id === "api"
+            ? "Staging verification passed for the proposed image. Production rollout is waiting for the database compatibility review."
+            : "No review notes have been supplied for this selection."}
+        </Text>
+        <Text as="p" variant="body2">
+          Illustrative application evidence, supplied independently of the
+          resource changes.
+        </Text>
+      </VerticalStack>
+    ),
   },
 };
 export const EmbeddedInspector: Story = {

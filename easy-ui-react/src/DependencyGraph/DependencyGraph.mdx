@@ -87,6 +87,16 @@ still controls these differences and graph card expansion independently of selec
 <Canvas of={Stories.TreeWithoutInspector} />
 <Canvas of={Stories.TreeWithSupportingDetails} />
 
+### Custom drawer content
+
+Set `renderDetailsMode="replace"` with `renderDetails` to own the entire selection
+body, including changes and connected relationships. The native close controls,
+inline placement, and focus handling remain. The default is `"append"`; without
+a renderer, both modes use the built-in details. Add evidence that is not already
+visible in the row instead of repeating its identity and status.
+
+<Canvas of={Stories.CustomTreeDetails} />
+
 ## Explicit subgraphs
 
 Supply `groups` and each resource's `groupId` to place related resources in a
@@ -447,5 +457,3 @@ for the head and visible shaft after the last rounded corner. Convergent arrival
 paint that common shaft once; mixed relationship states remain neutral there.
 Near-level resource headers connect horizontally without a small terminal jog.
 Visible attribute ports and parallel relationship ports remain exact.
-
-Applications can set `renderDetailsMode="replace"` with `renderDetails` to own the entire selection body, including changes and connected relationships. The native heading, close controls, inline placement and focus handling remain. The default is `"append"`; without a renderer, both modes use the built-in details.

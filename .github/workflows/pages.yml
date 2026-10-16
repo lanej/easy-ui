@@ -11,6 +11,7 @@ on:
       - ".storybook/**"
       - "docs-site/**"
       - "easy-ui-react/src/**"
+      - "easy-ui-react/skills/**"
       - "package.json"
       - "package-lock.json"
       - "scripts/build-docs.mjs"

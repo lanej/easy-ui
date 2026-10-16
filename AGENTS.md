@@ -40,6 +40,33 @@ verified package until a replacement passes verification. Changing an
 application's dependency, lockfile, installation, and receipt is coordinated
 with that application's work.
 
+## Storybook and the installable skill
+
+Keep public APIs, Storybook, and the installable skill current in the same change.
+The skill source is `easy-ui-react/skills/easy-ui/SKILL.md`; its component catalog
+is `easy-ui-react/skills/easy-ui/references/components.md`. Keep the skill's main
+instructions concise and put component selection, composition, and example links
+in the reference. Check exported types before documenting an import or prop.
+
+For added or changed public behavior, update the component's MDX and relevant
+stories under `easy-ui-react/src/<Name>/`. Include the smallest useful example
+and affected states or interactions. Preserve the standard Usage, Props, and
+Examples sections. Update removed APIs and migration guidance in the reference;
+do not leave removed components listed as available.
+
+Build Storybook and run `npm run check:storybook` (pass an alternate built
+`index.json` after `--` when needed). This checks every public component module
+for stories, docs, and a skill entry, and resolves the reference's Storybook links.
+Review behavioral coverage as well: module presence alone does not demonstrate
+a new prop or interaction. Skill-only changes must also pass this check.
+
+After changing the skill, rebuild the React package and run
+`node scripts/check-style-package.mjs`. It checks the actual packed skill and
+reference against source, package exports, and installation behavior. Edit the
+source skill rather than generated package copies or installed symlinks, and
+retain the changes in Git. When checking published examples, compare
+`https://lanej.io/easy-ui/revision.txt` with the intended source revision.
+
 ## Automatic PR writing and code review
 
 For every proposed PR creation or revision, invoke `pull-request-writer`

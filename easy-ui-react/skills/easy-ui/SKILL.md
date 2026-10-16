@@ -33,7 +33,12 @@ span, and respect explicit caller filtering.
 
 ## Change library components
 
-Keep public types and Storybook examples consistent with the implementation.
+Keep public types, Storybook examples, and the bundled component reference
+consistent with the implementation. Update the reference in the same change
+when adding, removing, or extending a public API; link its relevant Storybook
+examples. Preserve the standard Usage, Props, and Examples documentation sections.
+Run `npm run check:storybook` against the built index to verify component coverage
+and the reference's story links.
 Document the smallest valid input and relevant interaction states. Verify API
 contracts through Easy UI's existing real-engine regression tests, including
 partial configuration and overlapping zoom spans when affected. Improve the

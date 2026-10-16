@@ -5,7 +5,7 @@ the matching revision's Storybook API and examples for exact props. This index
 describes the components shipped alongside this skill; installed types are the
 authority when working with another package version.
 
-Import each named entry from `@easypost/easy-ui/<Name>`:
+Use documented public package subpaths:
 
 ```tsx
 import { Button } from "@easypost/easy-ui/Button";
@@ -18,13 +18,24 @@ In a source checkout, read `easy-ui-react/src/<Name>/index.ts` and the adjacent
 `<Name>.mdx` and stories. Read compound-component APIs before assembling children;
 do not assume every child has an independent import subpath.
 
+Browse the [published Storybook](https://lanej.io/easy-ui/storybook/). Its adjacent
+[`revision.txt`](https://lanej.io/easy-ui/revision.txt) identifies the source
+revision; use the installed declarations when the application pins another version.
+
+- [Application components](#application-components)
+- [Metrics and comparisons](#metrics-and-comparisons)
+- [Analytical charts](#analytical-charts)
+- [Compact plots and geographical views](#compact-plots-and-geographical-views)
+- [Event and path investigations](#event-and-path-investigations)
+- [Dependency investigation](#dependency-investigation)
+
 ## Application components
 
 | Responsibility                      | Public entries                                                                                                                                                                    |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Theme and design-token layout       | `Provider`, `Theme`, `Box`, `HorizontalGrid`, `HorizontalStack`, `VerticalStack`, `FormLayout`                                                                                    |
+| Theme and design-token layout       | `Provider`, `Theme`, `ThemeToggle`, `Box`, `HorizontalGrid`, `HorizontalStack`, `VerticalStack`, `FormLayout`                                                                     |
 | Text, symbols, and formatted values | `Text`, `Icon`, `SignedValue`, `DurationValue`, `CodeSnippet`, `CodeBlock`                                                                                                        |
-| Actions and action menus            | `Button`, `UnstyledButton`, `IconButton`, `DropdownButton`, `KebabButton`, `Menu`                                                                                                 |
+| Actions and action menus            | `Button`, `UnstyledButton`, `IconButton`, `DropdownButton`, `KebabButton`, `Menu`, `ExpandButton`, `CollapseButton`                                                               |
 | Text and selection inputs           | `InputField`, `TextField`, `Textarea`, `Select`, `MultiSelect`, `Checkbox`, `RadioGroup`, `RadioButtonGroup`, `Toggle`, `ColorPicker`, `PriceRangeSlider`, `SelectorErrorTooltip` |
 | Date inputs and calendars           | `DatePicker`, `DateRangePicker`, `Calendar`, `RangeCalendar`                                                                                                                      |
 | Navigation and pagination           | `Tabs`, `TabNav`, `TabPanels`, `VerticalNav`, `SearchNav`, `Stepper`, `Pagination`                                                                                                |
@@ -32,19 +43,56 @@ do not assume every child has an independent import subpath.
 | Cards and selection shells          | `Card`, `SectionCard`, `PlanCard`, `EmptyStateCard`, `CardListItem`, `CheckableCard`, `ToggleCard`, `SplitToggleCard`                                                             |
 | Disclosure and overlays             | `Disclosure`, `Drawer`, `Modal`, `Popover`, `Tooltip`                                                                                                                             |
 | Feedback and status labels          | `Banner`, `Notification`, `Spinner`, `Badge`, `AlertBadge`, `Pill`, `PillGroup`, `StatusDot`                                                                                      |
-| Exact metrics and tabular data      | `MetricCard`, `KpiTile`, `DataGrid`, `DrawerTable`                                                                                                                                |
+| Exact metrics and tabular data      | `MetricCard`, `DataGrid`, `DrawerTable`                                                                                                                                           |
 | Supplied health observations        | `HealthIndicator`, `HealthAssessment`, `ObservationFreshness`, `DurationDistribution`, `RiskScore`, `FacilitySummary`, `EventMetrics`                                             |
 | Event and path investigations       | `EventDetails`, `EventTimeline`, `InvestigationWorkspace`, `PathComparison`                                                                                                       |
+| Resource dependency investigation   | `DependencyGraph`                                                                                                                                                                 |
 | Score explanations                  | `ScoreComposition`                                                                                                                                                                |
 
 Use `DataGrid` for table semantics, columns, selection, and sorting. Use
 `DrawerTable` for a list of summary rows with independently rendered inline
 details; `DrawerRow` is exported from the same `DrawerTable` entry.
 
-Use `MetricCard` for exact values and comparisons. Compose a chart alongside it
-when a trend is needed. Applications supply health assessments, freshness,
-thresholds, units, scores, and event relationships; these components display
-those facts without deciding their meaning.
+Use `WorkspaceHeader` for a page title, caller-composed `navigation`, and actions;
+the surrounding page layout remains independent. See [page navigation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspaceheader--with-navigation).
+
+Control `ThemeToggle` with `mode` and `onModeChange`, and pass the same mode to
+`ThemeProvider`'s `colorScheme`. The application owns system-preference resolution
+and persistence. See [theme selection](https://lanej.io/easy-ui/storybook/?path=/docs/atoms-actions-themetoggle--docs)
+and the rendered [design tokens](https://lanej.io/easy-ui/storybook/?path=/docs/foundations-design-tokens--docs).
+
+Applications supply assessments, freshness, thresholds, units, and scores.
+Use `HealthAssessment` to compose a supplied observation with its assessment and
+optional `DurationDistribution` reference. Use `FacilitySummary` for facility
+identity and independent observations; freshness and health remain separate.
+See [assessment forms](https://lanej.io/easy-ui/storybook/?path=/story/organisms-feedback-healthassessment--presentation-forms)
+and [facility summaries](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-facilities-facilitysummary--docs).
+
+## Metrics and comparisons
+
+Import `MetricCard`, `MetricContent`, `MetricGroup`, and
+`MetricComparisonContent` from `@easypost/easy-ui/MetricCard`. Use `MetricCard`
+for standalone framing; use `MetricContent` inside a caller-owned section.
+`KpiTile` has been removed. Compose a chart separately when a trend is needed.
+
+Choose `layout="summary"` for a label above its reading, or `layout="row"` for
+label/value/comparison columns. Direct `MetricContent` children of
+`MetricGroup layout="row"` share aligned columns. Narrow rows give labels their
+own line, including standalone metrics and row overrides within summary groups.
+Choose `size="sm" | "md" | "lg"` independently of layout; `unit` is a secondary
+suffix and `valueSize` / `typography` override text roles.
+
+Supply comparison `label` and exactly one of `baseline` or `baselineId`.
+Use a unique `baselineId` referencing visible shared context to avoid repeating
+the period on every metric. Set `direction` independently of `sentiment`; lower
+cost can be positive. `accessibilityLabel` supplies a localized change description.
+Use `null` for missing data and `isLoading` for loading; both suppress comparisons
+and units, while the formatted string `"0"` remains an observed value.
+Passive `Pill` supports `size="xs"`; `PillButton` retains `sm` and `md`.
+
+See [shared summaries](https://lanej.io/easy-ui/storybook/?path=/story/components-metriccard--shipping-overview),
+[aligned rows](https://lanej.io/easy-ui/storybook/?path=/story/components-metriccard--shipping-rows),
+and [independent row layouts](https://lanej.io/easy-ui/storybook/?path=/story/components-metriccard--mixed-layouts).
 
 ## Analytical charts
 
@@ -87,23 +135,37 @@ independently placed elements, import `ChartSurface`, `ChartProvider`,
 
 Category/value axes are the native Cartesian defaults except scatter and bubble,
 which use two value axes. Set value/time axes explicitly when spacing carries
-numeric meaning. Consult Storybook's **Choosing a chart** page and each chart's
+numeric meaning. Consult [Choosing a chart](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-charts-choosing-a-chart--docs) and each chart's
 examples for configuration and missing-data behavior.
 
 ## Compact plots and geographical views
 
-| Public entry           | Choose it for                                                                    |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| `MeterBar`             | Visual-only bounded track/fill atom; its owner supplies labels, states, and accessible meter semantics |
+| Public entry           | Choose it for                                                                                             |
+| ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| `MeterBar`             | Visual-only single fill, or labeled measurements with accessible meters on one explicit shared scale      |
 | `ProportionBar`        | Accessible part-to-whole molecule with percentage, numerator/denominator, label, and explicit data states |
-| `BarList`              | Compact category comparisons with HTML/CSS                                       |
-| `BulletChart`          | A supplied measure and target on an explicit zero-based scale                    |
-| `CompactTimeSeries`    | A compact native SVG trend and optional reference                                |
-| `RangePlot`            | Named points and an optional interval on a shared scale                          |
-| `DurationDistribution` | Elapsed duration against supplied bins, density, cumulative points, or quantiles |
-| `NetworkMap`           | Geographical layers and inspection using MapLibre                                |
+| `BarList`              | Compact category comparisons with HTML/CSS                                                                |
+| `BulletChart`          | A supplied measure and target on an explicit zero-based scale                                             |
+| `CompactTimeSeries`    | A compact native SVG trend and optional reference                                                         |
+| `RangePlot`            | Named points and an optional interval on a shared scale                                                   |
+| `DurationDistribution` | Elapsed duration against supplied bins, density, cumulative points, or quantiles                          |
+| `NetworkMap`           | Geographical layers and inspection using MapLibre                                                         |
 
-For proportions, import from `@easypost/easy-ui/ProportionBar`; for a custom metric's visual fill, import from `@easypost/easy-ui/MeterBar`. Read the installed `ProportionBar/index.d.ts` or `MeterBar/index.d.ts` declarations. In a source checkout, their implementations, `<Name>.mdx` API documentation, and stories live in `easy-ui-react/src/<Name>/`. `RiskScore` and `ProportionBar` both compose `MeterBar`; do not nest accessible meters or turn a bounded score into a percentage.
+Use the unframed `ProportionBar` for part-to-whole meaning.
+`presentation="compact" | "expanded" | "bar"` controls layout; the application
+supplies any surrounding card. Keep zero, missing data, an empty
+population, and invalid observations distinct. See [proportion presentations](https://lanej.io/easy-ui/storybook/?path=/story/components-proportionbar--presentations).
+
+Use `MeterBar value={...} max={...}` for a visual-only fill whose owner supplies
+labels and accessible semantics. Use `data` for labeled comparison rows on the
+same explicit positive `max` and units; valid rows expose their own meters.
+`formatValue` formats text without changing geometry. `color` selects the
+primary/secondary/tertiary series palette; `tone` expresses caller-supplied meaning.
+Missing, nonfinite, negative, and out-of-range values are unavailable, not zero.
+`RiskScore` and `ProportionBar` compose the visual-only form: do not nest meters
+or turn a bounded risk score into a percentage.
+See [shared-scale comparisons](https://lanej.io/easy-ui/storybook/?path=/story/components-meterbar--comparison)
+and [zero and missing values](https://lanej.io/easy-ui/storybook/?path=/story/components-meterbar--comparison-states).
 
 For map composition, import `NetworkMapSurface`, `NetworkMapProvider`,
 `NetworkMapHeading`, `NetworkMapControlPanel`, `NetworkMapLegend`,
@@ -112,17 +174,103 @@ For map composition, import `NetworkMapSurface`, `NetworkMapProvider`,
 Follow the package README for MapLibre stylesheet and worker setup. Use
 `GraphChart` for abstract relationships without geographical coordinates.
 
+Use `zoomSections` for caller-defined journey groups with crowded stops. Selecting
+an overlapping group opens one close-up; **Zoom to area** moves the main map there.
+Insets share selection and metrics and omit inspection cards. Use
+`NetworkMapViewport` and `NetworkMapZoomSections` from the same subpath for custom
+compositions. See [journey close-ups](https://lanej.io/easy-ui/storybook/?path=/story/components-networkmap--zoomed-journey).
+
+Use `renderCellDetails` to replace cell inspection content, or children of
+`NetworkMapCellDetails` to replace its plot while retaining summary and provenance.
+The same content is available in keyboard-accessible exact-data details. Supply
+actual distributions or history; median and IQR do not define a histogram.
+See [rich cell inspection](https://lanej.io/easy-ui/storybook/?path=/story/components-networkmap--rich-cell-inspection).
+
+## Event and path investigations
+
+Use `EventTimeline` for ordered observations and `EventMetrics` for independent
+measurements. Compose `renderMetrics` with `variant="minimal" | "compact" | "expanded"`.
+Minimal metrics use `metricsPlacement="inline"` and compact event size; other
+metrics sit below identity. Metrics remain outside the event-selection button.
+Keep event selection, each metric's assessment, and receipt time distinct.
+See [timeline presentations](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--presentation-modes).
+
+Use `InvestigationWorkspace` to coordinate timeline, map, and persistent details
+through one controlled `InvestigationSelection`. Supply stable event, location,
+path, and segment IDs with explicit memberships. Scoped event stepping preserves
+the selected path/location/connection; selection does not automatically move the
+camera. Narrow layouts retain the same mounted views behind Events / Map tabs.
+Use `PathComparison` with the same selection for caller-aligned candidate rows.
+The application supplies ordering, alignment, and confidence; neither component
+chooses a true history or repairs timestamps.
+See [linked investigation](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-investigation-investigationworkspace--docs)
+and [candidate comparison](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-investigation-pathcomparison--docs).
+
 ## Dependency investigation
 
-Import `DependencyGraph` and `DependencyGraphDetails` from
+Import `DependencyGraph`, `DependencyGraphDetails`, and `DependencyGraphChanges` from
 `@easypost/easy-ui/DependencyGraph`. Supply stable node/edge IDs; arrows run
 from dependency to dependent. The organism owns directed layout, bounded
 neighborhoods, group collapse, search, and linked selection. Applications own
 relationship discovery, evidence, change kinds, and risk. Read its Storybook
 examples and types before using the independently controlled view and selection.
 
-Each DependencyGraph resource can supply `changeSummary` and typed `changes` for a summary or red/green field diff. Resource cards expand attribute differences stacked on narrow containers and side by side on wide containers, without visible column headers; use `expandedChangeNodeIds` to control expansion independently of selection. Use `DependencyGraphChanges` from the same subpath for an application-owned resource inspector. Supply explicit unknown/redacted values and compute the actual diff in the application.
+Omit `title` and `description` when embedding; use `accessibilityLabel` for its
+accessible name. Keep `label`, `typeLabel`, and complete `address` distinct.
+Supply `categories` as labeled objects with optional theme `variant`; categories
+and resource operations are independent. Omitted `change`, explicit `unknown`,
+and explicit `unchanged` have distinct meanings. Use `groups` and node `groupId`
+for explicit, optionally nested boundaries and `collapsedGroupIds` for their state.
+See [source identity and categories](https://lanej.io/easy-ui/storybook/?path=/story/components-dependencygraph--source-only-evidence)
+and [nested subgraphs](https://lanej.io/easy-ui/storybook/?path=/story/components-dependencygraph--nested-subgraphs).
 
+### Graph and tree presentations
+
+Use `presentation="tree"` / `onPresentationChange`, or
+`defaultPresentation="tree"`, for the compact foldable outline of the same graph.
+`treeHierarchy` chooses explicit group containment or dependency nesting; automatic
+selection prefers groups when supplied. Shared paths become reference rows and
+back edges become cycle references, linked to each resource's primary row.
+The tree is a navigation projection of supplied relationships.
+
+Tree drawers add details without repeating row identity and status. Use
+`showDetails={false}` for an external inspector, or `renderDetails` to append
+application evidence. Set `renderDetailsMode="replace"` to own the detail body
+while retaining native close controls. Standalone `DependencyGraphDetails`
+accepts the same renderer and mode. `detailsExpanded` controls the built-in
+inspector's expansion. See [compact tree](https://lanej.io/easy-ui/storybook/?path=/story/components-dependencygraph--compact-tree)
+and [custom drawer content](https://lanej.io/easy-ui/storybook/?path=/story/components-dependencygraph--custom-tree-details).
+
+### Resource differences and risk
+
+Supply `changeSummary` and typed `changes`; control expanded differences through
+`expandedChangeNodeIds`, independently of selection. Comparisons stack on narrow
+containers and align side by side when space allows. Added attributes and explicit
+native `null` to non-null changes show only the new value with a blue plus.
+The literal string `"null"`, empty strings, unknown values, and redacted values do
+not imply an absent prior value. The application computes diffs and formats values.
+See [newly set values](https://lanej.io/easy-ui/storybook/?path=/story/components-dependencygraph--newly-set-values)
+and [responsive comparisons](https://lanej.io/easy-ui/storybook/?path=/story/components-dependencygraph--responsive-attribute-differences).
+
+Use `renderNodeAnnotation` for resource findings and `renderAttributeAnnotation`
+for findings on a supplied `change.path`. Set `node.appearance.background` and
+`node.appearance.borderColor` with theme tokens to emphasize either a graph card
+or tree row; pair meaningful colors with text. Selection and focus retain their
+indicators. Applications own assessment, thresholds, and promotion of attribute
+findings to resources; omitted findings do not establish safety.
+See [risk annotations and resource colors](https://lanej.io/easy-ui/storybook/?path=/story/components-dependencygraph--risk-annotations).
+
+### Layout and inspection
+
+Use the built-in full-screen control to expand the whole graph and inspector;
+embedded iframes must permit the Fullscreen API. Enable **Edit layout** to move
+or resize resource cards. Persist `cardLayouts` / `onCardLayoutsChange`, keyed
+by original resource ID with optional `x`, `y`, `width`, and `height` in graph
+units. `defaultCardLayouts` provides local initial state; `allowLayoutEditing={false}`
+hides editing controls while retaining saved geometry. Automatic layouts preserve
+relative resource order as content expands; `layoutRevision` explicitly recomputes
+that order. Manual cards can overlap. See [full-screen inspection](https://lanej.io/easy-ui/storybook/?path=/story/components-dependencygraph--fullscreen-inspection)
+and [editable resource cards](https://lanej.io/easy-ui/storybook/?path=/story/components-dependencygraph--editable-resource-cards).
 
 ### Disclosure atoms and dependency density
 
