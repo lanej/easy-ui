@@ -110,16 +110,20 @@
     outline-offset: 1px;
   }
 }
-.diff {
+.diff,
+.drawer {
   padding: 8px 12px 12px;
   border-block-start: 1px solid design-token("color.neutral.200");
+}
+.drawer {
+  background: design-token("color.neutral.000");
 }
 @container (max-width: 34rem) {
   .row {
     padding-inline-start: min(calc(var(--tree-depth) * 0.75rem), 2.25rem);
   }
   .identity {
-    flex-basis: 60px;
+    flex-basis: 40px;
   }
   .type {
     display: none;

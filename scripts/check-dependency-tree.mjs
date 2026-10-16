@@ -53,7 +53,7 @@ try {
         await geometry();
         if (width === 1280 && story !== "tree-without-inspector") {
           const heights = await page
-            .locator('[role="row"]')
+            .locator("[data-tree-row-header]")
             .evaluateAll((rows) =>
               rows.map((row) => row.getBoundingClientRect().height),
             );
@@ -128,6 +128,74 @@ try {
   );
   checks.push("arrow-home-end-keyboard-navigation");
 
+  await open("compact-tree");
+  const apiRow = page.locator('[data-tree-node="api"]');
+  const apiDrawer = apiRow.getByRole("region", { name: "Details for api" });
+  assert(await apiDrawer.isVisible());
+  assert.equal(await page.getByRole("complementary").count(), 0);
+  const treeWidth = await page
+    .locator("[data-tree-viewport]")
+    .evaluate((el) => el.clientWidth);
+  const drawerWidth = await apiDrawer.evaluate((el) => el.clientWidth);
+  assert(drawerWidth >= treeWidth - 50, "Drawer uses full tree width");
+  const apiIcon = apiRow.locator("[data-tree-row-header] svg").first();
+  assert(await apiIcon.isVisible());
+  await apiDrawer.getByRole("button", { name: "Summary", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  assert(
+    await apiDrawer.isVisible(),
+    "Drawer controls must not toggle row selection",
+  );
+  await page.keyboard.press("Tab");
+  assert.equal(
+    await page.evaluate(() => document.activeElement.textContent),
+    "Specific changes",
+  );
+  await page.keyboard.press("Enter");
+  assert(await apiDrawer.getByText("app:v2", { exact: true }).isVisible());
+  await apiDrawer
+    .getByRole("button", { name: "Close details for api" })
+    .click();
+  await page.waitForFunction(
+    () => document.activeElement?.dataset.treeNode === "api",
+  );
+  assert(await apiIcon.isVisible());
+  assert.equal(await apiDrawer.count(), 0);
+  await page.keyboard.press("Enter");
+  assert(await apiDrawer.isVisible(), "Enter opens row drawer");
+  await page.keyboard.press("Enter");
+  assert.equal(
+    await apiDrawer.count(),
+    0,
+    "Enter closes the selected row drawer",
+  );
+  checks.push("drawer-width-native-controls-icons-and-keyboard");
+
+  await page
+    .getByRole("button", { name: "Show details for api", exact: true })
+    .click();
+  await page.locator('[data-tree-group="database"] [slot="chevron"]').click();
+  await apiDrawer
+    .getByRole("button", { name: /primary is a dependency of api/ })
+    .click();
+  const relationshipDrawer = apiRow.getByRole("region", {
+    name: "Details for Relationship",
+  });
+  assert(await relationshipDrawer.isVisible());
+  await relationshipDrawer
+    .getByRole("button", { name: "Inspect dependency" })
+    .click();
+  await page.waitForFunction(
+    () => document.activeElement?.dataset.treeNode === "db",
+  );
+  assert(
+    await page
+      .locator('[data-tree-node="db"]')
+      .getByRole("region", { name: "Details for primary" })
+      .isVisible(),
+  );
+  checks.push("drawer-relationship-inspection-and-folded-endpoint");
+
   await page.getByRole("button", { name: "Collapse all", exact: true }).click();
   await page.getByRole("searchbox", { name: "Find resource" }).fill("api");
   await page
@@ -147,14 +215,17 @@ try {
       .getAttribute("aria-expanded"),
     "false",
   );
+  assert(
+    await page.getByRole("region", { name: "Details for api" }).isVisible(),
+  );
+  await page.getByRole("button", { name: "Graph", exact: true }).click();
+  await page.locator('[data-graph-resource-card="api"]').waitFor();
   await page
     .getByRole("button", {
       name: "Show attribute differences for api",
       exact: true,
     })
     .click();
-  await page.getByRole("button", { name: "Graph", exact: true }).click();
-  await page.locator('[data-graph-resource-card="api"]').waitFor();
   await page.getByRole("button", { name: "Zoom in graph" }).click();
   const zoom = await page.getByLabel("Graph zoom").textContent();
   const canvas = page.locator("[data-graph-canvas]");
@@ -174,12 +245,20 @@ try {
   assert(
     await page
       .getByRole("button", {
-        name: "Hide attribute differences for api",
+        name: "Hide details for api",
         exact: true,
       })
       .isVisible(),
   );
   await page.getByRole("button", { name: "Graph", exact: true }).click();
+  assert(
+    await page
+      .getByRole("button", {
+        name: "Hide attribute differences for api",
+        exact: true,
+      })
+      .isVisible(),
+  );
   assert.equal(await page.getByLabel("Graph zoom").textContent(), zoom);
   assert.deepEqual(
     await canvas.evaluate((el) => ({ left: el.scrollLeft, top: el.scrollTop })),
@@ -221,6 +300,18 @@ try {
   );
   checks.push("shared-and-cycle-reference-navigation");
 
+  await open("dependency-tree", "dark");
+  await page
+    .getByRole("button", {
+      name: "Hide details for Primary database",
+      exact: true,
+    })
+    .click();
+  await page.getByRole("button", { name: "Tree", exact: true }).focus();
+  await page.locator("[data-dependency-graph]").screenshot({
+    path: resolve(output, "dependency-tree-references-dark-1280.png"),
+  });
+
   await page.setViewportSize({ width: 320, height: 1000 });
   await open("tree-without-inspector", "dark");
   await page.evaluate(() => {
@@ -232,6 +323,15 @@ try {
     fullPage: true,
   });
   checks.push("narrow-large-text");
+  await open("compact-tree", "dark");
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "24px";
+  });
+  await geometry();
+  assert(
+    await page.getByRole("region", { name: "Details for api" }).isVisible(),
+  );
+  checks.push("drawer-narrow-large-text");
   assert.deepEqual(errors, [], "No runtime errors");
   await writeFile(
     resolve(output, "report.json"),

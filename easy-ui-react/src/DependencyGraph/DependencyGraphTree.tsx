@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import ChevronRightIcon from "@easypost/easy-ui-icons/ChevronRight400";
 import {
   Button as AriaButton,
@@ -9,19 +9,28 @@ import {
 import { Icon } from "../Icon";
 import { ExpandButton } from "../ExpandButton";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
+import { DependencyGraphDetails } from "./DependencyGraphDetails";
 import {
   DependencyGraphCategories,
   dependencyGraphCategoryLabels,
 } from "./DependencyGraphCategories";
 import { dependencyChangeLabels, hasDependencyGraphChanges } from "./model";
 import type { DependencyGraphProps, DependencyGraphSelection } from "./types";
+import { dependencyTreeAncestors } from "./tree";
 import type { DependencyTreeEntry, DependencyTreeModel } from "./tree";
 import graphStyles from "./DependencyGraph.module.scss";
 import styles from "./DependencyGraphTree.module.scss";
 
 type Props = Pick<
   DependencyGraphProps,
-  "renderNodeAnnotation" | "renderAttributeAnnotation"
+  | "renderNodeAnnotation"
+  | "renderAttributeAnnotation"
+  | "renderDetails"
+  | "nodes"
+  | "edges"
+  | "groups"
+  | "showDetails"
+  | "defaultChangePresentation"
 > & {
   tree: DependencyTreeModel;
   selection: DependencyGraphSelection;
@@ -51,7 +60,18 @@ export function DependencyGraphTree({
   instanceId,
   renderNodeAnnotation,
   renderAttributeAnnotation,
+  renderDetails,
+  nodes,
+  edges,
+  groups,
+  showDetails,
+  defaultChangePresentation,
 }: Props) {
+  const root = useRef<HTMLDivElement>(null);
+  const [relationshipOwner, setRelationshipOwner] = useState<{
+    key: string;
+    ids: readonly string[];
+  }>();
   const branches = [...tree.entries.values()].filter(
     (entry) => entry.children.length,
   );
@@ -62,10 +82,87 @@ export function DependencyGraphTree({
         : !collapsedNodes.includes(entry.node!.id),
     )
     .map((entry) => entry.key);
-  const selectedKey =
+  const resourceKey =
     selection?.type === "node" || selection?.type === "group"
       ? `${selection.type}:${selection.id}`
       : undefined;
+  const visibleKeys = new Set<string>();
+  const expandedSet = new Set(expandedKeys);
+  const pending = [...tree.roots];
+  while (pending.length) {
+    const entry = pending.pop()!;
+    visibleKeys.add(entry.key);
+    if (expandedSet.has(entry.key)) pending.push(...entry.children);
+  }
+  const selectedEdgeIds =
+    selection?.type === "edge"
+      ? [selection.id]
+      : selection?.type === "edges"
+        ? selection.ids
+        : [];
+  const selectedEdges = edges.filter((edge) =>
+    selectedEdgeIds.includes(edge.id),
+  );
+  const endpoints = selectedEdges
+    .flatMap((edge) => [edge.source, edge.target])
+    .map((id) => `node:${id}`);
+  const currentOwner =
+    relationshipOwner &&
+    relationshipOwner.ids.length === selectedEdgeIds.length &&
+    relationshipOwner.ids.every((id) => selectedEdgeIds.includes(id)) &&
+    visibleKeys.has(relationshipOwner.key)
+      ? relationshipOwner.key
+      : undefined;
+  const selectedKey =
+    resourceKey ??
+    (selectedEdges.length
+      ? (currentOwner ??
+        endpoints.find((key) => visibleKeys.has(key)) ??
+        endpoints
+          .flatMap((key) => dependencyTreeAncestors(tree, key).reverse())
+          .find((entry) => visibleKeys.has(entry.key))?.key)
+      : undefined);
+  const restoreRowFocus = (key: string) => {
+    requestAnimationFrame(() => {
+      const row = [
+        ...(root.current?.querySelectorAll<HTMLElement>("[data-tree-key]") ??
+          []),
+      ].find((element) => element.dataset.treeKey === key);
+      row?.focus({ preventScroll: true });
+    });
+  };
+  const details = (ownerKey?: string) => (
+    <DependencyGraphDetails
+      nodes={nodes}
+      edges={edges}
+      groups={groups}
+      selection={selection}
+      onSelectionChange={(next) => {
+        if (next?.type === "node") onReveal(next.id);
+        else {
+          if (ownerKey && (next?.type === "edge" || next?.type === "edges"))
+            setRelationshipOwner({
+              key: ownerKey,
+              ids: next.type === "edges" ? next.ids : [next.id],
+            });
+          onSelect(next);
+          if (!next) restoreRowFocus(ownerKey ?? tree.roots[0]?.key);
+        }
+      }}
+      placement="inline"
+      renderDetails={renderDetails}
+      renderAttributeAnnotation={renderAttributeAnnotation}
+      defaultChangePresentation={defaultChangePresentation}
+    />
+  );
+  // The inspector contains native and caller-owned controls. Their interactions
+  // must not bubble into the treegrid's row selection or arrow-key navigation.
+  const drawerEvents = {
+    onClick: (event: React.MouseEvent) => event.stopPropagation(),
+    onPointerDown: (event: React.PointerEvent) => event.stopPropagation(),
+    onMouseDown: (event: React.MouseEvent) => event.stopPropagation(),
+    onKeyDown: (event: React.KeyboardEvent) => event.stopPropagation(),
+  };
 
   const renderEntry = (
     entry: DependencyTreeEntry,
@@ -75,6 +172,8 @@ export function DependencyGraphTree({
     const label = node?.label ?? group!.label;
     const changed = node && hasDependencyGraphChanges(node);
     const diffShown = !!node && expandedChanges.includes(node.id);
+    const detailsShown =
+      !!showDetails && !reference && selectedKey === entry.key;
     const descendants = entry.resourceCount - (node && !reference ? 1 : 0);
     const descendantChanges =
       entry.changedCount - (changed && !reference ? 1 : 0);
@@ -84,6 +183,7 @@ export function DependencyGraphTree({
       typeof annotation !== "boolean" &&
       annotation !== "";
     const detailId = `${instanceId}-tree-diff-${encodeURIComponent(entry.key)}`;
+    const drawerId = `${instanceId}-tree-details-${encodeURIComponent(entry.key)}`;
     const annotationId = `${instanceId}-tree-annotation-${encodeURIComponent(entry.key)}`;
     const accessibleName = [
       label,
@@ -117,12 +217,14 @@ export function DependencyGraphTree({
         data-tree-node={reference ? undefined : node?.id}
         data-tree-group={group?.id}
         data-tree-reference={reference ? node?.id : undefined}
+        data-tree-key={entry.key}
+        data-details-open={detailsShown || undefined}
         onAction={reference ? () => onReveal(node!.id) : undefined}
       >
         <TreeItemContent>
           {({ isExpanded, hasChildItems }) => (
             <>
-              <div className={styles.row}>
+              <div className={styles.row} data-tree-row-header>
                 {hasChildItems ? (
                   <AriaButton
                     slot="chevron"
@@ -189,7 +291,33 @@ export function DependencyGraphTree({
                       <span aria-hidden="true">↗</span>
                     </AriaButton>
                   )}
-                  {node && changed && !reference && (
+                  {showDetails && !reference && (
+                    <span className={styles.fields}>
+                      <ExpandButton
+                        expanded={detailsShown}
+                        accessibilityLabel={`${detailsShown ? "Hide" : "Show"} details for ${label}`}
+                        aria-controls={drawerId}
+                        onPress={() => {
+                          onSelect(
+                            detailsShown
+                              ? null
+                              : {
+                                  type: node ? "node" : "group",
+                                  id: node?.id ?? group!.id,
+                                },
+                          );
+                          if (detailsShown) restoreRowFocus(entry.key);
+                        }}
+                      />
+                      {!!node?.changes?.length && (
+                        <span>
+                          {node.changes.length}{" "}
+                          {node.changes.length === 1 ? "field" : "fields"}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  {!showDetails && node && changed && !reference && (
                     <span className={styles.fields}>
                       <ExpandButton
                         expanded={diffShown}
@@ -212,7 +340,18 @@ export function DependencyGraphTree({
                   )}
                 </div>
               </div>
-              {node && changed && !reference && (
+              {showDetails && !reference && (
+                <div
+                  id={drawerId}
+                  hidden={!detailsShown}
+                  className={styles.drawer}
+                  data-tree-drawer={entry.key}
+                  {...drawerEvents}
+                >
+                  {detailsShown && details(entry.key)}
+                </div>
+              )}
+              {!showDetails && node && changed && !reference && (
                 <div id={detailId} hidden={!diffShown} className={styles.diff}>
                   {diffShown && (
                     <DependencyGraphChanges
@@ -245,45 +384,55 @@ export function DependencyGraphTree({
     );
 
   return (
-    <Tree
-      aria-label="Resource tree"
-      className={styles.tree}
-      selectionMode="single"
-      selectionBehavior="replace"
-      selectedKeys={
-        selectedKey && tree.entries.has(selectedKey) ? [selectedKey] : []
-      }
-      onSelectionChange={(keys) => {
-        if (keys === "all") return;
-        const key = [...keys][0];
-        const entry = tree.entries.get(String(key));
-        onSelect(
-          entry
-            ? {
-                type: entry.node ? "node" : "group",
-                id: entry.node?.id ?? entry.group!.id,
-              }
-            : null,
-        );
-      }}
-      expandedKeys={expandedKeys}
-      onExpandedChange={(keys) => {
-        // Update only branches represented in this scope. Hidden child folds survive.
-        const nextGroups = new Set(collapsedGroups);
-        const nextNodes = new Set(collapsedNodes);
-        for (const entry of branches) {
-          const ids = entry.group ? nextGroups : nextNodes;
-          const id = entry.group?.id ?? entry.node!.id;
-          if (keys.has(entry.key)) ids.delete(id);
-          else ids.add(id);
+    <>
+      <Tree
+        ref={root}
+        aria-label="Resource tree"
+        className={styles.tree}
+        selectionMode="single"
+        selectionBehavior="replace"
+        selectedKeys={
+          selectedKey && tree.entries.has(selectedKey) ? [selectedKey] : []
         }
-        if ([...nextGroups].join("\0") !== collapsedGroups.join("\0"))
-          onCollapsedGroupsChange([...nextGroups]);
-        if ([...nextNodes].join("\0") !== collapsedNodes.join("\0"))
-          onCollapsedNodesChange([...nextNodes]);
-      }}
-    >
-      {tree.roots.map((entry) => rendered.get(entry.key))}
-    </Tree>
+        onSelectionChange={(keys) => {
+          if (keys === "all") return;
+          const key = [...keys][0];
+          const entry = tree.entries.get(String(key));
+          onSelect(
+            entry
+              ? {
+                  type: entry.node ? "node" : "group",
+                  id: entry.node?.id ?? entry.group!.id,
+                }
+              : null,
+          );
+        }}
+        expandedKeys={expandedKeys}
+        onExpandedChange={(keys) => {
+          // Update only branches represented in this scope. Hidden child folds survive.
+          const nextGroups = new Set(collapsedGroups);
+          const nextNodes = new Set(collapsedNodes);
+          for (const entry of branches) {
+            const ids = entry.group ? nextGroups : nextNodes;
+            const id = entry.group?.id ?? entry.node!.id;
+            if (keys.has(entry.key)) ids.delete(id);
+            else ids.add(id);
+          }
+          if ([...nextGroups].join("\0") !== collapsedGroups.join("\0"))
+            onCollapsedGroupsChange([...nextGroups]);
+          if ([...nextNodes].join("\0") !== collapsedNodes.join("\0"))
+            onCollapsedNodesChange([...nextNodes]);
+        }}
+      >
+        {tree.roots.map((entry) => rendered.get(entry.key))}
+      </Tree>
+      {showDetails &&
+        selection &&
+        (!selectedKey || !visibleKeys.has(selectedKey)) && (
+          <div className={styles.drawer} {...drawerEvents}>
+            {details()}
+          </div>
+        )}
+    </>
   );
 }

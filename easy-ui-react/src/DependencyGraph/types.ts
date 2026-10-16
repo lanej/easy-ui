@@ -161,6 +161,7 @@ export type DependencyGraphProps = {
   onRetry?: () => void;
   /** Viewport height in CSS pixels. The graph scrolls within this viewport. */
   height?: number;
+  /** Show selection details in a graph sidebar or the selected tree row's drawer. */
   showDetails?: boolean;
   /** Widen the built-in inspector and show its full height. */
   detailsExpanded?: boolean;

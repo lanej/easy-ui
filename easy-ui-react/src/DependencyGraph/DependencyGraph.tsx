@@ -934,7 +934,9 @@ export function DependencyGraph({
       )}
       <div
         className={styles.workspace}
-        data-has-details={showDetails || undefined}
+        data-has-details={
+          (showDetails && presentation === "graph") || undefined
+        }
         data-details-expanded={detailsExpanded || undefined}
       >
         <div className={styles.graphColumn}>
@@ -999,6 +1001,12 @@ export function DependencyGraph({
                   instanceId={instanceId}
                   renderNodeAnnotation={renderNodeAnnotation}
                   renderAttributeAnnotation={renderAttributeAnnotation}
+                  nodes={nodes}
+                  edges={edges}
+                  groups={groups}
+                  showDetails={showDetails}
+                  renderDetails={renderDetails}
+                  defaultChangePresentation={defaultChangePresentation}
                 />
               </div>
               <div className={styles.canvasFooter}>
@@ -1450,6 +1458,25 @@ export function DependencyGraph({
               </div>
             </>
           )}
+          {showDetails &&
+            presentation === "tree" &&
+            !duplicate &&
+            selection &&
+            (status !== "ready" || !nodes.length || !hasVisibleItems) && (
+              <DependencyGraphDetails
+                nodes={nodes}
+                edges={edges}
+                groups={groups}
+                selection={selection}
+                onSelectionChange={(next) =>
+                  next?.type === "node" ? showNode(next.id) : select(next)
+                }
+                renderDetails={renderDetails}
+                renderAttributeAnnotation={renderAttributeAnnotation}
+                defaultChangePresentation={defaultChangePresentation}
+                placement="inline"
+              />
+            )}
           {selectedNode &&
             (presentation === "tree"
               ? !treeVisible.has(selectedNode.id)
@@ -1468,7 +1495,7 @@ export function DependencyGraph({
               </button>
             )}
         </div>
-        {showDetails && !duplicate && (
+        {showDetails && presentation === "graph" && !duplicate && (
           <DependencyGraphDetails
             nodes={nodes}
             edges={edges}

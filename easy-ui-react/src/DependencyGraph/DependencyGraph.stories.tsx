@@ -10,6 +10,7 @@ import StorageIcon from "@easypost/easy-ui-icons/Storage";
 import HubIcon from "@easypost/easy-ui-icons/Hub";
 import KeyIcon from "@easypost/easy-ui-icons/Key";
 import ShieldIcon from "@easypost/easy-ui-icons/Shield";
+import CodeIcon from "@easypost/easy-ui-icons/Code";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DependencyGraph } from "./DependencyGraph";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
@@ -78,13 +79,22 @@ export const CompactTree: Story = {
   args: {
     title: undefined,
     accessibilityLabel: "Resource change review",
-    nodes: subgraphNodes,
+    nodes: subgraphNodes.map((node) => ({
+      ...node,
+      ...{
+        api: { icon: CodeIcon, iconLabel: "Application" },
+        db: { icon: DatabaseIcon, iconLabel: "Database" },
+        user: { icon: KeyIcon, iconLabel: "Database user" },
+        audit: { icon: StorageIcon, iconLabel: "Storage" },
+        module: { icon: HubIcon, iconLabel: "Module" },
+      }[node.id],
+    })),
     edges: subgraphEdges,
     groups: subgraphGroups,
     defaultPresentation: "tree",
     defaultSelection: { type: "node", id: "api" },
     defaultChangePresentation: "diff",
-    height: 560,
+    height: 760,
   },
 };
 export const TreeWithoutInspector: Story = {

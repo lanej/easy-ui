@@ -32,7 +32,8 @@ An arrow runs **from a dependency to its dependent**: `subnet → api` means the
 
 Use **Graph / Tree** to switch between the spatial canvas and a compact foldable
 outline. Selection, scope, search, group folds, and expanded attribute differences
-stay in the same component state. The inspector remains available in either view.
+stay in the same component state. Tree rows open full-width drawers containing
+the same details as the graph's sidebar; tree mode uses the full available width.
 Set `defaultPresentation="tree"` to start with the outline, or control
 `presentation` with `onPresentationChange`.
 
@@ -57,10 +58,21 @@ missing change data does not become a zero-change claim. Group folds share
 parent folding, and references reveal only the ancestors needed for their target.
 
 Use arrow keys to move, Right/Left to expand/collapse, Home/End to reach the first
-or last visible row, and type a resource name to jump to it. Row selection opens
-the inspector; the separate +/− control shows exact attribute differences inline,
-including when `showDetails={false}`. Resource and attribute annotation renderers
-work in the tree as well.
+or last visible row, and type a resource name to jump to it. Select a row or use its
+**Show details** control to open its drawer. The selected resource or group owns
+the open drawer; selecting another row moves the details there. Close it with
+**Hide details**, **Close**, or by clearing selection. Branch chevrons only fold
+children. Resource icons and annotations remain in the row header in either state.
+
+Drawers include the complete identity, change summary and exact differences,
+attribute annotations, `renderDetails` content, group members, and connected
+relationships. Inspecting a relationship keeps its details in the originating
+drawer; its endpoint actions reveal the corresponding resource row. On wider
+rows, resource details and relationships sit side by side; narrow rows stack them.
+Drawer content mounts when opened. `showDetails={false}` disables these drawers
+and retains the separate +/− control for inline attribute differences, allowing
+an application to place its own inspector. `expandedChangeNodeIds` still controls
+these differences and graph card expansion independently of selection.
 
 <Canvas of={Stories.CompactTree} />
 <Canvas of={Stories.DependencyTree} />

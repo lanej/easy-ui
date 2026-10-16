@@ -464,6 +464,12 @@
   &[data-expanded="true"] {
     max-block-size: none;
   }
+  &[data-placement="inline"] {
+    max-block-size: none;
+    overflow: visible;
+    container-type: inline-size;
+    container-name: inline-inspector;
+  }
   h3 {
     margin: 0;
     font-size: 1rem;
@@ -476,6 +482,20 @@
   }
   p {
     margin-block-start: 6px;
+  }
+}
+.detailPrimary,
+.detailRelationships {
+  min-inline-size: 0;
+}
+@container inline-inspector (min-width: 48rem) {
+  .detailContent {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+    gap: 24px;
+  }
+  .detailRelationships > h4:first-child {
+    margin-block-start: 0;
   }
 }
 .detailHeading {
