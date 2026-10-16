@@ -32,19 +32,21 @@ const summaries = {
 } as const;
 
 const formatValue = (value: DependencyGraphChangeValue) =>
-  typeof value === "string"
-    ? value === ""
-      ? '""'
-      : value
-    : value.status === "redacted"
-      ? "Redacted value"
-      : "Unknown value";
+  value === null
+    ? "null"
+    : typeof value === "string"
+      ? value === ""
+        ? '""'
+        : value
+      : value.status === "redacted"
+        ? "Redacted value"
+        : "Unknown value";
 
 function DiffValue({
   kind,
   value,
 }: {
-  kind: "addition" | "removal";
+  kind: "addition" | "removal" | "set";
   value?: DependencyGraphChangeValue;
 }) {
   return (
@@ -53,13 +55,17 @@ function DiffValue({
       data-diff={value === undefined ? "absent" : kind}
     >
       <span className={styles.visuallyHidden}>
-        {kind === "addition" ? "After: " : "Before: "}
+        {kind === "set"
+          ? "New value: "
+          : kind === "addition"
+            ? "After: "
+            : "Before: "}
       </span>
       {value === undefined ? (
         <span className={styles.muted}>Not present</span>
       ) : (
         <>
-          <span aria-hidden="true">{kind === "addition" ? "+" : "−"}</span>
+          <span aria-hidden="true">{kind === "removal" ? "−" : "+"}</span>
           <code>{formatValue(value)}</code>
         </>
       )}
@@ -145,6 +151,11 @@ export function DependencyGraphChanges({
           aria-label={`${node.label} attribute differences`}
         >
           {changes.map((change, index) => {
+            const newlySet =
+              change.type === "add" ||
+              (change.type === "change" &&
+                change.before === null &&
+                change.after !== null);
             const annotation = renderAttributeAnnotation?.(node, change);
             const hasAnnotation =
               annotation != null &&
@@ -159,13 +170,16 @@ export function DependencyGraphChanges({
                 <dt aria-describedby={hasAnnotation ? annotationId : undefined}>
                   <code>{change.path}</code>
                 </dt>
-                <dd className={styles.fieldValues} data-field-values>
+                <dd
+                  className={styles.fieldValues}
+                  data-field-values
+                  data-single-value={newlySet || undefined}
+                >
+                  {!newlySet && (
+                    <DiffValue kind="removal" value={change.before} />
+                  )}
                   <DiffValue
-                    kind="removal"
-                    value={change.type === "add" ? undefined : change.before}
-                  />
-                  <DiffValue
-                    kind="addition"
+                    kind={newlySet ? "set" : "addition"}
                     value={change.type === "remove" ? undefined : change.after}
                   />
                 </dd>
