@@ -96,9 +96,13 @@ When a comparison describes a value, supply `comparison` to keep them grouped. U
 
 ## Narrow and large-text layouts
 
+Rows place the label above the reading when their available width is narrow. This also works for standalone `MetricContent` inside a caller-owned frame and for individual row overrides in a summary group.
+
 <Canvas of={MetricCardStories.Narrow} />
 <Canvas of={MetricCardStories.LargeText} />
 <Canvas of={MetricCardStories.RowLongContent} />
+<Canvas of={MetricCardStories.CallerOwnedRow} />
+<Canvas of={MetricCardStories.MixedLayouts} />
 
 ## Loading, unavailable, and composed values
 

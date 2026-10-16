@@ -191,7 +191,8 @@ try {
   const expandedHeight = await card.evaluate(
     (el) => el.getBoundingClientRect().height,
   );
-  assert.equal(await card.locator('[data-diff="addition"]').count(), 4);
+  assert.equal(await card.locator('[data-diff="addition"]').count(), 3);
+  assert.equal(await card.locator('[data-diff="set"]').count(), 1);
   assert.equal(await card.locator('[data-diff="removal"]').count(), 4);
   await card
     .getByRole("button", {
@@ -245,7 +246,8 @@ try {
     .press("Enter");
   await settledCards();
   assert.equal(await graph.getAttribute("data-graph-density"), "detail");
-  assert.equal(await card.locator('[data-diff="addition"]').count(), 4);
+  assert.equal(await card.locator('[data-diff="addition"]').count(), 3);
+  assert.equal(await card.locator('[data-diff="set"]').count(), 1);
   const inlineValues = await card
     .locator("[data-diff] code")
     .evaluateAll((values) => values.map((value) => value.textContent));
@@ -379,7 +381,8 @@ try {
     );
   });
   assert.equal(await graph.getAttribute("data-graph-density"), "detail");
-  assert.equal(await card.locator('[data-diff="addition"]').count(), 4);
+  assert.equal(await card.locator('[data-diff="addition"]').count(), 3);
+  assert.equal(await card.locator('[data-diff="set"]').count(), 1);
   await graph.screenshot({
     path: resolve(output, "mobile-overview-expansion.png"),
   });
@@ -443,10 +446,8 @@ try {
   await page
     .getByRole("button", { name: /^API availability alert, Create/ })
     .press("Enter");
-  assert.equal(
-    await resourceChanges.locator('[data-diff="addition"]').count(),
-    2,
-  );
+  assert.equal(await resourceChanges.locator('[data-diff="set"]').count(), 2);
+  assert.equal(await resourceChanges.locator("[data-diff]").count(), 2);
   assert.equal(
     await resourceChanges.locator('[data-diff="removal"]').count(),
     0,
@@ -584,19 +585,26 @@ try {
     );
     assert.equal(await diff.getByRole("columnheader").count(), 0);
     assert.ok(
-      await diff.locator("[data-field-values]").evaluateAll((rows) =>
-        rows.every((row) => {
-          const [before, after] = [...row.children].map((cell) =>
-            cell.getBoundingClientRect(),
-          );
-          return (
-            after.top >= before.bottom - 1 &&
-            Math.abs(before.left - after.left) <= 1 &&
-            Math.abs(before.right - after.right) <= 1
-          );
-        }),
+      await diff.locator("[data-field-values]").evaluateAll(
+        (rows, wide) =>
+          rows.every((row) => {
+            const [before, after] = [...row.children].map((cell) =>
+              cell.getBoundingClientRect(),
+            );
+            if (!after)
+              return (
+                Math.abs(before.width - row.getBoundingClientRect().width) <= 1
+              );
+            return wide
+              ? after.left >= before.right - 1 &&
+                  Math.abs(before.top - after.top) <= 1
+              : after.top >= before.bottom - 1 &&
+                  Math.abs(before.left - after.left) <= 1 &&
+                  Math.abs(before.right - after.right) <= 1;
+          }),
+        width === 1440,
       ),
-      "Narrow graph cards stack full-width values",
+      "Wide graph cards pair values; narrow cards stack full-width values",
     );
     assert.equal(
       await page
@@ -681,11 +689,16 @@ try {
             cell.getBoundingClientRect(),
           );
           return {
+            single:
+              !after &&
+              Math.abs(before.width - row.getBoundingClientRect().width) <= 1,
             stacked:
+              after &&
               after.top >= before.bottom - 1 &&
               Math.abs(before.left - after.left) <= 1 &&
               Math.abs(before.right - after.right) <= 1,
             paired:
+              after &&
               Math.abs(before.top - after.top) <= 1 &&
               Math.abs(before.bottom - after.bottom) <= 1 &&
               before.right <= after.left + 1,
@@ -693,7 +706,9 @@ try {
         }),
       );
     assert.ok(
-      geometry.every((row) => (columns === 1 ? row.stacked : row.paired)),
+      geometry.every(
+        (row) => row.single || (columns === 1 ? row.stacked : row.paired),
+      ),
       `Responsive diff uses ${columns} column(s) at ${width}px`,
     );
     assert.ok(
@@ -737,7 +752,9 @@ try {
             const [a, b] = [...row.children].map((c) =>
               c.getBoundingClientRect(),
             );
-            return b.top >= a.bottom - 1 && Math.abs(a.left - b.left) <= 1;
+            return b
+              ? b.top >= a.bottom - 1 && Math.abs(a.left - b.left) <= 1
+              : Math.abs(a.width - row.getBoundingClientRect().width) <= 1;
           }),
         ),
         "Diff responds to its narrow container on a wide page",
@@ -770,7 +787,15 @@ try {
           return {
             id: card.dataset.graphResourceCard,
             height: card.getBoundingClientRect().height,
-            identityFirst: s.top >= l.bottom - 1,
+            identityFirst:
+              s.top >= l.bottom - 1 ||
+              (s.left >= l.right &&
+                Math.abs(s.top + s.height / 2 - l.top - l.height / 2) < 2),
+            differencesFit: [...card.querySelectorAll("[data-diff]")].every(
+              (value) =>
+                value.getBoundingClientRect().bottom <=
+                card.getBoundingClientRect().bottom,
+            ),
             controls: [...card.querySelectorAll("button")].every((button) => {
               const r = button.getBoundingClientRect();
               return r.width >= 24 && r.height >= 24;
@@ -797,10 +822,12 @@ try {
           card.compactControls &&
           card.readableValues,
       ),
-      "Dense cards prioritize identity above status while preserving readable values and usable targets",
+      "Dense cards place status beside or below identity while preserving readable values and usable targets",
     );
     assert.ok(
-      compactCards.find((card) => card.id === "api").height > 224,
+      compactCards.find((card) => card.id === "api").height >
+        compactCards.find((card) => card.id === "network").height &&
+        compactCards.find((card) => card.id === "api").differencesFit,
       "Expanded cards grow to fit full differences",
     );
     assert.ok(
@@ -1359,6 +1386,95 @@ try {
     await accessibility(`risk-annotations-${width}`);
     checks.push({ name: `inline-resource-and-attribute-risk-${width}` });
   }
+  for (const theme of ["light", "dark"]) {
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await open("newly-set-values", theme);
+      const headers = await page
+        .locator("[data-graph-resource-card]")
+        .evaluateAll((cards) =>
+          cards.map((card) => {
+            const label = card
+              .querySelector("[data-graph-resource-label]")
+              .getBoundingClientRect();
+            const status = card
+              .querySelector("[data-change]")
+              .getBoundingClientRect();
+            const controls = card.querySelector(
+              "[data-graph-attribute-controls]",
+            );
+            const type = controls
+              .querySelector("span[title]")
+              .getBoundingClientRect();
+            const toggle = controls
+              .querySelector("button")
+              .getBoundingClientRect();
+            const top = card.getBoundingClientRect().top;
+            return {
+              sameNameRow:
+                Math.abs(
+                  label.top + label.height / 2 - status.top - status.height / 2,
+                ) < 2,
+              sameTypeRow:
+                Math.abs(
+                  type.top + type.height / 2 - toggle.top - toggle.height / 2,
+                ) < 2,
+              nearbyStatus: status.left - label.right <= 8,
+              height: controls.getBoundingClientRect().bottom - top,
+            };
+          }),
+        );
+      assert.ok(
+        headers.every(
+          (header) =>
+            header.sameNameRow &&
+            header.sameTypeRow &&
+            header.nearbyStatus &&
+            header.height < 70,
+        ),
+        "Resource headers use two compact rows with controls near their labels",
+      );
+      for (const presentation of ["graph", "tree"]) {
+        if (presentation === "tree") {
+          await page
+            .getByRole("button", { name: "Tree", exact: true })
+            .press("Enter");
+          await page.getByRole("treegrid", { name: "Resource tree" }).waitFor();
+        }
+        const values = page.locator("[data-field-values]");
+        assert.equal(await values.count(), 7);
+        assert.equal(await values.locator('[data-diff="set"]').count(), 6);
+        assert.equal(await values.locator('[data-diff="removal"]').count(), 1);
+        assert.equal(await values.locator('[data-diff="addition"]').count(), 1);
+        assert.ok(
+          await values.evaluateAll((rows) =>
+            rows.every((row) => {
+              const cells = [...row.children];
+              if (cells.length === 2) return true;
+              return (
+                cells.length === 1 &&
+                Math.abs(
+                  cells[0].getBoundingClientRect().width -
+                    row.getBoundingClientRect().width,
+                ) <= 1 &&
+                !row.textContent.includes("Not present") &&
+                row.textContent.includes("New value:")
+              );
+            }),
+          ),
+          "New values fill the available width without an absent side",
+        );
+        await accessibility(`new-values-${presentation}-${theme}-${width}`);
+        await page.locator("[data-dependency-graph]").screenshot({
+          path: resolve(
+            output,
+            `new-values-${presentation}-${theme}-${width}.png`,
+          ),
+        });
+        checks.push({ name: `new-values-${presentation}-${theme}-${width}` });
+      }
+    }
+  }
   assert.deepEqual(errors, [], "Runtime diagnostics");
   console.log(`DependencyGraph: ${checks.length} browser cases passed.`);
 } catch (error) {
@@ -1373,4 +1489,8 @@ try {
 }
 
 await import("./check-dependency-graph-source.mjs");
+await import("./check-dependency-graph-appearance.mjs");
 await import("./check-dependency-graph-heading-routing.mjs");
+await import("./check-dependency-graph-responsive.mjs");
+await import("./check-dependency-graph-fullscreen.mjs");
+await import("./check-dependency-graph-card-layout.mjs");

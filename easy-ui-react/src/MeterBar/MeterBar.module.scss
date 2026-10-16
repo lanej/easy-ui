@@ -32,7 +32,7 @@
     @include component-token(
       "meter-bar",
       "color.fill",
-      design-token("color.tertiary.500")
+      design-token("color.positive.700")
     );
   }
   &[data-tone="success"] {

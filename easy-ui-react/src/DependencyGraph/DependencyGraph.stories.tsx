@@ -1,5 +1,6 @@
 import { realWorldNodes, realWorldEdges } from "./DependencyGraph.realWorld";
-import React from "react";
+import React, { useState } from "react";
+import type { DependencyGraphCardLayouts, DependencyGraphProps } from "./types";
 import {
   subgraphGroups,
   subgraphNodes,
@@ -10,9 +11,15 @@ import StorageIcon from "@easypost/easy-ui-icons/Storage";
 import HubIcon from "@easypost/easy-ui-icons/Hub";
 import KeyIcon from "@easypost/easy-ui-icons/Key";
 import ShieldIcon from "@easypost/easy-ui-icons/Shield";
+import CodeIcon from "@easypost/easy-ui-icons/Code";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DependencyGraph } from "./DependencyGraph";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
+import {
+  wideDependencyNodes,
+  wideDependencyEdges,
+  deepDependencyEdges,
+} from "./DependencyGraph.responsive.fixtures";
 import {
   DependencyGraphReviewExample,
   DependencyGraphLinkedInspectorExample,
@@ -69,6 +76,113 @@ export const SpecificChanges: Story = {
   },
 };
 export const AllResources: Story = {};
+export const NewlySetValues: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "New resource attributes",
+    nodes: [
+      {
+        id: "archive",
+        label: "Audit archive",
+        typeLabel: "Storage bucket",
+        icon: StorageIcon,
+        iconLabel: "Storage",
+        change: "create",
+        changes: [
+          { path: "name", type: "add", after: "production-audit-archive" },
+          { path: "region", type: "change", before: null, after: "us-west-2" },
+          { path: "versioning.enabled", type: "add", after: "false" },
+          { path: "retention_days", type: "add", after: "0" },
+          {
+            path: "encryption.key_id",
+            type: "add",
+            after: { status: "unknown" },
+          },
+        ],
+      },
+      {
+        id: "worker",
+        label: "Audit worker",
+        typeLabel: "Container application",
+        icon: CodeIcon,
+        iconLabel: "Application",
+        change: "update",
+        changes: [
+          {
+            path: "archive_bucket",
+            type: "change",
+            before: null,
+            after: "production-audit-archive",
+          },
+          { path: "replicas", type: "change", before: "1", after: "2" },
+        ],
+      },
+    ],
+    edges: [{ id: "archive-worker", source: "archive", target: "worker" }],
+    groups: [],
+    showDetails: false,
+    defaultExpandedChangeNodeIds: ["archive", "worker"],
+    height: 480,
+  },
+};
+export const CompactTree: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Resource change review",
+    nodes: subgraphNodes.map((node) => ({
+      ...node,
+      ...{
+        api: { icon: CodeIcon, iconLabel: "Application" },
+        db: { icon: DatabaseIcon, iconLabel: "Database" },
+        user: { icon: KeyIcon, iconLabel: "Database user" },
+        audit: { icon: StorageIcon, iconLabel: "Storage" },
+        module: { icon: HubIcon, iconLabel: "Module" },
+      }[node.id],
+    })),
+    edges: subgraphEdges,
+    groups: subgraphGroups,
+    defaultPresentation: "tree",
+    defaultSelection: { type: "node", id: "api" },
+    defaultChangePresentation: "diff",
+    height: 760,
+  },
+};
+export const TreeWithSupportingDetails: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Resources with supporting evidence",
+    nodes: Array.from({ length: 40 }, (_, index) => ({
+      id: `resource-${index}`,
+      label: `Resource ${index + 1}`,
+    })),
+    edges: [],
+    groups: [],
+    defaultPresentation: "tree",
+    defaultSelection: { type: "node", id: "resource-10" },
+    renderDetails: () => (
+      <div>
+        <h4>Supporting evidence</h4>
+        {Array.from({ length: 12 }, (_, index) => (
+          <p key={index}>
+            Verification step {index + 1}: compare the supplied runtime
+            configuration with the planned resource changes before approving
+            this dependency.
+          </p>
+        ))}
+      </div>
+    ),
+    height: 360,
+  },
+};
+export const TreeWithoutInspector: Story = {
+  ...CompactTree,
+  args: {
+    ...CompactTree.args,
+    showDetails: false,
+    defaultExpandedChangeNodeIds: ["api"],
+    defaultCollapsedGroupIds: ["database"],
+  },
+};
 export const EmbeddedInspector: Story = {
   args: {
     title: undefined,
@@ -93,6 +207,170 @@ export const RiskAnnotations: Story = {
 };
 export const StableResourceOrder: Story = {
   render: () => <DependencyGraphStableLayoutExample />,
+};
+export const ResponsiveResourceCard: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Application user changes",
+    nodes: [
+      {
+        id: "application-user",
+        label: "application_user",
+        typeLabel: "SQL user",
+        categories: [{ label: "Source modified", variant: "primary" }],
+        changeSummary: "Captured attributes",
+        changes: [
+          {
+            path: "configuration.name",
+            type: "change",
+            before: '"application-old"',
+            after: "service_account.application.email",
+          },
+        ],
+      },
+    ],
+    edges: [],
+    groups: [],
+    showDetails: false,
+    defaultExpandedChangeNodeIds: ["application-user"],
+    height: 320,
+  },
+};
+export const FullscreenInspection: Story = {
+  args: {
+    ...ResponsiveResourceCard.args,
+    title: "Resource dependencies",
+    showDetails: true,
+    defaultSelection: { type: "node", id: "application-user" },
+  },
+  render: (args) => (
+    <div style={{ maxWidth: 900, margin: "auto" }}>
+      <p>Inspect resources here or open the graph in full screen.</p>
+      <DependencyGraph {...args} />
+    </div>
+  ),
+};
+
+function EditableCardsExample(args: DependencyGraphProps) {
+  const [layouts, setLayouts] = useState<DependencyGraphCardLayouts>(
+    args.defaultCardLayouts ?? {},
+  );
+  return (
+    <DependencyGraph
+      {...args}
+      cardLayouts={layouts}
+      onCardLayoutsChange={setLayouts}
+    />
+  );
+}
+
+export const EditableResourceCards: Story = {
+  args: {
+    title: "Arrange resource dependencies",
+    nodes: [
+      {
+        id: "store",
+        label: "Application database",
+        typeLabel: "Database",
+        groupId: "data",
+        change: "update",
+        changes: Array.from({ length: 12 }, (_, index) => ({
+          path: `settings.field_${index + 1}`,
+          type: "change" as const,
+          before: "previous-value",
+          after: "updated-value",
+        })),
+      },
+      {
+        id: "api",
+        label: "API service",
+        typeLabel: "Container",
+        groupId: "apps",
+        change: "update",
+        changes: [
+          {
+            path: "database.host",
+            type: "change",
+            before: "database.previous.host",
+            after: "database.current.host",
+          },
+        ],
+      },
+      {
+        id: "worker",
+        label: "Background worker",
+        typeLabel: "Container",
+        groupId: "apps",
+        change: "unchanged",
+      },
+    ],
+    edges: [
+      {
+        id: "store-api",
+        source: "store",
+        target: "api",
+        sourceAttributePath: "settings.field_12",
+        targetAttributePath: "database.host",
+      },
+      { id: "api-worker", source: "api", target: "worker" },
+    ],
+    groups: [
+      { id: "system", label: "Application" },
+      { id: "data", label: "Data", parentId: "system" },
+      { id: "apps", label: "Services", parentId: "system" },
+    ],
+    defaultExpandedChangeNodeIds: ["store", "api"],
+    defaultSelection: { type: "node", id: "store" },
+    defaultCardLayouts: {
+      store: { width: 400, height: 300 },
+      api: { width: 320, height: 220 },
+    },
+    showDetails: false,
+    height: 620,
+  },
+  render: (args) => <EditableCardsExample {...args} />,
+};
+export const WideAttributeInspection: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Application attribute changes",
+    nodes: wideDependencyNodes,
+    edges: wideDependencyEdges,
+    groups: [],
+    showDetails: false,
+    defaultExpandedChangeNodeIds: wideDependencyNodes.map((node) => node.id),
+    height: 1400,
+  },
+};
+export const DeepAttributeInspection: Story = {
+  ...WideAttributeInspection,
+  args: { ...WideAttributeInspection.args, edges: deepDependencyEdges },
+};
+export const CyclicAttributeInspection: Story = {
+  ...WideAttributeInspection,
+  args: {
+    ...WideAttributeInspection.args,
+    edges: [
+      ...wideDependencyEdges,
+      { id: "feedback", source: "service-1", target: "network" },
+      { id: "self", source: "service-2", target: "service-2" },
+    ],
+  },
+};
+export const GroupedAttributeInspection: Story = {
+  ...WideAttributeInspection,
+  args: {
+    ...WideAttributeInspection.args,
+    groups: [
+      { id: "platform", label: "Platform root" },
+      { id: "applications", label: "Applications root" },
+      { id: "services", label: "Services module", parentId: "applications" },
+    ],
+    nodes: wideDependencyNodes.map((node) => ({
+      ...node,
+      groupId: node.id === "network" ? "platform" : "services",
+    })),
+  },
 };
 export const CollapsibleBranches: Story = {
   args: {
@@ -158,6 +436,27 @@ export const CollapsibleBranches: Story = {
     groups: [],
     showDetails: false,
     height: 600,
+  },
+};
+export const DependencyTree: Story = {
+  args: {
+    ...CollapsibleBranches.args,
+    title: undefined,
+    description: undefined,
+    defaultPresentation: "tree",
+    treeHierarchy: "dependencies",
+    showDetails: true,
+    defaultSelection: { type: "node", id: "database" },
+    defaultChangePresentation: "diff",
+    edges: [
+      ...CollapsibleBranches.args!.edges!,
+      {
+        id: "storage-db",
+        source: "storage",
+        target: "database",
+        variant: "dashed",
+      },
+    ],
   },
 };
 export const ExpandedAttributeDifferences: Story = {

@@ -86,7 +86,13 @@ try {
         const el = await driver.findElement(By.css(selector));
         await driver.executeScript("arguments[0].focus()", el);
         await el.sendKeys(
-          key === "Enter" ? Key.ENTER : key === "Escape" ? Key.ESCAPE : key,
+          key === "Enter"
+            ? Key.ENTER
+            : key === "Escape"
+              ? Key.ESCAPE
+              : key === "Tab"
+                ? Key.TAB
+                : key,
         );
       },
       select: (selector, value) =>

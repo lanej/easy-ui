@@ -249,7 +249,7 @@ export function NetworkMapCellPopover({
               position: "fixed",
               zIndex: 1000,
               maxWidth: "calc(100vw - 16px)",
-              maxHeight: "min(480px, calc(100vh - 56px))",
+              maxHeight: "calc(100dvh - 56px)",
             }
           : position
       }
@@ -280,7 +280,14 @@ export function NetworkMapCellPopover({
           <span className={styles.controlLabel}>Close</span>
         </Button>
       </div>
-      {children}
+      <div
+        className={styles.cellPopoverBody}
+        role="group"
+        aria-label={`${label} content`}
+        tabIndex={0}
+      >
+        {children}
+      </div>
     </div>
   );
   return positioning === "viewport"

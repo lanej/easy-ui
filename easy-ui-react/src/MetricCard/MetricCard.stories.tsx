@@ -295,6 +295,35 @@ export const CallerOwnedFrame: Story = {
     </Card>
   ),
 };
+export const CallerOwnedRow: Story = {
+  render: () => (
+    <div style={{ width: 300, maxWidth: "100%" }}>
+      <Card as="section" aria-label="Caller-owned cost row" padding="2">
+        <MetricContent
+          {...Default.args}
+          label="Average international rated cost including carrier adjustments"
+          value="$1,234.56"
+          layout="row"
+        />
+      </Card>
+    </div>
+  ),
+};
+export const MixedLayouts: Story = {
+  render: () => (
+    <MetricGroup>
+      {["Domestic", "International", "Express", "Economy"].map((service) => (
+        <MetricContent
+          {...Default.args}
+          key={service}
+          label={`${service} average rated cost including carrier adjustments`}
+          value="$1,234.56"
+          layout="row"
+        />
+      ))}
+    </MetricGroup>
+  ),
+};
 export const ComparisonOnly: Story = {
   render: () => (
     <MetricComparisonContent

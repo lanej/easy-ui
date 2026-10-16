@@ -181,7 +181,7 @@ export function MetricContent(props: MetricContentProps) {
       ? valueSize
       : presets[size].value;
 
-  return (
+  const content = (
     <div
       className={styles.content}
       data-metric-content=""
@@ -248,6 +248,13 @@ export function MetricContent(props: MetricContentProps) {
       )}
     </div>
   );
+
+  // Independent rows query their own width; row groups share one set of columns.
+  return layout === "row" && group.layout !== "row" ? (
+    <div className={styles.container}>{content}</div>
+  ) : (
+    content
+  );
 }
 
 /** Optional standalone framing; use MetricContent within an existing section. */
@@ -260,9 +267,7 @@ export function MetricCard(props: MetricCardProps) {
       background="primary"
       padding="2"
     >
-      <div className={styles.container}>
-        <MetricContent {...props} />
-      </div>
+      <MetricContent {...props} />
     </Card>
   );
 }

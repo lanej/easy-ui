@@ -15,6 +15,7 @@ on:
       - "package-lock.json"
       - "scripts/build-docs.mjs"
       - "scripts/check-docs-site.mjs"
+      - "scripts/check-storybook-coverage.mjs"
       - "scripts/preview-metrics/**"
       - "scripts/preview-maps/**"
       - "typedoc.json"

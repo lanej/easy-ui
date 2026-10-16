@@ -21,6 +21,86 @@ beforeAll(() => {
 });
 
 describe("DependencyGraph interaction contract", () => {
+  it.each(["graph", "tree"] as const)(
+    "updates caller appearance without changing selection or operations in %s view",
+    (presentation) => {
+      const resource = {
+        id: "worker",
+        label: "Worker",
+        change: "unchanged" as const,
+      };
+      const props = { edges: [], presentation, showDetails: false };
+      const { container, rerender } = render(
+        <DependencyGraph
+          {...props}
+          nodes={[
+            {
+              ...resource,
+              appearance: {
+                background: "warning.050",
+                borderColor: "warning.600",
+              },
+            },
+            { id: "other", label: "Other" },
+          ]}
+          renderNodeAnnotation={() => <span>Medium risk</span>}
+        />,
+      );
+      const control = () =>
+        screen.getByRole(presentation === "graph" ? "button" : "row", {
+          name: "Worker, Unchanged",
+        });
+      fireEvent.click(control());
+      const surface = () =>
+        container.querySelector<HTMLElement>(
+          presentation === "graph"
+            ? '[data-graph-resource-card="worker"]'
+            : '[data-tree-node="worker"]',
+        )!;
+      const background = "--ezui-c-dependency-graph-node-background";
+      const border = "--ezui-c-dependency-graph-node-border";
+      expect(surface().style.getPropertyValue(background)).toBe(
+        "var(--ezui-color-warning-050)",
+      );
+      expect(surface().style.getPropertyValue(border)).toBe(
+        "var(--ezui-color-warning-600)",
+      );
+      expect(within(surface()).getByText("Medium risk")).toBeVisible();
+      if (presentation === "graph")
+        expect(control()).toHaveAccessibleDescription("Medium risk");
+      rerender(
+        <DependencyGraph
+          {...props}
+          nodes={[
+            { ...resource, appearance: { background: "negative.050" } },
+            { id: "other", label: "Other" },
+          ]}
+        />,
+      );
+      expect(surface().style.getPropertyValue(background)).toBe(
+        "var(--ezui-color-negative-050)",
+      );
+      expect(surface().style.getPropertyValue(border)).toBe("");
+      expect(surface()).toHaveAttribute("data-selected");
+      expect(control()).toHaveAccessibleName("Worker, Unchanged");
+      expect(control()).not.toHaveAttribute("aria-describedby");
+      rerender(
+        <DependencyGraph
+          {...props}
+          nodes={[resource, { id: "other", label: "Other" }]}
+        />,
+      );
+      expect(surface().style.getPropertyValue(background)).toBe("");
+      expect(surface()).toHaveAttribute("data-selected");
+      const other = container.querySelector<HTMLElement>(
+        presentation === "graph"
+          ? '[data-graph-resource-card="other"]'
+          : '[data-tree-node="other"]',
+      )!;
+      expect(other.style.getPropertyValue(background)).toBe("");
+      expect(other.style.getPropertyValue(border)).toBe("");
+    },
+  );
   it("embeds without a heading and keeps the graph named", () => {
     const { container, rerender } = render(
       <DependencyGraph nodes={nodes} edges={edges} showDetails={false} />,
@@ -506,8 +586,8 @@ describe("DependencyGraph per-resource changes", () => {
     );
     const rows = (selector: string) =>
       [...container.querySelectorAll(selector)].map((row) => row.textContent);
+    expect(rows('[data-diff="set"]')).toEqual(["New value: +false"]);
     expect(rows('[data-diff="addition"]')).toEqual([
-      "After: +false",
       "After: +null",
       "After: +Unknown value",
     ]);
@@ -667,16 +747,64 @@ describe("DependencyGraph zoom and branch disclosures", () => {
     const rows = screen
       .getByLabelText("A attribute differences")
       .querySelectorAll("dd");
-    expect(rows[0].querySelectorAll("[data-diff]")[0]).toHaveTextContent(
-      "Not present",
-    );
-    expect(rows[0].querySelectorAll("[data-diff]")[1]).toHaveTextContent('""');
+    expect(rows[0].querySelectorAll("[data-diff]")).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent('New value: +""');
     expect(rows[1].querySelectorAll("[data-diff]")[0]).toHaveTextContent(
       "old value",
     );
     expect(rows[1].querySelectorAll("[data-diff]")[1]).toHaveTextContent(
       "Not present",
     );
+  });
+  it("compacts explicit null-to-value changes without treating display text or unavailable values as null", () => {
+    const { container } = render(
+      <DependencyGraphChanges
+        presentation="diff"
+        node={{
+          id: "a",
+          label: "A",
+          changes: [
+            { path: "zero", type: "change", before: null, after: "0" },
+            { path: "false", type: "change", before: null, after: "false" },
+            { path: "empty", type: "change", before: null, after: "" },
+            { path: "literal", type: "change", before: "null", after: "set" },
+            { path: "clear", type: "change", before: "set", after: null },
+            { path: "null", type: "add", after: null },
+            {
+              path: "redacted",
+              type: "change",
+              before: { status: "redacted" },
+              after: "set",
+            },
+            {
+              path: "unknown",
+              type: "change",
+              before: { status: "unknown" },
+              after: "set",
+            },
+          ],
+        }}
+      />,
+    );
+    const field = (path: string) =>
+      [...container.querySelectorAll("[data-field-change]")].find(
+        (row) => row.getAttribute("data-field-change") === path,
+      )!;
+    for (const [path, value] of [
+      ["zero", "0"],
+      ["false", "false"],
+      ["empty", '""'],
+      ["null", "null"],
+    ]) {
+      expect(field(path).querySelectorAll("[data-diff]")).toHaveLength(1);
+      expect(field(path)).toHaveTextContent(`New value: +${value}`);
+      expect(field(path)).not.toHaveTextContent("Before:");
+    }
+    for (const path of ["literal", "clear", "redacted", "unknown"]) {
+      expect(field(path).querySelectorAll("[data-diff]")).toHaveLength(2);
+    }
+    expect(field("literal")).toHaveTextContent("Before: −null");
+    expect(field("clear")).toHaveTextContent("After: +null");
   });
   it("keeps added and removed relationships individually selectable with unchanged endpoints", () => {
     const { container } = render(

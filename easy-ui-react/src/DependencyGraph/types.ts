@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 import type { BadgeVariant } from "../Badge/Badge";
-import type { IconSymbol } from "../types";
+import type { IconSymbol, ThemeTokenNamespace } from "../types";
 
 export type DependencyGraphChange =
   "create" | "update" | "replace" | "delete" | "unchanged" | "unknown";
 
-/** Formatted display text, or an explicit unavailable value. Never supply secrets. */
+/** Formatted display text, explicit null, or an unavailable value. Never supply secrets. */
 export type DependencyGraphChangeValue =
-  string | { status: "unknown" | "redacted" };
+  string | null | { status: "unknown" | "redacted" };
 
 /** Absence is explicit: an addition has no before value, a removal has no after. */
 export type DependencyGraphPropertyChange = { path: string } & (
@@ -28,6 +28,14 @@ export type DependencyGraphCategory = {
   readonly variant?: "neutral" | BadgeVariant;
 };
 
+/** Caller-owned emphasis, independent of resource operations and risk assessment. */
+export type DependencyGraphNodeAppearance = {
+  /** Theme color for the resource card and tree row background. */
+  background?: ThemeTokenNamespace<"color">;
+  /** Theme color for the resource outline. Selection and focus retain their own indicators. */
+  borderColor?: ThemeTokenNamespace<"color">;
+};
+
 export type DependencyGraphNode = {
   id: string;
   label: string;
@@ -41,6 +49,8 @@ export type DependencyGraphNode = {
   description?: string;
   /** Caller-owned category labels and optional theme variants. Never interpreted as plan actions or risk. */
   categories?: readonly DependencyGraphCategory[];
+  /** Optional visual emphasis. Pair meaningful colors with a category or node annotation. */
+  appearance?: DependencyGraphNodeAppearance;
   /** Caller-supplied resource type symbol, using Easy UI's normal Icon contract. */
   icon?: IconSymbol;
   /** Accessible resource type label, such as Database or Authentication. */
@@ -93,6 +103,8 @@ export type DependencyGraphSelection =
   | { type: "edges"; ids: readonly string[] }
   | null;
 
+export type DependencyGraphPresentation = "graph" | "tree";
+
 export type DependencyGraphView =
   | { scope: "all" }
   | { scope: "changes"; depth?: number }
@@ -108,6 +120,22 @@ export type DependencyGraphDetailsContext = {
   group?: DependencyGraphGroup;
   edges: readonly DependencyGraphEdge[];
 };
+
+/** Card geometry in graph units (CSS pixels at 100% zoom and a 16px root font). */
+export type DependencyGraphCardLayout = {
+  /** Omit coordinates to retain automatic placement. Group headings reserve space at the canvas edges. */
+  x?: number;
+  y?: number;
+  /** Omit width for responsive sizing. Minimum 192. */
+  width?: number;
+  /** Omit height to grow with content. Minimum 96; fixed-height cards scroll internally. */
+  height?: number;
+};
+
+/** Original resource IDs map to geometry; collapsed group proxies are not editable. */
+export type DependencyGraphCardLayouts = Readonly<
+  Record<string, DependencyGraphCardLayout>
+>;
 
 export type DependencyGraphProps = {
   /** Optional visible heading. Omit it when the surrounding application supplies context. */
@@ -126,6 +154,12 @@ export type DependencyGraphProps = {
   defaultView?: DependencyGraphView;
   /** Also usable to request a larger neighborhood from the application's API. */
   onViewChange?: (view: DependencyGraphView) => void;
+  /** Switch between the spatial graph and a compact, foldable outline. */
+  presentation?: DependencyGraphPresentation;
+  defaultPresentation?: DependencyGraphPresentation;
+  onPresentationChange?: (presentation: DependencyGraphPresentation) => void;
+  /** Tree nesting. Defaults to explicit groups when supplied, otherwise dependencies. */
+  treeHierarchy?: "groups" | "dependencies";
   collapsedGroupIds?: readonly string[];
   defaultCollapsedGroupIds?: readonly string[];
   onCollapsedGroupIdsChange?: (ids: readonly string[]) => void;
@@ -143,6 +177,12 @@ export type DependencyGraphProps = {
   hiddenEdgeIds?: readonly string[];
   /** Recompute the directed resource order for changed topology with the same resource IDs. */
   layoutRevision?: string | number;
+  /** Show the Edit layout toolbar control. Defaults to true. Geometry still applies when false. */
+  allowLayoutEditing?: boolean;
+  cardLayouts?: DependencyGraphCardLayouts;
+  defaultCardLayouts?: DependencyGraphCardLayouts;
+  /** Committed pointer/keyboard/size/reset changes; applications can persist this map. */
+  onCardLayoutsChange?: (layouts: DependencyGraphCardLayouts) => void;
   /** Coverage of the supplied relationship evidence, not operational impact. */
   coverage?: {
     status: "complete" | "partial" | "unknown";
@@ -153,6 +193,7 @@ export type DependencyGraphProps = {
   onRetry?: () => void;
   /** Viewport height in CSS pixels. The graph scrolls within this viewport. */
   height?: number;
+  /** Show selection details in a graph sidebar or the selected tree row's drawer. */
   showDetails?: boolean;
   /** Widen the built-in inspector and show its full height. */
   detailsExpanded?: boolean;
@@ -167,6 +208,8 @@ export type DependencyGraphProps = {
     node: DependencyGraphNode,
     change: DependencyGraphPropertyChange,
   ) => ReactNode;
-  /** Additional evidence/diff content below the standard selection details. */
+  /** Replace the entire detail body while retaining native heading and close controls. Defaults to append. */
+  renderDetailsMode?: "append" | "replace";
+  /** Application content appended to the standard details, or replacing their body in replace mode. */
   renderDetails?: (context: DependencyGraphDetailsContext) => ReactNode;
 };

@@ -37,6 +37,7 @@
     "build:storybook": "storybook build",
     "build:tokens": "FORCE_COLOR=1 turbo run build --filter=@easypost/easy-ui-tokens",
     "build:typedoc": "typedoc --options typedoc.json",
+    "check:storybook": "node scripts/check-storybook-coverage.mjs",
     "changes:add": "changeset add",
     "changes:publish": "FORCE_COLOR=1 turbo run build && changeset publish",
     "changes:status": "changeset status",

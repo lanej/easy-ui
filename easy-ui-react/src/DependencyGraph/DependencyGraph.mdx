@@ -28,6 +28,65 @@ import { DependencyGraph } from "@easypost/easy-ui/DependencyGraph";
 
 An arrow runs **from a dependency to its dependent**: `subnet → api` means the API depends on the subnet. Translate reverse-oriented Terraform/OpenTofu relationships in the application. Easy UI does not infer resources, edges, risk, execution order, or operational blast radius.
 
+## Compact tree view
+
+Use **Graph / Tree** to switch between the spatial canvas and a compact foldable
+outline. Selection, scope, search, group folds, and expanded attribute differences
+stay in the same component state. Tree rows open full-width drawers with
+additional detail; tree mode uses the full available width.
+Set `defaultPresentation="tree"` to start with the outline, or control
+`presentation` with `onPresentationChange`.
+
+The tree defaults to explicit group containment when `groups` are supplied;
+otherwise it nests dependents under their prerequisites. Set
+`treeHierarchy="groups"` or `treeHierarchy="dependencies"` to choose explicitly.
+Group nesting does not imply a dependency. Nodes without a defined group remain
+at the root of a grouped outline. Empty groups are omitted.
+
+In dependency mode each resource has one deterministic primary row. Extra paths
+are short **Reference** rows, and back edges are marked **Cycle**. Activate their
+link to reveal and focus the primary row. Parallel relationships between the same
+resources share a reference; their original IDs, states, and attributes remain in
+the inspector. Unavailable endpoints retain the graph's evidence disclosure.
+The tree is a navigation projection, not an execution order.
+
+Fold a branch with its chevron or use **Collapse all / Expand all**. Counts summarize
+the unique primary resources in that subtree within the current scope, excluding
+references. Nonzero change counts reflect supplied operations or field changes;
+missing change data does not become a zero-change claim. Group folds share
+`collapsedGroupIds`; dependency folds share `collapsedNodeIds`. Child folds survive
+parent folding, and references reveal only the ancestors needed for their target.
+
+Use arrow keys to move, Right/Left to expand/collapse branches, Home/End to reach
+the first or last visible row, and type a resource name to jump to it. Select a
+row to open its drawer; selecting another row moves the details there. Expandable
+rows use one chevron on the left: branch chevrons fold children, while leaf
+chevrons open or close details. Close a drawer with **Close**, the leaf chevron,
+or by clearing selection. Resource icons and annotations remain in the row header
+in either state.
+
+Drawers add information to the row: descriptions, distinct addresses and IDs,
+exact differences, attribute annotations, `renderDetails` content, group members,
+and connected relationships. They omit the repeated name and status summary.
+A type label hidden by the compact row on narrow screens remains available in
+the drawer. Field differences are the default; `defaultChangePresentation` can
+choose the summary instead. Close remains available after the additional details.
+
+Inspecting a relationship keeps its details in the originating drawer; its
+endpoint actions reveal the corresponding resource row. Relationship details and
+standalone fallback inspectors retain their own identity. On wider rows, resource
+details and relationships sit side by side; narrow rows stack them.
+Drawer content mounts when opened. `showDetails={false}` disables these drawers
+and uses the leaf chevron for inline attribute differences, allowing an
+application to place its own inspector. On branches, the field-count control
+opens differences independently of folding children. `expandedChangeNodeIds`
+still controls these differences and graph card expansion independently of selection.
+
+<Canvas of={Stories.CompactTree} />
+<Canvas of={Stories.DependencyTree} />
+<Canvas of={Stories.TreeWithoutInspector} />
+<Canvas of={Stories.TreeWithSupportingDetails} />
+
 ## Explicit subgraphs
 
 Supply `groups` and each resource's `groupId` to place related resources in a
@@ -106,7 +165,28 @@ Resource annotations remain visible when attribute differences are collapsed. At
 
 The application owns assessments and their evidence. A change operation, a reachable dependency, or missing risk data does not establish risk or safety. This extension supports future analysis that combines planned changes with runtime relationships, including affected resources that have no planned changes. No risk engine, severity thresholds, or synthetic scores are built into the graph.
 
-The following example uses illustrative caller-supplied findings. High risk is attached to the API's `env.DATABASE_URL` attribute block. Medium risk is attached to the unchanged worker's resource block. Expand Supporting evidence in either annotation to inspect its rationale in place; unannotated resources are not implicitly low risk.
+Set `node.appearance.background` and `node.appearance.borderColor` independently
+to emphasize a resource card or its tree row. Both accept Easy UI theme color
+tokens, such as `warning.050` and `warning.600`, and follow the active theme.
+Selection and keyboard focus keep their own indicators; an explicit border color
+remains visible when selected. Omitted colors use the normal appearance.
+Choose readable background tokens and pair meaningful colors with a category or
+`renderNodeAnnotation` so the finding is available without relying on color.
+The caller decides when a finding warrants emphasis, including promotion of an
+attribute finding to its resource. No colors are inferred from severity or
+resource operations.
+
+```tsx
+{
+  id: "worker",
+  label: "Background worker",
+  change: "unchanged",
+  appearance: { background: "warning.050", borderColor: "warning.600" },
+  categories: [{ label: "Medium risk", variant: "warning" }],
+}
+```
+
+The following example uses illustrative caller-supplied findings. High risk is attached to the API's `env.DATABASE_URL` attribute block, with an explicitly supplied red card outline. Medium risk is attached to the unchanged worker's resource block, with an amber background and outline. Expand Supporting evidence in either annotation to inspect its rationale in place; unannotated resources are not implicitly low risk.
 
 <Canvas of={Stories.RiskAnnotations} />
 
@@ -122,11 +202,17 @@ Control this independently with `collapsedNodeIds`, `defaultCollapsedNodeIds`, a
 
 Pass `icon` and `iconLabel` on a node to identify its type. `icon` accepts the standard Easy UI `IconSymbol`, including a custom SVG component. The label becomes part of the resource button's accessible name. Icons are caller-owned; Easy UI does not infer type from a resource ID. The icon package provides Database, Storage, Hub (network), Key (authentication), and Shield (authorization).
 
+Resource headers place the name and status together, with the type and attribute
+toggle on the next row. Metadata wraps when space is limited; long resource names
+retain their distinguishing suffix.
+
 <Canvas of={Stories.CollapsibleBranches} />
 
 ### Per-resource summaries and diffs
 
-Every resource can supply a `changeSummary` and typed `changes`. The graph card shows the short summary. The **+** control labeled **Show attribute differences** expands that resource card with its exact field diff; The **−** control labeled **Hide attribute differences** returns it to the compact view. Expansion is independent of selection and works with `showDetails={false}`. The inspector also switches between **Summary** and **Specific changes**. Attribute values stack on narrow cards and inspectors, with the removed value above the added value. At 36rem of available content width they align side by side. The layout responds to the containing component rather than the page or graph zoom. Red `−` marks removal and green `+` marks addition; full values wrap without visible Before/After headers. Those labels remain available to screen readers. “Not present” distinguishes an absent side from an empty string, unknown value, or redacted value. Resource operations and field changes remain distinct: a replacement retains its Replace badge while showing the exact supplied field diff.
+Every resource can supply a `changeSummary` and typed `changes`. The graph card shows the short summary. The **+** control labeled **Show attribute differences** expands that resource card with its exact field diff; The **−** control labeled **Hide attribute differences** returns it to the compact view. Expansion is independent of selection and works with `showDetails={false}`. The inspector also switches between **Summary** and **Specific changes**. Attribute values stack on narrow cards and inspectors, with the removed value above the added value. At 36rem of available content width they align side by side. The layout responds to the containing component rather than the page or graph zoom. Red `−` marks the previous value and green `+` marks its replacement; full values wrap without visible Before/After headers. Those labels remain available to screen readers.
+
+Newly added attributes and explicit `null` → non-null changes show just the new value with a blue `+`, announced as “New value.” They use the full available width, without a blank column or a “Not present” row. This applies to graph cards, the inspector, and tree drawers, including new fields on existing resources. Removals retain “Not present” on the after side. Resource operations and field changes remain distinct: a replacement retains its Replace badge while showing the exact supplied field diff.
 
 ```tsx
 {
@@ -138,24 +224,77 @@ Every resource can supply a `changeSummary` and typed `changes`. The graph card 
     { path: "address_prefixes[0]", type: "change",
       before: "10.20.0.0/24", after: "10.20.4.0/24" },
     { path: "tags.owner", type: "add", after: "network-platform" },
+    { path: "description", type: "change", before: null, after: "Application subnet" },
     { path: "tags.legacy", type: "remove", before: "true" },
   ],
 }
 ```
 
-Values are caller-formatted strings, so format numbers, booleans, and explicit `null` before supplying them. An empty string is displayed as `""`. Use `{ status: "unknown" }` for an unavailable value and `{ status: "redacted" }` for a sensitive value; never pass secrets. Omitted `changes` means specific changes were not supplied. An empty array does not establish that the resource is unchanged. Easy UI renders the supplied field operations; the application computes their meaning and diff.
+Values are caller-formatted strings, so format numbers and booleans before supplying them. Pass native `null` for an explicitly unset value; the display string `"null"` remains literal text and does not trigger the single-value layout. An empty string is displayed as `""`. Empty strings, `"0"`, and `"false"` are present values. Use `{ status: "unknown" }` for an unavailable value and `{ status: "redacted" }` for a sensitive value; never pass secrets. Neither is treated as an absent prior value. Omitted `changes` means specific changes were not supplied. An empty array does not establish that the resource is unchanged. Easy UI renders the supplied field operations; the application computes their meaning and diff.
 
 `defaultChangePresentation="diff"` starts each newly selected resource in the detailed view. The default is `"summary"`. Selection changes initialize that resource's presentation independently, so another resource's values cannot remain visible. `DependencyGraphChanges` accepts `compact` to omit the heading when embedded in a card and is also exported for an application-owned inspector; it supports controlled `presentation`/`onPresentationChange` or local `defaultPresentation`.
 
 `expandedChangeNodeIds`, `defaultExpandedChangeNodeIds`, and `onExpandedChangeNodeIdsChange` control which resource cards show their attribute differences. Callbacks return original resource IDs. Multiple cards can be expanded at once.
 
 <Canvas of={Stories.ExpandedAttributeDifferences} />
+<Canvas of={Stories.NewlySetValues} />
 <Canvas of={Stories.ChangeSummary} />
 <Canvas of={Stories.SpecificChanges} />
 
 ### Layout, scale, and accessibility
 
-Dagre establishes the initial directed resource order from the full topology, including folded resources. Hiding/showing edges, expanding/collapsing differences, folding branches or groups, and responsive card measurements preserve each card's relative horizontal and vertical order. Expanded cards grow to show their full content; measured widths and heights adjust spacing and routing so neighbors can move without swapping order or overlapping. There is no card height cap or nested diff scroller. A different resource set or group membership starts a new layout; increment `layoutRevision` to deliberately recompute the order after relationship topology changes with the same IDs. Filtering `edges` preserves the order; `hiddenEdgeIds` hides lines while retaining complete relationship evidence for traversal and details. Zoom ranges from 40% to 200% and changes the card presentation automatically: below 70%, an overview shows icons, labels, actions, and compact disclosure controls; from 70% to below 100%, cards show summaries; at 100% and above, expanded cards show attribute diffs. Expanded-card state survives zooming out and returns when zooming in. Opening an attribute control zooms to at least 100% and keeps that resource in view. Use the toolbar +/− controls, Ctrl/⌘ plus wheel or pinch, or focus the canvas and press +/−. Press 0 or **Fit visible** to fit the current view. Ordinary wheel and trackpad movement scrolls. Initial fitting keeps expanded cards and narrow canvases at 100%; an explicit fit can use the overview.
+The **Enter full screen** icon beside zoom and **Fit visible** expands the entire
+resource graph, including its canvas, controls, and selection inspector, to the screen. Selection, zoom, scope, and expanded cards stay in place. Use
+**Exit full screen** or the browser's Escape action to return to the embedded
+graph; focus returns to the full-screen button. Menus stay available inside the
+full-screen graph. The control appears when the browser permits the Fullscreen
+API; embedded applications must allow fullscreen on their iframe. If a request
+is rejected, an accessible message lets the user retry.
+
+<Canvas of={Stories.FullscreenInspection} />
+
+**Edit layout** enables a Move handle and a lower-right resize handle on each
+resource card. Select a resource to enter its width and height, then choose
+**Apply size**. A focused handle supports arrow keys in 10-unit steps, or
+Shift+arrow in 50-unit steps. Escape cancels the current drag. **Reset card**
+restores automatic sizing and placement for the selection; **Reset layout**
+restores all cards. **Done editing** hides the handles and keeps the adjustments.
+
+Use `cardLayouts` / `onCardLayoutsChange` for application-owned persistence, or
+`defaultCardLayouts` for local state. Maps use original resource IDs, with optional
+`x`, `y`, `width`, and `height` fields. Coordinates and sizes are graph units:
+CSS pixels at 100% zoom and a 16px root font. Width has a 192-unit minimum and
+height a 96-unit minimum; invalid non-finite values are ignored. Omitted dimensions
+retain responsive width and content-driven height. Fixed-height cards scroll their
+content, and connections to scrolled-out attributes use the card boundary.
+Clearing a size field restores that dimension's automatic sizing.
+
+Manual positions reserve space for group headings at the canvas edges. Moving a
+resource retains its group membership; group bounds and relationship routes follow
+the new geometry. Manual cards can overlap: the user controls their arrangement, and overlaps can obscure connections. Tight arrangements use square-corner routes without the automatic layout’s reserved arrow clearance.
+Folded or filtered resources retain their saved geometry until revealed again.
+`layoutRevision` recomputes automatic order without erasing manual adjustments.
+Set `allowLayoutEditing={false}` to hide editing controls while displaying saved
+geometry. Collapsed group proxies are not draggable or resizable.
+
+```tsx
+const [cardLayouts, setCardLayouts] = useState<DependencyGraphCardLayouts>({});
+
+<DependencyGraph
+  nodes={nodes}
+  edges={edges}
+  cardLayouts={cardLayouts}
+  onCardLayoutsChange={setCardLayouts}
+/>;
+```
+
+Callbacks fire on completed pointer gestures, keyboard adjustments, size changes,
+and resets. Pointer previews remain local; cancelled gestures do not save changes.
+Applications decide where and when to persist the resulting map.
+
+<Canvas of={Stories.EditableResourceCards} />
+
+Dagre establishes the initial directed resource order from the full topology, including folded resources. Hiding/showing edges, expanding/collapsing differences, folding branches or groups, and responsive card measurements preserve each card's relative horizontal and vertical order. Expanded cards grow to show their full content; measured widths and heights adjust spacing and routing so neighbors can move without swapping order or overlapping. Automatic sizing has no card height cap or nested diff scroller. A different resource set or group membership starts a new layout; increment `layoutRevision` to deliberately recompute the order after relationship topology changes with the same IDs. Filtering `edges` preserves the order; `hiddenEdgeIds` hides lines while retaining complete relationship evidence for traversal and details. Zoom ranges from 40% to 200% and changes the card presentation automatically: below 70%, an overview shows icons, labels, actions, and compact disclosure controls; from 70% to below 100%, cards show summaries; at 100% and above, expanded cards show attribute diffs. Expanded-card state survives zooming out and returns when zooming in. Opening an attribute control zooms to at least 100% and keeps that resource in view. Use the toolbar +/− controls, Ctrl/⌘ plus wheel or pinch, or focus the canvas and press +/−. Press 0 or **Fit visible** to fit the current view. Ordinary wheel and trackpad movement scrolls. Initial fitting keeps expanded cards and narrow canvases at 100%; an explicit fit can use the overview.
 
 Card and group disclosure controls use the reusable `ExpandButton` (+) and `CollapseButton` (−) atoms.
 
@@ -184,6 +323,24 @@ Use `variant="dashed"` on an edge for a caller-defined distinction and explain i
 Resource cards use a compact identity/status row, 25px disclosure controls (preserved while zooming out), and tighter attribute spacing. A description row appears only when supplied. Expanded cards grow to display every difference. Values retain 13px text, full content, and responsive stacked/paired layout. Measured card sizes update spacing and routing while preserving resource order; the graph canvas handles scrolling for large cards.
 
 <Canvas of={Stories.StableResourceOrder} />
+
+### Wide attribute inspection
+
+Expanded attribute cards share spare canvas width across the existing dependency
+columns, up to 60rem per card. Once a card has 52rem of content width, its
+expanded attribute comparisons sit beside the resource summary. Narrower cards
+keep the comparisons below it. This responds to the card’s own width, including
+when the graph is embedded in a smaller panel. Before/after values still adapt
+to the comparison area’s width; edge gaps and text size stay unchanged. Parallel
+dependents remain stacked in their dependency column, preserving the graph's direction and convergence. Width allocation
+reserves room for every expandable resource, including folded
+resources, so selection and disclosure do not redistribute that room. Resizing
+the canvas updates card widths while preserving relative resource order and the
+chosen zoom. Deep graphs retain readable cards and scroll horizontally; narrow
+screens keep a card within the available reading width.
+
+<Canvas of={Stories.ResponsiveResourceCard} />
+<Canvas of={Stories.WideAttributeInspection} />
 
 ### Relationship changes
 
@@ -290,3 +447,5 @@ for the head and visible shaft after the last rounded corner. Convergent arrival
 paint that common shaft once; mixed relationship states remain neutral there.
 Near-level resource headers connect horizontally without a small terminal jog.
 Visible attribute ports and parallel relationship ports remain exact.
+
+Applications can set `renderDetailsMode="replace"` with `renderDetails` to own the entire selection body, including changes and connected relationships. The native heading, close controls, inline placement and focus handling remain. The default is `"append"`; without a renderer, both modes use the built-in details.

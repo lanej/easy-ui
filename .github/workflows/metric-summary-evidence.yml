@@ -59,31 +59,3 @@ jobs:
         with:
           name: metric-summary-evidence
           path: ${{ runner.temp }}/metric-summary/metric-card
-  prepare-images:
-    needs: capture
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: metric-summary-evidence
-          path: evidence
-      - uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('node:fs');
-            const entries = [];
-            for (const name of ['shipping-overview-light-390','shipping-overview-dark-390','shipping-overview-dark-1040','shipping-rows-dark-390','shipping-rows-dark-1040','typography-presets-dark-390','row-long-content-dark-320']) {
-              const content = fs.readFileSync(`evidence/${name}.png`).toString('base64');
-              const {data} = await github.rest.git.createBlob({...context.repo, content, encoding: 'base64'});
-              entries.push({path:`documentation/images/metric-card-${name}.png`,sha:data.sha,mode:'100644',type:'blob'});
-            }
-            const manifest = {source_sha: context.payload.pull_request.head.sha, entries};
-            fs.writeFileSync('metric-summary-blobs.json', JSON.stringify(manifest, null, 2));
-            console.log('METRIC_SUMMARY_BLOBS=' + JSON.stringify(manifest));
-      - uses: actions/upload-artifact@v4
-        with:
-          name: metric-summary-blobs
-          path: metric-summary-blobs.json

@@ -1,0 +1,60 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as Stories from "./Provider.stories";
+
+<Meta of={Stories} />
+
+# Provider
+
+Configures Easy UI at the application root: theme, color scheme, notifications,
+and optional client-side routing. Storybook already supplies a provider; these
+examples add an explicitly configured provider so you can inspect its behavior.
+Each preview runs in an isolated frame to keep theme and notification changes
+within that example.
+
+## Usage
+
+```tsx
+import { Provider } from "@easypost/easy-ui/Provider";
+
+<Provider colorScheme="system">
+  <App />
+</Provider>;
+```
+
+Select **Save settings** to display a notification from the provider.
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+Use `theme` to supply a theme creator and `colorScheme` to choose light, dark,
+system, or inverted colors. `notificationPlacement` sets notification offsets
+and an optional container. When nesting providers, explicitly supply a theme
+or color scheme.
+
+## Examples
+
+### Dark color scheme
+
+<Canvas of={Stories.Dark} />
+
+### Notification placement
+
+Select **Save settings** to show the notification at the configured offset.
+
+<Canvas of={Stories.CustomNotificationPlacement} />
+
+### Client-side routing
+
+Pass your router's navigation function as `navigate`. Optional `useHref` resolves
+the rendered URL, for example by adding a base path. The navigation callback
+receives the original path. Without `navigate`, links use native navigation and
+`useHref` is ignored.
+
+This example renders `/console/overview` and `/console/settings` URLs while
+simulating route changes locally.
+
+<Canvas of={Stories.ClientSideRouting} />

@@ -69,14 +69,16 @@ describe("resource category pills", () => {
   });
   it("does not infer pills from prose or render empty categories", () => {
     const { container } = render(
-      <DependencyGraphIdentity
-        node={{
-          id: "prose",
-          label: "Resource",
-          description: "Source unchanged",
-          categories: [{ label: "" }, { label: "  " }],
-        }}
-        overview={false}
+      <DependencyGraph
+        nodes={[
+          {
+            id: "prose",
+            label: "Resource",
+            description: "Source unchanged",
+            categories: [{ label: "" }, { label: "  " }],
+          },
+        ]}
+        edges={[]}
       />,
     );
     expect(screen.getByText("Source unchanged")).not.toHaveAttribute(

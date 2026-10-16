@@ -177,8 +177,25 @@ const riskFindings = {
   },
 } as const;
 const riskNodes = [
-  ...attributeDependencyNodes,
-  { id: "worker", label: "Background worker", change: "unchanged" as const },
+  ...attributeDependencyNodes.map((node) => ({
+    ...node,
+    // The application explicitly promotes this attribute finding to a card outline.
+    appearance:
+      node.id === "api" ? { borderColor: "negative.600" as const } : undefined,
+    categories:
+      node.id === "api"
+        ? [{ label: "High risk", variant: "danger" as const }]
+        : undefined,
+  })),
+  {
+    id: "worker",
+    label: "Background worker",
+    change: "unchanged" as const,
+    appearance: {
+      background: "warning.050" as const,
+      borderColor: "warning.600" as const,
+    },
+  },
 ];
 const riskEdges = [
   ...attributeDependencyEdges,

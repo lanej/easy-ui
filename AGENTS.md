@@ -23,6 +23,11 @@ are historical; its component and verification guidance still applies.
 Follow the existing React Aria, Sass tokens, TypeScript, Vite, and Vitest patterns.
 Read component types and documentation before extending APIs. Applications own
 aggregation, units, forecasts, records, and domain interpretation.
+Expanded drawers add information. Do not repeat the identity, status pills,
+icons, identifiers, or summary metrics already visible in the originating row
+as a second header or summary block inside its drawer. Preserve information
+that the row does not display.
+
 Verify affected behavior with the existing checks. Interactive changes need
 real browser checks, including relevant themes, narrow layouts, and keyboard
 behavior. Package verification uses actual `npm pack` artifacts and

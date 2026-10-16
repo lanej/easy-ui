@@ -1,0 +1,43 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import * as Stories from "./InputField.stories";
+
+<Meta of={Stories} />
+
+# InputField
+
+The shared input primitive used by `TextField` and `Textarea`. It owns labels,
+validation feedback, input adornments, and password visibility. Use `TextField`
+or `Textarea` for their more focused application APIs.
+
+## Usage
+
+```tsx
+import { InputField } from "@easypost/easy-ui/InputField";
+
+<InputField label="Shipment reference" placeholder="Enter a reference" />;
+```
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={Stories} />
+
+## Examples
+
+### Password visibility
+
+<Canvas of={Stories.Password} />
+
+### Multiline input
+
+<Canvas of={Stories.Multiline} />
+
+### Validation error
+
+<Canvas of={Stories.Error} />
+
+### Disabled input
+
+<Canvas of={Stories.Disabled} />

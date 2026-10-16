@@ -39,6 +39,7 @@ it("is visual only and does not create duplicate semantics or text", () => {
   const { container } = render(<MeterBar value={72} max={100} />);
   const track = container.querySelector("[data-meter-bar]");
   expect(track).toBeInTheDocument();
+  expect(track?.tagName).toBe("SPAN");
   expect(track).toHaveAttribute("aria-hidden", "true");
   expect(track).not.toHaveAttribute("data-color");
   expect(track).toHaveAttribute("data-tone", "neutral");
@@ -60,14 +61,14 @@ it.each(["neutral", "success", "warning", "danger"] as const)(
       "data-tone",
       tone,
     );
-    rerender(<MeterBar value={100} max={100} tone={tone} thickness="md" />);
+    rerender(<MeterBar value={100} max={100} tone={tone} thickness="lg" />);
     expect(container.querySelector("[data-meter-bar]")).toHaveAttribute(
       "data-tone",
       tone,
     );
     expect(container.querySelector("[data-meter-bar]")).toHaveAttribute(
       "data-thickness",
-      "md",
+      "lg",
     );
   },
 );

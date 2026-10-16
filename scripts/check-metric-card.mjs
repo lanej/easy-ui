@@ -37,6 +37,8 @@ const stories = [
   "no-data",
   "zero",
   "caller-owned-frame",
+  "caller-owned-row",
+  "mixed-layouts",
   "comparison-only",
   "signed-values",
 ];
@@ -223,6 +225,16 @@ try {
             assert.ok(
               Math.abs(startGap) <= 1,
               `${name}: summary remains start-aligned`,
+            );
+          }
+          if (metric.layout === "row" && metric.box.width <= 384) {
+            assert.ok(
+              metric.value.top >= metric.label.bottom - 1,
+              `${name}: narrow row places the reading below the label`,
+            );
+            assert.ok(
+              metric.label.width >= metric.box.width - 1,
+              `${name}: narrow row reserves a full line for the label`,
             );
           }
           if (metric.unit) {
