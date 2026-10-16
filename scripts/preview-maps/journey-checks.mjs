@@ -39,6 +39,196 @@ const bounded = () => {
     card.bottom <= frame.bottom
   );
 };
+export async function checkJourneySizing({
+  browser,
+  base,
+  check,
+  capture,
+  scan,
+}) {
+  const compactReady = () =>
+    window.journeyMaps &&
+    Object.keys(window.journeyMaps).length === 1 &&
+    document.querySelector('[data-map-inset-compact="true"]') &&
+    !window.journeyMaps.overview.isMoving();
+  for (const theme of ["light", "dark"])
+    for (const width of [1440, 390]) {
+      const name = `sizing/${theme}/${width}`;
+      await browser.resize(width, 1000);
+      await browser.open(
+        `${base}/journey.html?local=1&height=300&theme=${theme}`,
+      );
+      await browser.wait(overviewReady);
+      const initial = await browser.evaluate(cameras);
+      check(
+        `${name}: close-ups honor a 300px geographic height`,
+        await browser.evaluate(
+          () =>
+            Math.abs(
+              document
+                .querySelector("[data-map-geography]")
+                .getBoundingClientRect().height - 300,
+            ) <= 1,
+        ),
+      );
+      await browser.key(marker("oak"), "Enter");
+      await browser.wait(compactReady);
+      check(
+        `${name}: compact stop list stays inside the frame`,
+        await browser.evaluate(bounded),
+      );
+      await browser.clickNamed("button", "Oakland acceptance");
+      check(
+        `${name}: compact selection preserves the overview camera`,
+        JSON.stringify((await browser.evaluate(cameras)).overview) ===
+          JSON.stringify(initial.overview) &&
+          (await browser.evaluate(
+            () =>
+              document.querySelector(
+                '[aria-label="Locations in close-up"] [aria-pressed="true"]',
+              )?.textContent === "Oakland acceptance",
+          )),
+      );
+      await capture(`journey-compact-${theme}-${width}`);
+      await scan(`journey-compact-${theme}-${width}`);
+      await browser.key(
+        "[data-map-inset-header] > div:first-child > div > button:first-child",
+        "Enter",
+      );
+      await browser.wait(overviewReady);
+      check(
+        `${name}: keyboard Zoom to area closes the compact list and focuses the map`,
+        await browser.evaluate(
+          () =>
+            !document.querySelector("[data-map-zoom-section]") &&
+            document.activeElement === window.journeyMaps.overview.getCanvas(),
+        ),
+      );
+
+      await browser.open(
+        `${base}/journey.html?local=1&height=500&theme=${theme}`,
+      );
+      await browser.wait(overviewReady);
+      await browser.key(marker("oak"), "Enter");
+      await browser.wait(insetReady);
+      check(
+        `${name}: a 500px map fits a full close-up without growing`,
+        (await browser.evaluate(
+          () =>
+            Math.abs(
+              document
+                .querySelector("[data-map-geography]")
+                .getBoundingClientRect().height - 500,
+            ) <= 1 && !document.querySelector("[data-map-inset-compact]"),
+        )) && (await browser.evaluate(bounded)),
+      );
+      await capture(`journey-fixed-${theme}-${width}`);
+
+      await browser.open(
+        `${base}/journey.html?local=1&height=fill&theme=${theme}`,
+      );
+      await browser.wait(overviewReady);
+      await browser.evaluate(() => {
+        window.journeySizingOverview = window.journeyMaps.overview;
+        document.querySelector("[data-journey-zoom-example]").style.height =
+          "900px";
+      });
+      await browser.wait(
+        () => window.journeyMaps.overview.getContainer().clientHeight > 450,
+      );
+      const before = await browser.evaluate(cameras);
+      await browser.key(marker("oak"), "Enter");
+      await browser.wait(insetReady);
+      await browser.evaluate(() => {
+        const parent = document.querySelector("[data-journey-zoom-example]");
+        const frame = document.querySelector("[data-map-geography]");
+        const companions =
+          parent.getBoundingClientRect().height -
+          frame.getBoundingClientRect().height;
+        parent.style.height = `${companions + 300}px`;
+      });
+      await browser.wait(compactReady);
+      check(
+        `${name}: filling parent can shrink below 700px with the close-up open`,
+        await browser.evaluate(bounded),
+      );
+      check(
+        `${name}: filling map stays within its parent`,
+        await browser.evaluate(() => {
+          const parent = document
+            .querySelector("[data-journey-zoom-example]")
+            .getBoundingClientRect();
+          const frame = document
+            .querySelector("[data-map-geography]")
+            .getBoundingClientRect();
+          return (
+            frame.bottom <= parent.bottom &&
+            document
+              .querySelector("[data-journey-zoom-example]")
+              .lastElementChild.getBoundingClientRect().bottom <=
+              parent.bottom &&
+            frame.height >= 220 &&
+            frame.height < 400
+          );
+        }),
+      );
+      await browser.clickNamed("button", "Oakland acceptance");
+      await browser.evaluate(() => {
+        document.querySelector("[data-journey-zoom-example]").style.height =
+          "900px";
+      });
+      await browser.wait(insetReady);
+      check(
+        `${name}: growing restores a local map without replacing or moving the overview`,
+        JSON.stringify((await browser.evaluate(cameras)).overview) ===
+          JSON.stringify(before.overview) &&
+          (await browser.evaluate(
+            () => window.journeyMaps.overview === window.journeySizingOverview,
+          )) &&
+          (await browser.evaluate(bounded)),
+      );
+      check(
+        `${name}: resizing retains visible keyboard focus`,
+        await browser.evaluate(() => {
+          const card = document.querySelector("[data-map-zoom-section]");
+          return (
+            card
+              .querySelector("[data-map-inset-header]")
+              .contains(document.activeElement) && card.scrollTop === 0
+          );
+        }),
+      );
+      await browser.key(":focus", "Escape");
+      await browser.wait(overviewReady);
+      check(
+        `${name}: Escape restores focus to the source stop`,
+        await browser.evaluate(
+          () =>
+            document.activeElement?.getAttribute("data-map-facility-id") ===
+            "oak",
+        ),
+      );
+    }
+  await browser.resize(390, 1000);
+  await browser.open(`${base}/journey.html?local=1&height=220&large=1`);
+  await browser.wait(overviewReady);
+  await browser.key(marker("oak"), "Enter");
+  await browser.wait(compactReady);
+  check(
+    "Minimum-height map with large text keeps the compact close-up inside its frame",
+    await browser.evaluate(bounded),
+  );
+  await browser.clickNamed("button", "Oakland acceptance");
+  await browser.key(":focus", "Escape");
+  await browser.wait(overviewReady);
+  check(
+    "Minimum-height close-up retains selectable stops and keyboard dismissal",
+    await browser.evaluate(
+      () =>
+        document.activeElement?.getAttribute("data-map-facility-id") === "oak",
+    ),
+  );
+}
 export async function checkJourneySections({
   browser,
   base,
@@ -47,6 +237,7 @@ export async function checkJourneySections({
   scan,
   clean,
 }) {
+  await checkJourneySizing({ browser, base, check, capture, scan });
   const selectMetric = async (label) => {
     await browser.click("[data-map-surface-metric] button");
     await browser.wait(() => document.querySelector('[role="option"]'));

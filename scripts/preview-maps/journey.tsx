@@ -33,6 +33,14 @@ createRoot(document.getElementById("root")!).render(
         emptySection={query.has("empty")}
         clustered={query.has("clustered")}
         sectionHeight={query.has("tall") ? 1000 : undefined}
+        height={
+          query.get("height") === "fill"
+            ? "fill"
+            : query.has("height")
+              ? Number(query.get("height"))
+              : undefined
+        }
+        parentHeight={query.get("height") === "fill" ? 600 : undefined}
         weighted={query.has("weighted")}
         surfaceMetrics={query.has("metrics")}
       />

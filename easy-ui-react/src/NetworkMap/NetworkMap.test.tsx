@@ -376,6 +376,94 @@ it("preserves camera and focused markers when observations or selection update, 
   view.unmount();
   expect(remove).toHaveBeenCalledTimes(1);
 });
+it.each([undefined, ["one", "shared"]])(
+  "synchronizes primary route state on reused markers (initial IDs: %j)",
+  async (initialIds) => {
+    const routeProps = {
+      ...props,
+      facilities: [
+        props.facilities[0],
+        {
+          id: "two",
+          label: "Alternative",
+          coordinates: [-100, 40],
+          kind: "hub",
+        },
+        {
+          id: "shared",
+          label: "Shared stop",
+          coordinates: [-80, 40],
+          kind: "destination",
+        },
+      ],
+      segments: [
+        {
+          id: "primary",
+          from: "one",
+          to: "shared",
+          label: "Primary route",
+          evidence: "inferred",
+        },
+        {
+          id: "alternative",
+          from: "two",
+          to: "shared",
+          label: "Alternative route",
+          evidence: "inferred",
+        },
+      ],
+      selectedFacilityId: "one",
+      latestFacilityId: "two",
+      showDataTable: false,
+    } satisfies NetworkMapProps;
+    const view = render(
+      <NetworkMap {...routeProps} primaryFacilityIds={initialIds} />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const markers = routeProps.facilities.map((facility) =>
+      screen.getByRole("button", { name: `Select ${facility.label}` }),
+    );
+    const expectPrimary = (ids: readonly string[] | undefined) => {
+      markers.forEach((marker, index) => {
+        if (ids) {
+          expect(marker).toHaveAttribute(
+            "data-primary",
+            String(ids.includes(routeProps.facilities[index].id)),
+          );
+        } else {
+          expect(marker).not.toHaveAttribute("data-primary");
+        }
+      });
+    };
+    expectPrimary(initialIds);
+    markers[0].focus();
+    const fits = fitBounds.mock.calls.length;
+    for (const ids of [["two", "shared"], [], undefined]) {
+      view.rerender(<NetworkMap {...routeProps} primaryFacilityIds={ids} />);
+      expectPrimary(ids);
+      markers.forEach((marker, index) => {
+        expect(
+          screen.getByRole("button", {
+            name: `Select ${routeProps.facilities[index].label}`,
+          }),
+        ).toBe(marker);
+        expect(marker).toHaveClass("maplibregl-marker");
+        expect(marker).toHaveAttribute("data-selected", String(index === 0));
+        expect(marker).toHaveAttribute("data-latest", String(index === 1));
+        expect(marker).toHaveAttribute("aria-pressed", String(index === 0));
+        expect(marker).toBeEnabled();
+      });
+      expect(document.activeElement).toBe(markers[0]);
+      expect(constructor).toHaveBeenCalledTimes(1);
+      expect(fitBounds).toHaveBeenCalledTimes(fits);
+    }
+    await userEvent.keyboard("{Enter}");
+    expect(props.onFacilitySelect).toHaveBeenCalledTimes(1);
+    expect(props.onFacilitySelect).toHaveBeenCalledWith("one");
+  },
+);
+
 it("keeps data available after an engine failure and retries explicitly", async () => {
   vi.mocked(loadMapEngine).mockRejectedValueOnce(
     new Error("WebGL unavailable"),
@@ -485,21 +573,33 @@ it("clamps a height below the floor to 220px instead of the caller-supplied valu
   expect(canvas.style.height).toBe("220px");
 });
 
-it("switches between fixed and filling height without replacing the map or refitting its camera", async () => {
-  const view = render(<NetworkMap {...props} height={300} />);
-  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
-  act(() => listeners.load());
-  const instance = constructor.mock.calls[0][0];
-  const fits = fitBounds.mock.calls.length;
-  view.rerender(<NetworkMap {...props} height="fill" />);
-  expect(instance.getContainer().style.height).toBe("100%");
-  expect(constructor).toHaveBeenCalledTimes(1);
-  expect(fitBounds).toHaveBeenCalledTimes(fits);
-  view.rerender(<NetworkMap {...props} height={260} />);
-  expect(instance.getContainer().style.height).toBe("260px");
-  expect(constructor).toHaveBeenCalledTimes(1);
-  expect(fitBounds).toHaveBeenCalledTimes(fits);
-});
+it.each([false, true])(
+  "switches fixed and filling heights without replacing or refitting the map (close-ups: %s)",
+  async (withInsets) => {
+    const zoomSections = withInsets
+      ? [{ id: "origin", title: "Origin", facilityIds: ["one"] }]
+      : undefined;
+    const view = render(
+      <NetworkMap {...props} zoomSections={zoomSections} height={300} />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const instance = constructor.mock.calls[0][0];
+    const fits = fitBounds.mock.calls.length;
+    view.rerender(
+      <NetworkMap {...props} zoomSections={zoomSections} height="fill" />,
+    );
+    expect(instance.getContainer().style.height).toBe("100%");
+    expect(constructor).toHaveBeenCalledTimes(1);
+    expect(fitBounds).toHaveBeenCalledTimes(fits);
+    view.rerender(
+      <NetworkMap {...props} zoomSections={zoomSections} height={260} />,
+    );
+    expect(instance.getContainer().style.height).toBe("260px");
+    expect(constructor).toHaveBeenCalledTimes(1);
+    expect(fitBounds).toHaveBeenCalledTimes(fits);
+  },
+);
 
 it("moves controls without replacing the map, canvas, or camera", async () => {
   const onMapReady = vi.fn();
@@ -2906,21 +3006,28 @@ it("fits the full viewport without reserving space for unopened insets", async (
   );
 });
 
-it("keeps enough viewport height for an on-demand close-up", async () => {
-  const { container } = render(
-    <NetworkMap
-      {...props}
-      height={80}
-      zoomSections={[
-        { id: "empty", title: "Unmapped", facilityIds: ["missing"] },
-      ]}
-    />,
-  );
-  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
-  expect(container.querySelector("[data-map-state] > div")).toHaveStyle({
-    height: "700px",
-  });
-});
+it.each([
+  [80, 220],
+  [300, 300],
+  [560, 560],
+])(
+  "respects a %spx height with close-ups (minimum %spx)",
+  async (height, expected) => {
+    const { container } = render(
+      <NetworkMap
+        {...props}
+        height={height}
+        zoomSections={[
+          { id: "empty", title: "Unmapped", facilityIds: ["missing"] },
+        ]}
+      />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+    expect(container.querySelector("[data-map-state] > div")).toHaveStyle({
+      height: `${expected}px`,
+    });
+  },
+);
 
 it("leaves enough geographic space for labels inside a compact close-up", async () => {
   vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(220);

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import userEvent from "@testing-library/user-event";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import type { Map as MapInstance } from "maplibre-gl";
 import { NetworkMap } from "./NetworkMap";
 import { NetworkMapProvider, useNetworkMap } from "./NetworkMapContext";
@@ -12,7 +12,9 @@ const seen = new Map<string, NetworkMapProps>();
 const seenMetrics = new Map<string, MapSurfaceMetric | undefined>();
 const mounts = new Map<string, number>();
 const focusRequests = vi.fn<(name: string, target: MapFocus) => void>();
+const resizeListeners = new Set<() => void>();
 let scale = 14;
+let viewportHeight = 660;
 const project = ([longitude, latitude]: number[]) => ({
   x: 400 + (longitude + 122.2) * scale,
   y: 330 + (latitude - 37.8) * scale,
@@ -40,7 +42,7 @@ vi.mock("./NetworkMapSurface", () => ({
       const container = element.current!;
       Object.defineProperties(container, {
         clientWidth: { value: 1300, configurable: true },
-        clientHeight: { value: 660, configurable: true },
+        clientHeight: { value: viewportHeight, configurable: true },
       });
       const map = {
         getContainer: () => container,
@@ -48,8 +50,12 @@ vi.mock("./NetworkMapSurface", () => ({
         getCenter: () => ({ lng: -96 }),
         project,
         isMoving: () => false,
-        on() {},
-        off() {},
+        on(event: string, callback: () => void) {
+          if (event === "resize") resizeListeners.add(callback);
+        },
+        off(event: string, callback: () => void) {
+          if (event === "resize") resizeListeners.delete(callback);
+        },
       } as unknown as MapInstance;
       mapRef.current = map;
       commands.current.focus = (target) => {
@@ -169,7 +175,164 @@ beforeEach(() => {
   seenMetrics.clear();
   mounts.clear();
   focusRequests.mockClear();
+  resizeListeners.clear();
   scale = 14;
+  viewportHeight = 660;
+});
+
+it("retains a requested group when resizing clips its overview markers, but closes when the group changes", () => {
+  const view = render(<NetworkMap {...records} />);
+  openOrigin();
+  viewportHeight = 220;
+  view.rerender(
+    <NetworkMap {...records} facilities={[...records.facilities!]} />,
+  );
+  expect(
+    screen.getByRole("region", { name: "Origin detail" }),
+  ).toBeInTheDocument();
+  view.rerender(
+    <NetworkMap
+      {...records}
+      facilities={records.facilities!.filter((facility) => facility.id !== "b")}
+    />,
+  );
+  expect(
+    screen.queryByRole("region", { name: "Origin detail" }),
+  ).not.toBeInTheDocument();
+});
+
+it.each(["dismiss", "change", "change before resize"])(
+  "retains a partially visible group across resize until %s, including overlapping sections",
+  (action) => {
+    viewportHeight = 343;
+    const facilities = [
+      ...records.facilities!,
+      {
+        id: "edge",
+        label: "Edge",
+        kind: "hub" as const,
+        coordinates: [-122.2, 38.7] as const,
+      },
+    ];
+    const zoomSections = [
+      { id: "origin", title: "Origin detail", facilityIds: ["a", "b", "edge"] },
+      { id: "overlap", title: "Overlap", facilityIds: ["a", "b"] },
+    ];
+    const view = render(
+      <NetworkMap
+        {...records}
+        facilities={facilities}
+        zoomSections={zoomSections}
+      />,
+    );
+    openOrigin();
+    expect(
+      seen.get(originName)?.facilities?.map((facility) => facility.id),
+    ).toEqual(["a", "b"]);
+    const changedSections = zoomSections.map((section) =>
+      section.id === "origin"
+        ? { ...section, facilityIds: ["a", "b"] }
+        : section,
+    );
+    if (action === "change before resize") {
+      view.rerender(
+        <NetworkMap
+          {...records}
+          facilities={facilities}
+          zoomSections={changedSections}
+        />,
+      );
+      expect(
+        screen.queryByRole("region", { name: "Origin detail" }),
+      ).not.toBeInTheDocument();
+      return;
+    }
+    viewportHeight = 220;
+    view.rerender(
+      <NetworkMap
+        {...records}
+        facilities={[...facilities]}
+        zoomSections={zoomSections}
+      />,
+    );
+    const card = screen.getByRole("region", { name: "Origin detail" });
+    if (action === "dismiss") {
+      fireEvent.keyDown(card, { key: "Escape" });
+      expect(screen.getByTestId("Journey")).toHaveFocus();
+    } else {
+      view.rerender(
+        <NetworkMap
+          {...records}
+          facilities={facilities}
+          zoomSections={changedSections}
+        />,
+      );
+    }
+    expect(card).not.toBeInTheDocument();
+  },
+);
+
+it("keeps short close-ups selectable and switches to a local map when the frame grows", async () => {
+  const user = userEvent.setup();
+  let frameHeight = 300;
+  const bounds = vi
+    .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+    .mockImplementation(function (this: HTMLElement) {
+      if (this.hasAttribute("data-map-geography"))
+        return new DOMRect(0, 0, 600, frameHeight);
+      if (this.hasAttribute("data-map-inset-header"))
+        return new DOMRect(0, 0, 340, 60);
+      return new DOMRect(0, 0, 340, 200);
+    });
+  function Journey() {
+    const [selected, setSelected] = useState("a");
+    return (
+      <NetworkMap
+        {...records}
+        selectedFacilityId={selected}
+        onFacilitySelect={setSelected}
+      />
+    );
+  }
+  try {
+    render(<Journey />);
+    openOrigin();
+    const card = screen.getByRole("region", { name: "Origin detail" });
+    expect(card).toHaveAttribute("data-map-inset-compact", "true");
+    expect(screen.queryByTestId(originName)).not.toBeInTheDocument();
+    await user.click(within(card).getByRole("button", { name: "Acceptance" }));
+    expect(seen.get("Journey")?.selectedFacilityId).toBe("b");
+
+    frameHeight = 700;
+    act(() => [...resizeListeners].forEach((resize) => resize()));
+    expect(card).not.toHaveAttribute("data-map-inset-compact");
+    expect(screen.getByTestId(originName)).toBeInTheDocument();
+    expect(seen.get(originName)?.selectedFacilityId).toBe("b");
+    expect(
+      within(card).getByRole("button", { name: "Zoom to area" }),
+    ).toHaveFocus();
+
+    within(screen.getByTestId(originName)).getByText("Acceptance").focus();
+    frameHeight = 300;
+    act(() => [...resizeListeners].forEach((resize) => resize()));
+    expect(card).toHaveAttribute("data-map-inset-compact", "true");
+    expect(
+      within(card).getByRole("button", { name: "Acceptance" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    const zoom = within(card).getByRole("button", { name: "Zoom to area" });
+    expect(zoom).toBeEnabled();
+    expect(zoom).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(focusRequests).toHaveBeenCalledWith(
+      "Journey",
+      expect.objectContaining({ facilityIds: ["a", "b"], maxZoom: 14 }),
+    );
+    expect(card).not.toBeInTheDocument();
+    expect(screen.getByTestId("Journey")).toHaveFocus();
+    expect(mounts.get("Journey")).toBe(1);
+  } finally {
+    bounds.mockRestore();
+  }
 });
 
 it.each(["before", "after"] as const)(

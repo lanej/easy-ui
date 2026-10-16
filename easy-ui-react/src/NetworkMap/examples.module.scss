@@ -364,6 +364,34 @@
   }
 }
 
+.primaryRouteExample {
+  padding: 16px;
+
+  > label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  select {
+    max-width: 100%;
+    color: design-token("color.neutral.900");
+    background: design-token("color.neutral.000");
+  }
+
+  :is([data-primary="true"], [data-selected="true"], [data-latest="true"])
+    [data-map-label] {
+    color: design-token("color.primary.600");
+  }
+
+  [data-primary="false"]:not([data-selected="true"]):not([data-latest="true"])
+    [data-map-label] {
+    color: design-token("color.neutral.700");
+  }
+}
+
 .sidebar button:focus-visible,
 .sidebar select:focus-visible {
   outline: 3px solid design-token("color.primary.600");

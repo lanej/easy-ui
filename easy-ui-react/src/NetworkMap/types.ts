@@ -268,7 +268,7 @@ export type NetworkMapZoomSection = {
   description?: string;
   /** Local markers; connections to mapped off-inset facilities continue to the edge. */
   facilityIds: readonly string[];
-  /** Inset viewport height in CSS pixels. Defaults to 260 (240 in narrow frames); minimum 220, capped to fit the geographic frame. */
+  /** Inset viewport height in CSS pixels. Defaults to 260 (240 in narrow frames); minimum 220, capped to fit the geographic frame. Shows a compact stop list when a 220px inset cannot fit. */
   height?: number;
   /** Upper zoom bound when fitting this section. Defaults to 13. */
   maxZoom?: number;
@@ -405,7 +405,13 @@ export type NetworkMapProps = {
   selectedSegmentId?: string;
   /** Facility of the last observed event, never an interpolated current position. */
   latestFacilityId?: string;
-  /** Location labels to prioritize alongside selection and last observation. */
+  /**
+   * Location labels to prioritize alongside selection and last observation.
+   * Marker buttons expose `data-primary="true"` for included IDs and `"false"`
+   * for other IDs. Shared stops are primary when included. An empty array marks
+   * all false; omitting the prop removes the attribute. Selection/latest state
+   * is independent.
+   */
   primaryFacilityIds?: readonly string[];
   /** Explicit camera command issued by application selection controls. */
   focus?: MapFocus;

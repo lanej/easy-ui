@@ -739,6 +739,13 @@ function NetworkMapSurfaceView() {
             button.dataset.kind = f.kind;
             button.dataset.selected = String(f.id === p.selectedFacilityId);
             button.dataset.latest = String(f.id === p.latestFacilityId);
+            if (p.primaryFacilityIds) {
+              button.dataset.primary = String(
+                p.primaryFacilityIds.includes(f.id),
+              );
+            } else {
+              delete button.dataset.primary;
+            }
             button.dataset.risk =
               layers.current.risk && f.risk
                 ? f.risk.status === "current" && f.risk.probability !== null
@@ -1388,10 +1395,7 @@ function NetworkMapSurfaceView() {
         ref={container}
         className={styles.canvas}
         style={{
-          height:
-            height === "fill"
-              ? "100%"
-              : Math.max(options.zoomSections?.length ? 700 : 220, height),
+          height: height === "fill" ? "100%" : Math.max(220, height),
         }}
       />
       {featureInspection && hasOverlayContent && (

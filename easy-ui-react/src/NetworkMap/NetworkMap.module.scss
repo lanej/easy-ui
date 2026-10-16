@@ -523,9 +523,6 @@
     flex: 1 1 0;
     min-block-size: 220px;
   }
-  &[data-has-insets="true"] {
-    min-block-size: min-content;
-  }
 }
 .viewport[data-fill-height="true"] {
   flex: 1 1 0;
@@ -534,9 +531,6 @@
     position: absolute;
     inset: 0;
   }
-}
-.geography[data-has-insets="true"] .viewport[data-fill-height="true"] {
-  min-block-size: 700px;
 }
 .overMapControls {
   position: absolute;

@@ -19,6 +19,7 @@ type Placement = {
   left: number;
   top: number;
   narrow: boolean;
+  maxHeight?: number;
   maxViewportHeight?: number;
   x: number;
   y: number;
@@ -90,8 +91,8 @@ export function NetworkMapZoomSections() {
           ? base.bottom - attribution.top + 12
           : 44,
       );
-      const viewport = element
-        .querySelector("[data-map-state]")
+      const header = element
+        .querySelector("[data-map-inset-header]")
         ?.getBoundingClientRect();
       const navigationHeight =
         options.controls !== false && options.controls?.navigation !== false
@@ -101,18 +102,28 @@ export function NetworkMapZoomSections() {
               ?.getBoundingClientRect().height ?? 62)
           : 0;
       const topSpace = navigationHeight > 0 ? navigationHeight + 22 : 12;
-      const maxViewportHeight =
-        base.height > 0 && viewport && viewport.height > 0
-          ? Math.max(
-              220,
-              Math.floor(
-                base.height -
-                  bottom -
-                  topSpace -
-                  (bounds.height - viewport.height),
-              ),
-            )
+      const maxHeight =
+        base.height > 0
+          ? Math.max(0, Math.floor(base.height - bottom - topSpace))
           : undefined;
+      const maxViewportHeight =
+        maxHeight !== undefined && header
+          ? Math.max(0, Math.floor(maxHeight - header.height - 2))
+          : undefined;
+      const compact = (maxViewportHeight ?? Infinity) < 220;
+      if (
+        compact !== element.hasAttribute("data-map-inset-compact") &&
+        element
+          .querySelector("[data-map-inset-body]")
+          ?.contains(element.ownerDocument.activeElement)
+      ) {
+        element
+          .querySelector<HTMLButtonElement>(
+            "[data-map-inset-header] button:not(:disabled)",
+          )
+          ?.focus({ preventScroll: true });
+        element.scrollTop = 0;
+      }
       const candidates = [
         { left: 12, top: Math.max(12, base.height - bottom - bounds.height) },
         {
@@ -148,6 +159,7 @@ export function NetworkMapZoomSections() {
       setPlacement({
         ...position,
         narrow: frame.clientWidth <= 700,
+        maxHeight,
         maxViewportHeight,
         ...source,
         endX,
@@ -169,6 +181,8 @@ export function NetworkMapZoomSections() {
         : new ResizeObserver(update);
     observer?.observe(frame);
     observer?.observe(element);
+    const header = element.querySelector("[data-map-inset-header]");
+    if (header) observer?.observe(header);
     map.on("resize", update);
     return () => {
       disposed = true;
@@ -215,6 +229,7 @@ export function NetworkMapZoomSections() {
         section={activeSection}
         element={card}
         narrow={placement.narrow}
+        maxHeight={placement.maxHeight}
         maxViewportHeight={placement.maxViewportHeight}
         position={{ left: placement.left, top: placement.top }}
         onClose={() => insets.close(true)}
@@ -226,6 +241,7 @@ export function NetworkMapZoomSections() {
 function ZoomSection({
   section,
   narrow,
+  maxHeight,
   maxViewportHeight,
   element,
   position,
@@ -233,6 +249,7 @@ function ZoomSection({
 }: {
   section: NetworkMapZoomSection;
   narrow: boolean;
+  maxHeight?: number;
   maxViewportHeight?: number;
   element: React.RefObject<HTMLElement | null>;
   position: { left: number; top: number };
@@ -246,6 +263,7 @@ function ZoomSection({
     setActiveMetric,
     commands,
     mapRef,
+    state,
   } = useNetworkMap();
   const headingId = useId();
   const facilities = useMemo(() => {
@@ -293,6 +311,7 @@ function ZoomSection({
     Math.max(220, requestedHeight),
     maxViewportHeight ?? Infinity,
   );
+  const compact = viewportHeight < 220;
   const focus = useMemo(
     () => ({
       revision: section.focusRevision ?? section.id,
@@ -307,7 +326,8 @@ function ZoomSection({
       ref={element}
       className={styles.section}
       data-map-zoom-section={section.id}
-      style={position}
+      data-map-inset-compact={compact || undefined}
+      style={{ ...position, maxHeight }}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
@@ -358,6 +378,7 @@ function ZoomSection({
           >
             <InsetHeader
               heading={heading}
+              isReady={state === "ready"}
               onZoom={() => {
                 commands.current.focus(focus);
                 mapRef.current?.getCanvas().focus({ preventScroll: true });
@@ -365,9 +386,35 @@ function ZoomSection({
               onClose={onClose}
               connections={connections}
             />
-            <NetworkMapRouteContext.Provider value={routeContext}>
-              <NetworkMapSurface />
-            </NetworkMapRouteContext.Provider>
+            <div data-map-inset-body>
+              {compact ? (
+                <ul
+                  className={styles.compactLocations}
+                  aria-label="Locations in close-up"
+                >
+                  {facilities.map((facility) => (
+                    <li key={facility.id}>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        type="button"
+                        isDisabled={!options.onFacilitySelect}
+                        aria-pressed={
+                          options.selectedFacilityId === facility.id
+                        }
+                        onPress={() => options.onFacilitySelect?.(facility.id)}
+                      >
+                        {facility.label}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <NetworkMapRouteContext.Provider value={routeContext}>
+                  <NetworkMapSurface />
+                </NetworkMapRouteContext.Provider>
+              )}
+            </div>
           </NetworkMapProvider>
         </NetworkMapMetricContext.Provider>
       ) : (
@@ -384,18 +431,20 @@ function ZoomSection({
 
 function InsetHeader({
   heading,
+  isReady,
   onZoom,
   onClose,
   connections,
 }: {
   heading: React.ReactNode;
+  isReady: boolean;
   onZoom: () => void;
   onClose: () => void;
   connections: JourneyConnection[];
 }) {
-  const { props: options, state } = useNetworkMap();
+  const { props: options } = useNetworkMap();
   return (
-    <header className={styles.header}>
+    <header className={styles.header} data-map-inset-header>
       <div className={styles.headingRow}>
         {heading}
         <div className={styles.actions}>
@@ -404,7 +453,7 @@ function InsetHeader({
               size="sm"
               variant="text"
               type="button"
-              isDisabled={state !== "ready"}
+              isDisabled={!isReady}
               onPress={onZoom}
             >
               <span className={styles.controlLabel}>Zoom to area</span>
