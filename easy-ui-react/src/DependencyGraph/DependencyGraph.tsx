@@ -16,6 +16,12 @@ import { normalizeCardLayout, positionDependencyCards } from "./cardLayout";
 import { DependencyGraphCardSize } from "./DependencyGraphCardSize";
 import { dependencyGraphCategoryLabels } from "./DependencyGraphCategories";
 import { DependencyGraphConvergence } from "./DependencyGraphConvergence";
+import { DependencyGraphTree } from "./DependencyGraphTree";
+import {
+  buildDependencyTree,
+  dependencyTreeAncestors,
+  dependencyTreeVisibleNodes,
+} from "./tree";
 import { Select } from "../Select";
 import { TextField } from "../TextField";
 import { DependencyGraphDetails } from "./DependencyGraphDetails";
@@ -39,6 +45,7 @@ import {
 } from "./routing";
 import type {
   DependencyGraphGroup,
+  DependencyGraphPresentation,
   DependencyGraphProps,
   DependencyGraphSelection,
   DependencyGraphView,
@@ -85,6 +92,10 @@ export function DependencyGraph({
   view: controlledView,
   defaultView = { scope: "all" },
   onViewChange,
+  presentation: controlledPresentation,
+  defaultPresentation = "graph",
+  onPresentationChange,
+  treeHierarchy = groups.length ? "groups" : "dependencies",
   collapsedGroupIds: controlledCollapsed,
   defaultCollapsedGroupIds = [],
   onCollapsedGroupIdsChange,
@@ -116,6 +127,14 @@ export function DependencyGraph({
   renderDetails,
 }: DependencyGraphProps) {
   const [localSelection, setLocalSelection] = useState(defaultSelection);
+  const [localPresentation, setLocalPresentation] =
+    useState(defaultPresentation);
+  const presentation = controlledPresentation ?? localPresentation;
+  const graphScroll = useRef({ left: 0, top: 0 });
+  const changePresentation = (next: DependencyGraphPresentation) => {
+    if (controlledPresentation === undefined) setLocalPresentation(next);
+    onPresentationChange?.(next);
+  };
   const [localDetailsExpanded, setLocalDetailsExpanded] = useState(
     defaultDetailsExpanded,
   );
@@ -144,7 +163,8 @@ export function DependencyGraph({
   >(() => new Map());
   const [zoom, setZoom] = useState(1);
   const [editingLayout, setEditingLayout] = useState(false);
-  const editingCards = allowLayoutEditing && editingLayout;
+  const editingCards =
+    presentation === "graph" && allowLayoutEditing && editingLayout;
   const cardLayout = useDependencyGraphCardLayout({
     controlled: controlledCardLayouts,
     initial: defaultCardLayouts,
@@ -216,6 +236,24 @@ export function DependencyGraph({
   const hierarchy = useMemo(
     () => dependencyGroupHierarchy(nodes, duplicate ? [] : groups),
     [nodes, groups, duplicate],
+  );
+  const scopedNodeIds = useMemo(
+    () => visibleDependencyNodes(nodes, edges, view),
+    [nodes, edges, view],
+  );
+  const tree = useMemo(
+    () =>
+      buildDependencyTree(
+        duplicate ? [] : nodes.filter((node) => scopedNodeIds.has(node.id)),
+        duplicate ? [] : edges,
+        duplicate ? [] : groups,
+        treeHierarchy,
+      ),
+    [nodes, edges, groups, scopedNodeIds, treeHierarchy, duplicate],
+  );
+  const treeVisible = useMemo(
+    () => dependencyTreeVisibleNodes(tree, collapsed, collapsedNodes),
+    [tree, collapsed, collapsedNodes],
   );
   const layoutKey = dependencyGraphLayoutKey(nodes, groups, layoutRevision);
   const newLayout = () => ({
@@ -354,7 +392,7 @@ export function DependencyGraph({
     });
     observer.observe(element);
     return () => observer.disconnect();
-  }, [status, duplicate, items.length]);
+  }, [status, duplicate, items.length, presentation]);
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
     const measurePorts = () => {
@@ -448,6 +486,7 @@ export function DependencyGraph({
     nodes,
     expandedChanges,
     density,
+    presentation,
     editingCards,
   ]);
   const clusters = useMemo(
@@ -458,7 +497,7 @@ export function DependencyGraph({
     viewport,
     clusters,
     zoom,
-    status,
+    presentation === "graph" ? status : "loading",
   );
   const rawConnections = useMemo(
     () =>
@@ -621,6 +660,7 @@ export function DependencyGraph({
     });
   };
   useEffect(() => {
+    if (presentation !== "graph") return;
     const measured =
       typeof ResizeObserver === "undefined" ||
       items.every((item) => !item.node || nodeHeights.has(item.node.id));
@@ -632,6 +672,34 @@ export function DependencyGraph({
   const showNode = (id: string) => {
     const node = nodes.find((record) => record.id === id);
     if (!node) return;
+    if (presentation === "tree") {
+      const ancestors = dependencyTreeAncestors(tree, `node:${id}`);
+      const groupIds = new Set(
+        ancestors.flatMap((entry) => (entry.group ? [entry.group.id] : [])),
+      );
+      const nodeIds = new Set(
+        ancestors.flatMap((entry) => (entry.node ? [entry.node.id] : [])),
+      );
+      changeCollapsed(collapsed.filter((key) => !groupIds.has(key)));
+      changeCollapsedNodes(collapsedNodes.filter((key) => !nodeIds.has(key)));
+      if (!scopedNodeIds.has(id)) {
+        changeView({ scope: "all" });
+        changeCollapsed([]);
+        changeCollapsedNodes([]);
+      }
+      select({ type: "node", id });
+      setQuery("");
+      requestAnimationFrame(() => {
+        const row = [
+          ...(treeViewport.current?.querySelectorAll<HTMLElement>(
+            "[data-tree-node]",
+          ) ?? []),
+        ].find((element) => element.dataset.treeNode === id);
+        row?.focus({ preventScroll: true });
+        row?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      });
+      return;
+    }
     if (!branches.visible.has(id)) changeCollapsedNodes([]);
     const ancestors = hierarchy.paths.get(node.groupId!) ?? [];
     if (ancestors.some((groupId) => collapsed.includes(groupId)))
@@ -710,14 +778,29 @@ export function DependencyGraph({
             ),
         );
 
+  const treeViewport = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (presentation === "graph" && viewport.current) {
+      viewport.current.scrollLeft = graphScroll.current.left;
+      viewport.current.scrollTop = graphScroll.current.top;
+    }
+  }, [presentation]);
+  const hasVisibleItems =
+    presentation === "tree" ? tree.roots.length > 0 : items.length > 0;
+
   const graph = (
     <section
       ref={root}
       className={styles.root}
       data-dependency-graph
       data-graph-fullscreen={fullscreen.active || undefined}
-      data-graph-density={density}
-      style={{ "--dependency-graph-zoom": zoom } as React.CSSProperties}
+      data-presentation={presentation}
+      data-graph-density={presentation === "tree" ? "detail" : density}
+      style={
+        {
+          "--dependency-graph-zoom": presentation === "tree" ? 1 : zoom,
+        } as React.CSSProperties
+      }
       aria-label={accessibilityLabel || title || "Resource dependencies"}
     >
       {(title || description) && (
@@ -741,6 +824,23 @@ export function DependencyGraph({
         </p>
       )}
       <div className={styles.toolbar}>
+        <div
+          className={styles.presentation}
+          role="group"
+          aria-label="Resource presentation"
+        >
+          {(["graph", "tree"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              className={styles.presentationButton}
+              aria-pressed={presentation === mode}
+              onClick={() => changePresentation(mode)}
+            >
+              {mode === "graph" ? "Graph" : "Tree"}
+            </button>
+          ))}
+        </div>
         <div className={styles.search}>
           <TextField
             type="search"
@@ -811,7 +911,7 @@ export function DependencyGraph({
             Expand one level
           </Button>
         )}
-        {!!collapsedNodes.length && (
+        {presentation === "graph" && !!collapsedNodes.length && (
           <Button
             size="sm"
             variant="outlined"
@@ -820,45 +920,93 @@ export function DependencyGraph({
             Expand all branches
           </Button>
         )}
-        <div className={styles.cameraControls}>
-          {allowLayoutEditing && (
+        {presentation === "tree" ? (
+          <div className={styles.treeControls}>
             <Button
               size="sm"
               variant="outlined"
-              aria-pressed={editingCards}
-              onPress={() => setEditingLayout(!editingLayout)}
+              onPress={() => {
+                changeCollapsed([]);
+                changeCollapsedNodes([]);
+              }}
             >
-              {editingCards ? "Done editing" : "Edit layout"}
+              Expand all
             </Button>
-          )}
-          <CollapseButton
-            accessibilityLabel="Zoom out graph"
-            aria-expanded={undefined}
-            isDisabled={zoom <= 0.4}
-            onPress={() => changeZoom(zoom - 0.2)}
-          />
-          <output aria-label="Graph zoom">{Math.round(zoom * 100)}%</output>
-          <ExpandButton
-            accessibilityLabel="Zoom in graph"
-            aria-expanded={undefined}
-            isDisabled={zoom >= 2}
-            onPress={() => changeZoom(zoom + 0.2)}
-          />
-          <Button
-            size="sm"
-            variant="outlined"
-            color="primary"
-            onPress={() => fit()}
-          >
-            Fit visible
-          </Button>
-          {fullscreen.available && (
-            <DependencyGraphFullscreenControl
-              active={fullscreen.active}
-              onPress={fullscreen.toggle}
+            <Button
+              size="sm"
+              variant="outlined"
+              onPress={() => {
+                const entries = [...tree.entries.values()].filter(
+                  (entry) => entry.children.length,
+                );
+                changeCollapsed([
+                  ...new Set([
+                    ...collapsed,
+                    ...entries.flatMap((entry) =>
+                      entry.group ? [entry.group.id] : [],
+                    ),
+                  ]),
+                ]);
+                changeCollapsedNodes([
+                  ...new Set([
+                    ...collapsedNodes,
+                    ...entries.flatMap((entry) =>
+                      entry.node ? [entry.node.id] : [],
+                    ),
+                  ]),
+                ]);
+              }}
+            >
+              Collapse all
+            </Button>
+            {fullscreen.available && (
+              <DependencyGraphFullscreenControl
+                active={fullscreen.active}
+                onPress={fullscreen.toggle}
+              />
+            )}
+          </div>
+        ) : (
+          <div className={styles.cameraControls}>
+            {allowLayoutEditing && (
+              <Button
+                size="sm"
+                variant="outlined"
+                aria-pressed={editingCards}
+                onPress={() => setEditingLayout(!editingLayout)}
+              >
+                {editingCards ? "Done editing" : "Edit layout"}
+              </Button>
+            )}
+            <CollapseButton
+              accessibilityLabel="Zoom out graph"
+              aria-expanded={undefined}
+              isDisabled={zoom <= 0.4}
+              onPress={() => changeZoom(zoom - 0.2)}
             />
-          )}
-        </div>
+            <output aria-label="Graph zoom">{Math.round(zoom * 100)}%</output>
+            <ExpandButton
+              accessibilityLabel="Zoom in graph"
+              aria-expanded={undefined}
+              isDisabled={zoom >= 2}
+              onPress={() => changeZoom(zoom + 0.2)}
+            />
+            <Button
+              size="sm"
+              variant="outlined"
+              color="primary"
+              onPress={() => fit()}
+            >
+              Fit visible
+            </Button>
+            {fullscreen.available && (
+              <DependencyGraphFullscreenControl
+                active={fullscreen.active}
+                onPress={fullscreen.toggle}
+              />
+            )}
+          </div>
+        )}
       </div>
       {fullscreen.error && <p role="alert">{fullscreen.error}</p>}
       {editingCards && (
@@ -928,11 +1076,16 @@ export function DependencyGraph({
       )}
       <div
         className={styles.workspace}
-        data-has-details={showDetails || undefined}
+        data-has-details={
+          (showDetails && presentation === "graph") || undefined
+        }
         data-details-expanded={detailsExpanded || undefined}
       >
         <div className={styles.graphColumn}>
-          {status !== "ready" || duplicate || !nodes.length || !items.length ? (
+          {status !== "ready" ||
+          duplicate ||
+          !nodes.length ||
+          !hasVisibleItems ? (
             <div
               className={styles.state}
               role="status"
@@ -955,7 +1108,7 @@ export function DependencyGraph({
               {nodes.length > 0 &&
                 !duplicate &&
                 status === "ready" &&
-                !items.length && (
+                !hasVisibleItems && (
                   <Button
                     size="sm"
                     variant="outlined"
@@ -965,6 +1118,53 @@ export function DependencyGraph({
                   </Button>
                 )}
             </div>
+          ) : presentation === "tree" ? (
+            <>
+              <div
+                className={styles.viewport}
+                ref={treeViewport}
+                data-tree-viewport
+                style={{
+                  maxHeight: fullscreen.active
+                    ? undefined
+                    : Number.isFinite(height) && height > 0
+                      ? height
+                      : 480,
+                }}
+              >
+                <DependencyGraphTree
+                  tree={tree}
+                  selection={selection}
+                  onSelect={select}
+                  collapsedGroups={collapsed}
+                  collapsedNodes={collapsedNodes}
+                  onCollapsedGroupsChange={changeCollapsed}
+                  onCollapsedNodesChange={changeCollapsedNodes}
+                  expandedChanges={expandedChanges}
+                  onExpandedChangesChange={changeExpandedChanges}
+                  onReveal={showNode}
+                  instanceId={instanceId}
+                  renderNodeAnnotation={renderNodeAnnotation}
+                  renderAttributeAnnotation={renderAttributeAnnotation}
+                  nodes={nodes}
+                  edges={edges}
+                  groups={groups}
+                  showDetails={showDetails}
+                  renderDetails={renderDetails}
+                  defaultChangePresentation={defaultChangePresentation}
+                />
+              </div>
+              <div className={styles.canvasFooter}>
+                <span>
+                  {treeVisible.size} of {nodes.length} resources
+                </span>
+                <span>
+                  {treeHierarchy === "groups"
+                    ? "Grouped by containment"
+                    : "Dependency → dependent"}
+                </span>
+              </div>
+            </>
           ) : (
             <>
               <div
@@ -972,6 +1172,12 @@ export function DependencyGraph({
                 data-graph-canvas
                 id={`${instanceId}-canvas`}
                 ref={viewport}
+                onScroll={(event) => {
+                  graphScroll.current = {
+                    left: event.currentTarget.scrollLeft,
+                    top: event.currentTarget.scrollTop,
+                  };
+                }}
                 tabIndex={0}
                 aria-label="Dependency graph canvas"
                 onKeyDown={(event) => {
@@ -1447,13 +1653,34 @@ export function DependencyGraph({
               </div>
             </>
           )}
+          {showDetails &&
+            presentation === "tree" &&
+            !duplicate &&
+            selection &&
+            (status !== "ready" || !nodes.length || !hasVisibleItems) && (
+              <DependencyGraphDetails
+                nodes={nodes}
+                edges={edges}
+                groups={groups}
+                selection={selection}
+                onSelectionChange={(next) =>
+                  next?.type === "node" ? showNode(next.id) : select(next)
+                }
+                renderDetails={renderDetails}
+                renderAttributeAnnotation={renderAttributeAnnotation}
+                defaultChangePresentation={defaultChangePresentation}
+                placement="inline"
+              />
+            )}
           {selectedNode &&
-            (!visible.has(selectedNode.id) ||
-              collapsedDependencyGroup(
-                selectedNode,
-                hierarchy,
-                new Set(collapsed),
-              ) !== undefined) && (
+            (presentation === "tree"
+              ? !treeVisible.has(selectedNode.id)
+              : !visible.has(selectedNode.id) ||
+                collapsedDependencyGroup(
+                  selectedNode,
+                  hierarchy,
+                  new Set(collapsed),
+                ) !== undefined) && (
               <button
                 type="button"
                 className={styles.textButton}
@@ -1463,7 +1690,7 @@ export function DependencyGraph({
               </button>
             )}
         </div>
-        {showDetails && !duplicate && (
+        {showDetails && presentation === "graph" && !duplicate && (
           <DependencyGraphDetails
             nodes={nodes}
             edges={edges}

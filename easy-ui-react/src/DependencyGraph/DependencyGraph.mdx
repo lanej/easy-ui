@@ -28,6 +28,65 @@ import { DependencyGraph } from "@easypost/easy-ui/DependencyGraph";
 
 An arrow runs **from a dependency to its dependent**: `subnet → api` means the API depends on the subnet. Translate reverse-oriented Terraform/OpenTofu relationships in the application. Easy UI does not infer resources, edges, risk, execution order, or operational blast radius.
 
+## Compact tree view
+
+Use **Graph / Tree** to switch between the spatial canvas and a compact foldable
+outline. Selection, scope, search, group folds, and expanded attribute differences
+stay in the same component state. Tree rows open full-width drawers with
+additional detail; tree mode uses the full available width.
+Set `defaultPresentation="tree"` to start with the outline, or control
+`presentation` with `onPresentationChange`.
+
+The tree defaults to explicit group containment when `groups` are supplied;
+otherwise it nests dependents under their prerequisites. Set
+`treeHierarchy="groups"` or `treeHierarchy="dependencies"` to choose explicitly.
+Group nesting does not imply a dependency. Nodes without a defined group remain
+at the root of a grouped outline. Empty groups are omitted.
+
+In dependency mode each resource has one deterministic primary row. Extra paths
+are short **Reference** rows, and back edges are marked **Cycle**. Activate their
+link to reveal and focus the primary row. Parallel relationships between the same
+resources share a reference; their original IDs, states, and attributes remain in
+the inspector. Unavailable endpoints retain the graph's evidence disclosure.
+The tree is a navigation projection, not an execution order.
+
+Fold a branch with its chevron or use **Collapse all / Expand all**. Counts summarize
+the unique primary resources in that subtree within the current scope, excluding
+references. Nonzero change counts reflect supplied operations or field changes;
+missing change data does not become a zero-change claim. Group folds share
+`collapsedGroupIds`; dependency folds share `collapsedNodeIds`. Child folds survive
+parent folding, and references reveal only the ancestors needed for their target.
+
+Use arrow keys to move, Right/Left to expand/collapse branches, Home/End to reach
+the first or last visible row, and type a resource name to jump to it. Select a
+row to open its drawer; selecting another row moves the details there. Expandable
+rows use one chevron on the left: branch chevrons fold children, while leaf
+chevrons open or close details. Close a drawer with **Close**, the leaf chevron,
+or by clearing selection. Resource icons and annotations remain in the row header
+in either state.
+
+Drawers add information to the row: descriptions, distinct addresses and IDs,
+exact differences, attribute annotations, `renderDetails` content, group members,
+and connected relationships. They omit the repeated name and status summary.
+A type label hidden by the compact row on narrow screens remains available in
+the drawer. Field differences are the default; `defaultChangePresentation` can
+choose the summary instead. Close remains available after the additional details.
+
+Inspecting a relationship keeps its details in the originating drawer; its
+endpoint actions reveal the corresponding resource row. Relationship details and
+standalone fallback inspectors retain their own identity. On wider rows, resource
+details and relationships sit side by side; narrow rows stack them.
+Drawer content mounts when opened. `showDetails={false}` disables these drawers
+and uses the leaf chevron for inline attribute differences, allowing an
+application to place its own inspector. On branches, the field-count control
+opens differences independently of folding children. `expandedChangeNodeIds`
+still controls these differences and graph card expansion independently of selection.
+
+<Canvas of={Stories.CompactTree} />
+<Canvas of={Stories.DependencyTree} />
+<Canvas of={Stories.TreeWithoutInspector} />
+<Canvas of={Stories.TreeWithSupportingDetails} />
+
 ## Explicit subgraphs
 
 Supply `groups` and each resource's `groupId` to place related resources in a

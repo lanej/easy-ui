@@ -93,6 +93,8 @@ export type DependencyGraphSelection =
   | { type: "edges"; ids: readonly string[] }
   | null;
 
+export type DependencyGraphPresentation = "graph" | "tree";
+
 export type DependencyGraphView =
   | { scope: "all" }
   | { scope: "changes"; depth?: number }
@@ -142,6 +144,12 @@ export type DependencyGraphProps = {
   defaultView?: DependencyGraphView;
   /** Also usable to request a larger neighborhood from the application's API. */
   onViewChange?: (view: DependencyGraphView) => void;
+  /** Switch between the spatial graph and a compact, foldable outline. */
+  presentation?: DependencyGraphPresentation;
+  defaultPresentation?: DependencyGraphPresentation;
+  onPresentationChange?: (presentation: DependencyGraphPresentation) => void;
+  /** Tree nesting. Defaults to explicit groups when supplied, otherwise dependencies. */
+  treeHierarchy?: "groups" | "dependencies";
   collapsedGroupIds?: readonly string[];
   defaultCollapsedGroupIds?: readonly string[];
   onCollapsedGroupIdsChange?: (ids: readonly string[]) => void;
@@ -175,6 +183,7 @@ export type DependencyGraphProps = {
   onRetry?: () => void;
   /** Viewport height in CSS pixels. The graph scrolls within this viewport. */
   height?: number;
+  /** Show selection details in a graph sidebar or the selected tree row's drawer. */
   showDetails?: boolean;
   /** Widen the built-in inspector and show its full height. */
   detailsExpanded?: boolean;

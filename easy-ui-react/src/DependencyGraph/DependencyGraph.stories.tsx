@@ -11,6 +11,7 @@ import StorageIcon from "@easypost/easy-ui-icons/Storage";
 import HubIcon from "@easypost/easy-ui-icons/Hub";
 import KeyIcon from "@easypost/easy-ui-icons/Key";
 import ShieldIcon from "@easypost/easy-ui-icons/Shield";
+import CodeIcon from "@easypost/easy-ui-icons/Code";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DependencyGraph } from "./DependencyGraph";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
@@ -75,6 +76,64 @@ export const SpecificChanges: Story = {
   },
 };
 export const AllResources: Story = {};
+export const CompactTree: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Resource change review",
+    nodes: subgraphNodes.map((node) => ({
+      ...node,
+      ...{
+        api: { icon: CodeIcon, iconLabel: "Application" },
+        db: { icon: DatabaseIcon, iconLabel: "Database" },
+        user: { icon: KeyIcon, iconLabel: "Database user" },
+        audit: { icon: StorageIcon, iconLabel: "Storage" },
+        module: { icon: HubIcon, iconLabel: "Module" },
+      }[node.id],
+    })),
+    edges: subgraphEdges,
+    groups: subgraphGroups,
+    defaultPresentation: "tree",
+    defaultSelection: { type: "node", id: "api" },
+    defaultChangePresentation: "diff",
+    height: 760,
+  },
+};
+export const TreeWithSupportingDetails: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Resources with supporting evidence",
+    nodes: Array.from({ length: 40 }, (_, index) => ({
+      id: `resource-${index}`,
+      label: `Resource ${index + 1}`,
+    })),
+    edges: [],
+    groups: [],
+    defaultPresentation: "tree",
+    defaultSelection: { type: "node", id: "resource-10" },
+    renderDetails: () => (
+      <div>
+        <h4>Supporting evidence</h4>
+        {Array.from({ length: 12 }, (_, index) => (
+          <p key={index}>
+            Verification step {index + 1}: compare the supplied runtime
+            configuration with the planned resource changes before approving
+            this dependency.
+          </p>
+        ))}
+      </div>
+    ),
+    height: 360,
+  },
+};
+export const TreeWithoutInspector: Story = {
+  ...CompactTree,
+  args: {
+    ...CompactTree.args,
+    showDetails: false,
+    defaultExpandedChangeNodeIds: ["api"],
+    defaultCollapsedGroupIds: ["database"],
+  },
+};
 export const EmbeddedInspector: Story = {
   args: {
     title: undefined,
@@ -328,6 +387,27 @@ export const CollapsibleBranches: Story = {
     groups: [],
     showDetails: false,
     height: 600,
+  },
+};
+export const DependencyTree: Story = {
+  args: {
+    ...CollapsibleBranches.args,
+    title: undefined,
+    description: undefined,
+    defaultPresentation: "tree",
+    treeHierarchy: "dependencies",
+    showDetails: true,
+    defaultSelection: { type: "node", id: "database" },
+    defaultChangePresentation: "diff",
+    edges: [
+      ...CollapsibleBranches.args!.edges!,
+      {
+        id: "storage-db",
+        source: "storage",
+        target: "database",
+        variant: "dashed",
+      },
+    ],
   },
 };
 export const ExpandedAttributeDifferences: Story = {
