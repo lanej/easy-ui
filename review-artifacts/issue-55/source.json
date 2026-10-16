@@ -1,0 +1,26 @@
+{
+  "source": "f0300e983a7b9fb757be0071d541e2f0a82cdaff",
+  "story": "components-networkmap--primary-route-markers",
+  "browser": "Chromium 153.0.8010.0",
+  "widths": [
+    1440,
+    390
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "checks": [
+    "initial membership",
+    "shared stop",
+    "immutable primary IDs",
+    "empty array",
+    "cleared prop",
+    "marker identity and positioning",
+    "independent selected/latest",
+    "computed label colors",
+    "keyboard selection and focus",
+    "horizontal overflow",
+    "no page errors"
+  ]
+}
