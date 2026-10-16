@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "3cdfa7b1c8f891465fba6c00b1dbcef7f529ccfa",
+  "sourceTree": "bb84c2b1f4554219c47ca1b2ad814e26925c0515",
+  "localCommit": "8fe60ae6403a484cafd6725a6c11fa5449906a39",
+  "browser": "Chromium 153",
+  "fixture": "scripts/preview-maps/journey.html with local deterministic basemap",
+  "checks": 184,
+  "accessibilityScans": 23,
+  "pageErrors": 0,
+  "unitTests": 311
+}
