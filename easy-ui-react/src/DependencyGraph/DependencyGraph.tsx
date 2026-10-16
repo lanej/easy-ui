@@ -1,10 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useId } from "react-aria";
+import {
+  useId,
+  UNSAFE_PortalProvider,
+  useUNSAFE_PortalContext,
+} from "react-aria";
 import { Button } from "../Button";
 import { ExpandButton } from "../ExpandButton";
 import { CollapseButton } from "../CollapseButton";
 import { DependencyGraphIdentity } from "./DependencyGraphIdentity";
 import { useDependencyGraphHeadings } from "./useDependencyGraphHeadings";
+import { useDependencyGraphFullscreen } from "./useDependencyGraphFullscreen";
+import { DependencyGraphFullscreenControl } from "./DependencyGraphFullscreenControl";
+import { useDependencyGraphCardLayout } from "./useDependencyGraphCardLayout";
+import { normalizeCardLayout, positionDependencyCards } from "./cardLayout";
+import { DependencyGraphCardSize } from "./DependencyGraphCardSize";
 import { dependencyGraphCategoryLabels } from "./DependencyGraphCategories";
 import { DependencyGraphConvergence } from "./DependencyGraphConvergence";
 import { DependencyGraphTree } from "./DependencyGraphTree";
@@ -99,6 +108,10 @@ export function DependencyGraph({
   highlightedEdgeIds = [],
   hiddenEdgeIds = [],
   layoutRevision,
+  allowLayoutEditing = true,
+  cardLayouts: controlledCardLayouts,
+  defaultCardLayouts = {},
+  onCardLayoutsChange,
   coverage,
   status = "ready",
   message,
@@ -149,6 +162,29 @@ export function DependencyGraph({
     ReadonlyMap<string, number>
   >(() => new Map());
   const [zoom, setZoom] = useState(1);
+  const [editingLayout, setEditingLayout] = useState(false);
+  const editingCards =
+    presentation === "graph" && allowLayoutEditing && editingLayout;
+  const cardLayout = useDependencyGraphCardLayout({
+    controlled: controlledCardLayouts,
+    initial: defaultCardLayouts,
+    onChange: onCardLayoutsChange,
+    enabled: editingCards,
+    zoom,
+  });
+  const normalizedLayouts = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(cardLayout.layouts).map(([id, value]) => [
+          id,
+          normalizeCardLayout(value),
+        ]),
+      ),
+    [cardLayout.layouts],
+  );
+  const root = useRef<HTMLElement>(null);
+  const fullscreen = useDependencyGraphFullscreen(root);
+  const parentPortal = useUNSAFE_PortalContext();
   const viewport = useRef<HTMLDivElement>(null);
   const [canvasWidth, setCanvasWidth] = useState<number | null>(null);
   const firstFit = useRef(false);
@@ -259,18 +295,7 @@ export function DependencyGraph({
           !stops.has(edge.source)),
     );
   }, [nodes, edges, branches, collapsedNodes]);
-  useEffect(() => {
-    const element = viewport.current;
-    if (!element || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => {
-      const unit =
-        (parseFloat(getComputedStyle(document.documentElement).fontSize) ||
-          16) / 16;
-      setCanvasWidth(Math.floor(element.clientWidth / unit));
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [status, duplicate, projectedNodes.length, presentation]);
+
   const expandedWidth = useMemo(
     () =>
       currentLayout.order && canvasWidth !== null
@@ -287,17 +312,29 @@ export function DependencyGraph({
             projectedEdges,
             groups,
             collapsed,
-            nodeHeights,
+            new Map(
+              nodes
+                .map((node) => [
+                  node.id,
+                  normalizedLayouts[node.id]?.height ??
+                    nodeHeights.get(node.id),
+                ])
+                .filter(
+                  (entry): entry is [string, number] =>
+                    typeof entry[1] === "number",
+                ),
+            ),
             new Map(
               nodes.map((node) => [
                 node.id,
-                density === "overview"
-                  ? 192
-                  : density === "detail" &&
-                      hasDependencyGraphChanges(node) &&
-                      expandedChanges.includes(node.id)
-                    ? expandedWidth
-                    : 256,
+                normalizedLayouts[node.id]?.width ??
+                  (density === "overview"
+                    ? 192
+                    : density === "detail" &&
+                        hasDependencyGraphChanges(node) &&
+                        expandedChanges.includes(node.id)
+                      ? expandedWidth
+                      : 256),
               ]),
             ),
             zoom,
@@ -311,6 +348,7 @@ export function DependencyGraph({
       collapsed,
       duplicate,
       nodeHeights,
+      normalizedLayouts,
       expandedChanges,
       expandedWidth,
       density,
@@ -329,15 +367,32 @@ export function DependencyGraph({
   );
   const items = useMemo(
     () =>
-      model?.items.filter((item) =>
-        item.members.some((node) => visible.has(node.id)),
-      ) ?? [],
-    [model, visible],
+      positionDependencyCards(
+        model?.items.filter((item) =>
+          item.members.some((node) => visible.has(node.id)),
+        ) ?? [],
+        normalizedLayouts,
+        hierarchy,
+        zoom,
+      ),
+    [model, visible, normalizedLayouts, hierarchy, zoom],
   );
   const renderedNodeIds = items
     .filter((item) => item.node)
     .map((item) => item.node!.id)
     .join("\0");
+  useEffect(() => {
+    const element = viewport.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      const unit =
+        (parseFloat(getComputedStyle(document.documentElement).fontSize) ||
+          16) / 16;
+      setCanvasWidth(Math.floor(element.clientWidth / unit));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [status, duplicate, items.length, presentation]);
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
     const measurePorts = () => {
@@ -369,8 +424,8 @@ export function DependencyGraph({
                 heading &&
                 diff &&
                 heading.height > 0 &&
-                heading.top >= diff.top &&
-                heading.bottom <= diff.bottom &&
+                heading.top >= Math.max(diff.top, rect.top) &&
+                heading.bottom <= Math.min(diff.bottom, rect.bottom) &&
                 !next.has(key)
               )
                 next.set(
@@ -418,7 +473,12 @@ export function DependencyGraph({
       ?.querySelectorAll("[data-graph-resource-card] [data-field-change]")
       .forEach((element) => observer.observe(element));
     measurePorts();
-    return () => observer.disconnect();
+    const element = viewport.current;
+    element?.addEventListener("scroll", measurePorts, true);
+    return () => {
+      observer.disconnect();
+      element?.removeEventListener("scroll", measurePorts, true);
+    };
   }, [
     renderedNodeIds,
     status,
@@ -427,6 +487,7 @@ export function DependencyGraph({
     expandedChanges,
     density,
     presentation,
+    editingCards,
   ]);
   const clusters = useMemo(
     () => dependencyGraphClusters(items, hierarchy, new Set(collapsed), zoom),
@@ -461,17 +522,33 @@ export function DependencyGraph({
         attributePorts,
         headingObstacles,
         zoom,
+        Object.values(normalizedLayouts).some(
+          (value) =>
+            value.x !== undefined ||
+            value.y !== undefined ||
+            value.width !== undefined ||
+            value.height !== undefined,
+        ),
       ),
-    [items, rawConnections, attributePorts, headingObstacles, zoom],
+    [
+      items,
+      rawConnections,
+      attributePorts,
+      headingObstacles,
+      zoom,
+      normalizedLayouts,
+    ],
   );
   const sceneWidth = Math.max(
     model?.width ?? 0,
+    ...[...items, ...clusters].map((item) => item.x + item.width + 64),
     ...connections.flatMap((connection) =>
       connection.points.map((point) => point.x + 16),
     ),
   );
   const sceneHeight = Math.max(
     model?.height ?? 0,
+    ...[...items, ...clusters].map((item) => item.y + item.height + 64),
     ...connections.flatMap((connection) =>
       connection.points.map((point) => point.y + 16),
     ),
@@ -484,6 +561,9 @@ export function DependencyGraph({
     "nodeId" in view
       ? nodes.find((node) => node.id === view.nodeId)
       : undefined;
+  const selectedCard = items.find(
+    (item) => item.node?.id === selectedNode?.id && item.node,
+  );
   const search = query.trim().toLowerCase();
   const matches = search
     ? nodes.filter((node) =>
@@ -708,10 +788,12 @@ export function DependencyGraph({
   const hasVisibleItems =
     presentation === "tree" ? tree.roots.length > 0 : items.length > 0;
 
-  return (
+  const graph = (
     <section
+      ref={root}
       className={styles.root}
       data-dependency-graph
+      data-graph-fullscreen={fullscreen.active || undefined}
       data-presentation={presentation}
       data-graph-density={presentation === "tree" ? "detail" : density}
       style={
@@ -877,9 +959,25 @@ export function DependencyGraph({
             >
               Collapse all
             </Button>
+            {fullscreen.available && (
+              <DependencyGraphFullscreenControl
+                active={fullscreen.active}
+                onPress={fullscreen.toggle}
+              />
+            )}
           </div>
         ) : (
           <div className={styles.cameraControls}>
+            {allowLayoutEditing && (
+              <Button
+                size="sm"
+                variant="outlined"
+                aria-pressed={editingCards}
+                onPress={() => setEditingLayout(!editingLayout)}
+              >
+                {editingCards ? "Done editing" : "Edit layout"}
+              </Button>
+            )}
             <CollapseButton
               accessibilityLabel="Zoom out graph"
               aria-expanded={undefined}
@@ -901,9 +999,53 @@ export function DependencyGraph({
             >
               Fit visible
             </Button>
+            {fullscreen.available && (
+              <DependencyGraphFullscreenControl
+                active={fullscreen.active}
+                onPress={fullscreen.toggle}
+              />
+            )}
           </div>
         )}
       </div>
+      {fullscreen.error && <p role="alert">{fullscreen.error}</p>}
+      {editingCards && (
+        <div className={styles.layoutEditor}>
+          <p id={`${instanceId}-layout-help`}>
+            Select a resource to set its size. Drag Move or the lower-right
+            corner. Arrow keys adjust a focused handle; Shift takes larger
+            steps. Escape cancels a drag.
+          </p>
+          <Button
+            size="sm"
+            variant="outlined"
+            isDisabled={!Object.keys(cardLayout.saved).length}
+            onPress={() => cardLayout.reset()}
+          >
+            Reset layout
+          </Button>
+          {selectedCard && (
+            <DependencyGraphCardSize
+              key={selectedCard.node!.id}
+              item={selectedCard}
+              onApply={(size) =>
+                cardLayout.update(selectedCard.node!.id, {
+                  ...cardLayout.saved[selectedCard.node!.id],
+                  x: selectedCard.x,
+                  y: selectedCard.y,
+                  ...size,
+                })
+              }
+              onReset={() => cardLayout.reset(selectedCard.node!.id)}
+            />
+          )}
+        </div>
+      )}
+      {cardLayout.announcement && (
+        <span role="status" className={styles.visuallyHidden}>
+          {cardLayout.announcement}
+        </span>
+      )}
       {focusNode && (
         <p className={styles.focusContext}>
           {scopeLabels[view.scope]} of <strong>{focusNode.label}</strong> ·{" "}
@@ -983,8 +1125,11 @@ export function DependencyGraph({
                 ref={treeViewport}
                 data-tree-viewport
                 style={{
-                  maxHeight:
-                    Number.isFinite(height) && height > 0 ? height : 480,
+                  maxHeight: fullscreen.active
+                    ? undefined
+                    : Number.isFinite(height) && height > 0
+                      ? height
+                      : 480,
                 }}
               >
                 <DependencyGraphTree
@@ -1044,7 +1189,11 @@ export function DependencyGraph({
                   }
                 }}
                 style={{
-                  height: Number.isFinite(height) && height > 0 ? height : 480,
+                  height: fullscreen.active
+                    ? undefined
+                    : Number.isFinite(height) && height > 0
+                      ? height
+                      : 480,
                 }}
               >
                 <div
@@ -1135,7 +1284,10 @@ export function DependencyGraph({
                         const ids = connection.edges.map((edge) => edge.id);
                         const change = connection.edges[0].change ?? "unknown";
                         const selected = sameEdgeSelection(selection, ids);
-                        const path = roundedConnectionPath(connection.points);
+                        const path = roundedConnectionPath(
+                          connection.points,
+                          connection.compactRoute ? 0 : undefined,
+                        );
                         return (
                           <g
                             key={connection.key}
@@ -1230,6 +1382,13 @@ export function DependencyGraph({
                         <article
                           key={item.key}
                           className={styles.node}
+                          data-graph-fixed-height={
+                            (node &&
+                              normalizedLayouts[node.id]?.height !==
+                                undefined) ||
+                            undefined
+                          }
+                          data-graph-editing={editingCards || undefined}
                           data-change={node?.change}
                           data-node-kind={node?.kind}
                           data-group={!!item.group || undefined}
@@ -1242,10 +1401,26 @@ export function DependencyGraph({
                             left: rem(item.x),
                             top: rem(item.y),
                             width: rem(item.width),
-                            height: node ? undefined : rem(item.height),
+                            height: node
+                              ? normalizedLayouts[node.id]?.height === undefined
+                                ? undefined
+                                : rem(item.height)
+                              : rem(item.height),
                           }}
                         >
                           <div className={styles.cardSummary}>
+                            {editingCards && node && (
+                              <button
+                                type="button"
+                                className={styles.moveHandle}
+                                aria-label={`Move ${label}`}
+                                aria-describedby={`${instanceId}-layout-help`}
+                                data-graph-move={node.id}
+                                {...cardLayout.handleProps(item, "move")}
+                              >
+                                Move
+                              </button>
+                            )}
                             <div className={styles.cardHeading}>
                               <button
                                 type="button"
@@ -1437,6 +1612,26 @@ export function DependencyGraph({
                         </article>
                       );
                     })}
+                    {editingCards &&
+                      items
+                        .filter((item) => item.node)
+                        .map((item) => (
+                          <button
+                            key={`resize:${item.key}`}
+                            type="button"
+                            className={styles.resizeHandle}
+                            aria-label={`Resize ${item.node!.label}`}
+                            aria-describedby={`${instanceId}-layout-help`}
+                            data-graph-resize={item.node!.id}
+                            style={{
+                              left: rem(item.x + item.width),
+                              top: rem(item.y + item.height),
+                            }}
+                            {...cardLayout.handleProps(item, "resize")}
+                          >
+                            <span aria-hidden="true">↘</span>
+                          </button>
+                        ))}
                   </div>
                 </div>
               </div>
@@ -1511,5 +1706,14 @@ export function DependencyGraph({
         )}
       </div>
     </section>
+  );
+  return (
+    <UNSAFE_PortalProvider
+      getContainer={
+        fullscreen.active ? () => root.current : parentPortal.getContainer
+      }
+    >
+      {graph}
+    </UNSAFE_PortalProvider>
   );
 }

@@ -54,7 +54,7 @@
 }
 .identity {
   display: flex;
-  flex: 1 1 140px;
+  flex: 0 1 auto;
   align-items: baseline;
   gap: 8px;
   min-inline-size: 0;
@@ -76,9 +76,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 4px 8px;
-  margin-inline-start: auto;
   min-inline-size: 0;
   max-inline-size: 100%;
 }
@@ -121,9 +120,6 @@
 @container (max-width: 34rem) {
   .row {
     padding-inline-start: min(calc(var(--tree-depth) * 0.75rem), 2.25rem);
-  }
-  .identity {
-    flex-basis: 40px;
   }
   .type {
     display: none;

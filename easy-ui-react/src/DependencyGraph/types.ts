@@ -111,6 +111,22 @@ export type DependencyGraphDetailsContext = {
   edges: readonly DependencyGraphEdge[];
 };
 
+/** Card geometry in graph units (CSS pixels at 100% zoom and a 16px root font). */
+export type DependencyGraphCardLayout = {
+  /** Omit coordinates to retain automatic placement. Group headings reserve space at the canvas edges. */
+  x?: number;
+  y?: number;
+  /** Omit width for responsive sizing. Minimum 192. */
+  width?: number;
+  /** Omit height to grow with content. Minimum 96; fixed-height cards scroll internally. */
+  height?: number;
+};
+
+/** Original resource IDs map to geometry; collapsed group proxies are not editable. */
+export type DependencyGraphCardLayouts = Readonly<
+  Record<string, DependencyGraphCardLayout>
+>;
+
 export type DependencyGraphProps = {
   /** Optional visible heading. Omit it when the surrounding application supplies context. */
   title?: string;
@@ -151,6 +167,12 @@ export type DependencyGraphProps = {
   hiddenEdgeIds?: readonly string[];
   /** Recompute the directed resource order for changed topology with the same resource IDs. */
   layoutRevision?: string | number;
+  /** Show the Edit layout toolbar control. Defaults to true. Geometry still applies when false. */
+  allowLayoutEditing?: boolean;
+  cardLayouts?: DependencyGraphCardLayouts;
+  defaultCardLayouts?: DependencyGraphCardLayouts;
+  /** Committed pointer/keyboard/size/reset changes; applications can persist this map. */
+  onCardLayoutsChange?: (layouts: DependencyGraphCardLayouts) => void;
   /** Coverage of the supplied relationship evidence, not operational impact. */
   coverage?: {
     status: "complete" | "partial" | "unknown";

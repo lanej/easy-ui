@@ -196,6 +196,87 @@ try {
   );
   checks.push("drawer-relationship-inspection-and-folded-endpoint");
 
+  await open("compact-tree");
+  const treeViewport = page.locator("[data-tree-viewport]");
+  const embeddedMaxHeight = await treeViewport.evaluate(
+    (el) => el.style.maxHeight,
+  );
+  await page
+    .getByRole("button", { name: "Enter full screen", exact: true })
+    .click();
+  await page.waitForFunction(() =>
+    document.fullscreenElement?.hasAttribute("data-graph-fullscreen"),
+  );
+  assert.equal(await treeViewport.evaluate((el) => el.style.maxHeight), "");
+  assert(
+    await page.getByRole("region", { name: "Details for api" }).isVisible(),
+  );
+  await page.getByRole("button", { name: /Graph scope/ }).click();
+  await page.getByRole("listbox").waitFor();
+  assert(
+    await page
+      .getByRole("listbox")
+      .evaluate((el) => document.fullscreenElement.contains(el)),
+  );
+  await page
+    .getByRole("option", { name: "All resources", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Graph", exact: true }).click();
+  assert.equal(
+    await page.locator('[data-graph-node="api"]').getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.getByRole("button", { name: "Edit layout", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Card width", exact: true })
+    .fill("360");
+  await page
+    .getByRole("textbox", { name: "Card height", exact: true })
+    .fill("240");
+  await page.getByRole("button", { name: "Apply size", exact: true }).click();
+  const cardWidth = await page
+    .locator('[data-graph-resource-card="api"]')
+    .evaluate((el) => el.style.width);
+  await page.getByRole("button", { name: "Tree", exact: true }).click();
+  assert(
+    await page.getByRole("region", { name: "Details for api" }).isVisible(),
+  );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Reset layout", exact: true })
+      .count(),
+    0,
+  );
+  assert.equal(
+    await page
+      .getByRole("textbox", { name: "Card width", exact: true })
+      .count(),
+    0,
+  );
+  await page.getByRole("button", { name: "Graph", exact: true }).click();
+  assert.equal(
+    await page
+      .locator('[data-graph-resource-card="api"]')
+      .evaluate((el) => el.style.width),
+    cardWidth,
+  );
+  await page.getByRole("button", { name: "Done editing", exact: true }).click();
+  await page.getByRole("button", { name: "Tree", exact: true }).click();
+  checks.push("card-layout-retained-with-editing-hidden-in-tree");
+  await page
+    .getByRole("button", { name: "Exit full screen", exact: true })
+    .click();
+  await page.waitForFunction(
+    () =>
+      !document.fullscreenElement &&
+      !document.querySelector("[data-graph-fullscreen]"),
+  );
+  assert.equal(
+    await treeViewport.evaluate((el) => el.style.maxHeight),
+    embeddedMaxHeight,
+  );
+  checks.push("tree-fullscreen-presentation-switch-and-portals");
+
   await page.getByRole("button", { name: "Collapse all", exact: true }).click();
   await page.getByRole("searchbox", { name: "Find resource" }).fill("api");
   await page
