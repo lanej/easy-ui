@@ -573,21 +573,33 @@ it("clamps a height below the floor to 220px instead of the caller-supplied valu
   expect(canvas.style.height).toBe("220px");
 });
 
-it("switches between fixed and filling height without replacing the map or refitting its camera", async () => {
-  const view = render(<NetworkMap {...props} height={300} />);
-  await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
-  act(() => listeners.load());
-  const instance = constructor.mock.calls[0][0];
-  const fits = fitBounds.mock.calls.length;
-  view.rerender(<NetworkMap {...props} height="fill" />);
-  expect(instance.getContainer().style.height).toBe("100%");
-  expect(constructor).toHaveBeenCalledTimes(1);
-  expect(fitBounds).toHaveBeenCalledTimes(fits);
-  view.rerender(<NetworkMap {...props} height={260} />);
-  expect(instance.getContainer().style.height).toBe("260px");
-  expect(constructor).toHaveBeenCalledTimes(1);
-  expect(fitBounds).toHaveBeenCalledTimes(fits);
-});
+it.each([false, true])(
+  "switches fixed and filling heights without replacing or refitting the map (close-ups: %s)",
+  async (withInsets) => {
+    const zoomSections = withInsets
+      ? [{ id: "origin", title: "Origin", facilityIds: ["one"] }]
+      : undefined;
+    const view = render(
+      <NetworkMap {...props} zoomSections={zoomSections} height={300} />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const instance = constructor.mock.calls[0][0];
+    const fits = fitBounds.mock.calls.length;
+    view.rerender(
+      <NetworkMap {...props} zoomSections={zoomSections} height="fill" />,
+    );
+    expect(instance.getContainer().style.height).toBe("100%");
+    expect(constructor).toHaveBeenCalledTimes(1);
+    expect(fitBounds).toHaveBeenCalledTimes(fits);
+    view.rerender(
+      <NetworkMap {...props} zoomSections={zoomSections} height={260} />,
+    );
+    expect(instance.getContainer().style.height).toBe("260px");
+    expect(constructor).toHaveBeenCalledTimes(1);
+    expect(fitBounds).toHaveBeenCalledTimes(fits);
+  },
+);
 
 it("moves controls without replacing the map, canvas, or camera", async () => {
   const onMapReady = vi.fn();
@@ -2994,21 +3006,28 @@ it("fits the full viewport without reserving space for unopened insets", async (
   );
 });
 
-it("keeps enough viewport height for an on-demand close-up", async () => {
-  const { container } = render(
-    <NetworkMap
-      {...props}
-      height={80}
-      zoomSections={[
-        { id: "empty", title: "Unmapped", facilityIds: ["missing"] },
-      ]}
-    />,
-  );
-  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
-  expect(container.querySelector("[data-map-state] > div")).toHaveStyle({
-    height: "700px",
-  });
-});
+it.each([
+  [80, 220],
+  [300, 300],
+  [560, 560],
+])(
+  "respects a %spx height with close-ups (minimum %spx)",
+  async (height, expected) => {
+    const { container } = render(
+      <NetworkMap
+        {...props}
+        height={height}
+        zoomSections={[
+          { id: "empty", title: "Unmapped", facilityIds: ["missing"] },
+        ]}
+      />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+    expect(container.querySelector("[data-map-state] > div")).toHaveStyle({
+      height: `${expected}px`,
+    });
+  },
+);
 
 it("leaves enough geographic space for labels inside a compact close-up", async () => {
   vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(220);

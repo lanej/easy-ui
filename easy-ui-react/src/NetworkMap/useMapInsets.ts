@@ -14,6 +14,7 @@ export type MapInset = {
 export function crowdedInsetNodes(
   options: NetworkMapProps,
   map: Pick<MapInstance, "project" | "getCenter" | "getContainer">,
+  includeOffscreen = false,
 ) {
   const candidates = new Map<string, MapInset>();
   if (!options.zoomSections?.length) return candidates;
@@ -39,10 +40,11 @@ export function crowdedInsetNodes(
         }))
         .filter(
           ({ point }) =>
-            point.x >= 12 &&
-            point.x <= width - 12 &&
-            point.y >= 12 &&
-            point.y <= height - 12,
+            includeOffscreen ||
+            (point.x >= 12 &&
+              point.x <= width - 12 &&
+              point.y >= 12 &&
+              point.y <= height - 12),
         ) ?? [];
     const remaining = new Set(points.map((point) => point.id));
     for (const start of points) {
@@ -80,11 +82,29 @@ export function crowdedInsetNodes(
   return candidates;
 }
 
+function unclippedGroupKey(
+  options: NetworkMapProps,
+  map: MapInstance,
+  inset: MapInset,
+) {
+  return crowdedInsetNodes(
+    {
+      ...options,
+      zoomSections: options.zoomSections?.filter(
+        (section) => section.id === inset.sectionId,
+      ),
+    },
+    map,
+    true,
+  ).get(inset.anchorId)?.key;
+}
+
 export function useMapInsets(options: NetworkMapProps) {
   const latest = useRef(options);
   latest.current = options;
   const available = useRef(new Map<string, MapInset>());
   const activeRef = useRef<MapInset | null>(null);
+  const activeUnclippedKey = useRef<string | undefined>(undefined);
   const generation = useRef(0);
   const map = useRef<MapInstance | null>(null);
   const [active, setActive] = useState<MapInset | null>(null);
@@ -94,15 +114,17 @@ export function useMapInsets(options: NetworkMapProps) {
     if (!activeRef.current) return;
     const anchor = activeRef.current.anchorId;
     activeRef.current = null;
+    activeUnclippedKey.current = undefined;
     setActive(null);
     if (returnFocus && anchor) {
-      const target =
-        [
-          ...(map.current
-            ?.getContainer()
-            .querySelectorAll<HTMLElement>("[data-map-facility-id]") ?? []),
-        ].find((node) => node.dataset.mapFacilityId === anchor) ??
-        map.current?.getCanvas?.();
+      const target = available.current.has(anchor)
+        ? ([
+            ...(map.current
+              ?.getContainer()
+              .querySelectorAll<HTMLElement>("[data-map-facility-id]") ?? []),
+          ].find((node) => node.dataset.mapFacilityId === anchor) ??
+          map.current?.getCanvas?.())
+        : map.current?.getCanvas?.();
       target?.focus({ preventScroll: true });
     }
   }, []);
@@ -112,7 +134,15 @@ export function useMapInsets(options: NetworkMapProps) {
       const next = crowdedInsetNodes(latest.current, instance);
       available.current = next;
       const current = activeRef.current;
-      if (current && next.get(current.anchorId)?.key !== current.key) close();
+      if (current) {
+        // A shorter frame can clip a group without changing its geometry.
+        // Keep that requested close-up; camera movement closes it separately.
+        if (
+          unclippedGroupKey(latest.current, instance, current) !==
+          activeUnclippedKey.current
+        )
+          close();
+      }
       return next;
     },
     [close],
@@ -125,6 +155,9 @@ export function useMapInsets(options: NetworkMapProps) {
         close();
         return false;
       }
+      activeUnclippedKey.current = map.current
+        ? unclippedGroupKey(latest.current, map.current, next)
+        : undefined;
       activeRef.current = next;
       setActive(next);
       return true;

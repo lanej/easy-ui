@@ -111,6 +111,8 @@ export function JourneyZoomExample({
   emptySection = false,
   clustered = false,
   sectionHeight,
+  height,
+  parentHeight,
   weighted = false,
   surfaceMetrics = false,
 }: {
@@ -122,6 +124,8 @@ export function JourneyZoomExample({
   emptySection?: boolean;
   clustered?: boolean;
   sectionHeight?: number;
+  height?: NetworkMapProps["height"];
+  parentHeight?: number;
   weighted?: boolean;
   surfaceMetrics?: boolean;
 }) {
@@ -172,7 +176,12 @@ export function JourneyZoomExample({
     <div
       className={styles.example}
       data-journey-zoom-example
-      style={{ maxWidth: narrow ? 540 : 1120 }}
+      style={{
+        maxWidth: narrow ? 540 : 1120,
+        height: parentHeight,
+        display: parentHeight ? "flex" : undefined,
+        flexDirection: parentHeight ? "column" : undefined,
+      }}
     >
       {(title || description) && (
         <div className={styles.exampleHeader} data-journey-heading>
@@ -228,7 +237,7 @@ export function JourneyZoomExample({
         latestFacilityId="dbn"
         primaryFacilityIds={["oak", "slc", "chi", "dtw"]}
         clusterFacilities={clustered ? { radius: 50, maxZoom: 8 } : undefined}
-        height={largeText ? 780 : 700}
+        height={height ?? (largeText ? 780 : 700)}
         controls={{ risk: false, latestEvent: false, selectedSegment: false }}
         controlLabels={{
           fitAll: "Entire journey",
@@ -255,6 +264,30 @@ export function JourneyZoomExample({
         }
       />
     </div>
+  );
+}
+
+export function JourneySizingExample() {
+  const [size, setSize] = useState("300");
+  return (
+    <>
+      <div className={styles.example} style={{ maxWidth: 360 }}>
+        <Select
+          label="Map height"
+          selectedKey={size}
+          onSelectionChange={(key) => setSize(String(key))}
+        >
+          <Select.Option key="300">300px</Select.Option>
+          <Select.Option key="500">500px</Select.Option>
+          <Select.Option key="700">700px</Select.Option>
+          <Select.Option key="fill">Fill a 600px parent</Select.Option>
+        </Select>
+      </div>
+      <JourneyZoomExample
+        height={size === "fill" ? "fill" : Number(size)}
+        parentHeight={size === "fill" ? 600 : undefined}
+      />
+    </>
   );
 }
 

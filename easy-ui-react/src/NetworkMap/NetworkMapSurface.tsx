@@ -1395,10 +1395,7 @@ function NetworkMapSurfaceView() {
         ref={container}
         className={styles.canvas}
         style={{
-          height:
-            height === "fill"
-              ? "100%"
-              : Math.max(options.zoomSections?.length ? 700 : 220, height),
+          height: height === "fill" ? "100%" : Math.max(220, height),
         }}
       />
       {featureInspection && hasOverlayContent && (

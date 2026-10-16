@@ -180,6 +180,12 @@ Insets share selection and metrics and omit inspection cards. Use
 `NetworkMapViewport` and `NetworkMapZoomSections` from the same subpath for custom
 compositions. See [journey close-ups](https://lanej.io/easy-ui/storybook/?path=/story/components-networkmap--zoomed-journey).
 
+Map width follows its container. Set numeric `height` for the geographic surface,
+or `height="fill"` inside a parent with a defined height; both keep a 220px surface
+minimum, including with `zoomSections`. Close-ups fit the available space and
+show a compact selectable stop list when an inset map cannot fit. **Zoom to area**
+remains available unless `controls={false}`. See [journey sizing](https://lanej.io/easy-ui/storybook/?path=/story/components-networkmap--journey-sizing).
+
 Use `primaryFacilityIds` to prioritize route labels and style rendered marker
 buttons through `data-primary="true|false"`. Included IDs are primary even when
 shared by routes; an empty array marks all false, while omitting or clearing

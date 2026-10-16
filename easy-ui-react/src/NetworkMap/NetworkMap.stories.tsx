@@ -12,7 +12,10 @@ import { NetworkMap } from "./NetworkMap";
 import type { MapFacility, MapSegment, NetworkMapProps } from "./types";
 import styles from "./examples.module.scss";
 import { NetworkMapExample } from "./NetworkMap.examples";
-import { JourneyZoomExample } from "./NetworkMapZoomSections.examples";
+import {
+  JourneySizingExample,
+  JourneyZoomExample,
+} from "./NetworkMapZoomSections.examples";
 import {
   CellChartExample,
   inspectionObservations,
@@ -37,6 +40,9 @@ export const ParcelJourney: Story = {
 };
 export const ZoomedJourney: Story = {
   render: () => <JourneyZoomExample />,
+};
+export const JourneySizing: Story = {
+  render: () => <JourneySizingExample />,
 };
 export const ZoomedJourneyNarrow: Story = {
   render: () => <JourneyZoomExample narrow />,

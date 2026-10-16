@@ -11,7 +11,7 @@
   inline-size: 340px;
   max-inline-size: calc(100% - 24px);
   min-inline-size: 0;
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid design-token("color.neutral.300");
   border-radius: 8px;
   box-shadow: 0 3px 14px #10274333;
@@ -23,6 +23,22 @@
   min-inline-size: 0;
   max-block-size: 76px;
   overflow: auto;
+}
+.compactLocations {
+  margin: 0;
+  padding: 0 10px 8px;
+  list-style: none;
+  button {
+    max-inline-size: 100%;
+    padding: 2px 0;
+    font-size: var(--ezui-viz-control-size, 14px);
+    text-align: start;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    &[aria-pressed="true"] {
+      font-weight: 600;
+    }
+  }
 }
 .actions {
   display: flex;
