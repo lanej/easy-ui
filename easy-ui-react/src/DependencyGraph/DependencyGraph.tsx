@@ -1,10 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useId } from "react-aria";
+import {
+  useId,
+  UNSAFE_PortalProvider,
+  useUNSAFE_PortalContext,
+} from "react-aria";
 import { Button } from "../Button";
 import { ExpandButton } from "../ExpandButton";
 import { CollapseButton } from "../CollapseButton";
 import { DependencyGraphIdentity } from "./DependencyGraphIdentity";
 import { useDependencyGraphHeadings } from "./useDependencyGraphHeadings";
+import { useDependencyGraphFullscreen } from "./useDependencyGraphFullscreen";
+import { DependencyGraphFullscreenControl } from "./DependencyGraphFullscreenControl";
 import { dependencyGraphCategoryLabels } from "./DependencyGraphCategories";
 import { DependencyGraphConvergence } from "./DependencyGraphConvergence";
 import { Select } from "../Select";
@@ -130,6 +136,9 @@ export function DependencyGraph({
     ReadonlyMap<string, number>
   >(() => new Map());
   const [zoom, setZoom] = useState(1);
+  const root = useRef<HTMLElement>(null);
+  const fullscreen = useDependencyGraphFullscreen(root);
+  const parentPortal = useUNSAFE_PortalContext();
   const viewport = useRef<HTMLDivElement>(null);
   const [canvasWidth, setCanvasWidth] = useState<number | null>(null);
   const firstFit = useRef(false);
@@ -222,18 +231,7 @@ export function DependencyGraph({
           !stops.has(edge.source)),
     );
   }, [nodes, edges, branches, collapsedNodes]);
-  useEffect(() => {
-    const element = viewport.current;
-    if (!element || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => {
-      const unit =
-        (parseFloat(getComputedStyle(document.documentElement).fontSize) ||
-          16) / 16;
-      setCanvasWidth(Math.floor(element.clientWidth / unit));
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [status, duplicate, projectedNodes.length]);
+
   const expandedWidth = useMemo(
     () =>
       currentLayout.order && canvasWidth !== null
@@ -301,6 +299,18 @@ export function DependencyGraph({
     .filter((item) => item.node)
     .map((item) => item.node!.id)
     .join("\0");
+  useEffect(() => {
+    const element = viewport.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      const unit =
+        (parseFloat(getComputedStyle(document.documentElement).fontSize) ||
+          16) / 16;
+      setCanvasWidth(Math.floor(element.clientWidth / unit));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [status, duplicate, items.length]);
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
     const measurePorts = () => {
@@ -624,10 +634,12 @@ export function DependencyGraph({
             ),
         );
 
-  return (
+  const graph = (
     <section
+      ref={root}
       className={styles.root}
       data-dependency-graph
+      data-graph-fullscreen={fullscreen.active || undefined}
       data-graph-density={density}
       style={{ "--dependency-graph-zoom": zoom } as React.CSSProperties}
       aria-label={accessibilityLabel || title || "Resource dependencies"}
@@ -754,8 +766,15 @@ export function DependencyGraph({
           >
             Fit visible
           </Button>
+          {fullscreen.available && (
+            <DependencyGraphFullscreenControl
+              active={fullscreen.active}
+              onPress={fullscreen.toggle}
+            />
+          )}
         </div>
       </div>
+      {fullscreen.error && <p role="alert">{fullscreen.error}</p>}
       {focusNode && (
         <p className={styles.focusContext}>
           {scopeLabels[view.scope]} of <strong>{focusNode.label}</strong> ·{" "}
@@ -841,7 +860,11 @@ export function DependencyGraph({
                   }
                 }}
                 style={{
-                  height: Number.isFinite(height) && height > 0 ? height : 480,
+                  height: fullscreen.active
+                    ? undefined
+                    : Number.isFinite(height) && height > 0
+                      ? height
+                      : 480,
                 }}
               >
                 <div
@@ -1287,5 +1310,14 @@ export function DependencyGraph({
         )}
       </div>
     </section>
+  );
+  return (
+    <UNSAFE_PortalProvider
+      getContainer={
+        fullscreen.active ? () => root.current : parentPortal.getContainer
+      }
+    >
+      {graph}
+    </UNSAFE_PortalProvider>
   );
 }

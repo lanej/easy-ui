@@ -127,6 +127,20 @@ export const ResponsiveResourceCard: Story = {
     height: 320,
   },
 };
+export const FullscreenInspection: Story = {
+  args: {
+    ...ResponsiveResourceCard.args,
+    title: "Resource dependencies",
+    showDetails: true,
+    defaultSelection: { type: "node", id: "application-user" },
+  },
+  render: (args) => (
+    <div style={{ maxWidth: 900, margin: "auto" }}>
+      <p>Inspect resources here or open the graph in full screen.</p>
+      <DependencyGraph {...args} />
+    </div>
+  ),
+};
 export const WideAttributeInspection: Story = {
   args: {
     title: undefined,
