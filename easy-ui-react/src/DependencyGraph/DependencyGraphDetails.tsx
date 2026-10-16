@@ -22,6 +22,7 @@ export type DependencyGraphDetailsProps = {
   selection: DependencyGraphSelection;
   onSelectionChange: (selection: DependencyGraphSelection) => void;
   renderDetails?: DependencyGraphProps["renderDetails"];
+  renderDetailsMode?: DependencyGraphProps["renderDetailsMode"];
   renderAttributeAnnotation?: DependencyGraphProps["renderAttributeAnnotation"];
   defaultChangePresentation?: DependencyGraphChangePresentation;
   /** Inline details fill their row without a separate scrolling sidebar. */
@@ -146,6 +147,8 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
           <p role="status">
             The selected record is unavailable in the supplied graph.
           </p>
+        ) : props.renderDetailsMode === "replace" && renderDetails ? (
+          <div>{renderDetails(context)}</div>
         ) : (
           <div className={styles.detailContent}>
             <div className={styles.detailPrimary}>

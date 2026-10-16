@@ -198,6 +198,8 @@ export type DependencyGraphProps = {
     node: DependencyGraphNode,
     change: DependencyGraphPropertyChange,
   ) => ReactNode;
-  /** Additional evidence/diff content below the standard selection details. */
+  /** Replace the entire detail body while retaining native heading and close controls. Defaults to append. */
+  renderDetailsMode?: "append" | "replace";
+  /** Application content appended to the standard details, or replacing their body in replace mode. */
   renderDetails?: (context: DependencyGraphDetailsContext) => ReactNode;
 };

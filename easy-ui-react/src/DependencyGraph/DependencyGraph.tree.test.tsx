@@ -540,3 +540,52 @@ it("retains relationship inspection with an empty scope or no available endpoint
     screen.getByRole("region", { name: "Details for Relationship" }),
   ).toHaveTextContent("Endpoint unavailable");
 });
+
+it("replaces the whole inline body without losing close controls", () => {
+  const onSelectionChange = vi.fn();
+  const { rerender } = render(
+    <DependencyGraph
+      nodes={nodes}
+      edges={edges}
+      groups={groups}
+      presentation="tree"
+      selection={{ type: "node", id: "api" }}
+      onSelectionChange={onSelectionChange}
+      renderDetailsMode="replace"
+      renderDetails={() => <p>Application details</p>}
+    />,
+  );
+  const details = screen.getByRole("region", { name: "Details for api" });
+  expect(details).toHaveTextContent("Application details");
+  expect(within(details).queryByText(/Connected relationships/)).toBeNull();
+  expect(within(details).queryByText(/Record ID/)).toBeNull();
+  fireEvent.click(
+    within(details).getByRole("button", { name: "Close details for api" }),
+  );
+  expect(onSelectionChange).toHaveBeenLastCalledWith(null);
+  rerender(
+    <DependencyGraph
+      nodes={nodes}
+      edges={edges}
+      groups={groups}
+      presentation="tree"
+      selection={{ type: "node", id: "api" }}
+      renderDetailsMode="replace"
+    />,
+  );
+  expect(screen.getByText(/Connected relationships/)).toBeVisible();
+});
+
+it("appends custom details by default", () => {
+  render(
+    <DependencyGraph
+      nodes={nodes}
+      edges={edges}
+      presentation="tree"
+      selection={{ type: "node", id: "api" }}
+      renderDetails={() => <p>Application details</p>}
+    />,
+  );
+  expect(screen.getByText("Application details")).toBeVisible();
+  expect(screen.getByText(/Connected relationships/)).toBeVisible();
+});

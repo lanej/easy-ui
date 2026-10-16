@@ -25,6 +25,7 @@ type Props = Pick<
   | "renderNodeAnnotation"
   | "renderAttributeAnnotation"
   | "renderDetails"
+  | "renderDetailsMode"
   | "nodes"
   | "edges"
   | "groups"
@@ -60,6 +61,7 @@ export function DependencyGraphTree({
   renderNodeAnnotation,
   renderAttributeAnnotation,
   renderDetails,
+  renderDetailsMode,
   nodes,
   edges,
   groups,
@@ -156,6 +158,7 @@ export function DependencyGraphTree({
         !!ownerKey && ownerKey === resourceKey && visibleKeys.has(ownerKey)
       }
       renderDetails={renderDetails}
+      renderDetailsMode={renderDetailsMode}
       renderAttributeAnnotation={renderAttributeAnnotation}
       defaultChangePresentation={defaultChangePresentation}
     />

@@ -125,6 +125,7 @@ export function DependencyGraph({
   renderNodeAnnotation,
   renderAttributeAnnotation,
   renderDetails,
+  renderDetailsMode,
 }: DependencyGraphProps) {
   const [localSelection, setLocalSelection] = useState(defaultSelection);
   const [localPresentation, setLocalPresentation] =
@@ -1151,6 +1152,7 @@ export function DependencyGraph({
                   groups={groups}
                   showDetails={showDetails}
                   renderDetails={renderDetails}
+                  renderDetailsMode={renderDetailsMode}
                   defaultChangePresentation={defaultChangePresentation}
                 />
               </div>
@@ -1667,6 +1669,7 @@ export function DependencyGraph({
                   next?.type === "node" ? showNode(next.id) : select(next)
                 }
                 renderDetails={renderDetails}
+                renderDetailsMode={renderDetailsMode}
                 renderAttributeAnnotation={renderAttributeAnnotation}
                 defaultChangePresentation={defaultChangePresentation}
                 placement="inline"
@@ -1698,6 +1701,7 @@ export function DependencyGraph({
             selection={selection}
             onSelectionChange={select}
             renderDetails={renderDetails}
+            renderDetailsMode={renderDetailsMode}
             renderAttributeAnnotation={renderAttributeAnnotation}
             defaultChangePresentation={defaultChangePresentation}
             expanded={detailsExpanded}
