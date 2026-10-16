@@ -97,7 +97,7 @@ try {
         0,
       );
       assert.equal(
-        await page.locator("[data-graph-attribute-controls]").count(),
+        await page.locator("[data-graph-attribute-controls] button").count(),
         1,
       );
       const categoryPills = cards.locator("[data-graph-category]");
@@ -122,7 +122,8 @@ try {
             .getBoundingClientRect();
           return {
             inside: box.left >= card.left && box.right <= card.right + 1,
-            belowIdentity: box.top >= identity.bottom - 1,
+            clearOfIdentity:
+              box.top >= identity.bottom - 1 || box.left >= identity.right,
             radius: parseFloat(getComputedStyle(pill).borderRadius),
           };
         }),
@@ -130,8 +131,8 @@ try {
       for (const pill of categories) {
         assert.ok(pill.inside, `${name}: category stays inside the card`);
         assert.ok(
-          pill.belowIdentity,
-          `${name}: category does not compete with identity`,
+          pill.clearOfIdentity,
+          `${name}: category does not overlap identity`,
         );
         assert.ok(pill.radius >= 999, `${name}: category has pill geometry`);
       }
@@ -218,20 +219,27 @@ try {
         '[data-graph-resource-card="google_sql_user.pipeline"] [data-graph-node]',
       );
       const identity = await select.evaluate((button) => {
-        const primary = button.querySelector("strong").getBoundingClientRect();
-        const type = [...button.querySelectorAll("span")]
+        const label = button.querySelector("strong");
+        const primary = label.getBoundingClientRect();
+        const card = button.closest("[data-graph-resource-card]");
+        const type = [...card.querySelectorAll("span")]
           .find((span) => span.textContent === "google_sql_user")
           .getBoundingClientRect();
         return {
           primaryWidth: primary.width,
-          buttonWidth: button.getBoundingClientRect().width,
+          labelClipped: label.scrollWidth > label.clientWidth,
+          contained:
+            primary.left >= button.getBoundingClientRect().left &&
+            primary.right <= button.getBoundingClientRect().right,
           typeTop: type.top,
           primaryBottom: primary.bottom,
         };
       });
       assert.ok(
-        identity.primaryWidth >= identity.buttonWidth - 16,
-        `${name}: primary identity owns the row`,
+        identity.primaryWidth > 0 &&
+          !identity.labelClipped &&
+          identity.contained,
+        `${name}: short resource name remains fully readable`,
       );
       assert.ok(
         identity.typeTop >= identity.primaryBottom - 1,
@@ -366,11 +374,9 @@ try {
         0,
       );
       if (width !== 320)
-        await page
-          .locator("[data-dependency-graph]")
-          .screenshot({
-            path: resolve(output, `category-colors-${theme}-${width}.png`),
-          });
+        await page.locator("[data-dependency-graph]").screenshot({
+          path: resolve(output, `category-colors-${theme}-${width}.png`),
+        });
       await page
         .getByRole("searchbox", { name: "Find resource" })
         .fill("Source modified");

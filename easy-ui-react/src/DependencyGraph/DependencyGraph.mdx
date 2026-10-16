@@ -165,7 +165,28 @@ Resource annotations remain visible when attribute differences are collapsed. At
 
 The application owns assessments and their evidence. A change operation, a reachable dependency, or missing risk data does not establish risk or safety. This extension supports future analysis that combines planned changes with runtime relationships, including affected resources that have no planned changes. No risk engine, severity thresholds, or synthetic scores are built into the graph.
 
-The following example uses illustrative caller-supplied findings. High risk is attached to the API's `env.DATABASE_URL` attribute block. Medium risk is attached to the unchanged worker's resource block. Expand Supporting evidence in either annotation to inspect its rationale in place; unannotated resources are not implicitly low risk.
+Set `node.appearance.background` and `node.appearance.borderColor` independently
+to emphasize a resource card or its tree row. Both accept Easy UI theme color
+tokens, such as `warning.050` and `warning.600`, and follow the active theme.
+Selection and keyboard focus keep their own indicators; an explicit border color
+remains visible when selected. Omitted colors use the normal appearance.
+Choose readable background tokens and pair meaningful colors with a category or
+`renderNodeAnnotation` so the finding is available without relying on color.
+The caller decides when a finding warrants emphasis, including promotion of an
+attribute finding to its resource. No colors are inferred from severity or
+resource operations.
+
+```tsx
+{
+  id: "worker",
+  label: "Background worker",
+  change: "unchanged",
+  appearance: { background: "warning.050", borderColor: "warning.600" },
+  categories: [{ label: "Medium risk", variant: "warning" }],
+}
+```
+
+The following example uses illustrative caller-supplied findings. High risk is attached to the API's `env.DATABASE_URL` attribute block, with an explicitly supplied red card outline. Medium risk is attached to the unchanged worker's resource block, with an amber background and outline. Expand Supporting evidence in either annotation to inspect its rationale in place; unannotated resources are not implicitly low risk.
 
 <Canvas of={Stories.RiskAnnotations} />
 
@@ -180,6 +201,10 @@ Each resource with dependents has a **−** control to fold its outgoing branch.
 Control this independently with `collapsedNodeIds`, `defaultCollapsedNodeIds`, and `onCollapsedNodeIdsChange`. Branch folding preserves resource order; it does not alter the caller's nodes, edges, or selection.
 
 Pass `icon` and `iconLabel` on a node to identify its type. `icon` accepts the standard Easy UI `IconSymbol`, including a custom SVG component. The label becomes part of the resource button's accessible name. Icons are caller-owned; Easy UI does not infer type from a resource ID. The icon package provides Database, Storage, Hub (network), Key (authentication), and Shield (authorization).
+
+Resource headers place the name and status together, with the type and attribute
+toggle on the next row. Metadata wraps when space is limited; long resource names
+retain their distinguishing suffix.
 
 <Canvas of={Stories.CollapsibleBranches} />
 

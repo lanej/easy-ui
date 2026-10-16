@@ -43,10 +43,9 @@ export function DependencyGraphIdentity({
   node: DependencyGraphNode;
   overview: boolean;
 }) {
-  const summary = node.changeSummary ?? node.description;
   return (
-    <>
-      <span className={styles.nodeTop}>
+    <span className={styles.nodeTop}>
+      <span className={styles.nodeName}>
         {node.icon && (
           <span className={styles.resourceIcon}>
             <Icon symbol={node.icon} size="sm" />
@@ -60,11 +59,6 @@ export function DependencyGraphIdentity({
           <ResourceLabel label={node.label} />
         </strong>
       </span>
-      {node.typeLabel && (
-        <span className={styles.nodeType} title={node.typeLabel}>
-          {node.typeLabel}
-        </span>
-      )}
       {(dependencyGraphCategoryLabels(node.categories).length > 0 ||
         node.kind === "unresolved" ||
         node.change) && (
@@ -88,11 +82,6 @@ export function DependencyGraphIdentity({
           <DependencyGraphCategories categories={node.categories} />
         </span>
       )}
-      {summary && node.kind !== "unresolved" && (
-        <span className={styles.nodeDescription} title={summary}>
-          {summary}
-        </span>
-      )}
-    </>
+    </span>
   );
 }

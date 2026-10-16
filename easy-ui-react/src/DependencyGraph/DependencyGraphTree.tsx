@@ -8,6 +8,7 @@ import {
 } from "react-aria-components";
 import { Icon } from "../Icon";
 import { DependencyGraphChanges } from "./DependencyGraphChanges";
+import { dependencyGraphAppearanceStyle } from "./appearance";
 import { DependencyGraphDetails } from "./DependencyGraphDetails";
 import {
   DependencyGraphCategories,
@@ -241,8 +242,12 @@ export function DependencyGraphTree({
         aria-label={accessibleName}
         aria-describedby={hasAnnotation ? annotationId : undefined}
         className={styles.item}
+        data-custom-outline={!!node?.appearance?.borderColor || undefined}
         style={({ level }) =>
-          ({ "--tree-depth": level - 1 }) as React.CSSProperties
+          ({
+            ...dependencyGraphAppearanceStyle(node?.appearance),
+            "--tree-depth": level - 1,
+          }) as React.CSSProperties
         }
         data-tree-node={reference ? undefined : node?.id}
         data-tree-group={group?.id}

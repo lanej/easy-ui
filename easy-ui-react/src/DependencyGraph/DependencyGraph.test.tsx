@@ -21,6 +21,86 @@ beforeAll(() => {
 });
 
 describe("DependencyGraph interaction contract", () => {
+  it.each(["graph", "tree"] as const)(
+    "updates caller appearance without changing selection or operations in %s view",
+    (presentation) => {
+      const resource = {
+        id: "worker",
+        label: "Worker",
+        change: "unchanged" as const,
+      };
+      const props = { edges: [], presentation, showDetails: false };
+      const { container, rerender } = render(
+        <DependencyGraph
+          {...props}
+          nodes={[
+            {
+              ...resource,
+              appearance: {
+                background: "warning.050",
+                borderColor: "warning.600",
+              },
+            },
+            { id: "other", label: "Other" },
+          ]}
+          renderNodeAnnotation={() => <span>Medium risk</span>}
+        />,
+      );
+      const control = () =>
+        screen.getByRole(presentation === "graph" ? "button" : "row", {
+          name: "Worker, Unchanged",
+        });
+      fireEvent.click(control());
+      const surface = () =>
+        container.querySelector<HTMLElement>(
+          presentation === "graph"
+            ? '[data-graph-resource-card="worker"]'
+            : '[data-tree-node="worker"]',
+        )!;
+      const background = "--ezui-c-dependency-graph-node-background";
+      const border = "--ezui-c-dependency-graph-node-border";
+      expect(surface().style.getPropertyValue(background)).toBe(
+        "var(--ezui-color-warning-050)",
+      );
+      expect(surface().style.getPropertyValue(border)).toBe(
+        "var(--ezui-color-warning-600)",
+      );
+      expect(within(surface()).getByText("Medium risk")).toBeVisible();
+      if (presentation === "graph")
+        expect(control()).toHaveAccessibleDescription("Medium risk");
+      rerender(
+        <DependencyGraph
+          {...props}
+          nodes={[
+            { ...resource, appearance: { background: "negative.050" } },
+            { id: "other", label: "Other" },
+          ]}
+        />,
+      );
+      expect(surface().style.getPropertyValue(background)).toBe(
+        "var(--ezui-color-negative-050)",
+      );
+      expect(surface().style.getPropertyValue(border)).toBe("");
+      expect(surface()).toHaveAttribute("data-selected");
+      expect(control()).toHaveAccessibleName("Worker, Unchanged");
+      expect(control()).not.toHaveAttribute("aria-describedby");
+      rerender(
+        <DependencyGraph
+          {...props}
+          nodes={[resource, { id: "other", label: "Other" }]}
+        />,
+      );
+      expect(surface().style.getPropertyValue(background)).toBe("");
+      expect(surface()).toHaveAttribute("data-selected");
+      const other = container.querySelector<HTMLElement>(
+        presentation === "graph"
+          ? '[data-graph-resource-card="other"]'
+          : '[data-tree-node="other"]',
+      )!;
+      expect(other.style.getPropertyValue(background)).toBe("");
+      expect(other.style.getPropertyValue(border)).toBe("");
+    },
+  );
   it("embeds without a heading and keeps the graph named", () => {
     const { container, rerender } = render(
       <DependencyGraph nodes={nodes} edges={edges} showDetails={false} />,

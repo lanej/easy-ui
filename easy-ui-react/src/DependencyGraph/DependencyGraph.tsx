@@ -8,6 +8,7 @@ import { Button } from "../Button";
 import { ExpandButton } from "../ExpandButton";
 import { CollapseButton } from "../CollapseButton";
 import { DependencyGraphIdentity } from "./DependencyGraphIdentity";
+import { dependencyGraphAppearanceStyle } from "./appearance";
 import { useDependencyGraphHeadings } from "./useDependencyGraphHeadings";
 import { useDependencyGraphFullscreen } from "./useDependencyGraphFullscreen";
 import { DependencyGraphFullscreenControl } from "./DependencyGraphFullscreenControl";
@@ -1400,6 +1401,7 @@ export function DependencyGraph({
                           data-graph-resource-card={node?.id}
                           data-graph-layout-height={item.height}
                           style={{
+                            ...dependencyGraphAppearanceStyle(node?.appearance),
                             left: rem(item.x),
                             top: rem(item.y),
                             width: rem(item.width),
@@ -1516,6 +1518,78 @@ export function DependencyGraph({
                                 </span>
                               )}
                             </div>
+                            {node &&
+                              (node.typeLabel ||
+                                hasDependencyGraphChanges(node)) && (
+                                <div
+                                  className={styles.cardControls}
+                                  data-graph-attribute-controls
+                                >
+                                  {node.typeLabel && (
+                                    <span
+                                      className={styles.nodeType}
+                                      title={node.typeLabel}
+                                    >
+                                      {node.typeLabel}
+                                    </span>
+                                  )}
+                                  {hasDependencyGraphChanges(node) && (
+                                    <span className={styles.controlPair}>
+                                      <ExpandButton
+                                        accessibilityLabel={`${diffShown ? "Hide" : "Show"} attribute differences for ${label}`}
+                                        expanded={diffShown}
+                                        aria-controls={`${instanceId}-diff-${items.indexOf(item)}`}
+                                        onPress={(event) => {
+                                          const reveal =
+                                            !diffShown && zoom < 1
+                                              ? event.target.closest<HTMLElement>(
+                                                  "[data-graph-resource-card]",
+                                                )
+                                              : null;
+                                          if (!diffShown && zoom < 1)
+                                            setZoom(1);
+                                          changeExpandedChanges(
+                                            diffShown
+                                              ? expandedChanges.filter(
+                                                  (id) => id !== node.id,
+                                                )
+                                              : expandedChanges.includes(
+                                                    node.id,
+                                                  )
+                                                ? expandedChanges
+                                                : [...expandedChanges, node.id],
+                                          );
+                                          if (reveal)
+                                            requestAnimationFrame(() =>
+                                              requestAnimationFrame(() => {
+                                                if (reveal.isConnected)
+                                                  reveal.scrollIntoView({
+                                                    block: "nearest",
+                                                    inline: "nearest",
+                                                  });
+                                              }),
+                                            );
+                                        }}
+                                      />
+                                      <span className={styles.controlCaption}>
+                                        {node.changes?.length
+                                          ? `${node.changes.length} ${node.changes.length === 1 ? "field" : "fields"}`
+                                          : "Changes"}
+                                      </span>
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            {node &&
+                              cardDescription &&
+                              node.kind !== "unresolved" && (
+                                <span
+                                  className={styles.nodeDescription}
+                                  title={cardDescription}
+                                >
+                                  {cardDescription}
+                                </span>
+                              )}
                             {hasAnnotation && (
                               <div
                                 id={annotationId}
@@ -1523,55 +1597,6 @@ export function DependencyGraph({
                                 data-graph-node-annotation
                               >
                                 {annotation}
-                              </div>
-                            )}
-                            {node && hasDependencyGraphChanges(node) && (
-                              <div
-                                className={styles.cardControls}
-                                data-graph-attribute-controls
-                              >
-                                {hasDependencyGraphChanges(node) && (
-                                  <span className={styles.controlPair}>
-                                    <ExpandButton
-                                      accessibilityLabel={`${diffShown ? "Hide" : "Show"} attribute differences for ${label}`}
-                                      expanded={diffShown}
-                                      aria-controls={`${instanceId}-diff-${items.indexOf(item)}`}
-                                      onPress={(event) => {
-                                        const reveal =
-                                          !diffShown && zoom < 1
-                                            ? event.target.closest<HTMLElement>(
-                                                "[data-graph-resource-card]",
-                                              )
-                                            : null;
-                                        if (!diffShown && zoom < 1) setZoom(1);
-                                        changeExpandedChanges(
-                                          diffShown
-                                            ? expandedChanges.filter(
-                                                (id) => id !== node.id,
-                                              )
-                                            : expandedChanges.includes(node.id)
-                                              ? expandedChanges
-                                              : [...expandedChanges, node.id],
-                                        );
-                                        if (reveal)
-                                          requestAnimationFrame(() =>
-                                            requestAnimationFrame(() => {
-                                              if (reveal.isConnected)
-                                                reveal.scrollIntoView({
-                                                  block: "nearest",
-                                                  inline: "nearest",
-                                                });
-                                            }),
-                                          );
-                                      }}
-                                    />
-                                    <span className={styles.controlCaption}>
-                                      {node.changes?.length
-                                        ? `${node.changes.length} ${node.changes.length === 1 ? "field" : "fields"}`
-                                        : "Changes"}
-                                    </span>
-                                  </span>
-                                )}
                               </div>
                             )}
                           </div>

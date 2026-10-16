@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { BadgeVariant } from "../Badge/Badge";
-import type { IconSymbol } from "../types";
+import type { IconSymbol, ThemeTokenNamespace } from "../types";
 
 export type DependencyGraphChange =
   "create" | "update" | "replace" | "delete" | "unchanged" | "unknown";
@@ -28,6 +28,14 @@ export type DependencyGraphCategory = {
   readonly variant?: "neutral" | BadgeVariant;
 };
 
+/** Caller-owned emphasis, independent of resource operations and risk assessment. */
+export type DependencyGraphNodeAppearance = {
+  /** Theme color for the resource card and tree row background. */
+  background?: ThemeTokenNamespace<"color">;
+  /** Theme color for the resource outline. Selection and focus retain their own indicators. */
+  borderColor?: ThemeTokenNamespace<"color">;
+};
+
 export type DependencyGraphNode = {
   id: string;
   label: string;
@@ -41,6 +49,8 @@ export type DependencyGraphNode = {
   description?: string;
   /** Caller-owned category labels and optional theme variants. Never interpreted as plan actions or risk. */
   categories?: readonly DependencyGraphCategory[];
+  /** Optional visual emphasis. Pair meaningful colors with a category or node annotation. */
+  appearance?: DependencyGraphNodeAppearance;
   /** Caller-supplied resource type symbol, using Easy UI's normal Icon contract. */
   icon?: IconSymbol;
   /** Accessible resource type label, such as Database or Authentication. */
