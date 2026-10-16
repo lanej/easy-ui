@@ -215,6 +215,7 @@ export function routeDependencyConnections(
   ports: ReadonlyMap<string, number> = new Map(),
   headings: RoutingObstacle[] = [],
   zoom = 1,
+  manualLayout = false,
 ) {
   const records = new Map(items.map((item) => [item.key, item]));
   const clearance = Math.max(12, 10 / zoom);
@@ -336,13 +337,21 @@ export function routeDependencyConnections(
         .filter((route) => route.destination !== destination)
         .map((route) => route.points),
     );
-    const points = middle.length
+    let points = middle.length
       ? simplify([start, ...middle, end])
       : connection.points;
+    const compactRoute = !middle.length && manualLayout;
+    if (compactRoute) {
+      // User placement can leave less space than the automatic layout's
+      // arrow corridor. Retain exact ports and use square corners in tight lanes.
+      const tight = routeBetween(start, end, [...items, ...headings], []);
+      points = tight.length > 1 ? tight : [start, end];
+    }
     occupied.push({ destination, points });
     return {
       ...connection,
       points,
+      compactRoute,
       sourceAttribute:
         offset(connection, "source") !== undefined
           ? connection.edges[0].sourceAttributePath
@@ -364,12 +373,14 @@ export function routeDependencyConnections(
     ]);
   const counts = new Map<string, number>();
   for (const route of routed) {
+    if (route.compactRoute) continue;
     const key = destinationKey(route);
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return routed.map((route) => ({
     ...route,
     convergenceKey:
+      !route.compactRoute &&
       dependencyConnectionArrival(route.points) !== undefined &&
       counts.get(destinationKey(route))! > 1
         ? destinationKey(route)

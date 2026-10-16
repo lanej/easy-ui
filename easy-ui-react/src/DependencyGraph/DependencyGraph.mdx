@@ -165,7 +165,48 @@ is rejected, an accessible message lets the user retry.
 
 <Canvas of={Stories.FullscreenInspection} />
 
-Dagre establishes the initial directed resource order from the full topology, including folded resources. Hiding/showing edges, expanding/collapsing differences, folding branches or groups, and responsive card measurements preserve each card's relative horizontal and vertical order. Expanded cards grow to show their full content; measured widths and heights adjust spacing and routing so neighbors can move without swapping order or overlapping. There is no card height cap or nested diff scroller. A different resource set or group membership starts a new layout; increment `layoutRevision` to deliberately recompute the order after relationship topology changes with the same IDs. Filtering `edges` preserves the order; `hiddenEdgeIds` hides lines while retaining complete relationship evidence for traversal and details. Zoom ranges from 40% to 200% and changes the card presentation automatically: below 70%, an overview shows icons, labels, actions, and compact disclosure controls; from 70% to below 100%, cards show summaries; at 100% and above, expanded cards show attribute diffs. Expanded-card state survives zooming out and returns when zooming in. Opening an attribute control zooms to at least 100% and keeps that resource in view. Use the toolbar +/− controls, Ctrl/⌘ plus wheel or pinch, or focus the canvas and press +/−. Press 0 or **Fit visible** to fit the current view. Ordinary wheel and trackpad movement scrolls. Initial fitting keeps expanded cards and narrow canvases at 100%; an explicit fit can use the overview.
+**Edit layout** enables a Move handle and a lower-right resize handle on each
+resource card. Select a resource to enter its width and height, then choose
+**Apply size**. A focused handle supports arrow keys in 10-unit steps, or
+Shift+arrow in 50-unit steps. Escape cancels the current drag. **Reset card**
+restores automatic sizing and placement for the selection; **Reset layout**
+restores all cards. **Done editing** hides the handles and keeps the adjustments.
+
+Use `cardLayouts` / `onCardLayoutsChange` for application-owned persistence, or
+`defaultCardLayouts` for local state. Maps use original resource IDs, with optional
+`x`, `y`, `width`, and `height` fields. Coordinates and sizes are graph units:
+CSS pixels at 100% zoom and a 16px root font. Width has a 192-unit minimum and
+height a 96-unit minimum; invalid non-finite values are ignored. Omitted dimensions
+retain responsive width and content-driven height. Fixed-height cards scroll their
+content, and connections to scrolled-out attributes use the card boundary.
+Clearing a size field restores that dimension's automatic sizing.
+
+Manual positions reserve space for group headings at the canvas edges. Moving a
+resource retains its group membership; group bounds and relationship routes follow
+the new geometry. Manual cards can overlap: the user controls their arrangement, and overlaps can obscure connections. Tight arrangements use square-corner routes without the automatic layout’s reserved arrow clearance.
+Folded or filtered resources retain their saved geometry until revealed again.
+`layoutRevision` recomputes automatic order without erasing manual adjustments.
+Set `allowLayoutEditing={false}` to hide editing controls while displaying saved
+geometry. Collapsed group proxies are not draggable or resizable.
+
+```tsx
+const [cardLayouts, setCardLayouts] = useState<DependencyGraphCardLayouts>({});
+
+<DependencyGraph
+  nodes={nodes}
+  edges={edges}
+  cardLayouts={cardLayouts}
+  onCardLayoutsChange={setCardLayouts}
+/>;
+```
+
+Callbacks fire on completed pointer gestures, keyboard adjustments, size changes,
+and resets. Pointer previews remain local; cancelled gestures do not save changes.
+Applications decide where and when to persist the resulting map.
+
+<Canvas of={Stories.EditableResourceCards} />
+
+Dagre establishes the initial directed resource order from the full topology, including folded resources. Hiding/showing edges, expanding/collapsing differences, folding branches or groups, and responsive card measurements preserve each card's relative horizontal and vertical order. Expanded cards grow to show their full content; measured widths and heights adjust spacing and routing so neighbors can move without swapping order or overlapping. Automatic sizing has no card height cap or nested diff scroller. A different resource set or group membership starts a new layout; increment `layoutRevision` to deliberately recompute the order after relationship topology changes with the same IDs. Filtering `edges` preserves the order; `hiddenEdgeIds` hides lines while retaining complete relationship evidence for traversal and details. Zoom ranges from 40% to 200% and changes the card presentation automatically: below 70%, an overview shows icons, labels, actions, and compact disclosure controls; from 70% to below 100%, cards show summaries; at 100% and above, expanded cards show attribute diffs. Expanded-card state survives zooming out and returns when zooming in. Opening an attribute control zooms to at least 100% and keeps that resource in view. Use the toolbar +/− controls, Ctrl/⌘ plus wheel or pinch, or focus the canvas and press +/−. Press 0 or **Fit visible** to fit the current view. Ordinary wheel and trackpad movement scrolls. Initial fitting keeps expanded cards and narrow canvases at 100%; an explicit fit can use the overview.
 
 Card and group disclosure controls use the reusable `ExpandButton` (+) and `CollapseButton` (−) atoms.
 

@@ -1379,3 +1379,4 @@ await import("./check-dependency-graph-source.mjs");
 await import("./check-dependency-graph-heading-routing.mjs");
 await import("./check-dependency-graph-responsive.mjs");
 await import("./check-dependency-graph-fullscreen.mjs");
+await import("./check-dependency-graph-card-layout.mjs");
