@@ -331,18 +331,21 @@ try {
       exact: true,
     });
     assert.equal(await overview.getByRole("img").count(), 0);
+    const summary = overview.locator('[data-metric-group][data-layout="summary"]');
+    assert.equal(await summary.count(), 1);
+    assert.equal(await summary.locator("[data-metric-content]").count(), 4);
     for (const label of [
       "Labels purchased",
       "Average rated cost",
       "On-time delivery rate",
       "Average transit",
     ]) {
-      assert.equal(
-        await overview
-          .getByRole("region", { name: label, exact: true })
-          .count(),
-        1,
-      );
+      const metric = summary.locator("[data-metric-content]").filter({
+        has: page.locator("[data-metric-label]").getByText(label, { exact: true }),
+      });
+      assert.equal(await metric.count(), 1);
+      assert.equal(await metric.locator("[data-metric-number]").isVisible(), true);
+      assert.equal(await metric.getByRole("region").count(), 0);
     }
     results.push({
       name,
@@ -352,7 +355,7 @@ try {
       keyboardZoom: true,
       pointerSelection: true,
       keyboardRowSelection: true,
-      metricCards: 4,
+      metricSummaries: 4,
       barListRows: 3,
       bulletCharts: 2,
       compactTimeSeries: 4,

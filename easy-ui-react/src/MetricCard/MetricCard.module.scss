@@ -1,42 +1,206 @@
 @use "../styles/common" as *;
 
-.content {
+.container {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: design-token("space.3");
+  min-width: 0;
+}
+
+.content,
+.header,
+.reading {
   display: flex;
   flex-direction: column;
-  gap: design-token("space.1");
+  gap: design-token("space.0.5");
   min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
 }
 
 .label {
-  font-size: var(--ezui-viz-title-size, 18px);
+  font-size: var(--ezui-viz-title-size, 14px);
+  font-weight: 400;
+  line-height: 1.4;
   color: design-token("color.neutral.700");
 }
-.supportingText {
-  font-size: var(--ezui-viz-description-size, 14px);
-  color: design-token("color.neutral.600");
-}
-.baseline,
-.comparisonLabel {
-  font-size: var(--ezui-viz-detail-size, 12px);
-}
-.baseline {
-  color: design-token("color.neutral.600");
-}
-.comparisonLabel[data-sentiment="positive"] {
-  color: design-token("color.neutral.900");
+
+.valueGroup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: design-token("space.0.5") design-token("space.1");
+  min-width: 0;
+  max-width: 100%;
 }
 
 .value {
-  min-height: 1.5em;
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 design-token("space.0.5");
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.2;
   color: design-token("color.neutral.900");
   font-variant-numeric: tabular-nums;
 }
 
+.number {
+  min-width: 0;
+  max-width: 100%;
+  font-weight: 600;
+}
+
+.unit {
+  font-size: var(--ezui-viz-detail-size, 13px);
+  font-weight: 400;
+  line-height: 1.25;
+  color: design-token("color.neutral.700");
+}
+
+.supportingText {
+  font-size: var(--ezui-viz-description-size, 13px);
+  line-height: 1.4;
+  color: design-token("color.neutral.600");
+}
+
+.baseline,
+.localBaseline {
+  font-size: var(--ezui-viz-detail-size, 13px);
+  line-height: 1.4;
+  color: design-token("color.neutral.600");
+}
+
 .comparison {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: design-token("space.1");
+  gap: design-token("space.0.5") design-token("space.1");
+  min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
+}
+
+.pill,
+.comparisonLabel {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.comparisonLabel {
+  gap: 0.25em;
+  font-size: var(--ezui-viz-detail-size, 13px);
+  line-height: 1.25;
+  // Pill owns its muted foreground/background pair in both themes.
+  color: inherit;
+}
+
+// Subgrid shares the numeric and comparison columns across a MetricGroup.
+.content[data-layout="row"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) fit-content(35%) fit-content(33%);
+  align-items: center;
+  column-gap: design-token("space.1");
+
+  .header,
+  .reading {
+    display: contents;
+  }
+
+  .label {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .valueGroup {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 2 / -1;
+    grid-row: 1;
+  }
+
+  .value {
+    grid-column: 1;
+    justify-self: end;
+    text-align: end;
+  }
+
+  .comparison {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .supportingText {
+    grid-column: 1 / -1;
+    align-self: start;
+  }
+
+  .localBaseline {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    justify-self: end;
+    text-align: end;
+    align-self: start;
+  }
+}
+
+.group[data-layout="row"] {
+  grid-template-columns: minmax(0, 1fr) fit-content(35%) fit-content(33%);
+  gap: 0 design-token("space.1");
+
+  > .content {
+    grid-column: 1 / -1;
+    padding-block: design-token("space.1.5");
+
+    + .content {
+      border-block-start: 1px solid design-token("color.neutral.200");
+    }
+
+    &:first-child {
+      padding-block-start: 0;
+    }
+
+    &:last-child {
+      padding-block-end: 0;
+    }
+  }
+
+  > .content[data-layout="row"] {
+    grid-template-columns: subgrid;
+  }
+}
+
+// Narrow rows reserve a full line for the label, retaining shared reading columns.
+// Query the component's actual container rather than the viewport beside a map.
+@container (max-width: 24rem) {
+  .group[data-layout="row"],
+  .content[data-layout="row"] {
+    grid-template-columns: fit-content(55%) minmax(0, 1fr);
+  }
+
+  .content[data-layout="row"] {
+    .label {
+      grid-column: 1 / -1;
+    }
+
+    .valueGroup {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+
+    .localBaseline {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      justify-self: start;
+      text-align: start;
+    }
+  }
 }

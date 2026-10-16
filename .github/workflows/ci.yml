@@ -68,6 +68,7 @@ jobs:
             sleep 1
           done
           curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
+          node scripts/check-metric-card.mjs
           node scripts/check-facility-summary.mjs
           node scripts/check-chart-catalog.mjs
           node scripts/check-proportion-bar.mjs

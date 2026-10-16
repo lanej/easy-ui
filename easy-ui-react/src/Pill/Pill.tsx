@@ -9,7 +9,8 @@ export type PillTone = "neutral" | "primary" | "success" | "warning" | "danger";
 export type PillProps = {
   children: ReactNode;
   tone?: PillTone;
-  size?: "sm" | "md";
+  /** xs uses compact padding for passive inline annotations. */
+  size?: "xs" | "sm" | "md";
   background?: ThemeTokenNamespace<"color">;
   bordered?: boolean;
 };
@@ -43,10 +44,12 @@ export function Pill({
 export type PillButtonProps = Omit<
   UnstyledButtonProps,
   "children" | "className" | "href"
-> &
-  Pick<PillProps, "children" | "size"> & {
-    isSelected?: boolean;
-  };
+> & {
+  children: ReactNode;
+  /** Interactive pills retain their existing sm/md sizing. */
+  size?: "sm" | "md";
+  isSelected?: boolean;
+};
 
 export function PillButton({
   children,

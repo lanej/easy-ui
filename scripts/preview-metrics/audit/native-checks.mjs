@@ -380,7 +380,9 @@ export async function auditNativeRegressions(
       legend: size('[data-native-case="precision"] ul'),
       detail: size('[data-native-case="precision"] tbody td'),
       metric: size('[data-native-case="unframed"] strong'),
-      comparison: size('[data-native-case="unframed"] span[data-sentiment]'),
+      comparison: size(
+        '[data-native-case="unframed"] [data-metric-pill] > span > span',
+      ),
     };
   });
   assert.deepEqual(textSizes, {

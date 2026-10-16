@@ -1,15 +1,17 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
-import React from "react";
-import { HorizontalGrid } from "../HorizontalGrid";
+import React, { useId } from "react";
+import { Card } from "../Card";
+import { SignedValue } from "../SignedValue";
 import { Text } from "../Text";
 import { VerticalStack } from "../VerticalStack";
 import {
   MetricCard,
   MetricContent,
   MetricComparisonContent,
+  MetricGroup,
+  type MetricLayout,
+  type MetricSize,
 } from "./MetricCard";
-import { Card } from "../Card";
-import { SignedValue } from "../SignedValue";
 
 const meta: Meta<typeof MetricCard> = {
   id: "components-metriccard",
@@ -23,111 +25,257 @@ export const Default: Story = {
   args: {
     label: "Average rated cost",
     value: "$5.20",
-    supportingText: "June 1–30 · USD",
+    unit: "USD",
+    supportingText: "June 1–30",
     comparison: {
-      label: "4.2% lower",
+      label: "4.2%",
+      direction: "decrease",
       baseline: "vs previous 30 days",
       sentiment: "positive",
     },
   },
 };
+export const Row: Story = { args: { ...Default.args, layout: "row" } };
 
-export const ShippingOverview: Story = {
+function ShippingMetrics({
+  layout = "summary",
+  size = "md",
+}: {
+  layout?: MetricLayout;
+  size?: MetricSize;
+}) {
+  const baselineId = useId();
+  return (
+    <Card as="section" aria-label="Shipping overview" padding="2">
+      <VerticalStack gap="3">
+        <VerticalStack gap="0.5">
+          <Text as="h2" variant="heading4">
+            Shipping overview
+          </Text>
+          <span id={baselineId} style={{ fontSize: 13 }}>
+            <Text color="neutral.600">
+              Illustrative · June 1–30 · vs previous 30 days
+            </Text>
+          </span>
+        </VerticalStack>
+        <MetricGroup layout={layout} size={size}>
+          <MetricContent
+            label="Labels purchased"
+            value="24,810"
+            comparison={{ label: "8.3%", direction: "increase", baselineId }}
+          />
+          <MetricContent
+            label="Average rated cost"
+            value="$5.20"
+            unit="USD"
+            comparison={{
+              label: "4.2%",
+              direction: "decrease",
+              baselineId,
+              sentiment: "positive",
+            }}
+          />
+          <MetricContent
+            label="On-time delivery rate"
+            value="97.8%"
+            supportingText="Delivered parcels with an estimate"
+            comparison={{
+              label: "1.2 pp",
+              direction: "increase",
+              baselineId,
+              sentiment: "positive",
+            }}
+          />
+          <MetricContent
+            label="Average transit"
+            value="2.4"
+            unit="days"
+            supportingText="Delivered parcels · calendar days"
+            comparison={{
+              label: "0.2 days",
+              direction: "decrease",
+              baselineId,
+              sentiment: "positive",
+            }}
+          />
+        </MetricGroup>
+      </VerticalStack>
+    </Card>
+  );
+}
+
+export const ShippingOverview: Story = { render: () => <ShippingMetrics /> };
+export const ShippingRows: Story = {
+  render: () => <ShippingMetrics layout="row" />,
+};
+export const CompactSummary: Story = {
+  render: () => <ShippingMetrics size="sm" />,
+};
+
+export const TypographyPresets: Story = {
   render: () => (
     <VerticalStack gap="3">
-      <Text as="h2" variant="heading4">
-        Shipping overview
-      </Text>
-      <Text color="neutral.600">
-        Illustrative data · June 1–30 · Comparisons use the previous 30 days
-      </Text>
-      <HorizontalGrid columns={{ xs: 1, sm: 2, lg: 4 }} gap="2">
-        <MetricCard
-          label="Labels purchased"
-          value="24,810"
-          supportingText="June 1–30"
-          comparison={{ label: "8.3% higher", baseline: "vs previous 30 days" }}
-        />
-        <MetricCard
-          {...Default.args}
-          label="Average rated cost"
-          value="$5.20"
-        />
-        <MetricCard
-          label="On-time delivery rate"
-          value="97.8%"
-          supportingText="Delivered parcels with an estimate"
-          comparison={{
-            label: "1.2 pp higher",
-            baseline: "vs previous 30 days",
-            sentiment: "positive",
-          }}
-        />
-        <MetricCard
-          label="Average transit"
-          value="2.4 days"
-          supportingText="Delivered parcels · calendar days"
-          comparison={{
-            label: "0.2 days lower",
-            baseline: "vs previous 30 days",
-            sentiment: "positive",
-          }}
-        />
-      </HorizontalGrid>
+      {(["sm", "md", "lg"] as const).map((size) => (
+        <Card
+          key={size}
+          as="section"
+          aria-label={`${size} metric preset`}
+          padding="2"
+        >
+          <MetricGroup size={size}>
+            <MetricContent
+              {...Default.args}
+              label={`Average rated cost · ${size}`}
+              value="$5.20"
+            />
+            <MetricContent
+              label="Average transit"
+              value="2.4"
+              unit="days"
+              comparison={{
+                label: "0.2 days",
+                direction: "decrease",
+                sentiment: "positive",
+                baseline: "vs previous 30 days",
+              }}
+            />
+          </MetricGroup>
+        </Card>
+      ))}
     </VerticalStack>
   ),
 };
-
-/** Compact KPI summaries without a mandatory icon, decorative chip, or invented status. */
-export const CompactSummary: Story = {
+export const ValueAlignment: Story = {
   render: () => (
     <VerticalStack gap="2">
-      <Text as="h2" variant="heading4">
-        Compact shipping metrics
-      </Text>
-      <Text color="neutral.600">
-        Illustrative data · June 1–30 · Comparisons use the previous 30 days
-      </Text>
-      <HorizontalGrid columns={{ xs: 1, sm: 2, lg: 3 }} gap="3">
-        <MetricContent
-          label="Labels purchased"
-          value="24,810"
-          valueSize={24}
-          typography={{ title: 14 }}
-          comparison={{ label: "8.3% higher", baseline: "vs previous 30 days" }}
-        />
-        <MetricContent
-          label="Average rated cost"
+      {[16, 24, 28, 48].map((valueSize) => (
+        <MetricCard
+          {...Default.args}
+          key={valueSize}
+          label={`Average rated cost · ${valueSize}px value`}
           value="$5.20"
-          supportingText="USD · June 1–30"
-          valueSize={24}
-          typography={{ title: 14 }}
-          comparison={{
-            label: "4.2% lower",
-            baseline: "vs previous 30 days",
-            sentiment: "positive",
-          }}
+          valueSize={valueSize}
         />
-        <MetricContent
-          label="Delivery exception rate"
-          value="1.4%"
-          supportingText="Current 30-day cohort"
-          valueSize={24}
-          typography={{ title: 14 }}
-        />
-      </HorizontalGrid>
+      ))}
     </VerticalStack>
   ),
 };
 
-export const Loading: Story = {
-  ...Default,
-  args: { ...Default.args, isLoading: true },
+export const Sentiments: Story = {
+  render: () => (
+    <MetricGroup>
+      <MetricContent
+        {...Default.args}
+        label="Average rated cost"
+        value="$5.20"
+      />
+      <MetricContent
+        label="Labels purchased"
+        value="24,810"
+        comparison={{
+          label: "8.3%",
+          direction: "increase",
+          baseline: "vs May",
+        }}
+      />
+      <MetricContent
+        label="Delivery exception rate"
+        value="1.4%"
+        comparison={{
+          label: "0.3 pp",
+          direction: "increase",
+          baseline: "vs May",
+          sentiment: "negative",
+        }}
+      />
+      <MetricContent
+        label="Average transit"
+        value="2.4"
+        unit="days"
+        comparison={{
+          label: "0 days",
+          direction: "unchanged",
+          baseline: "vs May",
+        }}
+      />
+    </MetricGroup>
+  ),
 };
-export const NoData: Story = {
-  ...Default,
-  args: { ...Default.args, value: null },
+export const Narrow: Story = {
+  render: () => (
+    <div style={{ width: 180, maxWidth: "100%" }}>
+      <MetricCard
+        {...Default.args}
+        label="Average international rated cost"
+        value="$1,234.56"
+      />
+    </div>
+  ),
 };
+export const LargeText: Story = {
+  args: {
+    ...Default.args,
+    label: "Average international rated cost including carrier adjustments",
+    value: "$1,234,567.89",
+    valueSize: 48,
+    typography: { title: 28, description: 26, detail: 26 },
+  },
+};
+export const RightToLeft: Story = {
+  render: () => (
+    <div dir="rtl">
+      <MetricCard
+        label="Average rated cost"
+        value="$5.20"
+        unit="USD"
+        comparison={{
+          label: "4.2%",
+          direction: "decrease",
+          baseline: "vs previous 30 days",
+          sentiment: "positive",
+        }}
+      />
+    </div>
+  ),
+};
+export const RowRightToLeft: Story = {
+  render: () => (
+    <div dir="rtl">
+      <ShippingMetrics layout="row" />
+    </div>
+  ),
+};
+export const RowLongContent: Story = {
+  render: () => (
+    <MetricGroup layout="row">
+      <MetricContent
+        label="Average international rated cost including carrier adjustments"
+        value="$1,234.56"
+        unit="USD"
+        comparison={{
+          label: "4.2%",
+          direction: "decrease",
+          baseline: "vs the previous reporting period",
+          sentiment: "positive",
+        }}
+      />
+      <MetricContent
+        label="Delivery exception rate"
+        value="1.4%"
+        supportingText="Delivered international parcels only"
+        comparison={{
+          label: "0.3 percentage points",
+          direction: "increase",
+          baseline: "vs May",
+          sentiment: "negative",
+        }}
+      />
+      <MetricContent label="Unavailable" value={null} unit="days" />
+    </MetricGroup>
+  ),
+};
+export const Loading: Story = { args: { ...Default.args, isLoading: true } };
+export const NoData: Story = { args: { ...Default.args, value: null } };
 export const Zero: Story = {
   args: { label: "Delivery exceptions", value: "0" },
 };
@@ -136,29 +284,60 @@ export const CallerOwnedFrame: Story = {
     <Card
       as="section"
       aria-label="Caller-owned cost analysis"
-      padding="3"
+      padding="2"
       background="secondary"
     >
-      <VerticalStack gap="3">
-        <MetricContent
-          label="Average rated cost"
-          value="$5.20"
-          supportingText="USD · June"
-        />
-        <MetricComparisonContent
-          label="4.2% lower"
-          baseline="vs previous 30 days"
-          sentiment="positive"
-        />
-      </VerticalStack>
+      <MetricContent
+        {...Default.args}
+        label="Average rated cost"
+        value="$5.20"
+      />
     </Card>
   ),
 };
-
+export const CallerOwnedRow: Story = {
+  render: () => (
+    <div style={{ width: 300, maxWidth: "100%" }}>
+      <Card as="section" aria-label="Caller-owned cost row" padding="2">
+        <MetricContent
+          {...Default.args}
+          label="Average international rated cost including carrier adjustments"
+          value="$1,234.56"
+          layout="row"
+        />
+      </Card>
+    </div>
+  ),
+};
+export const MixedLayouts: Story = {
+  render: () => (
+    <MetricGroup>
+      {["Domestic", "International", "Express", "Economy"].map((service) => (
+        <MetricContent
+          {...Default.args}
+          key={service}
+          label={`${service} average rated cost including carrier adjustments`}
+          value="$1,234.56"
+          layout="row"
+        />
+      ))}
+    </MetricGroup>
+  ),
+};
+export const ComparisonOnly: Story = {
+  render: () => (
+    <MetricComparisonContent
+      label="4.2%"
+      direction="decrease"
+      baseline="vs previous 30 days"
+      sentiment="positive"
+    />
+  ),
+};
 export const SignedValues: Story = {
   render: () => (
-    <HorizontalGrid columns={{ xs: 1, sm: 2 }} gap="2">
-      <MetricCard
+    <MetricGroup>
+      <MetricContent
         label="Contribution / day"
         value={
           <SignedValue
@@ -169,7 +348,7 @@ export const SignedValues: Story = {
         }
         supportingText="Proposed contribution"
       />
-      <MetricCard
+      <MetricContent
         label="Contribution range / day"
         value={
           <>
@@ -180,6 +359,6 @@ export const SignedValues: Story = {
         }
         supportingText="Scenario bounds"
       />
-    </HorizontalGrid>
+    </MetricGroup>
   ),
 };
