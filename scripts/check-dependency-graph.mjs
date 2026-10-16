@@ -787,7 +787,15 @@ try {
           return {
             id: card.dataset.graphResourceCard,
             height: card.getBoundingClientRect().height,
-            identityFirst: s.top >= l.bottom - 1,
+            identityFirst:
+              s.top >= l.bottom - 1 ||
+              (s.left >= l.right &&
+                Math.abs(s.top + s.height / 2 - l.top - l.height / 2) < 2),
+            differencesFit: [...card.querySelectorAll("[data-diff]")].every(
+              (value) =>
+                value.getBoundingClientRect().bottom <=
+                card.getBoundingClientRect().bottom,
+            ),
             controls: [...card.querySelectorAll("button")].every((button) => {
               const r = button.getBoundingClientRect();
               return r.width >= 24 && r.height >= 24;
@@ -814,10 +822,12 @@ try {
           card.compactControls &&
           card.readableValues,
       ),
-      "Dense cards prioritize identity above status while preserving readable values and usable targets",
+      "Dense cards place status beside or below identity while preserving readable values and usable targets",
     );
     assert.ok(
-      compactCards.find((card) => card.id === "api").height > 224,
+      compactCards.find((card) => card.id === "api").height >
+        compactCards.find((card) => card.id === "network").height &&
+        compactCards.find((card) => card.id === "api").differencesFit,
       "Expanded cards grow to fit full differences",
     );
     assert.ok(
@@ -1380,6 +1390,50 @@ try {
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 1000 });
       await open("newly-set-values", theme);
+      const headers = await page
+        .locator("[data-graph-resource-card]")
+        .evaluateAll((cards) =>
+          cards.map((card) => {
+            const label = card
+              .querySelector("[data-graph-resource-label]")
+              .getBoundingClientRect();
+            const status = card
+              .querySelector("[data-change]")
+              .getBoundingClientRect();
+            const controls = card.querySelector(
+              "[data-graph-attribute-controls]",
+            );
+            const type = controls
+              .querySelector("span[title]")
+              .getBoundingClientRect();
+            const toggle = controls
+              .querySelector("button")
+              .getBoundingClientRect();
+            const top = card.getBoundingClientRect().top;
+            return {
+              sameNameRow:
+                Math.abs(
+                  label.top + label.height / 2 - status.top - status.height / 2,
+                ) < 2,
+              sameTypeRow:
+                Math.abs(
+                  type.top + type.height / 2 - toggle.top - toggle.height / 2,
+                ) < 2,
+              nearbyStatus: status.left - label.right <= 8,
+              height: controls.getBoundingClientRect().bottom - top,
+            };
+          }),
+        );
+      assert.ok(
+        headers.every(
+          (header) =>
+            header.sameNameRow &&
+            header.sameTypeRow &&
+            header.nearbyStatus &&
+            header.height < 70,
+        ),
+        "Resource headers use two compact rows with controls near their labels",
+      );
       for (const presentation of ["graph", "tree"]) {
         if (presentation === "tree") {
           await page
@@ -1435,6 +1489,7 @@ try {
 }
 
 await import("./check-dependency-graph-source.mjs");
+await import("./check-dependency-graph-appearance.mjs");
 await import("./check-dependency-graph-heading-routing.mjs");
 await import("./check-dependency-graph-responsive.mjs");
 await import("./check-dependency-graph-fullscreen.mjs");

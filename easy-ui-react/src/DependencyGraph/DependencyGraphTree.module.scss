@@ -8,12 +8,23 @@
 .item {
   border-block-end: 1px solid design-token("color.neutral.200");
   border-radius: 4px;
+  background: var(--ezui-c-dependency-graph-node-background, transparent);
   outline: none;
+  &[data-custom-outline] {
+    border: 1px solid component-token("dependency-graph-node", "border");
+  }
   &[data-hovered] {
-    background: design-token("color.neutral.050");
+    background: var(
+      --ezui-c-dependency-graph-node-background,
+      #{design-token("color.neutral.050")}
+    );
   }
   &[data-selected] {
-    background: design-token("color.primary.050");
+    background: var(
+      --ezui-c-dependency-graph-node-background,
+      #{design-token("color.primary.050")}
+    );
+    box-shadow: inset 3px 0 design-token("color.primary.500");
   }
   &[data-focus-visible] {
     outline: 2px solid design-token("color.primary.500");
@@ -126,6 +137,12 @@
   }
 }
 @media (forced-colors: active) {
+  .item,
+  .item[data-hovered],
+  .item[data-selected] {
+    background: Canvas;
+    border-color: CanvasText;
+  }
   .item[data-selected] {
     outline: 1px solid Highlight;
     outline-offset: -1px;
