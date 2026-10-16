@@ -405,7 +405,13 @@ export type NetworkMapProps = {
   selectedSegmentId?: string;
   /** Facility of the last observed event, never an interpolated current position. */
   latestFacilityId?: string;
-  /** Location labels to prioritize alongside selection and last observation. */
+  /**
+   * Location labels to prioritize alongside selection and last observation.
+   * Marker buttons expose `data-primary="true"` for included IDs and `"false"`
+   * for other IDs. Shared stops are primary when included. An empty array marks
+   * all false; omitting the prop removes the attribute. Selection/latest state
+   * is independent.
+   */
   primaryFacilityIds?: readonly string[];
   /** Explicit camera command issued by application selection controls. */
   focus?: MapFocus;

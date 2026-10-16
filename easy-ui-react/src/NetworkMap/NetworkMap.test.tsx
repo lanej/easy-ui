@@ -376,6 +376,94 @@ it("preserves camera and focused markers when observations or selection update, 
   view.unmount();
   expect(remove).toHaveBeenCalledTimes(1);
 });
+it.each([undefined, ["one", "shared"]])(
+  "synchronizes primary route state on reused markers (initial IDs: %j)",
+  async (initialIds) => {
+    const routeProps = {
+      ...props,
+      facilities: [
+        props.facilities[0],
+        {
+          id: "two",
+          label: "Alternative",
+          coordinates: [-100, 40],
+          kind: "hub",
+        },
+        {
+          id: "shared",
+          label: "Shared stop",
+          coordinates: [-80, 40],
+          kind: "destination",
+        },
+      ],
+      segments: [
+        {
+          id: "primary",
+          from: "one",
+          to: "shared",
+          label: "Primary route",
+          evidence: "inferred",
+        },
+        {
+          id: "alternative",
+          from: "two",
+          to: "shared",
+          label: "Alternative route",
+          evidence: "inferred",
+        },
+      ],
+      selectedFacilityId: "one",
+      latestFacilityId: "two",
+      showDataTable: false,
+    } satisfies NetworkMapProps;
+    const view = render(
+      <NetworkMap {...routeProps} primaryFacilityIds={initialIds} />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const markers = routeProps.facilities.map((facility) =>
+      screen.getByRole("button", { name: `Select ${facility.label}` }),
+    );
+    const expectPrimary = (ids: readonly string[] | undefined) => {
+      markers.forEach((marker, index) => {
+        if (ids) {
+          expect(marker).toHaveAttribute(
+            "data-primary",
+            String(ids.includes(routeProps.facilities[index].id)),
+          );
+        } else {
+          expect(marker).not.toHaveAttribute("data-primary");
+        }
+      });
+    };
+    expectPrimary(initialIds);
+    markers[0].focus();
+    const fits = fitBounds.mock.calls.length;
+    for (const ids of [["two", "shared"], [], undefined]) {
+      view.rerender(<NetworkMap {...routeProps} primaryFacilityIds={ids} />);
+      expectPrimary(ids);
+      markers.forEach((marker, index) => {
+        expect(
+          screen.getByRole("button", {
+            name: `Select ${routeProps.facilities[index].label}`,
+          }),
+        ).toBe(marker);
+        expect(marker).toHaveClass("maplibregl-marker");
+        expect(marker).toHaveAttribute("data-selected", String(index === 0));
+        expect(marker).toHaveAttribute("data-latest", String(index === 1));
+        expect(marker).toHaveAttribute("aria-pressed", String(index === 0));
+        expect(marker).toBeEnabled();
+      });
+      expect(document.activeElement).toBe(markers[0]);
+      expect(constructor).toHaveBeenCalledTimes(1);
+      expect(fitBounds).toHaveBeenCalledTimes(fits);
+    }
+    await userEvent.keyboard("{Enter}");
+    expect(props.onFacilitySelect).toHaveBeenCalledTimes(1);
+    expect(props.onFacilitySelect).toHaveBeenCalledWith("one");
+  },
+);
+
 it("keeps data available after an engine failure and retries explicitly", async () => {
   vi.mocked(loadMapEngine).mockRejectedValueOnce(
     new Error("WebGL unavailable"),

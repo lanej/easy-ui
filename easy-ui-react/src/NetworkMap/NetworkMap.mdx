@@ -185,6 +185,30 @@ Use `NetworkMapViewport` under `NetworkMapProvider` to compose the same behavior
 
 <Canvas of={NetworkMapStories.ZoomedJourneyMetrics} />
 
+### Primary-route marker styling
+
+<Canvas of={NetworkMapStories.PrimaryRouteMarkers} />
+
+`primaryFacilityIds` also exposes a stable styling contract on each rendered facility marker button: `data-primary="true"` when its ID is included, and `data-primary="false"` otherwise. A stop shared by primary and alternative routes is primary if included. An empty array sets every marker to `"false"`; omitting or clearing the prop removes the attribute. Membership updates on existing markers without replacing them.
+
+This state is independent of `data-selected` and `data-latest` and does not change the default marker colors. Applications choose the emphasis. For example, wrap the map in `.tracking-map` and style its labels through `data-map-label`:
+
+```css
+.tracking-map
+  [data-primary="false"]:not([data-selected="true"]):not([data-latest="true"])
+  [data-map-label] {
+  color: var(--ezui-color-neutral-700);
+}
+
+.tracking-map
+  :is([data-primary="true"], [data-selected="true"], [data-latest="true"])
+  [data-map-label] {
+  color: var(--merchant-accent, var(--ezui-color-primary-600));
+}
+```
+
+Pass all stops that should retain primary emphasis, including shared stops. `"false"` means only that an ID is outside that supplied set; it does not infer whether a stop is observed or alternative. Native cluster symbols do not expose individual marker state until their facilities are unclustered.
+
 ### Camera, selection and labels
 
 Facilities have stable IDs; segments reference their endpoints. `selectedFacilityId` and `onFacilitySelect` control selection across markers and table rows. Provide the callback to enable selection. `selectedSegmentId` emphasizes a connection and makes Selected leg available when its geometry can be fitted. `latestFacilityId` identifies the last observed facility, never an interpolated position.

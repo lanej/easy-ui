@@ -9,6 +9,8 @@ import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { NetworkMap } from "./NetworkMap";
+import type { MapFacility, MapSegment, NetworkMapProps } from "./types";
+import styles from "./examples.module.scss";
 import { NetworkMapExample } from "./NetworkMap.examples";
 import { JourneyZoomExample } from "./NetworkMapZoomSections.examples";
 import {
@@ -91,6 +93,92 @@ function ExternalWeatherExample() {
 
 export const ExternalLayerControls: Story = {
   render: () => <ExternalWeatherExample />,
+};
+
+const routeMapStyle: NetworkMapProps["mapStyle"] = {
+  version: 8,
+  sources: {},
+  layers: [],
+};
+const routeFacilities: MapFacility[] = [
+  {
+    id: "origin",
+    label: "Last observed",
+    kind: "warehouse",
+    coordinates: [-1, 0],
+  },
+  { id: "north", label: "North hub", kind: "hub", coordinates: [0, 0.7] },
+  { id: "south", label: "South hub", kind: "hub", coordinates: [0, -0.7] },
+  {
+    id: "destination",
+    label: "Shared destination",
+    kind: "destination",
+    coordinates: [1, 0],
+  },
+];
+const routeSegments: MapSegment[] = ["north", "south"].flatMap((id) => [
+  {
+    id: `origin-${id}`,
+    from: "origin",
+    to: id,
+    label: `Predicted via ${id}`,
+    evidence: "inferred",
+  },
+  {
+    id: `${id}-destination`,
+    from: id,
+    to: "destination",
+    label: `Predicted from ${id}`,
+    evidence: "inferred",
+  },
+]);
+
+function PrimaryRouteMarkersExample() {
+  const [route, setRoute] = useState("north");
+  const [selected, setSelected] = useState("destination");
+  const primaryFacilityIds =
+    route === "unset"
+      ? undefined
+      : route === "empty"
+        ? []
+        : [route, "destination"];
+  return (
+    <div className={styles.primaryRouteExample}>
+      <label>
+        Primary route{" "}
+        <select
+          value={route}
+          onChange={(event) => setRoute(event.target.value)}
+        >
+          <option value="north">North hub</option>
+          <option value="south">South hub</option>
+          <option value="empty">No primary stops (empty array)</option>
+          <option value="unset">Unset route (omit prop)</option>
+        </select>
+      </label>
+      <NetworkMap
+        title="Primary route marker styling"
+        description="Primary, selected, and last-observed labels keep the accent. Other labels are muted. Select a stop or change the primary route. Synthetic locations on a tile-free map."
+        mapStyle={routeMapStyle}
+        workerUrl={workerUrl}
+        facilities={routeFacilities}
+        segments={routeSegments}
+        primaryFacilityIds={primaryFacilityIds}
+        latestFacilityId="origin"
+        selectedFacilityId={selected}
+        onFacilitySelect={setSelected}
+        showSelectionDetails={false}
+        showDataTable={false}
+        showLegend={false}
+        controls={{ risk: false }}
+        height={440}
+      />
+    </div>
+  );
+}
+
+export const PrimaryRouteMarkers: Story = {
+  render: () => <PrimaryRouteMarkersExample />,
 };
 
 function LayerOnlyExample() {

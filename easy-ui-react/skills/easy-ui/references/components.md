@@ -180,6 +180,13 @@ Insets share selection and metrics and omit inspection cards. Use
 `NetworkMapViewport` and `NetworkMapZoomSections` from the same subpath for custom
 compositions. See [journey close-ups](https://lanej.io/easy-ui/storybook/?path=/story/components-networkmap--zoomed-journey).
 
+Use `primaryFacilityIds` to prioritize route labels and style rendered marker
+buttons through `data-primary="true|false"`. Included IDs are primary even when
+shared by routes; an empty array marks all false, while omitting or clearing
+the prop removes the attribute. Keep `data-selected` and `data-latest` emphasis
+independent. Scope label styles to a wrapper and `[data-map-label]`; do not
+replace MapLibre positioning classes. See [primary-route marker styling](https://lanej.io/easy-ui/storybook/?path=/story/components-networkmap--primary-route-markers).
+
 Use `renderCellDetails` to replace cell inspection content, or children of
 `NetworkMapCellDetails` to replace its plot while retaining summary and provenance.
 The same content is available in keyboard-accessible exact-data details. Supply
