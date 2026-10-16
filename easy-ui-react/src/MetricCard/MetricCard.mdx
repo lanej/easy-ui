@@ -9,9 +9,11 @@ import * as MetricCardStories from "./MetricCard.stories";
 
 Show a formatted metric with a secondary unit and an optional comparison. Applications own aggregation, units, reporting periods, calculations, and business meaning.
 
+## Usage
+
 ```tsx
+import { MetricCard } from "@easypost/easy-ui/MetricCard";
 import {
-  MetricCard,
   MetricContent,
   MetricComparisonContent,
   MetricGroup,
@@ -24,7 +26,9 @@ import {
 
 <ArgTypes of={MetricCard} />
 
-## Summary and row are different compositions
+## Examples
+
+### Summary and row are different compositions
 
 The default `layout="summary"` always places the label above the value and its comparison, aligned to the start edge. Extra width does not move the number away from its label. The pill stays centered beside the reading; oversized content wraps without clipping. `MetricCard` adds a frame; `MetricContent` does not.
 
@@ -33,7 +37,7 @@ The default `layout="summary"` always places the label above the value and its c
 <Canvas of={MetricCardStories.Row} />
 <Canvas of={MetricCardStories.ShippingRows} />
 
-## One section, not a card around every number
+### One section, not a card around every number
 
 Use one caller-owned Card with `MetricGroup` and unframed metrics. The summary group adapts its column count to its actual container width. Every metric retains the same label-above-reading composition on mobile and desktop.
 
@@ -42,7 +46,7 @@ Reporting and comparison periods belong in the group header. Currency belongs to
 <Canvas of={MetricCardStories.ShippingOverview} />
 <Canvas of={MetricCardStories.CompactSummary} />
 
-## Hierarchy and typography
+### Hierarchy and typography
 
 `size` is independent of layout and framing. `sm` uses a 20px value, `md` 24px, and `lg` 28px. Labels remain 14–15px; units and comparisons use 13–14px text. `MetricGroup` supplies the size and layout defaults for its children; individual metrics can override them.
 
@@ -53,7 +57,7 @@ Custom `valueSize` and `typography` remain available. Invalid `valueSize` falls 
 <Canvas of={MetricCardStories.TypographyPresets} />
 <Canvas of={MetricCardStories.ValueAlignment} />
 
-## Direction is not sentiment
+### Direction is not sentiment
 
 Supply `direction` with an unsigned, formatted comparison magnitude to show a compact arrow, for example `label: "4.2%", direction: "decrease"`. Increase and decrease use up and down arrows; unchanged uses an equals sign. Direction stays visible without color. `accessibilityLabel` can supply a localized description of the complete change.
 
@@ -63,7 +67,7 @@ A change from 96.6% to 97.8% is **1.2 percentage points**, not 1.2 percent. Appl
 
 <Canvas of={MetricCardStories.Sentiments} />
 
-## Shared context without repetition
+### Shared context without repetition
 
 Comparisons require exactly one of `baseline` (displayed locally) or `baselineId` (referencing a visible baseline in the same document with `aria-describedby`). Use a unique ID, such as React's `useId()`, and keep the referenced text mounted and visible. Independently embedded metrics need their own local baseline.
 
@@ -94,7 +98,7 @@ When a comparison describes a value, supply `comparison` to keep them grouped. U
 <Canvas of={MetricCardStories.CallerOwnedFrame} />
 <Canvas of={MetricCardStories.ComparisonOnly} />
 
-## Narrow and large-text layouts
+### Narrow and large-text layouts
 
 Rows place the label above the reading when their available width is narrow. This also works for standalone `MetricContent` inside a caller-owned frame and for individual row overrides in a summary group.
 
@@ -104,7 +108,7 @@ Rows place the label above the reading when their available width is narrow. Thi
 <Canvas of={MetricCardStories.CallerOwnedRow} />
 <Canvas of={MetricCardStories.MixedLayouts} />
 
-## Loading, unavailable, and composed values
+### Loading, unavailable, and composed values
 
 Use `isLoading` to suppress stale readings. Use `null` for unavailable data; an observed zero remains `"0"`. Loading and empty labels can be localized. For a failed query, compose a Banner and retry action rather than presenting zero. React-element values can contain SignedValue atoms without losing the surrounding metric's hierarchy.
 
@@ -113,7 +117,7 @@ Use `isLoading` to suppress stale readings. Use `null` for unavailable data; an 
 <Canvas of={MetricCardStories.Zero} />
 <Canvas of={MetricCardStories.SignedValues} />
 
-## Migration
+### Migration
 
 `KpiTile` was a duplicate wrapper and remains removed. Use MetricCard for standalone framing or MetricContent inside an existing section. Map metric label/value to `label`/`value`; provide an explicit comparison baseline. Do not restore the decorative icon chip or Point-in-time pill.
 
