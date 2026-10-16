@@ -5,9 +5,9 @@ import type { IconSymbol } from "../types";
 export type DependencyGraphChange =
   "create" | "update" | "replace" | "delete" | "unchanged" | "unknown";
 
-/** Formatted display text, or an explicit unavailable value. Never supply secrets. */
+/** Formatted display text, explicit null, or an unavailable value. Never supply secrets. */
 export type DependencyGraphChangeValue =
-  string | { status: "unknown" | "redacted" };
+  string | null | { status: "unknown" | "redacted" };
 
 /** Absence is explicit: an addition has no before value, a removal has no after. */
 export type DependencyGraphPropertyChange = { path: string } & (

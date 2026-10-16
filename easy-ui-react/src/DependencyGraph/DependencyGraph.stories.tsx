@@ -76,6 +76,55 @@ export const SpecificChanges: Story = {
   },
 };
 export const AllResources: Story = {};
+export const NewlySetValues: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "New resource attributes",
+    nodes: [
+      {
+        id: "archive",
+        label: "Audit archive",
+        typeLabel: "Storage bucket",
+        icon: StorageIcon,
+        iconLabel: "Storage",
+        change: "create",
+        changes: [
+          { path: "name", type: "add", after: "production-audit-archive" },
+          { path: "region", type: "change", before: null, after: "us-west-2" },
+          { path: "versioning.enabled", type: "add", after: "false" },
+          { path: "retention_days", type: "add", after: "0" },
+          {
+            path: "encryption.key_id",
+            type: "add",
+            after: { status: "unknown" },
+          },
+        ],
+      },
+      {
+        id: "worker",
+        label: "Audit worker",
+        typeLabel: "Container application",
+        icon: CodeIcon,
+        iconLabel: "Application",
+        change: "update",
+        changes: [
+          {
+            path: "archive_bucket",
+            type: "change",
+            before: null,
+            after: "production-audit-archive",
+          },
+          { path: "replicas", type: "change", before: "1", after: "2" },
+        ],
+      },
+    ],
+    edges: [{ id: "archive-worker", source: "archive", target: "worker" }],
+    groups: [],
+    showDetails: false,
+    defaultExpandedChangeNodeIds: ["archive", "worker"],
+    height: 480,
+  },
+};
 export const CompactTree: Story = {
   args: {
     title: undefined,

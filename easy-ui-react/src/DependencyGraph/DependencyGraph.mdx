@@ -185,7 +185,9 @@ Pass `icon` and `iconLabel` on a node to identify its type. `icon` accepts the s
 
 ### Per-resource summaries and diffs
 
-Every resource can supply a `changeSummary` and typed `changes`. The graph card shows the short summary. The **+** control labeled **Show attribute differences** expands that resource card with its exact field diff; The **−** control labeled **Hide attribute differences** returns it to the compact view. Expansion is independent of selection and works with `showDetails={false}`. The inspector also switches between **Summary** and **Specific changes**. Attribute values stack on narrow cards and inspectors, with the removed value above the added value. At 36rem of available content width they align side by side. The layout responds to the containing component rather than the page or graph zoom. Red `−` marks removal and green `+` marks addition; full values wrap without visible Before/After headers. Those labels remain available to screen readers. “Not present” distinguishes an absent side from an empty string, unknown value, or redacted value. Resource operations and field changes remain distinct: a replacement retains its Replace badge while showing the exact supplied field diff.
+Every resource can supply a `changeSummary` and typed `changes`. The graph card shows the short summary. The **+** control labeled **Show attribute differences** expands that resource card with its exact field diff; The **−** control labeled **Hide attribute differences** returns it to the compact view. Expansion is independent of selection and works with `showDetails={false}`. The inspector also switches between **Summary** and **Specific changes**. Attribute values stack on narrow cards and inspectors, with the removed value above the added value. At 36rem of available content width they align side by side. The layout responds to the containing component rather than the page or graph zoom. Red `−` marks the previous value and green `+` marks its replacement; full values wrap without visible Before/After headers. Those labels remain available to screen readers.
+
+Newly added attributes and explicit `null` → non-null changes show just the new value with a blue `+`, announced as “New value.” They use the full available width, without a blank column or a “Not present” row. This applies to graph cards, the inspector, and tree drawers, including new fields on existing resources. Removals retain “Not present” on the after side. Resource operations and field changes remain distinct: a replacement retains its Replace badge while showing the exact supplied field diff.
 
 ```tsx
 {
@@ -197,18 +199,20 @@ Every resource can supply a `changeSummary` and typed `changes`. The graph card 
     { path: "address_prefixes[0]", type: "change",
       before: "10.20.0.0/24", after: "10.20.4.0/24" },
     { path: "tags.owner", type: "add", after: "network-platform" },
+    { path: "description", type: "change", before: null, after: "Application subnet" },
     { path: "tags.legacy", type: "remove", before: "true" },
   ],
 }
 ```
 
-Values are caller-formatted strings, so format numbers, booleans, and explicit `null` before supplying them. An empty string is displayed as `""`. Use `{ status: "unknown" }` for an unavailable value and `{ status: "redacted" }` for a sensitive value; never pass secrets. Omitted `changes` means specific changes were not supplied. An empty array does not establish that the resource is unchanged. Easy UI renders the supplied field operations; the application computes their meaning and diff.
+Values are caller-formatted strings, so format numbers and booleans before supplying them. Pass native `null` for an explicitly unset value; the display string `"null"` remains literal text and does not trigger the single-value layout. An empty string is displayed as `""`. Empty strings, `"0"`, and `"false"` are present values. Use `{ status: "unknown" }` for an unavailable value and `{ status: "redacted" }` for a sensitive value; never pass secrets. Neither is treated as an absent prior value. Omitted `changes` means specific changes were not supplied. An empty array does not establish that the resource is unchanged. Easy UI renders the supplied field operations; the application computes their meaning and diff.
 
 `defaultChangePresentation="diff"` starts each newly selected resource in the detailed view. The default is `"summary"`. Selection changes initialize that resource's presentation independently, so another resource's values cannot remain visible. `DependencyGraphChanges` accepts `compact` to omit the heading when embedded in a card and is also exported for an application-owned inspector; it supports controlled `presentation`/`onPresentationChange` or local `defaultPresentation`.
 
 `expandedChangeNodeIds`, `defaultExpandedChangeNodeIds`, and `onExpandedChangeNodeIdsChange` control which resource cards show their attribute differences. Callbacks return original resource IDs. Multiple cards can be expanded at once.
 
 <Canvas of={Stories.ExpandedAttributeDifferences} />
+<Canvas of={Stories.NewlySetValues} />
 <Canvas of={Stories.ChangeSummary} />
 <Canvas of={Stories.SpecificChanges} />
 

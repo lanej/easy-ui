@@ -506,8 +506,8 @@ describe("DependencyGraph per-resource changes", () => {
     );
     const rows = (selector: string) =>
       [...container.querySelectorAll(selector)].map((row) => row.textContent);
+    expect(rows('[data-diff="set"]')).toEqual(["New value: +false"]);
     expect(rows('[data-diff="addition"]')).toEqual([
-      "After: +false",
       "After: +null",
       "After: +Unknown value",
     ]);
@@ -667,16 +667,64 @@ describe("DependencyGraph zoom and branch disclosures", () => {
     const rows = screen
       .getByLabelText("A attribute differences")
       .querySelectorAll("dd");
-    expect(rows[0].querySelectorAll("[data-diff]")[0]).toHaveTextContent(
-      "Not present",
-    );
-    expect(rows[0].querySelectorAll("[data-diff]")[1]).toHaveTextContent('""');
+    expect(rows[0].querySelectorAll("[data-diff]")).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent('New value: +""');
     expect(rows[1].querySelectorAll("[data-diff]")[0]).toHaveTextContent(
       "old value",
     );
     expect(rows[1].querySelectorAll("[data-diff]")[1]).toHaveTextContent(
       "Not present",
     );
+  });
+  it("compacts explicit null-to-value changes without treating display text or unavailable values as null", () => {
+    const { container } = render(
+      <DependencyGraphChanges
+        presentation="diff"
+        node={{
+          id: "a",
+          label: "A",
+          changes: [
+            { path: "zero", type: "change", before: null, after: "0" },
+            { path: "false", type: "change", before: null, after: "false" },
+            { path: "empty", type: "change", before: null, after: "" },
+            { path: "literal", type: "change", before: "null", after: "set" },
+            { path: "clear", type: "change", before: "set", after: null },
+            { path: "null", type: "add", after: null },
+            {
+              path: "redacted",
+              type: "change",
+              before: { status: "redacted" },
+              after: "set",
+            },
+            {
+              path: "unknown",
+              type: "change",
+              before: { status: "unknown" },
+              after: "set",
+            },
+          ],
+        }}
+      />,
+    );
+    const field = (path: string) =>
+      [...container.querySelectorAll("[data-field-change]")].find(
+        (row) => row.getAttribute("data-field-change") === path,
+      )!;
+    for (const [path, value] of [
+      ["zero", "0"],
+      ["false", "false"],
+      ["empty", '""'],
+      ["null", "null"],
+    ]) {
+      expect(field(path).querySelectorAll("[data-diff]")).toHaveLength(1);
+      expect(field(path)).toHaveTextContent(`New value: +${value}`);
+      expect(field(path)).not.toHaveTextContent("Before:");
+    }
+    for (const path of ["literal", "clear", "redacted", "unknown"]) {
+      expect(field(path).querySelectorAll("[data-diff]")).toHaveLength(2);
+    }
+    expect(field("literal")).toHaveTextContent("Before: −null");
+    expect(field("clear")).toHaveTextContent("After: +null");
   });
   it("keeps added and removed relationships individually selectable with unchanged endpoints", () => {
     const { container } = render(
