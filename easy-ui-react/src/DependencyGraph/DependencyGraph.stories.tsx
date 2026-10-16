@@ -1,5 +1,6 @@
 import { realWorldNodes, realWorldEdges } from "./DependencyGraph.realWorld";
-import React from "react";
+import React, { useState } from "react";
+import type { DependencyGraphCardLayouts, DependencyGraphProps } from "./types";
 import {
   subgraphGroups,
   subgraphNodes,
@@ -140,6 +141,86 @@ export const FullscreenInspection: Story = {
       <DependencyGraph {...args} />
     </div>
   ),
+};
+
+function EditableCardsExample(args: DependencyGraphProps) {
+  const [layouts, setLayouts] = useState<DependencyGraphCardLayouts>(
+    args.defaultCardLayouts ?? {},
+  );
+  return (
+    <DependencyGraph
+      {...args}
+      cardLayouts={layouts}
+      onCardLayoutsChange={setLayouts}
+    />
+  );
+}
+
+export const EditableResourceCards: Story = {
+  args: {
+    title: "Arrange resource dependencies",
+    nodes: [
+      {
+        id: "store",
+        label: "Application database",
+        typeLabel: "Database",
+        groupId: "data",
+        change: "update",
+        changes: Array.from({ length: 12 }, (_, index) => ({
+          path: `settings.field_${index + 1}`,
+          type: "change" as const,
+          before: "previous-value",
+          after: "updated-value",
+        })),
+      },
+      {
+        id: "api",
+        label: "API service",
+        typeLabel: "Container",
+        groupId: "apps",
+        change: "update",
+        changes: [
+          {
+            path: "database.host",
+            type: "change",
+            before: "database.previous.host",
+            after: "database.current.host",
+          },
+        ],
+      },
+      {
+        id: "worker",
+        label: "Background worker",
+        typeLabel: "Container",
+        groupId: "apps",
+        change: "unchanged",
+      },
+    ],
+    edges: [
+      {
+        id: "store-api",
+        source: "store",
+        target: "api",
+        sourceAttributePath: "settings.field_12",
+        targetAttributePath: "database.host",
+      },
+      { id: "api-worker", source: "api", target: "worker" },
+    ],
+    groups: [
+      { id: "system", label: "Application" },
+      { id: "data", label: "Data", parentId: "system" },
+      { id: "apps", label: "Services", parentId: "system" },
+    ],
+    defaultExpandedChangeNodeIds: ["store", "api"],
+    defaultSelection: { type: "node", id: "store" },
+    defaultCardLayouts: {
+      store: { width: 400, height: 300 },
+      api: { width: 320, height: 220 },
+    },
+    showDetails: false,
+    height: 620,
+  },
+  render: (args) => <EditableCardsExample {...args} />,
 };
 export const WideAttributeInspection: Story = {
   args: {
