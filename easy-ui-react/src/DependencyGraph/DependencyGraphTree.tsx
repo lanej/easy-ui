@@ -127,6 +127,9 @@ export function DependencyGraphTree({
         ...(root.current?.querySelectorAll<HTMLElement>("[data-tree-key]") ??
           []),
       ].find((element) => element.dataset.treeKey === key);
+      (
+        row?.querySelector<HTMLElement>("[data-tree-row-header]") ?? row
+      )?.scrollIntoView({ block: "nearest", inline: "nearest" });
       row?.focus({ preventScroll: true });
     });
   };
@@ -149,6 +152,9 @@ export function DependencyGraphTree({
         }
       }}
       placement="inline"
+      summaryInRow={
+        !!ownerKey && ownerKey === resourceKey && visibleKeys.has(ownerKey)
+      }
       renderDetails={renderDetails}
       renderAttributeAnnotation={renderAttributeAnnotation}
       defaultChangePresentation={defaultChangePresentation}
@@ -281,9 +287,13 @@ export function DependencyGraphTree({
                     label
                   }
                 >
-                  <strong className={styles.label}>{label}</strong>
+                  <strong className={styles.label} title={label}>
+                    {label}
+                  </strong>
                   {node?.typeLabel && (
-                    <span className={styles.type}>{node.typeLabel}</span>
+                    <span className={styles.type} title={node.typeLabel}>
+                      {node.typeLabel}
+                    </span>
                   )}
                 </span>
                 <div className={styles.metadata}>

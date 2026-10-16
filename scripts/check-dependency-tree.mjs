@@ -51,6 +51,35 @@ try {
       ]) {
         await open(story, theme);
         await geometry();
+        if (story === "compact-tree") {
+          const drawer = page.getByRole("region", { name: "Details for api" });
+          assert.equal(
+            await drawer
+              .getByRole("heading", { name: "api", exact: true })
+              .count(),
+            0,
+          );
+          assert.equal(
+            await drawer.getByText("api", { exact: true }).count(),
+            0,
+          );
+          assert.equal(
+            await drawer.getByText("Source modified", { exact: true }).count(),
+            0,
+          );
+          const typeLabel = "google_cloud_run_v2_service";
+          assert.equal(
+            await drawer.getByText(typeLabel, { exact: true }).isVisible(),
+            width === 390,
+          );
+          assert.equal(
+            await page
+              .locator('[data-tree-node="api"] [data-tree-row-header]')
+              .getByText(typeLabel, { exact: true })
+              .isVisible(),
+            width === 1280,
+          );
+        }
         if (width === 1280 && story !== "tree-without-inspector") {
           const heights = await page
             .locator("[data-tree-row-header]")
@@ -463,6 +492,26 @@ try {
     await page.getByRole("region", { name: "Details for api" }).isVisible(),
   );
   checks.push("drawer-narrow-large-text");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await open("tree-with-supporting-details");
+  const longDrawerRow = page.locator('[data-tree-node="resource-10"]');
+  await longDrawerRow
+    .getByRole("button", { name: "Close details for Resource 11" })
+    .click();
+  await page.waitForFunction(
+    () => document.activeElement?.dataset.treeNode === "resource-10",
+  );
+  const headerBox = await longDrawerRow
+    .locator("[data-tree-row-header]")
+    .boundingBox();
+  const viewportBox = await page.locator("[data-tree-viewport]").boundingBox();
+  assert(
+    headerBox.y >= viewportBox.y - 1 &&
+      headerBox.y + headerBox.height <= viewportBox.y + viewportBox.height + 1,
+    "Closing a long drawer restores its row to the visible viewport",
+  );
+  checks.push("long-drawer-close-restores-visible-row");
+
   assert.deepEqual(errors, [], "No runtime errors");
   await writeFile(
     resolve(output, "report.json"),

@@ -32,8 +32,8 @@ An arrow runs **from a dependency to its dependent**: `subnet → api` means the
 
 Use **Graph / Tree** to switch between the spatial canvas and a compact foldable
 outline. Selection, scope, search, group folds, and expanded attribute differences
-stay in the same component state. Tree rows open full-width drawers containing
-the same details as the graph's sidebar; tree mode uses the full available width.
+stay in the same component state. Tree rows open full-width drawers with
+additional detail; tree mode uses the full available width.
 Set `defaultPresentation="tree"` to start with the outline, or control
 `presentation` with `onPresentationChange`.
 
@@ -65,11 +65,17 @@ chevrons open or close details. Close a drawer with **Close**, the leaf chevron,
 or by clearing selection. Resource icons and annotations remain in the row header
 in either state.
 
-Drawers include the complete identity, change summary and exact differences,
-attribute annotations, `renderDetails` content, group members, and connected
-relationships. Inspecting a relationship keeps its details in the originating
-drawer; its endpoint actions reveal the corresponding resource row. On wider
-rows, resource details and relationships sit side by side; narrow rows stack them.
+Drawers add information to the row: descriptions, distinct addresses and IDs,
+exact differences, attribute annotations, `renderDetails` content, group members,
+and connected relationships. They omit the repeated name and status summary.
+A type label hidden by the compact row on narrow screens remains available in
+the drawer. Field differences are the default; `defaultChangePresentation` can
+choose the summary instead. Close remains available after the additional details.
+
+Inspecting a relationship keeps its details in the originating drawer; its
+endpoint actions reveal the corresponding resource row. Relationship details and
+standalone fallback inspectors retain their own identity. On wider rows, resource
+details and relationships sit side by side; narrow rows stack them.
 Drawer content mounts when opened. `showDetails={false}` disables these drawers
 and uses the leaf chevron for inline attribute differences, allowing an
 application to place its own inspector. On branches, the field-count control
@@ -79,6 +85,7 @@ still controls these differences and graph card expansion independently of selec
 <Canvas of={Stories.CompactTree} />
 <Canvas of={Stories.DependencyTree} />
 <Canvas of={Stories.TreeWithoutInspector} />
+<Canvas of={Stories.TreeWithSupportingDetails} />
 
 ## Explicit subgraphs
 

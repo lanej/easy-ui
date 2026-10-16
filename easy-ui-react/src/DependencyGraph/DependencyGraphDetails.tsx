@@ -26,6 +26,8 @@ export type DependencyGraphDetailsProps = {
   defaultChangePresentation?: DependencyGraphChangePresentation;
   /** Inline details fill their row without a separate scrolling sidebar. */
   placement?: "sidebar" | "inline";
+  /** The containing tree row already shows this selection's identity and status. */
+  summaryInRow?: boolean;
   /** Optional size control for an application-owned inspector layout. */
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
@@ -89,7 +91,37 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
       : "Relationships");
   const found = context.node || context.group || context.edges.length;
   const inline = props.placement === "inline";
+  const summaryInRow =
+    inline && props.summaryInRow && !!(context.node || context.group);
+  const rowLabel = summaryInRow
+    ? (context.node?.label ?? context.group?.label)
+    : undefined;
+  const identifier = context.node?.address ?? context.node?.id;
   const Container = inline ? "section" : "aside";
+  const actions = (
+    <div className={styles.detailActions}>
+      {selection && (
+        <button
+          type="button"
+          className={styles.textButton}
+          onClick={() => onSelectionChange(null)}
+          aria-label={
+            inline ? `Close details for ${title}` : "Clear graph selection"
+          }
+        >
+          {inline ? "Close" : "Clear"}
+        </button>
+      )}
+      {props.onExpandedChange && (
+        <ExpandButton
+          expanded={props.expanded}
+          accessibilityLabel={`${props.expanded ? "Collapse" : "Expand"} selection details`}
+          aria-controls={contentId}
+          onPress={() => props.onExpandedChange?.(!props.expanded)}
+        />
+      )}
+    </div>
+  );
   return (
     <Container
       className={styles.details}
@@ -97,32 +129,14 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
       data-graph-details
       data-placement={props.placement}
       data-expanded={props.expanded || undefined}
+      data-summary-in-row={summaryInRow || undefined}
     >
-      <div className={styles.detailHeading}>
-        <h3>{selection && found ? title : "Selection"}</h3>
-        <div className={styles.detailActions}>
-          {selection && (
-            <button
-              type="button"
-              className={styles.textButton}
-              onClick={() => onSelectionChange(null)}
-              aria-label={
-                inline ? `Close details for ${title}` : "Clear graph selection"
-              }
-            >
-              {inline ? "Close" : "Clear"}
-            </button>
-          )}
-          {props.onExpandedChange && (
-            <ExpandButton
-              expanded={props.expanded}
-              accessibilityLabel={`${props.expanded ? "Collapse" : "Expand"} selection details`}
-              aria-controls={contentId}
-              onPress={() => props.onExpandedChange?.(!props.expanded)}
-            />
-          )}
+      {!summaryInRow && (
+        <div className={styles.detailHeading}>
+          <h3>{selection && found ? title : "Selection"}</h3>
+          {actions}
         </div>
-      </div>
+      )}
       <div id={contentId}>
         {!selection ? (
           <p className={styles.muted}>
@@ -137,41 +151,53 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
             <div className={styles.detailPrimary}>
               {context.node && (
                 <>
-                  {context.node.kind === "unresolved" && (
+                  {!summaryInRow && context.node.kind === "unresolved" && (
                     <p className={styles.referenceLabel}>
                       Unresolved reference
                     </p>
                   )}
                   {context.node.typeLabel && (
-                    <p className={styles.detailDescription}>
+                    <p
+                      className={
+                        summaryInRow
+                          ? styles.detailRowType
+                          : styles.detailDescription
+                      }
+                    >
                       {context.node.typeLabel}
                     </p>
                   )}
-                  <div className={styles.nodeMetadata}>
-                    <span
-                      className={
-                        context.node.change ? styles.change : styles.muted
-                      }
-                      data-change={context.node.change}
-                    >
-                      {context.node.change
-                        ? dependencyChangeLabels[context.node.change]
-                        : "Change not supplied"}
-                    </span>
-                    <DependencyGraphCategories
-                      categories={context.node.categories}
-                    />
-                  </div>
-                  {context.node.description && (
-                    <p className={styles.detailDescription}>
-                      {context.node.description}
-                    </p>
+                  {!summaryInRow && (
+                    <div className={styles.nodeMetadata}>
+                      <span
+                        className={
+                          context.node.change ? styles.change : styles.muted
+                        }
+                        data-change={context.node.change}
+                      >
+                        {context.node.change
+                          ? dependencyChangeLabels[context.node.change]
+                          : "Change not supplied"}
+                      </span>
+                      <DependencyGraphCategories
+                        categories={context.node.categories}
+                      />
+                    </div>
                   )}
-                  <code className={styles.identifier}>
-                    {context.node.address ?? context.node.id}
-                  </code>
+                  {context.node.description &&
+                    context.node.description !== rowLabel &&
+                    (!summaryInRow ||
+                      context.node.description !== context.node.typeLabel) && (
+                      <p className={styles.detailDescription}>
+                        {context.node.description}
+                      </p>
+                    )}
+                  {identifier !== rowLabel && (
+                    <code className={styles.identifier}>{identifier}</code>
+                  )}
                   {context.node.address &&
-                    context.node.address !== context.node.id && (
+                    context.node.address !== context.node.id &&
+                    context.node.id !== rowLabel && (
                       <span className={styles.identifier}>
                         Record ID: {context.node.id}
                       </span>
@@ -179,16 +205,20 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
                   <DependencyGraphChanges
                     key={context.node.id}
                     node={context.node}
-                    defaultPresentation={props.defaultChangePresentation}
+                    defaultPresentation={
+                      props.defaultChangePresentation ??
+                      (summaryInRow ? "diff" : undefined)
+                    }
                     renderAttributeAnnotation={props.renderAttributeAnnotation}
                   />
                 </>
               )}
-              {context.group?.description && (
-                <p className={styles.detailDescription}>
-                  {context.group.description}
-                </p>
-              )}
+              {context.group?.description &&
+                context.group.description !== rowLabel && (
+                  <p className={styles.detailDescription}>
+                    {context.group.description}
+                  </p>
+                )}
               {context.group && (
                 <div className={styles.members}>
                   {(
@@ -329,6 +359,7 @@ export function DependencyGraphDetails(props: DependencyGraphDetailsProps) {
           </div>
         )}
       </div>
+      {summaryInRow && <div className={styles.detailFooter}>{actions}</div>}
     </Container>
   );
 }

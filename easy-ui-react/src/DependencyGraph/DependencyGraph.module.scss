@@ -19,6 +19,7 @@
 
 .root {
   container-type: inline-size;
+  container-name: dependency-graph;
   min-inline-size: 0;
   color: design-token("color.neutral.900");
   font-size: 0.875rem;
@@ -533,6 +534,18 @@
     margin-block-start: 6px;
   }
 }
+.detailRowType {
+  display: none;
+  margin-block-end: 6px;
+}
+@container dependency-graph (max-width: 34rem) {
+  .detailRowType {
+    display: block;
+  }
+}
+.detailFooter {
+  margin-block-start: 12px;
+}
 .detailPrimary,
 .detailRelationships {
   min-inline-size: 0;
@@ -1024,4 +1037,10 @@
   flex-basis: 100%;
   color: design-token("color.neutral.700");
   font-size: 0.75rem;
+}
+
+.details[data-summary-in-row] .resourceChanges {
+  margin-block-start: 0;
+  border-block-start: 0;
+  padding-block-start: 0;
 }

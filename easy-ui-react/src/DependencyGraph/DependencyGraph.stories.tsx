@@ -98,6 +98,33 @@ export const CompactTree: Story = {
     height: 760,
   },
 };
+export const TreeWithSupportingDetails: Story = {
+  args: {
+    title: undefined,
+    accessibilityLabel: "Resources with supporting evidence",
+    nodes: Array.from({ length: 40 }, (_, index) => ({
+      id: `resource-${index}`,
+      label: `Resource ${index + 1}`,
+    })),
+    edges: [],
+    groups: [],
+    defaultPresentation: "tree",
+    defaultSelection: { type: "node", id: "resource-10" },
+    renderDetails: () => (
+      <div>
+        <h4>Supporting evidence</h4>
+        {Array.from({ length: 12 }, (_, index) => (
+          <p key={index}>
+            Verification step {index + 1}: compare the supplied runtime
+            configuration with the planned resource changes before approving
+            this dependency.
+          </p>
+        ))}
+      </div>
+    ),
+    height: 360,
+  },
+};
 export const TreeWithoutInspector: Story = {
   ...CompactTree,
   args: {

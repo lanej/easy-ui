@@ -247,7 +247,7 @@ it("uses normal tree density while retaining the graph zoom", () => {
   expect(screen.getByLabelText("Graph zoom")).toHaveTextContent(zoom!);
 });
 
-it("opens complete inspector content in a row drawer and keeps its resource icon", () => {
+it("opens additional inspector content without repeating the row summary", () => {
   const renderDetails = vi.fn(({ node }) => <p>Evidence for {node?.id}</p>);
   const { container } = render(
     <DependencyGraph
@@ -271,6 +271,15 @@ it("opens complete inspector content in a row drawer and keeps its resource icon
   fireEvent.click(screen.getByRole("button", { name: "Show details for api" }));
   const drawer = screen.getByRole("region", { name: "Details for api" });
   expect(row).toContainElement(drawer);
+  expect(
+    within(drawer).queryByRole("heading", { name: "api" }),
+  ).not.toBeInTheDocument();
+  expect(
+    within(drawer).queryByText("api", { exact: true }),
+  ).not.toBeInTheDocument();
+  expect(
+    within(drawer).queryByText("Source modified", { exact: true }),
+  ).not.toBeInTheDocument();
   expect(within(drawer).getByText("Evidence for api")).toBeVisible();
   expect(within(drawer).getByText("app:v1")).toBeVisible();
   expect(within(drawer).getByText("app:v2")).toBeVisible();
@@ -297,6 +306,44 @@ it("opens complete inspector content in a row drawer and keeps its resource icon
   ).toBeVisible();
 });
 
+it("retains distinct addresses and record IDs without repeating the row label", () => {
+  const node = {
+    id: "api",
+    label: "api",
+    address: "module.shipping.service.api",
+    description: "Serves parcel requests.",
+    change: "update" as const,
+    changes: [
+      { path: "image", type: "change" as const, before: "v1", after: "v2" },
+    ],
+  };
+  const { rerender } = render(
+    <DependencyGraph
+      nodes={[node]}
+      edges={[]}
+      defaultPresentation="tree"
+      defaultSelection={{ type: "node", id: "api" }}
+    />,
+  );
+  const drawer = screen.getByRole("region", { name: "Details for api" });
+  expect(within(drawer).getByText(node.address)).toBeVisible();
+  expect(within(drawer).getByText(node.description)).toBeVisible();
+  expect(within(drawer).getByText("v2")).toBeVisible();
+  expect(
+    within(drawer).queryByText("Update", { exact: true }),
+  ).not.toBeInTheDocument();
+  expect(within(drawer).queryByText("Record ID: api")).not.toBeInTheDocument();
+  rerender(
+    <DependencyGraph
+      nodes={[{ ...node, label: "Shipping API" }]}
+      edges={[]}
+      defaultPresentation="tree"
+      defaultSelection={{ type: "node", id: "api" }}
+    />,
+  );
+  expect(screen.getByText("Record ID: api")).toBeVisible();
+});
+
 it("keeps relationship details in the originating drawer and reveals folded endpoints", () => {
   const { container } = render(
     <DependencyGraph
@@ -320,6 +367,11 @@ it("keeps relationship details in the originating drawer and reveals folded endp
   const relationship = screen.getByRole("region", {
     name: "Details for Relationship",
   });
+  expect(
+    within(relationship).getByRole("heading", {
+      name: "Relationship",
+    }),
+  ).toBeVisible();
   expect(container.querySelector('[data-tree-node="api"]')).toContainElement(
     relationship,
   );
@@ -418,6 +470,7 @@ it("keeps selected relationships reachable when endpoints or owners are folded o
   expect(
     screen.getByRole("region", { name: "Details for Runtime module" }),
   ).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Runtime module" })).toBeVisible();
 });
 
 it("does not reuse a drawer owner for an unrelated controlled relationship selection", () => {
