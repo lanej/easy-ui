@@ -71,12 +71,53 @@ try {
         )
         .first();
       await source.waitFor();
+      const overviewBefore = await source.boundingBox();
       await source.press("Enter");
       const inset = page.locator('[data-map-zoom-section="origin"]');
       await inset.waitFor();
       await inset.locator('[data-map-state="ready"]').waitFor();
       await inset.locator('[data-map-facility-id="acceptance"]').waitFor();
       const retained = await inset.elementHandle();
+      const overview = page.locator("[data-map-geography] > [data-map-state]");
+      if (width === 390) {
+        assert.equal(
+          await overview.evaluate(
+            (element) => getComputedStyle(element).visibility,
+          ),
+          "hidden",
+          "narrow overview is hidden from view and keyboard navigation",
+        );
+        assert.ok(
+          await inset
+            .getByText("Back to overview", { exact: true })
+            .isVisible(),
+          "narrow drill-in has a clear return action",
+        );
+        assert.ok(
+          await inset.locator(".maplibregl-map").isVisible(),
+          "narrow close-up keeps its local map",
+        );
+        assert.ok(
+          await inset
+            .locator("[data-map-inset-header]")
+            .evaluate((element) => element.contains(document.activeElement)),
+          "opening moves focus out of hidden overview",
+        );
+        const height = await page
+          .locator("[data-map-geography]")
+          .evaluate((element) => element.getBoundingClientRect().height);
+        assert.ok(
+          height < 400,
+          "narrow drill-in does not reserve the tall overview space",
+        );
+      } else {
+        assert.equal(
+          await overview.evaluate(
+            (element) => getComputedStyle(element).visibility,
+          ),
+          "visible",
+        );
+      }
       await membership(page, ["oak", "slc", "dtw"]);
       const insetIds = await inset
         .locator("[data-map-facility-id]")
@@ -115,21 +156,86 @@ try {
       );
       assert.ok(overflow <= 1, "story has no page-level horizontal overflow");
       await inset
-        .getByRole("button", { name: "Close close-up", exact: true })
+        .getByRole("button", {
+          name: width === 390 ? "Back to overview" : "Close close-up",
+          exact: true,
+        })
         .press("Escape");
       await inset.waitFor({ state: "detached" });
       assert.ok(
         await source.evaluate((element) => element === document.activeElement),
         "Escape returns focus to the source marker",
       );
+      const overviewAfter = await source.boundingBox();
+      assert.ok(
+        Math.abs(overviewBefore.x - overviewAfter.x) < 1 &&
+          Math.abs(overviewBefore.y - overviewAfter.y) < 1,
+        "dismissal restores the original overview camera",
+      );
       await source.press("Enter");
       await inset.waitFor();
       await inset.locator('[data-map-state="ready"]').waitFor();
       await membership(page, null);
       await inset
-        .getByRole("button", { name: "Close close-up", exact: true })
+        .getByRole("button", {
+          name: width === 390 ? "Back to overview" : "Close close-up",
+          exact: true,
+        })
         .click();
       await inset.waitFor({ state: "detached" });
+      if (width === 1200) {
+        await source.press("Enter");
+        await inset.waitFor();
+        await inset.locator('[data-map-state="ready"]').waitFor();
+        const frame = page.locator("[data-map-geography]");
+        await frame.evaluate((element) => {
+          element.style.width = "480px";
+        });
+        await page.waitForFunction(
+          () =>
+            getComputedStyle(
+              document.querySelector("[data-map-geography] > [data-map-state]"),
+            ).visibility === "hidden",
+        );
+        await inset
+          .getByRole("button", { name: "Back to overview", exact: true })
+          .waitFor();
+        await page.screenshot({
+          path: resolve(output, `panel-${theme}-480.png`),
+          fullPage: true,
+        });
+        await frame.evaluate((element) => {
+          element.style.width = "481px";
+        });
+        await page.waitForFunction(
+          () =>
+            getComputedStyle(
+              document.querySelector("[data-map-geography] > [data-map-state]"),
+            ).visibility === "visible",
+        );
+        await inset
+          .getByRole("button", { name: "Close close-up", exact: true })
+          .waitFor();
+        await source.focus();
+        await frame.evaluate((element) => {
+          element.style.width = "480px";
+        });
+        await page.waitForFunction(() =>
+          document
+            .querySelector("[data-map-inset-header]")
+            .contains(document.activeElement),
+        );
+        await inset
+          .getByRole("button", { name: "Back to overview", exact: true })
+          .press("Escape");
+        await inset.waitFor({ state: "detached" });
+        assert.ok(
+          await source.evaluate(
+            (element) => element === document.activeElement,
+          ),
+          "panel Escape restores focus after resize",
+        );
+      }
       results.push({
         theme,
         width,

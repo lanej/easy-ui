@@ -169,3 +169,40 @@
     padding: 12px;
   }
 }
+
+.backLabel {
+  display: none;
+}
+@container network-map (max-width: 480px) {
+  .sections {
+    position: relative;
+  }
+  .section {
+    position: relative;
+    inset: auto !important;
+    inline-size: auto;
+    max-inline-size: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .leaders,
+  .closeIcon {
+    display: none;
+  }
+  .backLabel {
+    display: inline;
+    font-size: var(--ezui-viz-label-size, 12px);
+  }
+  .headingRow {
+    flex-wrap: wrap;
+  }
+  .header {
+    padding: 8px 12px;
+    border-block-start: 1px solid design-token("color.neutral.200");
+  }
+  .actions {
+    gap: 8px;
+  }
+}

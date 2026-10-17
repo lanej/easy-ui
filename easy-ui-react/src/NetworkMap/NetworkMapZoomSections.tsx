@@ -19,6 +19,7 @@ type Placement = {
   left: number;
   top: number;
   narrow: boolean;
+  inline: boolean;
   maxHeight?: number;
   maxViewportHeight?: number;
   x: number;
@@ -36,6 +37,7 @@ export function NetworkMapZoomSections() {
     left: 12,
     top: 12,
     narrow: false,
+    inline: false,
     x: 0,
     y: 0,
     endX: 0,
@@ -102,8 +104,10 @@ export function NetworkMapZoomSections() {
               ?.getBoundingClientRect().height ?? 62)
           : 0;
       const topSpace = navigationHeight > 0 ? navigationHeight + 22 : 12;
+      const frameWidth = frame.clientWidth || base.width;
+      const inline = frameWidth > 0 && frameWidth <= 480;
       const maxHeight =
-        base.height > 0
+        !inline && base.height > 0
           ? Math.max(0, Math.floor(base.height - bottom - topSpace))
           : undefined;
       const maxViewportHeight =
@@ -111,6 +115,20 @@ export function NetworkMapZoomSections() {
           ? Math.max(0, Math.floor(maxHeight - header.height - 2))
           : undefined;
       const compact = (maxViewportHeight ?? Infinity) < 220;
+      // A narrow close-up replaces the overview; do not leave keyboard focus
+      // inside the now-hidden map, including when a desktop panel shrinks.
+      if (
+        inline &&
+        frame
+          .querySelector("[data-map-state]")
+          ?.contains(element.ownerDocument.activeElement)
+      ) {
+        element
+          .querySelector<HTMLButtonElement>(
+            "[data-map-inset-header] button:not(:disabled)",
+          )
+          ?.focus({ preventScroll: true });
+      }
       if (
         compact !== element.hasAttribute("data-map-inset-compact") &&
         element
@@ -158,7 +176,8 @@ export function NetworkMapZoomSections() {
       );
       setPlacement({
         ...position,
-        narrow: frame.clientWidth <= 700,
+        narrow: frameWidth <= 700,
+        inline,
         maxHeight,
         maxViewportHeight,
         ...source,
@@ -229,6 +248,7 @@ export function NetworkMapZoomSections() {
         section={activeSection}
         element={card}
         narrow={placement.narrow}
+        inline={placement.inline}
         maxHeight={placement.maxHeight}
         maxViewportHeight={placement.maxViewportHeight}
         position={{ left: placement.left, top: placement.top }}
@@ -241,6 +261,7 @@ export function NetworkMapZoomSections() {
 function ZoomSection({
   section,
   narrow,
+  inline,
   maxHeight,
   maxViewportHeight,
   element,
@@ -249,6 +270,7 @@ function ZoomSection({
 }: {
   section: NetworkMapZoomSection;
   narrow: boolean;
+  inline: boolean;
   maxHeight?: number;
   maxViewportHeight?: number;
   element: React.RefObject<HTMLElement | null>;
@@ -378,6 +400,7 @@ function ZoomSection({
           >
             <InsetHeader
               heading={heading}
+              inline={inline}
               isReady={state === "ready"}
               onZoom={() => {
                 commands.current.focus(focus);
@@ -431,12 +454,14 @@ function ZoomSection({
 
 function InsetHeader({
   heading,
+  inline,
   isReady,
   onZoom,
   onClose,
   connections,
 }: {
   heading: React.ReactNode;
+  inline: boolean;
   isReady: boolean;
   onZoom: () => void;
   onClose: () => void;
@@ -463,9 +488,12 @@ function InsetHeader({
             size="sm"
             variant="text"
             type="button"
-            aria-label="Close close-up"
+            aria-label={inline ? "Back to overview" : "Close close-up"}
             onPress={onClose}
           >
+            <span className={styles.backLabel} aria-hidden="true">
+              Back to overview
+            </span>
             <span className={styles.closeIcon} aria-hidden="true">
               ×
             </span>

@@ -740,3 +740,38 @@ it("deduplicates continuation links and omits missing or unmapped endpoints", ()
     "another",
   ]);
 });
+
+it("keeps a full local map in narrow drill-ins even when the overview frame is short", () => {
+  const bounds = vi
+    .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+    .mockImplementation(function (this: HTMLElement) {
+      if (this.hasAttribute("data-map-geography"))
+        return new DOMRect(0, 0, 390, 300);
+      if (this.hasAttribute("data-map-inset-header"))
+        return new DOMRect(0, 0, 390, 60);
+      return new DOMRect(0, 0, 390, 240);
+    });
+  try {
+    const { container } = render(<NetworkMap {...records} />);
+    openOrigin();
+    expect(container.querySelector("[data-map-geography]")).toHaveAttribute(
+      "data-inset-open",
+      "true",
+    );
+    expect(
+      screen.getByRole("region", { name: "Origin detail" }),
+    ).not.toHaveAttribute("data-map-inset-compact");
+    expect(screen.getByTestId(originName)).toBeInTheDocument();
+    fireEvent.keyDown(
+      screen.getByRole("button", { name: "Back to overview" }),
+      {
+        key: "Escape",
+      },
+    );
+    expect(container.querySelector("[data-map-geography]")).not.toHaveAttribute(
+      "data-inset-open",
+    );
+  } finally {
+    bounds.mockRestore();
+  }
+});
