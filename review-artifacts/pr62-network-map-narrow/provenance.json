@@ -1,0 +1,26 @@
+{
+  "repository": "lanej/easy-ui",
+  "pullRequest": 62,
+  "validatedHead": "8f83810a34ce3bc6864956a10f1fbcb254df0f71",
+  "testedMerge": "fac50390c663b6a52e1290feb2661550f9ffa1bd",
+  "mergedCommit": "b513c7053d947cfc8fe3f656a9b90bd10ccf43c3",
+  "sourceTree": "45cbdd651db187f43ab11af84b78498dfdc66557",
+  "workflowRun": 39045874404,
+  "artifactId": 12105982613,
+  "artifactSha256": "b527274029f8535414a8143eb8a6c4b79d483c70abb277698a595ad8e060f218",
+  "beforeSource": "https://raw.githubusercontent.com/lanej/easy-ui/ff77b78c4e6bd4beae78a7413095a8ade4d0f121/review-artifacts/issue-57-controlled/mixed-dark-390.png",
+  "independentVisualReview": "Passed for all ten mixed/panel images, compared against original before image",
+  "screenshots": {
+    "mixed-map-light-390.png": "0d9e7ac02a72fa096d11e1d9b32083f1fee222f592f1962e1219f293023b14ec",
+    "mixed-map-light-1200.png": "0211193f0e078c214e0ac2bfa2b5835451604371abbae4cc9ad55446708d3d90",
+    "mixed-light-390.png": "633c73ad66395136c94bbc8c6b78770f99c2866ebfb1ce8c9be6468e95ccf312",
+    "mixed-map-dark-390.png": "8f9ab1300c2aac5f79ba031d0f4eb73b80625f694d88665c7d1a7e52671a2bdd",
+    "mixed-map-dark-1200.png": "0aacc5cba183e9b1fba1c4f96e28d4ad5d4d76dd758de9ece79a7427993995bc",
+    "mixed-light-1200.png": "fefce2e90b4ea51851d7f572bb0ae30103e859e33fa589a96483605ef161b428",
+    "mixed-dark-390.png": "d66ae89c50df75a0f6e4096d981b96b00446ade9aca0ddd5a51c0cac1cbd0c67",
+    "mixed-dark-1200.png": "9c8afcc12af1d83e0776528786344ba1cfd39609559af13127d2599339280879",
+    "panel-light-480.png": "559042b520463a9e54ccb3a2438d0e0a7749bcadb7c50879c3fdf48f2547ce49",
+    "panel-dark-480.png": "1a75f2bc17637f185c5b71542dc02bc14995f4e1ebc19d8b09586c79c26e61d6",
+    "before-dark-390.png": "147c4bdeb1177dce80a29f40c41dac531ab377fa26a91e4dc60961ac56ce5ca8"
+  }
+}
