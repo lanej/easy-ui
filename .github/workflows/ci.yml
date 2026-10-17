@@ -56,6 +56,7 @@ jobs:
           CHART_CATALOG_REPORT_DIR: ${{ runner.temp }}/chart-catalog-browser
           STORYBOOK_DOCS_REPORT_DIR: ${{ runner.temp }}/storybook-docs-browser
           TOKEN_BROWSER_REPORT_DIR: ${{ runner.temp }}/token-browser
+          MAP_PRIMARY_REPORT_DIR: ${{ runner.temp }}/map-primary-insets
           EVIDENCE_TYPOGRAPHY_REPORT_DIR: ${{ runner.temp }}/evidence-typography-browser
           THEME_TOGGLE_REPORT_DIR: ${{ runner.temp }}/theme-toggle-browser
         run: |
@@ -69,6 +70,7 @@ jobs:
             sleep 1
           done
           curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
+          node scripts/check-map-primary-insets.mjs
           node scripts/check-metric-card.mjs
           node scripts/check-facility-summary.mjs
           node scripts/check-chart-catalog.mjs
@@ -92,6 +94,7 @@ jobs:
             ${{ runner.temp }}/chart-catalog-browser
             ${{ runner.temp }}/storybook-docs-browser
             ${{ runner.temp }}/token-browser
+            ${{ runner.temp }}/map-primary-insets
             ${{ runner.temp }}/theme-toggle-browser
             ${{ runner.temp }}/evidence-typography-browser
             ${{ runner.temp }}/facility-storybook.log

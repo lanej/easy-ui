@@ -353,7 +353,7 @@ function ZoomSection({
             initialView={undefined}
             focus={focus}
             height={viewportHeight}
-            primaryFacilityIds={section.facilityIds}
+            primaryFacilityIds={options.primaryFacilityIds}
             clusterFacilities={undefined}
             layerVisibility={visibility}
             controlPlacement="toolbar"

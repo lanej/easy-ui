@@ -189,7 +189,10 @@ remains available unless `controls={false}`. See [journey sizing](https://lanej.
 Use `primaryFacilityIds` to prioritize route labels and style rendered marker
 buttons through `data-primary="true|false"`. Included IDs are primary even when
 shared by routes; an empty array marks all false, while omitting or clearing
-the prop removes the attribute. Keep `data-selected` and `data-latest` emphasis
+the prop removes the attribute. Insets inherit this membership independently of
+which stops they display, including live updates, empty arrays, and clearing.
+See [primary-route close-ups](https://lanej.io/easy-ui/storybook/?path=/story/components-networkmap--primary-route-insets).
+Keep `data-selected` and `data-latest` emphasis
 independent. Scope label styles to a wrapper and `[data-map-label]`; do not
 replace MapLibre positioning classes. See [primary-route marker styling](https://lanej.io/easy-ui/storybook/?path=/story/components-networkmap--primary-route-markers).
 

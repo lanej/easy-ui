@@ -13,6 +13,9 @@ import type { MapFacility, MapSegment, NetworkMapProps } from "./types";
 import styles from "./examples.module.scss";
 import { NetworkMapExample } from "./NetworkMap.examples";
 import {
+  journeyZoomSections,
+  zoomJourneyFacilities,
+  zoomJourneySegments,
   JourneySizingExample,
   JourneyZoomExample,
 } from "./NetworkMapZoomSections.examples";
@@ -40,6 +43,52 @@ export const ParcelJourney: Story = {
 };
 export const ZoomedJourney: Story = {
   render: () => <JourneyZoomExample />,
+};
+function PrimaryRouteInsetsExample() {
+  const [route, setRoute] = useState("first");
+  const [selected, setSelected] = useState<string>();
+  return (
+    <div className={styles.primaryRouteExample}>
+      <label>
+        Primary membership{" "}
+        <select
+          value={route}
+          onChange={(event) => setRoute(event.target.value)}
+        >
+          <option value="first">Oakland and remote stops</option>
+          <option value="second">Acceptance and remote stops</option>
+          <option value="empty">No primary stops</option>
+          <option value="unset">Clear membership</option>
+        </select>
+      </label>
+      <NetworkMap
+        title="Primary route close-ups"
+        selectedFacilityId={selected}
+        onFacilitySelect={setSelected}
+        mapStyle={routeMapStyle}
+        workerUrl={workerUrl}
+        facilities={zoomJourneyFacilities}
+        segments={zoomJourneySegments}
+        zoomSections={journeyZoomSections}
+        showDataTable={false}
+        showSelectionDetails={false}
+        showLegend={false}
+        height={660}
+        primaryFacilityIds={
+          route === "unset"
+            ? undefined
+            : route === "empty"
+              ? []
+              : route === "first"
+                ? ["oak", "slc", "dtw"]
+                : ["acceptance", "chi", "dst"]
+        }
+      />
+    </div>
+  );
+}
+export const PrimaryRouteInsets: Story = {
+  render: () => <PrimaryRouteInsetsExample />,
 };
 export const JourneySizing: Story = {
   render: () => <JourneySizingExample />,

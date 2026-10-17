@@ -180,6 +180,39 @@ beforeEach(() => {
   viewportHeight = 660;
 });
 
+it.each([undefined, [], ["a", "c"]])(
+  "inherits primary route membership %j independently of inset visibility",
+  (primaryFacilityIds) => {
+    render(<NetworkMap {...records} primaryFacilityIds={primaryFacilityIds} />);
+    openOrigin();
+    const inset = seen.get(originName)!;
+    expect(inset.facilities?.map((facility) => facility.id)).toEqual([
+      "a",
+      "b",
+    ]);
+    expect(inset.primaryFacilityIds).toBe(primaryFacilityIds);
+  },
+);
+
+it("updates and clears primary membership without remounting an open inset", () => {
+  const view = render(
+    <NetworkMap {...records} primaryFacilityIds={["a", "c"]} />,
+  );
+  openOrigin();
+  const initialMounts = mounts.get(originName);
+  const next = ["b", "d"];
+  view.rerender(<NetworkMap {...records} primaryFacilityIds={next} />);
+  expect(seen.get(originName)?.primaryFacilityIds).toBe(next);
+  view.rerender(<NetworkMap {...records} primaryFacilityIds={[]} />);
+  expect(seen.get(originName)?.primaryFacilityIds).toEqual([]);
+  view.rerender(<NetworkMap {...records} />);
+  expect(seen.get(originName)?.primaryFacilityIds).toBeUndefined();
+  expect(mounts.get(originName)).toBe(initialMounts);
+  expect(
+    screen.getByRole("region", { name: "Origin detail" }),
+  ).toBeInTheDocument();
+});
+
 it("retains a requested group when resizing clips its overview markers, but closes when the group changes", () => {
   const view = render(<NetworkMap {...records} />);
   openOrigin();
