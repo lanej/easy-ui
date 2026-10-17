@@ -498,6 +498,8 @@
 
 .mapFrame {
   position: relative;
+  container-name: network-map-frame;
+  container-type: inline-size;
 }
 .geography {
   position: relative;
@@ -568,5 +570,12 @@
     * {
       visibility: hidden !important;
     }
+  }
+}
+
+@container network-map-frame (max-width: 480px) {
+  .overMapControls:has(+ .geography[data-inset-open="true"]) {
+    position: static;
+    padding: 8px 12px;
   }
 }
