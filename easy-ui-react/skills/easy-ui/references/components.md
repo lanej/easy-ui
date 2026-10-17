@@ -170,10 +170,11 @@ with `onSelectionChange`; `defaultSelection` initializes local state. Item/group
 hover, focus, and activation callbacks coordinate related views. Arrow keys and
 Home/End move cell focus, Enter/Space or a tap pins inspection, and Escape clears
 it. Hover details remain available across the chart/details area for pointer
-inspection and text selection. Focus can move into detail actions and their
-caller-owned Select/Modal portals without pinning; that target stays available
-until focus leaves the combined region or inspection is dismissed. Pointer exit
-does not remove focused controls. Escape returns focus to the inspected origin.
+inspection and text selection. Focus can traverse the interactive legend, detail
+actions, and their caller-owned Select/Modal portals without pinning; that target
+stays available until focus leaves the combined chart region or inspection is
+dismissed. Pointer exit does not remove focused controls. Escape returns focus to
+the inspected origin.
 Supply controlled `selectedCategoryId` / `onCategorySelectionChange` or
 `highlight` item/group/category IDs to emphasize related records without filtering
 the pool or changing totals. Draft, muted, and selected states remain distinct.
@@ -181,8 +182,9 @@ the pool or changing totals. Draft, muted, and selected states remain distinct.
 Use `onGroupAnchorsChange` for a caller-owned connection layer. Each explicit
 group supplies a stable `groupId`, supported endpoint `element`, and viewport
 CSS-pixel `bounds`; one anchor can feed several edges. Convert to your overlay's
-coordinate system. Measurements update after data and arrangement changes, resize, wrapping,
-and scroll, and cleanup supplies `[]`. Change `layoutRevision` for external layout
+coordinate system. Measurements update after data, arrangement, count visibility
+or count-label changes, resize, wrapping, and scroll; cleanup supplies `[]`.
+Change `layoutRevision` for external layout
 moves that do not resize the chart. Compact mode does not expose group anchors.
 Use `itemOrder="input"` (default) to retain supplied cell order or
 `itemOrder="category"` to cluster by category ID in supplied `categories` order,

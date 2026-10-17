@@ -440,11 +440,15 @@ function KeyboardDetailControls({
 }
 
 /** Unpinned keyboard details, including caller-owned portalled controls. */
-export function KeyboardWaffleDetails() {
+export function KeyboardWaffleDetails({
+  showLegend = false,
+}: { showLegend?: boolean } = {}) {
   const [itemSelection, setItemSelection] =
     useState<WaffleChartSelection>(null);
   const [groupSelection, setGroupSelection] =
     useState<WaffleChartSelection>(null);
+  const [itemCategory, setItemCategory] = useState<string | null>(null);
+  const [groupCategory, setGroupCategory] = useState<string | null>(null);
   return (
     <div className={styles.keyboardExamples}>
       <h3 className={styles.heading}>Keyboard-accessible detail controls</h3>
@@ -457,7 +461,9 @@ export function KeyboardWaffleDetails() {
           accessibilityLabel="Keyboard resource inspection"
           items={waffleItems.slice(0, 1)}
           categories={waffleCategories}
-          showLegend={false}
+          showLegend={showLegend}
+          selectedCategoryId={itemCategory}
+          onCategorySelectionChange={showLegend ? setItemCategory : undefined}
           selection={itemSelection}
           onSelectionChange={setItemSelection}
           renderDetails={({ target }) => (
@@ -475,7 +481,9 @@ export function KeyboardWaffleDetails() {
           items={[]}
           categories={waffleCategories}
           groups={[{ id: "empty", label: "Empty synthetic group" }]}
-          showLegend={false}
+          showLegend={showLegend}
+          selectedCategoryId={groupCategory}
+          onCategorySelectionChange={showLegend ? setGroupCategory : undefined}
           selection={groupSelection}
           onSelectionChange={setGroupSelection}
           renderDetails={({ target }) => (

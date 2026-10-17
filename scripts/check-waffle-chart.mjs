@@ -16,10 +16,35 @@ const browser = await chromium.launch({
 });
 const results = [];
 const errors = [];
+let failureDiagnostics;
 let currentPage;
-const observe = (page) => {
+const observe = async (page) => {
   currentPage = page;
   page.on("pageerror", (error) => errors.push(error.message));
+  await page.addInitScript(() => {
+    window.__waffleFocusTrace = [];
+    for (const type of ["focusin", "focusout", "keydown"]) {
+      document.addEventListener(type, (event) => {
+        const describe = (element) =>
+          element instanceof Element
+            ? {
+                tag: element.tagName,
+                role: element.getAttribute("role"),
+                label: element.getAttribute("aria-label"),
+                text: element.textContent?.trim().slice(0, 120),
+              }
+            : null;
+        window.__waffleFocusTrace.push({
+          type,
+          key: event.key,
+          target: describe(event.target),
+          relatedTarget: describe(event.relatedTarget),
+          active: describe(document.activeElement),
+        });
+        window.__waffleFocusTrace = window.__waffleFocusTrace.slice(-80);
+      });
+    }
+  });
 };
 const visit = async (page, story, theme) => {
   await page.goto(
@@ -204,7 +229,8 @@ const hoverableDetails = async (page, type, theme, width) => {
 };
 // Exercise actual Tab destinations with no hover or pin, including React-owned
 // portals. A locator.focus() on the destination would hide the original bug.
-const keyboardDetails = async (page, type, theme, width) => {
+const keyboardDetails = async (page, type, theme, width, legend = false) => {
+  const capture = legend ? "keyboard-legend-details" : "keyboard-details";
   const label = type === "item" ? "resource" : "group";
   const section = page.locator(`[data-waffle-keyboard-example="${type}"]`);
   const origin = section.getByRole("button", {
@@ -237,8 +263,24 @@ const keyboardDetails = async (page, type, theme, width) => {
       await control.evaluate((element) => element === document.activeElement),
     );
   };
+  const legendButtons = section
+    .getByRole("group", { name: "Categories", exact: true })
+    .getByRole("button");
+  const tabIntoDetails = async (destination) => {
+    if (legend) {
+      assert.equal(await legendButtons.count(), 3);
+      for (let index = 0; index < 3; index++) {
+        await page.keyboard.press("Tab");
+        await focusIs(legendButtons.nth(index));
+        assert.ok(await pin.isVisible(), "legend traversal retains inspection");
+      }
+    }
+    await page.keyboard.press("Tab");
+    await focusIs(destination);
+  };
   await page.mouse.move(width - 1, 1);
   await origin.focus();
+  await pin.waitFor();
   // Focusing a lower chart can scroll the page beneath a stationary pointer.
   // Explicitly leave again before Tab so hover cannot mask keyboard-only loss.
   await page.mouse.move(width - 1, 1);
@@ -248,14 +290,22 @@ const keyboardDetails = async (page, type, theme, width) => {
     ),
     "keyboard-only path starts without chart hover",
   );
-  await page.keyboard.press("Tab");
-  await focusIs(pin);
+  await tabIntoDetails(pin);
   assert.equal(await origin.getAttribute("aria-pressed"), "false");
+  if (legend) {
+    for (let index = 2; index >= 0; index--) {
+      await page.keyboard.press("Shift+Tab");
+      await focusIs(legendButtons.nth(index));
+      assert.ok(
+        await pin.isVisible(),
+        "reverse legend traversal retains inspection",
+      );
+    }
+  }
   await page.keyboard.press("Shift+Tab");
   await focusIs(origin);
-  await page.keyboard.press("Tab");
-  await focusIs(pin);
-  await screenshot(page, `keyboard-details-${type}-${theme}-${width}`);
+  await tabIntoDetails(pin);
+  await screenshot(page, `${capture}-${type}-${theme}-${width}`);
   await page.keyboard.press("Tab");
   await focusIs(select);
   await page.keyboard.press("Enter");
@@ -269,7 +319,7 @@ const keyboardDetails = async (page, type, theme, width) => {
     await pin.isVisible(),
     "owned Select keeps unpinned details mounted",
   );
-  await screenshot(page, `keyboard-details-select-${type}-${theme}-${width}`);
+  await screenshot(page, `${capture}-select-${type}-${theme}-${width}`);
   await page.keyboard.press("Escape");
   await page.getByRole("listbox").waitFor({ state: "hidden" });
   await focusIs(select);
@@ -288,7 +338,7 @@ const keyboardDetails = async (page, type, theme, width) => {
     ),
     "owned Modal retains its focus scope",
   );
-  await screenshot(page, `keyboard-details-modal-${type}-${theme}-${width}`);
+  await screenshot(page, `${capture}-modal-${type}-${theme}-${width}`);
   await page.keyboard.press("Escape");
   await dialog.waitFor({ state: "hidden" });
   await focusIs(modalTrigger);
@@ -302,8 +352,8 @@ const keyboardDetails = async (page, type, theme, width) => {
   await pin.waitFor({ state: "hidden" });
 
   await origin.focus();
-  await page.keyboard.press("Tab");
-  await focusIs(pin);
+  await pin.waitFor();
+  await tabIntoDetails(pin);
   await page.keyboard.press("Escape");
   await focusIs(origin);
   await pin.waitFor({ state: "hidden" });
@@ -313,8 +363,8 @@ const keyboardDetails = async (page, type, theme, width) => {
     name: "Clear selection",
     exact: true,
   });
-  await page.keyboard.press("Tab");
-  await focusIs(clear);
+  await clear.waitFor();
+  await tabIntoDetails(clear);
   await page.keyboard.press("Escape");
   await focusIs(origin);
   await clear.waitFor({ state: "hidden" });
@@ -448,7 +498,7 @@ try {
         viewport: { width, height: 1000 },
         reducedMotion: "reduce",
       });
-      observe(page);
+      await observe(page);
       await visit(page, "linked-groups", theme);
       assert.equal(await page.locator("[data-waffle-item]").count(), 17);
       assert.equal(await page.locator("[data-waffle-group]").count(), 3);
@@ -828,6 +878,9 @@ try {
       await visit(page, "keyboard-details", theme);
       await keyboardDetails(page, "item", theme, width);
       await keyboardDetails(page, "group", theme, width);
+      await visit(page, "keyboard-legend-details", theme);
+      await keyboardDetails(page, "item", theme, width, true);
+      await keyboardDetails(page, "group", theme, width, true);
       await page.close();
       results.push({
         theme,
@@ -842,6 +895,7 @@ try {
           "latest-pointer-keyboard-inspection",
           "hoverable-selectable-details",
           "keyboard-only-details-tab-region",
+          "legend-intermediate-focus-region",
           "owned-select-modal-focus-restoration",
           "responsive-anchors",
           "no-clipping",
@@ -855,7 +909,7 @@ try {
     const page = await browser.newPage({
       viewport: { width: 390, height: 1000 },
     });
-    observe(page);
+    await observe(page);
     await visit(page, "compact-linked-summary", theme);
     const link = page.getByRole("link", { name: /Synthetic priority/ });
     assert.equal(await link.locator("[data-waffle-item]").count(), 11);
@@ -945,7 +999,7 @@ try {
     isMobile: true,
     hasTouch: true,
   });
-  observe(page);
+  await observe(page);
   await visit(page, "controlled-inspection", "light");
   const first = page.getByRole("button", {
     name: "Resource 01, Engineering",
@@ -997,13 +1051,32 @@ try {
     "WaffleChart browser checks passed in Light/Dark at desktop, mobile and 280px reflow, including keyboard, touch, exact counts and public connection anchors.",
   );
 } catch (error) {
-  if (currentPage && !currentPage.isClosed())
+  if (currentPage && !currentPage.isClosed()) {
+    failureDiagnostics = await currentPage
+      .evaluate(() => ({
+        url: location.href,
+        activeElement: document.activeElement?.outerHTML,
+        focusTrace: window.__waffleFocusTrace,
+        charts: [
+          ...document.querySelectorAll("[data-waffle-keyboard-example]"),
+        ].map((element) => element.outerHTML),
+        focusables: [
+          ...document.querySelectorAll("button, a, select, [tabindex]"),
+        ].map((element) => ({
+          tag: element.tagName,
+          text: element.textContent?.trim().slice(0, 100),
+          tabIndex: element.tabIndex,
+          connected: element.isConnected,
+        })),
+      }))
+      .catch((diagnosticError) => ({ error: String(diagnosticError) }));
     await screenshot(currentPage, "failure");
+  }
   throw error;
 } finally {
   await writeFile(
     resolve(output, "report.json"),
-    JSON.stringify({ results, errors }, null, 2),
+    JSON.stringify({ results, errors, failureDiagnostics }, null, 2),
   );
   await browser.close();
 }

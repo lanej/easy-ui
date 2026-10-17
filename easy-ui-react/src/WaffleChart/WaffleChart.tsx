@@ -97,7 +97,7 @@ export function WaffleChart<Metadata = unknown>({
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [focused, setFocused] = useState<WaffleChartSelection>(null);
-  const [detailsFocused, setDetailsFocused] = useState(false);
+  const [contentFocused, setContentFocused] = useState(false);
   const [inspectionSource, setInspectionSource] = useState<"focus" | "hover">(
     "focus",
   );
@@ -111,7 +111,7 @@ export function WaffleChart<Metadata = unknown>({
   const hoveredGroupElement = useRef<HTMLElement | null>(null);
   const restoringDismissedFocus = useRef(false);
   // React focus capture includes caller-owned portals, unlike DOM contains().
-  const ownedDetailsElement = useRef<Element | null>(null);
+  const ownedContentElement = useRef<Element | null>(null);
   const focusRevision = useRef(0);
   const focusExitFrame = useRef<number | null>(null);
   const instructionsId = useId();
@@ -156,7 +156,7 @@ export function WaffleChart<Metadata = unknown>({
   // Focus can remain on an unpinned control while the pointer explores other
   // targets. Let the latest interaction lead, without moving actual DOM focus.
   const transient =
-    detailsFocused && focusedTarget
+    contentFocused && focusedTarget
       ? focusedTarget
       : inspectionSource === "hover"
         ? (hoveredTarget ?? focusedTarget)
@@ -229,18 +229,30 @@ export function WaffleChart<Metadata = unknown>({
     window.addEventListener("keydown", dismissHover);
     return () => window.removeEventListener("keydown", dismissHover);
   }, [interactive, selection, hoveredItem, hoveredGroup, leaveHoverArea]);
-  const ownsDetailsFocus = (node: Element | null) =>
-    !!node &&
-    (!!details.current?.contains(node) ||
-      ownedDetailsElement.current === node ||
-      !!ownedDetailsElement.current?.contains(node));
-  const cancelFocusExit = () => {
+  const isOriginControl = useCallback(
+    (node: Element | null) =>
+      [
+        ...cellElements.current.values(),
+        ...groupControls.current.values(),
+      ].some((element) => element === node),
+    [],
+  );
+  const ownsContentFocus = useCallback(
+    (node: Element | null) =>
+      !!node &&
+      !isOriginControl(node) &&
+      (!!root.current?.contains(node) ||
+        ownedContentElement.current === node ||
+        !!ownedContentElement.current?.contains(node)),
+    [isOriginControl],
+  );
+  const cancelFocusExit = useCallback(() => {
     focusRevision.current++;
     if (focusExitFrame.current !== null) {
       cancelAnimationFrame(focusExitFrame.current);
       focusExitFrame.current = null;
     }
-  };
+  }, []);
   useEffect(
     () => () => {
       focusRevision.current++;
@@ -250,7 +262,7 @@ export function WaffleChart<Metadata = unknown>({
     [],
   );
   const hoverGroup = (group: WaffleChartGroup) => {
-    const withinDetails = ownsDetailsFocus(document.activeElement);
+    const withinContent = ownsContentFocus(document.activeElement);
     // A group/caption is a new pointer target, rather than stale retained item
     // inspection. Use the public group's actual anchor element for lifecycle checks.
     if (hoveredItemElement.current) {
@@ -263,22 +275,25 @@ export function WaffleChart<Metadata = unknown>({
       hoveredGroupElement.current !== element || inspectionSource !== "hover";
     hoveredGroupElement.current = element;
     setHoveredGroup(group.id);
-    if (!withinDetails) {
+    if (!withinContent) {
       setInspectionSource("hover");
       if (changed) onGroupHoverChange?.(group);
     }
   };
-  const targetControl = (next: WaffleChartSelection) =>
-    next?.type === "item"
-      ? cellElements.current.get(next.id)
-      : next?.type === "group"
-        ? groupControls.current.get(next.id)
-        : undefined;
-  const enterDetailsFocus = (event: React.FocusEvent<HTMLDivElement>) => {
-    if (!target) return;
+  const targetControl = useCallback(
+    (next: WaffleChartSelection) =>
+      next?.type === "item"
+        ? cellElements.current.get(next.id)
+        : next?.type === "group"
+          ? groupControls.current.get(next.id)
+          : undefined,
+    [],
+  );
+  const enterContentFocus = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (!target || isOriginControl(event.target)) return;
     cancelFocusExit();
-    ownedDetailsElement.current = event.target;
-    setDetailsFocused(true);
+    ownedContentElement.current = event.target;
+    setContentFocused(true);
     if (focused?.type === "item" && target.type !== "item")
       onItemFocusChange?.(null);
     if (focused?.type === "group" && target.type !== "group")
@@ -291,12 +306,12 @@ export function WaffleChart<Metadata = unknown>({
     }
   };
   const releaseFocusRegion = () => {
-    ownedDetailsElement.current = null;
-    setDetailsFocused(false);
+    ownedContentElement.current = null;
+    setContentFocused(false);
     setFocused(null);
     if (focused?.type === "item") onItemFocusChange?.(null);
     if (focused?.type === "group") onGroupFocusChange?.(null);
-    // Pointer targets tracked while details owned focus become active only now.
+    // Pointer targets tracked while chart content owned focus become active only now.
     if (hoveredItemElement.current || hoveredGroupElement.current) {
       setInspectionSource("hover");
       if (hoveredGroupElement.current && hoveredGroup)
@@ -307,24 +322,24 @@ export function WaffleChart<Metadata = unknown>({
   };
   const focusRegionState = useRef({ focused, releaseFocusRegion });
   focusRegionState.current = { focused, releaseFocusRegion };
-  const leaveFocusRegion = () => {
+  const leaveFocusRegion = useCallback(() => {
     if (restoringDismissedFocus.current) return;
     cancelFocusExit();
     const revision = focusRevision.current;
     const settle = (allowPortalRestore: boolean) => {
       if (revision !== focusRevision.current) return;
       const active = document.activeElement;
-      if (ownsDetailsFocus(active)) return;
+      if (ownsContentFocus(active)) return;
       if (active === targetControl(focusRegionState.current.focused)) {
-        ownedDetailsElement.current = null;
-        setDetailsFocused(false);
+        ownedContentElement.current = null;
+        setContentFocused(false);
         return;
       }
       if (
         allowPortalRestore &&
         active === document.body &&
-        ownedDetailsElement.current &&
-        !ownedDetailsElement.current.isConnected
+        ownedContentElement.current &&
+        !ownedContentElement.current.isConnected
       ) {
         // React Aria restores an overlay's trigger on the next frame. Keep its
         // owning details mounted through that handoff, then check actual focus.
@@ -336,10 +351,14 @@ export function WaffleChart<Metadata = unknown>({
       }
       focusRegionState.current.releaseFocusRegion();
     };
-    // The destination's React capture handler can claim focus before dismissal,
-    // including a portal whose DOM is outside this chart.
-    Promise.resolve().then(() => settle(true));
-  };
+    // A browser may run microtasks between native blur and destination focus.
+    // Wait for the whole focus transition, then honor its React capture claim,
+    // including caller-owned portals outside the chart's DOM.
+    focusExitFrame.current = requestAnimationFrame(() => {
+      focusExitFrame.current = null;
+      settle(true);
+    });
+  }, [cancelFocusExit, ownsContentFocus, targetControl]);
   const restoreTargetFocus = () => {
     const returnTarget = targetControl(target);
     if (returnTarget) {
@@ -350,9 +369,9 @@ export function WaffleChart<Metadata = unknown>({
   };
   const clear = (restoreFocus = false) => {
     cancelFocusExit();
-    ownedDetailsElement.current = null;
+    ownedContentElement.current = null;
     changeSelection(null);
-    setDetailsFocused(false);
+    setContentFocused(false);
     setFocused(null);
     setHoveredItem(null);
     setHoveredGroup(null);
@@ -368,25 +387,27 @@ export function WaffleChart<Metadata = unknown>({
   // React may remove/move a keyed cell between group parents without firing
   // blur/pointerleave. Clear transient targets when their real DOM owner changes.
   useEffect(() => {
-    const withinDetails = ownsDetailsFocus(document.activeElement);
+    const withinContent = ownsContentFocus(document.activeElement);
+    const waitingForFocus = focusExitFrame.current !== null;
     const restoringPortal =
-      detailsFocused &&
+      contentFocused &&
       document.activeElement === document.body &&
-      !!ownedDetailsElement.current &&
-      !ownedDetailsElement.current.isConnected;
-    if (detailsFocused && !interactive) {
+      !!ownedContentElement.current &&
+      !ownedContentElement.current.isConnected;
+    if (contentFocused && !interactive) {
       cancelFocusExit();
-      ownedDetailsElement.current = null;
-      setDetailsFocused(false);
-    } else if (detailsFocused && !withinDetails) {
+      ownedContentElement.current = null;
+      setContentFocused(false);
+    } else if (contentFocused && !withinContent) {
       leaveFocusRegion();
     }
     if (
       focused?.type === "item" &&
       (!interactive ||
         !itemMap.has(focused.id) ||
-        (!withinDetails &&
+        (!withinContent &&
           !restoringPortal &&
+          !waitingForFocus &&
           cellElements.current.get(focused.id) !== document.activeElement))
     ) {
       setFocused(null);
@@ -396,8 +417,9 @@ export function WaffleChart<Metadata = unknown>({
       focused?.type === "group" &&
       (!interactive ||
         !groupMap.has(focused.id) ||
-        (!withinDetails &&
+        (!withinContent &&
           !restoringPortal &&
+          !waitingForFocus &&
           groupControls.current.get(focused.id) !== document.activeElement))
     ) {
       setFocused(null);
@@ -429,7 +451,10 @@ export function WaffleChart<Metadata = unknown>({
     itemMap,
     groupMap,
     focused,
-    detailsFocused,
+    cancelFocusExit,
+    ownsContentFocus,
+    leaveFocusRegion,
+    contentFocused,
     hoveredItem,
     hoveredGroup,
     onItemFocusChange,
@@ -497,6 +522,7 @@ export function WaffleChart<Metadata = unknown>({
     }
     return [...entries.values()];
   }, [items, categories]);
+  const totalLabel = countLabel(items.length);
   // A single revision object avoids coupling consumers to markup or class names.
   const geometryRevision = useMemo(
     () => [
@@ -508,6 +534,9 @@ export function WaffleChart<Metadata = unknown>({
       columns,
       size,
       spacing,
+      showCount,
+      countLabel,
+      totalLabel,
       layoutRevision,
     ],
     [
@@ -519,6 +548,9 @@ export function WaffleChart<Metadata = unknown>({
       columns,
       size,
       spacing,
+      showCount,
+      countLabel,
+      totalLabel,
       layoutRevision,
     ],
   );
@@ -657,15 +689,15 @@ export function WaffleChart<Metadata = unknown>({
           }
           hoveredItemElement.current = event.currentTarget;
           setHoveredItem(item.id);
-          if (!ownsDetailsFocus(document.activeElement)) {
+          if (!ownsContentFocus(document.activeElement)) {
             setInspectionSource("hover");
             onItemHoverChange?.(item);
           }
         }}
         onFocus={() => {
           cancelFocusExit();
-          ownedDetailsElement.current = null;
-          setDetailsFocused(false);
+          ownedContentElement.current = null;
+          setContentFocused(false);
           setTabItemId(item.id);
           if (restoringDismissedFocus.current) return;
           if (focused?.type === "group") onGroupFocusChange?.(null);
@@ -673,7 +705,6 @@ export function WaffleChart<Metadata = unknown>({
           setInspectionSource("focus");
           onItemFocusChange?.(item);
         }}
-        onBlur={leaveFocusRegion}
         onClick={() => activate({ type: "item", id: item.id })}
         onKeyDown={(event) => {
           inspectFromKeyboard(event, { type: "item", id: item.id });
@@ -692,7 +723,7 @@ export function WaffleChart<Metadata = unknown>({
         data-variant="compact"
         style={style}
         role="img"
-        aria-label={`${accessibilityLabel}: ${countLabel(items.length)}${selectedAnnouncement ? `. ${selectedAnnouncement}` : ""}${items.length ? `. ${compactItems.map(itemLabel).join("; ")}` : `. ${emptyMessage}`}`}
+        aria-label={`${accessibilityLabel}: ${totalLabel}${selectedAnnouncement ? `. ${selectedAnnouncement}` : ""}${items.length ? `. ${compactItems.map(itemLabel).join("; ")}` : `. ${emptyMessage}`}`}
       >
         <span className={styles.grid} style={gridStyle(items.length)}>
           {compactItems.map((item) => cell(item, true))}
@@ -717,6 +748,8 @@ export function WaffleChart<Metadata = unknown>({
       style={style}
       role="group"
       aria-label={accessibilityLabel}
+      onFocusCapture={interactive ? enterContentFocus : undefined}
+      onBlurCapture={interactive ? leaveFocusRegion : undefined}
       // Keep hover inspection available across the gap into selectable details.
       // It ends at the combined chart/details boundary, not the cell boundary.
       onPointerLeave={interactive ? leaveHoverArea : undefined}
@@ -729,13 +762,11 @@ export function WaffleChart<Metadata = unknown>({
         ) {
           event.preventDefault();
           event.stopPropagation();
-          clear(ownsDetailsFocus(event.target as Element));
+          clear(ownsContentFocus(event.target as Element));
         }
       }}
     >
-      {showCount && (
-        <div className={styles.total}>{countLabel(items.length)}</div>
-      )}
+      {showCount && <div className={styles.total}>{totalLabel}</div>}
       {interactive && (
         <span id={instructionsId} className={styles.srOnly}>
           Arrow keys move between items. Enter or Space pins details. Escape
@@ -803,8 +834,8 @@ export function WaffleChart<Metadata = unknown>({
                     onClick={() => activate({ type: "group", id: group.id })}
                     onFocus={() => {
                       cancelFocusExit();
-                      ownedDetailsElement.current = null;
-                      setDetailsFocused(false);
+                      ownedContentElement.current = null;
+                      setContentFocused(false);
                       if (restoringDismissedFocus.current) return;
                       if (focused?.type === "item") onItemFocusChange?.(null);
                       setFocused({ type: "group", id: group.id });
@@ -817,7 +848,6 @@ export function WaffleChart<Metadata = unknown>({
                         id: group.id,
                       })
                     }
-                    onBlur={leaveFocusRegion}
                   >
                     {group.label}{" "}
                     <span className={styles.count}>{members.length}</span>
@@ -887,8 +917,6 @@ export function WaffleChart<Metadata = unknown>({
           id={detailsId}
           aria-live="polite"
           aria-atomic="true"
-          onFocusCapture={enterDetailsFocus}
-          onBlurCapture={leaveFocusRegion}
         >
           {inspection ? (
             <>

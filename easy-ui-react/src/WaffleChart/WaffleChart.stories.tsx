@@ -77,6 +77,9 @@ export const ControlledInspection: Story = {
 export const KeyboardDetails: Story = {
   render: () => <KeyboardWaffleDetails />,
 };
+export const KeyboardLegendDetails: Story = {
+  render: () => <KeyboardWaffleDetails showLegend />,
+};
 export const UnknownAndEmpty: Story = {
   render: () => (
     <div style={{ display: "grid", gap: 36, maxWidth: 440 }}>
