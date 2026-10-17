@@ -75,6 +75,133 @@ const arrangementState = (page) =>
         ?.getAttribute("data-waffle-group"),
     })),
   );
+const hoverableDetails = async (page, type, theme, width) => {
+  const expected = type === "item" ? "Resource 07" : "Shared group";
+  const target = page.getByRole("button", {
+    name: type === "item" ? "Resource 07, Engineering" : "Shared group 7",
+    exact: true,
+  });
+  const chart = page.getByRole("group", {
+    name: "Synthetic resource pool",
+    exact: true,
+  });
+  const targetBounds = await target.boundingBox();
+  await target.hover({
+    position: { x: targetBounds.width - 2, y: targetBounds.height / 2 },
+  });
+  const detail = page.locator('[aria-live="polite"] strong');
+  await detail.filter({ hasText: new RegExp(`^${expected}$`) }).waitFor();
+  const chartBounds = await chart.boundingBox();
+  const textBounds = await detail.boundingBox();
+  assert.equal(await target.getAttribute("aria-pressed"), "false");
+  assert.ok(
+    await chart.evaluate(
+      (element) => !element.contains(document.activeElement),
+    ),
+    "hover inspection does not need focus",
+  );
+
+  // Travel through real pixels outside the other groups, not a synthetic enter
+  // directly on details. This crosses the cell/group boundary and the full gap.
+  await page.mouse.move(
+    chartBounds.x + chartBounds.width - 2,
+    targetBounds.y + targetBounds.height / 2,
+    { steps: 8 },
+  );
+  await page.mouse.move(
+    chartBounds.x + chartBounds.width - 2,
+    textBounds.y + textBounds.height / 2,
+    { steps: 20 },
+  );
+  await page.mouse.move(
+    textBounds.x + textBounds.width - 2,
+    textBounds.y + textBounds.height / 2,
+    { steps: 8 },
+  );
+  assert.equal(
+    await detail.textContent(),
+    expected,
+    "details survive actual pointer travel",
+  );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Clear selection", exact: true })
+      .count(),
+    0,
+  );
+  assert.equal(
+    await page.locator('[data-waffle-item][data-highlighted="true"]').count(),
+    7,
+  );
+  assert.equal(
+    await page
+      .locator('[data-waffle-connection][data-highlighted="true"]')
+      .count(),
+    2,
+  );
+
+  await page.mouse.move(textBounds.x + 1, textBounds.y + textBounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    textBounds.x + textBounds.width - 1,
+    textBounds.y + textBounds.height / 2,
+    { steps: 10 },
+  );
+  await page.mouse.up();
+  assert.ok(
+    await page.evaluate(
+      () => (getSelection()?.toString().trim().length ?? 0) > 3,
+    ),
+    "hover details text can be selected without pinning",
+  );
+  assert.equal(await detail.textContent(), expected);
+  await screenshot(page, `hover-${type}-details-${theme}-${width}`);
+
+  if (type === "item") {
+    await page
+      .getByRole("heading", {
+        name: "Resource pool and linked work",
+        exact: true,
+      })
+      .hover();
+  } else {
+    await page.evaluate(() => {
+      window.__waffleEscapes = [];
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape")
+          window.__waffleEscapes.push(event.defaultPrevented);
+      });
+    });
+    await page.keyboard.press("Escape");
+    assert.ok(
+      await page
+        .getByText("Focus or select a cell or group to inspect it")
+        .isVisible(),
+    );
+    await page.keyboard.press("Escape");
+    assert.deepEqual(
+      await page.evaluate(() => window.__waffleEscapes),
+      [true, false],
+      "only the dismissal Escape is consumed",
+    );
+  }
+  await page
+    .getByText("Focus or select a cell or group to inspect it")
+    .waitFor();
+  assert.equal(
+    await page.locator('[data-waffle-item][data-highlighted="true"]').count(),
+    0,
+    "leaving or dismissal clears linked cell hover",
+  );
+  assert.equal(
+    await page
+      .locator('[data-waffle-connection][data-highlighted="true"]')
+      .count(),
+    0,
+    "leaving or dismissal clears linked edge hover",
+  );
+  await page.evaluate(() => getSelection()?.removeAllRanges());
+};
 const connectionsAligned = (page) =>
   page.waitForFunction(() => {
     const frame = document.querySelector('[data-waffle-example="connections"]');
@@ -210,6 +337,8 @@ try {
       await connectionsAligned(page);
       await noOverflow(page);
       await screenshot(page, `groups-${theme}-${width}`);
+      await hoverableDetails(page, "item", theme, width);
+      await hoverableDetails(page, "group", theme, width);
       const engineering = page.getByRole("button", {
         name: "Engineering 6",
         exact: true,
@@ -486,8 +615,32 @@ try {
       const orderControl = page.getByRole("button", { name: /Cell order/ });
       await orderControl.focus();
       await orderControl.press("ArrowDown");
-      await page.getByRole("listbox").press("End");
-      await page.getByRole("listbox").press("Enter");
+      await page.getByRole("listbox").waitFor();
+      await page.waitForFunction(() => {
+        const listbox = document.querySelector('[role="listbox"]');
+        return (
+          !!listbox &&
+          (listbox === document.activeElement ||
+            listbox.contains(document.activeElement))
+        );
+      });
+      // Preserve the option focus reached by End. Locator.press on the listbox
+      // again would refocus it before Enter and can recommit the old selection.
+      await page.keyboard.press("End");
+      assert.equal(
+        await page
+          .getByRole("option", { name: "Group by category", exact: true })
+          .getAttribute("data-is-focused"),
+        "true",
+        "End reaches the category option before Enter commits it",
+      );
+      await page.keyboard.press("Enter");
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelectorAll("[data-waffle-item]")[3]
+            ?.getAttribute("data-waffle-item") === "resource-2",
+      );
       const categoryState = await arrangementState(page);
       assert.deepEqual(
         categoryState.map(({ id }) => id),
@@ -565,6 +718,7 @@ try {
           "pinned-group",
           "keyboard-focus-selection-escape",
           "latest-pointer-keyboard-inspection",
+          "hoverable-selectable-details",
           "responsive-anchors",
           "no-clipping",
           "controlled-category-order",

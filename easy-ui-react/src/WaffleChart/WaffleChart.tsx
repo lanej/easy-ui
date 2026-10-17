@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useId } from "react-aria";
 import { getComponentThemeToken } from "../utilities/css";
 import { useGroupAnchors } from "./useGroupAnchors";
@@ -242,13 +248,64 @@ export function WaffleChart<Metadata = unknown>({
     if (next.type === "item") onItemActivate?.(itemMap.get(next.id)!);
     else onGroupActivate?.(groupMap.get(next.id)!);
   };
-  const clear = (restoreFocus = false) => {
+  const leaveHoverArea = useCallback(() => {
+    const hadItem = !!hoveredItemElement.current;
+    const hadGroup = !!hoveredGroupElement.current;
+    setHoveredItem(null);
+    setHoveredGroup(null);
+    hoveredItemElement.current = null;
+    hoveredGroupElement.current = null;
+    if (hadItem) onItemHoverChange?.(null);
+    if (hadGroup) onGroupHoverChange?.(null);
+  }, [onItemHoverChange, onGroupHoverChange]);
+  useEffect(() => {
+    if (!interactive || selection || (!hoveredItem && !hoveredGroup)) return;
+    const dismissHover = (event: KeyboardEvent) => {
+      if (
+        event.key !== "Escape" ||
+        event.defaultPrevented ||
+        root.current?.contains(event.target as Node)
+      )
+        return;
+      // Pure hover needn't move keyboard focus into the chart. Outside controls,
+      // React roots and document-level overlays get the key first; dismiss only
+      // if none handled it. In-chart Escape retains its scoped root behavior.
+      event.preventDefault();
+      leaveHoverArea();
+    };
+    window.addEventListener("keydown", dismissHover);
+    return () => window.removeEventListener("keydown", dismissHover);
+  }, [interactive, selection, hoveredItem, hoveredGroup, leaveHoverArea]);
+  const hoverGroup = (group: WaffleChartGroup) => {
+    // A group/caption is a new pointer target, rather than stale retained item
+    // inspection. Use the public group's actual anchor element for lifecycle checks.
+    if (hoveredItemElement.current) {
+      hoveredItemElement.current = null;
+      setHoveredItem(null);
+      onItemHoverChange?.(null);
+    }
+    const element = anchorElements.current.get(group.id) ?? null;
+    const changed =
+      hoveredGroupElement.current !== element || inspectionSource !== "hover";
+    hoveredGroupElement.current = element;
+    setHoveredGroup(group.id);
+    setInspectionSource("hover");
+    if (changed) onGroupHoverChange?.(group);
+  };
+  const restoreTargetFocus = () => {
     const returnTarget =
-      selection?.type === "item"
-        ? cellElements.current.get(selection.id)
-        : selection?.type === "group"
-          ? groupControls.current.get(selection.id)
+      target?.type === "item"
+        ? cellElements.current.get(target.id)
+        : target?.type === "group"
+          ? groupControls.current.get(target.id)
           : undefined;
+    if (returnTarget) {
+      restoringDismissedFocus.current = true;
+      returnTarget.focus();
+      restoringDismissedFocus.current = false;
+    }
+  };
+  const clear = (restoreFocus = false) => {
     changeSelection(null);
     setFocused(null);
     setHoveredItem(null);
@@ -260,11 +317,7 @@ export function WaffleChart<Metadata = unknown>({
     onGroupFocusChange?.(null);
     onGroupHoverChange?.(null);
     if (selectedCategoryId !== null) onCategorySelectionChange?.(null);
-    if (restoreFocus && returnTarget) {
-      restoringDismissedFocus.current = true;
-      returnTarget.focus();
-      restoringDismissedFocus.current = false;
-    }
+    if (restoreFocus) restoreTargetFocus();
   };
   const columns = Math.floor(safeNumber(maxColumns, 12, 1, 1000));
   const size = safeNumber(
@@ -475,15 +528,19 @@ export function WaffleChart<Metadata = unknown>({
         aria-describedby={instructionsId}
         tabIndex={item.id === currentTabId ? 0 : -1}
         onPointerEnter={(event) => {
+          const groupElement = anchorElements.current.get(item.groupId ?? "");
+          if (
+            hoveredGroupElement.current &&
+            hoveredGroupElement.current !== groupElement
+          ) {
+            hoveredGroupElement.current = null;
+            setHoveredGroup(null);
+            onGroupHoverChange?.(null);
+          }
           hoveredItemElement.current = event.currentTarget;
           setHoveredItem(item.id);
           setInspectionSource("hover");
           onItemHoverChange?.(item);
-        }}
-        onPointerLeave={() => {
-          hoveredItemElement.current = null;
-          setHoveredItem(null);
-          onItemHoverChange?.(null);
         }}
         onFocus={() => {
           setTabItemId(item.id);
@@ -539,6 +596,20 @@ export function WaffleChart<Metadata = unknown>({
       style={style}
       role="group"
       aria-label={accessibilityLabel}
+      // Keep hover inspection available across the gap into selectable details.
+      // It ends at the combined chart/details boundary, not the cell boundary.
+      onPointerLeave={
+        interactive
+          ? () => {
+              if (
+                !selection &&
+                details.current?.contains(document.activeElement)
+              )
+                restoreTargetFocus();
+              leaveHoverArea();
+            }
+          : undefined
+      }
       onKeyDown={(event) => {
         if (
           interactive &&
@@ -592,23 +663,7 @@ export function WaffleChart<Metadata = unknown>({
               undefined
             }
             onPointerEnter={
-              interactive && group
-                ? (event) => {
-                    hoveredGroupElement.current = event.currentTarget;
-                    setHoveredGroup(group.id);
-                    setInspectionSource("hover");
-                    onGroupHoverChange?.(group);
-                  }
-                : undefined
-            }
-            onPointerLeave={
-              interactive && group
-                ? () => {
-                    hoveredGroupElement.current = null;
-                    setHoveredGroup(null);
-                    onGroupHoverChange?.(null);
-                  }
-                : undefined
+              interactive && group ? () => hoverGroup(group) : undefined
             }
           >
             {(group || groups.length > 0) && (
@@ -624,6 +679,17 @@ export function WaffleChart<Metadata = unknown>({
                     aria-pressed={
                       selection?.type === "group" && selection.id === group.id
                     }
+                    onPointerEnter={(event) => {
+                      // Entry from outside the group is already handled by its
+                      // wrapper; this path reclaims its caption from a child cell.
+                      if (
+                        event.relatedTarget instanceof Node &&
+                        anchorElements.current
+                          .get(group.id)
+                          ?.contains(event.relatedTarget)
+                      )
+                        hoverGroup(group);
+                    }}
                     onClick={() => activate({ type: "group", id: group.id })}
                     onFocus={() => {
                       if (restoringDismissedFocus.current) return;

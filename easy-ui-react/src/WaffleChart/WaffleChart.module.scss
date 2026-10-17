@@ -225,6 +225,7 @@ button.legendEntry {
 }
 
 .details {
+  user-select: text;
   margin-block-start: 16px;
   padding-block-start: 10px;
   border-block-start: 1px solid design-token("color.neutral.200");

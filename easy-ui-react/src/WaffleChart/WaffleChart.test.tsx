@@ -10,6 +10,7 @@ import { vi } from "vitest";
 import { Button } from "../Button";
 import { Drawer } from "../Drawer";
 import { Modal } from "../Modal";
+import { Select } from "../Select";
 import {
   disableReactTransitionGroup,
   enableReactTransitionGroup,
@@ -1343,6 +1344,706 @@ describe("inspection and selection", () => {
     expect(onFocus).toHaveBeenLastCalledWith(null);
     expect(onHover).toHaveBeenLastCalledWith(null);
     expect(group).not.toHaveAttribute("data-selected");
+  });
+});
+
+describe("hoverable inspection", () => {
+  beforeEach(() => {
+    // jsdom needs MouseEvent's relatedTarget for React's pointer enter/leave path.
+    vi.stubGlobal("PointerEvent", MouseEvent);
+  });
+
+  function movePointer(from: HTMLElement, to: HTMLElement) {
+    fireEvent.pointerLeave(from, { relatedTarget: to });
+    fireEvent.pointerEnter(to, { relatedTarget: from });
+  }
+
+  it.each(["item", "group"] as const)(
+    "retains pure %s hover across details, legend and gaps until the pointer leaves the root",
+    (type) => {
+      const onItemHover = vi.fn();
+      const onGroupHover = vi.fn();
+      const onFocus = vi.fn();
+      const onSelection = vi.fn();
+      const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+        <span>
+          Inspection: {inspection.item?.label ?? inspection.group?.label}
+        </span>
+      ));
+      render(
+        <WaffleChart
+          accessibilityLabel="Hoverable parcels"
+          items={items}
+          categories={categories}
+          groups={groups}
+          onItemHoverChange={onItemHover}
+          onGroupHoverChange={onGroupHover}
+          onItemFocusChange={onFocus}
+          onGroupFocusChange={onFocus}
+          onSelectionChange={onSelection}
+          renderDetails={renderDetails}
+        />,
+      );
+      const root = screen.getByRole("group", { name: "Hoverable parcels" });
+      const target =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("group", { name: "North" });
+      const text = `Inspection: ${type === "item" ? items[0].label : groups[0].label}`;
+      fireEvent.pointerEnter(target);
+      const details = screen
+        .getByText(text)
+        .closest<HTMLElement>('[aria-live="polite"]')!;
+      const legend = screen.getByRole("group", { name: "Categories" });
+      const itemCalls = onItemHover.mock.calls.length;
+      const groupCalls = onGroupHover.mock.calls.length;
+      expect(onGroupHover).toHaveBeenLastCalledWith(groups[0]);
+      if (type === "item")
+        expect(onItemHover).toHaveBeenLastCalledWith(items[0]);
+
+      movePointer(target, details);
+      expect(screen.getByText(text)).toBeVisible();
+      movePointer(details, legend);
+      expect(screen.getByText(text)).toBeVisible();
+      movePointer(legend, root);
+      expect(screen.getByText(text)).toBeVisible();
+      movePointer(root, details);
+      expect(screen.getByText(text)).toBeVisible();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: { type, id: type === "item" ? items[0].id : groups[0].id },
+        pinned: false,
+      });
+      expect(onItemHover).toHaveBeenCalledTimes(itemCalls);
+      expect(onGroupHover).toHaveBeenCalledTimes(groupCalls);
+      expect(onFocus).not.toHaveBeenCalled();
+      expect(onSelection).not.toHaveBeenCalled();
+      expect(document.body).toHaveFocus();
+
+      movePointer(details, document.body);
+      expect(screen.queryByText(text)).toBeNull();
+      expect(
+        screen.getByText("Focus or select a cell or group to inspect it"),
+      ).toBeVisible();
+      expect(onGroupHover).toHaveBeenLastCalledWith(null);
+      expect(onGroupHover).toHaveBeenCalledTimes(groupCalls + 1);
+      if (type === "item") {
+        expect(onItemHover).toHaveBeenLastCalledWith(null);
+        expect(onItemHover).toHaveBeenCalledTimes(itemCalls + 1);
+      } else expect(onItemHover).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["item", "group"] as const)(
+    "dismisses retained %s hover with Escape in details and lets the next Escape propagate",
+    (type) => {
+      const onOuterKeyDown = vi.fn();
+      const onItemHover = vi.fn();
+      const onGroupHover = vi.fn();
+      const onFocus = vi.fn();
+      render(
+        <div onKeyDown={onOuterKeyDown}>
+          <WaffleChart
+            accessibilityLabel="Hover Escape"
+            items={items}
+            categories={categories}
+            groups={groups}
+            onItemHoverChange={onItemHover}
+            onGroupHoverChange={onGroupHover}
+            onItemFocusChange={onFocus}
+            onGroupFocusChange={onFocus}
+            renderDetails={({ item, group }) => (
+              <span>Inspection: {item?.label ?? group?.label}</span>
+            )}
+          />
+        </div>,
+      );
+      const target =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("group", { name: "North" });
+      const text = `Inspection: ${type === "item" ? items[0].label : groups[0].label}`;
+      fireEvent.pointerEnter(target);
+      const details = screen
+        .getByText(text)
+        .closest<HTMLElement>('[aria-live="polite"]')!;
+      movePointer(target, details);
+      expect(screen.getByText(text)).toBeVisible();
+      expect(onFocus).not.toHaveBeenCalled();
+      expect(document.body).toHaveFocus();
+
+      expect(fireEvent.keyDown(details, { key: "Escape" })).toBe(false);
+      expect(onItemHover).toHaveBeenLastCalledWith(null);
+      expect(onGroupHover).toHaveBeenLastCalledWith(null);
+      expect(screen.queryByText(text)).toBeNull();
+      expect(
+        screen.getByText("Focus or select a cell or group to inspect it"),
+      ).toBeVisible();
+      expect(onOuterKeyDown).not.toHaveBeenCalled();
+      expect(fireEvent.keyDown(details, { key: "Escape" })).toBe(true);
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+      expect(screen.queryByText(text)).toBeNull();
+    },
+  );
+
+  it.each(["item", "group"] as const)(
+    "returns focus to an unpinned hovered %s when Escape dismisses a custom details control",
+    (type) => {
+      const onOuterKeyDown = vi.fn();
+      const onFocus = vi.fn();
+      const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+        <button type="button">
+          Details: {inspection.item?.label ?? inspection.group?.label}
+        </button>
+      ));
+      render(
+        <div onKeyDown={onOuterKeyDown}>
+          <WaffleChart
+            accessibilityLabel="Unpinned details focus"
+            items={items}
+            categories={categories}
+            groups={groups}
+            onItemFocusChange={type === "item" ? onFocus : undefined}
+            onGroupFocusChange={type === "group" ? onFocus : undefined}
+            renderDetails={renderDetails}
+          />
+        </div>,
+      );
+      const target =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("group", { name: "North" });
+      const returnControl =
+        type === "item"
+          ? target
+          : screen.getByRole("button", { name: "North 2" });
+      fireEvent.pointerEnter(target);
+      const action = screen.getByRole("button", {
+        name: `Details: ${type === "item" ? "Parcel A" : "North"}`,
+      });
+      movePointer(target, action);
+      act(() => action.focus());
+      expect(action).toHaveFocus();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: { type, id: type === "item" ? items[0].id : groups[0].id },
+        pinned: false,
+      });
+      expect(onFocus).not.toHaveBeenCalled();
+
+      expect(fireEvent.keyDown(action, { key: "Escape" })).toBe(false);
+      expect(returnControl).toHaveFocus();
+      expect(action).not.toBeInTheDocument();
+      expect(
+        screen.getByText("Focus or select a cell or group to inspect it"),
+      ).toBeVisible();
+      expect(onFocus).toHaveBeenCalledExactlyOnceWith(null);
+      expect(onOuterKeyDown).not.toHaveBeenCalled();
+      expect(fireEvent.keyDown(returnControl, { key: "Escape" })).toBe(true);
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+      expect(screen.queryByText("Inspecting")).toBeNull();
+    },
+  );
+
+  it.each(["item", "group"] as const)(
+    "returns focus to an unpinned hovered %s when pointer exit dismisses a focused details control",
+    (type) => {
+      const onOuterKeyDown = vi.fn();
+      const onItemHover = vi.fn();
+      const onGroupHover = vi.fn();
+      const onFocus = vi.fn();
+      const onCategory = vi.fn();
+      const onSelection = vi.fn();
+      const props = {
+        accessibilityLabel: "Pointer exit details focus",
+        items,
+        categories,
+        groups,
+        onItemHoverChange: onItemHover,
+        onGroupHoverChange: onGroupHover,
+        onItemFocusChange: onFocus,
+        onGroupFocusChange: onFocus,
+        onCategorySelectionChange: onCategory,
+        onSelectionChange: onSelection,
+        renderDetails: ({ item, group }: WaffleChartInspection) => (
+          <button type="button">Details: {item?.label ?? group?.label}</button>
+        ),
+      };
+      const { rerender } = render(
+        <div onKeyDown={onOuterKeyDown}>
+          <WaffleChart {...props} selectedCategoryId="ready" />
+        </div>,
+      );
+      const target =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("group", { name: "North" });
+      const returnControl =
+        type === "item"
+          ? target
+          : screen.getByRole("button", { name: "North 2" });
+      fireEvent.pointerEnter(target);
+      const action = screen.getByRole("button", {
+        name: `Details: ${type === "item" ? "Parcel A" : "North"}`,
+      });
+      movePointer(target, action);
+      act(() => action.focus());
+      expect(action).toHaveFocus();
+      expect(onFocus).not.toHaveBeenCalled();
+
+      movePointer(action, document.body);
+      expect(returnControl).toHaveFocus();
+      expect(action).not.toBeInTheDocument();
+      expect(
+        screen.getByText("Focus or select a cell or group to inspect it"),
+      ).toBeVisible();
+      if (type === "item") expect(onItemHover).toHaveBeenLastCalledWith(null);
+      expect(onGroupHover).toHaveBeenLastCalledWith(null);
+      expect(onFocus).not.toHaveBeenCalled();
+      expect(onCategory).not.toHaveBeenCalled();
+      expect(onSelection).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Ready 2" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+
+      // Once the caller clears its category, dismissed hover cannot trap Escape.
+      rerender(
+        <div onKeyDown={onOuterKeyDown}>
+          <WaffleChart {...props} selectedCategoryId={null} />
+        </div>,
+      );
+      expect(returnControl).toHaveFocus();
+      expect(fireEvent.keyDown(returnControl, { key: "Escape" })).toBe(true);
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+      expect(onCategory).not.toHaveBeenCalled();
+      expect(screen.queryByText("Inspecting")).toBeNull();
+    },
+  );
+
+  it.each(["item", "group"] as const)(
+    "keeps a pinned %s details control focused when the pointer leaves the root",
+    (type) => {
+      const onItemHover = vi.fn();
+      const onGroupHover = vi.fn();
+      const onCategory = vi.fn();
+      const onSelection = vi.fn();
+      render(
+        <WaffleChart
+          accessibilityLabel="Pinned pointer exit"
+          items={items}
+          categories={categories}
+          groups={groups}
+          defaultSelection={{
+            type,
+            id: type === "item" ? items[0].id : groups[0].id,
+          }}
+          selectedCategoryId="ready"
+          onItemHoverChange={onItemHover}
+          onGroupHoverChange={onGroupHover}
+          onCategorySelectionChange={onCategory}
+          onSelectionChange={onSelection}
+          renderDetails={() => (
+            <button type="button">Pinned detail action</button>
+          )}
+        />,
+      );
+      const second = itemButton("Parcel B");
+      const action = screen.getByRole("button", {
+        name: "Pinned detail action",
+      });
+      fireEvent.pointerEnter(second);
+      movePointer(second, action);
+      act(() => action.focus());
+      expect(action).toHaveFocus();
+
+      movePointer(action, document.body);
+      expect(action).toHaveFocus();
+      expect(action).toBeVisible();
+      expect(screen.getByText("Selected")).toBeVisible();
+      expect(
+        screen.getByRole("button", { name: "Clear selection" }),
+      ).toBeVisible();
+      expect(onItemHover).toHaveBeenLastCalledWith(null);
+      expect(onGroupHover).toHaveBeenLastCalledWith(null);
+      expect(onSelection).not.toHaveBeenCalled();
+      expect(onCategory).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Ready 2" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    },
+  );
+
+  it.each(["item", "group"] as const)(
+    "dismisses retained %s hover once when Escape targets the unfocused document body",
+    (type) => {
+      const onOuterKeyDown = vi.fn(
+        (event: KeyboardEvent) => event.defaultPrevented,
+      );
+      const onItemHover = vi.fn();
+      const onGroupHover = vi.fn();
+      render(
+        <WaffleChart
+          accessibilityLabel="Unfocused hover Escape"
+          items={items}
+          categories={categories}
+          groups={groups}
+          onItemHoverChange={onItemHover}
+          onGroupHoverChange={onGroupHover}
+          renderDetails={({ item, group }) => (
+            <span>Inspection: {item?.label ?? group?.label}</span>
+          )}
+        />,
+      );
+      const target =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("group", { name: "North" });
+      const text = `Inspection: ${type === "item" ? items[0].label : groups[0].label}`;
+      fireEvent.pointerEnter(target);
+      const details = screen
+        .getByText(text)
+        .closest<HTMLElement>('[aria-live="polite"]')!;
+      movePointer(target, details);
+      expect(screen.getByText(text)).toBeVisible();
+      expect(document.body).toHaveFocus();
+      window.addEventListener("keydown", onOuterKeyDown);
+      try {
+        expect(fireEvent.keyDown(document.body, { key: "Escape" })).toBe(false);
+        expect(screen.queryByText(text)).toBeNull();
+        expect(
+          screen.getByText("Focus or select a cell or group to inspect it"),
+        ).toBeVisible();
+        if (type === "item") expect(onItemHover).toHaveBeenLastCalledWith(null);
+        expect(onGroupHover).toHaveBeenLastCalledWith(null);
+        expect(onOuterKeyDown).toHaveBeenCalledOnce();
+        expect(onOuterKeyDown).toHaveLastReturnedWith(true);
+        const itemCalls = onItemHover.mock.calls.length;
+        const groupCalls = onGroupHover.mock.calls.length;
+
+        expect(fireEvent.keyDown(document.body, { key: "Escape" })).toBe(true);
+        expect(onOuterKeyDown).toHaveBeenCalledTimes(2);
+        expect(onOuterKeyDown).toHaveLastReturnedWith(false);
+        expect(onItemHover).toHaveBeenCalledTimes(itemCalls);
+        expect(onGroupHover).toHaveBeenCalledTimes(groupCalls);
+        expect(screen.queryByText(text)).toBeNull();
+      } finally {
+        window.removeEventListener("keydown", onOuterKeyDown);
+      }
+    },
+  );
+
+  it("lets a sibling chart handle Escape before clearing retained hover", () => {
+    const onHover = vi.fn();
+    render(
+      <>
+        <WaffleChart
+          accessibilityLabel="Hovered sibling"
+          items={items}
+          categories={categories}
+          onItemHoverChange={onHover}
+          renderDetails={() => <span>Retained sibling details</span>}
+        />
+        <WaffleChart
+          accessibilityLabel="Focused sibling"
+          items={items}
+          categories={categories}
+        />
+      </>,
+    );
+    const hovered = screen.getByRole("group", { name: "Hovered sibling" });
+    const focused = screen.getByRole("group", { name: "Focused sibling" });
+    const first = within(hovered).getByRole("button", {
+      name: "Parcel A, Ready",
+    });
+    const second = within(focused).getByRole("button", {
+      name: "Parcel B, Working, Draft",
+    });
+    fireEvent.pointerEnter(first);
+    const details = screen
+      .getByText("Retained sibling details")
+      .closest<HTMLElement>('[aria-live="polite"]')!;
+    movePointer(first, details);
+    act(() => second.focus());
+    expect(within(focused).getByText("Inspecting")).toBeVisible();
+
+    expect(fireEvent.keyDown(second, { key: "Escape" })).toBe(false);
+    expect(within(focused).queryByText("Inspecting")).toBeNull();
+    expect(screen.getByText("Retained sibling details")).toBeVisible();
+    expect(onHover).toHaveBeenCalledExactlyOnceWith(items[0]);
+  });
+
+  it("respects Escape prevented by an outside control", () => {
+    const onHover = vi.fn();
+    render(
+      <>
+        <WaffleChart
+          accessibilityLabel="Outside handled Escape"
+          items={items}
+          categories={categories}
+          onItemHoverChange={onHover}
+          renderDetails={() => <span>Outside-safe details</span>}
+        />
+        <button
+          type="button"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") event.preventDefault();
+          }}
+        >
+          Handle outside Escape
+        </button>
+      </>,
+    );
+    const first = itemButton("Parcel A");
+    fireEvent.pointerEnter(first);
+    const details = screen
+      .getByText("Outside-safe details")
+      .closest<HTMLElement>('[aria-live="polite"]')!;
+    movePointer(first, details);
+    const outside = screen.getByRole("button", {
+      name: "Handle outside Escape",
+    });
+    act(() => outside.focus());
+    expect(fireEvent.keyDown(outside, { key: "Escape" })).toBe(false);
+    expect(screen.getByText("Outside-safe details")).toBeVisible();
+    expect(onHover).toHaveBeenCalledExactlyOnceWith(items[0]);
+  });
+
+  it.each(["item", "group"] as const)(
+    "reports same-group caption hover again after keyboard focus on another %s",
+    (type) => {
+      const onHover = vi.fn();
+      render(
+        <WaffleChart
+          accessibilityLabel="Alternating group modality"
+          items={items}
+          categories={categories}
+          groups={groups}
+          onGroupHoverChange={onHover}
+          renderDetails={({ item, group }) => (
+            <span>Inspection: {item?.label ?? group?.label}</span>
+          )}
+        />,
+      );
+      const north = screen.getByRole("group", { name: "North" });
+      const northCaption = screen.getByRole("button", { name: "North 2" });
+      const keyboardTarget =
+        type === "item"
+          ? itemButton("Parcel C")
+          : screen.getByRole("button", { name: "South 1" });
+      fireEvent.pointerEnter(northCaption);
+      expect(screen.getByText("Inspection: North")).toBeVisible();
+      expect(onHover).toHaveBeenCalledExactlyOnceWith(groups[0]);
+      movePointer(northCaption, north);
+      act(() => keyboardTarget.focus());
+      expect(
+        screen.getByText(
+          `Inspection: ${type === "item" ? "Parcel C" : "South"}`,
+        ),
+      ).toBeVisible();
+
+      movePointer(north, northCaption);
+      expect(screen.getByText("Inspection: North")).toBeVisible();
+      expect(onHover.mock.calls.map(([value]) => value)).toEqual([
+        groups[0],
+        groups[0],
+      ]);
+      expect(keyboardTarget).toHaveFocus();
+    },
+  );
+
+  it("immediately retargets retained hover to a new item, group and same-group caption", () => {
+    const onItemHover = vi.fn();
+    const onGroupHover = vi.fn();
+    render(
+      <WaffleChart
+        accessibilityLabel="Retargeted hover"
+        items={items}
+        categories={categories}
+        groups={groups}
+        onItemHoverChange={onItemHover}
+        onGroupHoverChange={onGroupHover}
+        renderDetails={({ item, group }) => (
+          <span>Inspection: {item?.label ?? group?.label}</span>
+        )}
+      />,
+    );
+    const first = itemButton("Parcel A");
+    const second = itemButton("Parcel B");
+    const south = screen.getByRole("group", { name: "South" });
+    const northCaption = screen.getByRole("button", { name: "North 2" });
+    fireEvent.pointerEnter(first);
+    const details = screen
+      .getByText("Inspection: Parcel A")
+      .closest<HTMLElement>('[aria-live="polite"]')!;
+    movePointer(first, details);
+    movePointer(details, second);
+    expect(screen.getByText("Inspection: Parcel B")).toBeVisible();
+    expect(onItemHover).toHaveBeenLastCalledWith(items[1]);
+
+    movePointer(second, details);
+    expect(screen.getByText("Inspection: Parcel B")).toBeVisible();
+    movePointer(details, south);
+    expect(screen.getByText("Inspection: South")).toBeVisible();
+    expect(onItemHover).toHaveBeenLastCalledWith(null);
+    expect(onGroupHover).toHaveBeenLastCalledWith(groups[1]);
+
+    movePointer(south, details);
+    expect(screen.getByText("Inspection: South")).toBeVisible();
+    movePointer(details, first);
+    expect(screen.getByText("Inspection: Parcel A")).toBeVisible();
+    expect(onItemHover).toHaveBeenLastCalledWith(items[0]);
+    movePointer(first, northCaption);
+    expect(screen.getByText("Inspection: North")).toBeVisible();
+    expect(onItemHover).toHaveBeenLastCalledWith(null);
+    expect(onGroupHover).toHaveBeenLastCalledWith(groups[0]);
+    expect(document.body).toHaveFocus();
+  });
+
+  it.each(["item", "group"] as const)(
+    "keeps a selected %s pinned across details, retargeted hover and root exit",
+    (type) => {
+      const selection = {
+        type,
+        id: type === "item" ? items[0].id : groups[0].id,
+      };
+      const onSelection = vi.fn();
+      const onItemHover = vi.fn();
+      const onGroupHover = vi.fn();
+      const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+        <span>
+          Inspection: {inspection.item?.label ?? inspection.group?.label}
+        </span>
+      ));
+      render(
+        <WaffleChart
+          accessibilityLabel="Pinned hover"
+          items={items}
+          categories={categories}
+          groups={groups}
+          defaultSelection={selection}
+          onSelectionChange={onSelection}
+          onItemHoverChange={onItemHover}
+          onGroupHoverChange={onGroupHover}
+          renderDetails={renderDetails}
+        />,
+      );
+      const text = `Inspection: ${type === "item" ? items[0].label : groups[0].label}`;
+      const details = screen
+        .getByText(text)
+        .closest<HTMLElement>('[aria-live="polite"]')!;
+      const second = itemButton("Parcel B");
+      const south = screen.getByRole("group", { name: "South" });
+      fireEvent.pointerEnter(second);
+      movePointer(second, details);
+      expect(screen.getByText(text)).toBeVisible();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: selection,
+        pinned: true,
+      });
+      expect(fireEvent.keyDown(document.body, { key: "Escape" })).toBe(true);
+      expect(screen.getByText(text)).toBeVisible();
+      expect(onItemHover).toHaveBeenLastCalledWith(items[1]);
+      expect(onGroupHover).toHaveBeenLastCalledWith(groups[0]);
+      movePointer(details, south);
+      expect(screen.getByText(text)).toBeVisible();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: selection,
+        pinned: true,
+      });
+      expect(onItemHover).toHaveBeenLastCalledWith(null);
+      expect(onGroupHover).toHaveBeenLastCalledWith(groups[1]);
+      movePointer(south, document.body);
+      expect(onGroupHover).toHaveBeenLastCalledWith(null);
+      expect(screen.getByText(text)).toBeVisible();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: selection,
+        pinned: true,
+      });
+      expect(
+        screen.getByRole("button", { name: "Clear selection" }),
+      ).toBeVisible();
+      expect(onSelection).not.toHaveBeenCalled();
+    },
+  );
+
+  describe("beside nested library overlays", () => {
+    let restoreStyle: () => void;
+    let restoreIntersection: () => void;
+
+    beforeEach(() => {
+      restoreStyle = mockGetComputedStyle();
+      restoreIntersection = mockIntersectionObserver();
+      disableReactTransitionGroup();
+    });
+
+    afterEach(() => {
+      cleanup();
+      restoreIntersection();
+      restoreStyle();
+      enableReactTransitionGroup();
+    });
+
+    it("lets a portalled Select and separate Modal handle Escape before retained chart hover", async () => {
+      const onHover = vi.fn();
+      const { user } = render(
+        <>
+          <WaffleChart
+            accessibilityLabel="Hover beside overlays"
+            items={items}
+            categories={categories}
+            onItemHoverChange={onHover}
+            renderDetails={() => <span>Overlay-safe hover details</span>}
+          />
+          <Modal.Trigger>
+            <Button>Open separate modal</Button>
+            <Modal>
+              <Modal.Header>Separate view</Modal.Header>
+              <Modal.Body>
+                <Select label="View" defaultSelectedKey="daily">
+                  <Select.Option key="daily">Daily</Select.Option>
+                  <Select.Option key="weekly">Weekly</Select.Option>
+                </Select>
+              </Modal.Body>
+            </Modal>
+          </Modal.Trigger>
+        </>,
+      );
+      const opener = screen.getByRole("button", {
+        name: "Open separate modal",
+      });
+      act(() => opener.focus());
+      const first = itemButton("Parcel A");
+      fireEvent.pointerEnter(first);
+      const content = screen.getByText("Overlay-safe hover details");
+      const details = content.closest<HTMLElement>('[aria-live="polite"]')!;
+      movePointer(first, details);
+      await user.keyboard("{Enter}");
+      const dialog = screen.getByRole("dialog");
+      const select = screen.getByRole("button", { name: "Daily View" });
+      act(() => select.focus());
+      await user.keyboard("{Enter}");
+      const listbox = screen.getByRole("listbox");
+      expect(dialog.contains(listbox)).toBe(false);
+
+      await user.keyboard("{Escape}");
+      expect(screen.queryByRole("listbox")).toBeNull();
+      expect(screen.getByRole("dialog")).toBe(dialog);
+      expect(content).toBeInTheDocument();
+      expect(onHover).toHaveBeenCalledExactlyOnceWith(items[0]);
+      act(() => vi.advanceTimersByTime(32));
+      expect(select).toHaveFocus();
+
+      await user.keyboard("{Escape}");
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(content).toBeVisible();
+      expect(onHover).toHaveBeenCalledExactlyOnceWith(items[0]);
+      act(() => vi.advanceTimersByTime(32));
+      expect(opener).toHaveFocus();
+
+      await user.keyboard("{Escape}");
+      expect(content).not.toBeInTheDocument();
+      expect(onHover).toHaveBeenLastCalledWith(null);
+    });
   });
 });
 
