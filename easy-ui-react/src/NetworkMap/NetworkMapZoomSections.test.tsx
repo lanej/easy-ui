@@ -775,3 +775,31 @@ it("keeps a full local map in narrow drill-ins even when the overview frame is s
     bounds.mockRestore();
   }
 });
+
+it("bounds narrow fill close-ups and retains selectable stops when a map cannot fit", () => {
+  const bounds = vi
+    .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+    .mockImplementation(function (this: HTMLElement) {
+      if (this.hasAttribute("data-map-geography"))
+        return new DOMRect(0, 0, 390, 220);
+      if (this.hasAttribute("data-map-inset-header"))
+        return new DOMRect(0, 0, 390, 80);
+      return new DOMRect(0, 0, 390, 200);
+    });
+  try {
+    render(<NetworkMap {...records} height="fill" />);
+    openOrigin();
+    const card = screen.getByRole("region", { name: "Origin detail" });
+    expect(card).toHaveAttribute("data-map-inset-compact", "true");
+    expect(card).toHaveStyle({ maxHeight: "220px" });
+    expect(
+      within(card).getByRole("list", { name: "Locations in close-up" }),
+    ).toBeInTheDocument();
+    expect(
+      within(card).getByRole("button", { name: "Back to overview" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId(originName)).not.toBeInTheDocument();
+  } finally {
+    bounds.mockRestore();
+  }
+});

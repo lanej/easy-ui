@@ -562,8 +562,11 @@
 @container network-map (max-width: 480px) {
   .geography[data-inset-open="true"] > .viewport {
     position: absolute;
-    inline-size: 100%;
-    visibility: hidden;
+    inset: 0;
     pointer-events: none;
+    &,
+    * {
+      visibility: hidden !important;
+    }
   }
 }

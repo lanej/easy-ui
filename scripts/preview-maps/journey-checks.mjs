@@ -71,6 +71,103 @@ export async function checkJourneySizing({
             ) <= 1,
         ),
       );
+      if (width === 390) {
+        await browser.key(marker("oak"), "Enter");
+        await browser.wait(insetReady);
+        const opened = await browser.evaluate(cameras);
+        check(
+          `${name}: narrow close-up replaces the overview without changing its camera`,
+          JSON.stringify(opened.overview) ===
+            JSON.stringify(initial.overview) &&
+            (await browser.evaluate(
+              () =>
+                getComputedStyle(
+                  document.querySelector(
+                    "[data-map-geography] > [data-map-state]",
+                  ),
+                ).visibility === "hidden",
+            )),
+        );
+        check(
+          `${name}: narrow close-up has one bounded local map`,
+          await browser.evaluate(bounded),
+        );
+        await browser.key(
+          `${section("origin")} [data-map-facility-id="acceptance"]`,
+          "Enter",
+        );
+        await capture(`journey-drill-in-${theme}-${width}`);
+        await scan(`journey-drill-in-${theme}-${width}`);
+        await browser.clickNamed("button", "Back to overview");
+        await browser.wait(overviewReady);
+        check(
+          `${name}: Back restores source focus and camera`,
+          (await browser.evaluate(
+            () => document.activeElement?.dataset.mapFacilityId === "oak",
+          )) &&
+            JSON.stringify((await browser.evaluate(cameras)).overview) ===
+              JSON.stringify(initial.overview),
+        );
+        await browser.open(
+          `${base}/journey.html?local=1&height=fill&theme=${theme}`,
+        );
+        await browser.wait(overviewReady);
+        await browser.evaluate(() => {
+          document.querySelector("[data-journey-zoom-example]").style.height =
+            "900px";
+        });
+        await browser.wait(
+          () => window.journeyMaps.overview.getContainer().clientHeight > 450,
+        );
+        await browser.key(marker("oak"), "Enter");
+        await browser.wait(insetReady);
+        await browser.evaluate(() => {
+          const parent = document.querySelector("[data-journey-zoom-example]");
+          const frame = document.querySelector("[data-map-geography]");
+          parent.style.height = `${parent.getBoundingClientRect().height - frame.getBoundingClientRect().height + 300}px`;
+        });
+        await browser.wait(() => {
+          const frame = document
+            .querySelector("[data-map-geography]")
+            .getBoundingClientRect();
+          const card = document
+            .querySelector("[data-map-zoom-section]")
+            .getBoundingClientRect();
+          return frame.height < 400 && card.bottom <= frame.bottom + 1;
+        });
+        check(
+          `${name}: fill close-up remains bounded after shrinking`,
+          await browser.evaluate(bounded),
+        );
+        await browser.evaluate(() => {
+          const parent = document.querySelector("[data-journey-zoom-example]");
+          const frame = document.querySelector("[data-map-geography]");
+          parent.style.height = `${parent.getBoundingClientRect().height - frame.getBoundingClientRect().height + 220}px`;
+        });
+        await browser.wait(compactReady);
+        check(
+          `${name}: compact fill fallback scrolls content and keeps its return header reachable`,
+          await browser.evaluate(() => {
+            const card = document.querySelector("[data-map-zoom-section]");
+            const header = card.querySelector("[data-map-inset-header]");
+            card.scrollTop = card.scrollHeight;
+            return (
+              getComputedStyle(card).overflowY === "auto" &&
+              getComputedStyle(header).position === "sticky" &&
+              header.getBoundingClientRect().top >=
+                card.getBoundingClientRect().top
+            );
+          }),
+        );
+        await browser.evaluate(() => {
+          document.querySelector("[data-journey-zoom-example]").style.height =
+            "900px";
+        });
+        await browser.wait(insetReady);
+        await browser.clickNamed("button", "Back to overview");
+        await browser.wait(overviewReady);
+        continue;
+      }
       await browser.key(marker("oak"), "Enter");
       await browser.wait(compactReady);
       check(
@@ -213,12 +310,15 @@ export async function checkJourneySizing({
   await browser.open(`${base}/journey.html?local=1&height=220&large=1`);
   await browser.wait(overviewReady);
   await browser.key(marker("oak"), "Enter");
-  await browser.wait(compactReady);
+  await browser.wait(insetReady);
   check(
-    "Minimum-height map with large text keeps the compact close-up inside its frame",
+    "Minimum-height numeric map with large text opens a bounded local drill-in",
     await browser.evaluate(bounded),
   );
-  await browser.clickNamed("button", "Oakland acceptance");
+  await browser.key(
+    `${section("origin")} [data-map-facility-id="acceptance"]`,
+    "Enter",
+  );
   await browser.key(":focus", "Escape");
   await browser.wait(overviewReady);
   check(
@@ -418,10 +518,12 @@ export async function checkJourneySections({
         }),
       );
       check(
-        `${name}: local labels and a geographic leader remain visible`,
+        `${name}: local labels remain visible, with a geographic leader on desktop`,
         await browser.evaluate(
           () =>
-            document.querySelectorAll("[data-map-inset-leader]").length === 1 &&
+            (innerWidth <= 480 ||
+              document.querySelectorAll("[data-map-inset-leader]").length ===
+                1) &&
             [
               ...document.querySelectorAll(
                 '[data-map-zoom-section] [data-map-label="true"]',
@@ -584,7 +686,10 @@ export async function checkJourneySections({
       );
       await capture(`journey-destination-${theme}-${width}`);
       await scan(`journey-destination-${theme}-${width}`);
-      await browser.clickNamed("button", "Close close-up");
+      await browser.clickNamed(
+        "button",
+        width === 390 ? "Back to overview" : "Close close-up",
+      );
       await browser.wait(overviewReady);
       check(
         `${name}: Close returns to the same journey with availability still indicated`,
@@ -650,6 +755,7 @@ export async function checkJourneySections({
       );
       await browser.key(marker("dbn"), "Enter");
       await browser.wait(insetReady);
+      if (width === 390) await browser.clickNamed("button", "Back to overview");
       await browser.click(
         "[data-map-geography] > [data-map-state] .maplibregl-ctrl-zoom-out",
       );
@@ -676,7 +782,7 @@ export async function checkJourneySections({
   await browser.key(marker("oak"), "Enter");
   await browser.wait(insetReady);
   check(
-    "Large text close-up remains bounded and leaves native overview navigation accessible",
+    "Large text drill-in remains bounded with local navigation available",
     await browser.evaluate(() => {
       const frame = document
           .querySelector("[data-map-geography]")
@@ -695,10 +801,10 @@ export async function checkJourneySections({
         card.right <= frame.right &&
         card.top >= frame.top &&
         card.bottom <= frame.bottom &&
-        (nav.bottom <= card.top ||
-          nav.top >= card.bottom ||
-          nav.right <= card.left ||
-          nav.left >= card.right)
+        getComputedStyle(
+          document.querySelector("[data-map-geography] > [data-map-state]"),
+        ).visibility === "hidden" &&
+        document.querySelector('[aria-label="Back to overview"]')
       );
     }),
   );
@@ -724,7 +830,10 @@ export async function checkJourneySections({
             .getBoundingClientRect();
           return (
             window.journeyMaps.origin.getContainer().clientHeight < 1000 &&
-            (navigation.bottom <= card.top ||
+            (getComputedStyle(
+              document.querySelector("[data-map-geography] > [data-map-state]"),
+            ).visibility === "hidden" ||
+              navigation.bottom <= card.top ||
               navigation.top >= card.bottom ||
               navigation.right <= card.left ||
               navigation.left >= card.right)

@@ -104,16 +104,21 @@ export function NetworkMapZoomSections() {
               ?.getBoundingClientRect().height ?? 62)
           : 0;
       const topSpace = navigationHeight > 0 ? navigationHeight + 22 : 12;
-      const frameWidth = frame.clientWidth || base.width;
+      const frameWidth = base.width || frame.clientWidth;
       const inline = frameWidth > 0 && frameWidth <= 480;
       const maxHeight =
-        !inline && base.height > 0
-          ? Math.max(0, Math.floor(base.height - bottom - topSpace))
+        (!inline || options.height === "fill") && base.height > 0
+          ? Math.max(
+              0,
+              Math.floor(base.height - (inline ? 0 : bottom + topSpace)),
+            )
           : undefined;
       const maxViewportHeight =
-        maxHeight !== undefined && header
-          ? Math.max(0, Math.floor(maxHeight - header.height - 2))
-          : undefined;
+        inline && options.height !== "fill"
+          ? 320
+          : maxHeight !== undefined && header
+            ? Math.max(0, Math.floor(maxHeight - header.height - 2))
+            : undefined;
       const compact = (maxViewportHeight ?? Infinity) < 220;
       // A narrow close-up replaces the overview; do not leave keyboard focus
       // inside the now-hidden map, including when a desktop panel shrinks.
@@ -209,7 +214,15 @@ export function NetworkMapZoomSections() {
       map.off("resize", update);
       frame.removeEventListener("keydown", onEscape);
     };
-  }, [active, options.facilities, options.controls, mapRef, setDock, close]);
+  }, [
+    active,
+    options.facilities,
+    options.controls,
+    options.height,
+    mapRef,
+    setDock,
+    close,
+  ]);
   const ids = new Set<string>();
   for (const item of options.zoomSections ?? []) {
     if (!item.id || ids.has(item.id))
