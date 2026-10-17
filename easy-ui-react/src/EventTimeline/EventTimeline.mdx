@@ -22,6 +22,13 @@ import { EventTimeline } from "@easypost/easy-ui/EventTimeline";
 
 ## Examples
 
+### Complete timestamps
+
+Supply full occurrence and receipt labels, including dates and timezone, when the evidence requires them. Native timestamps stay at least 12px in narrow containers. Their 96px column keeps dates and clock values readable, wrapping complete UTC labels at spaces without shortening the supplied evidence. Receipt time remains separate from occurrence time.
+
+<Canvas of={Stories.FullTimestamps} />
+<Canvas of={Stories.FullTimestampsInline} />
+
 ### Event identity and independent metrics
 
 The event's time, label, facility type, and location form its identity. Minimal presentation puts the event label, facility icon and type, location, and metric pills in one wrapping flow within the selected event surface. Compact and expanded measurements sit beneath event identity. Every pill contains both the metric label and its current value. The event-selection dot is independent of metric health: an arrival can have a healthy dwell time and an elevated exception rate at the same time.

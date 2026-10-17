@@ -85,6 +85,34 @@ export const MissingData: Story = {
 };
 export const Empty: Story = { args: { events: [], selectedId: null } };
 
+/** Full caller-owned evidence stays intact at narrow and wide widths. */
+export const FullTimestamps: Story = {
+  render: (args) => <EventTimeline {...args} selectedId={undefined} />,
+  args: {
+    selectedId: undefined,
+    size: "detailed",
+    events: events.slice(0, 3).map((event, index) => ({
+      ...event,
+      timeLabel: `2026-10-16 ${["09:42:00", "13:18:00", "17:06:00"][index]} UTC`,
+      receivedTimeLabel: `2026-10-16 ${["09:43:00", "13:20:00", "17:14:00"][index]} UTC`,
+    })),
+  },
+};
+
+export const FullTimestampsInline: Story = {
+  render: FullTimestamps.render,
+  args: { ...FullTimestamps.args, metricsPlacement: "inline" },
+};
+
+export const FullTimestampsCompact: Story = {
+  render: FullTimestamps.render,
+  args: {
+    ...FullTimestamps.args,
+    size: "compact",
+    renderTrailing: () => <span>6 h</span>,
+  },
+};
+
 /** An actual following interval remains a separate, caller-owned composition. */
 export const WithIntervalAssessment: Story = {
   args: {

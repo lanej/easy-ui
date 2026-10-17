@@ -206,6 +206,9 @@ measurements. Compose `renderMetrics` with `variant="minimal" | "compact" | "exp
 Minimal metrics use `metricsPlacement="inline"` and compact event size; other
 metrics sit below identity. Metrics remain outside the event-selection button.
 Keep event selection, each metric's assessment, and receipt time distinct.
+Supply complete date/time and timezone labels when needed; native timestamps
+stay at least 12px and wrap at spaces in a readable column.
+See [full timestamps](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--full-timestamps).
 See [timeline presentations](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--presentation-modes).
 
 Use `InvestigationWorkspace` to coordinate timeline, map, and persistent details
