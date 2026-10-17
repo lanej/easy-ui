@@ -1,7 +1,7 @@
 import type { InvestigationRecords } from "./selection";
 
 /** Intentionally synthetic positions and observations, never an inferred journey. */
-export const investigationRecords: InvestigationRecords = {
+export const investigationRecords: Required<InvestigationRecords> = {
   locations: [
     {
       id: "origin",

@@ -13,3 +13,10 @@
   flex: 0 0 9.5rem;
   max-inline-size: 100%;
 }
+
+.mapFree {
+  display: grid;
+  gap: design-token("space.2");
+  min-inline-size: 0;
+  margin-inline: auto;
+}

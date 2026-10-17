@@ -82,9 +82,9 @@ export type InvestigationWorkspaceProps = InvestigationRecords & {
 /** Linked, controlled inspection of supplied observations, candidate histories and locations. */
 export function InvestigationWorkspace({
   events,
-  locations,
-  segments,
-  paths,
+  locations = [],
+  segments = [],
+  paths = [],
   selection,
   onSelectionChange,
   map,

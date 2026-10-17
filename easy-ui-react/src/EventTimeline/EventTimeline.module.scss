@@ -13,12 +13,12 @@
 .entry {
   // Reserve the selected dot's 30px highlight without obscuring event text.
   // The connector and content use the same grid measurements as the button.
-  --time-column: 78px;
+  --time-column: 96px;
   --dot-column: 24px;
   --column-gap: 12px;
   --row-inline-padding: 8px;
-  --connector-inset: 110px;
-  --content-inset: 134px;
+  --connector-inset: 128px;
+  --content-inset: 152px;
 
   position: relative;
   min-inline-size: 0;
@@ -79,10 +79,12 @@
   background: design-token("color.primary.050");
 }
 
+// Keep full date and clock tokens readable; UTC labels wrap at spaces.
 .time {
   font-variant-numeric: tabular-nums;
   color: design-token("color.neutral.700");
   font-size: 12px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
   padding-block-start: 2px;
   min-inline-size: 0;
@@ -189,16 +191,12 @@
 
 @container (max-width: 500px) {
   .entry {
-    --time-column: 42px;
+    --time-column: 96px;
     --dot-column: 24px;
     --column-gap: 8px;
     --row-inline-padding: 2px;
-    --connector-inset: 64px;
-    --content-inset: 84px;
-  }
-
-  .time {
-    font-size: 11px;
+    --connector-inset: 118px;
+    --content-inset: 138px;
   }
 }
 

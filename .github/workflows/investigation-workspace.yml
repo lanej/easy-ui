@@ -12,6 +12,7 @@ on:
       - "easy-ui-react/src/HealthIndicator/**"
       - "easy-ui-react/src/DurationDistribution/**"
       - "scripts/check-investigation-workspace.mjs"
+      - "scripts/check-map-free-investigation.mjs"
       - "scripts/check-investigation-toolkit.mjs"
       - "scripts/check-event-timeline.mjs"
       - "scripts/browser-proof.mjs"
@@ -64,6 +65,7 @@ jobs:
           done
           curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
           node scripts/check-investigation-workspace.mjs
+          node scripts/check-map-free-investigation.mjs
           node scripts/check-investigation-toolkit.mjs
           if [ "$EVENT_TIMELINE_REUSE" != "true" ]; then
             node scripts/check-event-timeline.mjs

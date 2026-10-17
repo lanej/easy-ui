@@ -255,6 +255,7 @@ import { PredictionBandChart } from "@easypost/easy-ui/PredictionBandChart";
 import { WaterfallChart } from "@easypost/easy-ui/WaterfallChart";
 import { NetworkMapCellDetails, NetworkMapInspectionTrigger, type MapFacilityDetailsContext, type MapOverlayHoverDetailsContext, type MapInspectionTarget } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard, type MetricCardProps, type MetricContentProps } from "@easypost/easy-ui/MetricCard";
+import { InvestigationDetails, resolveSelection, selectEvent, type InvestigationRecords, type InvestigationSelection, type InvestigationDetailsContext, type InvestigationDetailsProps, type InvestigationDetailsLabels } from "@easypost/easy-ui/InvestigationWorkspace";
 import { ScoreComposition, ScoreSignal, ScoreContribution, ScoreConnector, ScoreResult, type ScoreCompositionProps, type ScoreCompositionColumn } from "@easypost/easy-ui/ScoreComposition";
 import { Button } from "@easypost/easy-ui/Button";
 import { DataGrid } from "@easypost/easy-ui/DataGrid";
@@ -335,6 +336,12 @@ export const example = <>
 </>;
 void [Select, SelectField, sort, invalidSort, menu, field, heading, icon, responsive, className];
 const collapsedColumns: ScoreCompositionColumn[] = ["signals"];
+const investigationRecords: InvestigationRecords = { events: [{ id: "account", label: "Account updated" }] };
+const investigationSelection: InvestigationSelection = { type: "event", eventId: "account" };
+const investigationContext: InvestigationDetailsContext = resolveSelection(investigationRecords, investigationSelection);
+const investigationLabels: Partial<InvestigationDetailsLabels> = { details: "Account details" };
+const investigationProps: InvestigationDetailsProps = { context: investigationContext, labels: investigationLabels, chooseEvent: id => selectEvent(investigationContext, id), clear: () => undefined };
+const investigationInspector = <InvestigationDetails {...investigationProps} />;
 const scoreProps: ScoreCompositionProps = {signals: [], contributions: [], result: {score: null}, defaultCollapsedColumns: collapsedColumns, collapsedColumns, onCollapsedColumnsChange: columns => columns.includes("contributions")};
 void scoreProps;
 ${["Chart", "MetricCard", "Button", "DataGrid"]
@@ -391,7 +398,7 @@ for (const load of [require, (specifier) => import(specifier)]) {
 }
 const rawIcon = insideConsumer(require.resolve("@easypost/easy-ui-icons/svg/EasyUI.svg"));
 assert.equal(readFileSync(rawIcon, "utf8"), readFileSync("expected-icon.svg", "utf8"));
-for (const subpath of ["Chart", "Chart/index", "MetricCard", "NetworkMap", "ScoreComposition", "utilities/css"]) {
+for (const subpath of ["Chart", "Chart/index", "MetricCard", "NetworkMap", "ScoreComposition", "InvestigationWorkspace", "utilities/css"]) {
   const specifier = "@easypost/easy-ui/" + subpath;
   insideConsumer(require.resolve(specifier));
   insideConsumer(fileURLToPath(import.meta.resolve(specifier)));
@@ -410,6 +417,18 @@ for (const subpath of ["Sparkline", "Sparkline/index", "Sparkline/index.js", "Sp
   await assert.rejects(import(specifier), { code: "ERR_MODULE_NOT_FOUND" });
 }
 for (const load of [require, (specifier) => import(specifier)]) {
+  const { InvestigationDetails, resolveSelection, selectEvent } = await load("@easypost/easy-ui/InvestigationWorkspace");
+  const accountContext = resolveSelection({events: [{id: "account", label: "Account updated"}]}, {type: "event", eventId: "account"});
+  assert.equal(accountContext.isAvailable, true);
+  assert.deepEqual(selectEvent(accountContext, "account"), {type: "event", eventId: "account"});
+  const accountInspector = renderToString(React.createElement(InvestigationDetails, {
+    context: accountContext, chooseEvent: () => {}, clear: () => {},
+    renderDetails: () => React.createElement("strong", null, "Rich account detail"),
+  }));
+  assert.match(accountInspector, /Account updated/);
+  assert.match(accountInspector, /Rich account detail/);
+  assert.match(accountInspector, /Clear selection/);
+  assert.doesNotMatch(accountInspector, /maplibregl/);
   const { ScoreComposition } = await load("@easypost/easy-ui/ScoreComposition");
   const score = renderToString(React.createElement(ScoreComposition, {
     signals: [{id: "a", label: "Observed input", value: false}],
