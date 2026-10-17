@@ -68,6 +68,48 @@ Change control placement without resetting a chosen map view:
 
 <Canvas of={Stories.ControlPlacement} />
 
+### Map-free timeline and inspector
+
+Import the inspector and selection helpers from the supported workspace entrypoint. No map, location geometry, or deep imports are needed for event-only records:
+
+```tsx
+import { EventTimeline } from "@easypost/easy-ui/EventTimeline";
+import {
+  InvestigationDetails,
+  resolveSelection,
+  selectEvent,
+  type InvestigationSelection,
+} from "@easypost/easy-ui/InvestigationWorkspace";
+
+const [selection, setSelection] = useState<InvestigationSelection>(null);
+const context = resolveSelection({ events }, selection);
+const chooseEvent = (id: string) => setSelection(selectEvent(context, id));
+
+<>
+  <EventTimeline
+    events={events}
+    selectedId={context.event?.id ?? null}
+    onSelectedIdChange={chooseEvent}
+  />
+  <InvestigationDetails
+    context={context}
+    chooseEvent={chooseEvent}
+    clear={() => setSelection(null)}
+    labels={{ empty: "Select an account event." }}
+    renderDetails={({ event }) => <ApplicationDetails event={event} />}
+  />
+</>;
+```
+
+`resolveSelection(records, selection)` retains caller order and marks removed records unavailable. `InvestigationRecords` requires only `events`; `locations`, `segments`, and `paths` default to empty arrays. `selectEvent(context, id)` preserves an available scope for member events. Both helpers are pure; changes remain controlled by the application.
+
+`InvestigationDetailsProps` exposes `context`, `chooseEvent(id)`, `clear()`, optional `renderDetails(context)`, optional partial `labels`, and optional `isNarrow`. The inspector supplies previous/next boundaries and clear controls. The default labels match the workspace; `InvestigationDetailsLabels` describes the supported overrides. `InvestigationDetailsContext`, `InvestigationRecords`, `InvestigationPath`, and `InvestigationSelection` are public types from the same entrypoint.
+
+The standalone inspector observes its own container at the native 740px breakpoint. It retains metadata and navigation while rich content collapses behind Show details. Content stays mounted, and focus moves to the disclosure if narrowing hides the focused action. Widening reveals the same content. Pass `isNarrow` only when a parent layout already owns this decision; `InvestigationWorkspace` does so internally. Compose the timeline and inspector in the application's layout; timeline arrow keys and Home/End remain native.
+
+<Canvas of={Stories.MapFree} />
+<Canvas of={Stories.MapFreeNarrow} />
+
 ### Ambiguity and missing data
 
 <Canvas of={Stories.SharedConnection} />

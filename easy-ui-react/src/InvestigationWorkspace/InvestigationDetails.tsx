@@ -1,4 +1,11 @@
-import React, { useId, useState, type ReactNode } from "react";
+import React, {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import ArrowBackIcon from "@easypost/easy-ui-icons/ArrowBack";
 import ArrowForwardIcon from "@easypost/easy-ui-icons/ArrowForward";
 import CloseIcon from "@easypost/easy-ui-icons/Close";
@@ -9,31 +16,94 @@ import { EventDetails } from "../EventDetails";
 import type { InvestigationDetailsContext } from "./selection";
 import styles from "./InvestigationWorkspace.module.scss";
 
-/** One persistent inspector; the timeline remains the only list of events. */
+export type InvestigationDetailsLabels = Record<
+  | "details"
+  | "clear"
+  | "previous"
+  | "next"
+  | "empty"
+  | "showDetails"
+  | "hideDetails",
+  string
+>;
+
+export type InvestigationDetailsProps = {
+  context: InvestigationDetailsContext;
+  /** Override automatic container-width detection when composed in a workspace. */
+  isNarrow?: boolean;
+  chooseEvent: (id: string) => void;
+  clear: () => void;
+  renderDetails?: (context: InvestigationDetailsContext) => ReactNode;
+  labels?: Partial<InvestigationDetailsLabels>;
+};
+
+/** Persistent inspector, usable with EventTimeline without a map or workspace. */
 export function InvestigationDetails({
   context,
-  isNarrow,
+  isNarrow: narrowOverride,
   chooseEvent,
   clear,
   renderDetails,
   labels,
-}: {
-  context: InvestigationDetailsContext;
-  isNarrow: boolean;
-  chooseEvent: (id: string) => void;
-  clear: () => void;
-  renderDetails?: (context: InvestigationDetailsContext) => ReactNode;
-  labels: Record<
-    | "details"
-    | "clear"
-    | "previous"
-    | "next"
-    | "empty"
-    | "showDetails"
-    | "hideDetails",
-    string
-  >;
-}) {
+}: InvestigationDetailsProps) {
+  const text: InvestigationDetailsLabels = {
+    details: "Selection details",
+    clear: "Clear selection",
+    previous: "Previous event",
+    next: "Next event",
+    empty: "Select an event, location, or candidate path.",
+    showDetails: "Show details",
+    hideDetails: "Hide details",
+    ...labels,
+  };
+  const root = useRef<HTMLElement>(null);
+  const restoreDisclosureFocus = useRef(false);
+  const [autoNarrow, setAutoNarrow] = useState(false);
+  const isNarrow = narrowOverride ?? autoNarrow;
+  useEffect(() => {
+    const element = root.current;
+    if (
+      narrowOverride !== undefined ||
+      !element ||
+      typeof ResizeObserver === "undefined"
+    )
+      return;
+    const update = () => {
+      const width = element.getBoundingClientRect().width;
+      if (width <= 0) return;
+      const narrow = width <= 740;
+      const active = document.activeElement;
+      restoreDisclosureFocus.current =
+        narrow &&
+        active instanceof HTMLElement &&
+        Boolean(
+          element
+            .querySelector("[data-investigation-details-body]")
+            ?.contains(active),
+        );
+      setAutoNarrow(narrow);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [narrowOverride]);
+  useLayoutEffect(() => {
+    if (isNarrow) {
+      const body = root.current?.querySelector<HTMLElement>(
+        "[data-investigation-details-body]",
+      );
+      if (
+        body?.hidden &&
+        (restoreDisclosureFocus.current ||
+          body.contains(document.activeElement))
+      )
+        root.current
+          ?.querySelector<HTMLButtonElement>("button[aria-controls]")
+          ?.focus({ preventScroll: true });
+    }
+    restoreDisclosureFocus.current = false;
+  }, [isNarrow]);
   const bodyId = useId();
   const [expanded, setExpanded] = useState(false);
   const {
@@ -64,15 +134,17 @@ export function InvestigationDetails({
       location?.label ??
       path?.label ??
       segment?.label ??
-      labels.details);
+      text.details);
   const description =
     event?.description ?? path?.description ?? location?.detail;
   const extra = selection && isAvailable ? renderDetails?.(context) : null;
   const hasMore = Boolean(description || extra);
   return (
     <section
+      ref={root}
+      data-narrow={isNarrow}
       className={styles.details}
-      aria-label={labels.details}
+      aria-label={text.details}
       data-expanded={!isNarrow || expanded}
     >
       <div className={styles.detailHeader}>
@@ -91,7 +163,7 @@ export function InvestigationDetails({
                 size="sm"
                 variant="outlined"
                 icon={ArrowBackIcon}
-                accessibilityLabel={labels.previous}
+                accessibilityLabel={text.previous}
                 isDisabled={index <= 0}
                 onPress={() => chooseEvent(events[index - 1].id)}
               />
@@ -99,7 +171,7 @@ export function InvestigationDetails({
                 size="sm"
                 variant="outlined"
                 icon={ArrowForwardIcon}
-                accessibilityLabel={labels.next}
+                accessibilityLabel={text.next}
                 isDisabled={index === events.length - 1}
                 onPress={() => chooseEvent(events[index + 1].id)}
               />
@@ -110,7 +182,7 @@ export function InvestigationDetails({
               size="sm"
               variant="outlined"
               icon={CloseIcon}
-              accessibilityLabel={labels.clear}
+              accessibilityLabel={text.clear}
               onPress={clear}
             />
           )}
@@ -123,7 +195,7 @@ export function InvestigationDetails({
       </span>
       {!selection ? (
         <Text as="p" color="subdued">
-          {labels.empty}
+          {text.empty}
         </Text>
       ) : !isAvailable ? (
         <Text as="p" color="subdued">
@@ -148,7 +220,7 @@ export function InvestigationDetails({
                 aria-controls={bodyId}
                 onPress={() => setExpanded(!expanded)}
               >
-                {expanded ? labels.hideDetails : labels.showDetails}
+                {expanded ? text.hideDetails : text.showDetails}
               </Button>
             )}
           </div>

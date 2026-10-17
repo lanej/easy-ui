@@ -45,7 +45,7 @@ revision; use the installed declarations when the application pins another versi
 | Feedback and status labels          | `Banner`, `Notification`, `Spinner`, `Badge`, `AlertBadge`, `Pill`, `PillGroup`, `StatusDot`                                                                                      |
 | Exact metrics and tabular data      | `MetricCard`, `DataGrid`, `DrawerTable`                                                                                                                                           |
 | Supplied health observations        | `HealthIndicator`, `HealthAssessment`, `ObservationFreshness`, `DurationDistribution`, `RiskScore`, `FacilitySummary`, `EventMetrics`                                             |
-| Event and path investigations       | `EventDetails`, `EventTimeline`, `InvestigationWorkspace`, `PathComparison`                                                                                                       |
+| Event and path investigations       | `EventDetails`, `EventTimeline`, `InvestigationWorkspace`, `InvestigationDetails`, `PathComparison`                                                                                                       |
 | Resource dependency investigation   | `DependencyGraph`                                                                                                                                                                 |
 | Score explanations                  | `ScoreComposition`                                                                                                                                                                |
 
@@ -218,6 +218,20 @@ The application supplies ordering, alignment, and confidence; neither component
 chooses a true history or repairs timestamps.
 See [linked investigation](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-investigation-investigationworkspace--docs)
 and [candidate comparison](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-investigation-pathcomparison--docs).
+
+For account activity or other map-free observations, compose `EventTimeline` with
+`InvestigationDetails`. Import the inspector, `resolveSelection`, `selectEvent`,
+`InvestigationDetailsProps`, `InvestigationDetailsLabels`, `InvestigationRecords`,
+`InvestigationDetailsContext`, and `InvestigationSelection` from
+`@easypost/easy-ui/InvestigationWorkspace`. Resolve `{ events }` with controlled
+selection, pass `context.event?.id ?? null` to the timeline, and route timeline
+selection and inspector `chooseEvent(id)` through `selectEvent(context, id)`.
+Inspector `clear()` requests `null`; `renderDetails(context)` supplies rich content.
+Geometry records are optional. The standalone inspector detects its own narrow
+container and keeps content mounted behind Show details; `isNarrow` is an optional
+parent-layout override. Labels accept partial overrides.
+See [map-free composition](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--map-free)
+and [narrow inspector](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--map-free-narrow).
 
 ## Dependency investigation
 

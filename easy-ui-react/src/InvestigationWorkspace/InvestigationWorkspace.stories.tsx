@@ -12,6 +12,8 @@ import type {
   InvestigationSelection,
   InvestigationDetailsContext,
 } from "./selection";
+import { InvestigationDetails, resolveSelection, selectEvent } from ".";
+import { EventTimeline, type EventTimelineEvent } from "../EventTimeline";
 import { investigationRecords } from "./InvestigationWorkspace.fixtures";
 import { HealthAssessment } from "../HealthAssessment";
 import { EventMetrics } from "../EventMetrics";
@@ -304,4 +306,67 @@ export const EmptyEvents: Story = {
 };
 export const ControlPlacement: Story = {
   render: () => <Example placementControls />,
+};
+
+const accountEvents: EventTimelineEvent[] = [
+  {
+    id: "created",
+    label: "Account created",
+    timeLabel: "Oct 15, 2026 · 09:42",
+    detailLabel: "Administration",
+    description:
+      "A new account was provisioned by the workspace administrator.",
+  },
+  {
+    id: "preferences",
+    label: "Notification preferences updated",
+    timeLabel: "Oct 16, 2026 · 11:20",
+    detailLabel: "Preferences",
+    description:
+      "Delivery updates are enabled. Billing notifications remain unchanged.",
+  },
+  {
+    id: "reviewed",
+    label: "Activity reviewed",
+    timeLabel: "Oct 17, 2026 · 08:15",
+    detailLabel: "Review",
+  },
+];
+function MapFreeComposition({ narrow = false }: { narrow?: boolean }) {
+  const [selection, setSelection] = useState<InvestigationSelection>({
+    type: "event",
+    eventId: "preferences",
+  });
+  const context = resolveSelection({ events: accountEvents }, selection);
+  const chooseEvent = (id: string) => setSelection(selectEvent(context, id));
+  return (
+    <div className={styles.mapFree} style={{ maxWidth: narrow ? 360 : 1000 }}>
+      <EventTimeline
+        events={accountEvents}
+        selectedId={context.event?.id ?? null}
+        onSelectedIdChange={chooseEvent}
+        ariaLabel="Account activity"
+      />
+      <InvestigationDetails
+        context={context}
+        chooseEvent={chooseEvent}
+        clear={() => setSelection(null)}
+        labels={{ empty: "Select an account event." }}
+        renderDetails={({ event }) => (
+          <div>
+            <Text as="p">Caller-owned audit detail for {event?.id}</Text>
+            <Button size="sm" variant="outlined">
+              Open audit record
+            </Button>
+          </div>
+        )}
+      />
+    </div>
+  );
+}
+
+/** Native timeline and public inspector, with no map or geometry records. */
+export const MapFree: Story = { render: () => <MapFreeComposition /> };
+export const MapFreeNarrow: Story = {
+  render: () => <MapFreeComposition narrow />,
 };

@@ -57,10 +57,12 @@
   flex-direction: column;
 }
 .details {
-  grid-area: detail;
   display: grid;
   gap: design-token("space.1");
   overflow-wrap: anywhere;
+}
+.layout > .details {
+  grid-area: detail;
 }
 .heading {
   justify-content: space-between;
@@ -190,6 +192,27 @@
   .heading {
     flex-wrap: wrap;
     gap: 4px;
+  }
+  .actions {
+    margin-inline-start: auto;
+  }
+  .detailHeader {
+    flex-wrap: wrap;
+  }
+}
+
+// Standalone inspectors retain the workspace's native narrow presentation.
+.details[data-narrow="true"] {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 6;
+  box-shadow: 0 -4px 16px #0000000d;
+  [hidden] {
+    display: none;
+  }
+  .detailBody {
+    max-block-size: 36dvh;
+    overflow: auto;
   }
   .actions {
     margin-inline-start: auto;
