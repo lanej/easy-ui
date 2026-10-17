@@ -139,6 +139,13 @@ try {
         exact: true,
       });
       await clearGroup.focus();
+      await clearGroup.press("Escape");
+      assert.ok(
+        await shared.evaluate((element) => element === document.activeElement),
+        "Escape from group details restores caption focus",
+      );
+      await shared.press("Enter");
+      await clearGroup.focus();
       await clearGroup.press("Enter");
       assert.ok(
         await shared.evaluate((element) => element === document.activeElement),
@@ -177,6 +184,13 @@ try {
         name: "Clear selection",
         exact: true,
       });
+      await clearItem.focus();
+      await clearItem.press("Escape");
+      assert.ok(
+        await second.evaluate((element) => element === document.activeElement),
+        "Escape from item details restores cell focus",
+      );
+      await second.press("Enter");
       await clearItem.focus();
       await clearItem.press("Enter");
       assert.ok(

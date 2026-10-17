@@ -10,7 +10,9 @@ export function useGroupAnchors(
   revision: unknown,
 ) {
   const callback = useRef(onChange);
-  callback.current = onChange;
+  // Retain the latest subscriber when disabling clears the incoming callback,
+  // so cleanup clears the current subscriber rather than the initial callback.
+  if (onChange) callback.current = onChange;
   const refresh = useRef<(() => void) | null>(null);
   const enabled = !!onChange;
   useEffect(() => {
@@ -20,7 +22,6 @@ export function useGroupAnchors(
     let lastElements: HTMLElement[] = [];
     let observed = new Set<HTMLElement>();
     let disposed = false;
-    const initialCallback = callback.current;
     const measure = () => {
       if (disposed) return;
       const anchors = [...elements.current].map(([groupId, element]) => {
@@ -80,7 +81,7 @@ export function useGroupAnchors(
       observer?.disconnect();
       window.removeEventListener("resize", schedule);
       window.removeEventListener("scroll", schedule, true);
-      (callback.current ?? initialCallback)?.([]);
+      callback.current?.([]);
     };
   }, [root, elements, enabled]);
   // Keep geometry comparisons across revisions. Inline callbacks and fresh data

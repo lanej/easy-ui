@@ -64,6 +64,7 @@ export function WaffleChart<Metadata = unknown>({
   const [focused, setFocused] = useState<WaffleChartSelection>(null);
   const [tabItemId, setTabItemId] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
+  const details = useRef<HTMLDivElement>(null);
   const anchorElements = useRef(new Map<string, HTMLElement>());
   const cellElements = useRef(new Map<string, HTMLButtonElement>());
   const groupControls = useRef(new Map<string, HTMLButtonElement>());
@@ -299,18 +300,28 @@ export function WaffleChart<Metadata = unknown>({
       const origin = event.currentTarget.getBoundingClientRect();
       const direction = event.key === "ArrowDown" ? 1 : -1;
       // Read live cell geometry so navigation follows responsive wrapping.
-      next = visibleItems
+      const candidates = visibleItems
         .map((entry) => ({
           entry,
           rect: cellElements.current.get(entry.id)?.getBoundingClientRect(),
         }))
-        .filter(({ rect }) => rect && (rect.top - origin.top) * direction > 1)
-        .sort((a, b) => {
-          const distance = (rect: DOMRect) =>
-            Math.abs(rect.top - origin.top) +
-            Math.abs(rect.left - origin.left) * 2;
-          return distance(a.rect!) - distance(b.rect!);
-        })[0]?.entry;
+        .filter(({ rect }) => rect && (rect.top - origin.top) * direction > 1);
+      const nearestRow = candidates.reduce(
+        (nearest, { rect }) =>
+          Math.min(nearest, Math.abs(rect!.top - origin.top)),
+        Infinity,
+      );
+      // Horizontal proximity must never skip a nearer partial row. Treat
+      // subpixel-aligned cells within 1px as members of the same visual row.
+      next = candidates
+        .filter(
+          ({ rect }) => Math.abs(rect!.top - origin.top) <= nearestRow + 1,
+        )
+        .sort(
+          (a, b) =>
+            Math.abs(a.rect!.left - origin.left) -
+            Math.abs(b.rect!.left - origin.left),
+        )[0]?.entry;
     } else return;
     event.preventDefault();
     if (next) {
@@ -429,7 +440,7 @@ export function WaffleChart<Metadata = unknown>({
         if (interactive && event.key === "Escape") {
           event.preventDefault();
           event.stopPropagation();
-          clear();
+          clear(!!details.current?.contains(event.target as Node));
         }
       }}
     >
@@ -574,6 +585,7 @@ export function WaffleChart<Metadata = unknown>({
       )}
       {interactive && (
         <div
+          ref={details}
           className={styles.details}
           id={detailsId}
           aria-live="polite"

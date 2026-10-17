@@ -275,6 +275,26 @@ it("uses the latest callback without observer teardown or redundant anchor publi
   expect(latest.mock.lastCall![0][0].bounds.top).toBe(55);
 });
 
+it.each(["disable", "unmount"])(
+  "clears the latest defined subscriber after replacement followed by %s",
+  (action) => {
+    const first = vi.fn();
+    const latest = vi.fn();
+    const { rerender, unmount } = render(<Harness onChange={first} />);
+    rerender(<Harness onChange={latest} />);
+    offset = 20;
+    fireEvent(window, new Event("resize"));
+    flushFrames();
+    expect(latest).toHaveBeenCalledOnce();
+    expect(latest.mock.lastCall![0]).toHaveLength(2);
+    if (action === "disable") rerender(<Harness />);
+    else unmount();
+    expect(first).toHaveBeenCalledOnce();
+    expect(latest).toHaveBeenCalledTimes(2);
+    expect(latest).toHaveBeenLastCalledWith([]);
+  },
+);
+
 it("cancels pending measurements, disconnects observers and clears anchors on cleanup", () => {
   const onChange = vi.fn();
   const removeListener = vi.spyOn(window, "removeEventListener");

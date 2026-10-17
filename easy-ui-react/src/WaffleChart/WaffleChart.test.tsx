@@ -642,6 +642,48 @@ describe("roving keyboard focus", () => {
   });
 });
 
+describe("vertical navigation between partial group rows", () => {
+  it.each(["down", "up"])(
+    "prioritizes the nearest visual row when moving %s",
+    async (direction) => {
+      const supplied = Array.from({ length: 25 }, (_, index) => ({
+        id: `row-item-${index}`,
+        label: `Row item ${index}`,
+        categoryId: "ready",
+        groupId: index < 13 ? "north" : "south",
+      }));
+      const { container, user } = render(
+        <WaffleChart
+          accessibilityLabel="Partial group rows"
+          categories={categories}
+          groups={groups}
+          items={supplied}
+          maxColumns={12}
+        />,
+      );
+      const cells = itemCells(container);
+      cells.forEach((cell, index) => {
+        const top = index < 12 ? 0 : index === 12 ? 30 : 100;
+        const left = (index < 13 ? index % 12 : index - 13) * 30;
+        vi.spyOn(cell, "getBoundingClientRect").mockReturnValue({
+          x: left,
+          y: top,
+          left,
+          top,
+          right: left + 24,
+          bottom: top + 24,
+          width: 24,
+          height: 24,
+          toJSON: () => ({}),
+        });
+      });
+      act(() => cells[direction === "down" ? 11 : 24].focus());
+      await user.keyboard(direction === "down" ? "{ArrowDown}" : "{ArrowUp}");
+      expect(cells[12]).toHaveFocus();
+    },
+  );
+});
+
 describe("inspection reconciliation after data changes", () => {
   it.each(["item", "group"])(
     "returns keyboard focus to the selected %s after clearing without reopening details",
@@ -681,6 +723,50 @@ describe("inspection reconciliation after data changes", () => {
       expect(target).toHaveAttribute("aria-pressed", "true");
       expect(
         screen.getByRole("button", { name: "Clear selection" }),
+      ).toBeVisible();
+    },
+  );
+
+  it.each([
+    { targetType: "item", control: "clear" },
+    { targetType: "item", control: "custom" },
+    { targetType: "group", control: "clear" },
+    { targetType: "group", control: "custom" },
+  ])(
+    "returns focus to the selected $targetType when Escape dismisses a $control details control",
+    async ({ targetType, control }) => {
+      const onSelection = vi.fn();
+      const { user } = render(
+        <WaffleChart
+          accessibilityLabel="Escape from details"
+          items={items}
+          categories={categories}
+          groups={groups}
+          onSelectionChange={onSelection}
+          renderDetails={() => (
+            <button type="button">Caller details action</button>
+          )}
+        />,
+      );
+      const target =
+        targetType === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("button", { name: "North 2" });
+      act(() => target.focus());
+      await user.keyboard("{Enter}");
+      const detailsControl = screen.getByRole("button", {
+        name: control === "clear" ? "Clear selection" : "Caller details action",
+      });
+      act(() => detailsControl.focus());
+      expect(detailsControl).toHaveFocus();
+      await user.keyboard("{Escape}");
+      expect(onSelection).toHaveBeenLastCalledWith(null);
+      expect(target).toHaveFocus();
+      expect(target).toHaveAttribute("aria-pressed", "false");
+      expect(detailsControl).not.toBeInTheDocument();
+      expect(screen.queryByText("Inspecting")).toBeNull();
+      expect(
+        screen.getByText("Focus or select a cell or group to inspect it"),
       ).toBeVisible();
     },
   );

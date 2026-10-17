@@ -173,9 +173,9 @@ The legend always shows exact category counts. With `onCategorySelectionChange`,
 
 ### Keyboard, pointer, and touch inspection
 
-Tab reaches group caption buttons and the current cell in the roving cell tab stop. Arrow Left/Right move between cells in displayed order; Arrow Up/Down use the current layout to move between visual rows after wrapping. Home/End move to the first/last cell. Focus has a visible indicator and exposes the same exact details as pointer hover.
+Tab reaches group caption buttons and the current cell in the roving cell tab stop. Arrow Left/Right move between cells in displayed order; Arrow Up/Down use the current layout to reach the nearest visual row, then the closest column, including partial rows after wrapping. Home/End move to the first/last cell. Focus has a visible indicator and exposes the same exact details as pointer hover.
 
-Enter, Space, a click, or a touch tap pins an item or group. A repeated activation unpins it; Clear selection or Escape dismisses pinned and transient inspection. Escape also requests that a controlled category highlight be cleared. Controlled callbacks must update the corresponding props for those requests to take effect. Touch inspection does not depend on hover. Clearing from the detail control returns keyboard focus to the selected cell or group caption. Data removal or moving a cell between groups clears transient inspection when its focused or hovered element is replaced; it does not resurrect stale inspection if that ID returns.
+Enter, Space, a click, or a touch tap pins an item or group. A repeated activation unpins it; Clear selection or Escape dismisses pinned and transient inspection. Escape also requests that a controlled category highlight be cleared. Controlled callbacks must update the corresponding props for those requests to take effect. Touch inspection does not depend on hover. Clearing or pressing Escape from a detail control returns keyboard focus to the selected cell or group caption. Data removal or moving a cell between groups clears transient inspection when its focused or hovered element is replaced; it does not resurrect stale inspection if that ID returns.
 
 ### Supported anchors for a connection layer
 
