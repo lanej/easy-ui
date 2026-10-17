@@ -305,6 +305,93 @@ try {
           .getByText("Focus or select a cell or group to inspect it")
           .isVisible(),
       );
+      // Click-unpin retains real focus, but newer pointer exploration must win.
+      await first.focus();
+      await first.click();
+      await first.click();
+      assert.equal(await first.getAttribute("aria-pressed"), "false");
+      await second.hover();
+      await page
+        .locator('[aria-live="polite"] strong')
+        .filter({ hasText: /^Resource 02$/ })
+        .waitFor();
+      assert.ok(
+        await first.evaluate((element) => element === document.activeElement),
+        "pointer inspection preserves the focused control",
+      );
+      // A boundary arrow still reclaims inspection without another focus event.
+      await first.press("ArrowLeft");
+      await page
+        .locator('[aria-live="polite"] strong')
+        .filter({ hasText: /^Resource 01$/ })
+        .waitFor();
+      await first.press("Escape");
+      await first.hover();
+      await second.hover();
+      await first.press("ArrowLeft");
+      await page
+        .locator('[aria-live="polite"] strong')
+        .filter({ hasText: /^Resource 01$/ })
+        .waitFor();
+      await page
+        .getByRole("button", { name: "Specialist group 5", exact: true })
+        .hover();
+      await page
+        .locator('[aria-live="polite"] strong')
+        .filter({ hasText: /^Specialist group$/ })
+        .waitFor();
+      assert.equal(
+        await page
+          .locator('[data-waffle-item][data-highlighted="true"]')
+          .count(),
+        5,
+        "pointer inspection emphasizes the specialist cells",
+      );
+      assert.deepEqual(
+        await page
+          .locator('[data-waffle-connection][data-highlighted="true"]')
+          .evaluateAll((edges) =>
+            edges.map((edge) => edge.getAttribute("data-waffle-connection")),
+          ),
+        ["specialist-beacon"],
+        "pointer inspection emphasizes the specialist edge",
+      );
+      await first.press("ArrowRight");
+      await page
+        .locator('[aria-live="polite"] strong')
+        .filter({ hasText: /^Resource 02$/ })
+        .waitFor();
+      assert.equal(
+        await page
+          .locator('[data-waffle-item][data-highlighted="true"]')
+          .count(),
+        7,
+        "keyboard inspection restores shared cell emphasis",
+      );
+      assert.equal(
+        await page
+          .locator('[data-waffle-connection][data-highlighted="true"]')
+          .count(),
+        2,
+        "keyboard inspection restores shared edge emphasis",
+      );
+      await second.press("Enter");
+      await page
+        .getByRole("button", { name: "Specialist group 5", exact: true })
+        .hover();
+      assert.equal(
+        await page.locator('[aria-live="polite"] strong').textContent(),
+        "Resource 02",
+        "pinned selection takes precedence over newer hover",
+      );
+      assert.equal(
+        await page
+          .locator('[data-waffle-connection][data-highlighted="true"]')
+          .count(),
+        2,
+        "pinned selection retains shared edge emphasis",
+      );
+      await second.press("Escape");
       // The same mounted composition must keep endpoints aligned across reflow.
       const originalPath = await page
         .locator('[data-waffle-connection="shared-atlas"]')
@@ -334,6 +421,7 @@ try {
           "exact-category-counts",
           "pinned-group",
           "keyboard-focus-selection-escape",
+          "latest-pointer-keyboard-inspection",
           "responsive-anchors",
           "no-clipping",
         ],

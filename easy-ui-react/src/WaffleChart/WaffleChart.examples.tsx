@@ -43,6 +43,9 @@ export function LinkedWaffleGroups() {
   const [focusedGroup, setFocusedGroup] = useState<string | null>(null);
   const [focusedItemGroup, setFocusedItemGroup] = useState<string | null>(null);
   const [targetGroup, setTargetGroup] = useState<string | null>(null);
+  const [inspectionSource, setInspectionSource] = useState<"focus" | "hover">(
+    "focus",
+  );
   const [selection, setSelection] = useState<WaffleChartSelection>(null);
   const [category, setCategory] = useState<string | null>(null);
   const selectedGroup =
@@ -51,13 +54,13 @@ export function LinkedWaffleGroups() {
       : selection?.type === "item"
         ? groupedWaffleItems.find((item) => item.id === selection.id)?.groupId
         : null;
+  const focusGroup = focusedItemGroup ?? focusedGroup ?? targetGroup;
+  const hoverGroup = hoveredItemGroup ?? hoveredGroup ?? targetGroup;
   const activeGroup =
     selectedGroup ??
-    focusedItemGroup ??
-    focusedGroup ??
-    targetGroup ??
-    hoveredItemGroup ??
-    hoveredGroup;
+    (inspectionSource === "hover"
+      ? (hoverGroup ?? focusGroup)
+      : (focusGroup ?? hoverGroup));
   const updateAnchors = useCallback(
     (next: readonly WaffleChartGroupAnchor[]) => setAnchors(next),
     [],
@@ -153,14 +156,22 @@ export function LinkedWaffleGroups() {
             selectedCategoryId={category}
             onCategorySelectionChange={setCategory}
             onGroupAnchorsChange={updateAnchors}
-            onGroupHoverChange={(group) => setHoveredGroup(group?.id ?? null)}
-            onGroupFocusChange={(group) => setFocusedGroup(group?.id ?? null)}
-            onItemHoverChange={(item) =>
-              setHoveredItemGroup(item?.groupId ?? null)
-            }
-            onItemFocusChange={(item) =>
-              setFocusedItemGroup(item?.groupId ?? null)
-            }
+            onGroupHoverChange={(group) => {
+              setHoveredGroup(group?.id ?? null);
+              if (group) setInspectionSource("hover");
+            }}
+            onGroupFocusChange={(group) => {
+              setFocusedGroup(group?.id ?? null);
+              if (group) setInspectionSource("focus");
+            }}
+            onItemHoverChange={(item) => {
+              setHoveredItemGroup(item?.groupId ?? null);
+              if (item) setInspectionSource("hover");
+            }}
+            onItemFocusChange={(item) => {
+              setFocusedItemGroup(item?.groupId ?? null);
+              if (item) setInspectionSource("focus");
+            }}
             renderDetails={({ item, group, pinned }) => (
               <div>
                 <strong>{item?.label ?? group?.label}</strong>
@@ -192,9 +203,15 @@ export function LinkedWaffleGroups() {
               aria-pressed={
                 selection?.type === "group" && selection.id === "shared"
               }
-              onPointerEnter={() => setTargetGroup("shared")}
+              onPointerEnter={() => {
+                setTargetGroup("shared");
+                setInspectionSource("hover");
+              }}
               onPointerLeave={() => setTargetGroup(null)}
-              onFocus={() => setTargetGroup("shared")}
+              onFocus={() => {
+                setTargetGroup("shared");
+                setInspectionSource("focus");
+              }}
               onBlur={() => setTargetGroup(null)}
               onClick={() =>
                 setSelection(

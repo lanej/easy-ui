@@ -23,6 +23,16 @@ const safeNumber = (
   min: number,
   max: number,
 ) => (Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback);
+const INSPECTION_KEYS = new Set([
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+  "Home",
+  "End",
+  "Enter",
+  " ",
+]);
 
 /** Discrete supplied resources. Applications own grouping and relationship meaning. */
 export function WaffleChart<Metadata = unknown>({
@@ -62,6 +72,9 @@ export function WaffleChart<Metadata = unknown>({
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [focused, setFocused] = useState<WaffleChartSelection>(null);
+  const [inspectionSource, setInspectionSource] = useState<"focus" | "hover">(
+    "focus",
+  );
   const [tabItemId, setTabItemId] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const details = useRef<HTMLDivElement>(null);
@@ -157,13 +170,19 @@ export function WaffleChart<Metadata = unknown>({
       ? `Selected item: ${itemMap.get(selection.id)!.label}`
       : `Selected group: ${groupMap.get(selection.id)!.label}`
     : "";
-  const transient =
-    validTarget(focused) ??
-    (hoveredItem && itemMap.has(hoveredItem)
+  const focusedTarget = validTarget(focused);
+  const hoveredTarget =
+    hoveredItem && itemMap.has(hoveredItem)
       ? { type: "item" as const, id: hoveredItem }
       : hoveredGroup && groupMap.has(hoveredGroup)
         ? { type: "group" as const, id: hoveredGroup }
-        : null);
+        : null;
+  // Focus can remain on an unpinned control while the pointer explores other
+  // targets. Let the latest interaction lead, without moving actual DOM focus.
+  const transient =
+    inspectionSource === "hover"
+      ? (hoveredTarget ?? focusedTarget)
+      : (focusedTarget ?? hoveredTarget);
   const canDismissInspection =
     (!selection && !!transient) ||
     (!!selection && canChangeSelection) ||
@@ -184,6 +203,20 @@ export function WaffleChart<Metadata = unknown>({
   const changeSelection = (next: WaffleChartSelection) => {
     if (controlledSelection === undefined) setLocalSelection(next);
     onSelectionChange?.(next);
+  };
+  const inspectFromKeyboard = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    next: Exclude<WaffleChartSelection, null>,
+  ) => {
+    // Escape leaves DOM focus in place after dismissal. A later inspection key
+    // must restart inspection even when navigation cannot move to another cell.
+    if (event.defaultPrevented || !INSPECTION_KEYS.has(event.key)) return;
+    setFocused(next);
+    setInspectionSource("focus");
+    if (!sameTarget(focused, next) || inspectionSource !== "focus") {
+      if (next.type === "item") onItemFocusChange?.(itemMap.get(next.id)!);
+      else onGroupFocusChange?.(groupMap.get(next.id)!);
+    }
   };
   const activate = (next: Exclude<WaffleChartSelection, null>) => {
     changeSelection(sameTarget(selection, next) ? null : next);
@@ -394,6 +427,7 @@ export function WaffleChart<Metadata = unknown>({
         onPointerEnter={(event) => {
           hoveredItemElement.current = event.currentTarget;
           setHoveredItem(item.id);
+          setInspectionSource("hover");
           onItemHoverChange?.(item);
         }}
         onPointerLeave={() => {
@@ -405,6 +439,7 @@ export function WaffleChart<Metadata = unknown>({
           setTabItemId(item.id);
           if (restoringDismissedFocus.current) return;
           setFocused({ type: "item", id: item.id });
+          setInspectionSource("focus");
           onItemFocusChange?.(item);
         }}
         onBlur={() => {
@@ -412,7 +447,10 @@ export function WaffleChart<Metadata = unknown>({
           onItemFocusChange?.(null);
         }}
         onClick={() => activate({ type: "item", id: item.id })}
-        onKeyDown={(event) => moveFocus(event, item)}
+        onKeyDown={(event) => {
+          inspectFromKeyboard(event, { type: "item", id: item.id });
+          moveFocus(event, item);
+        }}
       >
         {content}
       </button>
@@ -508,6 +546,7 @@ export function WaffleChart<Metadata = unknown>({
                 ? (event) => {
                     hoveredGroupElement.current = event.currentTarget;
                     setHoveredGroup(group.id);
+                    setInspectionSource("hover");
                     onGroupHoverChange?.(group);
                   }
                 : undefined
@@ -539,8 +578,15 @@ export function WaffleChart<Metadata = unknown>({
                     onFocus={() => {
                       if (restoringDismissedFocus.current) return;
                       setFocused({ type: "group", id: group.id });
+                      setInspectionSource("focus");
                       onGroupFocusChange?.(group);
                     }}
+                    onKeyDown={(event) =>
+                      inspectFromKeyboard(event, {
+                        type: "group",
+                        id: group.id,
+                      })
+                    }
                     onBlur={() => {
                       setFocused(null);
                       onGroupFocusChange?.(null);

@@ -455,6 +455,184 @@ describe("inspection and selection", () => {
     ).toBeNull();
   });
 
+  it.each(["item", "group"] as const)(
+    "inspects the latest hovered %s after unpinning a focused cell without moving focus",
+    (type) => {
+      const onFocus = vi.fn();
+      const renderDetails = vi.fn(
+        (inspection: WaffleChartInspection) =>
+          inspection.item?.label ?? inspection.group?.label,
+      );
+      render(
+        <WaffleChart
+          accessibilityLabel="Parcels"
+          items={items}
+          categories={categories}
+          groups={groups}
+          onItemFocusChange={onFocus}
+          renderDetails={renderDetails}
+        />,
+      );
+      const first = itemButton("Parcel A");
+      fireEvent.pointerEnter(first);
+      act(() => first.focus());
+      fireEvent.click(first);
+      fireEvent.click(first);
+      expect(first).toHaveAttribute("aria-pressed", "false");
+
+      fireEvent.pointerLeave(first);
+      fireEvent.pointerEnter(
+        type === "item"
+          ? itemButton("Parcel B")
+          : screen.getByRole("group", { name: "South" }),
+      );
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: { type, id: type === "item" ? items[1].id : groups[1].id },
+        pinned: false,
+      });
+      expect(first).toHaveFocus();
+      expect(onFocus).toHaveBeenCalledExactlyOnceWith(items[0]);
+    },
+  );
+
+  it("lets later focus and pointer entry take turns inspecting their own targets", () => {
+    const renderDetails = vi.fn(
+      (inspection: WaffleChartInspection) =>
+        inspection.item?.label ?? inspection.group?.label,
+    );
+    render(
+      <WaffleChart
+        accessibilityLabel="Parcels"
+        items={items}
+        categories={categories}
+        renderDetails={renderDetails}
+      />,
+    );
+    const first = itemButton("Parcel A");
+    const second = itemButton("Parcel B");
+    const third = itemButton("Parcel C");
+    act(() => first.focus());
+    fireEvent.pointerEnter(second);
+    expect(renderDetails.mock.lastCall![0].item).toBe(items[1]);
+    expect(first).toHaveFocus();
+
+    act(() => third.focus());
+    expect(renderDetails.mock.lastCall![0].item).toBe(items[2]);
+    fireEvent.pointerLeave(second);
+    fireEvent.pointerEnter(first);
+    expect(renderDetails.mock.lastCall![0]).toMatchObject({
+      item: items[0],
+      pinned: false,
+    });
+    expect(third).toHaveFocus();
+  });
+
+  it("reclaims inspection on cell navigation even when an arrow cannot move focus", async () => {
+    const renderDetails = vi.fn(
+      (inspection: WaffleChartInspection) => inspection.item?.label,
+    );
+    const { user } = render(
+      <WaffleChart
+        accessibilityLabel="Parcels"
+        items={items}
+        categories={categories}
+        renderDetails={renderDetails}
+      />,
+    );
+    const first = itemButton("Parcel A");
+    const second = itemButton("Parcel B");
+    const third = itemButton("Parcel C");
+    act(() => first.focus());
+    fireEvent.pointerEnter(third);
+    expect(renderDetails.mock.lastCall![0].item).toBe(items[2]);
+
+    await user.keyboard("{ArrowLeft}");
+    expect(first).toHaveFocus();
+    expect(renderDetails.mock.lastCall![0].item).toBe(items[0]);
+    await user.keyboard("{ArrowRight}");
+    expect(second).toHaveFocus();
+    expect(renderDetails.mock.lastCall![0].item).toBe(items[1]);
+    fireEvent.pointerLeave(third);
+    fireEvent.pointerEnter(first);
+    expect(renderDetails.mock.lastCall![0].item).toBe(items[0]);
+    expect(second).toHaveFocus();
+  });
+
+  it("lets a focused group reclaim inspection from hover on keyboard input", async () => {
+    const renderDetails = vi.fn(
+      (inspection: WaffleChartInspection) =>
+        inspection.item?.label ?? inspection.group?.label,
+    );
+    const { user } = render(
+      <WaffleChart
+        accessibilityLabel="Parcels"
+        items={items}
+        categories={categories}
+        groups={groups}
+        renderDetails={renderDetails}
+      />,
+    );
+    const north = screen.getByRole("button", { name: "North 2" });
+    const south = screen.getByRole("group", { name: "South" });
+    act(() => north.focus());
+    fireEvent.pointerEnter(south);
+    expect(renderDetails.mock.lastCall![0].target).toEqual({
+      type: "group",
+      id: "south",
+    });
+    await user.keyboard("{ArrowLeft}");
+    expect(renderDetails.mock.lastCall![0].target).toEqual({
+      type: "group",
+      id: "north",
+    });
+    fireEvent.pointerLeave(south);
+    fireEvent.pointerEnter(south);
+    expect(renderDetails.mock.lastCall![0].target).toEqual({
+      type: "group",
+      id: "south",
+    });
+    expect(north).toHaveFocus();
+  });
+
+  it.each(["item", "group"] as const)(
+    "keeps a pinned %s authoritative over later focus, keyboard input and hover",
+    async (type) => {
+      const selection = {
+        type,
+        id: type === "item" ? items[0].id : groups[0].id,
+      };
+      const renderDetails = vi.fn(
+        (inspection: WaffleChartInspection) =>
+          inspection.item?.label ?? inspection.group?.label,
+      );
+      const { user } = render(
+        <WaffleChart
+          accessibilityLabel="Parcels"
+          items={items}
+          categories={categories}
+          groups={groups}
+          defaultSelection={selection}
+          renderDetails={renderDetails}
+        />,
+      );
+      act(() => itemButton("Parcel C").focus());
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: selection,
+        pinned: true,
+      });
+      fireEvent.pointerEnter(itemButton("Parcel B"));
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: selection,
+        pinned: true,
+      });
+      await user.keyboard("{ArrowLeft}");
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: selection,
+        pinned: true,
+      });
+    },
+  );
+
   it.each(["{Enter}", " "])(
     "pins with %s and clears selection, inspection and category with Escape",
     async (key) => {
@@ -689,6 +867,76 @@ describe("inspection and selection", () => {
 });
 
 describe("Escape propagation", () => {
+  it.each(["item", "group"] as const)(
+    "restarts dismissed %s inspection on a boundary key without trapping later Escape",
+    (type) => {
+      const onOuterKeyDown = vi.fn();
+      const onFocus = vi.fn();
+      render(
+        <div onKeyDown={onOuterKeyDown}>
+          <WaffleChart
+            accessibilityLabel="Parcels"
+            items={items}
+            categories={categories}
+            groups={groups}
+            onItemFocusChange={type === "item" ? onFocus : undefined}
+            onGroupFocusChange={type === "group" ? onFocus : undefined}
+            renderDetails={({ item, group }) => (
+              <span>Inspection: {item?.label ?? group?.label}</span>
+            )}
+          />
+        </div>,
+      );
+      const target =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("button", { name: "North 2" });
+      const hovered =
+        type === "item"
+          ? itemButton("Parcel B")
+          : screen.getByRole("group", { name: "South" });
+      const record = type === "item" ? items[0] : groups[0];
+      const detail = `Inspection: ${record.label}`;
+      act(() => target.focus());
+      expect(screen.getByText(detail)).toBeVisible();
+      expect(fireEvent.keyDown(target, { key: "Escape" })).toBe(false);
+      expect(screen.queryByText(detail)).toBeNull();
+      expect(
+        screen.getByText("Focus or select a cell or group to inspect it"),
+      ).toBeVisible();
+      expect(target).toHaveFocus();
+      expect(onFocus).toHaveBeenLastCalledWith(null);
+      expect(onOuterKeyDown).not.toHaveBeenCalled();
+      expect(fireEvent.keyDown(target, { key: "Escape" })).toBe(true);
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+      expect(screen.queryByText(detail)).toBeNull();
+
+      fireEvent.pointerEnter(hovered);
+      expect(
+        screen.getByText(
+          `Inspection: ${type === "item" ? items[1].label : groups[1].label}`,
+        ),
+      ).toBeVisible();
+      fireEvent.keyDown(target, { key: "ArrowLeft" });
+      expect(screen.getByText(detail)).toBeVisible();
+      expect(target).toHaveFocus();
+      expect(onFocus.mock.calls.map(([value]) => value)).toEqual([
+        record,
+        null,
+        record,
+      ]);
+
+      onOuterKeyDown.mockClear();
+      expect(fireEvent.keyDown(target, { key: "Escape" })).toBe(false);
+      expect(screen.queryByText(detail)).toBeNull();
+      expect(onOuterKeyDown).not.toHaveBeenCalled();
+      expect(fireEvent.keyDown(target, { key: "Escape" })).toBe(true);
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+      expect(screen.queryByText(detail)).toBeNull();
+      expect(onFocus).toHaveBeenLastCalledWith(null);
+    },
+  );
+
   it.each([{ supplied: [] }, { supplied: items }])(
     "lets Escape bubble with no dismissible state, including empty data",
     ({ supplied }) => {

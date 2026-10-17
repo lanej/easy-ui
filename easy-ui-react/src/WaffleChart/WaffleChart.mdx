@@ -161,7 +161,7 @@ function ControlledPool() {
 }
 ```
 
-`selection` is `null`, `{ type: "item", id }`, or `{ type: "group", id }`. Pass `onSelectionChange` to accept controlled changes, or omit `selection` and use `defaultSelection` for local initial state. A controlled selection without `onSelectionChange` is read-only and does not show Clear selection. Stable IDs preserve selection when items move or reorder; selections absent from the latest supplied data are not rendered. A valid pinned selection takes precedence over transient focus and hover inspection.
+`selection` is `null`, `{ type: "item", id }`, or `{ type: "group", id }`. Pass `onSelectionChange` to accept controlled changes, or omit `selection` and use `defaultSelection` for local initial state. A controlled selection without `onSelectionChange` is read-only and does not show Clear selection. Stable IDs preserve selection when items move or reorder; selections absent from the latest supplied data are not rendered. A valid pinned selection takes precedence over transient focus and hover inspection. When unpinned, the latest pointer hover or keyboard focus interaction leads inspection without moving focus away from its control.
 
 `onItemHoverChange`, `onItemFocusChange`, `onItemActivate`, and their `onGroupHoverChange`, `onGroupFocusChange`, `onGroupActivate` counterparts support linked views. Hover and focus callbacks receive the full supplied record, and `null` when the interaction leaves or is cleared. Activation callbacks receive the activated record; clicking the same selected target again requests a cleared selection. These callbacks do not require querying internal markup.
 
