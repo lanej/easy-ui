@@ -105,6 +105,8 @@ BROWSER_CHANNEL=chrome STORYBOOK_URL=http://localhost:9013 node scripts/check-du
 
 Run its focused tests and `NetworkMap` tests, then build Storybook and run `STORYBOOK_URL=http://localhost:9019 node scripts/check-investigation-workspace.mjs` using the locked `scripts/preview-metrics` Playwright dependencies. `INVESTIGATION_REPORT_DIR` selects its screenshots and report. The harness checks actual map clicks, keyboard selection, location stepping, shared connections, external selection, immutable refreshes, camera retention, related-event filtering, mobile keyboard tabs, disclosure state, initial framing after revealing a hidden map, responsive layouts, large text, and light/dark accessibility. The investigation workflow retains this browser evidence. Examples use a local schematic basemap with synthetic observations.
 
+For map-free timeline/inspector composition, also run `STORYBOOK_URL=http://localhost:9019 node scripts/check-map-free-investigation.mjs`. It uses the same browser dependencies and report directory, checking native timeline keyboard selection, previous/next boundaries, clear, rich-content disclosure, responsive focus, both themes, and wide/narrow accessibility without mounting a map. The investigation workflow runs it and retains screenshots under the report's `map-free/` folder.
+
 ### Standalone chart verification
 
 Run the Chart tests (including `chartCatalog.test.tsx`), package build, and Storybook build. `node scripts/check-chart-package.mjs` checks all chart subpaths in both module formats without eager engine loading; `node scripts/check-style-package.mjs` verifies packed TypeScript consumers.

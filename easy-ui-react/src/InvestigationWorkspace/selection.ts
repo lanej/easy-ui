@@ -31,18 +31,20 @@ export type InvestigationDetailsContext = {
   isAvailable: boolean;
 };
 
+/** Observations plus optional map and candidate records; event-only inspection needs no geometry. */
 export type InvestigationRecords = {
   events: readonly EventTimelineEvent[];
-  locations: readonly MapFacility[];
-  segments: readonly MapSegment[];
-  paths: readonly InvestigationPath[];
+  locations?: readonly MapFacility[];
+  segments?: readonly MapSegment[];
+  paths?: readonly InvestigationPath[];
 };
 
+/** Resolve a controlled selection against the current snapshot without changing it. */
 export function resolveSelection(
   records: InvestigationRecords,
   selection: InvestigationSelection,
 ): InvestigationDetailsContext {
-  const { events, locations, segments, paths } = records;
+  const { events, locations = [], segments = [], paths = [] } = records;
   const path =
     selection?.type === "path"
       ? paths.find((item) => item.id === selection.pathId)
@@ -105,6 +107,7 @@ export function resolveSelection(
   };
 }
 
+/** Request an event selection, retaining an available scope for its member events. */
 export function selectEvent(
   context: InvestigationDetailsContext,
   eventId: string,
