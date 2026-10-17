@@ -1,10 +1,8 @@
-# PR 59 browser evidence
+# PR 59 exact-head browser evidence
 
-Captured by the successful Investigation workspace workflow for source commit ebd2328b6449a8f5676a906b25dd6e9322177487.
+Source commit: 913829fb43cb66f4669b799e65b7212970d87c8f.
 
-Run: https://github.com/lanej/easy-ui/actions/runs/38997272074
-Artifact: https://github.com/lanej/easy-ui/actions/runs/38997272074/artifacts/12087877261
+Successful run: https://github.com/lanej/easy-ui/actions/runs/39000204323
+Artifact: https://github.com/lanej/easy-ui/actions/runs/39000204323/artifacts/12088728106
 
-The map-free suite passed six light/dark, wide/narrow accessibility captures, keyboard selection, previous/next/clear boundaries, rich-content disclosure, no mounted map, and responsive focus checks. No runtime errors or axe violations.
-
-These generated review assets are retained separately from the implementation PR.
+The suite passed light/dark, wide/narrow, keyboard navigation, previous/next/clear, rich-content disclosure, no-map, axe, and responsive-focus checks. Both focused Show and Hide details controls restore focus to the persistent inspector on widening. Zero runtime errors or accessibility violations. The narrow dark capture is byte-identical to the previous capture. These generated assets are retained separately from the implementation PR.
