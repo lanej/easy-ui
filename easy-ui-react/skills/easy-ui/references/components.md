@@ -229,7 +229,8 @@ selection and inspector `chooseEvent(id)` through `selectEvent(context, id)`.
 Inspector `clear()` requests `null`; `renderDetails(context)` supplies rich content.
 Geometry records are optional. The standalone inspector detects its own narrow
 container and keeps content mounted behind Show details; `isNarrow` is an optional
-parent-layout override. Labels accept partial overrides.
+parent-layout override. Widening a focused detail disclosure returns focus to the
+inspector region. Labels accept partial overrides.
 See [map-free composition](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--map-free)
 and [narrow inspector](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--map-free-narrow).
 

@@ -58,6 +58,7 @@ export function InvestigationDetails({
   };
   const root = useRef<HTMLElement>(null);
   const restoreDisclosureFocus = useRef(false);
+  const disclosureFocused = useRef(false);
   const [autoNarrow, setAutoNarrow] = useState(false);
   const isNarrow = narrowOverride ?? autoNarrow;
   useEffect(() => {
@@ -102,6 +103,18 @@ export function InvestigationDetails({
           ?.querySelector<HTMLButtonElement>("button[aria-controls]")
           ?.focus({ preventScroll: true });
     }
+    if (!isNarrow && disclosureFocused.current) {
+      // The focused disclosure was removed during this commit. Keep the
+      // keyboard user's position in the persistent inspector region.
+      const active = document.activeElement;
+      if (
+        active === document.body ||
+        active === document.documentElement ||
+        active === root.current
+      )
+        root.current?.focus({ preventScroll: true });
+      disclosureFocused.current = false;
+    }
     restoreDisclosureFocus.current = false;
   }, [isNarrow]);
   const bodyId = useId();
@@ -142,6 +155,7 @@ export function InvestigationDetails({
   return (
     <section
       ref={root}
+      tabIndex={-1}
       data-narrow={isNarrow}
       className={styles.details}
       aria-label={text.details}
@@ -218,6 +232,12 @@ export function InvestigationDetails({
                 variant="text"
                 aria-expanded={expanded}
                 aria-controls={bodyId}
+                onFocus={() => {
+                  disclosureFocused.current = true;
+                }}
+                onBlur={() => {
+                  disclosureFocused.current = false;
+                }}
                 onPress={() => setExpanded(!expanded)}
               >
                 {expanded ? text.hideDetails : text.showDetails}

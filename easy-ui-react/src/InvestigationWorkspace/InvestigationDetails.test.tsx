@@ -139,10 +139,14 @@ describe("map-free investigation composition", () => {
       fireEvent.click(show);
       expect(screen.getByRole("button", { name: "Rich action" })).toBe(action);
       fireEvent.click(screen.getByRole("button", { name: "Hide details" }));
+      screen.getByRole("button", { name: "Show details" }).focus();
       act(() => {
         width = 900;
         resize();
       });
+      expect(
+        screen.getByRole("region", { name: "Selection details" }),
+      ).toHaveFocus();
       expect(screen.getByRole("button", { name: "Rich action" })).toBe(action);
       expect(
         screen.queryByRole("button", { name: "Show details" }),
@@ -169,6 +173,99 @@ describe("map-free investigation composition", () => {
     screen.getByRole("button", { name: "Controlled action" }).focus();
     rerender(<InvestigationDetails {...props} isNarrow />);
     expect(screen.getByRole("button", { name: "Show details" })).toHaveFocus();
+  });
+
+  it.each([false, true])(
+    "keeps inspector focus when a parent widens a focused disclosure (expanded: %s)",
+    (expanded) => {
+      const props = {
+        context: resolveSelection(
+          { events },
+          { type: "event" as const, eventId: "created" },
+        ),
+        chooseEvent: vi.fn(),
+        clear: vi.fn(),
+        renderDetails: () => <button>Controlled action</button>,
+      };
+      const { rerender } = render(<InvestigationDetails {...props} isNarrow />);
+      const show = screen.getByRole("button", { name: "Show details" });
+      if (expanded) fireEvent.click(show);
+      screen
+        .getByRole("button", {
+          name: expanded ? "Hide details" : "Show details",
+        })
+        .focus();
+      rerender(<InvestigationDetails {...props} isNarrow={false} />);
+      expect(
+        screen.getByRole("region", { name: "Selection details" }),
+      ).toHaveFocus();
+      expect(
+        screen.getByRole("button", { name: "Controlled action" }),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it("does not steal outside focus when widening after leaving the disclosure", () => {
+    const props = {
+      context: resolveSelection(
+        { events },
+        { type: "event" as const, eventId: "created" },
+      ),
+      chooseEvent: vi.fn(),
+      clear: vi.fn(),
+      renderDetails: () => <button>Controlled action</button>,
+    };
+    const { rerender } = render(
+      <>
+        <button>Outside inspector</button>
+        <InvestigationDetails {...props} isNarrow />
+      </>,
+    );
+    screen.getByRole("button", { name: "Show details" }).focus();
+    const outside = screen.getByRole("button", { name: "Outside inspector" });
+    outside.focus();
+    rerender(
+      <>
+        <button>Outside inspector</button>
+        <InvestigationDetails {...props} isNarrow={false} />
+      </>,
+    );
+    expect(outside).toHaveFocus();
+  });
+
+  it("does not restore stale disclosure focus after clearing selection while narrow", () => {
+    const props = {
+      chooseEvent: vi.fn(),
+      clear: vi.fn(),
+      renderDetails: () => <button>Controlled action</button>,
+    };
+    const selected = resolveSelection(
+      { events },
+      { type: "event" as const, eventId: "created" },
+    );
+    const cleared = resolveSelection({ events }, null);
+    const { rerender } = render(
+      <>
+        <button>Outside inspector</button>
+        <InvestigationDetails {...props} context={selected} isNarrow />
+      </>,
+    );
+    screen.getByRole("button", { name: "Show details" }).focus();
+    rerender(
+      <>
+        <button>Outside inspector</button>
+        <InvestigationDetails {...props} context={cleared} isNarrow />
+      </>,
+    );
+    const outside = screen.getByRole("button", { name: "Outside inspector" });
+    outside.focus();
+    rerender(
+      <>
+        <button>Outside inspector</button>
+        <InvestigationDetails {...props} context={cleared} isNarrow={false} />
+      </>,
+    );
+    expect(outside).toHaveFocus();
   });
 
   it("retains missing-selection state and accepts partial labels without geometry", () => {

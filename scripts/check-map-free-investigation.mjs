@@ -172,6 +172,23 @@ try {
     await action.evaluate((node) => node === document.activeElement),
     "Widening retains rich-action focus",
   );
+  for (const expanded of [false, true]) {
+    await page.setViewportSize({ width: 390, height: 1000 });
+    await waitForLayout();
+    const disclosure = inspector().getByRole("button", {
+      name: /^(Show|Hide) details$/,
+    });
+    if ((await disclosure.getAttribute("aria-expanded")) !== String(expanded))
+      await disclosure.click();
+    await disclosure.focus();
+    await page.setViewportSize({ width: 1200, height: 1000 });
+    await waitForLayout();
+    assert(
+      await inspector().evaluate((node) => node === document.activeElement),
+      `Widening restores focused ${expanded ? "Hide" : "Show"} details to inspector`,
+    );
+    assert(await action.isVisible(), "Widening reveals the same rich content");
+  }
   assert.deepEqual(errors, [], "Browser runtime errors");
   await writeFile(
     `${output}/report.json`,
