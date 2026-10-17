@@ -227,6 +227,78 @@ const hoverableDetails = async (page, type, theme, width) => {
   );
   await page.evaluate(() => getSelection()?.removeAllRanges());
 };
+// Enter the legend without ever focusing an inspected origin. Merely owning
+// chart DOM focus must not suppress the callbacks that drive caller-owned edges.
+const legendFirstHover = async (page, width) => {
+  await page.mouse.move(width - 1, 1);
+  const following = page.locator('[data-waffle-target="atlas"]');
+  await following.focus();
+  await page.keyboard.press("Shift+Tab");
+  const legend = page.getByRole("button", {
+    name: "Operations 5",
+    exact: true,
+  });
+  await page.waitForFunction(
+    (element) => element === document.activeElement,
+    await legend.elementHandle(),
+  );
+  await page
+    .getByText("Focus or select a cell or group to inspect it")
+    .waitFor();
+  const detail = page.locator('[aria-live="polite"] strong');
+  for (const { name, label, count, edges } of [
+    {
+      name: "Specialist group 5",
+      label: "Specialist group",
+      count: 5,
+      edges: ["specialist-beacon"],
+    },
+    {
+      name: "Resource 01, Engineering",
+      label: "Resource 01",
+      count: 7,
+      edges: ["shared-atlas", "shared-beacon"],
+    },
+  ]) {
+    await page.getByRole("button", { name, exact: true }).hover();
+    await detail.filter({ hasText: new RegExp(`^${label}$`) }).waitFor();
+    assert.ok(
+      await legend.evaluate((element) => element === document.activeElement),
+      "legend-first pointer inspection preserves keyboard focus",
+    );
+    assert.equal(
+      await page.locator('[data-waffle-item][data-highlighted="true"]').count(),
+      count,
+      "legend-first hover coordinates caller-owned cell emphasis",
+    );
+    assert.deepEqual(
+      await page
+        .locator('[data-waffle-connection][data-highlighted="true"]')
+        .evaluateAll((elements) =>
+          elements.map((element) =>
+            element.getAttribute("data-waffle-connection"),
+          ),
+        ),
+      edges,
+      "legend-first hover coordinates caller-owned edges",
+    );
+  }
+  await page.mouse.move(width - 1, 1);
+  await page
+    .getByText("Focus or select a cell or group to inspect it")
+    .waitFor();
+  assert.equal(
+    await page.locator('[data-waffle-item][data-highlighted="true"]').count(),
+    0,
+  );
+  assert.equal(
+    await page
+      .locator('[data-waffle-connection][data-highlighted="true"]')
+      .count(),
+    0,
+  );
+  await legend.evaluate((element) => element.blur());
+};
 // Exercise actual Tab destinations with no hover or pin, including React-owned
 // portals. A locator.focus() on the destination would hide the original bug.
 const keyboardDetails = async (page, type, theme, width, legend = false) => {
@@ -505,6 +577,7 @@ try {
       await connectionsAligned(page);
       await noOverflow(page);
       await screenshot(page, `groups-${theme}-${width}`);
+      await legendFirstHover(page, width);
       await hoverableDetails(page, "item", theme, width);
       await hoverableDetails(page, "group", theme, width);
       const engineering = page.getByRole("button", {
@@ -896,6 +969,7 @@ try {
           "hoverable-selectable-details",
           "keyboard-only-details-tab-region",
           "legend-intermediate-focus-region",
+          "legend-first-hover-linked-emphasis",
           "owned-select-modal-focus-restoration",
           "responsive-anchors",
           "no-clipping",

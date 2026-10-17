@@ -261,8 +261,12 @@ export function WaffleChart<Metadata = unknown>({
     },
     [],
   );
+  const contentRetainsTarget = () =>
+    contentFocused &&
+    !!focusedTarget &&
+    ownsContentFocus(document.activeElement);
   const hoverGroup = (group: WaffleChartGroup) => {
-    const withinContent = ownsContentFocus(document.activeElement);
+    const retainInspection = contentRetainsTarget();
     // A group/caption is a new pointer target, rather than stale retained item
     // inspection. Use the public group's actual anchor element for lifecycle checks.
     if (hoveredItemElement.current) {
@@ -275,7 +279,7 @@ export function WaffleChart<Metadata = unknown>({
       hoveredGroupElement.current !== element || inspectionSource !== "hover";
     hoveredGroupElement.current = element;
     setHoveredGroup(group.id);
-    if (!withinContent) {
+    if (!retainInspection) {
       setInspectionSource("hover");
       if (changed) onGroupHoverChange?.(group);
     }
@@ -689,7 +693,7 @@ export function WaffleChart<Metadata = unknown>({
           }
           hoveredItemElement.current = event.currentTarget;
           setHoveredItem(item.id);
-          if (!ownsContentFocus(document.activeElement)) {
+          if (!contentRetainsTarget()) {
             setInspectionSource("hover");
             onItemHoverChange?.(item);
           }

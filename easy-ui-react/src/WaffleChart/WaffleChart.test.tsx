@@ -1776,6 +1776,161 @@ describe("combined trigger and details focus", () => {
     },
   );
 
+  it.each(["item", "group"] as const)(
+    "reports initial %s hover and later pointer targets when the legend receives focus before inspection",
+    async (type) => {
+      const onItemHover = vi.fn();
+      const onGroupHover = vi.fn();
+      const onFocus = vi.fn();
+      const onCategorySelection = vi.fn();
+      const onSelection = vi.fn();
+      const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+        <span>
+          Inspection: {inspection.item?.label ?? inspection.group?.label}
+        </span>
+      ));
+      function LinkedHoverChart() {
+        const [hoveredItem, setHoveredItem] = useState<WaffleChartItem | null>(
+          null,
+        );
+        const [hoveredGroup, setHoveredGroup] =
+          useState<WaffleChartGroup | null>(null);
+        return (
+          <>
+            <WaffleChart
+              accessibilityLabel="Legend-first hover"
+              items={items}
+              categories={categories}
+              groups={groups}
+              onCategorySelectionChange={onCategorySelection}
+              onItemFocusChange={onFocus}
+              onGroupFocusChange={onFocus}
+              onSelectionChange={onSelection}
+              onItemHoverChange={(item) => {
+                onItemHover(item);
+                setHoveredItem(item);
+              }}
+              onGroupHoverChange={(group) => {
+                onGroupHover(group);
+                setHoveredGroup(group);
+              }}
+              highlight={{
+                itemIds: hoveredItem ? [hoveredItem.id] : [],
+                groupIds: !hoveredItem && hoveredGroup ? [hoveredGroup.id] : [],
+              }}
+              renderDetails={renderDetails}
+            />
+            <span>
+              Linked hover:{" "}
+              {hoveredItem?.label ?? hoveredGroup?.label ?? "none"}
+            </span>
+            <button type="button">After legend-first hover</button>
+          </>
+        );
+      }
+      const { user, container } = render(<LinkedHoverChart />);
+      const after = screen.getByRole("button", {
+        name: "After legend-first hover",
+      });
+      act(() => after.focus());
+      await user.tab({ shift: true });
+      const working = within(
+        screen.getByRole("group", { name: "Categories" }),
+      ).getByRole("button", { name: "Working 1" });
+      expect(working).toHaveFocus();
+      expect(renderDetails).not.toHaveBeenCalled();
+      expect(onFocus).not.toHaveBeenCalled();
+      expect(onItemHover).not.toHaveBeenCalled();
+      expect(onGroupHover).not.toHaveBeenCalled();
+
+      const movePointer = (from: HTMLElement, to: HTMLElement) => {
+        fireEvent.pointerLeave(from, { relatedTarget: to });
+        fireEvent.pointerEnter(to, { relatedTarget: from });
+      };
+      const expectInspection = (
+        targetType: "item" | "group",
+        record: WaffleChartItem | WaffleChartGroup,
+        group: WaffleChartGroup,
+        highlightedIds: string[],
+      ) => {
+        expect(renderDetails.mock.lastCall![0]).toEqual({
+          target: { type: targetType, id: record.id },
+          item: targetType === "item" ? record : undefined,
+          group,
+          pinned: false,
+          totalCount: items.length,
+        });
+        expect(renderDetails.mock.lastCall![0].group).toBe(group);
+        if (targetType === "item")
+          expect(renderDetails.mock.lastCall![0].item).toBe(record);
+        expect(screen.getByText(`Inspection: ${record.label}`)).toBeVisible();
+        expect(screen.getByText(`Linked hover: ${record.label}`)).toBeVisible();
+        expect(
+          itemCells(container)
+            .filter((cell) => cell.dataset.highlighted === "true")
+            .map((cell) => cell.dataset.waffleItem),
+        ).toEqual(highlightedIds);
+        expect(working).toHaveFocus();
+      };
+      const initial =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("group", { name: "North" });
+      fireEvent.pointerEnter(initial);
+      expectInspection(
+        type,
+        type === "item" ? items[0] : groups[0],
+        groups[0],
+        type === "item" ? [items[0].id] : [items[0].id, items[1].id],
+      );
+      expect(onGroupHover.mock.lastCall![0]).toBe(groups[0]);
+      if (type === "item") expect(onItemHover.mock.lastCall![0]).toBe(items[0]);
+      else expect(onItemHover).not.toHaveBeenCalled();
+
+      const second = itemButton("Parcel B");
+      movePointer(initial, second);
+      expectInspection("item", items[1], groups[0], [items[1].id]);
+      expect(onItemHover.mock.lastCall![0]).toBe(items[1]);
+
+      const south = screen.getByRole("group", { name: "South" });
+      movePointer(second, south);
+      expectInspection("group", groups[1], groups[1], [items[2].id]);
+      expect(onItemHover).toHaveBeenLastCalledWith(null);
+      expect(onGroupHover.mock.lastCall![0]).toBe(groups[1]);
+
+      const third = itemButton("Parcel C");
+      movePointer(south, third);
+      expectInspection("item", items[2], groups[1], [items[2].id]);
+      expect(onItemHover.mock.lastCall![0]).toBe(items[2]);
+      movePointer(third, document.body);
+      fireEvent.pointerLeave(
+        screen.getByRole("group", { name: "Legend-first hover" }),
+        { relatedTarget: document.body },
+      );
+      expect(onItemHover.mock.calls).toEqual(
+        type === "item"
+          ? [[items[0]], [items[1]], [null], [items[2]], [null]]
+          : [[items[1]], [null], [items[2]], [null]],
+      );
+      expect(onGroupHover.mock.calls).toEqual([
+        [groups[0]],
+        [groups[1]],
+        [null],
+      ]);
+      expect(screen.getByText("Linked hover: none")).toBeVisible();
+      expect(
+        itemCells(container).some((cell) => cell.dataset.highlighted),
+      ).toBe(false);
+      expect(
+        screen.getByText("Focus or select a cell or group to inspect it"),
+      ).toBeVisible();
+      expect(working).toHaveFocus();
+      expect(onFocus).not.toHaveBeenCalled();
+      expect(onCategorySelection).not.toHaveBeenCalled();
+      expect(onSelection).not.toHaveBeenCalled();
+    },
+  );
+
   it("defers a new cell hover while legend controls retain inspection, then releases it on chart exit", async () => {
     const onFocus = vi.fn();
     const onHover = vi.fn();
