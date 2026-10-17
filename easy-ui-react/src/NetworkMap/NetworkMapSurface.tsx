@@ -194,7 +194,7 @@ function NetworkMapSurfaceView() {
     // after every setup, while reading current data from the stable ref.
     commands.current = {
       focus: (target) => {
-        insetState.current.close();
+        insetState.current.close("canvas");
         focusView(target);
       },
       fitAll: () => {

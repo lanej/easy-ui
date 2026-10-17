@@ -52,100 +52,235 @@ const membership = async (page, ids) => {
 };
 
 try {
-  for (const theme of ["light", "dark"]) {
-    for (const width of [1200, 390]) {
-      const page = await browser.newPage({
-        viewport: { width, height: 1000 },
-        reducedMotion: "reduce",
-      });
-      page.on("pageerror", (error) => errors.push(error.message));
-      await page.goto(
-        `${base}/iframe.html?id=components-networkmap--primary-route-insets&viewMode=story&globals=colorScheme:${theme}`,
-      );
-      await page.locator('[data-map-state="ready"]').waitFor();
-      await page.evaluate(() => document.fonts.ready);
-      await settledMaps(page, 1);
-      const source = page
-        .locator(
-          '[data-map-facility-id="oak"][data-map-inset-available="origin"]',
-        )
-        .first();
-      await source.waitFor();
-      await source.press("Enter");
-      const inset = page.locator('[data-map-zoom-section="origin"]');
-      await inset.waitFor();
-      await inset.locator('[data-map-state="ready"]').waitFor();
-      await inset.locator('[data-map-facility-id="acceptance"]').waitFor();
-      const retained = await inset.elementHandle();
-      await membership(page, ["oak", "slc", "dtw"]);
-      const insetIds = await inset
-        .locator("[data-map-facility-id]")
-        .evaluateAll((markers) =>
-          markers
-            .map((marker) => marker.getAttribute("data-map-facility-id"))
-            .sort(),
+  for (const placement of ["toolbar", "map"]) {
+    for (const theme of ["light", "dark"]) {
+      for (const width of [1200, 390]) {
+        const prefix = placement === "map" ? "map-" : "";
+        const story =
+          placement === "map"
+            ? "primary-route-insets-map-controls"
+            : "primary-route-insets";
+        const page = await browser.newPage({
+          viewport: { width, height: 1000 },
+          reducedMotion: "reduce",
+        });
+        page.on("pageerror", (error) => errors.push(error.message));
+        await page.goto(
+          `${base}/iframe.html?id=components-networkmap--${story}&viewMode=story&globals=colorScheme:${theme}`,
         );
-      assert.deepEqual(insetIds, ["acceptance", "oak", "origin-sort"]);
-      await settledMaps(page, 2);
-      await page.screenshot({
-        path: resolve(output, `mixed-${theme}-${width}.png`),
-        fullPage: true,
-      });
-      await page.getByLabel("Primary membership").selectOption("second");
-      await membership(page, ["acceptance", "chi", "dst"]);
-      assert.ok(
-        await retained.evaluate((element) => element.isConnected),
-        "membership update retains the open inset",
-      );
-      await page.getByLabel("Primary membership").selectOption("empty");
-      await membership(page, []);
-      await page.getByLabel("Primary membership").selectOption("unset");
-      await membership(page, null);
-      assert.ok(
-        await retained.evaluate((element) => element.isConnected),
-        "clearing membership retains the open inset",
-      );
-      await settledMaps(page, 2);
-      await page.screenshot({
-        path: resolve(output, `cleared-${theme}-${width}.png`),
-        fullPage: true,
-      });
-      const overflow = await page.evaluate(
-        () => document.documentElement.scrollWidth - innerWidth,
-      );
-      assert.ok(overflow <= 1, "story has no page-level horizontal overflow");
-      await inset
-        .getByRole("button", { name: "Close close-up", exact: true })
-        .press("Escape");
-      await inset.waitFor({ state: "detached" });
-      assert.ok(
-        await source.evaluate((element) => element === document.activeElement),
-        "Escape returns focus to the source marker",
-      );
-      await source.press("Enter");
-      await inset.waitFor();
-      await inset.locator('[data-map-state="ready"]').waitFor();
-      await membership(page, null);
-      await inset
-        .getByRole("button", { name: "Close close-up", exact: true })
-        .click();
-      await inset.waitFor({ state: "detached" });
-      results.push({
-        theme,
-        width,
-        insetIds,
-        overflow,
-        checks: [
-          "mixed",
-          "immutable-update",
-          "empty",
-          "clear",
-          "keyboard-dismiss",
-          "reopen-cleared",
-          "pointer-dismiss",
-        ],
-      });
-      await page.close();
+        await page.locator('[data-map-state="ready"]').waitFor();
+        await page.evaluate(() => document.fonts.ready);
+        await settledMaps(page, 1);
+        const source = page
+          .locator(
+            '[data-map-facility-id="oak"][data-map-inset-available="origin"]',
+          )
+          .first();
+        await source.waitFor();
+        const overviewBefore = await source.boundingBox();
+        await source.press("Enter");
+        const inset = page.locator('[data-map-zoom-section="origin"]');
+        await inset.waitFor();
+        await inset.locator('[data-map-state="ready"]').waitFor();
+        await inset.locator('[data-map-facility-id="acceptance"]').waitFor();
+        const retained = await inset.elementHandle();
+        const overview = page.locator(
+          "[data-map-geography] > [data-map-state]",
+        );
+        if (width === 390) {
+          assert.equal(
+            await overview.evaluate(
+              (element) => getComputedStyle(element).visibility,
+            ),
+            "hidden",
+            "narrow overview is hidden from view and keyboard navigation",
+          );
+          assert.ok(
+            await inset
+              .getByText("Back to overview", { exact: true })
+              .isVisible(),
+            "narrow drill-in has a clear return action",
+          );
+          assert.ok(
+            await inset.locator(".maplibregl-map").isVisible(),
+            "narrow close-up keeps its local map",
+          );
+          assert.ok(
+            await inset
+              .locator("[data-map-inset-header]")
+              .evaluate((element) => element.contains(document.activeElement)),
+            "opening moves focus out of hidden overview",
+          );
+          const height = await page
+            .locator("[data-map-geography]")
+            .evaluate((element) => element.getBoundingClientRect().height);
+          assert.ok(
+            height < 400,
+            "narrow drill-in does not reserve the tall overview space",
+          );
+          if (placement === "map") {
+            const controls = await page
+              .locator("[data-map-controls]")
+              .boundingBox();
+            const header = await inset
+              .locator("[data-map-inset-header]")
+              .boundingBox();
+            assert.ok(
+              controls.y + controls.height <= header.y + 1,
+              "map toolbar reflows above narrow drill-in header",
+            );
+          }
+        } else {
+          assert.equal(
+            await overview.evaluate(
+              (element) => getComputedStyle(element).visibility,
+            ),
+            "visible",
+          );
+        }
+        await membership(page, ["oak", "slc", "dtw"]);
+        const insetIds = await inset
+          .locator("[data-map-facility-id]")
+          .evaluateAll((markers) =>
+            markers
+              .map((marker) => marker.getAttribute("data-map-facility-id"))
+              .sort(),
+          );
+        assert.deepEqual(insetIds, ["acceptance", "oak", "origin-sort"]);
+        await settledMaps(page, 2);
+        await page.screenshot({
+          path: resolve(output, `mixed-${prefix}${theme}-${width}.png`),
+          fullPage: true,
+        });
+        await page.getByLabel("Primary membership").selectOption("second");
+        await membership(page, ["acceptance", "chi", "dst"]);
+        assert.ok(
+          await retained.evaluate((element) => element.isConnected),
+          "membership update retains the open inset",
+        );
+        await page.getByLabel("Primary membership").selectOption("empty");
+        await membership(page, []);
+        await page.getByLabel("Primary membership").selectOption("unset");
+        await membership(page, null);
+        assert.ok(
+          await retained.evaluate((element) => element.isConnected),
+          "clearing membership retains the open inset",
+        );
+        await settledMaps(page, 2);
+        await page.screenshot({
+          path: resolve(output, `cleared-${prefix}${theme}-${width}.png`),
+          fullPage: true,
+        });
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth - innerWidth,
+        );
+        assert.ok(overflow <= 1, "story has no page-level horizontal overflow");
+        await inset
+          .getByRole("button", {
+            name: width === 390 ? "Back to overview" : "Close close-up",
+            exact: true,
+          })
+          .press("Escape");
+        await inset.waitFor({ state: "detached" });
+        assert.ok(
+          await source.evaluate(
+            (element) => element === document.activeElement,
+          ),
+          "Escape returns focus to the source marker",
+        );
+        const overviewAfter = await source.boundingBox();
+        assert.ok(
+          Math.abs(overviewBefore.x - overviewAfter.x) < 1 &&
+            Math.abs(overviewBefore.y - overviewAfter.y) < 1,
+          "dismissal restores the original overview camera",
+        );
+        await source.press("Enter");
+        await inset.waitFor();
+        await inset.locator('[data-map-state="ready"]').waitFor();
+        await membership(page, null);
+        await inset
+          .getByRole("button", {
+            name: width === 390 ? "Back to overview" : "Close close-up",
+            exact: true,
+          })
+          .click();
+        await inset.waitFor({ state: "detached" });
+        if (width === 1200 && placement === "toolbar") {
+          await source.press("Enter");
+          await inset.waitFor();
+          await inset.locator('[data-map-state="ready"]').waitFor();
+          const frame = page.locator("[data-map-geography]");
+          await frame.evaluate((element) => {
+            element.style.width = "480px";
+          });
+          await page.waitForFunction(
+            () =>
+              getComputedStyle(
+                document.querySelector(
+                  "[data-map-geography] > [data-map-state]",
+                ),
+              ).visibility === "hidden",
+          );
+          await inset
+            .getByRole("button", { name: "Back to overview", exact: true })
+            .waitFor();
+          await page.screenshot({
+            path: resolve(output, `panel-${theme}-480.png`),
+            fullPage: true,
+          });
+          await frame.evaluate((element) => {
+            element.style.width = "481px";
+          });
+          await page.waitForFunction(
+            () =>
+              getComputedStyle(
+                document.querySelector(
+                  "[data-map-geography] > [data-map-state]",
+                ),
+              ).visibility === "visible",
+          );
+          await inset
+            .getByRole("button", { name: "Close close-up", exact: true })
+            .waitFor();
+          const canvas = overview.locator("canvas");
+          await canvas.focus();
+          await frame.evaluate((element) => {
+            element.style.width = "480px";
+          });
+          await page.waitForFunction(() =>
+            document
+              .querySelector("[data-map-inset-header]")
+              .contains(document.activeElement),
+          );
+          await inset
+            .getByRole("button", { name: "Back to overview", exact: true })
+            .press("Escape");
+          await inset.waitFor({ state: "detached" });
+          assert.ok(
+            await canvas.evaluate(
+              (element) => element === document.activeElement,
+            ),
+            "panel Escape falls back to canvas when resized source is clipped",
+          );
+        }
+        results.push({
+          placement,
+          theme,
+          width,
+          insetIds,
+          overflow,
+          checks: [
+            "mixed",
+            "immutable-update",
+            "empty",
+            "clear",
+            "keyboard-dismiss",
+            "reopen-cleared",
+            "pointer-dismiss",
+          ],
+        });
+        await page.close();
+      }
     }
   }
   assert.deepEqual(errors, [], "no browser runtime errors");

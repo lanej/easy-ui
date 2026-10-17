@@ -44,7 +44,11 @@ export const ParcelJourney: Story = {
 export const ZoomedJourney: Story = {
   render: () => <JourneyZoomExample />,
 };
-function PrimaryRouteInsetsExample() {
+function PrimaryRouteInsetsExample({
+  controlPlacement = "toolbar",
+}: {
+  controlPlacement?: NetworkMapProps["controlPlacement"];
+}) {
   const [route, setRoute] = useState("first");
   const [selected, setSelected] = useState<string>();
   return (
@@ -63,6 +67,7 @@ function PrimaryRouteInsetsExample() {
       </label>
       <NetworkMap
         title="Primary route close-ups"
+        controlPlacement={controlPlacement}
         selectedFacilityId={selected}
         onFacilitySelect={setSelected}
         mapStyle={routeMapStyle}
@@ -89,6 +94,9 @@ function PrimaryRouteInsetsExample() {
 }
 export const PrimaryRouteInsets: Story = {
   render: () => <PrimaryRouteInsetsExample />,
+};
+export const PrimaryRouteInsetsMapControls: Story = {
+  render: () => <PrimaryRouteInsetsExample controlPlacement="map" />,
 };
 export const JourneySizing: Story = {
   render: () => <JourneySizingExample />,

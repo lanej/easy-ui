@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { Map as MapInstance } from "maplibre-gl";
 import { validCoordinate } from "./geometry";
 import type { NetworkMapProps } from "./types";
@@ -109,7 +109,14 @@ export function useMapInsets(options: NetworkMapProps) {
   const map = useRef<MapInstance | null>(null);
   const [active, setActive] = useState<MapInset | null>(null);
   const [dock, setDock] = useState<"top" | "bottom">("bottom");
-  const close = useCallback((returnFocus = false) => {
+  const returnFocusTarget = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (!active && returnFocusTarget.current) {
+      returnFocusTarget.current.focus({ preventScroll: true });
+      returnFocusTarget.current = null;
+    }
+  }, [active]);
+  const close = useCallback((returnFocus: boolean | "canvas" = false) => {
     generation.current++;
     if (!activeRef.current) return;
     const anchor = activeRef.current.anchorId;
@@ -117,15 +124,17 @@ export function useMapInsets(options: NetworkMapProps) {
     activeUnclippedKey.current = undefined;
     setActive(null);
     if (returnFocus && anchor) {
-      const target = available.current.has(anchor)
-        ? ([
-            ...(map.current
-              ?.getContainer()
-              .querySelectorAll<HTMLElement>("[data-map-facility-id]") ?? []),
-          ].find((node) => node.dataset.mapFacilityId === anchor) ??
-          map.current?.getCanvas?.())
-        : map.current?.getCanvas?.();
-      target?.focus({ preventScroll: true });
+      const target =
+        returnFocus !== "canvas" && available.current.has(anchor)
+          ? ([
+              ...(map.current
+                ?.getContainer()
+                .querySelectorAll<HTMLElement>("[data-map-facility-id]") ?? []),
+            ].find((node) => node.dataset.mapFacilityId === anchor) ??
+            map.current?.getCanvas?.())
+          : map.current?.getCanvas?.();
+      // Restore after the narrow overview is visible again.
+      returnFocusTarget.current = target ?? null;
     }
   }, []);
   const update = useCallback(

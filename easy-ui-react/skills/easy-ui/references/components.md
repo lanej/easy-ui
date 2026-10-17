@@ -151,6 +151,9 @@ examples for configuration and missing-data behavior.
 | `DurationDistribution` | Elapsed duration against supplied bins, density, cumulative points, or quantiles                          |
 | `NetworkMap`           | Geographical layers and inspection using MapLibre                                                         |
 
+NetworkMap close-ups use a compact drill-in at container widths up to 480px: Back to overview or Escape restores the unchanged overview. Wider cards retain a floating inset. Only the visible map exposes controls and keyboard targets.
+
+
 Use the unframed `ProportionBar` for part-to-whole meaning.
 `presentation="compact" | "expanded" | "bar"` controls layout; the application
 supplies any surrounding card. Keep zero, missing data, an empty

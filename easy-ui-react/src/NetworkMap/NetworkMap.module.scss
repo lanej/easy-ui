@@ -498,6 +498,8 @@
 
 .mapFrame {
   position: relative;
+  container-name: network-map-frame;
+  container-type: inline-size;
 }
 .geography {
   position: relative;
@@ -556,4 +558,24 @@
 
 .root > .mapFrame:first-child > :not([data-map-controls]) .toolbar {
   padding-block-start: 10px;
+}
+
+// Close-ups become a drill-in inside narrow cards, including desktop sidebars.
+@container network-map (max-width: 480px) {
+  .geography[data-inset-open="true"] > .viewport {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    &,
+    * {
+      visibility: hidden !important;
+    }
+  }
+}
+
+@container network-map-frame (max-width: 480px) {
+  .overMapControls:has(+ .geography[data-inset-open="true"]) {
+    position: static;
+    padding: 8px 12px;
+  }
 }
