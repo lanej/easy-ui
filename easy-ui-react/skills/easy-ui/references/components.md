@@ -149,7 +149,46 @@ examples for configuration and missing-data behavior.
 | `CompactTimeSeries`    | A compact native SVG trend and optional reference                                                         |
 | `RangePlot`            | Named points and an optional interval on a shared scale                                                   |
 | `DurationDistribution` | Elapsed duration against supplied bins, density, cumulative points, or quantiles                          |
+| `WaffleChart`          | One cell per supplied discrete item, passive linked summaries, and inspectable grouped pools             |
 | `NetworkMap`           | Geographical layers and inspection using MapLibre                                                         |
+
+Import `WaffleChart` and its public item, category, group, selection, inspection,
+highlight, and anchor types from `@easypost/easy-ui/WaffleChart`. Supply stable
+item IDs, exact labels, explicit category-to-theme-token colors, and optional
+`item.groupId` membership. Each supplied item appears once; counts are never
+normalized to 100 or percentages. Applications own relationships, allocation,
+and the meaning of missing data. Keep shared resources once in `items` even when
+their group connects to several targets. Unmatched memberships stay visible in
+the neutral `ungroupedLabel` bucket; unlinked items do not establish capacity.
+Unknown categories use a neutral dashed marker and exact unknown-category label.
+
+Use `variant="compact"` inside a row link for a passive grid with an adjacent
+count and visible draft marker. It has no nested controls, legend, or details.
+The default presentation supports group captions, exact-count legends, keyboard
+and touch inspection, and caller-rendered `renderDetails`. Control `selection`
+with `onSelectionChange`; `defaultSelection` initializes local state. Item/group
+hover, focus, and activation callbacks coordinate related views. Arrow keys and
+Home/End move cell focus, Enter/Space or a tap pins inspection, and Escape clears
+it. Supply controlled `selectedCategoryId` / `onCategorySelectionChange` or
+`highlight` item/group/category IDs to emphasize related records without filtering
+the pool or changing totals. Draft, muted, and selected states remain distinct.
+
+Use `onGroupAnchorsChange` for a caller-owned connection layer. Each explicit
+group supplies a stable `groupId`, supported endpoint `element`, and viewport
+CSS-pixel `bounds`; one anchor can feed several edges. Convert to your overlay's
+coordinate system. Measurements update after data changes, resize, wrapping,
+and scroll, and cleanup supplies `[]`. Change `layoutRevision` for external layout
+moves that do not resize the chart. Compact mode does not expose group anchors.
+Use `maxColumns`, `cellSize`, and `gap` for responsive embedding; interactive cells
+retain at least a 24px pointer target. Inspect Light and Dark with the theme toolbar.
+See [smallest input and API](https://lanej.io/easy-ui/storybook/?path=/docs/components-wafflechart--docs),
+[passive linked summaries](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--compact-linked-summary),
+[shared group connections](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--linked-groups),
+[controlled inspection](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--controlled-inspection),
+[unknown and empty data](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--unknown-and-empty),
+[Dark theme](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--dark),
+[narrow layouts](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--narrow-layout),
+and [arbitrary item counts](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--many-items).
 
 NetworkMap close-ups use a compact drill-in at container widths up to 480px: Back to overview or Escape restores the unchanged overview. Wider cards retain a floating inset. Only the visible map exposes controls and keyboard targets.
 

@@ -1,0 +1,125 @@
+@use "../styles/common" as *;
+
+.example {
+  max-inline-size: 820px;
+  min-inline-size: 0;
+  color: design-token("color.neutral.900");
+  font-size: 14px;
+}
+
+.heading {
+  margin: 0 0 6px;
+  font-size: 17px;
+}
+
+.intro {
+  margin: 0 0 24px;
+  max-inline-size: 65ch;
+  color: design-token("color.neutral.600");
+  line-height: 1.6;
+}
+
+.composition {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  align-items: start;
+  gap: 54px;
+}
+
+.connections {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.connections path {
+  fill: none;
+  stroke: design-token("color.neutral.400");
+  stroke-width: 1.5;
+}
+
+.connections path[data-highlighted="true"] {
+  stroke: design-token("color.primary.600");
+  stroke-width: 3;
+}
+
+.connections path[data-muted="true"] {
+  opacity: 0.25;
+}
+
+.pool,
+.targets {
+  position: relative;
+  min-inline-size: 0;
+}
+
+.pool {
+  padding: 12px;
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 8px;
+  // Keep the caller-owned connection layer visible up to each group endpoint.
+  background: transparent;
+}
+
+.targets {
+  display: grid;
+  gap: 56px;
+  padding-block: 36px;
+}
+
+.target {
+  display: grid;
+  gap: 5px;
+  inline-size: 100%;
+  padding: 16px;
+  border: 1px solid design-token("color.neutral.300");
+  border-radius: 6px;
+  color: inherit;
+  background: design-token("color.neutral.000");
+  font: inherit;
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.target[aria-pressed="true"] {
+  border-color: design-token("color.primary.600");
+}
+
+.small {
+  color: design-token("color.neutral.600");
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-end: 18px;
+}
+
+.actions button {
+  padding: 6px 10px;
+  min-block-size: 32px;
+  border: 1px solid design-token("color.neutral.300");
+  border-radius: 4px;
+  background: design-token("color.neutral.000");
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.actions button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.target:focus-visible,
+.actions button:focus-visible {
+  outline: 2px solid design-token("color.primary.600");
+  outline-offset: 3px;
+}

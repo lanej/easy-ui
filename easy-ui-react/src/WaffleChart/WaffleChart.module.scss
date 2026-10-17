@@ -1,0 +1,311 @@
+@use "../styles/common" as *;
+
+.root {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  color: design-token("color.neutral.900");
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.total {
+  margin-block-end: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.groups {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 20px 28px;
+}
+
+.group {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  border-radius: 6px;
+  outline: 2px solid transparent;
+  outline-offset: 5px;
+}
+
+.group[data-highlighted="true"] {
+  outline-color: design-token("color.primary.400");
+}
+
+.group[data-selected="true"] {
+  outline-color: design-token("color.neutral.800");
+  outline-style: double;
+}
+
+.caption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-block-end: 8px;
+  overflow-wrap: anywhere;
+}
+
+.groupButton,
+.clear {
+  appearance: none;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.groupButton {
+  padding: 2px 0;
+  min-block-size: 24px;
+  font-weight: 600;
+}
+
+.description,
+.hint,
+.draftLabel {
+  color: design-token("color.neutral.600");
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, var(--waffle-track-size)), var(--waffle-track-size))
+  );
+  gap: var(--waffle-gap);
+  inline-size: var(--waffle-grid-width);
+  max-inline-size: 100%;
+}
+
+.cell {
+  --ezui-c-waffle-color: #{design-token("color.neutral.500")};
+  appearance: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 3px;
+  padding: 0;
+  min-inline-size: 0;
+  inline-size: 100%;
+  block-size: var(--waffle-track-size);
+  background: transparent;
+  color: design-token("color.neutral.900");
+  font: inherit;
+}
+
+button.cell {
+  cursor: pointer;
+}
+
+.marker {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  inline-size: min(100%, var(--waffle-cell-size));
+  block-size: var(--waffle-cell-size);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: var(--ezui-c-waffle-color);
+}
+
+.cell[data-muted="true"] .marker {
+  opacity: 0.3;
+}
+
+.cell[data-highlighted="true"] .marker {
+  outline: 1px solid design-token("color.neutral.900");
+  outline-offset: 2px;
+}
+
+.cell[data-unknown="true"] .marker {
+  border: 1px dashed design-token("color.neutral.900");
+}
+
+.cell[data-selected="true"] .marker {
+  outline: 2px solid design-token("color.neutral.900");
+  outline-offset: 2px;
+}
+
+.draft,
+.selectedMark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: design-token("color.neutral.900");
+  background: design-token("color.neutral.000");
+  font-size: min(14px, var(--waffle-cell-size));
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+}
+
+.draft {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    #{design-token("color.neutral.000")} 3px,
+    #{design-token("color.neutral.000")} 5px
+  );
+}
+
+.selectedMark {
+  inset: auto -3px -3px auto;
+  inline-size: 12px;
+  block-size: 12px;
+  font-size: 9px;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.caption .count {
+  margin-inline-start: 6px;
+  color: design-token("color.neutral.600");
+  font-weight: 400;
+}
+
+.root > .draftLabel {
+  margin-block-start: 10px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-block-start: 16px;
+}
+
+.legendEntry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 3px 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+button.legendEntry {
+  min-block-size: 28px;
+  cursor: pointer;
+}
+
+.legendEntry[aria-pressed="true"] {
+  border-color: design-token("color.neutral.700");
+  background: design-token("color.neutral.100");
+  text-decoration: underline;
+}
+
+.swatch {
+  --ezui-c-waffle-color: #{design-token("color.neutral.500")};
+  inline-size: 10px;
+  block-size: 10px;
+  flex: none;
+  border: 1px solid design-token("color.neutral.400");
+  border-radius: 2px;
+  background: var(--ezui-c-waffle-color);
+}
+
+.details {
+  margin-block-start: 16px;
+  padding-block-start: 10px;
+  border-block-start: 1px solid design-token("color.neutral.200");
+  min-block-size: 48px;
+  overflow-wrap: anywhere;
+}
+
+.detailsHeading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-block-end: 3px;
+  color: design-token("color.neutral.600");
+  font-size: 12px;
+}
+
+.clear {
+  padding: 2px;
+  min-block-size: 24px;
+  color: design-token("color.primary.700");
+  text-decoration: underline;
+}
+
+.cell:focus-visible,
+.groupButton:focus-visible,
+.legendEntry:focus-visible,
+.clear:focus-visible {
+  outline: 2px solid design-token("color.primary.600");
+  outline-offset: 3px;
+}
+
+.empty {
+  margin: 0;
+  color: design-token("color.neutral.600");
+}
+
+.srOnly {
+  @include visually-hidden;
+}
+
+.root[data-variant="compact"] {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  vertical-align: middle;
+  font-size: 12px;
+}
+
+.root[data-variant="compact"] .grid {
+  flex: 0 1 auto;
+}
+
+.root[data-variant="compact"] .draftLabel {
+  margin: 0;
+  font-size: 11px;
+}
+
+@media (forced-colors: active) {
+  .marker,
+  .swatch {
+    border: 1px solid CanvasText;
+    background: CanvasText;
+  }
+  .draft,
+  .selectedMark {
+    forced-color-adjust: none;
+    color: CanvasText;
+    background: Canvas;
+  }
+  .cell:focus-visible,
+  .groupButton:focus-visible,
+  .legendEntry:focus-visible,
+  .clear:focus-visible {
+    outline-color: Highlight;
+  }
+  .cell[data-selected="true"] .marker,
+  .cell[data-highlighted="true"] .marker,
+  .group[data-highlighted="true"],
+  .group[data-selected="true"] {
+    outline-color: Highlight;
+  }
+}

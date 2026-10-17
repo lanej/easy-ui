@@ -1,0 +1,204 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import { WaffleChart } from "./WaffleChart";
+import * as Stories from "./WaffleChart.stories";
+
+<Meta of={Stories} />
+
+# WaffleChart
+
+One cell per supplied item, with compact linked summaries, grouped pools, and accessible inspection. Native HTML/CSS; no chart engine. Import from `@easypost/easy-ui/WaffleChart`.
+
+Applications supply the items, category mappings, group membership, relationships, and the meaning of the data. Counts are exact: 7 items produce 7 cells, and 137 items produce 137 cells. The chart does not normalize to 100 cells, calculate percentages, or infer allocation or available capacity.
+
+## Usage
+
+The smallest useful input is an accessible name, one item, and its category:
+
+```tsx
+import { WaffleChart } from "@easypost/easy-ui/WaffleChart";
+
+<WaffleChart
+  accessibilityLabel="Example resource pool"
+  items={[{ id: "resource-1", label: "Resource 1", categoryId: "design" }]}
+  categories={[{ id: "design", label: "Design", color: "primary.500" }]}
+/>;
+```
+
+Use stable, unique item IDs across reordering and updates. Category and group IDs must also be unique within their collections. Labels are caller-supplied exact text; `metadata` carries caller-owned details without changing the item's identity or count. Category colors are explicit Easy UI theme-token aliases, independent of category array order.
+
+<Canvas of={Stories.Default} />
+
+## Props
+
+<ArgTypes of={WaffleChart} />
+
+The public entry also exports `WaffleChartProps`, `WaffleChartItem`, `WaffleChartCategory`, `WaffleChartGroup`, `WaffleChartSelection`, `WaffleChartHighlight`, `WaffleChartInspection`, and `WaffleChartGroupAnchor`. Item, props, and inspection types accept a metadata type parameter.
+
+- `variant="default"` supports grouped captions, a legend, and inspection. `variant="compact"` is always passive and omits captions, legend, details, and controls. `interaction="none"` makes the default presentation passive too.
+- `maxColumns` is an upper column limit, not a fixed width. `cellSize` and `gap` are CSS pixels. Defaults are 12 columns, 20px cells, and 6px gaps; compact defaults to 8px cells and 3px gaps. Interactive cells retain at least a 24px pointer target, independently of the visual cell size.
+- `showCount` and `showLegend` default to `true`. `countLabel(count)` formats the exact total for the default presentation and accessible compact summary; the compact adjacent count remains numeric. `emptyMessage` defaults to "No items supplied"; `ungroupedLabel` defaults to "Other items".
+
+## Examples
+
+### Passive summary inside a link
+
+```tsx
+<a href="/priorities/example">
+  Example priority
+  <WaffleChart
+    variant="compact"
+    accessibilityLabel="Priority resources"
+    items={[
+      { id: "designer-1", label: "Designer 1", categoryId: "design" },
+      {
+        id: "engineer-1",
+        label: "Engineer 1",
+        categoryId: "engineering",
+        draft: true,
+      },
+    ]}
+    categories={[
+      { id: "design", label: "Design", color: "primary.500" },
+      { id: "engineering", label: "Engineering", color: "neutral.600" },
+    ]}
+  />
+</a>
+```
+
+The entire row remains one link. Compact cells create no nested buttons or focus stops, even if inspection callbacks are supplied. The adjacent exact count and `/ Draft` count stay visible, while the accessible summary includes every item label, category, and supplied draft or muted state. Draft cells also have a patterned slash marker, so draft status does not depend on color.
+
+<Canvas of={Stories.CompactLinkedSummary} />
+
+### Group membership and shared relationships
+
+```tsx
+import type {
+  WaffleChartCategory,
+  WaffleChartGroup,
+  WaffleChartItem,
+} from "@easypost/easy-ui/WaffleChart";
+
+const categories: WaffleChartCategory[] = [
+  { id: "design", label: "Design", color: "primary.500" },
+  { id: "engineering", label: "Engineering", color: "neutral.600" },
+];
+const groups: WaffleChartGroup[] = [
+  {
+    id: "shared",
+    label: "Shared team",
+    description: "Linked to two priorities",
+  },
+  { id: "unlinked", label: "Unlinked team" },
+];
+const items: WaffleChartItem[] = [
+  {
+    id: "design-1",
+    label: "Designer 1",
+    categoryId: "design",
+    groupId: "shared",
+  },
+  {
+    id: "engineer-1",
+    label: "Engineer 1",
+    categoryId: "engineering",
+    groupId: "shared",
+  },
+  {
+    id: "engineer-2",
+    label: "Engineer 2",
+    categoryId: "engineering",
+    groupId: "unlinked",
+  },
+];
+
+<WaffleChart
+  accessibilityLabel="Grouped resource pool"
+  items={items}
+  categories={categories}
+  groups={groups}
+/>;
+```
+
+`item.groupId` assigns each item to at most one supplied group. Put the shared team's two outgoing relationships in a caller-owned connection layer; keep each resource once in `items`. The example therefore has three cells in the whole pool, regardless of how many targets a group connects to. Group order follows `groups`, and item order within each group follows `items`.
+
+Items with no group or an unmatched `groupId` stay visible in the neutral `ungroupedLabel` bucket. An unlinked group is simply a group with no supplied relationship. Neither state establishes availability, spare capacity, or an error. Supplied empty groups retain their caption and zero count.
+
+<Canvas of={Stories.LinkedGroups} />
+
+### Controlled selection, details, and category emphasis
+
+Using the synthetic `items`, `categories`, and `groups` above:
+
+```tsx
+import { useState } from "react";
+import type { WaffleChartSelection } from "@easypost/easy-ui/WaffleChart";
+
+function ControlledPool() {
+  const [selection, setSelection] = useState<WaffleChartSelection>(null);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+
+  return (
+    <WaffleChart
+      accessibilityLabel="Inspectable resource pool"
+      items={items}
+      categories={categories}
+      groups={groups}
+      selection={selection}
+      onSelectionChange={setSelection}
+      selectedCategoryId={categoryId}
+      onCategorySelectionChange={setCategoryId}
+      renderDetails={({ item, group, pinned, totalCount }) => (
+        <div>
+          {pinned ? "Pinned" : "Preview"}: {item?.label ?? group?.label}
+          {item?.draft && " · Draft"}
+          {" · "}
+          {totalCount} items in the pool
+        </div>
+      )}
+    />
+  );
+}
+```
+
+`selection` is `null`, `{ type: "item", id }`, or `{ type: "group", id }`. Pass `onSelectionChange` to accept controlled changes, or omit `selection` and use `defaultSelection` for local initial state. Stable IDs preserve selection when items move or reorder; selections absent from the latest supplied data are not rendered. A valid pinned selection takes precedence over transient focus and hover inspection.
+
+`onItemHoverChange`, `onItemFocusChange`, `onItemActivate`, and their `onGroupHoverChange`, `onGroupFocusChange`, `onGroupActivate` counterparts support linked views. Hover and focus callbacks receive the full supplied record, and `null` when the interaction leaves or is cleared. Activation callbacks receive the activated record; clicking the same selected target again requests a cleared selection. These callbacks do not require querying internal markup.
+
+`renderDetails` receives the target, optional item and group, pinned state, and unchanged `totalCount`. Use it for caller-owned metadata, labels, and evidence. Exact inspection is visible in the chart's live detail region, rather than hidden in native `title` tooltips.
+
+The legend always shows exact category counts. With `onCategorySelectionChange`, its entries become buttons that request a category ID or `null`; the caller supplies the result as `selectedCategoryId`. This emphasizes matching cells and dims the rest without removing cells or changing totals. `highlight` can additionally supply `itemIds`, `groupIds`, and `categoryIds` together to coordinate cells, group boundaries, and caller-owned edges. Highlight, selection, `draft`, and `muted` are independent supplied states.
+
+<Canvas of={Stories.ControlledInspection} />
+
+### Keyboard, pointer, and touch inspection
+
+Tab reaches group caption buttons and the current cell in the roving cell tab stop. Arrow Left/Right move between cells in displayed order; Arrow Up/Down use the current layout to move between visual rows after wrapping. Home/End move to the first/last cell. Focus has a visible indicator and exposes the same exact details as pointer hover.
+
+Enter, Space, a click, or a touch tap pins an item or group. A repeated activation unpins it; Clear selection or Escape dismisses pinned and transient inspection. Escape also requests that a controlled category highlight be cleared. Controlled callbacks must update the corresponding props for those requests to take effect. Touch inspection does not depend on hover. Clearing from the detail control returns keyboard focus to the selected cell or group caption. Data removal or moving a cell between groups clears transient inspection when its focused or hovered element is replaced; it does not resurrect stale inspection if that ID returns.
+
+### Supported anchors for a connection layer
+
+`onGroupAnchorsChange` supplies an array of `{ groupId, element, bounds }` for explicit groups in the default presentation. Join `groupId` to your own relationships; the same anchor can be the source of several edges. `element` is a supported public endpoint, and `bounds` contains `left`, `top`, `right`, `bottom`, `width`, and `height` in viewport CSS pixels. Consumers never need private class names or DOM selectors.
+
+Use bounds directly in a fixed viewport-aligned connection layer. For an overlay in another coordinate system, convert the bounds to that layer's coordinates, accounting for its viewport origin, scrolling, and any scale. For example, an unscaled SVG whose coordinate origin matches its viewport rectangle uses `bounds.left - svgRect.left` and `bounds.top - svgRect.top`.
+
+Anchors are measured after mount and data changes, and update after resize, responsive wrapping, and scrolling when their geometry changes. The callback receives `[]` during cleanup so obsolete connectors can be removed. Use a stable callback such as a state setter; compact summaries do not expose group anchors. Change `layoutRevision` when caller-owned layout moves the chart without resizing it, such as opening an adjacent panel or changing an ancestor's position. This requests fresh viewport bounds.
+
+The linked-groups story draws caller-owned connections from one shared group to two targets and highlights related cells, group, and edges together. Resize the story and scroll its page to check endpoint alignment.
+
+### Unknown, empty, and responsive states
+
+Unknown category IDs retain their cells and exact counts, use a neutral dashed marker, and show `Unknown category: <id>` in the legend and accessible item label. A missing mapping is never assigned the next category's color. Empty `items` show `emptyMessage` and an exact zero total; empty data does not imply an available pool. Applications should distinguish loading and failed queries in their surrounding UI instead of supplying an unexplained successful empty state.
+
+<Canvas of={Stories.UnknownAndEmpty} />
+
+Grids and group captions reflow within their container, keeping all supplied items visible. Choose the upper column limit and cell size for the embedding context. Use the Storybook theme toolbar to inspect the same synthetic examples in Light and Dark; category mappings, exact labels, patterned drafts, selected indicators, and visible focus remain meaningful in both.
+
+<Canvas of={Stories.Dark} />
+
+<Canvas of={Stories.NarrowLayout} />
+
+Large pools keep one cell per item and the exact total without normalization or silent truncation:
+
+<Canvas of={Stories.ManyItems} />
