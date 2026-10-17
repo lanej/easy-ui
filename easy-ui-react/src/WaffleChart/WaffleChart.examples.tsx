@@ -9,6 +9,7 @@ import {
 import type { ExampleMetadata } from "./WaffleChart.fixtures";
 import type { WaffleChartGroupAnchor, WaffleChartSelection } from "./types";
 import styles from "./WaffleChart.examples.module.scss";
+import { routeExampleConnection } from "./exampleRouting";
 
 const relationships = [
   { id: "shared-atlas", groupId: "shared", targetId: "atlas" },
@@ -31,6 +32,7 @@ const targets = [
 /** Caller-owned relationships and SVG layer; only the public anchors locate groups. */
 export function LinkedWaffleGroups() {
   const frame = useRef<HTMLDivElement>(null);
+  const pool = useRef<HTMLDivElement>(null);
   const targetElements = useRef(new Map<string, HTMLButtonElement>());
   const [anchors, setAnchors] = useState<readonly WaffleChartGroupAnchor[]>([]);
   const [paths, setPaths] = useState<
@@ -62,10 +64,12 @@ export function LinkedWaffleGroups() {
   );
   useEffect(() => {
     const container = frame.current;
-    if (!container) return;
+    if (!container || !pool.current) return;
     const measure = () => {
+      if (!pool.current) return;
       const parent = container.getBoundingClientRect();
-      const next = relationships.flatMap((relationship) => {
+      const poolBounds = pool.current.getBoundingClientRect();
+      const next = relationships.flatMap((relationship, lane) => {
         const anchor = anchors.find(
           (entry) => entry.groupId === relationship.groupId,
         );
@@ -74,21 +78,23 @@ export function LinkedWaffleGroups() {
         // Re-read the supported public element for caller-owned target/layout changes.
         const source = anchor.element.getBoundingClientRect();
         const destination = target.getBoundingClientRect();
-        const below = destination.left < source.right;
-        const x1 =
-          (below ? source.left + source.width / 2 : source.right) - parent.left;
-        const y1 =
-          (below ? source.bottom : source.top + source.height / 2) - parent.top;
-        const x2 =
-          (below
-            ? destination.left + destination.width / 2
-            : destination.left) - parent.left;
-        const y2 =
-          (below ? destination.top : destination.top + destination.height / 2) -
-          parent.top;
-        const path = below
-          ? `M ${x1} ${y1} C ${x1} ${y1 + 22}, ${x2} ${y2 - 22}, ${x2} ${y2}`
-          : `M ${x1} ${y1} C ${x1 + 30} ${y1}, ${x2 - 30} ${y2}, ${x2} ${y2}`;
+        const outgoing = relationships.filter(
+          (edge) => edge.groupId === relationship.groupId,
+        );
+        const incoming = relationships.filter(
+          (edge) => edge.targetId === relationship.targetId,
+        );
+        const { path } = routeExampleConnection({
+          source,
+          destination,
+          pool: poolBounds,
+          frame: parent,
+          lane,
+          sourcePort: outgoing.findIndex((edge) => edge.id === relationship.id),
+          sourcePortCount: outgoing.length,
+          targetPort: incoming.findIndex((edge) => edge.id === relationship.id),
+          targetPortCount: incoming.length,
+        });
         return [{ ...relationship, path }];
       });
       setPaths((previous) =>
@@ -98,6 +104,7 @@ export function LinkedWaffleGroups() {
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(container);
+    observer.observe(pool.current);
     for (const target of targetElements.current.values())
       observer.observe(target);
     window.addEventListener("resize", measure);
@@ -133,7 +140,7 @@ export function LinkedWaffleGroups() {
             />
           ))}
         </svg>
-        <div className={styles.pool}>
+        <div className={styles.pool} ref={pool} data-waffle-pool>
           <WaffleChart<ExampleMetadata>
             accessibilityLabel="Synthetic resource pool"
             items={groupedWaffleItems}

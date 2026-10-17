@@ -1,6 +1,7 @@
 @use "../styles/common" as *;
 
 .example {
+  container-type: inline-size;
   max-inline-size: 820px;
   min-inline-size: 0;
   color: design-token("color.neutral.900");
@@ -22,7 +23,7 @@
 .composition {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
   align-items: start;
   gap: 54px;
 }
@@ -40,6 +41,8 @@
   fill: none;
   stroke: design-token("color.neutral.400");
   stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }
 
 .connections path[data-highlighted="true"] {
@@ -58,6 +61,9 @@
 }
 
 .pool {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: 280px;
   padding: 12px;
   border: 1px solid design-token("color.neutral.200");
   border-radius: 8px;
@@ -122,4 +128,21 @@
 .actions button:focus-visible {
   outline: 2px solid design-token("color.primary.600");
   outline-offset: 3px;
+}
+
+// Stack the content while keeping all three connection lanes outside both the
+// chart and target cards. The capped pool keeps the supplied groups on separate rows.
+@container (max-width: 613px) {
+  .composition {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline-end: 32px;
+    gap: 24px;
+  }
+
+  .targets {
+    inline-size: 100%;
+    max-inline-size: 280px;
+    gap: 24px;
+    padding-block: 0;
+  }
 }

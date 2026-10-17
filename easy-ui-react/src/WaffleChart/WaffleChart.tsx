@@ -150,6 +150,11 @@ export function WaffleChart<Metadata = unknown>({
   const selection = validTarget(
     controlledSelection === undefined ? localSelection : controlledSelection,
   );
+  const selectedAnnouncement = selection
+    ? selection.type === "item"
+      ? `Selected item: ${itemMap.get(selection.id)!.label}`
+      : `Selected group: ${groupMap.get(selection.id)!.label}`
+    : "";
   const transient =
     validTarget(focused) ??
     (hoveredItem && itemMap.has(hoveredItem)
@@ -157,6 +162,11 @@ export function WaffleChart<Metadata = unknown>({
       : hoveredGroup && groupMap.has(hoveredGroup)
         ? { type: "group" as const, id: hoveredGroup }
         : null);
+  const canDismissInspection =
+    (!selection && !!transient) ||
+    (!!selection &&
+      (controlledSelection === undefined || !!onSelectionChange)) ||
+    (selectedCategoryId !== null && !!onCategorySelectionChange);
   const target = interactive ? (selection ?? transient) : null;
   const inspection: WaffleChartInspection<Metadata> | null = target
     ? {
@@ -358,7 +368,11 @@ export function WaffleChart<Metadata = unknown>({
           key={item.id}
           aria-hidden={compact || undefined}
           role={compact ? undefined : "img"}
-          aria-label={compact ? undefined : itemLabel(item)}
+          aria-label={
+            compact
+              ? undefined
+              : `${itemLabel(item)}${selected ? ", Selected" : ""}`
+          }
         >
           {content}
         </span>
@@ -411,7 +425,7 @@ export function WaffleChart<Metadata = unknown>({
         data-variant="compact"
         style={style}
         role="img"
-        aria-label={`${accessibilityLabel}: ${countLabel(items.length)}${items.length ? `. ${items.map(itemLabel).join("; ")}` : `. ${emptyMessage}`}`}
+        aria-label={`${accessibilityLabel}: ${countLabel(items.length)}${selectedAnnouncement ? `. ${selectedAnnouncement}` : ""}${items.length ? `. ${items.map(itemLabel).join("; ")}` : `. ${emptyMessage}`}`}
       >
         <span className={styles.grid} style={gridStyle(items.length)}>
           {items.map((item) => cell(item, true))}
@@ -437,7 +451,12 @@ export function WaffleChart<Metadata = unknown>({
       role="group"
       aria-label={accessibilityLabel}
       onKeyDown={(event) => {
-        if (interactive && event.key === "Escape") {
+        if (
+          interactive &&
+          event.key === "Escape" &&
+          !event.defaultPrevented &&
+          canDismissInspection
+        ) {
           event.preventDefault();
           event.stopPropagation();
           clear(!!details.current?.contains(event.target as Node));
@@ -469,7 +488,11 @@ export function WaffleChart<Metadata = unknown>({
             }
             role="group"
             aria-label={
-              group?.label ?? (groups.length ? ungroupedLabel : undefined)
+              group
+                ? `${group.label}${!interactive && selection?.type === "group" && selection.id === group.id ? ", Selected group" : ""}`
+                : groups.length
+                  ? ungroupedLabel
+                  : undefined
             }
             data-waffle-group={group?.id}
             data-highlighted={

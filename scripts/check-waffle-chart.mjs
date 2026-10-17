@@ -28,8 +28,19 @@ const visit = async (page, story, theme) => {
   await page.locator("[data-waffle-item]").first().waitFor();
   await page.evaluate(() => document.fonts.ready);
 };
-const screenshot = (page, name) =>
-  page.screenshot({ path: resolve(output, `${name}.png`), fullPage: true });
+const screenshot = async (page, name) => {
+  if (
+    name !== "failure" &&
+    (await page.locator('[data-waffle-example="connections"]').count())
+  ) {
+    await connectionsAligned(page);
+    await connectionsAvoidContent(page);
+  }
+  return page.screenshot({
+    path: resolve(output, `${name}.png`),
+    fullPage: true,
+  });
+};
 const noOverflow = async (page) => {
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - innerWidth,
@@ -61,7 +72,11 @@ const connectionsAligned = (page) =>
       ["shared-beacon", "shared", "beacon"],
       ["specialist-beacon", "specialist", "beacon"],
     ];
-    return relationships.every(([id, groupId, targetId]) => {
+    const pool = frame
+      .querySelector("[data-waffle-pool]")
+      ?.getBoundingClientRect();
+    if (!pool) return false;
+    return relationships.every(([id, groupId, targetId], lane) => {
       const edge = frame.querySelector(`[data-waffle-connection="${id}"]`);
       const group = frame.querySelector(`[data-waffle-group="${groupId}"]`);
       const target = frame.querySelector(`[data-waffle-target="${targetId}"]`);
@@ -73,20 +88,100 @@ const connectionsAligned = (page) =>
       if (!values || values.length !== 8) return false;
       const source = group.getBoundingClientRect();
       const destination = target.getBoundingClientRect();
-      const below = destination.left < source.right;
+      const stacked = destination.left < pool.right;
+      const outgoing = relationships.filter((entry) => entry[1] === groupId);
+      const incoming = relationships.filter((entry) => entry[2] === targetId);
+      const sourceY =
+        source.top +
+        source.height / 2 +
+        (outgoing.findIndex((entry) => entry[0] === id) -
+          (outgoing.length - 1) / 2) *
+          10 -
+        parent.top;
+      const targetY =
+        destination.top +
+        destination.height / 2 +
+        (incoming.findIndex((entry) => entry[0] === id) -
+          (incoming.length - 1) / 2) *
+          10 -
+        parent.top;
+      const laneX = pool.right + 8 + lane * 8 - parent.left;
       const expected = [
-        (below ? source.left + source.width / 2 : source.right) - parent.left,
-        (below ? source.bottom : source.top + source.height / 2) - parent.top,
-        (below ? destination.left + destination.width / 2 : destination.left) -
-          parent.left,
-        (below ? destination.top : destination.top + destination.height / 2) -
-          parent.top,
+        source.right - parent.left,
+        sourceY,
+        laneX,
+        sourceY,
+        laneX,
+        targetY,
+        (stacked ? destination.right : destination.left) - parent.left,
+        targetY,
       ];
-      return [values[0], values[1], values[6], values[7]].every(
+      return values.every(
         (value, index) => Math.abs(value - expected[index]) < 1,
       );
     });
   });
+
+const connectionsAvoidContent = async (page) => {
+  const violations = await page.evaluate(() => {
+    const frame = document.querySelector('[data-waffle-example="connections"]');
+    const parent = frame.getBoundingClientRect();
+    const obstacles = [
+      ...frame.querySelectorAll(
+        '[data-waffle-group], [data-waffle-target], [aria-label="Categories"], [aria-live="polite"]',
+      ),
+    ].map((element) => ({
+      name:
+        element.getAttribute("data-waffle-group") ??
+        element.getAttribute("data-waffle-target") ??
+        element.getAttribute("aria-label") ??
+        "Inspection details",
+      bounds: element.getBoundingClientRect(),
+    }));
+    const collisions = [];
+    for (const edge of frame.querySelectorAll("[data-waffle-connection]")) {
+      const values = edge
+        .getAttribute("d")
+        .match(/-?[\d.]+/g)
+        .map(Number);
+      const points = [0, 2, 4, 6].map((index) => ({
+        x: values[index] + parent.left,
+        y: values[index + 1] + parent.top,
+      }));
+      for (let index = 1; index < points.length; index++) {
+        const a = points[index - 1];
+        const b = points[index];
+        for (const { name, bounds } of obstacles) {
+          const horizontal = Math.abs(a.y - b.y) < 0.01;
+          const vertical = Math.abs(a.x - b.x) < 0.01;
+          const hit = horizontal
+            ? a.y > bounds.top + 1 &&
+              a.y < bounds.bottom - 1 &&
+              Math.max(Math.min(a.x, b.x), bounds.left + 1) <
+                Math.min(Math.max(a.x, b.x), bounds.right - 1)
+            : vertical
+              ? a.x > bounds.left + 1 &&
+                a.x < bounds.right - 1 &&
+                Math.max(Math.min(a.y, b.y), bounds.top + 1) <
+                  Math.min(Math.max(a.y, b.y), bounds.bottom - 1)
+              : true;
+          if (hit)
+            collisions.push({
+              edge: edge.getAttribute("data-waffle-connection"),
+              obstacle: name,
+              segment: index,
+            });
+        }
+      }
+    }
+    return collisions;
+  });
+  assert.deepEqual(
+    violations,
+    [],
+    "connection paths avoid group, legend, inspection and target content",
+  );
+};
 
 try {
   for (const theme of ["light", "dark"]) {

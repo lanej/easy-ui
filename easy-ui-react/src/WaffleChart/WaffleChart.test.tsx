@@ -7,7 +7,16 @@ import {
   within,
 } from "@testing-library/react";
 import { vi } from "vitest";
-import { render } from "../utilities/test";
+import { Button } from "../Button";
+import { Drawer } from "../Drawer";
+import { Modal } from "../Modal";
+import {
+  disableReactTransitionGroup,
+  enableReactTransitionGroup,
+  mockGetComputedStyle,
+  mockIntersectionObserver,
+  render,
+} from "../utilities/test";
 import { WaffleChart } from "./WaffleChart";
 import type {
   WaffleChartCategory,
@@ -15,6 +24,7 @@ import type {
   WaffleChartGroupAnchor,
   WaffleChartInspection,
   WaffleChartItem,
+  WaffleChartProps,
 } from "./types";
 
 const categories: WaffleChartCategory[] = [
@@ -195,6 +205,83 @@ describe("WaffleChart supplied data", () => {
 });
 
 describe("passive variants", () => {
+  describe.each([
+    { mode: "passive", modeProps: { interaction: "none" as const } },
+    { mode: "compact", modeProps: { variant: "compact" as const } },
+  ])("$mode selection announcements", ({ mode, modeProps }) => {
+    it.each(["item", "group"] as const)(
+      "announces selected %s state without requiring color",
+      (type) => {
+        const id = type === "item" ? items[0].id : groups[0].id;
+        render(
+          <WaffleChart
+            accessibilityLabel="Selected parcels"
+            items={items}
+            categories={categories}
+            groups={groups}
+            selection={{ type, id }}
+            {...modeProps}
+          />,
+        );
+        expect(screen.queryByRole("button")).toBeNull();
+        if (mode === "compact") {
+          expect(screen.getByRole("img")).toHaveAccessibleName(
+            expect.stringContaining(
+              type === "item"
+                ? "Selected item: Parcel A"
+                : "Selected group: North",
+            ),
+          );
+        } else {
+          expect(
+            screen.getByRole("img", { name: /^Parcel A, Ready/ }),
+          ).toHaveAccessibleName(/Selected/);
+          expect(
+            screen.getByRole("img", { name: /^Parcel C, Ready/ }),
+          ).not.toHaveAccessibleName(/Selected/);
+          if (type === "group") {
+            expect(
+              screen.getByRole("img", { name: /^Parcel B, Working, Draft/ }),
+            ).toHaveAccessibleName(/Selected/);
+            expect(
+              screen.getByRole("group", { name: /North/ }),
+            ).toHaveAccessibleName(/Selected/);
+          } else {
+            expect(
+              screen.getByRole("img", { name: /^Parcel B, Working, Draft/ }),
+            ).not.toHaveAccessibleName(/Selected/);
+            expect(screen.getByRole("group", { name: "North" })).toBeVisible();
+          }
+        }
+      },
+    );
+  });
+
+  it.each(["item", "group"] as const)(
+    "keeps interactive names unchanged when a %s is selected",
+    (type) => {
+      render(
+        <WaffleChart
+          accessibilityLabel="Selected interactive parcels"
+          items={items}
+          categories={categories}
+          groups={groups}
+          selection={{ type, id: type === "item" ? items[0].id : groups[0].id }}
+        />,
+      );
+      expect(
+        screen.getByRole("button", { name: "Parcel A, Ready" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(
+        screen.getByRole("button", { name: "Parcel B, Working, Draft" }),
+      ).toHaveAttribute("aria-pressed", String(type === "group"));
+      expect(screen.getByRole("button", { name: "North 2" })).toHaveAttribute(
+        "aria-pressed",
+        String(type === "group"),
+      );
+    },
+  );
+
   it("keeps compact charts passive inside a link and exposes exact counts and draft state", () => {
     const onActivate = vi.fn();
     const onHover = vi.fn();
@@ -554,6 +641,326 @@ describe("inspection and selection", () => {
     expect(onFocus).toHaveBeenLastCalledWith(null);
     expect(onHover).toHaveBeenLastCalledWith(null);
     expect(group).not.toHaveAttribute("data-selected");
+  });
+});
+
+describe("Escape propagation", () => {
+  it.each([{ supplied: [] }, { supplied: items }])(
+    "lets Escape bubble with no dismissible state, including empty data",
+    ({ supplied }) => {
+      const onOuterKeyDown = vi.fn();
+      const onSelection = vi.fn();
+      render(
+        <div onKeyDown={onOuterKeyDown}>
+          <WaffleChart
+            accessibilityLabel="Uninspected parcels"
+            items={supplied}
+            categories={categories}
+            onSelectionChange={onSelection}
+          />
+        </div>,
+      );
+      const root = screen.getByRole("group", { name: "Uninspected parcels" });
+      const escape = new KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true,
+      });
+      fireEvent(root, escape);
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+      expect(escape.defaultPrevented).toBe(false);
+      expect(onSelection).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    {
+      name: "item selection",
+      props: { selection: { type: "item" as const, id: items[0].id } },
+    },
+    {
+      name: "group selection",
+      props: { selection: { type: "group" as const, id: groups[0].id } },
+    },
+    { name: "category selection", props: { selectedCategoryId: "ready" } },
+    {
+      name: "item and category selection",
+      props: {
+        selection: { type: "item" as const, id: items[0].id },
+        selectedCategoryId: "ready",
+      },
+    },
+  ])(
+    "does not trap Escape for static controlled $name without change callbacks",
+    ({ props }) => {
+      const onOuterKeyDown = vi.fn();
+      render(
+        <div onKeyDown={onOuterKeyDown}>
+          <WaffleChart
+            accessibilityLabel="Static parcels"
+            items={items}
+            categories={categories}
+            groups={groups}
+            {...props}
+          />
+        </div>,
+      );
+      const root = screen.getByRole("group", { name: "Static parcels" });
+      expect(fireEvent.keyDown(root, { key: "Escape" })).toBe(true);
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each(["selection", "category"] as const)(
+    "consumes Escape for controlled %s with a callback until the caller clears it",
+    (kind) => {
+      const onOuterKeyDown = vi.fn();
+      const onChange = vi.fn();
+      function Controlled() {
+        const [selection, setSelection] = useState<
+          WaffleChartProps["selection"]
+        >(kind === "selection" ? { type: "item", id: items[0].id } : null);
+        const [category, setCategory] = useState<string | null>(
+          kind === "category" ? "ready" : null,
+        );
+        return (
+          <div onKeyDown={onOuterKeyDown}>
+            <WaffleChart
+              accessibilityLabel="Controlled parcels"
+              items={items}
+              categories={categories}
+              selection={selection}
+              onSelectionChange={
+                kind === "selection"
+                  ? (next) => {
+                      onChange(next);
+                      setSelection(next);
+                    }
+                  : undefined
+              }
+              selectedCategoryId={category}
+              onCategorySelectionChange={
+                kind === "category"
+                  ? (next) => {
+                      onChange(next);
+                      setCategory(next);
+                    }
+                  : undefined
+              }
+            />
+          </div>
+        );
+      }
+      render(<Controlled />);
+      const root = screen.getByRole("group", { name: "Controlled parcels" });
+      expect(fireEvent.keyDown(root, { key: "Escape" })).toBe(false);
+      expect(onChange).toHaveBeenCalledOnce();
+      expect(onChange).toHaveBeenLastCalledWith(null);
+      expect(onOuterKeyDown).not.toHaveBeenCalled();
+      expect(fireEvent.keyDown(root, { key: "Escape" })).toBe(true);
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each(["item", "group"] as const)(
+    "lets Escape bubble when a readonly selected %s also owns focus",
+    (type) => {
+      const onOuterKeyDown = vi.fn();
+      render(
+        <div onKeyDown={onOuterKeyDown}>
+          <WaffleChart
+            accessibilityLabel="Readonly selected parcels"
+            items={items}
+            categories={categories}
+            groups={groups}
+            selection={{
+              type,
+              id: type === "item" ? items[0].id : groups[0].id,
+            }}
+          />
+        </div>,
+      );
+      const target =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("button", { name: "North 2" });
+      act(() => target.focus());
+      expect(fireEvent.keyDown(target, { key: "Escape" })).toBe(true);
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+      expect(target).toHaveAttribute("aria-pressed", "true");
+    },
+  );
+
+  it("respects Escape already handled by a control in caller-rendered details", () => {
+    const onSelection = vi.fn();
+    const onOuterKeyDown = vi.fn();
+    render(
+      <div onKeyDown={onOuterKeyDown}>
+        <WaffleChart
+          accessibilityLabel="Caller handled Escape"
+          items={items}
+          categories={categories}
+          defaultSelection={{ type: "item", id: items[0].id }}
+          onSelectionChange={onSelection}
+          renderDetails={() => (
+            <button
+              type="button"
+              onKeyDown={(event) => {
+                if (event.key === "Escape") event.preventDefault();
+              }}
+            >
+              Handle own Escape
+            </button>
+          )}
+        />
+      </div>,
+    );
+    const action = screen.getByRole("button", { name: "Handle own Escape" });
+    act(() => action.focus());
+    expect(fireEvent.keyDown(action, { key: "Escape" })).toBe(false);
+    expect(onOuterKeyDown).toHaveBeenCalledOnce();
+    expect(onSelection).not.toHaveBeenCalled();
+    expect(itemButton("Parcel A")).toHaveAttribute("aria-pressed", "true");
+    expect(action).toHaveFocus();
+  });
+
+  it.each(["item", "group"] as const)(
+    "clears transient %s hover once while a static category does not trap later Escape",
+    (type) => {
+      const onOuterKeyDown = vi.fn();
+      render(
+        <div onKeyDown={onOuterKeyDown}>
+          <WaffleChart
+            accessibilityLabel="Hovered static category"
+            items={items}
+            categories={categories}
+            groups={groups}
+            selectedCategoryId="ready"
+          />
+        </div>,
+      );
+      const target =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("group", { name: "North" });
+      fireEvent.pointerEnter(target);
+      expect(screen.getByText("Inspecting")).toBeVisible();
+      expect(fireEvent.keyDown(target, { key: "Escape" })).toBe(false);
+      expect(onOuterKeyDown).not.toHaveBeenCalled();
+      expect(screen.queryByText("Inspecting")).toBeNull();
+      expect(itemButton("Parcel A")).toHaveAttribute(
+        "data-highlighted",
+        "true",
+      );
+      expect(fireEvent.keyDown(target, { key: "Escape" })).toBe(true);
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+    },
+  );
+
+  describe("inside actual library overlays", () => {
+    let restoreStyle: () => void;
+    let restoreIntersection: () => void;
+
+    beforeEach(() => {
+      restoreStyle = mockGetComputedStyle();
+      restoreIntersection = mockIntersectionObserver();
+      disableReactTransitionGroup();
+    });
+
+    afterEach(() => {
+      cleanup();
+      restoreIntersection();
+      restoreStyle();
+      enableReactTransitionGroup();
+    });
+
+    function overlay(kind: "Modal" | "Drawer", chart: React.ReactElement) {
+      return kind === "Modal" ? (
+        <Modal.Trigger>
+          <Button>Open chart modal</Button>
+          <Modal>
+            <Modal.Header>Chart modal</Modal.Header>
+            <Modal.Body>{chart}</Modal.Body>
+          </Modal>
+        </Modal.Trigger>
+      ) : (
+        <Drawer.Trigger>
+          <Button>Open chart drawer</Button>
+          <Drawer>
+            <Drawer.Body>
+              <Drawer.StandaloneContentArea>
+                <Drawer.Title>Chart drawer</Drawer.Title>
+                {chart}
+              </Drawer.StandaloneContentArea>
+            </Drawer.Body>
+          </Drawer>
+        </Drawer.Trigger>
+      );
+    }
+
+    describe.each(["Modal", "Drawer"] as const)("inside %s", (kind) => {
+      it.each(["focus", "selection", "details"] as const)(
+        "clears %s on first Escape and dismisses the overlay on the second",
+        async (origin) => {
+          const { user } = render(
+            overlay(
+              kind,
+              <WaffleChart
+                accessibilityLabel="Overlay parcels"
+                items={items}
+                categories={categories}
+                renderDetails={() => (
+                  <button type="button">Caller detail action</button>
+                )}
+              />,
+            ),
+          );
+          await user.click(
+            screen.getByRole("button", {
+              name: `Open chart ${kind.toLowerCase()}`,
+            }),
+          );
+          const dialog = screen.getByRole("dialog");
+          const first = within(dialog).getByRole("button", {
+            name: "Parcel A, Ready",
+          });
+          act(() => first.focus());
+          expect(first).toHaveFocus();
+          if (origin !== "focus") {
+            await user.keyboard("{Enter}");
+            expect(first).toHaveAttribute("aria-pressed", "true");
+          }
+          if (origin === "details") {
+            const action = screen.getByRole("button", {
+              name: "Caller detail action",
+            });
+            act(() => action.focus());
+            expect(action).toHaveFocus();
+          }
+          await user.keyboard("{Escape}");
+          expect(screen.getByRole("dialog")).toBe(dialog);
+          expect(first).toHaveAttribute("aria-pressed", "false");
+          expect(first).toHaveFocus();
+          expect(
+            screen.queryByRole("button", { name: "Clear selection" }),
+          ).toBeNull();
+          expect(
+            screen.queryByRole("button", { name: "Caller detail action" }),
+          ).toBeNull();
+          expect(
+            screen.getByText("Focus or select a cell or group to inspect it"),
+          ).toBeVisible();
+          await user.keyboard("{Escape}");
+          expect(screen.queryByRole("dialog")).toBeNull();
+          act(() => vi.advanceTimersByTime(32));
+          expect(
+            screen.getByRole("button", {
+              name: `Open chart ${kind.toLowerCase()}`,
+            }),
+          ).toHaveFocus();
+        },
+      );
+    });
   });
 });
 

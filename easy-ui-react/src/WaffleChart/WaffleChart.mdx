@@ -66,7 +66,7 @@ The public entry also exports `WaffleChartProps`, `WaffleChartItem`, `WaffleChar
 </a>
 ```
 
-The entire row remains one link. Compact cells create no nested buttons or focus stops, even if inspection callbacks are supplied. The adjacent exact count and `/ Draft` count stay visible, while the accessible summary includes every item label, category, and supplied draft or muted state. Draft cells also have a patterned slash marker, so draft status does not depend on color.
+The entire row remains one link. Compact cells create no nested buttons or focus stops, even if inspection callbacks are supplied. The adjacent exact count and `/ Draft` count stay visible, while the accessible summary includes every item label, category, and supplied draft or muted state. Draft cells also have a patterned slash marker, so draft status does not depend on color. A supplied selection is announced as a selected item or selected group in the compact summary. Full-sized passive cells announce selected state too; interactive control names stay stable and use `aria-pressed`.
 
 <Canvas of={Stories.CompactLinkedSummary} />
 
@@ -175,7 +175,7 @@ The legend always shows exact category counts. With `onCategorySelectionChange`,
 
 Tab reaches group caption buttons and the current cell in the roving cell tab stop. Arrow Left/Right move between cells in displayed order; Arrow Up/Down use the current layout to reach the nearest visual row, then the closest column, including partial rows after wrapping. Home/End move to the first/last cell. Focus has a visible indicator and exposes the same exact details as pointer hover.
 
-Enter, Space, a click, or a touch tap pins an item or group. A repeated activation unpins it; Clear selection or Escape dismisses pinned and transient inspection. Escape also requests that a controlled category highlight be cleared. Controlled callbacks must update the corresponding props for those requests to take effect. Touch inspection does not depend on hover. Clearing or pressing Escape from a detail control returns keyboard focus to the selected cell or group caption. Data removal or moving a cell between groups clears transient inspection when its focused or hovered element is replaced; it does not resurrect stale inspection if that ID returns.
+Enter, Space, a click, or a touch tap pins an item or group. A repeated activation unpins it; Clear selection or Escape dismisses pinned and transient inspection. Escape also requests that a controlled category highlight be cleared. Once dismissible chart state is cleared, Escape can reach an enclosing Modal or Drawer instead of being trapped by the chart. Controlled callbacks must update the corresponding props for those requests to take effect. Touch inspection does not depend on hover. Clearing or pressing Escape from a detail control returns keyboard focus to the selected cell or group caption. Data removal or moving a cell between groups clears transient inspection when its focused or hovered element is replaced; it does not resurrect stale inspection if that ID returns.
 
 ### Supported anchors for a connection layer
 
@@ -185,7 +185,7 @@ Use bounds directly in a fixed viewport-aligned connection layer. For an overlay
 
 Anchors are measured after mount and data changes, and update after resize, responsive wrapping, and scrolling when their geometry changes. The callback receives `[]` during cleanup so obsolete connectors can be removed. Use a stable callback such as a state setter; compact summaries do not expose group anchors. Change `layoutRevision` when caller-owned layout moves the chart without resizing it, such as opening an adjacent panel or changing an ancestor's position. This requests fresh viewport bounds.
 
-The linked-groups story draws caller-owned connections from one shared group to two targets and highlights related cells, group, and edges together. Resize the story and scroll its page to check endpoint alignment.
+The linked-groups story draws caller-owned connections from one shared group to two targets and highlights related cells, group, and edges together. Its composition reserves separate routing lanes outside the pool and target cards, including when the targets stack below the chart. Resize the story and scroll its page to check endpoint alignment.
 
 ### Unknown, empty, and responsive states
 
