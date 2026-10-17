@@ -1,0 +1,81 @@
+{
+  "results": [
+    {
+      "theme": "light",
+      "width": 1200,
+      "insetIds": [
+        "acceptance",
+        "oak",
+        "origin-sort"
+      ],
+      "overflow": 0,
+      "checks": [
+        "mixed",
+        "immutable-update",
+        "empty",
+        "clear",
+        "keyboard-dismiss",
+        "reopen-cleared",
+        "pointer-dismiss"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "insetIds": [
+        "acceptance",
+        "oak",
+        "origin-sort"
+      ],
+      "overflow": 0,
+      "checks": [
+        "mixed",
+        "immutable-update",
+        "empty",
+        "clear",
+        "keyboard-dismiss",
+        "reopen-cleared",
+        "pointer-dismiss"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1200,
+      "insetIds": [
+        "acceptance",
+        "oak",
+        "origin-sort"
+      ],
+      "overflow": 0,
+      "checks": [
+        "mixed",
+        "immutable-update",
+        "empty",
+        "clear",
+        "keyboard-dismiss",
+        "reopen-cleared",
+        "pointer-dismiss"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "insetIds": [
+        "acceptance",
+        "oak",
+        "origin-sort"
+      ],
+      "overflow": 0,
+      "checks": [
+        "mixed",
+        "immutable-update",
+        "empty",
+        "clear",
+        "keyboard-dismiss",
+        "reopen-cleared",
+        "pointer-dismiss"
+      ]
+    }
+  ],
+  "errors": []
+}
