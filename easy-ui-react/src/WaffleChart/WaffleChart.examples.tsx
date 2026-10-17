@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Select } from "../Select";
 import { WaffleChart } from "./WaffleChart";
 import {
   groupedWaffleItems,
@@ -7,7 +8,12 @@ import {
   waffleItems,
 } from "./WaffleChart.fixtures";
 import type { ExampleMetadata } from "./WaffleChart.fixtures";
-import type { WaffleChartGroupAnchor, WaffleChartSelection } from "./types";
+import type {
+  WaffleChartGroupAnchor,
+  WaffleChartItemOrder,
+  WaffleChartProps,
+  WaffleChartSelection,
+} from "./types";
 import styles from "./WaffleChart.examples.module.scss";
 import { routeExampleConnection } from "./exampleRouting";
 
@@ -30,7 +36,16 @@ const targets = [
 ];
 
 /** Caller-owned relationships and SVG layer; only the public anchors locate groups. */
-export function LinkedWaffleGroups() {
+export function LinkedWaffleGroups({
+  itemOrder,
+  maxColumns = 7,
+  cellSize,
+  gap,
+  controls,
+}: Pick<
+  WaffleChartProps<ExampleMetadata>,
+  "itemOrder" | "maxColumns" | "cellSize" | "gap"
+> & { controls?: React.ReactNode } = {}) {
   const frame = useRef<HTMLDivElement>(null);
   const pool = useRef<HTMLDivElement>(null);
   const targetElements = useRef(new Map<string, HTMLButtonElement>());
@@ -125,6 +140,7 @@ export function LinkedWaffleGroups() {
         17 supplied resources, each shown once. Shared group connects to two
         targets. Unlinked carries no availability meaning.
       </p>
+      {controls}
       <div
         className={styles.composition}
         ref={frame}
@@ -149,7 +165,10 @@ export function LinkedWaffleGroups() {
             items={groupedWaffleItems}
             groups={waffleGroups}
             categories={waffleCategories}
-            maxColumns={7}
+            itemOrder={itemOrder}
+            maxColumns={maxColumns}
+            cellSize={cellSize}
+            gap={gap}
             selection={selection}
             onSelectionChange={setSelection}
             highlight={{ groupIds: activeGroup ? [activeGroup] : [] }}
@@ -234,6 +253,65 @@ export function LinkedWaffleGroups() {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+const densities = {
+  dense: { cellSize: 16, gap: 2 },
+  comfortable: { cellSize: 20, gap: 6 },
+  spacious: { cellSize: 28, gap: 10 },
+};
+
+/** Optional caller-owned controls; compact charts never acquire a toolbar. */
+export function ControlledWaffleArrangement() {
+  const [itemOrder, setItemOrder] = useState<WaffleChartItemOrder>("input");
+  const [columns, setColumns] = useState("7");
+  const [density, setDensity] = useState<keyof typeof densities>("comfortable");
+  return (
+    <div data-waffle-arrangement>
+      <LinkedWaffleGroups
+        itemOrder={itemOrder}
+        maxColumns={Number(columns)}
+        {...densities[density]}
+        controls={
+          <div
+            className={styles.controls}
+            role="group"
+            aria-label="Waffle arrangement controls"
+          >
+            <Select<object, WaffleChartItemOrder>
+              label="Cell order"
+              selectedKey={itemOrder}
+              onSelectionChange={setItemOrder}
+              helperText="Category IDs, not matching color values. Linked membership stays unchanged."
+            >
+              <Select.Option key="input">Input order</Select.Option>
+              <Select.Option key="category">Group by category</Select.Option>
+            </Select>
+            <Select<object, string>
+              label="Maximum columns"
+              selectedKey={columns}
+              onSelectionChange={setColumns}
+              helperText="An upper limit; cells wrap to fit the available width."
+            >
+              <Select.Option key="4">4 columns</Select.Option>
+              <Select.Option key="7">7 columns</Select.Option>
+              <Select.Option key="12">12 columns</Select.Option>
+            </Select>
+            <Select<object, keyof typeof densities>
+              label="Density"
+              selectedKey={density}
+              onSelectionChange={setDensity}
+              helperText="Cell size and spacing; touch targets remain at least 24px."
+            >
+              <Select.Option key="dense">Dense</Select.Option>
+              <Select.Option key="comfortable">Comfortable</Select.Option>
+              <Select.Option key="spacious">Spacious</Select.Option>
+            </Select>
+          </div>
+        }
+      />
     </div>
   );
 }

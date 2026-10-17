@@ -33,9 +33,10 @@ Use stable, unique item IDs across reordering and updates. Category and group ID
 
 <ArgTypes of={WaffleChart} />
 
-The public entry also exports `WaffleChartProps`, `WaffleChartItem`, `WaffleChartCategory`, `WaffleChartGroup`, `WaffleChartSelection`, `WaffleChartHighlight`, `WaffleChartInspection`, and `WaffleChartGroupAnchor`. Item, props, and inspection types accept a metadata type parameter.
+The public entry also exports `WaffleChartProps`, `WaffleChartItem`, `WaffleChartItemOrder`, `WaffleChartCategory`, `WaffleChartGroup`, `WaffleChartSelection`, `WaffleChartHighlight`, `WaffleChartInspection`, and `WaffleChartGroupAnchor`. Item, props, and inspection types accept a metadata type parameter.
 
 - `variant="default"` supports grouped captions, a legend, and inspection. `variant="compact"` is always passive and omits captions, legend, details, and controls. `interaction="none"` makes the default presentation passive too.
+- `itemOrder` is `"input"` (the default) or `"category"`. Input order preserves the supplied item order within each displayed group. Category order clusters cells by category ID in the supplied `categories` order, preserving input order within each category. Unknown category IDs follow known categories in first-seen ID order. Categories with the same color remain separate clusters.
 - `maxColumns` is an upper column limit, not a fixed width. `cellSize` and `gap` are CSS pixels. Defaults are 12 columns, 20px cells, and 6px gaps; compact defaults to 8px cells and 3px gaps. Interactive cells retain at least a 24px pointer target, independently of the visual cell size.
 - `showCount` and `showLegend` default to `true`. `countLabel(count)` formats the exact total for the default presentation and accessible compact summary; the compact adjacent count remains numeric. `emptyMessage` defaults to "No items supplied"; `ungroupedLabel` defaults to "Other items".
 
@@ -120,11 +121,81 @@ const items: WaffleChartItem[] = [
 />;
 ```
 
-`item.groupId` assigns each item to at most one supplied group. Put the shared team's two outgoing relationships in a caller-owned connection layer; keep each resource once in `items`. The example therefore has three cells in the whole pool, regardless of how many targets a group connects to. Group order follows `groups`, and item order within each group follows `items`.
+`item.groupId` assigns each item to at most one supplied group. Put the shared team's two outgoing relationships in a caller-owned connection layer; keep each resource once in `items`. The example therefore has three cells in the whole pool, regardless of how many targets a group connects to. Group order follows `groups`. By default, item order within each group follows `items`; `itemOrder="category"` clusters each group's cells independently.
 
 Items with no group or an unmatched `groupId` stay visible in the neutral `ungroupedLabel` bucket. An unlinked group is simply a group with no supplied relationship. Neither state establishes availability, spare capacity, or an error. Supplied empty groups retain their caption and zero count.
 
 <Canvas of={Stories.LinkedGroups} />
+
+### Controlled cell order, columns, and density
+
+Use `itemOrder` to choose input order or category clusters, `maxColumns` to limit columns, and `cellSize` with `gap` to tune density. The caller owns the controls and their state. Using the synthetic `items`, `categories`, and `groups` above:
+
+```tsx
+import { useState } from "react";
+import { Select } from "@easypost/easy-ui/Select";
+import type { WaffleChartItemOrder } from "@easypost/easy-ui/WaffleChart";
+
+const densities = {
+  dense: { cellSize: 16, gap: 2 },
+  comfortable: { cellSize: 20, gap: 6 },
+  spacious: { cellSize: 28, gap: 10 },
+};
+
+function ArrangedPool() {
+  const [itemOrder, setItemOrder] = useState<WaffleChartItemOrder>("input");
+  const [maxColumns, setMaxColumns] = useState(7);
+  const [density, setDensity] = useState<keyof typeof densities>("comfortable");
+
+  return (
+    <>
+      <Select
+        label="Cell order"
+        selectedKey={itemOrder}
+        onSelectionChange={(key) =>
+          setItemOrder(key === "category" ? "category" : "input")
+        }
+      >
+        <Select.Option key="input">Input order</Select.Option>
+        <Select.Option key="category">Group by category</Select.Option>
+      </Select>
+      <Select
+        label="Maximum columns"
+        selectedKey={String(maxColumns)}
+        onSelectionChange={(key) => setMaxColumns(Number(key))}
+      >
+        <Select.Option key="4">4</Select.Option>
+        <Select.Option key="7">7</Select.Option>
+        <Select.Option key="12">12</Select.Option>
+      </Select>
+      <Select
+        label="Density"
+        selectedKey={density}
+        onSelectionChange={(key) => setDensity(key as keyof typeof densities)}
+      >
+        <Select.Option key="dense">Dense</Select.Option>
+        <Select.Option key="comfortable">Comfortable</Select.Option>
+        <Select.Option key="spacious">Spacious</Select.Option>
+      </Select>
+      <WaffleChart
+        accessibilityLabel="Arranged resource pool"
+        items={items}
+        categories={categories}
+        groups={groups}
+        itemOrder={itemOrder}
+        maxColumns={maxColumns}
+        {...densities[density]}
+      />
+    </>
+  );
+}
+```
+
+Category clustering uses category IDs, never color equality. It applies within each explicit group and the remainder bucket, leaving group membership and group order unchanged. Compact mode applies the chosen order to its flat item grid. Every arrangement keeps the same item IDs, counts, category-to-token mappings, draft and muted states, and supplied selection. Keep any controls outside a compact summary's link so the row remains one passive link.
+
+The example below uses the same linked synthetic pool to show cells wrapping and connection endpoints following order, column, and density changes. Dense uses 16px cells and 2px gaps; Comfortable uses 20px and 6px; Spacious uses 28px and 10px. Interactive cells keep their minimum 24px pointer target in every density.
+
+<Canvas of={Stories.ArrangementControls} />
 
 ### Controlled selection, details, and category emphasis
 
@@ -183,7 +254,7 @@ Enter, Space, a click, or a touch tap pins an item or group. A repeated activati
 
 Use bounds directly in a fixed viewport-aligned connection layer. For an overlay in another coordinate system, convert the bounds to that layer's coordinates, accounting for its viewport origin, scrolling, and any scale. For example, an unscaled SVG whose coordinate origin matches its viewport rectangle uses `bounds.left - svgRect.left` and `bounds.top - svgRect.top`.
 
-Anchors are measured after mount and data changes, and update after resize, responsive wrapping, and scrolling when their geometry changes. The callback receives `[]` during cleanup so obsolete connectors can be removed. Use a stable callback such as a state setter; compact summaries do not expose group anchors. Change `layoutRevision` when caller-owned layout moves the chart without resizing it, such as opening an adjacent panel or changing an ancestor's position. This requests fresh viewport bounds.
+Anchors are measured after mount and data changes, and update after cell-order, column-limit, or density changes, resize, responsive wrapping, and scrolling when their geometry changes. The callback receives `[]` during cleanup so obsolete connectors can be removed. Use a stable callback such as a state setter; compact summaries do not expose group anchors. Change `layoutRevision` when caller-owned layout moves the chart without resizing it, such as opening an adjacent panel or changing an ancestor's position. This requests fresh viewport bounds.
 
 The linked-groups story draws caller-owned connections from one shared group to two targets and highlights related cells, group, and edges together. Its composition reserves separate routing lanes outside the pool and target cards, including when the targets stack below the chart. Resize the story and scroll its page to check endpoint alignment.
 

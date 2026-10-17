@@ -204,6 +204,486 @@ describe("WaffleChart supplied data", () => {
   });
 });
 
+describe("item arrangement", () => {
+  const arrangedCategories: readonly WaffleChartCategory[] = Object.freeze([
+    { id: "review", label: "In review", color: "primary.500" },
+    { id: "ready", label: "Ready", color: "primary.500" },
+    { id: "queued", label: "Queued", color: "neutral.600" },
+  ]);
+  const readyFirstCategories = [
+    arrangedCategories[1],
+    arrangedCategories[0],
+    arrangedCategories[2],
+  ];
+  const supplied: readonly WaffleChartItem[] = Object.freeze(
+    (
+      [
+        ["south-ready", "ready", "south"],
+        ["north-ready-1", "ready", "north"],
+        ["other-unknown-a", "unknown-a", "missing"],
+        ["north-unknown-z-1", "unknown-z", "north"],
+        ["north-review-1", "review", "north"],
+        ["south-unknown-z", "unknown-z", "south"],
+        ["north-ready-2", "ready", "north"],
+        ["north-unknown-a", "unknown-a", "north"],
+        ["south-review", "review", "south"],
+        ["other-ready", "ready"],
+        ["north-review-2", "review", "north"],
+        ["north-unknown-z-2", "unknown-z", "north"],
+        ["other-unknown-z", "unknown-z"],
+        ["other-review", "review", "missing"],
+      ] as [string, string, string?][]
+    ).map(([id, categoryId, groupId]) => ({
+      id,
+      label: id.replace(/-/g, " "),
+      categoryId,
+      groupId,
+      draft: id === "north-review-1",
+      muted: id === "south-ready",
+    })),
+  );
+  const northInput = [
+    "north-ready-1",
+    "north-unknown-z-1",
+    "north-review-1",
+    "north-ready-2",
+    "north-unknown-a",
+    "north-review-2",
+    "north-unknown-z-2",
+  ];
+  const northCategory = [
+    "north-review-1",
+    "north-review-2",
+    "north-ready-1",
+    "north-ready-2",
+    "north-unknown-z-1",
+    "north-unknown-z-2",
+    "north-unknown-a",
+  ];
+  const flatCategory = [
+    "north-review-1",
+    "south-review",
+    "north-review-2",
+    "other-review",
+    "south-ready",
+    "north-ready-1",
+    "north-ready-2",
+    "other-ready",
+    "other-unknown-a",
+    "north-unknown-a",
+    "north-unknown-z-1",
+    "south-unknown-z",
+    "north-unknown-z-2",
+    "other-unknown-z",
+  ];
+  const props = {
+    accessibilityLabel: "Arranged resources",
+    items: supplied,
+    categories: arrangedCategories,
+    groups,
+  };
+  const itemIds = (container: HTMLElement) =>
+    itemCells(container).map((cell) => cell.dataset.waffleItem);
+
+  it.each([undefined, "input"] as const)(
+    "preserves supplied order within existing groups with itemOrder=%s",
+    (itemOrder) => {
+      const { container, rerender } = render(
+        <WaffleChart {...props} itemOrder={itemOrder} />,
+      );
+      const expected = [
+        ...northInput,
+        "south-ready",
+        "south-unknown-z",
+        "south-review",
+        "other-unknown-a",
+        "other-ready",
+        "other-unknown-z",
+        "other-review",
+      ];
+      expect(itemIds(container)).toEqual(expected);
+      rerender(
+        <WaffleChart
+          {...props}
+          itemOrder={itemOrder}
+          categories={readyFirstCategories}
+        />,
+      );
+      expect(itemIds(container)).toEqual(expected);
+      expect(screen.getByText("14 items")).toBeVisible();
+    },
+  );
+
+  it("clusters stable category IDs in supplied category order within each group and remainder", () => {
+    const originals = supplied.map((item) => ({ ...item }));
+    const { container } = render(
+      <WaffleChart {...props} itemOrder="category" />,
+    );
+    expect(itemIds(screen.getByRole("group", { name: "North" }))).toEqual(
+      northCategory,
+    );
+    expect(itemIds(screen.getByRole("group", { name: "South" }))).toEqual([
+      "south-review",
+      "south-ready",
+      "south-unknown-z",
+    ]);
+    expect(itemIds(screen.getByRole("group", { name: "Other items" }))).toEqual(
+      ["other-review", "other-ready", "other-unknown-a", "other-unknown-z"],
+    );
+    expect(itemCells(container)).toHaveLength(supplied.length);
+    expect(new Set(itemIds(container)).size).toBe(supplied.length);
+    expect(itemButton("north review 1").style.cssText).toBe(
+      itemButton("north ready 1").style.cssText,
+    );
+    expect(itemButton("north unknown z 1")).toHaveAccessibleName(
+      "north unknown z 1, Unknown category: unknown-z",
+    );
+    expect(screen.getByRole("button", { name: "North 7" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "South 3" })).toBeVisible();
+    expect(screen.getByText("14 items")).toBeVisible();
+    const legend = screen.getByRole("group", { name: "Categories" });
+    expect(legend).toHaveTextContent("In review4Ready4Queued0");
+    expect(legend).toHaveTextContent("Unknown category: unknown-a2");
+    expect(legend).toHaveTextContent("Unknown category: unknown-z4");
+    expect(supplied).toEqual(originals);
+  });
+
+  it("uses category array order rather than color and keeps unknown IDs first-seen per group", () => {
+    const { container, rerender } = render(
+      <WaffleChart {...props} itemOrder="category" />,
+    );
+    const original = new Map(
+      itemCells(container).map((cell) => [cell.dataset.waffleItem, cell]),
+    );
+    rerender(
+      <WaffleChart
+        {...props}
+        itemOrder="category"
+        categories={readyFirstCategories}
+      />,
+    );
+    expect(itemIds(screen.getByRole("group", { name: "North" }))).toEqual([
+      "north-ready-1",
+      "north-ready-2",
+      "north-review-1",
+      "north-review-2",
+      "north-unknown-z-1",
+      "north-unknown-z-2",
+      "north-unknown-a",
+    ]);
+    expect(itemIds(screen.getByRole("group", { name: "Other items" }))).toEqual(
+      ["other-ready", "other-review", "other-unknown-a", "other-unknown-z"],
+    );
+    for (const cell of itemCells(container)) {
+      expect(cell).toBe(original.get(cell.dataset.waffleItem));
+    }
+  });
+
+  it("keeps nodes, group membership, focus, selection, colors and counts while toggling order", () => {
+    const onSelection = vi.fn();
+    const onFocus = vi.fn();
+    const renderDetails = vi.fn(
+      (inspection: WaffleChartInspection) => inspection.item?.label,
+    );
+    const renderChart = (itemOrder: "input" | "category") => (
+      <WaffleChart
+        {...props}
+        itemOrder={itemOrder}
+        defaultSelection={{ type: "item", id: "north-review-2" }}
+        onSelectionChange={onSelection}
+        onItemFocusChange={onFocus}
+        renderDetails={renderDetails}
+      />
+    );
+    const { container, rerender } = render(renderChart("input"));
+    const original = itemCells(container).map((element) => ({
+      id: element.dataset.waffleItem,
+      element,
+      parent: element.parentElement,
+      color: element.style.cssText,
+    }));
+    const north = screen.getByRole("group", { name: "North" });
+    const south = screen.getByRole("group", { name: "South" });
+    const focused = itemButton("north ready 2");
+    act(() => focused.focus());
+    for (const order of ["category", "input", "category"] as const) {
+      rerender(renderChart(order));
+      for (const { id, element, parent, color } of original) {
+        expect(
+          itemCells(container).find((cell) => cell.dataset.waffleItem === id),
+        ).toBe(element);
+        expect(element.parentElement).toBe(parent);
+        expect(element.style.cssText).toBe(color);
+      }
+      expect(screen.getByRole("group", { name: "North" })).toBe(north);
+      expect(screen.getByRole("group", { name: "South" })).toBe(south);
+      expect(focused).toHaveFocus();
+      expect(focused).toHaveAttribute("tabindex", "0");
+      expect(
+        itemCells(container).filter((cell) => cell.tabIndex === 0),
+      ).toEqual([focused]);
+      expect(itemButton("north review 2")).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      expect(
+        itemCells(container).filter((cell) => cell.dataset.selected),
+      ).toEqual([itemButton("north review 2")]);
+      expect(screen.getByText("14 items")).toBeVisible();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: { type: "item", id: "north-review-2" },
+        pinned: true,
+        totalCount: 14,
+      });
+      expect(renderDetails.mock.lastCall![0].item).toBe(supplied[10]);
+    }
+    expect(onSelection).not.toHaveBeenCalled();
+    expect(onFocus).toHaveBeenCalledExactlyOnceWith(supplied[6]);
+  });
+
+  it("remeasures existing public group anchors after order and arrangement changes without remounting groups", () => {
+    const onAnchors = vi.fn();
+    const disconnect = vi.fn();
+    let top = 10;
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect = disconnect;
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        const left = this.dataset.waffleGroup === "south" ? 200 : 10;
+        return {
+          x: left,
+          y: top,
+          left,
+          top,
+          right: left + 120,
+          bottom: top + 48,
+          width: 120,
+          height: 48,
+          toJSON: () => ({}),
+        };
+      },
+    );
+    let chartProps: WaffleChartProps = {
+      ...props,
+      itemOrder: "input",
+      maxColumns: 4,
+      cellSize: 20,
+      gap: 6,
+      onGroupAnchorsChange: onAnchors,
+    };
+    const { rerender } = render(<WaffleChart {...chartProps} />);
+    const north = screen.getByRole("group", { name: "North" });
+    const south = screen.getByRole("group", { name: "South" });
+    expect(onAnchors).toHaveBeenCalledOnce();
+    const changes: Partial<WaffleChartProps>[] = [
+      { itemOrder: "category" },
+      { categories: readyFirstCategories },
+      { maxColumns: 2 },
+      { cellSize: 32 },
+      { gap: 10 },
+    ];
+    changes.forEach((change, index) => {
+      top += 10;
+      chartProps = { ...chartProps, ...change };
+      rerender(<WaffleChart {...chartProps} />);
+      expect(onAnchors).toHaveBeenCalledTimes(index + 2);
+      const anchors: readonly WaffleChartGroupAnchor[] =
+        onAnchors.mock.lastCall![0];
+      expect(
+        anchors.map(({ groupId, element, bounds }) => ({
+          groupId,
+          element,
+          top: bounds.top,
+        })),
+      ).toEqual([
+        { groupId: "north", element: north, top },
+        { groupId: "south", element: south, top },
+      ]);
+      expect(screen.getByRole("group", { name: "North" })).toBe(north);
+      expect(screen.getByRole("group", { name: "South" })).toBe(south);
+      expect(disconnect).not.toHaveBeenCalled();
+    });
+    expect(
+      onAnchors.mock.calls.every(([anchors]) => anchors.length === 2),
+    ).toBe(true);
+  });
+
+  it("navigates displayed category order and live row geometry after changing the arrangement", async () => {
+    const keyboardItems = [
+      supplied[1],
+      supplied[3],
+      supplied[4],
+      supplied[6],
+      supplied[10],
+      supplied[7],
+    ];
+    const keyboardProps = {
+      accessibilityLabel: "Keyboard resources",
+      categories: arrangedCategories,
+      items: keyboardItems,
+    };
+    const { container, rerender, user } = render(
+      <WaffleChart
+        {...keyboardProps}
+        itemOrder="category"
+        maxColumns={2}
+        cellSize={32}
+        gap={8}
+      />,
+    );
+    expect(itemIds(container)).toEqual([
+      "north-review-1",
+      "north-review-2",
+      "north-ready-1",
+      "north-ready-2",
+      "north-unknown-z-1",
+      "north-unknown-a",
+    ]);
+    let columns = 2;
+    itemCells(container).forEach((cell) => {
+      vi.spyOn(cell, "getBoundingClientRect").mockImplementation(() => {
+        const index = itemCells(container).indexOf(cell);
+        const left = (index % columns) * 40;
+        const top = Math.floor(index / columns) * 40;
+        return {
+          x: left,
+          y: top,
+          left,
+          top,
+          right: left + 32,
+          bottom: top + 32,
+          width: 32,
+          height: 32,
+          toJSON: () => ({}),
+        };
+      });
+    });
+    await user.tab();
+    expect(itemButton("north review 1")).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+    expect(itemButton("north review 2")).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(itemButton("north ready 2")).toHaveFocus();
+    await user.keyboard("{ArrowUp}");
+    expect(itemButton("north review 2")).toHaveFocus();
+    await user.keyboard("{End}");
+    expect(itemButton("north unknown a")).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(itemButton("north unknown z 1")).toHaveFocus();
+    await user.keyboard("{Home}");
+    expect(itemButton("north review 1")).toHaveFocus();
+    columns = 3;
+    rerender(
+      <WaffleChart
+        {...keyboardProps}
+        itemOrder="category"
+        maxColumns={3}
+        cellSize={32}
+        gap={8}
+      />,
+    );
+    await user.keyboard("{ArrowDown}");
+    expect(itemButton("north ready 2")).toHaveFocus();
+    rerender(
+      <WaffleChart
+        {...keyboardProps}
+        itemOrder="input"
+        maxColumns={3}
+        cellSize={32}
+        gap={8}
+      />,
+    );
+    await user.keyboard("{ArrowLeft}");
+    expect(itemButton("north review 1")).toHaveFocus();
+    expect(itemCells(container).filter((cell) => cell.tabIndex === 0)).toEqual([
+      itemButton("north review 1"),
+    ]);
+  });
+
+  it.each(["item", "group"] as const)(
+    "keeps compact order, counts and %s selection semantics passive inside a link",
+    (type) => {
+      const onActivate = vi.fn();
+      const onSelection = vi.fn();
+      const onFocus = vi.fn();
+      const onAnchors = vi.fn();
+      const onLinkClick = vi.fn();
+      const selection = {
+        type,
+        id: type === "item" ? "north-review-2" : "north",
+      };
+      const chart = (itemOrder?: "input" | "category") => (
+        <a href="#resources" onClick={onLinkClick}>
+          <WaffleChart
+            {...props}
+            accessibilityLabel="Arranged summary"
+            variant="compact"
+            itemOrder={itemOrder}
+            selection={selection}
+            onItemActivate={onActivate}
+            onSelectionChange={onSelection}
+            onItemFocusChange={onFocus}
+            onGroupAnchorsChange={onAnchors}
+          />
+        </a>
+      );
+      const { container, rerender } = render(chart());
+      const original = new Map(
+        itemCells(container).map((cell) => [cell.dataset.waffleItem, cell]),
+      );
+      const suppliedIds = supplied.map((item) => item.id);
+      const selectedIds = type === "item" ? ["north-review-2"] : northInput;
+      for (const order of [undefined, "category", "input"] as const) {
+        rerender(chart(order));
+        const expected = order === "category" ? flatCategory : suppliedIds;
+        expect(itemIds(container)).toEqual(expected);
+        expect(itemCells(container)).toHaveLength(14);
+        for (const cell of itemCells(container)) {
+          expect(cell).toBe(original.get(cell.dataset.waffleItem));
+          expect(cell).toHaveAttribute("aria-hidden", "true");
+          expect(!!cell.dataset.selected).toBe(
+            selectedIds.includes(cell.dataset.waffleItem!),
+          );
+        }
+        const selectedLabel =
+          type === "item"
+            ? "Selected item: north review 2"
+            : "Selected group: North";
+        const expectedLabels = expected.map((id) => {
+          const item = supplied.find((item) => item.id === id)!;
+          const category = arrangedCategories.find(
+            (category) => category.id === item.categoryId,
+          );
+          return `${item.label}, ${category?.label ?? `Unknown category: ${item.categoryId}`}${item.draft ? ", Draft" : ""}${item.muted ? ", Muted" : ""}`;
+        });
+        const image = screen.getByRole("img");
+        expect(image).toHaveAccessibleName(
+          `Arranged summary: 14 items. ${selectedLabel}. ${expectedLabels.join("; ")}`,
+        );
+        expect(screen.getByRole("link")).toContainElement(image);
+        expect(screen.getByText("14")).toBeVisible();
+        expect(screen.getByText("/ Draft 1")).toBeVisible();
+        expect(
+          container.querySelector(
+            "button, input, select, textarea, [tabindex], [aria-live]",
+          ),
+        ).toBeNull();
+        fireEvent.pointerEnter(itemCells(container)[0]);
+        fireEvent.focus(itemCells(container)[0]);
+      }
+      fireEvent.click(screen.getByRole("img"));
+      expect(onLinkClick).toHaveBeenCalledOnce();
+      for (const callback of [onActivate, onSelection, onFocus, onAnchors])
+        expect(callback).not.toHaveBeenCalled();
+    },
+  );
+});
+
 describe("passive variants", () => {
   describe.each([
     { mode: "passive", modeProps: { interaction: "none" as const } },

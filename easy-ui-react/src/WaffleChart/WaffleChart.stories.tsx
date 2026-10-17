@@ -2,6 +2,7 @@ import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { WaffleChart } from "./WaffleChart";
 import {
+  ControlledWaffleArrangement,
   ControlledWaffleInspection,
   LinkedWaffleGroups,
 } from "./WaffleChart.examples";
@@ -66,6 +67,9 @@ export const CompactLinkedSummary: Story = {
   ),
 };
 export const LinkedGroups: Story = { render: () => <LinkedWaffleGroups /> };
+export const ArrangementControls: Story = {
+  render: () => <ControlledWaffleArrangement />,
+};
 export const ControlledInspection: Story = {
   render: () => <ControlledWaffleInspection />,
 };

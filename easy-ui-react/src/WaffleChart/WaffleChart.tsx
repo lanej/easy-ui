@@ -34,6 +34,24 @@ const INSPECTION_KEYS = new Set([
   " ",
 ]);
 
+function categoryOrderedItems<Metadata>(
+  items: readonly WaffleChartItem<Metadata>[],
+  categories: readonly WaffleChartCategory[],
+) {
+  const buckets = new Map(
+    categories.map((category) => [
+      category.id,
+      [] as WaffleChartItem<Metadata>[],
+    ]),
+  );
+  for (const item of items) {
+    const bucket = buckets.get(item.categoryId);
+    if (bucket) bucket.push(item);
+    else buckets.set(item.categoryId, [item]);
+  }
+  return [...buckets.values()].flat();
+}
+
 /** Discrete supplied resources. Applications own grouping and relationship meaning. */
 export function WaffleChart<Metadata = unknown>({
   accessibilityLabel,
@@ -42,6 +60,7 @@ export function WaffleChart<Metadata = unknown>({
   groups = EMPTY_GROUPS,
   variant = "default",
   interaction = "inspect",
+  itemOrder = "input",
   maxColumns = 12,
   cellSize,
   gap,
@@ -278,8 +297,19 @@ export function WaffleChart<Metadata = unknown>({
       ).items.push(item);
     }
     if (remainder.items.length || !groups.length) buckets.push(remainder);
+    if (itemOrder === "category") {
+      for (const bucket of buckets)
+        bucket.items = categoryOrderedItems(bucket.items, categories);
+    }
     return buckets;
-  }, [items, groups]);
+  }, [items, groups, categories, itemOrder]);
+  const compactItems = useMemo(
+    () =>
+      itemOrder === "category"
+        ? categoryOrderedItems(items, categories)
+        : items,
+    [items, categories, itemOrder],
+  );
   const legend = useMemo(() => {
     const entries = new Map(
       categories.map((category) => [category.id, { ...category, count: 0 }]),
@@ -298,8 +328,28 @@ export function WaffleChart<Metadata = unknown>({
   }, [items, categories]);
   // A single revision object avoids coupling consumers to markup or class names.
   const geometryRevision = useMemo(
-    () => [items, groups, compact, columns, size, spacing, layoutRevision],
-    [items, groups, compact, columns, size, spacing, layoutRevision],
+    () => [
+      items,
+      groups,
+      categories,
+      itemOrder,
+      compact,
+      columns,
+      size,
+      spacing,
+      layoutRevision,
+    ],
+    [
+      items,
+      groups,
+      categories,
+      itemOrder,
+      compact,
+      columns,
+      size,
+      spacing,
+      layoutRevision,
+    ],
   );
   useGroupAnchors(
     root,
@@ -464,10 +514,10 @@ export function WaffleChart<Metadata = unknown>({
         data-variant="compact"
         style={style}
         role="img"
-        aria-label={`${accessibilityLabel}: ${countLabel(items.length)}${selectedAnnouncement ? `. ${selectedAnnouncement}` : ""}${items.length ? `. ${items.map(itemLabel).join("; ")}` : `. ${emptyMessage}`}`}
+        aria-label={`${accessibilityLabel}: ${countLabel(items.length)}${selectedAnnouncement ? `. ${selectedAnnouncement}` : ""}${items.length ? `. ${compactItems.map(itemLabel).join("; ")}` : `. ${emptyMessage}`}`}
       >
         <span className={styles.grid} style={gridStyle(items.length)}>
-          {items.map((item) => cell(item, true))}
+          {compactItems.map((item) => cell(item, true))}
         </span>
         {showCount && (
           <span className={styles.count} aria-hidden="true">

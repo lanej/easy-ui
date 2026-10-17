@@ -108,6 +108,14 @@
   margin-block-end: 18px;
 }
 
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px;
+  margin-block-end: 24px;
+}
+
 .actions button {
   padding: 6px 10px;
   min-block-size: 32px;
@@ -133,6 +141,10 @@
 // Stack the content while keeping all three connection lanes outside both the
 // chart and target cards. The capped pool keeps the supplied groups on separate rows.
 @container (max-width: 613px) {
+  .controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .composition {
     grid-template-columns: minmax(0, 1fr);
     padding-inline-end: 32px;

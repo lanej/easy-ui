@@ -62,6 +62,9 @@ export type WaffleChartGroupAnchor = {
   };
 };
 
+/** Visual ordering only; caller-owned group membership never changes. */
+export type WaffleChartItemOrder = "input" | "category";
+
 export type WaffleChartProps<Metadata = unknown> = {
   accessibilityLabel: string;
   items: readonly WaffleChartItem<Metadata>[];
@@ -71,6 +74,8 @@ export type WaffleChartProps<Metadata = unknown> = {
   variant?: "default" | "compact";
   /** Default is inspect. Use none for a passive full-size visualization. */
   interaction?: "inspect" | "none";
+  /** Stable category-ID clustering within each group, or the supplied input order. */
+  itemOrder?: WaffleChartItemOrder;
   maxColumns?: number;
   /** CSS pixels. Interactive cells retain a minimum 24px pointer target. */
   cellSize?: number;

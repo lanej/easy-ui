@@ -45,7 +45,7 @@ revision; use the installed declarations when the application pins another versi
 | Feedback and status labels          | `Banner`, `Notification`, `Spinner`, `Badge`, `AlertBadge`, `Pill`, `PillGroup`, `StatusDot`                                                                                      |
 | Exact metrics and tabular data      | `MetricCard`, `DataGrid`, `DrawerTable`                                                                                                                                           |
 | Supplied health observations        | `HealthIndicator`, `HealthAssessment`, `ObservationFreshness`, `DurationDistribution`, `RiskScore`, `FacilitySummary`, `EventMetrics`                                             |
-| Event and path investigations       | `EventDetails`, `EventTimeline`, `InvestigationWorkspace`, `InvestigationDetails`, `PathComparison`                                                                                                       |
+| Event and path investigations       | `EventDetails`, `EventTimeline`, `InvestigationWorkspace`, `InvestigationDetails`, `PathComparison`                                                                               |
 | Resource dependency investigation   | `DependencyGraph`                                                                                                                                                                 |
 | Score explanations                  | `ScoreComposition`                                                                                                                                                                |
 
@@ -149,11 +149,11 @@ examples for configuration and missing-data behavior.
 | `CompactTimeSeries`    | A compact native SVG trend and optional reference                                                         |
 | `RangePlot`            | Named points and an optional interval on a shared scale                                                   |
 | `DurationDistribution` | Elapsed duration against supplied bins, density, cumulative points, or quantiles                          |
-| `WaffleChart`          | One cell per supplied discrete item, passive linked summaries, and inspectable grouped pools             |
+| `WaffleChart`          | One cell per supplied discrete item, passive linked summaries, and inspectable grouped pools              |
 | `NetworkMap`           | Geographical layers and inspection using MapLibre                                                         |
 
-Import `WaffleChart` and its public item, category, group, selection, inspection,
-highlight, and anchor types from `@easypost/easy-ui/WaffleChart`. Supply stable
+Import `WaffleChart` and its public item, item-order, category, group, selection,
+inspection, highlight, and anchor types from `@easypost/easy-ui/WaffleChart`. Supply stable
 item IDs, exact labels, explicit category-to-theme-token colors, and optional
 `item.groupId` membership. Each supplied item appears once; counts are never
 normalized to 100 or percentages. Applications own relationships, allocation,
@@ -176,14 +176,23 @@ the pool or changing totals. Draft, muted, and selected states remain distinct.
 Use `onGroupAnchorsChange` for a caller-owned connection layer. Each explicit
 group supplies a stable `groupId`, supported endpoint `element`, and viewport
 CSS-pixel `bounds`; one anchor can feed several edges. Convert to your overlay's
-coordinate system. Measurements update after data changes, resize, wrapping,
+coordinate system. Measurements update after data and arrangement changes, resize, wrapping,
 and scroll, and cleanup supplies `[]`. Change `layoutRevision` for external layout
 moves that do not resize the chart. Compact mode does not expose group anchors.
-Use `maxColumns`, `cellSize`, and `gap` for responsive embedding; interactive cells
-retain at least a 24px pointer target. Inspect Light and Dark with the theme toolbar.
+Use `itemOrder="input"` (default) to retain supplied cell order or
+`itemOrder="category"` to cluster by category ID in supplied `categories` order,
+with stable input order within each category. Unknown IDs follow in first-seen
+ID order; categories sharing a color remain separate. Clustering stays within
+each explicit group and remainder bucket; compact uses its flat item grid.
+Arrangement leaves membership, IDs, exact counts, and category-token mappings
+unchanged. `WaffleChartItemOrder` exports the two order choices. Combine
+`maxColumns`, `cellSize`, and `gap` with caller-owned `Select` controls for column
+limits and density; interactive cells retain at least a 24px pointer target.
+Keep controls outside a compact summary's link. Inspect Light and Dark with the theme toolbar.
 See [smallest input and API](https://lanej.io/easy-ui/storybook/?path=/docs/components-wafflechart--docs),
 [passive linked summaries](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--compact-linked-summary),
 [shared group connections](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--linked-groups),
+[controlled order and arrangement](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--arrangement-controls),
 [controlled inspection](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--controlled-inspection),
 [unknown and empty data](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--unknown-and-empty),
 [Dark theme](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--dark),
@@ -191,7 +200,6 @@ See [smallest input and API](https://lanej.io/easy-ui/storybook/?path=/docs/comp
 and [arbitrary item counts](https://lanej.io/easy-ui/storybook/?path=/story/components-wafflechart--many-items).
 
 NetworkMap close-ups use a compact drill-in at container widths up to 480px: Back to overview or Escape restores the unchanged overview. Wider cards retain a floating inset. Only the visible map exposes controls and keyboard targets.
-
 
 Use the unframed `ProportionBar` for part-to-whole meaning.
 `presentation="compact" | "expanded" | "bar"` controls layout; the application

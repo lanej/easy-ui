@@ -62,6 +62,19 @@ const noOverflow = async (page) => {
     "cells fit their available group width",
   );
 };
+const chooseArrangement = async (page, label, option) => {
+  await page.getByRole("button", { name: new RegExp(label) }).click();
+  await page.getByRole("option", { name: option, exact: true }).click();
+};
+const arrangementState = (page) =>
+  page.locator("[data-waffle-item]").evaluateAll((cells) =>
+    cells.map((cell) => ({
+      id: cell.getAttribute("data-waffle-item"),
+      group: cell
+        .closest("[data-waffle-group]")
+        ?.getAttribute("data-waffle-group"),
+    })),
+  );
 const connectionsAligned = (page) =>
   page.waitForFunction(() => {
     const frame = document.querySelector('[data-waffle-example="connections"]');
@@ -410,6 +423,136 @@ try {
       await connectionsAligned(page);
       await noOverflow(page);
       await screenshot(page, `reflow-${theme}-${width}-to-280`);
+      await page.setViewportSize({ width, height: 1000 });
+      await visit(page, "arrangement-controls", theme);
+      const arrangementSelection = page.getByRole("button", {
+        name: "Resource 02, Design",
+        exact: true,
+      });
+      await arrangementSelection.click();
+      const selectedElement = await arrangementSelection.elementHandle();
+      const inputState = await arrangementState(page);
+      const originalIds = inputState.map(({ id }) => id);
+      assert.equal(new Set(originalIds).size, 17);
+      assert.equal(
+        await arrangementSelection.getAttribute("aria-pressed"),
+        "true",
+      );
+      await noOverflow(page);
+      await screenshot(page, `arrangement-input-${theme}-${width}`);
+
+      // Programmatic caller state updates must preserve the actual focused cell,
+      // independently of the separate toolbar-keyboard flow below. React Aria's
+      // native select change interface updates controlled state without focusing it.
+      await arrangementSelection.focus();
+      const nativeOrder = page.locator('select:has(option[value="category"])');
+      for (const order of ["category", "input"]) {
+        await nativeOrder.evaluate((select, value) => {
+          select.value = value;
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+        }, order);
+        await page.waitForFunction((value) => {
+          const cells = document.querySelectorAll("[data-waffle-item]");
+          return (
+            cells[value === "category" ? 3 : 1]?.getAttribute(
+              "data-waffle-item",
+            ) === "resource-2"
+          );
+        }, order);
+        assert.ok(
+          await selectedElement.evaluate(
+            (element) =>
+              element.isConnected && element === document.activeElement,
+          ),
+          "native reorder preserves focus on the original selected cell",
+        );
+        assert.equal(
+          await arrangementSelection.getAttribute("aria-pressed"),
+          "true",
+        );
+        assert.equal(
+          await page.locator('[aria-live="polite"] strong').textContent(),
+          "Resource 02",
+        );
+        assert.deepEqual(
+          [...(await arrangementState(page))].sort((a, b) =>
+            a.id.localeCompare(b.id),
+          ),
+          [...inputState].sort((a, b) => a.id.localeCompare(b.id)),
+        );
+      }
+
+      // Use the real Easy UI control's keyboard path, not its hidden native select.
+      const orderControl = page.getByRole("button", { name: /Cell order/ });
+      await orderControl.focus();
+      await orderControl.press("ArrowDown");
+      await page.getByRole("listbox").press("End");
+      await page.getByRole("listbox").press("Enter");
+      const categoryState = await arrangementState(page);
+      assert.deepEqual(
+        categoryState.map(({ id }) => id),
+        [1, 4, 7, 2, 5, 3, 6, 10, 8, 11, 9, 12, 13, 16, 14, 17, 15].map(
+          (id) => `resource-${id}`,
+        ),
+        "category IDs form stable runs inside unchanged memberships",
+      );
+      assert.deepEqual(
+        [...categoryState].sort((a, b) => a.id.localeCompare(b.id)),
+        [...inputState].sort((a, b) => a.id.localeCompare(b.id)),
+        "ordering preserves every ID and relationship membership",
+      );
+      assert.ok(
+        await selectedElement.evaluate((element) => element.isConnected),
+      );
+      assert.equal(
+        await arrangementSelection.getAttribute("aria-pressed"),
+        "true",
+      );
+      assert.ok(await page.getByText("17 items", { exact: true }).isVisible());
+      await screenshot(page, `arrangement-category-${theme}-${width}`);
+
+      const originalArrangementPath = await page
+        .locator('[data-waffle-connection="shared-atlas"]')
+        .getAttribute("d");
+      await chooseArrangement(page, "Maximum columns", "4 columns");
+      await chooseArrangement(page, "Density", "Dense");
+      await connectionsAligned(page);
+      assert.notEqual(
+        await page
+          .locator('[data-waffle-connection="shared-atlas"]')
+          .getAttribute("d"),
+        originalArrangementPath,
+        "anchors update after column and density changes",
+      );
+      assert.ok(
+        await page.locator("[data-waffle-item]").evaluateAll((cells) =>
+          cells.every((cell) => {
+            const rect = cell.getBoundingClientRect();
+            return rect.width >= 24 && rect.height >= 24;
+          }),
+        ),
+        "dense arrangement retains accessible pointer targets",
+      );
+      await noOverflow(page);
+      await screenshot(page, `arrangement-dense-${theme}-${width}`);
+      await chooseArrangement(page, "Maximum columns", "12 columns");
+      await chooseArrangement(page, "Density", "Spacious");
+      await noOverflow(page);
+      await screenshot(page, `arrangement-spacious-${theme}-${width}`);
+      assert.equal(
+        await arrangementSelection.getAttribute("aria-pressed"),
+        "true",
+      );
+      assert.equal(await page.locator("[data-waffle-item]").count(), 17);
+      await chooseArrangement(page, "Cell order", "Input order");
+      assert.deepEqual(
+        (await arrangementState(page)).map(({ id }) => id),
+        originalIds,
+      );
+      await page.setViewportSize({ width: 280, height: 1000 });
+      await noOverflow(page);
+      await connectionsAligned(page);
+      await connectionsAvoidContent(page);
       await page.close();
       results.push({
         theme,
@@ -424,6 +567,10 @@ try {
           "latest-pointer-keyboard-inspection",
           "responsive-anchors",
           "no-clipping",
+          "controlled-category-order",
+          "arrangement-selection-identity",
+          "focused-cell-native-reorder",
+          "columns-density-reflow",
         ],
       });
     }

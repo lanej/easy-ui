@@ -253,7 +253,7 @@ import { BubbleChart, type BubbleChartSeries } from "@easypost/easy-ui/BubbleCha
 import { IntervalChart } from "@easypost/easy-ui/IntervalChart";
 import { PredictionBandChart } from "@easypost/easy-ui/PredictionBandChart";
 import { WaterfallChart } from "@easypost/easy-ui/WaterfallChart";
-import { WaffleChart, type WaffleChartProps, type WaffleChartGroupAnchor } from "@easypost/easy-ui/WaffleChart";
+import { WaffleChart, type WaffleChartProps, type WaffleChartGroupAnchor, type WaffleChartItemOrder } from "@easypost/easy-ui/WaffleChart";
 import { NetworkMapCellDetails, NetworkMapInspectionTrigger, type MapFacilityDetailsContext, type MapOverlayHoverDetailsContext, type MapInspectionTarget } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard, type MetricCardProps, type MetricContentProps } from "@easypost/easy-ui/MetricCard";
 import { InvestigationDetails, resolveSelection, selectEvent, type InvestigationRecords, type InvestigationSelection, type InvestigationDetailsContext, type InvestigationDetailsProps, type InvestigationDetailsLabels } from "@easypost/easy-ui/InvestigationWorkspace";
@@ -299,11 +299,19 @@ const durationReference: DurationDistributionProps = { value: 6.125, unit: "hour
 
 const facility: FacilitySummaryProps = { name: "Packed facility", observations: [{ id: "dwell", health: { assessment: "healthy" }, observation: { value: 6, unit: "h" }, reference: <DurationDistribution {...durationReference} /> }] };
 
+const waffleOrder: WaffleChartItemOrder = "category";
+// @ts-expect-error Ordering uses category identity rather than raw color values.
+const invalidWaffleOrder: WaffleChartItemOrder = "color";
+void invalidWaffleOrder;
 const waffleProps: WaffleChartProps<{ externalId: number }> = {
   accessibilityLabel: "Packed resources",
   items: [{ id: "one", label: "Resource one", categoryId: "design", groupId: "shared", metadata: { externalId: 17 }, draft: true }],
   categories: [{ id: "design", label: "Design", color: "primary.600" }],
   groups: [{ id: "shared", label: "Shared group" }],
+  itemOrder: waffleOrder,
+  maxColumns: 7,
+  cellSize: 16,
+  gap: 2,
   selection: { type: "item", id: "one" },
   highlight: { itemIds: ["one"], groupIds: ["shared"], categoryIds: ["design"] },
   selectedCategoryId: "design",
@@ -449,10 +457,15 @@ for (const load of [require, (specifier) => import(specifier)]) {
   assert.match(waffle, /3 items/);
   assert.match(waffle, /Unknown category: missing/);
   assert.match(waffle, /Shared group/);
+  const ordered = renderToString(React.createElement(WaffleChart, { ...waffleProps, items: waffleItems.slice().reverse(), itemOrder: "category", selection: { type: "item", id: "one" } }));
+  assert.deepEqual([...ordered.matchAll(/data-waffle-item="([^"]+)"/g)].map((match) => match[1]), ["one", "two", "three"]);
+  assert.match(ordered, /aria-pressed="true"/);
   const compact = renderToString(React.createElement(WaffleChart, { ...waffleProps, variant: "compact", onItemActivate: () => {} }));
   assert.equal((compact.match(/data-waffle-item=/g) ?? []).length, 3);
   assert.match(compact, /Draft/);
   assert.doesNotMatch(compact, /<button/);
+  const orderedCompact = renderToString(React.createElement(WaffleChart, { ...waffleProps, items: waffleItems.slice().reverse(), itemOrder: "category", variant: "compact" }));
+  assert.deepEqual([...orderedCompact.matchAll(/data-waffle-item="([^"]+)"/g)].map((match) => match[1]), ["three", "one", "two"]);
 }
 for (const load of [require, (specifier) => import(specifier)]) {
   const { InvestigationDetails, resolveSelection, selectEvent } = await load("@easypost/easy-ui/InvestigationWorkspace");
