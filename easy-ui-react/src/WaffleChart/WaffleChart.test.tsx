@@ -525,6 +525,50 @@ describe("inspection and selection", () => {
     ).toBeNull();
   });
 
+  it.each(["item", "group"] as const)(
+    "omits the clear control for readonly selected %s without changing category emphasis",
+    (type) => {
+      const onCategory = vi.fn();
+      const onSelection = vi.fn();
+      const props = {
+        accessibilityLabel: "Readonly selected parcels",
+        items,
+        categories,
+        groups,
+        selection: {
+          type,
+          id: type === "item" ? items[0].id : groups[0].id,
+        },
+        selectedCategoryId: "ready",
+        onCategorySelectionChange: onCategory,
+      };
+      const { rerender } = render(<WaffleChart {...props} />);
+      const selectedTarget =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("button", { name: "North 2" });
+      expect(selectedTarget).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByText("Selected")).toBeVisible();
+      expect(
+        screen.queryByRole("button", { name: "Clear selection" }),
+      ).toBeNull();
+      expect(screen.getByRole("button", { name: "Ready 2" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      act(() => selectedTarget.focus());
+      fireEvent.click(selectedTarget);
+      expect(selectedTarget).toHaveAttribute("aria-pressed", "true");
+      expect(onCategory).not.toHaveBeenCalled();
+
+      // The clear control becomes available only when the parent accepts changes.
+      rerender(<WaffleChart {...props} onSelectionChange={onSelection} />);
+      fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+      expect(onSelection).toHaveBeenCalledExactlyOnceWith(null);
+      expect(onCategory).toHaveBeenCalledExactlyOnceWith(null);
+    },
+  );
+
   it("updates category and explicit highlights without filtering items or changing totals", () => {
     const onCategory = vi.fn();
     const props = {

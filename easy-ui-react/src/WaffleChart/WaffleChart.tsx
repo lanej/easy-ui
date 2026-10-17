@@ -150,6 +150,8 @@ export function WaffleChart<Metadata = unknown>({
   const selection = validTarget(
     controlledSelection === undefined ? localSelection : controlledSelection,
   );
+  const canChangeSelection =
+    controlledSelection === undefined || !!onSelectionChange;
   const selectedAnnouncement = selection
     ? selection.type === "item"
       ? `Selected item: ${itemMap.get(selection.id)!.label}`
@@ -164,8 +166,7 @@ export function WaffleChart<Metadata = unknown>({
         : null);
   const canDismissInspection =
     (!selection && !!transient) ||
-    (!!selection &&
-      (controlledSelection === undefined || !!onSelectionChange)) ||
+    (!!selection && canChangeSelection) ||
     (selectedCategoryId !== null && !!onCategorySelectionChange);
   const target = interactive ? (selection ?? transient) : null;
   const inspection: WaffleChartInspection<Metadata> | null = target
@@ -618,7 +619,7 @@ export function WaffleChart<Metadata = unknown>({
             <>
               <div className={styles.detailsHeading}>
                 {inspection.pinned ? "Selected" : "Inspecting"}
-                {inspection.pinned && (
+                {inspection.pinned && canChangeSelection && (
                   <button
                     type="button"
                     className={styles.clear}
