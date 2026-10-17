@@ -170,7 +170,10 @@ with `onSelectionChange`; `defaultSelection` initializes local state. Item/group
 hover, focus, and activation callbacks coordinate related views. Arrow keys and
 Home/End move cell focus, Enter/Space or a tap pins inspection, and Escape clears
 it. Hover details remain available across the chart/details area for pointer
-inspection and text selection, and dismiss on area exit or an unhandled Escape.
+inspection and text selection. Focus can move into detail actions and their
+caller-owned Select/Modal portals without pinning; that target stays available
+until focus leaves the combined region or inspection is dismissed. Pointer exit
+does not remove focused controls. Escape returns focus to the inspected origin.
 Supply controlled `selectedCategoryId` / `onCategorySelectionChange` or
 `highlight` item/group/category IDs to emphasize related records without filtering
 the pool or changing totals. Draft, muted, and selected states remain distinct.

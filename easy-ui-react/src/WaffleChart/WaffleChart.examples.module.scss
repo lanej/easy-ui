@@ -158,3 +158,17 @@
     padding-block: 0;
   }
 }
+
+.keyboardExamples {
+  max-inline-size: 440px;
+  min-inline-size: 0;
+  display: grid;
+  gap: 24px;
+}
+
+.keyboardDetails {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  min-inline-size: 0;
+}

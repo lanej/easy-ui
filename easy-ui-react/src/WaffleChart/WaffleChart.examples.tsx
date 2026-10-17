@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Select } from "../Select";
+import { Button } from "../Button";
+import { Modal } from "../Modal";
 import { WaffleChart } from "./WaffleChart";
 import {
   groupedWaffleItems,
@@ -396,6 +398,99 @@ export function ControlledWaffleInspection() {
           </div>
         )}
       />
+    </div>
+  );
+}
+
+function KeyboardDetailControls({
+  label,
+  onPin,
+}: {
+  label: string;
+  onPin: () => void;
+}) {
+  const [period, setPeriod] = useState("daily");
+  return (
+    <div className={styles.keyboardDetails}>
+      <Button onPress={onPin}>Pin {label} details</Button>
+      <Select
+        label={`${label} view`}
+        selectedKey={period}
+        onSelectionChange={(key) => setPeriod(String(key))}
+      >
+        <Select.Option key="daily">Daily</Select.Option>
+        <Select.Option key="weekly">Weekly</Select.Option>
+      </Select>
+      <span>{period === "daily" ? "Daily" : "Weekly"} synthetic record</span>
+      <Modal.Trigger>
+        <Button>Open {label} record</Button>
+        <Modal>
+          <Modal.Header>{label} record</Modal.Header>
+          <Modal.Body>
+            <p>This caller-owned record contains synthetic information.</p>
+            <Select label="Record interval" defaultSelectedKey="daily">
+              <Select.Option key="daily">Daily</Select.Option>
+              <Select.Option key="weekly">Weekly</Select.Option>
+            </Select>
+          </Modal.Body>
+        </Modal>
+      </Modal.Trigger>
+    </div>
+  );
+}
+
+/** Unpinned keyboard details, including caller-owned portalled controls. */
+export function KeyboardWaffleDetails() {
+  const [itemSelection, setItemSelection] =
+    useState<WaffleChartSelection>(null);
+  const [groupSelection, setGroupSelection] =
+    useState<WaffleChartSelection>(null);
+  return (
+    <div className={styles.keyboardExamples}>
+      <h3 className={styles.heading}>Keyboard-accessible detail controls</h3>
+      <p className={styles.intro}>
+        Focus a cell or empty group, then Tab into its controls without pinning.
+        Select menus and record dialogs keep the inspected target available.
+      </p>
+      <section data-waffle-keyboard-example="item">
+        <WaffleChart
+          accessibilityLabel="Keyboard resource inspection"
+          items={waffleItems.slice(0, 1)}
+          categories={waffleCategories}
+          showLegend={false}
+          selection={itemSelection}
+          onSelectionChange={setItemSelection}
+          renderDetails={({ target }) => (
+            <KeyboardDetailControls
+              label="resource"
+              onPin={() => setItemSelection(target)}
+            />
+          )}
+        />
+        <a href="#keyboard-inspection-notes">Continue past resource details</a>
+      </section>
+      <section data-waffle-keyboard-example="group">
+        <WaffleChart
+          accessibilityLabel="Keyboard empty-group inspection"
+          items={[]}
+          categories={waffleCategories}
+          groups={[{ id: "empty", label: "Empty synthetic group" }]}
+          showLegend={false}
+          selection={groupSelection}
+          onSelectionChange={setGroupSelection}
+          renderDetails={({ target }) => (
+            <KeyboardDetailControls
+              label="group"
+              onPin={() => setGroupSelection(target)}
+            />
+          )}
+        />
+        <a href="#keyboard-inspection-notes">Continue past group details</a>
+      </section>
+      <p id="keyboard-inspection-notes">
+        Escape dismisses inspection and returns focus to its cell or caption. A
+        second Escape is available to an enclosing overlay.
+      </p>
     </div>
   );
 }

@@ -862,7 +862,7 @@ describe("passive variants", () => {
 });
 
 describe("inspection and selection", () => {
-  it("reports original item metadata for transient hover, focus and pinned activation", () => {
+  it("reports original item metadata for transient hover, focus and pinned activation", async () => {
     const onHover = vi.fn();
     const onFocus = vi.fn();
     const onActivate = vi.fn();
@@ -909,7 +909,7 @@ describe("inspection and selection", () => {
       item: items[1],
       pinned: false,
     });
-    act(() => second.blur());
+    await act(async () => second.blur());
     expect(onFocus).toHaveBeenLastCalledWith(null);
     fireEvent.click(first);
     expect(onSelection).toHaveBeenLastCalledWith({
@@ -1286,7 +1286,7 @@ describe("inspection and selection", () => {
     expect(itemButton("Parcel C")).toHaveAttribute("data-muted", "true");
   });
 
-  it("reports group hover, focus and activation while marking exactly its members", () => {
+  it("reports group hover, focus and activation while marking exactly its members", async () => {
     const onHover = vi.fn();
     const onFocus = vi.fn();
     const onActivate = vi.fn();
@@ -1322,7 +1322,7 @@ describe("inspection and selection", () => {
     expect(onHover).toHaveBeenLastCalledWith(null);
     act(() => button.focus());
     expect(onFocus).toHaveBeenLastCalledWith(groups[0]);
-    act(() => button.blur());
+    await act(async () => button.blur());
     expect(onFocus).toHaveBeenLastCalledWith(null);
     fireEvent.click(button);
     expect(onActivate).toHaveBeenLastCalledWith(groups[0]);
@@ -1344,6 +1344,839 @@ describe("inspection and selection", () => {
     expect(onFocus).toHaveBeenLastCalledWith(null);
     expect(onHover).toHaveBeenLastCalledWith(null);
     expect(group).not.toHaveAttribute("data-selected");
+  });
+});
+
+describe("combined trigger and details focus", () => {
+  beforeEach(() => {
+    vi.stubGlobal("PointerEvent", MouseEvent);
+  });
+
+  it.each([false, true])(
+    "clears the previous callback kind when Tab moves group to item to group (custom details=%s)",
+    async (customDetails) => {
+      const changes: (WaffleChartItem | WaffleChartGroup | null)[] = [];
+      const onItemFocus = vi.fn((item: WaffleChartItem | null) =>
+        changes.push(item),
+      );
+      const onGroupFocus = vi.fn((group: WaffleChartGroup | null) =>
+        changes.push(group),
+      );
+      const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+        <button type="button">
+          Inspect cross-kind {inspection.item?.label ?? inspection.group?.label}
+        </button>
+      ));
+      const { user } = render(
+        <WaffleChart
+          accessibilityLabel="Cross-kind keyboard focus"
+          items={items}
+          categories={categories}
+          groups={groups}
+          showLegend={false}
+          onItemFocusChange={onItemFocus}
+          onGroupFocusChange={onGroupFocus}
+          renderDetails={customDetails ? renderDetails : undefined}
+        />,
+      );
+      const north = screen.getByRole("button", { name: "North 2" });
+      const first = itemButton("Parcel A");
+      const south = screen.getByRole("button", { name: "South 1" });
+      await user.tab();
+      await act(async () => {});
+      expect(north).toHaveFocus();
+      expect(onGroupFocus).toHaveBeenCalledExactlyOnceWith(groups[0]);
+      await user.tab();
+      await act(async () => {});
+      expect(first).toHaveFocus();
+      expect(onGroupFocus.mock.calls).toEqual([[groups[0]], [null]]);
+      expect(onItemFocus).toHaveBeenCalledExactlyOnceWith(items[0]);
+      expect(onItemFocus.mock.lastCall![0]).toBe(items[0]);
+      if (customDetails) {
+        expect(renderDetails.mock.lastCall![0]).toEqual({
+          target: { type: "item", id: items[0].id },
+          item: items[0],
+          group: groups[0],
+          pinned: false,
+          totalCount: items.length,
+        });
+      }
+      await user.tab();
+      await act(async () => {});
+      expect(south).toHaveFocus();
+      expect(onItemFocus.mock.calls).toEqual([[items[0]], [null]]);
+      expect(onGroupFocus.mock.calls).toEqual([
+        [groups[0]],
+        [null],
+        [groups[1]],
+      ]);
+      expect(onGroupFocus.mock.lastCall![0]).toBe(groups[1]);
+      expect(changes).toEqual([groups[0], null, items[0], null, groups[1]]);
+      if (customDetails) {
+        expect(renderDetails.mock.lastCall![0]).toEqual({
+          target: { type: "group", id: groups[1].id },
+          item: undefined,
+          group: groups[1],
+          pinned: false,
+          totalCount: items.length,
+        });
+      }
+    },
+  );
+
+  it.each(["item", "group"] as const)(
+    "clears the focused %s callback when ShiftTab leaves its details for a different origin kind",
+    async (type) => {
+      const onItemFocus = vi.fn();
+      const onGroupFocus = vi.fn();
+      const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+        <button
+          key={`${inspection.target.type}:${inspection.target.id}`}
+          type="button"
+        >
+          Cross-kind detail {inspection.item?.label ?? inspection.group?.label}
+        </button>
+      ));
+      const { user } = render(
+        <WaffleChart
+          accessibilityLabel="Cross-kind details exit"
+          items={[items[0]]}
+          categories={categories}
+          groups={type === "item" ? groups : [groups[0]]}
+          showLegend={false}
+          onItemFocusChange={onItemFocus}
+          onGroupFocusChange={onGroupFocus}
+          renderDetails={renderDetails}
+        />,
+      );
+      const origin =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("button", { name: "North 1" });
+      const original = type === "item" ? items[0] : groups[0];
+      act(() => origin.focus());
+      const action = screen.getByRole("button", {
+        name: `Cross-kind detail ${original.label}`,
+      });
+      act(() => action.focus());
+      expect(action).toHaveFocus();
+      const oldFocus = type === "item" ? onItemFocus : onGroupFocus;
+      expect(oldFocus).not.toHaveBeenCalledWith(null);
+      await user.tab({ shift: true });
+      await act(async () => {});
+      const next =
+        type === "item"
+          ? screen.getByRole("button", { name: "South 0" })
+          : itemButton("Parcel A");
+      expect(next).toHaveFocus();
+      expect(oldFocus.mock.calls).toEqual([[original], [null]]);
+      const nextObject = type === "item" ? groups[1] : items[0];
+      expect(
+        type === "item" ? onGroupFocus : onItemFocus,
+      ).toHaveBeenCalledExactlyOnceWith(nextObject);
+      expect(renderDetails.mock.lastCall![0]).toEqual({
+        target: { type: type === "item" ? "group" : "item", id: nextObject.id },
+        item: type === "group" ? items[0] : undefined,
+        group: type === "item" ? groups[1] : groups[0],
+        pinned: false,
+        totalCount: 1,
+      });
+      expect(action).not.toBeInTheDocument();
+    },
+  );
+
+  it.each(["item", "group"] as const)(
+    "tabs from an unpinned %s into multiple details controls and back without losing inspection",
+    async (type) => {
+      const suppliedItems = type === "item" ? [items[0]] : [];
+      const suppliedGroups = type === "group" ? [groups[0]] : undefined;
+      const onItemFocus = vi.fn();
+      const onGroupFocus = vi.fn();
+      const onHover = vi.fn();
+      const onActivate = vi.fn();
+      const onSelection = vi.fn();
+      const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+        <>
+          <button type="button">First inspection action</button>
+          <button type="button">Second inspection action</button>
+          <span>
+            Metadata:{" "}
+            {inspection.item?.metadata
+              ? (inspection.item.metadata as { externalId: number }).externalId
+              : (inspection.group?.metadata as { connection: string })
+                  .connection}
+          </span>
+        </>
+      ));
+      const { user } = render(
+        <>
+          <button type="button">Before chart</button>
+          <WaffleChart
+            accessibilityLabel="Keyboard-only inspection"
+            items={suppliedItems}
+            categories={categories}
+            groups={suppliedGroups}
+            showLegend={false}
+            onItemFocusChange={onItemFocus}
+            onGroupFocusChange={onGroupFocus}
+            onItemHoverChange={onHover}
+            onGroupHoverChange={onHover}
+            onItemActivate={onActivate}
+            onGroupActivate={onActivate}
+            onSelectionChange={onSelection}
+            renderDetails={renderDetails}
+          />
+          <button type="button">After chart</button>
+        </>,
+      );
+      await user.tab();
+      await act(async () => {});
+      expect(
+        screen.getByRole("button", { name: "Before chart" }),
+      ).toHaveFocus();
+      await user.tab();
+      await act(async () => {});
+      const origin =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("button", { name: "North 0" });
+      const onFocus = type === "item" ? onItemFocus : onGroupFocus;
+      const original = type === "item" ? items[0] : groups[0];
+      expect(origin).toHaveFocus();
+      expect(onFocus).toHaveBeenLastCalledWith(original);
+      expect(renderDetails.mock.lastCall![0]).toEqual({
+        target: { type, id: original.id },
+        item: type === "item" ? items[0] : undefined,
+        group: type === "group" ? groups[0] : undefined,
+        pinned: false,
+        totalCount: suppliedItems.length,
+      });
+      expect(
+        type === "item"
+          ? renderDetails.mock.lastCall![0].item
+          : renderDetails.mock.lastCall![0].group,
+      ).toBe(original);
+      expect(
+        screen.getByText(`Metadata: ${type === "item" ? "17" : "n-1"}`),
+      ).toBeVisible();
+      const first = screen.getByRole("button", {
+        name: "First inspection action",
+      });
+      const second = screen.getByRole("button", {
+        name: "Second inspection action",
+      });
+      await user.tab();
+      await act(async () => {});
+      expect(first).toHaveFocus();
+      expect(first).toBeInTheDocument();
+      expect(onFocus).not.toHaveBeenCalledWith(null);
+      await user.tab();
+      await act(async () => {});
+      expect(second).toHaveFocus();
+      await user.tab({ shift: true });
+      await act(async () => {});
+      expect(first).toHaveFocus();
+      await user.tab({ shift: true });
+      await act(async () => {});
+      expect(origin).toHaveFocus();
+      expect(onFocus).not.toHaveBeenCalledWith(null);
+      expect(screen.getByText("Inspecting")).toBeVisible();
+      expect(origin).toHaveAttribute("aria-pressed", "false");
+      await user.tab();
+      await act(async () => {});
+      expect(first).toHaveFocus();
+      await user.tab();
+      await act(async () => {});
+      expect(second).toHaveFocus();
+      await user.tab();
+      await act(async () => {});
+      expect(screen.getByRole("button", { name: "After chart" })).toHaveFocus();
+      expect(onFocus).toHaveBeenLastCalledWith(null);
+      expect(
+        onFocus.mock.calls.filter(([value]) => value === null),
+      ).toHaveLength(1);
+      expect(first).not.toBeInTheDocument();
+      expect(second).not.toBeInTheDocument();
+      expect(
+        screen.getByText("Focus or select a cell or group to inspect it"),
+      ).toBeVisible();
+      expect(onHover).not.toHaveBeenCalled();
+      expect(onActivate).not.toHaveBeenCalled();
+      expect(onSelection).not.toHaveBeenCalled();
+      expect(
+        type === "item" ? onGroupFocus : onItemFocus,
+      ).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["item", "group"] as const)(
+    "restores the unpinned keyboard %s after Escape in details without reopening on the next Escape",
+    async (type) => {
+      const onOuterKeyDown = vi.fn();
+      const onFocus = vi.fn();
+      const { user } = render(
+        <div onKeyDown={onOuterKeyDown}>
+          <WaffleChart
+            accessibilityLabel="Keyboard details Escape"
+            items={type === "item" ? [items[0]] : []}
+            categories={categories}
+            groups={type === "group" ? [groups[0]] : undefined}
+            showLegend={false}
+            onItemFocusChange={type === "item" ? onFocus : undefined}
+            onGroupFocusChange={type === "group" ? onFocus : undefined}
+            renderDetails={() => (
+              <button type="button">Keyboard detail action</button>
+            )}
+          />
+        </div>,
+      );
+      await user.tab();
+      await act(async () => {});
+      const origin =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("button", { name: "North 0" });
+      expect(origin).toHaveFocus();
+      await user.tab();
+      await act(async () => {});
+      const action = screen.getByRole("button", {
+        name: "Keyboard detail action",
+      });
+      expect(action).toHaveFocus();
+      onOuterKeyDown.mockClear();
+      await user.keyboard("{Escape}");
+      expect(origin).toHaveFocus();
+      expect(action).not.toBeInTheDocument();
+      expect(onFocus).toHaveBeenLastCalledWith(null);
+      expect(onOuterKeyDown).not.toHaveBeenCalled();
+      expect(screen.queryByText("Inspecting")).toBeNull();
+      await user.keyboard("{Escape}");
+      expect(origin).toHaveFocus();
+      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+      expect(
+        screen.queryByRole("button", { name: "Keyboard detail action" }),
+      ).toBeNull();
+    },
+  );
+
+  it.each([
+    { originType: "item", hoverType: "item" },
+    { originType: "item", hoverType: "group" },
+    { originType: "group", hoverType: "item" },
+    { originType: "group", hoverType: "group" },
+  ] as const)(
+    "keeps focused $originType details authoritative until Tab leaves, then reports the waiting $hoverType hover",
+    async ({ originType, hoverType }) => {
+      const onItemFocus = vi.fn();
+      const onGroupFocus = vi.fn();
+      const onItemHover = vi.fn();
+      const onGroupHover = vi.fn();
+      const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+        <div key={`${inspection.target.type}:${inspection.target.id}`}>
+          <button type="button">
+            Inspect {inspection.item?.label ?? inspection.group?.label}
+          </button>
+          <button type="button">Next detail action</button>
+        </div>
+      ));
+      const { user } = render(
+        <>
+          <WaffleChart
+            accessibilityLabel="Details focus authority"
+            items={items}
+            categories={categories}
+            groups={groups}
+            showLegend={false}
+            onItemFocusChange={onItemFocus}
+            onGroupFocusChange={onGroupFocus}
+            onItemHoverChange={onItemHover}
+            onGroupHoverChange={onGroupHover}
+            renderDetails={renderDetails}
+          />
+          <button type="button">Outside details</button>
+        </>,
+      );
+      const origin =
+        originType === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("button", { name: "North 2" });
+      const original = originType === "item" ? items[0] : groups[0];
+      const onFocus = originType === "item" ? onItemFocus : onGroupFocus;
+      act(() => origin.focus());
+      const action = screen.getByRole("button", {
+        name: `Inspect ${original.label}`,
+      });
+      act(() => action.focus());
+      expect(action).toHaveFocus();
+      const next =
+        hoverType === "item"
+          ? itemButton("Parcel C")
+          : screen.getByRole("group", { name: "South" });
+      fireEvent.pointerLeave(action, { relatedTarget: next });
+      fireEvent.pointerEnter(next, { relatedTarget: action });
+      expect(action).toHaveFocus();
+      expect(action).toBeInTheDocument();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: { type: originType, id: original.id },
+        pinned: false,
+      });
+      expect(onFocus).toHaveBeenLastCalledWith(original);
+      expect(onFocus).not.toHaveBeenCalledWith(null);
+      expect(onItemHover).not.toHaveBeenCalledWith(items[2]);
+      expect(onGroupHover).not.toHaveBeenCalledWith(groups[1]);
+      await user.tab();
+      await act(async () => {});
+      expect(
+        screen.getByRole("button", { name: "Next detail action" }),
+      ).toHaveFocus();
+      expect(renderDetails.mock.lastCall![0].target).toEqual({
+        type: originType,
+        id: original.id,
+      });
+      await user.tab();
+      await act(async () => {});
+      expect(
+        screen.getByRole("button", { name: "Outside details" }),
+      ).toHaveFocus();
+      expect(onFocus).toHaveBeenLastCalledWith(null);
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: {
+          type: hoverType,
+          id: hoverType === "item" ? items[2].id : groups[1].id,
+        },
+        pinned: false,
+      });
+      expect(
+        hoverType === "item"
+          ? renderDetails.mock.lastCall![0].item
+          : renderDetails.mock.lastCall![0].group,
+      ).toBe(hoverType === "item" ? items[2] : groups[1]);
+      expect(onGroupHover).toHaveBeenLastCalledWith(groups[1]);
+      if (hoverType === "item")
+        expect(onItemHover).toHaveBeenLastCalledWith(items[2]);
+    },
+  );
+
+  it.each([
+    { focusType: "item", hoverType: "item" },
+    { focusType: "item", hoverType: "group" },
+    { focusType: "group", hoverType: "item" },
+    { focusType: "group", hoverType: "group" },
+  ] as const)(
+    "captures the displayed hovered $hoverType when details take focus from a different $focusType",
+    ({ focusType, hoverType }) => {
+      const onItemFocus = vi.fn();
+      const onGroupFocus = vi.fn();
+      const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+        <button
+          key={`${inspection.target.type}:${inspection.target.id}`}
+          type="button"
+        >
+          Capture {inspection.item?.label ?? inspection.group?.label}
+        </button>
+      ));
+      render(
+        <WaffleChart
+          accessibilityLabel="Displayed inspection focus"
+          items={items}
+          categories={categories}
+          groups={groups}
+          onItemFocusChange={onItemFocus}
+          onGroupFocusChange={onGroupFocus}
+          renderDetails={renderDetails}
+        />,
+      );
+      const initial =
+        focusType === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("button", { name: "North 2" });
+      act(() => initial.focus());
+      const hovered =
+        hoverType === "item"
+          ? itemButton("Parcel C")
+          : screen.getByRole("group", { name: "South" });
+      const inspected = hoverType === "item" ? items[2] : groups[1];
+      fireEvent.pointerEnter(hovered);
+      expect(initial).toHaveFocus();
+      const action = screen.getByRole("button", {
+        name: `Capture ${inspected.label}`,
+      });
+      act(() => action.focus());
+      expect(action).toHaveFocus();
+      expect(
+        hoverType === "item" ? onItemFocus : onGroupFocus,
+      ).toHaveBeenLastCalledWith(inspected);
+      fireEvent.pointerLeave(hovered, { relatedTarget: document.body });
+      expect(action).toHaveFocus();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: { type: hoverType, id: inspected.id },
+        pinned: false,
+      });
+      expect(
+        hoverType === "item"
+          ? renderDetails.mock.lastCall![0].item
+          : renderDetails.mock.lastCall![0].group,
+      ).toBe(inspected);
+      expect(fireEvent.keyDown(action, { key: "Escape" })).toBe(false);
+      expect(
+        hoverType === "item"
+          ? hovered
+          : screen.getByRole("button", { name: "South 1" }),
+      ).toHaveFocus();
+      expect(action).not.toBeInTheDocument();
+      expect(screen.queryByText("Inspecting")).toBeNull();
+    },
+  );
+
+  it.each(["item", "group"] as const)(
+    "keeps a pinned %s authoritative when a custom details control captures another trigger's focus",
+    async (type) => {
+      const selected = type === "item" ? items[0] : groups[0];
+      const onSelection = vi.fn();
+      const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+        <button
+          key={`${inspection.target.type}:${inspection.target.id}`}
+          type="button"
+        >
+          Pinned {inspection.item?.label ?? inspection.group?.label}
+        </button>
+      ));
+      const { user } = render(
+        <>
+          <WaffleChart
+            accessibilityLabel="Pinned combined focus"
+            items={items}
+            categories={categories}
+            groups={groups}
+            defaultSelection={{ type, id: selected.id }}
+            showLegend={false}
+            onSelectionChange={onSelection}
+            renderDetails={renderDetails}
+          />
+          <button type="button">After pinned details</button>
+        </>,
+      );
+      act(() => itemButton("Parcel C").focus());
+      const action = screen.getByRole("button", {
+        name: `Pinned ${selected.label}`,
+      });
+      act(() => action.focus());
+      expect(action).toHaveFocus();
+      fireEvent.pointerEnter(itemButton("Parcel B"));
+      expect(action).toHaveFocus();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: { type, id: selected.id },
+        pinned: true,
+      });
+      await user.tab();
+      await act(async () => {});
+      expect(
+        screen.getByRole("button", { name: "After pinned details" }),
+      ).toHaveFocus();
+      expect(action).toBeVisible();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: { type, id: selected.id },
+        pinned: true,
+      });
+      expect(onSelection).not.toHaveBeenCalled();
+    },
+  );
+
+  it("preserves focused details through item membership and metadata updates while its origin remounts", () => {
+    const onFocus = vi.fn();
+    const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+      <button type="button">Updated inspection {inspection.item?.label}</button>
+    ));
+    const props = {
+      accessibilityLabel: "Updated focused details",
+      categories,
+      groups,
+      showLegend: false,
+      onItemFocusChange: onFocus,
+      renderDetails,
+    };
+    const { rerender } = render(<WaffleChart {...props} items={items} />);
+    const origin = itemButton("Parcel A");
+    act(() => origin.focus());
+    const action = screen.getByRole("button", {
+      name: "Updated inspection Parcel A",
+    });
+    act(() => action.focus());
+    expect(action).toHaveFocus();
+    const updated = {
+      ...items[0],
+      groupId: "south",
+      metadata: { externalId: 71 },
+    };
+    rerender(<WaffleChart {...props} items={[updated, items[1], items[2]]} />);
+    expect(origin).not.toBeInTheDocument();
+    expect(action).toHaveFocus();
+    expect(onFocus).not.toHaveBeenCalledWith(null);
+    expect(renderDetails.mock.lastCall![0]).toMatchObject({
+      target: { type: "item", id: updated.id },
+      item: updated,
+      group: groups[1],
+      pinned: false,
+    });
+    expect(renderDetails.mock.lastCall![0].item).toBe(updated);
+    expect(fireEvent.keyDown(action, { key: "Escape" })).toBe(false);
+    expect(itemButton("Parcel A")).toHaveFocus();
+    expect(action).not.toBeInTheDocument();
+    expect(onFocus).toHaveBeenLastCalledWith(null);
+  });
+
+  it.each([
+    { type: "item", change: "removal" },
+    { type: "group", change: "removal" },
+    { type: "item", change: "passive" },
+    { type: "group", change: "passive" },
+    { type: "item", change: "compact" },
+    { type: "group", change: "compact" },
+  ] as const)(
+    "releases focused $type details after $change and does not revive them when restored",
+    ({ type, change }) => {
+      const onItemFocus = vi.fn();
+      const onGroupFocus = vi.fn();
+      const props = {
+        accessibilityLabel: "Focused details lifecycle",
+        items,
+        categories,
+        groups,
+        showLegend: false,
+        onItemFocusChange: onItemFocus,
+        onGroupFocusChange: onGroupFocus,
+        renderDetails: () => (
+          <button type="button">Lifecycle detail action</button>
+        ),
+      };
+      const { rerender } = render(<WaffleChart {...props} />);
+      const origin =
+        type === "item"
+          ? itemButton("Parcel A")
+          : screen.getByRole("button", { name: "North 2" });
+      const onFocus = type === "item" ? onItemFocus : onGroupFocus;
+      act(() => origin.focus());
+      const action = screen.getByRole("button", {
+        name: "Lifecycle detail action",
+      });
+      act(() => action.focus());
+      expect(action).toHaveFocus();
+      expect(onFocus).not.toHaveBeenCalledWith(null);
+      const changedProps =
+        change === "removal"
+          ? type === "item"
+            ? { items: items.slice(1) }
+            : { groups: groups.slice(1) }
+          : change === "passive"
+            ? { interaction: "none" as const }
+            : { variant: "compact" as const };
+      rerender(<WaffleChart {...props} {...changedProps} />);
+      expect(action).not.toBeInTheDocument();
+      expect(onFocus).toHaveBeenLastCalledWith(null);
+      expect(screen.queryByText("Inspecting")).toBeNull();
+      rerender(<WaffleChart {...props} />);
+      expect(
+        screen.queryByRole("button", { name: "Lifecycle detail action" }),
+      ).toBeNull();
+      expect(screen.queryByText("Inspecting")).toBeNull();
+      expect(
+        screen.getByText("Focus or select a cell or group to inspect it"),
+      ).toBeVisible();
+      expect(onFocus.mock.calls).toEqual([
+        [type === "item" ? items[0] : groups[0]],
+        [null],
+      ]);
+    },
+  );
+
+  describe("with caller-rendered library portals", () => {
+    let restoreStyle: () => void;
+    let restoreIntersection: () => void;
+
+    beforeEach(() => {
+      restoreStyle = mockGetComputedStyle();
+      restoreIntersection = mockIntersectionObserver();
+      disableReactTransitionGroup();
+    });
+
+    afterEach(() => {
+      cleanup();
+      restoreIntersection();
+      restoreStyle();
+      enableReactTransitionGroup();
+    });
+
+    describe.each(["Select", "Modal"] as const)("with owned %s", (kind) => {
+      it.each([
+        { type: "item", pinned: false },
+        { type: "group", pinned: false },
+        { type: "item", pinned: true },
+        { type: "group", pinned: true },
+      ] as const)(
+        "keeps $type details and callbacks through portal focus, close and restoration (pinned=$pinned)",
+        async ({ type, pinned }) => {
+          const original = type === "item" ? items[0] : groups[0];
+          const onItemFocus = vi.fn();
+          const onGroupFocus = vi.fn();
+          const onItemHover = vi.fn();
+          const onGroupHover = vi.fn();
+          const onSelection = vi.fn();
+          const renderDetails = vi.fn((inspection: WaffleChartInspection) => (
+            <div key={`${inspection.target.type}:${inspection.target.id}`}>
+              <span>
+                Portal inspection:{" "}
+                {inspection.item?.label ?? inspection.group?.label}
+              </span>
+              {kind === "Select" ? (
+                <Select label="Inspection view" defaultSelectedKey="daily">
+                  <Select.Option key="daily">Daily</Select.Option>
+                  <Select.Option key="weekly">Weekly</Select.Option>
+                </Select>
+              ) : (
+                <Modal.Trigger>
+                  <Button>Open inspection modal</Button>
+                  <Modal>
+                    <Modal.Header>Inspection modal</Modal.Header>
+                    <Modal.Body>
+                      <button type="button">First modal detail action</button>
+                      <button type="button">Second modal detail action</button>
+                    </Modal.Body>
+                  </Modal>
+                </Modal.Trigger>
+              )}
+            </div>
+          ));
+          const { user } = render(
+            <>
+              <WaffleChart
+                accessibilityLabel="Owned inspection portal"
+                items={items}
+                categories={categories}
+                groups={groups}
+                showLegend={false}
+                defaultSelection={pinned ? { type, id: original.id } : null}
+                onItemFocusChange={onItemFocus}
+                onGroupFocusChange={onGroupFocus}
+                onItemHoverChange={onItemHover}
+                onGroupHoverChange={onGroupHover}
+                onSelectionChange={onSelection}
+                renderDetails={renderDetails}
+              />
+              <button type="button">After owned portal details</button>
+            </>,
+          );
+          const root = screen.getByRole("group", {
+            name: "Owned inspection portal",
+          });
+          const origin =
+            type === "item"
+              ? itemButton("Parcel A")
+              : screen.getByRole("button", { name: "North 2" });
+          const waitingHover =
+            type === "item"
+              ? itemButton("Parcel C")
+              : screen.getByRole("group", { name: "South" });
+          const outside = screen.getByRole("button", {
+            name: "After owned portal details",
+          });
+          const onFocus = type === "item" ? onItemFocus : onGroupFocus;
+          act(() => origin.focus());
+          const trigger = screen.getByRole("button", {
+            name:
+              kind === "Select"
+                ? "Daily Inspection view"
+                : "Open inspection modal",
+          });
+          act(() => trigger.focus());
+          expect(trigger).toHaveFocus();
+          await user.keyboard("{Enter}");
+          await act(async () => vi.advanceTimersByTime(100));
+          const portal = screen.getByRole(
+            kind === "Select" ? "listbox" : "dialog",
+          );
+          expect(root.contains(portal)).toBe(false);
+          expect(portal.contains(document.activeElement)).toBe(true);
+          expect(document.body).not.toHaveFocus();
+          expect(trigger).toBeInTheDocument();
+          expect(onFocus).not.toHaveBeenCalledWith(null);
+          expect(renderDetails.mock.lastCall![0]).toMatchObject({
+            target: { type, id: original.id },
+            pinned,
+          });
+          expect(
+            type === "item"
+              ? renderDetails.mock.lastCall![0].item
+              : renderDetails.mock.lastCall![0].group,
+          ).toBe(original);
+          fireEvent.pointerEnter(waitingHover);
+          expect(onItemHover).not.toHaveBeenCalledWith(items[2]);
+          expect(onGroupHover).not.toHaveBeenCalledWith(groups[1]);
+          expect(renderDetails.mock.lastCall![0].target).toEqual({
+            type,
+            id: original.id,
+          });
+          expect(portal.contains(document.activeElement)).toBe(true);
+          if (kind === "Select") {
+            await user.keyboard("{ArrowDown}");
+            expect(portal.contains(document.activeElement)).toBe(true);
+          } else {
+            const first = within(portal).getByRole("button", {
+              name: "First modal detail action",
+            });
+            act(() => first.focus());
+            expect(first).toHaveFocus();
+            await user.tab();
+            await act(async () => {});
+            expect(
+              within(portal).getByRole("button", {
+                name: "Second modal detail action",
+              }),
+            ).toHaveFocus();
+          }
+          await act(async () => vi.advanceTimersByTime(100));
+          expect(onFocus).not.toHaveBeenCalledWith(null);
+          expect(renderDetails.mock.lastCall![0].target).toEqual({
+            type,
+            id: original.id,
+          });
+          await user.keyboard("{Escape}");
+          expect(
+            screen.queryByRole(kind === "Select" ? "listbox" : "dialog"),
+          ).toBeNull();
+          await act(async () => vi.advanceTimersByTime(100));
+          expect(trigger).toHaveFocus();
+          expect(onFocus).not.toHaveBeenCalledWith(null);
+          expect(renderDetails.mock.lastCall![0]).toMatchObject({
+            target: { type, id: original.id },
+            pinned,
+          });
+          expect(onSelection).not.toHaveBeenCalled();
+          fireEvent.pointerLeave(waitingHover, {
+            relatedTarget: document.body,
+          });
+          expect(trigger).toHaveFocus();
+          expect(onFocus).not.toHaveBeenCalledWith(null);
+          await user.tab();
+          await act(async () => {});
+          await act(async () => vi.advanceTimersByTime(100));
+          expect(outside).toHaveFocus();
+          expect(onFocus).toHaveBeenLastCalledWith(null);
+          if (pinned) {
+            expect(trigger).toBeVisible();
+            expect(renderDetails.mock.lastCall![0]).toMatchObject({
+              target: { type, id: original.id },
+              pinned: true,
+            });
+          } else {
+            expect(trigger).not.toBeInTheDocument();
+            expect(
+              screen.getByText("Focus or select a cell or group to inspect it"),
+            ).toBeVisible();
+          }
+          expect(onSelection).not.toHaveBeenCalled();
+        },
+      );
+    });
   });
 });
 
@@ -1527,7 +2360,9 @@ describe("hoverable inspection", () => {
         target: { type, id: type === "item" ? items[0].id : groups[0].id },
         pinned: false,
       });
-      expect(onFocus).not.toHaveBeenCalled();
+      expect(onFocus).toHaveBeenCalledExactlyOnceWith(
+        type === "item" ? items[0] : groups[0],
+      );
 
       expect(fireEvent.keyDown(action, { key: "Escape" })).toBe(false);
       expect(returnControl).toHaveFocus();
@@ -1535,7 +2370,10 @@ describe("hoverable inspection", () => {
       expect(
         screen.getByText("Focus or select a cell or group to inspect it"),
       ).toBeVisible();
-      expect(onFocus).toHaveBeenCalledExactlyOnceWith(null);
+      expect(onFocus.mock.calls).toEqual([
+        [type === "item" ? items[0] : groups[0]],
+        [null],
+      ]);
       expect(onOuterKeyDown).not.toHaveBeenCalled();
       expect(fireEvent.keyDown(returnControl, { key: "Escape" })).toBe(true);
       expect(onOuterKeyDown).toHaveBeenCalledOnce();
@@ -1544,42 +2382,39 @@ describe("hoverable inspection", () => {
   );
 
   it.each(["item", "group"] as const)(
-    "returns focus to an unpinned hovered %s when pointer exit dismisses a focused details control",
-    (type) => {
-      const onOuterKeyDown = vi.fn();
+    "keeps an unpinned %s details control focused across root pointer exit until focus leaves",
+    async (type) => {
       const onItemHover = vi.fn();
       const onGroupHover = vi.fn();
       const onFocus = vi.fn();
       const onCategory = vi.fn();
       const onSelection = vi.fn();
-      const props = {
-        accessibilityLabel: "Pointer exit details focus",
-        items,
-        categories,
-        groups,
-        onItemHoverChange: onItemHover,
-        onGroupHoverChange: onGroupHover,
-        onItemFocusChange: onFocus,
-        onGroupFocusChange: onFocus,
-        onCategorySelectionChange: onCategory,
-        onSelectionChange: onSelection,
-        renderDetails: ({ item, group }: WaffleChartInspection) => (
-          <button type="button">Details: {item?.label ?? group?.label}</button>
-        ),
-      };
-      const { rerender } = render(
-        <div onKeyDown={onOuterKeyDown}>
-          <WaffleChart {...props} selectedCategoryId="ready" />
-        </div>,
+      const renderDetails = vi.fn(({ item, group }: WaffleChartInspection) => (
+        <button type="button">Details: {item?.label ?? group?.label}</button>
+      ));
+      const { user } = render(
+        <>
+          <WaffleChart
+            accessibilityLabel="Pointer exit details focus"
+            items={items}
+            categories={categories}
+            groups={groups}
+            selectedCategoryId="ready"
+            onItemHoverChange={onItemHover}
+            onGroupHoverChange={onGroupHover}
+            onItemFocusChange={type === "item" ? onFocus : undefined}
+            onGroupFocusChange={type === "group" ? onFocus : undefined}
+            onCategorySelectionChange={onCategory}
+            onSelectionChange={onSelection}
+            renderDetails={renderDetails}
+          />
+          <button type="button">After focused details</button>
+        </>,
       );
       const target =
         type === "item"
           ? itemButton("Parcel A")
           : screen.getByRole("group", { name: "North" });
-      const returnControl =
-        type === "item"
-          ? target
-          : screen.getByRole("button", { name: "North 2" });
       fireEvent.pointerEnter(target);
       const action = screen.getByRole("button", {
         name: `Details: ${type === "item" ? "Parcel A" : "North"}`,
@@ -1587,17 +2422,21 @@ describe("hoverable inspection", () => {
       movePointer(target, action);
       act(() => action.focus());
       expect(action).toHaveFocus();
-      expect(onFocus).not.toHaveBeenCalled();
+      expect(onFocus).toHaveBeenCalledExactlyOnceWith(
+        type === "item" ? items[0] : groups[0],
+      );
 
       movePointer(action, document.body);
-      expect(returnControl).toHaveFocus();
-      expect(action).not.toBeInTheDocument();
-      expect(
-        screen.getByText("Focus or select a cell or group to inspect it"),
-      ).toBeVisible();
+      expect(action).toHaveFocus();
+      expect(action).toBeInTheDocument();
+      expect(screen.getByText("Inspecting")).toBeVisible();
+      expect(renderDetails.mock.lastCall![0]).toMatchObject({
+        target: { type, id: type === "item" ? items[0].id : groups[0].id },
+        pinned: false,
+      });
       if (type === "item") expect(onItemHover).toHaveBeenLastCalledWith(null);
       expect(onGroupHover).toHaveBeenLastCalledWith(null);
-      expect(onFocus).not.toHaveBeenCalled();
+      expect(onFocus).not.toHaveBeenCalledWith(null);
       expect(onCategory).not.toHaveBeenCalled();
       expect(onSelection).not.toHaveBeenCalled();
       expect(screen.getByRole("button", { name: "Ready 2" })).toHaveAttribute(
@@ -1605,17 +2444,18 @@ describe("hoverable inspection", () => {
         "true",
       );
 
-      // Once the caller clears its category, dismissed hover cannot trap Escape.
-      rerender(
-        <div onKeyDown={onOuterKeyDown}>
-          <WaffleChart {...props} selectedCategoryId={null} />
-        </div>,
-      );
-      expect(returnControl).toHaveFocus();
-      expect(fireEvent.keyDown(returnControl, { key: "Escape" })).toBe(true);
-      expect(onOuterKeyDown).toHaveBeenCalledOnce();
+      await user.tab();
+      await act(async () => {});
+      expect(
+        screen.getByRole("button", { name: "After focused details" }),
+      ).toHaveFocus();
+      expect(action).not.toBeInTheDocument();
+      expect(onFocus).toHaveBeenLastCalledWith(null);
+      expect(
+        screen.getByText("Focus or select a cell or group to inspect it"),
+      ).toBeVisible();
       expect(onCategory).not.toHaveBeenCalled();
-      expect(screen.queryByText("Inspecting")).toBeNull();
+      expect(onSelection).not.toHaveBeenCalled();
     },
   );
 

@@ -5,6 +5,7 @@ import {
   ControlledWaffleArrangement,
   ControlledWaffleInspection,
   LinkedWaffleGroups,
+  KeyboardWaffleDetails,
 } from "./WaffleChart.examples";
 import { waffleCategories, waffleItems } from "./WaffleChart.fixtures";
 
@@ -72,6 +73,9 @@ export const ArrangementControls: Story = {
 };
 export const ControlledInspection: Story = {
   render: () => <ControlledWaffleInspection />,
+};
+export const KeyboardDetails: Story = {
+  render: () => <KeyboardWaffleDetails />,
 };
 export const UnknownAndEmpty: Story = {
   render: () => (

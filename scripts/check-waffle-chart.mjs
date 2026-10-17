@@ -202,6 +202,124 @@ const hoverableDetails = async (page, type, theme, width) => {
   );
   await page.evaluate(() => getSelection()?.removeAllRanges());
 };
+// Exercise actual Tab destinations with no hover or pin, including React-owned
+// portals. A locator.focus() on the destination would hide the original bug.
+const keyboardDetails = async (page, type, theme, width) => {
+  const label = type === "item" ? "resource" : "group";
+  const section = page.locator(`[data-waffle-keyboard-example="${type}"]`);
+  const origin = section.getByRole("button", {
+    name:
+      type === "item" ? "Resource 01, Engineering" : "Empty synthetic group 0",
+    exact: true,
+  });
+  const pin = section.getByRole("button", {
+    name: `Pin ${label} details`,
+    exact: true,
+  });
+  const select = section.getByRole("button", {
+    name: `Daily ${label} view`,
+    exact: true,
+  });
+  const modalTrigger = section.getByRole("button", {
+    name: `Open ${label} record`,
+    exact: true,
+  });
+  const outside = section.getByRole("link", {
+    name: `Continue past ${label} details`,
+    exact: true,
+  });
+  const focusIs = async (control) => {
+    await page.waitForFunction(
+      (element) => element === document.activeElement,
+      await control.elementHandle(),
+    );
+    assert.ok(
+      await control.evaluate((element) => element === document.activeElement),
+    );
+  };
+  await page.mouse.move(width - 1, 1);
+  await origin.focus();
+  // Focusing a lower chart can scroll the page beneath a stationary pointer.
+  // Explicitly leave again before Tab so hover cannot mask keyboard-only loss.
+  await page.mouse.move(width - 1, 1);
+  assert.ok(
+    await origin.evaluate(
+      (element) => !element.closest('[role="group"]').matches(":hover"),
+    ),
+    "keyboard-only path starts without chart hover",
+  );
+  await page.keyboard.press("Tab");
+  await focusIs(pin);
+  assert.equal(await origin.getAttribute("aria-pressed"), "false");
+  await page.keyboard.press("Shift+Tab");
+  await focusIs(origin);
+  await page.keyboard.press("Tab");
+  await focusIs(pin);
+  await screenshot(page, `keyboard-details-${type}-${theme}-${width}`);
+  await page.keyboard.press("Tab");
+  await focusIs(select);
+  await page.keyboard.press("Enter");
+  await page.getByRole("listbox").waitFor();
+  await page.waitForFunction(() =>
+    document
+      .querySelector('[role="listbox"]')
+      ?.contains(document.activeElement),
+  );
+  assert.ok(
+    await pin.isVisible(),
+    "owned Select keeps unpinned details mounted",
+  );
+  await screenshot(page, `keyboard-details-select-${type}-${theme}-${width}`);
+  await page.keyboard.press("Escape");
+  await page.getByRole("listbox").waitFor({ state: "hidden" });
+  await focusIs(select);
+  await page.keyboard.press("Tab");
+  await focusIs(modalTrigger);
+  await page.keyboard.press("Enter");
+  const dialog = page.getByRole("dialog");
+  await dialog.waitFor();
+  await page.waitForFunction(() =>
+    document.querySelector('[role="dialog"]')?.contains(document.activeElement),
+  );
+  await page.keyboard.press("Tab");
+  assert.ok(
+    await dialog.evaluate((element) =>
+      element.contains(document.activeElement),
+    ),
+    "owned Modal retains its focus scope",
+  );
+  await screenshot(page, `keyboard-details-modal-${type}-${theme}-${width}`);
+  await page.keyboard.press("Escape");
+  await dialog.waitFor({ state: "hidden" });
+  await focusIs(modalTrigger);
+  assert.equal(
+    await origin.getAttribute("aria-pressed"),
+    "false",
+    "owned overlays do not pin inspection",
+  );
+  await page.keyboard.press("Tab");
+  await focusIs(outside);
+  await pin.waitFor({ state: "hidden" });
+
+  await origin.focus();
+  await page.keyboard.press("Tab");
+  await focusIs(pin);
+  await page.keyboard.press("Escape");
+  await focusIs(origin);
+  await pin.waitFor({ state: "hidden" });
+  await origin.press("Enter");
+  assert.equal(await origin.getAttribute("aria-pressed"), "true");
+  const clear = section.getByRole("button", {
+    name: "Clear selection",
+    exact: true,
+  });
+  await page.keyboard.press("Tab");
+  await focusIs(clear);
+  await page.keyboard.press("Escape");
+  await focusIs(origin);
+  await clear.waitFor({ state: "hidden" });
+  await noOverflow(page);
+};
 const connectionsAligned = (page) =>
   page.waitForFunction(() => {
     const frame = document.querySelector('[data-waffle-example="connections"]');
@@ -706,6 +824,10 @@ try {
       await noOverflow(page);
       await connectionsAligned(page);
       await connectionsAvoidContent(page);
+      await page.setViewportSize({ width, height: 1000 });
+      await visit(page, "keyboard-details", theme);
+      await keyboardDetails(page, "item", theme, width);
+      await keyboardDetails(page, "group", theme, width);
       await page.close();
       results.push({
         theme,
@@ -719,6 +841,8 @@ try {
           "keyboard-focus-selection-escape",
           "latest-pointer-keyboard-inspection",
           "hoverable-selectable-details",
+          "keyboard-only-details-tab-region",
+          "owned-select-modal-focus-restoration",
           "responsive-anchors",
           "no-clipping",
           "controlled-category-order",
