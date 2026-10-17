@@ -1,0 +1,1682 @@
+[
+  {
+    "scheme": "light",
+    "width": 390,
+    "contrast": [
+      {
+        "label": "0.26·Elevated",
+        "foreground": "rgb(108, 74, 7)",
+        "background": "rgb(255, 248, 223)",
+        "ratio": 7.535469368274632
+      },
+      {
+        "label": "3·Elevated",
+        "foreground": "rgb(108, 74, 7)",
+        "background": "rgb(255, 248, 223)",
+        "ratio": 7.535469368274632
+      },
+      {
+        "label": "Partial · 50%",
+        "foreground": "rgb(108, 74, 7)",
+        "background": "rgb(255, 248, 223)",
+        "ratio": 7.535469368274632
+      }
+    ]
+  },
+  {
+    "scheme": "light",
+    "width": 390,
+    "variant": "full-timestamps",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 09:43:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:43:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 13:20:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:20:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 17:14:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:14:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "light",
+    "width": 390,
+    "variant": "full-timestamps-inline",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 09:43:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:43:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 13:20:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:20:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 17:14:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:14:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "light",
+    "width": 390,
+    "variant": "full-timestamps-compact",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "light",
+    "width": 1200,
+    "contrast": [
+      {
+        "label": "0.26·Elevated",
+        "foreground": "rgb(108, 74, 7)",
+        "background": "rgb(255, 248, 223)",
+        "ratio": 7.535469368274632
+      },
+      {
+        "label": "3·Elevated",
+        "foreground": "rgb(108, 74, 7)",
+        "background": "rgb(255, 248, 223)",
+        "ratio": 7.535469368274632
+      },
+      {
+        "label": "Partial · 50%",
+        "foreground": "rgb(108, 74, 7)",
+        "background": "rgb(255, 248, 223)",
+        "ratio": 7.535469368274632
+      }
+    ]
+  },
+  {
+    "scheme": "light",
+    "width": 1200,
+    "variant": "full-timestamps",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 09:43:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:43:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 13:20:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:20:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 17:14:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:14:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "light",
+    "width": 1200,
+    "variant": "full-timestamps-inline",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 09:43:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:43:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 13:20:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:20:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 17:14:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:14:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "light",
+    "width": 1200,
+    "variant": "full-timestamps-compact",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "dark",
+    "width": 390,
+    "contrast": [
+      {
+        "label": "0.26·Elevated",
+        "foreground": "rgb(255, 252, 240)",
+        "background": "rgb(108, 74, 7)",
+        "ratio": 7.798773674018118
+      },
+      {
+        "label": "3·Elevated",
+        "foreground": "rgb(255, 252, 240)",
+        "background": "rgb(108, 74, 7)",
+        "ratio": 7.798773674018118
+      },
+      {
+        "label": "Partial · 50%",
+        "foreground": "rgb(255, 252, 240)",
+        "background": "rgb(108, 74, 7)",
+        "ratio": 7.798773674018118
+      }
+    ]
+  },
+  {
+    "scheme": "dark",
+    "width": 390,
+    "variant": "full-timestamps",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 09:43:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:43:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 13:20:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:20:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 17:14:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:14:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "dark",
+    "width": 390,
+    "variant": "full-timestamps-inline",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 09:43:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:43:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 13:20:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:20:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 17:14:00 UTC",
+        "fontSize": 12,
+        "width": 218,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:14:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "dark",
+    "width": 390,
+    "variant": "full-timestamps-compact",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "dark",
+    "width": 1200,
+    "contrast": [
+      {
+        "label": "0.26·Elevated",
+        "foreground": "rgb(255, 252, 240)",
+        "background": "rgb(108, 74, 7)",
+        "ratio": 7.798773674018118
+      },
+      {
+        "label": "3·Elevated",
+        "foreground": "rgb(255, 252, 240)",
+        "background": "rgb(108, 74, 7)",
+        "ratio": 7.798773674018118
+      },
+      {
+        "label": "Partial · 50%",
+        "foreground": "rgb(255, 252, 240)",
+        "background": "rgb(108, 74, 7)",
+        "ratio": 7.798773674018118
+      }
+    ]
+  },
+  {
+    "scheme": "dark",
+    "width": 1200,
+    "variant": "full-timestamps",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 09:43:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:43:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 13:20:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:20:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 17:14:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:14:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "dark",
+    "width": 1200,
+    "variant": "full-timestamps-inline",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 09:43:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:43:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 13:20:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:20:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": true,
+        "label": "Received: 2026-10-16 17:14:00 UTC",
+        "fontSize": 12,
+        "width": 1008,
+        "words": [
+          {
+            "text": "Received:",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:14:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scheme": "dark",
+    "width": 1200,
+    "variant": "full-timestamps-compact",
+    "timestamps": [
+      {
+        "received": false,
+        "label": "2026-10-16 09:42:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "09:42:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 13:18:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "13:18:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      },
+      {
+        "received": false,
+        "label": "2026-10-16 17:06:00 UTC",
+        "fontSize": 12,
+        "width": 96,
+        "words": [
+          {
+            "text": "2026-10-16",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "17:06:00",
+            "lines": 1,
+            "fits": true
+          },
+          {
+            "text": "UTC",
+            "lines": 1,
+            "fits": true
+          }
+        ]
+      }
+    ]
+  }
+]

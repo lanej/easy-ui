@@ -1,0 +1,29 @@
+{
+  "sourceCommit": "5d839f1c175d47ad2892f23028da2ff69c8cad5d",
+  "pullRequest": "https://github.com/lanej/easy-ui/pull/60",
+  "workflowRun": "https://github.com/lanej/easy-ui/actions/runs/38997296204",
+  "artifactId": 12088290625,
+  "artifactName": "facility-summary-browser",
+  "artifactDigest": "sha256:3db0b429e3ed7daba6b1195f62f3d1404454c9590d46362735618c63465b1827",
+  "artifactCreatedAt": "2026-10-17T03:15:19Z",
+  "command": "node scripts/check-evidence-typography.mjs",
+  "filesSha256": {
+    "score-light-390.png": "3324287c955e6a2de3317f56f8678418f06ba8ffa785c15957602601417b6eb4",
+    "score-light-1200.png": "dfe915584f8bc8901d69d523b06803460303aa55b6ee57ff94f14f3a65babbab",
+    "score-dark-390.png": "7431a50ad5abd81cb7e06b8ac4f8524b44a480b15e74d99a78fba3ac4043ad9e",
+    "score-dark-1200.png": "4a6578df81cce51249b6501e93ad198201833ab22c6496955fdfc9150bf50492",
+    "full-timestamps-light-390.png": "740897cfd5224848d9658ba16fd7cb94d3b1bca52bb9e94ec05fd093a66d7230",
+    "full-timestamps-light-1200.png": "2664d6b185e065a226e689f4564acde95ebed70c42b8d19d09f5d66fdd256e27",
+    "full-timestamps-inline-light-390.png": "e85ebf427e9846992bd03602014c674ac96e263e964941416f620deb03d7f0c8",
+    "full-timestamps-inline-light-1200.png": "d6bbee7edc566fb3a17ee419f19989cab86dd3f7ab03beb379ddc5ba0adf2225",
+    "full-timestamps-inline-dark-390.png": "2581aea143b3363a00cdb6c4197adce15a95a894f4a5f23e81b11d8c7272d21d",
+    "full-timestamps-inline-dark-1200.png": "ca4428409ec52d1b020db75a73aedf1c54f077784358d181523d2d0f9c6ac16a",
+    "full-timestamps-dark-390.png": "650876e9a1d0b48887c95f552099bc41dd5dd28d32eef2290d09cb4827d579cb",
+    "full-timestamps-dark-1200.png": "39159bdea855ebdc4f107f1283fb9dceee46fe1d1b23256d0a28b08238d8dbf3",
+    "full-timestamps-compact-light-390.png": "9c204a12af250ed9d1351253c1423c9870c46985575bb84458374ccf5309bd1c",
+    "full-timestamps-compact-light-1200.png": "421ce99665d72322d10ad4052d2ec42bea756fa1773bc63bdf0581eefdbb5490",
+    "full-timestamps-compact-dark-390.png": "3a1f0da0dd52647ade2b6bd6045f37de887eb76ce1b88c2af69588b916bcdace",
+    "full-timestamps-compact-dark-1200.png": "fb78d8d9bdb51ccb868fc1d95610fd50d24311673f67d1b1eeefb5634381c36a",
+    "checks.json": "034c629ade5723893659a13ea92ffd7992d41b5368bda2eae6ac5d9d3223b54d"
+  }
+}
