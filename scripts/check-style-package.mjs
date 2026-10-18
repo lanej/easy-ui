@@ -253,6 +253,7 @@ import { BubbleChart, type BubbleChartSeries } from "@easypost/easy-ui/BubbleCha
 import { IntervalChart } from "@easypost/easy-ui/IntervalChart";
 import { PredictionBandChart } from "@easypost/easy-ui/PredictionBandChart";
 import { WaterfallChart } from "@easypost/easy-ui/WaterfallChart";
+import { WaffleChart, type WaffleChartProps, type WaffleChartGroupAnchor, type WaffleChartItemOrder } from "@easypost/easy-ui/WaffleChart";
 import { NetworkMapCellDetails, NetworkMapInspectionTrigger, type MapFacilityDetailsContext, type MapOverlayHoverDetailsContext, type MapInspectionTarget } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard, type MetricCardProps, type MetricContentProps } from "@easypost/easy-ui/MetricCard";
 import { InvestigationDetails, resolveSelection, selectEvent, type InvestigationRecords, type InvestigationSelection, type InvestigationDetailsContext, type InvestigationDetailsProps, type InvestigationDetailsLabels } from "@easypost/easy-ui/InvestigationWorkspace";
@@ -298,7 +299,30 @@ const durationReference: DurationDistributionProps = { value: 6.125, unit: "hour
 
 const facility: FacilitySummaryProps = { name: "Packed facility", observations: [{ id: "dwell", health: { assessment: "healthy" }, observation: { value: 6, unit: "h" }, reference: <DurationDistribution {...durationReference} /> }] };
 
+const waffleOrder: WaffleChartItemOrder = "category";
+// @ts-expect-error Ordering uses category identity rather than raw color values.
+const invalidWaffleOrder: WaffleChartItemOrder = "color";
+void invalidWaffleOrder;
+const waffleProps: WaffleChartProps<{ externalId: number }> = {
+  accessibilityLabel: "Packed resources",
+  items: [{ id: "one", label: "Resource one", categoryId: "design", groupId: "shared", metadata: { externalId: 17 }, draft: true }],
+  categories: [{ id: "design", label: "Design", color: "primary.600" }],
+  groups: [{ id: "shared", label: "Shared group" }],
+  itemOrder: waffleOrder,
+  maxColumns: 7,
+  cellSize: 16,
+  gap: 2,
+  selection: { type: "item", id: "one" },
+  highlight: { itemIds: ["one"], groupIds: ["shared"], categoryIds: ["design"] },
+  selectedCategoryId: "design",
+  onCategorySelectionChange: (id) => { const next: string | null = id; void next; },
+  onItemActivate: (item) => { const externalId: number | undefined = item.metadata?.externalId; void externalId; },
+  renderDetails: (inspection) => inspection.item?.metadata?.externalId,
+  onGroupAnchorsChange: (anchors) => { const anchor: WaffleChartGroupAnchor | undefined = anchors[0]; const left: number | undefined = anchor?.bounds.left; void left; },
+};
+
 export const example = <>
+  <WaffleChart<{ externalId: number }> {...waffleProps} />
   <LineChart series={[{id: "line", data: [[0, 1], [1, null]]}]} option={{xAxis: {type: "value"}, yAxis: {type: "value"}}} onSelect={(selection) => { const name: string = selection.name; void name; }} />
   <BubbleChart series={[{id: "bubble", data: [[1, 2, 3]], symbolSize: (value: number[]) => Math.sqrt(value[2])}]} />
   <IntervalChart intervals={[{id: "span", row: "Lane", label: "Span", start: 0, end: null}]} />
@@ -398,7 +422,7 @@ for (const load of [require, (specifier) => import(specifier)]) {
 }
 const rawIcon = insideConsumer(require.resolve("@easypost/easy-ui-icons/svg/EasyUI.svg"));
 assert.equal(readFileSync(rawIcon, "utf8"), readFileSync("expected-icon.svg", "utf8"));
-for (const subpath of ["Chart", "Chart/index", "MetricCard", "NetworkMap", "ScoreComposition", "InvestigationWorkspace", "utilities/css"]) {
+for (const subpath of ["Chart", "Chart/index", "MetricCard", "WaffleChart", "WaffleChart/index", "NetworkMap", "ScoreComposition", "InvestigationWorkspace", "utilities/css"]) {
   const specifier = "@easypost/easy-ui/" + subpath;
   insideConsumer(require.resolve(specifier));
   insideConsumer(fileURLToPath(import.meta.resolve(specifier)));
@@ -415,6 +439,33 @@ for (const subpath of ["Sparkline", "Sparkline/index", "Sparkline/index.js", "Sp
   const specifier = "@easypost/easy-ui/" + subpath;
   assert.throws(() => require.resolve(specifier), { code: "MODULE_NOT_FOUND" });
   await assert.rejects(import(specifier), { code: "ERR_MODULE_NOT_FOUND" });
+}
+for (const load of [require, (specifier) => import(specifier)]) {
+  const { WaffleChart } = await load("@easypost/easy-ui/WaffleChart");
+  const waffleItems = [
+    { id: "one", label: "Resource one", categoryId: "design", groupId: "shared", draft: true },
+    { id: "two", label: "Resource two", categoryId: "missing", groupId: "shared" },
+    { id: "three", label: "Resource three", categoryId: "design" },
+  ];
+  const waffleProps = {
+    accessibilityLabel: "Packed resources", items: waffleItems,
+    categories: [{ id: "design", label: "Design", color: "primary.600" }],
+    groups: [{ id: "shared", label: "Shared group" }],
+  };
+  const waffle = renderToString(React.createElement(WaffleChart, waffleProps));
+  assert.equal((waffle.match(/data-waffle-item=/g) ?? []).length, 3);
+  assert.match(waffle, /3 items/);
+  assert.match(waffle, /Unknown category: missing/);
+  assert.match(waffle, /Shared group/);
+  const ordered = renderToString(React.createElement(WaffleChart, { ...waffleProps, items: waffleItems.slice().reverse(), itemOrder: "category", selection: { type: "item", id: "one" } }));
+  assert.deepEqual([...ordered.matchAll(/data-waffle-item="([^"]+)"/g)].map((match) => match[1]), ["one", "two", "three"]);
+  assert.match(ordered, /aria-pressed="true"/);
+  const compact = renderToString(React.createElement(WaffleChart, { ...waffleProps, variant: "compact", onItemActivate: () => {} }));
+  assert.equal((compact.match(/data-waffle-item=/g) ?? []).length, 3);
+  assert.match(compact, /Draft/);
+  assert.doesNotMatch(compact, /<button/);
+  const orderedCompact = renderToString(React.createElement(WaffleChart, { ...waffleProps, items: waffleItems.slice().reverse(), itemOrder: "category", variant: "compact" }));
+  assert.deepEqual([...orderedCompact.matchAll(/data-waffle-item="([^"]+)"/g)].map((match) => match[1]), ["three", "one", "two"]);
 }
 for (const load of [require, (specifier) => import(specifier)]) {
   const { InvestigationDetails, resolveSelection, selectEvent } = await load("@easypost/easy-ui/InvestigationWorkspace");
