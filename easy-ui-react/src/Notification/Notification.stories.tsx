@@ -337,6 +337,20 @@ export const StackedPlacementOffsets: Story = {
   ),
 };
 
+export const StackedAutoPlacement: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{ stacking: true, timeout: 0, isDismissable: true }}
+      notificationPlacement={{
+        offset: { top: "auto", left: "auto", bottom: "16px", right: "16px" },
+      }}
+    >
+      <StackingExample />
+    </EasyUIProvider>
+  ),
+};
+
 export const StackedWithinContainer: Story = {
   render: (_, context) => (
     <EasyUIProvider

@@ -514,7 +514,7 @@ describe("stacked notification interaction", () => {
     }
   });
 
-  it("offers an oversized timed stack item a close control even when ordinary toast controls are disabled", async () => {
+  it("retains an oversized timed item's focused fallback after resize and resumes its captured duration", () => {
     let callback: IntersectionObserverCallback;
     let onResize: ResizeObserverCallback;
     vi.stubGlobal(
@@ -538,7 +538,7 @@ describe("stacked notification interaction", () => {
       },
     );
     try {
-      const { user, unmount } = render(
+      const { unmount, rerender } = render(
         <NotificationProvider
           notificationOptions={{ stacking: true, timeout: 5000 }}
         >
@@ -584,7 +584,63 @@ describe("stacked notification interaction", () => {
         name: "Dismiss Oversized timed message",
       });
       expect(close).toBeInTheDocument();
-      await user.click(close);
+      act(() => close.focus());
+      vi.mocked(node.getBoundingClientRect).mockReturnValue({
+        width: 200,
+        height: 100,
+      } as DOMRect);
+      act(() => onResize([], {} as ResizeObserver));
+      expect(node).not.toHaveAttribute(
+        "class",
+        expect.stringContaining("oversized"),
+      );
+      expect(
+        screen.getByRole("button", {
+          name: "Dismiss Oversized timed message",
+        }),
+      ).toBe(close);
+      expect(close).toHaveFocus();
+      rerender(
+        <NotificationProvider
+          notificationOptions={{ stacking: false, isDismissable: false }}
+          notificationPlacement={{
+            offset: {
+              top: "auto",
+              left: "auto",
+              bottom: "16px",
+              right: "16px",
+            },
+          }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      expect(close).toHaveFocus();
+      expect(close).toBeInTheDocument();
+      act(() =>
+        callback(
+          [
+            {
+              target: node,
+              isIntersecting: true,
+              intersectionRatio: 1,
+              boundingClientRect: node.getBoundingClientRect(),
+              intersectionRect: node.getBoundingClientRect(),
+              rootBounds: null,
+              time: 0,
+            },
+          ],
+          {} as IntersectionObserver,
+        ),
+      );
+      act(() => vi.advanceTimersByTime(60000));
+      expect(close).toHaveFocus();
+      act(() =>
+        screen.getByRole("button", { name: "Outside notifications" }).focus(),
+      );
+      act(() => vi.advanceTimersByTime(4999));
+      expect(close).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(1));
       expect(
         screen.queryByText("Oversized timed message"),
       ).not.toBeInTheDocument();
@@ -673,6 +729,63 @@ describe("stacked notification interaction", () => {
         .getByRole("region")
         .parentElement!.style.getPropertyValue("--easy-ui-notification-top"),
     ).toBe("0px");
+  });
+
+  it("treats auto as an unset stack edge while preserving authored placement", () => {
+    const bottomPlacement = {
+      offset: { top: "auto", left: "auto", bottom: "16px", right: "16px" },
+    };
+    const { rerender } = render(
+      <NotificationProvider
+        notificationOptions={{ stacking: true }}
+        notificationPlacement={bottomPlacement}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showSuccessToast({ message: "Auto edges" }));
+    const container = screen.getByRole("region").parentElement!;
+    // jsdom's CSS parser drops auto inset values; the browser harness checks
+    // the authored auto edges as well as the resulting viewport geometry.
+    expect(container.style.getPropertyValue("--easy-ui-notification-top")).toBe(
+      "16px",
+    );
+    expect(
+      container.style.getPropertyValue("--easy-ui-notification-left"),
+    ).toBe("16px");
+    expect(container.style.justifyContent).toBe("flex-end");
+    rerender(
+      <NotificationProvider
+        notificationOptions={{ stacking: true }}
+        notificationPlacement={{
+          offset: { top: "0", left: "0", bottom: "auto", right: "auto" },
+        }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    expect(
+      container.style.getPropertyValue("--easy-ui-notification-bottom"),
+    ).toBe("16px");
+    expect(
+      container.style.getPropertyValue("--easy-ui-notification-right"),
+    ).toBe("16px");
+    expect(container.style.justifyContent).toBe("flex-start");
+    rerender(
+      <NotificationProvider
+        notificationOptions={{ stacking: false }}
+        notificationPlacement={bottomPlacement}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showSuccessToast({ message: "Replacement" }));
+    const replacement = screen.getByRole("region").parentElement!;
+    expect(replacement.style.bottom).toBe("16px");
+    expect(replacement.style.right).toBe("16px");
+    expect(
+      replacement.style.getPropertyValue("--easy-ui-notification-top"),
+    ).toBe("");
   });
 
   it("adapts presentation tracking when stacking is enabled without resetting an older toast", () => {

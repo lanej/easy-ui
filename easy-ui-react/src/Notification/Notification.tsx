@@ -149,6 +149,7 @@ export const Notification = React.forwardRef<
 
   const { setPresented } = state;
   const [isOversized, setIsOversized] = useState(false);
+  const [hasDismissalFallback, setHasDismissalFallback] = useState(false);
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
@@ -167,10 +168,15 @@ export const Notification = React.forwardRef<
         window.innerWidth,
         region?.width || window.innerWidth,
       );
-      setIsOversized(
+      const oversized =
         bounds.height > availableHeight + 1 ||
-          bounds.width > availableWidth + 1,
-      );
+        bounds.width > availableWidth + 1;
+      setIsOversized(oversized);
+      // Once offered, keep this control for the item's lifetime. Removing it
+      // after a resize/reflow would disconnect a keyboard user's focus target.
+      if (oversized && notification.timeout != null) {
+        setHasDismissalFallback(true);
+      }
     };
     updateOversized();
     const onResize = () => updateOversized();
@@ -200,7 +206,7 @@ export const Notification = React.forwardRef<
       window.removeEventListener("resize", onResize);
       setPresented(notification.key, false);
     };
-  }, [notification.key, isStacked, setPresented]);
+  }, [notification.key, notification.timeout, isStacked, setPresented]);
 
   const handleDismiss = () => {
     if (onDismiss) {
@@ -239,7 +245,7 @@ export const Notification = React.forwardRef<
           <Text weight="semibold">{message}</Text>
         </div>
       </div>
-      {(isDismissable || (isOversized && notification.timeout != null)) && (
+      {(isDismissable || hasDismissalFallback) && (
         <span className={styles.closeButtonContainer}>
           <UnstyledButton
             {...closeButtonPropsWithDismiss}

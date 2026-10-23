@@ -152,7 +152,9 @@ Each timer starts only when its item is fully presented within the viewport.
 Clipped overflow items do not expire unseen; scrolling away pauses their remaining
 duration until they are fully presented again. A timed item too large to fit
 remains available with an always-reachable close control, even when close controls
-were disabled for ordinary timed items. Omitted stacking retains the existing
+were disabled for ordinary timed items. Once offered, that control stays until
+the item closes, preserving keyboard focus when resizing or reflow makes it fit.
+Omitted stacking retains the existing
 single-notification timer behavior. Hovering or focusing anywhere in the
 notification region pauses all timers, including new arrivals; leaving resumes
 the remaining duration, not a fresh timeout. Overflow remains start-aligned and scrollable on small screens.
@@ -198,9 +200,12 @@ Notifications can have custom placement on a per app basis. Use the `notificatio
 Stack size accounts for configured offsets on both axes. Its available size uses
 the actual positioning containing block: viewport for fixed positioning, or the
 positioned ancestor for absolute positioning. An unspecified opposite edge keeps
-a 16px reading margin. Keep offsets inside the available containing block.
+a 16px reading margin. Explicit `auto` edges are also treated as unspecified for
+stack sizing and alignment. Keep offsets inside the available containing block.
 
 <Canvas of={NotificationStories.StackedPlacementOffsets} />
+
+<Canvas of={NotificationStories.StackedAutoPlacement} />
 
 ### Custom placement within container
 

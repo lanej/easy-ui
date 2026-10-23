@@ -300,6 +300,58 @@ try {
       await page.screenshot({
         path: resolve(output, `${mode}-${width}-oversized.png`),
       });
+      // A responsive resize can make the same timed item fully presentable.
+      // Its fallback control must survive, retain focus, and keep time paused.
+      await oversizedClose.focus();
+      const focusedFallback = await oversizedClose.elementHandle();
+      const oversizedBounds = await page.getByRole("alertdialog").boundingBox();
+      await page.setViewportSize({
+        width,
+        height: Math.ceil(oversizedBounds.height + 64),
+      });
+      await settlePresentation(page);
+      assert.ok(
+        await focusedFallback.evaluate(
+          (element) =>
+            element.isConnected && element === document.activeElement,
+        ),
+        "resizing a fitting toast retains its focused fallback control",
+      );
+      const fittingGeometry = await page
+        .getByRole("alertdialog")
+        .evaluate((element) => {
+          const bounds = element.getBoundingClientRect();
+          const region = element.parentElement.getBoundingClientRect();
+          return {
+            fits:
+              bounds.height <= region.height + 1 &&
+              bounds.width <= region.width + 1,
+            isOversized: element.className.includes("oversized"),
+          };
+        });
+      assert.equal(
+        fittingGeometry.fits,
+        true,
+        "resize actually makes the item fit",
+      );
+      assert.equal(
+        fittingGeometry.isOversized,
+        false,
+        "oversized styling updates after resize",
+      );
+      await page.clock.runFor(10000);
+      assert.ok(
+        await oversizedClose.isVisible(),
+        "focus still pauses the now-fitting item",
+      );
+      await page.setViewportSize({ width, height: 720 });
+      await settlePresentation(page);
+      assert.ok(
+        await focusedFallback.evaluate(
+          (element) => element === document.activeElement,
+        ),
+        "shrinking again retains fallback focus",
+      );
       await oversizedClose.click();
       await settlePresentation(page);
       assert.equal(await page.getByRole("alertdialog").count(), 0);
@@ -370,6 +422,7 @@ try {
         "stacked-placement-offsets",
         "stacked-within-container",
         "stacked-default-placement",
+        "stacked-auto-placement",
       ]) {
         const placementPage = await browser.newPage({
           viewport: { width, height: 720 },
@@ -388,6 +441,17 @@ try {
         await placementPage.mouse.move(0, 0);
         await placementPage.waitForTimeout(200);
         const placementRegion = placementPage.getByRole("region");
+        if (placement === "stacked-auto-placement") {
+          assert.deepEqual(
+            await placementRegion.evaluate((element) => ({
+              top: element.parentElement.style.top,
+              left: element.parentElement.style.left,
+              alignment: getComputedStyle(element.parentElement).justifyContent,
+            })),
+            { top: "auto", left: "auto", alignment: "flex-end" },
+            "auto insets remain authored while stack alignment uses unset edges",
+          );
+        }
         const bounds =
           placement === "stacked-within-container"
             ? await placementPage
@@ -399,7 +463,10 @@ try {
           regionRect.x >= bounds.x && regionRect.y >= bounds.y,
           "large offsets cannot place leading content outside its containing block",
         );
-        const reserved = placement === "stacked-default-placement" ? 15 : 79;
+        const standardMargin =
+          placement === "stacked-default-placement" ||
+          placement === "stacked-auto-placement";
+        const reserved = standardMargin ? 15 : 79;
         assert.ok(
           regionRect.x + regionRect.width <= bounds.x + bounds.width - reserved,
           "right offset is reserved",
@@ -410,9 +477,7 @@ try {
           "bottom offset is reserved",
         );
         assert.ok(
-          regionRect.height <=
-            bounds.height -
-              (placement === "stacked-default-placement" ? 15 : 95),
+          regionRect.height <= bounds.height - (standardMargin ? 15 : 95),
           "scroll height accounts for placement offsets",
         );
         assert.ok(

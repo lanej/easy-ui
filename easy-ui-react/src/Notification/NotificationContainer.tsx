@@ -67,11 +67,19 @@ export function NotificationContainer(props: NotificationContainerProps) {
     position: !requestFailed ? position : "fixed",
   };
 
-  const stackLength = (value: string | number | undefined) =>
-    value === 0 ||
-    (typeof value === "string" && /^[-+]?0(?:\.0+)?$/.test(value.trim()))
+  // CSS auto is an unset edge, not a length that can participate in calc().
+  // Preserve the original positioning values, including non-stacked placement.
+  const stackEdge = (value: string | number | undefined) =>
+    typeof value === "string" && value.trim().toLowerCase() === "auto"
+      ? undefined
+      : value;
+  const stackLength = (value: string | number | undefined) => {
+    const edge = stackEdge(value);
+    return edge === 0 ||
+      (typeof edge === "string" && /^[-+]?0(?:\.0+)?$/.test(edge.trim()))
       ? "0px"
-      : (value ?? "16px");
+      : (edge ?? "16px");
+  };
   const containerStyles = {
     ...positionStyleProps,
     ...positionProps,
@@ -91,8 +99,8 @@ export function NotificationContainer(props: NotificationContainerProps) {
           "--easy-ui-notification-left": stackLength(positionStyleProps.left),
           justifyContent:
             "bottom" in positionStyleProps &&
-            positionStyleProps.bottom != null &&
-            positionStyleProps.top == null
+            stackEdge(positionStyleProps.bottom) != null &&
+            stackEdge(positionStyleProps.top) == null
               ? "flex-end"
               : "flex-start",
         }
