@@ -1,0 +1,31 @@
+{
+  "bounds": {
+    "x": 16,
+    "y": 640,
+    "width": 288,
+    "height": 64,
+    "top": 640,
+    "right": 304,
+    "bottom": 704,
+    "left": 16
+  },
+  "regionBounds": {
+    "x": 16,
+    "y": 640,
+    "width": 288,
+    "height": 64,
+    "top": 640,
+    "right": 304,
+    "bottom": 704,
+    "left": 16
+  },
+  "viewport": {
+    "width": 320,
+    "height": 720
+  },
+  "opacity": "1",
+  "transform": "none",
+  "regionHovered": false,
+  "regionFocused": false,
+  "activeElement": "<button type=\"button\" tabindex=\"0\" data-react-aria-pressable=\"true\" class=\"_UnstyledButton_qf59o_1 _Button_vrd1e_4 _colorPrimary_vrd1e_19 _variantFilled_vrd1e_73 _sizeMd_vrd1e_171\"><span class=\"\">Repeat identical message</span></button>"
+}

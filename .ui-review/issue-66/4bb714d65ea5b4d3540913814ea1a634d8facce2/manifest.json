@@ -1,0 +1,204 @@
+{
+  "source_sha": "4bb714d65ea5b4d3540913814ea1a634d8facce2",
+  "workflow_url": "https://github.com/lanej/easy-ui/actions/runs/40008880353",
+  "artifact_id": 12525587391,
+  "artifact_sha256": "c93f84d3abc819b5a22c7edbf6f0592af2add88bb0c22e89a6838b9fba8943c3",
+  "screenshots": [
+    {
+      "name": "dark-1280-overflow.png",
+      "sha256": "5ccbab2cd4fe6a6ffbfbc437754626147e0596ead1abb9a984decef9de103e55",
+      "bytes": 70180,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "dark-1280-oversized.png",
+      "sha256": "e825de31f9986d3126ee7074237f675c3788b12a0a04db1b3418bfe86a0d443e",
+      "bytes": 107607,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "dark-1280-stack.png",
+      "sha256": "111b969e4d1de616afd8e7a1e0d03c31459d484b64f3bcd4afecc05c1db036e3",
+      "bytes": 43276,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "dark-1280-stacked-auto-placement.png",
+      "sha256": "ac1468b41295bf7a68290b1180bac9d79541d648d9a2607ca3df74201706f64e",
+      "bytes": 69299,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "dark-1280-stacked-default-placement.png",
+      "sha256": "296f25274aa28963345455efac28e2b07a945fc37f92c803e43650d2facd6bf1",
+      "bytes": 55902,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "dark-1280-stacked-placement-offsets.png",
+      "sha256": "f8169e8dc4d571a47636130854791c5d977346e434d3ce0dd893c82798ee5712",
+      "bytes": 64173,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "dark-1280-stacked-within-container.png",
+      "sha256": "cabce98be35a9624a242915d3f2104801e7b97f823228fd1f12c5661ce758fca",
+      "bytes": 34490,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "dark-320-overflow.png",
+      "sha256": "6495b083c11db7d124f59fc2aacca43fbaacbc768df9369a845bdca542f9642b",
+      "bytes": 37796,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "dark-320-oversized.png",
+      "sha256": "b5b337a7e301f2566ca456902db440889d5fb3bcba0b74077ba99fbb48eb4472",
+      "bytes": 37106,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "dark-320-stack.png",
+      "sha256": "298b479c1a8025fbb5e6d6635c406c8ec1294a4cdd2c1d0dc00de859d7cc0825",
+      "bytes": 32157,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "dark-320-stacked-auto-placement.png",
+      "sha256": "5e92d6ab9424a353432837bff8aa631bc6a2e7b355d19bc174a0ee0548b9b84b",
+      "bytes": 35946,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "dark-320-stacked-default-placement.png",
+      "sha256": "960ce4ec7de365d43a761537a056ebb88d0ef51e8c67f116344d0e4bff0d2b7e",
+      "bytes": 35887,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "dark-320-stacked-placement-offsets.png",
+      "sha256": "c315dd9e03251d6036efa0588e7c5e920fef30947a9a866819cffef191721b44",
+      "bytes": 29817,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "dark-320-stacked-within-container.png",
+      "sha256": "351acfddde00286c6c6bfdc23436fc644e44626bb6df815aa146456ecc6f97c5",
+      "bytes": 27637,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "light-1280-overflow.png",
+      "sha256": "ed62f348dc5f331549009a0b629a9333241601c62874b6e1a936256cdc656d12",
+      "bytes": 67307,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "light-1280-oversized.png",
+      "sha256": "2f2d0c5060b505253e2b487b4c5047a998a5a018f9b3ae19c492300093ce3683",
+      "bytes": 103249,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "light-1280-stack.png",
+      "sha256": "f07b75dfbc543d6c13fd71b0fc1d7bb829f0c4fefd76aef49097e2307b19e12e",
+      "bytes": 40749,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "light-1280-stacked-auto-placement.png",
+      "sha256": "014465ff88e29ca46bbaab4938d1365fe8cc85a4fc60764e016ce5350d8a3c8a",
+      "bytes": 66448,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "light-1280-stacked-default-placement.png",
+      "sha256": "3782e315bcd2b7a8ec702c0fab42d36fc40af5275759ee462766116acda05673",
+      "bytes": 54891,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "light-1280-stacked-placement-offsets.png",
+      "sha256": "fc15f6bd36a82534dd11ebf6bccd741f46a6a9dfe55512a51e3a0297b13af3f9",
+      "bytes": 61500,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "light-1280-stacked-within-container.png",
+      "sha256": "e9bd15cca943bfcd5ed083c2024da2341a6fc795897858680d8e7d75295cf71d",
+      "bytes": 33225,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "light-320-overflow.png",
+      "sha256": "1bac97170e60352faed786ede658c052ee7fc3b20387ccb2faab5ef736bfd29b",
+      "bytes": 35629,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "light-320-oversized.png",
+      "sha256": "87c2219ed1e52aba000b5492a3e1a0b1e06dd8e24f5d7dab8fc1aae525cf3961",
+      "bytes": 33966,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "light-320-stack.png",
+      "sha256": "a8d01e11b8901ab3fade850251b3b39aa21f5f8bc796298878fa2d6a11cb14e6",
+      "bytes": 29539,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "light-320-stacked-auto-placement.png",
+      "sha256": "734b74db4cb26840262f02bcf37fcb31a5b8d422ab642576c6e8efc87d751c3a",
+      "bytes": 33814,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "light-320-stacked-default-placement.png",
+      "sha256": "ba7b6a64218af166585753ee7e43799794b2501b3d7008238e90d2a6f2f0e874",
+      "bytes": 33885,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "light-320-stacked-placement-offsets.png",
+      "sha256": "f106c2935fea3f960d0b9361f37dcc04e242c88f33151de6a8fee942b1f685b1",
+      "bytes": 28554,
+      "width": 320,
+      "height": 720
+    },
+    {
+      "name": "light-320-stacked-within-container.png",
+      "sha256": "0ed0aa11699c2256c2549bd94e059cf12bac234e9362a90f0109187e22d0112f",
+      "bytes": 25621,
+      "width": 320,
+      "height": 720
+    }
+  ]
+}
