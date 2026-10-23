@@ -1,0 +1,332 @@
+[
+  {
+    "story": "left-navigation",
+    "scheme": "light",
+    "width": 1280,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 280,
+      "height": 900
+    },
+    "screenshot": "left-navigation-light-1280.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "left-navigation",
+    "scheme": "light",
+    "width": 390,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 280,
+      "height": 900
+    },
+    "screenshot": "left-navigation-light-390.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "left-navigation",
+    "scheme": "light",
+    "width": 320,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 280,
+      "height": 900
+    },
+    "screenshot": "left-navigation-light-320.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "left-navigation",
+    "scheme": "light",
+    "resize": "1280 → 320 → 1280",
+    "focusPreserved": true
+  },
+  {
+    "story": "left-navigation",
+    "scheme": "dark",
+    "width": 1280,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 280,
+      "height": 900
+    },
+    "screenshot": "left-navigation-dark-1280.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "left-navigation",
+    "scheme": "dark",
+    "width": 390,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 280,
+      "height": 900
+    },
+    "screenshot": "left-navigation-dark-390.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "left-navigation",
+    "scheme": "dark",
+    "width": 320,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 280,
+      "height": 900
+    },
+    "screenshot": "left-navigation-dark-320.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "left-navigation",
+    "scheme": "dark",
+    "resize": "1280 → 320 → 1280",
+    "focusPreserved": true
+  },
+  {
+    "story": "right-navigation",
+    "scheme": "light",
+    "width": 1280,
+    "bounds": {
+      "x": 840,
+      "y": 0,
+      "width": 440,
+      "height": 900
+    },
+    "screenshot": "right-navigation-light-1280.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "right-navigation",
+    "scheme": "light",
+    "width": 390,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 900
+    },
+    "screenshot": "right-navigation-light-390.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "right-navigation",
+    "scheme": "light",
+    "width": 320,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 900
+    },
+    "screenshot": "right-navigation-light-320.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "right-navigation",
+    "scheme": "light",
+    "resize": "1280 → 320 → 1280",
+    "focusPreserved": true
+  },
+  {
+    "story": "right-navigation",
+    "scheme": "dark",
+    "width": 1280,
+    "bounds": {
+      "x": 840,
+      "y": 0,
+      "width": 440,
+      "height": 900
+    },
+    "screenshot": "right-navigation-dark-1280.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "right-navigation",
+    "scheme": "dark",
+    "width": 390,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 900
+    },
+    "screenshot": "right-navigation-dark-390.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "right-navigation",
+    "scheme": "dark",
+    "width": 320,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 900
+    },
+    "screenshot": "right-navigation-dark-320.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "right-navigation",
+    "scheme": "dark",
+    "resize": "1280 → 320 → 1280",
+    "focusPreserved": true
+  },
+  {
+    "story": "wide-navigation",
+    "scheme": "light",
+    "width": 1280,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 960,
+      "height": 900
+    },
+    "screenshot": "wide-navigation-light-1280.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "wide-navigation",
+    "scheme": "light",
+    "width": 390,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 900
+    },
+    "screenshot": "wide-navigation-light-390.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "wide-navigation",
+    "scheme": "light",
+    "width": 320,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 900
+    },
+    "screenshot": "wide-navigation-light-320.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "wide-navigation",
+    "scheme": "light",
+    "resize": "1280 → 320 → 1280",
+    "focusPreserved": true
+  },
+  {
+    "story": "wide-navigation",
+    "scheme": "dark",
+    "width": 1280,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 960,
+      "height": 900
+    },
+    "screenshot": "wide-navigation-dark-1280.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "wide-navigation",
+    "scheme": "dark",
+    "width": 390,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 900
+    },
+    "screenshot": "wide-navigation-dark-390.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "wide-navigation",
+    "scheme": "dark",
+    "width": 320,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 900
+    },
+    "screenshot": "wide-navigation-dark-320.png",
+    "keyboard": true,
+    "scrollLock": true,
+    "controlledReopen": true,
+    "axe": true
+  },
+  {
+    "story": "wide-navigation",
+    "scheme": "dark",
+    "resize": "1280 → 320 → 1280",
+    "focusPreserved": true
+  },
+  {
+    "story": "standalone",
+    "defaultRight": true,
+    "defaultWidth": 608,
+    "dismissal": true
+  }
+]
