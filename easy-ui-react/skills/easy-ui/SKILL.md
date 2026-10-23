@@ -31,6 +31,10 @@ generated categories; authored arrays replace defaults. For intervals and
 prediction bands, preserve visible overlap when zoom endpoints lie inside a
 span, and respect explicit caller filtering.
 
+For side navigation, compose the existing Drawer modal with caller-owned routing.
+Use its documented placement, width, and controlled-container behavior; provide
+an accessible name even when omitting a visible heading.
+
 ## Change library components
 
 Keep public types, Storybook examples, and the bundled component reference

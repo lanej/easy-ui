@@ -1,0 +1,10 @@
+@use "../styles/common" as *;
+
+.page {
+  min-height: 1800px;
+  padding: design-token("space.3");
+}
+
+.navigation {
+  padding: design-token("space.3");
+}

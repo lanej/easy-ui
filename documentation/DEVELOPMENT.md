@@ -112,3 +112,18 @@ For map-free timeline/inspector composition, also run `STORYBOOK_URL=http://loca
 Run the Chart tests (including `chartCatalog.test.tsx`), package build, and Storybook build. `node scripts/check-chart-package.mjs` checks all chart subpaths in both module formats without eager engine loading; `node scripts/check-style-package.mjs` verifies packed TypeScript consumers.
 
 With built Storybook served locally, run `STORYBOOK_URL=http://localhost:9013 node scripts/check-chart-catalog.mjs` with the existing Playwright browser dependencies. The harness checks all 17 analytical component entries, light/dark desktop and narrow layouts, keyboard exact-data disclosure, finite renderer geometry, accessibility, pattern edge cases, and the rendered API table. `CHART_CATALOG_REPORT_DIR` selects screenshots and measured results. The main CI workflow runs it alongside the existing facility checks.
+
+### Drawer placement verification
+
+Run the focused `Drawer` tests and build Storybook. With Storybook served locally
+and the locked `scripts/preview-metrics` dependencies installed, run
+`STORYBOOK_URL=http://localhost:9013 node scripts/check-drawer-placement.mjs`.
+`DRAWER_PLACEMENT_REPORT_DIR` selects screenshots and measured results;
+`BROWSER_EXECUTABLE` and `BROWSER_CHANNEL` support available managed browsers.
+The harness covers left/right and oversized widths, headerless accessible naming,
+Escape/backdrop dismissal, controlled reopening, keyboard focus containment and
+restoration, background scroll locking/release, light/dark themes at 1280/390/320px,
+and desktop → mobile → desktop resizing without losing focus. The dedicated
+Drawer workflow retains this evidence. Actual packed exports, declarations,
+CJS/ESM aliases, naming, styles, and skill installation are checked separately by
+`node scripts/check-style-package.mjs`; neither suite claims application adoption.
