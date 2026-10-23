@@ -17,11 +17,17 @@ const browser = await chromium.launch({
   executablePath: process.env.BROWSER_EXECUTABLE || undefined,
 });
 const results = [];
+let activePage;
+let activeCase;
+let activeErrors;
 try {
   for (const mode of ["light", "dark"]) {
     for (const width of [1280, 320]) {
       const page = await browser.newPage({ viewport: { width, height: 720 } });
       const errors = [];
+      activePage = page;
+      activeCase = `${mode}-${width}`;
+      activeErrors = errors;
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(
         `${baseUrl}/iframe.html?id=components-notification--stacked-notifications&viewMode=story&globals=colorScheme:${mode}`,
@@ -150,6 +156,29 @@ try {
       await page.close();
     }
   }
+} catch (error) {
+  if (activePage) {
+    await activePage
+      .screenshot({ path: resolve(output, `${activeCase}-failure.png`) })
+      .catch(() => {});
+    await writeFile(
+      resolve(output, "failure.json"),
+      JSON.stringify(
+        {
+          case: activeCase,
+          error: String(error),
+          pageErrors: activeErrors,
+          body: await activePage
+            .locator("body")
+            .innerText()
+            .catch(() => ""),
+        },
+        null,
+        2,
+      ),
+    );
+  }
+  throw error;
 } finally {
   await writeFile(
     resolve(output, "report.json"),

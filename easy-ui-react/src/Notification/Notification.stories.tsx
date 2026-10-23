@@ -1,6 +1,6 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
 import React from "react";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 import {
   Notification,
   NotificationProps,
@@ -261,8 +261,10 @@ export const StackedNotifications: Story = {
     await userEvent.click(
       canvas.getByRole("button", { name: "Save two orders" }),
     );
-    await expect(body.getByText("Order A saved")).toBeVisible();
-    await expect(body.getByText("Order B saved")).toBeVisible();
+    await waitFor(() => {
+      expect(body.getByText("Order A saved")).toBeVisible();
+      expect(body.getByText("Order B saved")).toBeVisible();
+    });
     await userEvent.click(
       body.getByRole("button", { name: "Dismiss Order A saved" }),
     );
