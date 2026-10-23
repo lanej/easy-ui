@@ -1,10 +1,10 @@
 {
-  "sourceCommit": "4395b8d8e9ac2ea856f0bce2318bdf3ce81ab44a",
-  "sourceTree": "62d8c45e35732c32e6ac2d4b9b8ae7f70d937083",
+  "sourceCommit": "e37b25acb63772a76f0a8529bd9c115079bc3baa",
+  "sourceTree": "1064862e7923850b4dd3fe8de65c0e9788dfc80c",
   "pullRequest": "https://github.com/lanej/easy-ui/pull/70",
-  "workflowRun": "https://github.com/lanej/easy-ui/actions/runs/40026102186",
-  "artifactId": 12533186357,
-  "artifactDigest": "sha256:75adaa5c7c433c8919e61e4db1cc86dbf054ac144c444bbe9d4d902df69904d0",
+  "workflowRun": "https://github.com/lanej/easy-ui/actions/runs/40035244298",
+  "artifactId": 12537011673,
+  "artifactDigest": "sha256:413fc7d7f3356dafc3f4204229571184897136b1cd8726ae4044bc55ec2b4d0b",
   "captures": [
     {
       "file": "workspace-tabs-desktop-dark.png",
