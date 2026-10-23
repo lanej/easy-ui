@@ -388,6 +388,191 @@ describe("stacked notification interaction", () => {
     expect(document.body).toHaveFocus();
   });
 
+  it("gates mounted notification timers by actual scroll-viewport presentation", () => {
+    const callbacks = new Map<Element, IntersectionObserverCallback>();
+    let creations = 0;
+    let disconnections = 0;
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        node?: Element;
+        constructor(private callback: IntersectionObserverCallback) {
+          creations++;
+        }
+        observe(node: Element) {
+          this.node = node;
+          callbacks.set(node, this.callback);
+        }
+        disconnect() {
+          disconnections++;
+          if (this.node) callbacks.delete(this.node);
+        }
+      },
+    );
+    try {
+      const { unmount, rerender } = render(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 5000 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      act(() => {
+        notification.showSuccessToast({ message: "Presented" });
+        notification.showSuccessToast({ message: "Clipped" });
+      });
+      const presented = screen
+        .getByText("Presented")
+        .closest("[data-notification-key]")!;
+      const clipped = screen
+        .getByText("Clipped")
+        .closest("[data-notification-key]")!;
+      const observe = (node: Element, ratio: number) =>
+        act(() =>
+          callbacks.get(node)!(
+            [
+              {
+                target: node,
+                isIntersecting: ratio > 0,
+                intersectionRatio: ratio,
+              } as IntersectionObserverEntry,
+            ],
+            {} as IntersectionObserver,
+          ),
+        );
+      observe(presented, 1);
+      observe(clipped, 0.5);
+      act(() => vi.advanceTimersByTime(2000));
+      rerender(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 5000 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      expect(creations).toBe(2);
+      expect(disconnections).toBe(0);
+      act(() => vi.advanceTimersByTime(3000));
+      expect(screen.queryByText("Presented")).not.toBeInTheDocument();
+      expect(screen.getByText("Clipped")).toBeInTheDocument();
+      observe(clipped, 1);
+      act(() => vi.advanceTimersByTime(4999));
+      expect(screen.getByText("Clipped")).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.queryByText("Clipped")).not.toBeInTheDocument();
+      unmount();
+      expect(callbacks.size).toBe(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("offers an oversized timed stack item a close control even when ordinary toast controls are disabled", async () => {
+    let callback: IntersectionObserverCallback;
+    let onResize: ResizeObserverCallback;
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          onResize = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(onIntersection: IntersectionObserverCallback) {
+          callback = onIntersection;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    try {
+      const { user, unmount } = render(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 5000 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      act(() =>
+        notification.showSuccessToast({
+          message: "Oversized timed message",
+          isDismissable: false,
+        }),
+      );
+      const node = screen.getByRole("alertdialog");
+      act(() =>
+        callback(
+          [
+            {
+              target: node,
+              isIntersecting: true,
+              intersectionRatio: 0.5,
+              boundingClientRect: new DOMRect(0, 0, 200, 200),
+              intersectionRect: new DOMRect(0, 0, 200, 100),
+              rootBounds: new DOMRect(0, 0, 320, 720),
+              time: 0,
+            },
+          ],
+          {} as IntersectionObserver,
+        ),
+      );
+      expect(
+        screen.queryByRole("button", {
+          name: "Dismiss Oversized timed message",
+        }),
+      ).not.toBeInTheDocument();
+      vi.spyOn(node, "getBoundingClientRect").mockReturnValue({
+        width: 200,
+        height: 2000,
+      } as DOMRect);
+      // Geometry can grow without crossing any intersection threshold.
+      act(() => onResize([], {} as ResizeObserver));
+      act(() => vi.advanceTimersByTime(60000));
+      const close = screen.getByRole("button", {
+        name: "Dismiss Oversized timed message",
+      });
+      expect(close).toBeInTheDocument();
+      await user.click(close);
+      expect(
+        screen.queryByText("Oversized timed message"),
+      ).not.toBeInTheDocument();
+      unmount();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("retains scrollable presentation when stacking is disabled until replacement arrives", () => {
+    const { rerender } = render(
+      <NotificationProvider notificationOptions={{ stacking: true }}>
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() =>
+      notification.showSuccessToast({ message: "Retained stack item" }),
+    );
+    rerender(
+      <NotificationProvider notificationOptions={{ stacking: false }}>
+        <Controls />
+      </NotificationProvider>,
+    );
+    expect(screen.getByRole("region").parentElement).toHaveAttribute(
+      "class",
+      expect.stringContaining("stacked"),
+    );
+    act(() => notification.showSuccessToast({ message: "Replacement" }));
+    expect(screen.queryByText("Retained stack item")).not.toBeInTheDocument();
+    expect(screen.getByRole("region").parentElement).not.toHaveAttribute(
+      "class",
+      expect.stringContaining("stacked"),
+    );
+  });
+
   it("clears active timers when the provider unmounts", () => {
     const { unmount } = render(
       <NotificationProvider notificationOptions={{ stacking: true }}>

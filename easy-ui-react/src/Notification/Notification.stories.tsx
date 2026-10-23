@@ -212,6 +212,33 @@ function StackingExample() {
         <Button onPress={arrivals}>Save two orders</Button>
         <Button
           onPress={() =>
+            notification.showNeutralToast({
+              message: (
+                <span>
+                  Oversized update:{" "}
+                  {"A lengthy shipment update remains readable while you scroll. ".repeat(
+                    90,
+                  )}
+                </span>
+              ),
+              isDismissable: false,
+            })
+          }
+        >
+          Show oversized update
+        </Button>
+        <Button
+          onPress={() => {
+            for (let index = 0; index < 50; index++)
+              notification.showSuccessToast({
+                message: `Burst update ${index}: shipment saved for review`,
+              });
+          }}
+        >
+          Show overflow burst
+        </Button>
+        <Button
+          onPress={() =>
             setLastKey(
               notification.showSuccessToast({ message: "Order saved" }),
             )

@@ -384,7 +384,8 @@ bottom-right placement. See [stacked notifications](https://lanej.io/easy-ui/sto
 Show methods return unique keys; `closeNotification(key)` dismisses one item.
 Per-message `timeout` and `isDismissable` override defaults; zero disables expiry.
 Alerts remain persistent/dismissible unless explicitly overridden on that alert.
-Hover/focus pauses all retained timers with their remaining durations. Provider
+Hover/focus pauses all retained timers with their remaining durations. Clipped
+scroll-overflow items only accumulate expiration time while fully presented. Provider
 changes apply only to future calls; disabling stacking replaces retained items on
 the next call. Unmount clears timers. Omitted configuration retains replacement,
 4000ms non-dismissible toasts, and persistent dismissible alerts.

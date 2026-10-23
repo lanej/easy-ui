@@ -96,6 +96,7 @@
 
   .region {
     align-items: stretch;
+    justify-content: flex-start;
     gap: design-token("space.1");
     max-height: calc(100dvh - 32px);
     overflow-y: auto;
@@ -119,4 +120,10 @@
     flex-shrink: 0;
     margin-right: 0;
   }
+}
+
+.oversized .closeButtonContainer {
+  align-self: flex-start;
+  position: sticky;
+  top: design-token("space.1");
 }

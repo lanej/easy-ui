@@ -84,7 +84,13 @@ try {
       await page.clock.runFor(200);
       assert.equal(await closeA.count(), 0);
       assert.ok(await closeB.isVisible());
-      await page.clock.runFor(1600); // first notifications have now used 2200ms
+      // A pointer dismissal can recover keyboard focus to a surviving item.
+      // Explicitly leave both interaction modalities before accruing duration.
+      await page.mouse.move(0, 0);
+      await page
+        .getByRole("button", { name: "Save two orders", exact: true })
+        .focus();
+      await page.clock.runFor(1600);
       await closeB.hover();
       await closeB.focus();
       await page.clock.runFor(10000);
@@ -115,9 +121,11 @@ try {
           .count(),
         1,
       );
-      await page.clock.runFor(2599);
+      await page.clock.runFor(1000);
       assert.ok(await closeB.isVisible());
-      await page.clock.runFor(201); // expiration + exit animation, not a new five seconds
+      // Combined pre-pause and resumed presentation exceeds five seconds, but
+      // resumed duration alone remains below five: a restart would fail here.
+      await page.clock.runFor(2400);
       assert.equal(await closeB.count(), 0);
       assert.equal(
         await page
@@ -151,6 +159,97 @@ try {
       await page.keyboard.press("Enter");
       await page.clock.runFor(200);
       assert.equal(await page.getByRole("alertdialog").count(), 0);
+
+      await page
+        .getByRole("button", { name: "Show oversized update", exact: true })
+        .click();
+      await page.mouse.move(0, 0);
+      await page
+        .getByRole("button", { name: "Save two orders", exact: true })
+        .focus();
+      await page.clock.runFor(200);
+      const oversizedClose = page.getByRole("button", {
+        name: "Dismiss notification",
+        exact: true,
+      });
+      assert.equal(
+        await oversizedClose.count(),
+        1,
+        "oversized timed item gets a dismissal fallback",
+      );
+      const closeBounds = await oversizedClose.boundingBox();
+      assert.ok(
+        closeBounds.y >= 0 && closeBounds.y + closeBounds.height <= 720,
+        "oversized close stays reachable",
+      );
+      await page.clock.runFor(10000);
+      assert.equal(await oversizedClose.count(), 1);
+      await page.screenshot({
+        path: resolve(output, `${mode}-${width}-oversized.png`),
+      });
+      await oversizedClose.click();
+      await page.clock.runFor(200);
+      assert.equal(await page.getByRole("alertdialog").count(), 0);
+
+      // A burst taller than the viewport must remain start-aligned and must not
+      // spend the visible duration of clipped messages before they are read.
+      await page
+        .getByRole("button", { name: "Show overflow burst", exact: true })
+        .click();
+      await page.mouse.move(0, 0);
+      await page
+        .getByRole("button", { name: "Save two orders", exact: true })
+        .focus();
+      await page.clock.runFor(200);
+      const region = page.getByRole("region");
+      assert.ok(
+        await region.evaluate(
+          (element) => element.scrollHeight > element.clientHeight,
+        ),
+      );
+      const regionBounds = await region.boundingBox();
+      const firstBounds = await page
+        .getByRole("alertdialog")
+        .first()
+        .boundingBox();
+      assert.ok(
+        firstBounds.y >= regionBounds.y - 1,
+        "leading notifications are reachable at scroll origin",
+      );
+      await page.screenshot({
+        path: resolve(output, `${mode}-${width}-overflow.png`),
+      });
+      const oldest = page.getByRole("button", {
+        name: "Dismiss Burst update 0: shipment saved for review",
+        exact: true,
+      });
+      await page.clock.runFor(6000);
+      assert.equal(
+        await oldest.count(),
+        1,
+        "offviewport item cannot expire unseen",
+      );
+      const clippedBounds = await oldest.boundingBox();
+      assert.ok(
+        clippedBounds.y >= regionBounds.y + regionBounds.height,
+        "oldest item remains clipped before it is revealed",
+      );
+      await region.evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+      });
+      await page.clock.runFor(200);
+      await page.clock.runFor(4500);
+      assert.equal(
+        await oldest.count(),
+        1,
+        "revealed item retains its own visible duration",
+      );
+      await page.clock.runFor(1000);
+      assert.equal(
+        await oldest.count(),
+        0,
+        "revealed item expires after its visible duration",
+      );
       assert.deepEqual(errors, []);
       results.push({ mode, width, passed: true });
       await page.close();

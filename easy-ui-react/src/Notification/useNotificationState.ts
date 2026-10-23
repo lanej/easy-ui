@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useToastQueue } from "@react-stately/toast";
 import {
   NotificationProps,
@@ -20,8 +20,13 @@ export function useNotificationState(
   const queue = useMemo(() => new EasyUINotificationQueue(), []);
   useEffect(() => () => queue.clear(), [queue]);
   const state = useToastQueue<NotificationProps>(queue);
+  const setPresented = useCallback(
+    (key: string, presented: boolean) => queue.setPresented(key, presented),
+    [queue],
+  );
   return {
     ...state,
+    setPresented,
     showPromotionalAlert: (content: AlertProps) =>
       queue.alert(
         { ...content, status: "promotional", type: "alert" },

@@ -1,4 +1,11 @@
-import React, { ReactNode, useRef, useContext, createContext } from "react";
+import React, {
+  ReactNode,
+  useRef,
+  useContext,
+  createContext,
+  useEffect,
+  useState,
+} from "react";
 import { mergeRefs, useObjectRef } from "@react-aria/utils";
 import CloseIcon from "@easypost/easy-ui-icons/Close";
 import ErrorIcon from "@easypost/easy-ui-icons/Error";
@@ -49,11 +56,17 @@ export type AlertProps = Omit<BaseNotificationProps, "type" | "status"> & {
   onDismiss?: () => void;
 };
 
-export type QueuedNotification = QueuedToast<NotificationProps>;
+export type QueuedNotification = QueuedToast<NotificationProps> & {
+  /** Presentation tracking is snapshotted when this item is added. */
+  isStacked?: boolean;
+};
 
 export type NotificationProps = BaseNotificationProps & ToastProps & AlertProps;
 
-export type NotificationInternalState = ToastState<NotificationProps>;
+export type NotificationInternalState = ToastState<NotificationProps> & {
+  /** Track whether an item is fully presented in the scroll viewport. */
+  setPresented(key: string, presented: boolean): void;
+};
 
 /** The methods below are accessible on the object returned by the `useNotification` hook. */
 export type NotificationExternalState = {
@@ -113,7 +126,7 @@ export const Notification = React.forwardRef<
   HTMLDivElement,
   NotificationItemStateProps
 >((props, forwardedRef) => {
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   const mergedRef = useObjectRef(mergeRefs(ref, forwardedRef));
   const { state, toast: notification, isExiting } = props;
   const {
@@ -131,6 +144,63 @@ export const Notification = React.forwardRef<
     contentProps,
     closeButtonProps,
   } = useToast(props, state, ref);
+
+  const { setPresented } = state;
+  const [isOversized, setIsOversized] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    if (
+      !notification.isStacked ||
+      typeof IntersectionObserver === "undefined"
+    ) {
+      setPresented(notification.key, true);
+      return () => setPresented(notification.key, false);
+    }
+    const updateOversized = (bounds = node.getBoundingClientRect()) => {
+      const region = node.parentElement?.getBoundingClientRect();
+      const availableHeight = Math.min(
+        window.innerHeight,
+        region?.height || window.innerHeight,
+      );
+      const availableWidth = Math.min(
+        window.innerWidth,
+        region?.width || window.innerWidth,
+      );
+      setIsOversized(
+        bounds.height > availableHeight + 1 ||
+          bounds.width > availableWidth + 1,
+      );
+    };
+    updateOversized();
+    const onResize = () => updateOversized();
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver(onResize);
+    resizeObserver?.observe(node);
+    if (node.parentElement) resizeObserver?.observe(node.parentElement);
+    window.addEventListener("resize", onResize);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          updateOversized(entry.boundingClientRect);
+          setPresented(
+            notification.key,
+            entry.isIntersecting && entry.intersectionRatio >= 0.999,
+          );
+        }
+      },
+      { threshold: [0, 0.999, 1] },
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", onResize);
+      setPresented(notification.key, false);
+    };
+  }, [notification.key, notification.isStacked, setPresented]);
 
   const handleDismiss = () => {
     if (onDismiss) {
@@ -155,6 +225,7 @@ export const Notification = React.forwardRef<
         styles.Notification,
         styles[variationName("status", status)],
         styles[variationName("type", type)],
+        isOversized && styles.oversized,
       )}
     >
       <div
@@ -167,7 +238,7 @@ export const Notification = React.forwardRef<
           <Text weight="semibold">{message}</Text>
         </div>
       </div>
-      {isDismissable && (
+      {(isDismissable || (isOversized && notification.timeout != null)) && (
         <span className={styles.closeButtonContainer}>
           <UnstyledButton
             {...closeButtonPropsWithDismiss}
@@ -396,6 +467,7 @@ export function NotificationProvider(props: NotificationProviderProps) {
     add: combinedState.add,
     pauseAll: combinedState.pauseAll,
     resumeAll: combinedState.resumeAll,
+    setPresented: combinedState.setPresented,
     visibleToasts: combinedState.visibleToasts,
   };
 
@@ -421,7 +493,12 @@ export function NotificationProvider(props: NotificationProviderProps) {
         offset={notificationPlacement?.offset}
         position={notificationPlacement?.position}
         state={state}
-        stacking={notificationOptions?.stacking}
+        stacking={
+          notificationOptions?.stacking ||
+          combinedState.visibleToasts.some(
+            (item) => (item as QueuedNotification).isStacked,
+          )
+        }
       />
       {children}
     </NotificationContext.Provider>

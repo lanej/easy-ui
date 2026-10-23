@@ -148,10 +148,14 @@ Configure the public provider once, then use the same hook methods anywhere belo
 
 Each call returns a unique key, including calls with identical text. All retained
 notifications render immediately, newest first, with no hidden waiting queue.
-Each timer starts when its item mounts. Hovering or focusing anywhere in the
+Each timer starts only when its item is fully presented within the viewport.
+Clipped overflow items do not expire unseen; scrolling away pauses their remaining
+duration until they are fully presented again. A timed item too large to fit
+remains available with an always-reachable close control, even when close controls
+were disabled for ordinary timed items. Omitted stacking retains the existing
+single-notification timer behavior. Hovering or focusing anywhere in the
 notification region pauses all timers, including new arrivals; leaving resumes
-the remaining duration, not a fresh timeout. Keep stacks short enough to read.
-Overflow remains scrollable on small screens.
+the remaining duration, not a fresh timeout. Overflow remains start-aligned and scrollable on small screens.
 
 The defaults remain replacement, four-second toasts without close controls,
 and persistent dismissible alerts. Provider `timeout` and `isDismissable` apply

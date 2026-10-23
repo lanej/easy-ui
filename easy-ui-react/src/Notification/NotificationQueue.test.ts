@@ -4,6 +4,7 @@ import { EasyUINotificationQueue } from "./NotificationQueue";
 function mount(queue: EasyUINotificationQueue) {
   for (const item of queue.visibleToasts) {
     if (item.timeout) item.timer?.reset(item.timeout);
+    queue.setPresented(item.key, true);
   }
 }
 
@@ -100,6 +101,40 @@ describe("notification queue configuration", () => {
     queue.closeActiveNotification();
     expect(queue.visibleToasts).toHaveLength(0);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("does not expire clipped items and counts only their fully presented duration", () => {
+    const queue = new EasyUINotificationQueue();
+    queue.configure({ stacking: true, timeout: 5000 });
+    const key = queue.toast({ message: "Below the scroll viewport" });
+    queue.visibleToasts[0].timer?.reset(5000);
+    vi.advanceTimersByTime(10000);
+    expect(queue.visibleToasts).toHaveLength(1);
+    queue.setPresented(key, true);
+    vi.advanceTimersByTime(2000);
+    queue.setPresented(key, false);
+    vi.advanceTimersByTime(10000);
+    expect(queue.visibleToasts).toHaveLength(1);
+    queue.setPresented(key, true);
+    vi.advanceTimersByTime(2999);
+    expect(queue.visibleToasts).toHaveLength(1);
+    vi.advanceTimersByTime(1);
+    expect(queue.visibleToasts).toHaveLength(0);
+  });
+
+  it("installs presentation guards before synchronous subscribers can mount an item", () => {
+    const queue = new EasyUINotificationQueue();
+    queue.configure({ stacking: true, timeout: 5000 });
+    queue.subscribe(() => {
+      for (const item of queue.visibleToasts)
+        if (item.timeout) item.timer?.reset(item.timeout);
+    });
+    const key = queue.toast({ message: "Synchronous mount" });
+    vi.advanceTimersByTime(10000);
+    expect(queue.visibleToasts).toHaveLength(1);
+    queue.setPresented(key, true);
+    vi.advanceTimersByTime(5000);
+    expect(queue.visibleToasts).toHaveLength(0);
   });
 
   it("clears every timer, including ones not yet mounted", () => {

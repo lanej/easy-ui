@@ -4,12 +4,24 @@ import type { NotificationOptions, NotificationProps } from "./Notification";
 export const TOAST_TIMEOUT_DURATION = 4000;
 
 /**
- * Retains React Stately's keyed queue and starts timers only when useToast mounts
- * an item. Configuration is read at insertion, never retroactively applied.
+ * Retains React Stately's keyed queue. Mounted items only accrue time while
+ * presented. Configuration is read at insertion, never retroactively applied.
  */
 export class EasyUINotificationQueue extends ToastQueue<NotificationProps> {
   private options: NotificationOptions = {};
   private isPaused = false;
+  private presentedKeys = new Set<string>();
+  private preparedKeys = new Set<string>();
+
+  constructor() {
+    super({
+      wrapUpdate: (notify) => {
+        // Prepare before publishing to synchronous external-store subscribers.
+        this.prepareVisibleTimers();
+        notify();
+      },
+    });
+  }
 
   configure(options: NotificationOptions = {}) {
     this.options = options;
@@ -20,7 +32,21 @@ export class EasyUINotificationQueue extends ToastQueue<NotificationProps> {
     if (latest) this.close(latest.key);
   }
 
+  setPresented(key: string, presented: boolean) {
+    const item = this.visibleToasts.find((toast) => toast.key === key);
+    if (!item) return;
+    if (presented) {
+      this.presentedKeys.add(key);
+      item.timer?.resume();
+    } else {
+      this.presentedKeys.delete(key);
+      item.timer?.pause();
+    }
+  }
+
   override close(key: string) {
+    this.presentedKeys.delete(key);
+    this.preparedKeys.delete(key);
     this.visibleToasts.find((toast) => toast.key === key)?.timer?.pause();
     super.close(key);
   }
@@ -28,6 +54,8 @@ export class EasyUINotificationQueue extends ToastQueue<NotificationProps> {
   override clear() {
     super.pauseAll();
     super.clear();
+    this.presentedKeys.clear();
+    this.preparedKeys.clear();
     this.isPaused = false;
   }
 
@@ -59,22 +87,30 @@ export class EasyUINotificationQueue extends ToastQueue<NotificationProps> {
       // items created before stacking was disabled. Do not invoke onDismiss.
       super.pauseAll();
       super.clear();
+      this.presentedKeys.clear();
+      this.preparedKeys.clear();
     }
     const timeout =
       content.timeout ??
       (isAlert ? 0 : (options.timeout ?? TOAST_TIMEOUT_DURATION));
-    const key = super.add(
+    const queueOptions = {
+      timeout: Number.isFinite(timeout) && timeout > 0 ? timeout : undefined,
+      isStacked: options.stacking === true,
+    };
+    return super.add(
       {
         ...content,
         isDismissable:
           content.isDismissable ?? (isAlert || options.isDismissable === true),
       },
-      {
-        timeout: Number.isFinite(timeout) && timeout > 0 ? timeout : undefined,
-      },
+      queueOptions,
     );
-    const timer = this.visibleToasts.find((toast) => toast.key === key)?.timer;
-    if (timer) {
+  }
+
+  private prepareVisibleTimers() {
+    for (const { key, timer } of this.visibleToasts) {
+      if (!timer || this.preparedKeys.has(key)) continue;
+      this.preparedKeys.add(key);
       // React Stately's Timer.resume is not idempotent. Guard repeated region
       // focus/hover events, and preserve elapsed time across StrictMode effects.
       const reset = timer.reset.bind(timer);
@@ -83,7 +119,12 @@ export class EasyUINotificationQueue extends ToastQueue<NotificationProps> {
       let started = false;
       let running = false;
       timer.resume = () => {
-        if (!running && !this.isPaused) {
+        if (
+          !running &&
+          started &&
+          !this.isPaused &&
+          this.presentedKeys.has(key)
+        ) {
           running = true;
           resume();
         }
@@ -101,6 +142,5 @@ export class EasyUINotificationQueue extends ToastQueue<NotificationProps> {
         }
       };
     }
-    return key;
   }
 }
