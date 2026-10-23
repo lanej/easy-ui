@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "4a9e549061443bbf5a13620511c2c76de2181fdb",
+  "workflowRun": "https://github.com/lanej/easy-ui/actions/runs/39996628717",
+  "artifactId": 12520930506,
+  "screenshots": [
+    {
+      "name": "workspace-tabs-desktop-dark.png",
+      "sha256": "140e14b3d950d1798c90540b57398a2cccb53ffaa38a73eb213bb158ebc4f90c"
+    },
+    {
+      "name": "workspace-tabs-mobile-dark.png",
+      "sha256": "49e42eca3916aad6b6842f2430584cd16fb516380a7b97090f5e4b21ce61ae5f"
+    },
+    {
+      "name": "workspace-tabs-desktop-light.png",
+      "sha256": "c2c050a0c464c624af8e7acc0a79d56af6514b60a70394bed99eddfc5f99e67e"
+    },
+    {
+      "name": "workspace-tabs-mobile-light.png",
+      "sha256": "60782a206b13ae678e55900def77c8e785da5c422ca7284a89625e35d8aa6dc2"
+    }
+  ]
+}
