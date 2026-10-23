@@ -20,6 +20,23 @@ const results = [];
 let activePage;
 let activeCase;
 let activeErrors;
+async function assertStatusIcons(page) {
+  const icons = await page
+    .locator('[role="status"] > span, [role="alert"] > span')
+    .evaluateAll((elements) =>
+      elements.map((element) => {
+        const bounds = element.getBoundingClientRect();
+        return { width: bounds.width, height: bounds.height };
+      }),
+    );
+  assert.ok(icons.length > 0, "notification status icons are present");
+  for (const icon of icons) {
+    assert.ok(
+      icon.height >= 20 && icon.width >= icon.height - 1,
+      "status icons retain their size under long text and narrow placements",
+    );
+  }
+}
 async function activate(page, name) {
   // The notification overlay can cover demo triggers on narrow screens. Real
   // keyboard activation keeps those controls operable without a forced click.
@@ -85,6 +102,7 @@ try {
         ),
         false,
       );
+      await assertStatusIcons(page);
       await page.screenshot({
         path: resolve(output, `${mode}-${width}-stack.png`),
       });
@@ -278,6 +296,7 @@ try {
       );
       await page.clock.runFor(10000);
       assert.equal(await oversizedClose.count(), 1);
+      await assertStatusIcons(page);
       await page.screenshot({
         path: resolve(output, `${mode}-${width}-oversized.png`),
       });
@@ -308,6 +327,7 @@ try {
         firstBounds.y >= regionBounds.y - 1,
         "leading notifications are reachable at scroll origin",
       );
+      await assertStatusIcons(page);
       await page.screenshot({
         path: resolve(output, `${mode}-${width}-overflow.png`),
       });
@@ -423,6 +443,7 @@ try {
             last.y + last.height <= regionRect.y + regionRect.height + 1,
           "trailing close remains reachable",
         );
+        await assertStatusIcons(placementPage);
         await placementPage.screenshot({
           path: resolve(output, `${mode}-${width}-${placement}.png`),
         });

@@ -134,6 +134,15 @@
   .iconText {
     min-width: 0;
     overflow-wrap: anywhere;
+
+    // Keep the status glyph legible while the message consumes available space.
+    > span {
+      flex-shrink: 0;
+    }
+
+    > div {
+      min-width: 0;
+    }
   }
 
   .closeButtonContainer {
