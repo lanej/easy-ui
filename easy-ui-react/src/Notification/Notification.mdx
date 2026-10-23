@@ -193,9 +193,21 @@ Notifications can have custom placement on a per app basis. Use the `notificatio
 
 <Canvas of={NotificationStories.CustomPlacement} />
 
+Stack size accounts for configured offsets on both axes. Its available size uses
+the actual positioning containing block: viewport for fixed positioning, or the
+positioned ancestor for absolute positioning. An unspecified opposite edge keeps
+a 16px reading margin. Keep offsets inside the available containing block.
+
+<Canvas of={NotificationStories.StackedPlacementOffsets} />
+
 ### Custom placement within container
 
 Notifications by default render into `document.body` via a portal. To render notifications into a custom container, pass a callback function
 to `getContainer` that returns a valid `HTMLElement`.
 
 <Canvas of={NotificationStories.CustomPlacementWithinContainer} />
+
+Stacking can also be bounded by a positioned custom container. Its scroll region
+reserves the configured offsets rather than borrowing the full viewport height.
+
+<Canvas of={NotificationStories.StackedWithinContainer} />

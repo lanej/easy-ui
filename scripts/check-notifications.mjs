@@ -253,6 +253,92 @@ try {
       assert.deepEqual(errors, []);
       results.push({ mode, width, passed: true });
       await page.close();
+
+      for (const placement of [
+        "stacked-placement-offsets",
+        "stacked-within-container",
+        "stacked-default-placement",
+      ]) {
+        const placementPage = await browser.newPage({
+          viewport: { width, height: 720 },
+        });
+        const placementErrors = [];
+        activePage = placementPage;
+        activeCase = `${mode}-${width}-${placement}`;
+        activeErrors = placementErrors;
+        placementPage.on("pageerror", (error) =>
+          placementErrors.push(error.message),
+        );
+        await placementPage.goto(
+          `${baseUrl}/iframe.html?id=components-notification--${placement}&viewMode=story&globals=colorScheme:${mode}`,
+        );
+        await placementPage
+          .getByRole("button", { name: "Show overflow burst", exact: true })
+          .click();
+        await placementPage.mouse.move(0, 0);
+        await placementPage.waitForTimeout(200);
+        const placementRegion = placementPage.getByRole("region");
+        const bounds =
+          placement === "stacked-within-container"
+            ? await placementPage
+                .locator("#notification-placement-container")
+                .boundingBox()
+            : { x: 0, y: 0, width, height: 720 };
+        const regionRect = await placementRegion.boundingBox();
+        assert.ok(
+          regionRect.x >= bounds.x && regionRect.y >= bounds.y,
+          "large offsets cannot place leading content outside its containing block",
+        );
+        const reserved = placement === "stacked-default-placement" ? 15 : 79;
+        assert.ok(
+          regionRect.x + regionRect.width <= bounds.x + bounds.width - reserved,
+          "right offset is reserved",
+        );
+        assert.ok(
+          regionRect.y + regionRect.height <=
+            bounds.y + bounds.height - reserved,
+          "bottom offset is reserved",
+        );
+        assert.ok(
+          regionRect.height <=
+            bounds.height -
+              (placement === "stacked-default-placement" ? 15 : 95),
+          "scroll height accounts for placement offsets",
+        );
+        assert.ok(
+          await placementRegion.evaluate(
+            (element) => element.scrollHeight > element.clientHeight,
+          ),
+        );
+        const first = await placementPage
+          .getByRole("alertdialog")
+          .first()
+          .boundingBox();
+        assert.ok(
+          first.y >= regionRect.y - 1,
+          "leading item remains reachable",
+        );
+        await placementRegion.evaluate((element) => {
+          element.scrollTop = element.scrollHeight;
+        });
+        await placementPage.waitForTimeout(50);
+        const last = await placementPage
+          .getByRole("button", {
+            name: "Dismiss Burst update 0: shipment saved for review",
+            exact: true,
+          })
+          .boundingBox();
+        assert.ok(
+          last.y >= regionRect.y &&
+            last.y + last.height <= regionRect.y + regionRect.height + 1,
+          "trailing close remains reachable",
+        );
+        await placementPage.screenshot({
+          path: resolve(output, `${mode}-${width}-${placement}.png`),
+        });
+        assert.deepEqual(placementErrors, []);
+        await placementPage.close();
+      }
     }
   }
 } catch (error) {

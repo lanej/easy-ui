@@ -324,3 +324,53 @@ export const PerMessageOptions: Story = {
     );
   },
 };
+
+export const StackedPlacementOffsets: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{ stacking: true, timeout: 0, isDismissable: true }}
+      notificationPlacement={{ offset: { bottom: "80px", right: "80px" } }}
+    >
+      <StackingExample />
+    </EasyUIProvider>
+  ),
+};
+
+export const StackedWithinContainer: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{ stacking: true, timeout: 0, isDismissable: true }}
+      notificationPlacement={{
+        position: "absolute",
+        getContainer: () =>
+          document.getElementById("notification-placement-container"),
+        offset: { bottom: "80px", right: "80px" },
+      }}
+    >
+      <div
+        id="notification-placement-container"
+        style={{
+          position: "relative",
+          width: "min(100%, 560px)",
+          height: 400,
+          boxSizing: "border-box",
+        }}
+      >
+        <StackingExample />
+      </div>
+    </EasyUIProvider>
+  ),
+};
+
+export const StackedDefaultPlacement: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{ stacking: true, timeout: 0, isDismissable: true }}
+    >
+      <StackingExample />
+    </EasyUIProvider>
+  ),
+};

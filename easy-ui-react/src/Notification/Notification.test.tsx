@@ -575,6 +575,61 @@ describe("stacked notification interaction", () => {
     );
   });
 
+  it("reserves configured placement offsets when sizing the stack", () => {
+    render(
+      <NotificationProvider
+        notificationOptions={{ stacking: true }}
+        notificationPlacement={{ offset: { bottom: "80px", right: "80px" } }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showSuccessToast({ message: "Offset stack" }));
+    const container = screen.getByRole("region").parentElement!;
+    expect(
+      container.style.getPropertyValue("--easy-ui-notification-bottom"),
+    ).toBe("80px");
+    expect(
+      container.style.getPropertyValue("--easy-ui-notification-right"),
+    ).toBe("80px");
+    expect(container.style.getPropertyValue("--easy-ui-notification-top")).toBe(
+      "16px",
+    );
+    expect(container.style.justifyContent).toBe("flex-end");
+  });
+
+  it("normalizes default and explicit zero offsets for length arithmetic", () => {
+    const { rerender } = render(
+      <NotificationProvider notificationOptions={{ stacking: true }}>
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showSuccessToast({ message: "Default stack" }));
+    expect(
+      screen
+        .getByRole("region")
+        .parentElement!.style.getPropertyValue("--easy-ui-notification-top"),
+    ).toBe("0px");
+    expect(
+      screen
+        .getByRole("region")
+        .parentElement!.style.getPropertyValue("--easy-ui-notification-left"),
+    ).toBe("0px");
+    rerender(
+      <NotificationProvider
+        notificationOptions={{ stacking: true }}
+        notificationPlacement={{ offset: { top: "0", left: "0" } }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    expect(
+      screen
+        .getByRole("region")
+        .parentElement!.style.getPropertyValue("--easy-ui-notification-top"),
+    ).toBe("0px");
+  });
+
   it("clears active timers when the provider unmounts", () => {
     const { unmount } = render(
       <NotificationProvider notificationOptions={{ stacking: true }}>

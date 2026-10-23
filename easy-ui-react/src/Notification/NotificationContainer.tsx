@@ -67,9 +67,36 @@ export function NotificationContainer(props: NotificationContainerProps) {
     position: !requestFailed ? position : "fixed",
   };
 
+  const stackLength = (value: string | number | undefined) =>
+    value === 0 ||
+    (typeof value === "string" && /^[-+]?0(?:\.0+)?$/.test(value.trim()))
+      ? "0px"
+      : (value ?? "16px");
   const containerStyles = {
     ...positionStyleProps,
     ...positionProps,
+    ...(stacking
+      ? {
+          "--easy-ui-notification-top": stackLength(positionStyleProps.top),
+          "--easy-ui-notification-right": stackLength(
+            "right" in positionStyleProps
+              ? positionStyleProps.right
+              : undefined,
+          ),
+          "--easy-ui-notification-bottom": stackLength(
+            "bottom" in positionStyleProps
+              ? positionStyleProps.bottom
+              : undefined,
+          ),
+          "--easy-ui-notification-left": stackLength(positionStyleProps.left),
+          justifyContent:
+            "bottom" in positionStyleProps &&
+            positionStyleProps.bottom != null &&
+            positionStyleProps.top == null
+              ? "flex-end"
+              : "flex-start",
+        }
+      : {}),
   } as React.CSSProperties;
 
   return (
