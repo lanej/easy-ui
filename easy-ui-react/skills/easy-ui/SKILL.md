@@ -16,6 +16,9 @@ before composing a component. Use existing components, tokens, and documented
 package subpaths. Follow the package README for the stylesheet and Provider;
 avoid copying implementation code or inventing props from a screenshot.
 
+For application-owned workspace panels, use `WorkspaceTabs` with the shared
+`useWorkspaceTabIds` contract; keep selection and close policy in the application.
+
 For charts, read the catalog's choosing-a-chart guidance and the selected
 component's examples. Keep aggregation, units, model bounds, and interpretation
 in the application. Supply accessible titles, descriptions, and exact-data

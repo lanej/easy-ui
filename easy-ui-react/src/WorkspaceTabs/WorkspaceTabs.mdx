@@ -1,0 +1,100 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import { WorkspaceTabs } from "./WorkspaceTabs";
+import * as WorkspaceTabsStories from "./WorkspaceTabs.stories";
+
+<Meta of={WorkspaceTabsStories} />
+
+# WorkspaceTabs
+
+Controlled workspace views with pinned and closable tabs. Applications own the panels, selection policy, and close confirmation or persistence. Use `TabNav` for URL navigation, or `TabPanels` for integrated tab/panel composition.
+
+## Usage
+
+```tsx
+import {
+  WorkspaceTabs,
+  useWorkspaceTabIds,
+} from "@easypost/easy-ui/WorkspaceTabs";
+```
+
+Call `useWorkspaceTabIds` once per instance, then share it with `WorkspaceTabs` and your external panels. Keys must be unique across both lists and remain stable. Opaque keys such as `order/a` and `order_002fa` get distinct DOM IDs; separate hook calls isolate separate workspaces. Do not construct, sanitize, or parse the generated IDs.
+
+```tsx
+import { useState } from "react";
+
+function Orders() {
+  const ids = useWorkspaceTabIds();
+  const [selectedKey, setSelectedKey] = useState("overview");
+  const [openTabs, setOpenTabs] = useState([
+    { id: "order/a", label: "Order A" },
+  ]);
+  const pinnedTabs = [{ id: "overview", label: "Overview", count: 0 }];
+  return (
+    <>
+      <WorkspaceTabs
+        aria-label="Workspace views"
+        ids={ids}
+        pinnedTabs={pinnedTabs}
+        openTabs={openTabs}
+        selectedKey={selectedKey}
+        onSelectionChange={setSelectedKey}
+        onClose={(id) => {
+          setOpenTabs((tabs) => tabs.filter((tab) => tab.id !== id));
+          if (selectedKey === id) setSelectedKey("overview");
+        }}
+      />
+      {[...pinnedTabs, ...openTabs].map((tab) => (
+        <section
+          key={tab.id}
+          role="tabpanel"
+          id={ids.panelId(tab.id)}
+          aria-labelledby={ids.tabId(tab.id)}
+          hidden={tab.id !== selectedKey}
+          tabIndex={0}
+        >
+          {tab.label}
+        </section>
+      ))}
+    </>
+  );
+}
+```
+
+<Canvas of={WorkspaceTabsStories.Default} />
+
+## Props
+
+<ArgTypes of={WorkspaceTabs} />
+
+Each `WorkspaceTab` supplies `id`, string `label`, optional `count`, `isDisabled`, and `isClosable`. Pinned tabs never close. Open tabs close by default when `onClose` is supplied; set `isClosable={false}` on an item to suppress its close button. Disabled items cannot activate or close. `getCloseLabel` localizes the separate close buttons, whose default is “Close [label] tab”. Zero counts remain visible and part of the accessible tab name.
+
+## Examples
+
+### Manual activation and controlled removal
+
+Left/Right arrows wrap focus across enabled tabs without changing selection. Home/End focus enabled endpoints; Enter/Space activate. Right/Left direction follows RTL layouts. Close buttons are separate keyboard-accessible buttons, never nested in a tab. Closing another view does not activate it.
+
+The application must update `selectedKey` when its selected tab closes. A delayed controlled removal recovers focus to the next enabled tab at that position, then the preceding enabled tab, or the empty bar. It never changes selection or steals focus after the user leaves the bar.
+
+For a single reused external panel, supply its ID with `panelId="order-panel"`, and set that panel's `aria-labelledby` to `ids.tabId(selectedKey)`. Keep the hook instance and keys stable. Give the tablist an `aria-label` or `aria-labelledby`.
+
+### Secondary presentation
+
+<Canvas of={WorkspaceTabsStories.Secondary} />
+
+### Overflow and long labels
+
+The bar scrolls independently of the page, revealing focused/selected tabs. Long labels truncate visually while retaining their full accessible names and hover titles. Trailing content stays outside the tablist; keep actions compact in narrow workspaces.
+
+<Canvas of={WorkspaceTabsStories.Narrow} />
+
+### Width transitions
+
+Resize the workspace while navigating to verify selected/focused items remain revealed.
+
+<Canvas of={WorkspaceTabsStories.WidthTransition} />
+
+### Empty workspace
+
+<Canvas of={WorkspaceTabsStories.Empty} />

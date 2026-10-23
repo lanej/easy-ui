@@ -1,0 +1,39 @@
+name: Workspace tabs
+on:
+  pull_request:
+    paths:
+      - "easy-ui-react/src/WorkspaceTabs/**"
+      - "scripts/check-workspace-tabs-consumer.mjs"
+      - "scripts/workspace-tabs-consumer.tsx"
+      - ".github/workflows/workspace-tabs.yml"
+      - "package-lock.json"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: workspace-tabs-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  packed-consumer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: node scripts/check-style-package.mjs
+      - run: npm ci --prefix scripts/preview-metrics --no-audit --no-fund
+      - run: npx --prefix scripts/preview-metrics playwright install --with-deps chromium
+      - run: node scripts/check-workspace-tabs-consumer.mjs
+        env:
+          WORKSPACE_TABS_REPORT_DIR: ${{ runner.temp }}/workspace-tabs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workspace-tabs-consumer
+          path: ${{ runner.temp }}/workspace-tabs
+          if-no-files-found: ignore

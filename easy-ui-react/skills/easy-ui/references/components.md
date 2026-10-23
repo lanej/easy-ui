@@ -38,7 +38,7 @@ revision; use the installed declarations when the application pins another versi
 | Actions and action menus            | `Button`, `UnstyledButton`, `IconButton`, `DropdownButton`, `KebabButton`, `Menu`, `ExpandButton`, `CollapseButton`                                                               |
 | Text and selection inputs           | `InputField`, `TextField`, `Textarea`, `Select`, `MultiSelect`, `Checkbox`, `RadioGroup`, `RadioButtonGroup`, `Toggle`, `ColorPicker`, `PriceRangeSlider`, `SelectorErrorTooltip` |
 | Date inputs and calendars           | `DatePicker`, `DateRangePicker`, `Calendar`, `RangeCalendar`                                                                                                                      |
-| Navigation and pagination           | `Tabs`, `TabNav`, `TabPanels`, `VerticalNav`, `SearchNav`, `Stepper`, `Pagination`                                                                                                |
+| Navigation and pagination           | `Tabs`, `TabNav`, `TabPanels`, `WorkspaceTabs`, `VerticalNav`, `SearchNav`, `Stepper`, `Pagination`                                                                                                |
 | Page structures                     | `ProductLayout`, `FocusedProductLayout`, `CustomerPortalLayout`, `ForgeLayout`, `NexusLayout`, `MultipageSection`, `WorkspaceHeader`                                              |
 | Cards and selection shells          | `Card`, `SectionCard`, `PlanCard`, `EmptyStateCard`, `CardListItem`, `CheckableCard`, `ToggleCard`, `SplitToggleCard`                                                             |
 | Disclosure and overlays             | `Disclosure`, `Drawer`, `Modal`, `Popover`, `Tooltip`                                                                                                                             |
@@ -55,6 +55,18 @@ details; `DrawerRow` is exported from the same `DrawerTable` entry.
 
 Use `WorkspaceHeader` for a page title, caller-composed `navigation`, and actions;
 the surrounding page layout remains independent. See [page navigation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspaceheader--with-navigation).
+
+Use `WorkspaceTabs` for application-owned workspace views with `pinnedTabs`,
+`openTabs`, controlled `selectedKey` / `onSelectionChange`, and separate `onClose`
+actions. Tabs use manual keyboard activation. Call `useWorkspaceTabIds` once per
+workspace, pass its `ids` object to the bar, and use `ids.tabId(key)` /
+`ids.panelId(key)` for external panels; never sanitize opaque keys yourself.
+`panelId` supports one shared panel instead. Applications choose the next
+selection after removal. Pinned and disabled tabs cannot close; zero counts
+remain accessible. Choose `variant="secondary"` for subordinate views and keep
+`trailing` actions compact. See [workspace interactions](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--default),
+[narrow overflow](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--narrow),
+and [width transitions](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--width-transition).
 
 Control `ThemeToggle` with `mode` and `onModeChange`, and pass the same mode to
 `ThemeProvider`'s `colorScheme`. The application owns system-preference resolution
