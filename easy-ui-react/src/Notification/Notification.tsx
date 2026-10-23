@@ -226,6 +226,7 @@ export const Notification = React.forwardRef<
         styles[variationName("status", status)],
         styles[variationName("type", type)],
         isOversized && styles.oversized,
+        isExiting && styles.exiting,
       )}
     >
       <div

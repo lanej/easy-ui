@@ -304,7 +304,9 @@ describe("stacked notification interaction", () => {
     expect(newest).toHaveAttribute("aria-hidden", "true");
     expect(newest).not.toHaveAttribute("role");
     expect(screen.getByRole("alertdialog")).toHaveFocus();
-    fireEvent.transitionEnd(newest);
+    expect(newest).toHaveAttribute("class", expect.stringContaining("exiting"));
+    act(() => vi.advanceTimersByTime(200)); // also works when no transitionend fires
+    expect(newest).not.toBeInTheDocument();
     expect(screen.getByRole("alertdialog")).toHaveFocus();
     expect(screen.getByText("Older saved")).toBeInTheDocument();
   });

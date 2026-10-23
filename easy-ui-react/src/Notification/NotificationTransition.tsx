@@ -43,6 +43,7 @@ export function NotificationTransition({
       appear={true}
       nodeRef={nodeRef}
       unmountOnExit
+      timeout={150}
       addEndListener={transitionEndListener}
       classNames={{
         appear: styles.appear,
