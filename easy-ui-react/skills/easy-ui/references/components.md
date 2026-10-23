@@ -61,6 +61,11 @@ Use `WorkspaceTabs` for application-owned workspace views with `pinnedTabs`,
 actions. Tabs use manual keyboard activation. Call `useWorkspaceTabIds` once per
 workspace, pass its `ids` object to the bar, and use `ids.tabId(key)` /
 `ids.panelId(key)` for external panels; never sanitize opaque keys yourself.
+The hook supports React 16.14/17 as well as 18/19. For React 16/17 server rendering,
+wrap both server and client application roots in one `SSRProvider` from
+`react-aria`, using the same module format as Easy UI and one dependency version.
+React 18+ needs no SSR wrapper. Separate hook instances isolate repeated keys;
+see [independent workspaces](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--isolated-workspaces).
 `panelId` supports one shared panel instead. Applications choose the next
 selection after removal. Pinned and disabled tabs cannot close; zero counts
 remain accessible. Choose `variant="secondary"` for subordinate views and keep
