@@ -30,6 +30,9 @@ const pack = (directory) => {
   )[0];
   return { ...result, path: join(consumer, result.filename) };
 };
+const sourceCommit =
+  process.env.WORKSPACE_TABS_SOURCE_COMMIT ??
+  run("git", ["rev-parse", "HEAD"], root).trim();
 const packed = pack(join(root, "easy-ui-react/dist"));
 const icons = pack(join(root, "easy-ui-icons/dist"));
 for (const entry of [
@@ -131,6 +134,7 @@ await writeFile(
   join(output, "package-results.json"),
   JSON.stringify(
     {
+      sourceCommit,
       consumer,
       tarball: packed.filename,
       integrity: packed.integrity,
@@ -364,6 +368,7 @@ try {
     join(output, "results.json"),
     JSON.stringify(
       {
+        sourceCommit,
         consumer,
         tarball: packed.filename,
         integrity: packed.integrity,

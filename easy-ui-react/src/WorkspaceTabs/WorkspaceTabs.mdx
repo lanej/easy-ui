@@ -12,10 +12,8 @@ Controlled workspace views with pinned and closable tabs. Applications own the p
 ## Usage
 
 ```tsx
-import {
-  WorkspaceTabs,
-  useWorkspaceTabIds,
-} from "@easypost/easy-ui/WorkspaceTabs";
+import { WorkspaceTabs } from "@easypost/easy-ui/WorkspaceTabs";
+import { useWorkspaceTabIds } from "@easypost/easy-ui/WorkspaceTabs";
 ```
 
 Call `useWorkspaceTabIds` once per instance, then share it with `WorkspaceTabs` and your external panels. Keys must be unique across both lists and remain stable. Opaque keys such as `order/a` and `order_002fa` get distinct DOM IDs; separate hook calls isolate separate workspaces. Do not construct, sanitize, or parse the generated IDs.
