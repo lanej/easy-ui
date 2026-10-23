@@ -20,6 +20,12 @@ const results = [];
 let activePage;
 let activeCase;
 let activeErrors;
+// Virtual time controls timeout accounting, not the browser's CSS transitions or
+// IntersectionObserver delivery. Wait for real presentation before charging time.
+async function settlePresentation(page) {
+  await page.clock.runFor(200);
+  await page.waitForTimeout(200);
+}
 try {
   for (const mode of ["light", "dark"]) {
     for (const width of [1280, 320]) {
@@ -42,7 +48,7 @@ try {
       await page
         .getByRole("button", { name: "Save two orders", exact: true })
         .click();
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       const closeA = page.getByRole("button", {
         name: "Dismiss Order A saved",
         exact: true,
@@ -63,7 +69,7 @@ try {
       await page
         .getByRole("button", { name: "Show long update", exact: true })
         .click();
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       for (const item of await page.getByRole("alertdialog").all()) {
         const rect = await item.boundingBox();
         assert.ok(
@@ -81,7 +87,7 @@ try {
         path: resolve(output, `${mode}-${width}-stack.png`),
       });
       await closeA.click();
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       assert.equal(await closeA.count(), 0);
       assert.ok(await closeB.isVisible());
       // A pointer dismissal can recover keyboard focus to a surviving item.
@@ -114,7 +120,7 @@ try {
           exact: true,
         })
         .click();
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       assert.equal(
         await page
           .getByRole("button", { name: "Dismiss Order saved", exact: true })
@@ -144,7 +150,7 @@ try {
       });
       await newestClose.focus();
       await page.keyboard.press("Enter");
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       assert.ok(
         await page
           .getByRole("alertdialog")
@@ -164,7 +170,7 @@ try {
         "none",
         "empty exit region cannot intercept clicks",
       );
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       assert.equal(await page.getByRole("alertdialog").count(), 0);
 
       // Prepending multiple items must not make another item's removal steal
@@ -178,7 +184,7 @@ try {
         exact: true,
       });
       await repeat.click();
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       const originalClose = await page
         .getByRole("button", {
           name: "Dismiss Order saved",
@@ -190,32 +196,66 @@ try {
       await repeat.evaluate((element) => element.click());
       assert.equal(await page.getByRole("status").count(), 3);
       await dismissLast.evaluate((element) => element.click());
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       assert.ok(
         await originalClose.evaluate(
           (element) => element === document.activeElement,
         ),
       );
       await originalClose.press("Enter");
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       await page
         .getByRole("button", { name: "Dismiss Order saved", exact: true })
         .click();
-      await page.clock.runFor(200);
+      await settlePresentation(page);
 
       // Removing the final hovered region cannot leave the next region's
       // timers permanently paused after that old region has unmounted.
       await repeat.click();
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       await page
         .getByRole("button", { name: "Dismiss Order saved", exact: true })
         .hover();
       await dismissLast.evaluate((element) => element.click());
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       assert.equal(await page.getByRole("region").count(), 0);
       await repeat.click();
       await page.mouse.move(0, 0);
       await repeat.focus();
+      await settlePresentation(page);
+      const remountPresentation = await page
+        .getByRole("alertdialog")
+        .evaluate((element) => {
+          const region = element.parentElement;
+          return {
+            bounds: element.getBoundingClientRect().toJSON(),
+            regionBounds: region.getBoundingClientRect().toJSON(),
+            viewport: { width: innerWidth, height: innerHeight },
+            opacity: getComputedStyle(element).opacity,
+            transform: getComputedStyle(element).transform,
+            regionHovered: region.matches(":hover"),
+            regionFocused: region.contains(document.activeElement),
+            activeElement: document.activeElement?.outerHTML,
+          };
+        });
+      await writeFile(
+        resolve(output, `${mode}-${width}-remount-presentation.json`),
+        JSON.stringify(remountPresentation, null, 2),
+      );
+      assert.equal(
+        remountPresentation.opacity,
+        "1",
+        "new region is fully rendered before charging visible time",
+      );
+      assert.equal(remountPresentation.regionHovered, false);
+      assert.equal(remountPresentation.regionFocused, false);
+      assert.ok(
+        remountPresentation.bounds.y >= remountPresentation.regionBounds.y - 1,
+      );
+      assert.ok(
+        remountPresentation.bounds.bottom <=
+          remountPresentation.regionBounds.bottom + 1,
+      );
       await page.clock.runFor(5200);
       assert.equal(await page.getByRole("status").count(), 0);
 
@@ -226,7 +266,7 @@ try {
       await page
         .getByRole("button", { name: "Save two orders", exact: true })
         .focus();
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       const oversizedClose = page.getByRole("button", {
         name: "Dismiss notification",
         exact: true,
@@ -247,7 +287,7 @@ try {
         path: resolve(output, `${mode}-${width}-oversized.png`),
       });
       await oversizedClose.click();
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       assert.equal(await page.getByRole("alertdialog").count(), 0);
 
       // A burst taller than the viewport must remain start-aligned and must not
@@ -259,7 +299,7 @@ try {
       await page
         .getByRole("button", { name: "Save two orders", exact: true })
         .focus();
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       const region = page.getByRole("region");
       assert.ok(
         await region.evaluate(
@@ -296,7 +336,7 @@ try {
       await region.evaluate((element) => {
         element.scrollTop = element.scrollHeight;
       });
-      await page.clock.runFor(200);
+      await settlePresentation(page);
       await page.clock.runFor(4500);
       assert.equal(
         await oldest.count(),
@@ -412,6 +452,25 @@ try {
           case: activeCase,
           error: String(error),
           pageErrors: activeErrors,
+          dom: await activePage
+            .evaluate(() => ({
+              activeElement: document.activeElement?.outerHTML,
+              items: Array.from(
+                document.querySelectorAll("[data-notification-key]"),
+              ).map((element) => ({
+                key: element.getAttribute("data-notification-key"),
+                role: element.getAttribute("role"),
+                classes: element.className,
+                opacity: getComputedStyle(element).opacity,
+                transform: getComputedStyle(element).transform,
+                regionHovered: element.parentElement?.matches(":hover"),
+                regionBounds: element.parentElement
+                  ?.getBoundingClientRect()
+                  .toJSON(),
+                bounds: element.getBoundingClientRect().toJSON(),
+              })),
+            }))
+            .catch(() => null),
           body: await activePage
             .locator("body")
             .innerText()
