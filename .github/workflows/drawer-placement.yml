@@ -1,0 +1,55 @@
+name: Drawer placement browser
+
+on:
+  pull_request:
+    paths:
+      - "easy-ui-react/src/Drawer/**"
+      - "easy-ui-react/src/styles/**"
+      - "easy-ui-react/src/Provider/**"
+      - "easy-ui-react/src/Theme/**"
+      - "easy-ui-react/skills/easy-ui/**"
+      - "scripts/check-drawer-placement.mjs"
+      - "scripts/preview-metrics/package*.json"
+      - ".github/workflows/drawer-placement.yml"
+  workflow_dispatch: ~
+
+jobs:
+  drawer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+      - run: npm ci
+      - run: npm run build:react
+      - run: npm run build:storybook
+      - run: npm run check:storybook
+      - run: npm ci --no-audit --no-fund
+        working-directory: scripts/preview-metrics
+      - run: npx playwright install --with-deps chromium
+        working-directory: scripts/preview-metrics
+      - name: Check modal behavior, responsive geometry, and themes
+        env:
+          STORYBOOK_URL: http://127.0.0.1:9024
+          DRAWER_PLACEMENT_REPORT_DIR: ${{ runner.temp }}/drawer-placement-browser
+        run: |
+          python3 -m http.server 9024 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/drawer-storybook.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
+          node scripts/check-drawer-placement.mjs
+      - name: Retain screenshots and measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawer-placement-browser
+          path: |
+            ${{ runner.temp }}/drawer-placement-browser
+            ${{ runner.temp }}/drawer-storybook.log
+          if-no-files-found: ignore

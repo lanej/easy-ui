@@ -78,7 +78,7 @@ The first child should be a trigger element, such as a `<Button />`, where the t
 
 The second element must be a `<Drawer />`. If access to programmatically close the drawer inline is needed, a child with a function that has a close method and returns a `<Drawer />` (`(close) => <Drawer />`) can be passed as the second child instead of a `<Drawer />`.
 
-Alternatively, a `<Drawer />` can be wrapped in a `<DrawerContainer />` to entirely control the triggering process. See the Custom Triggers story below.
+Alternatively, a `<Drawer />` can be wrapped in a `<Drawer.Container />` (also exported as `<DrawerContainer />`) to entirely control the triggering process. See the Custom Triggers story below.
 
 #### State management
 
@@ -89,6 +89,43 @@ It can be made to be a controlled component by using the `isOpen` and `onOpenCha
 It can be made to open by default using the `defaultOpen` prop on `<Drawer.Trigger />`.
 
 Use the `useDrawerTrigger()` hook inside a Drawer component to access the drawer state. Use the drawer trigger state to determine if the drawer `isOpen`. The drawer trigger state can also be used to programmatically `close()` the drawer.
+
+#### Placement, width, and headerless navigation
+
+Set `placement="left"` or `placement="right"` on `Drawer.Trigger` or
+`Drawer.Container`. The default remains right. `width` accepts a CSS width
+string or a number in pixels; it is capped at the viewport width and updates
+without remounting the drawer. The default remains at most 608px.
+
+Give `Drawer` an `aria-label` or `aria-labelledby` when no `Drawer.Title` is
+rendered. `aria-describedby` may reference additional instructions. Visible
+headers are optional. Keep routing and destination selection in the application.
+
+```tsx
+const [open, setOpen] = useState(false);
+
+<Button onPress={() => setOpen(true)}>Open navigation</Button>
+<Drawer.Container placement="left" width="280px" onDismiss={() => setOpen(false)}>
+  {open ? (
+    <Drawer aria-label="Workspace navigation">
+      <Drawer.Body>{navigation}</Drawer.Body>
+    </Drawer>
+  ) : null}
+</Drawer.Container>
+```
+
+The owner must remove the child in `onDismiss`. Escape, backdrop interaction,
+and `Drawer.CloseButton` request dismissal; the controlled drawer does not
+silently change its owner's value. With `Drawer.Trigger`, use `isOpen` and
+`onOpenChange` for the equivalent controlled flow. `isDismissable={false}`
+disables Escape and backdrop dismissal on either entry point.
+
+These examples use only Overview, Orders, and Settings. Try closing and reopening,
+Tab/Shift+Tab, and resizing desktop → mobile → desktop while open.
+
+<Canvas of={DrawerStories.LeftNavigation} />
+<Canvas of={DrawerStories.RightNavigation} />
+<Canvas of={DrawerStories.WideNavigation} />
 
 #### Focus containment
 
