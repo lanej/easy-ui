@@ -180,6 +180,9 @@ createRoot(document.getElementById("root")!).render(
         boxSizing: "border-box",
         background: "var(--ezui-color-neutral-000)",
         color: "var(--ezui-color-neutral-900)",
+        fontFamily: 'Poppins, "Poppins Fallback", sans-serif',
+        fontSize: 14,
+        lineHeight: 1.5,
       }}
     >
       <div style={{ maxWidth: 1100, display: "grid", gap: 40 }}>

@@ -77,7 +77,7 @@ await writeFile(
 );
 await writeFile(
   join(consumer, "index.html"),
-  '<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Workspace tabs consumer</title></head><body><div id="root"></div><script type="module" src="/main.tsx"></script></body></html>',
+  '<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Workspace tabs consumer</title><style>body{margin:0}</style></head><body><div id="root"></div><script type="module" src="/main.tsx"></script></body></html>',
 );
 for (const mode of ["bundler", "node16", "node"]) {
   const module = mode === "node16" ? "Node16" : "ESNext";
@@ -173,7 +173,7 @@ try {
   for (const theme of ["dark", "light"]) {
     for (const width of [1200, 390]) {
       const page = await browser.newPage({
-        viewport: { width, height: 760 },
+        viewport: { width, height: 560 },
         reducedMotion: "reduce",
       });
       const errors = [];
@@ -341,6 +341,12 @@ try {
         .evaluateAll((nodes) =>
           nodes.forEach((node) => (node.style.display = "none")),
         );
+      if (width === 390) {
+        await page
+          .getByRole("region", { name: "Primary workspace", exact: true })
+          .getByRole("tab", { name: "Order A 3" })
+          .click();
+      }
       const screenshot = `workspace-tabs-${width === 390 ? "mobile" : "desktop"}-${theme}.png`;
       await page.screenshot({ path: join(output, screenshot), fullPage: true });
       results.push({
