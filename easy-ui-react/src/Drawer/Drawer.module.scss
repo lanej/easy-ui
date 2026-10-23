@@ -46,6 +46,8 @@
 }
 
 .underlayBox {
+  --ezui-c-drawer-slide-offset: 25%;
+
   position: relative;
   display: flex;
   flex-direction: column;
@@ -56,8 +58,12 @@
   transition-duration: component-token("drawer", "animation-duration");
 }
 
+.underlayBox[data-placement="left"] {
+  --ezui-c-drawer-slide-offset: -25%;
+}
+
 .underlayBoxAppear {
-  transform: translateX(25%);
+  transform: translateX(var(--ezui-c-drawer-slide-offset));
 }
 
 .underlayBoxAppearDone {
@@ -65,7 +71,7 @@
 }
 
 .underlayBoxExit {
-  transform: translateX(25%);
+  transform: translateX(var(--ezui-c-drawer-slide-offset));
 }
 
 .Drawer {
@@ -74,8 +80,8 @@
   flex-direction: column;
   margin: 0;
   margin-left: auto;
-  width: 100%;
-  max-width: component-token("drawer", "max-width");
+  width: var(--ezui-c-drawer-width, #{component-token("drawer", "max-width")});
+  max-width: 100%;
   height: component-token("drawer", "height");
   overflow: hidden;
   background: design-token("color.neutral.000");
@@ -83,6 +89,11 @@
   pointer-events: auto;
   position: relative;
   outline: none;
+}
+
+.underlayBox[data-placement="left"] .Drawer {
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .header {

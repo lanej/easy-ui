@@ -8,10 +8,11 @@ import React, {
 } from "react";
 import { useOverlayTrigger } from "react-aria";
 import { useOverlayTriggerState } from "react-stately";
+import { DrawerLayoutProps } from "./types";
 import { DrawerUnderlay } from "./DrawerUnderlay";
 import { DrawerTriggerContext } from "./context";
 
-type DrawerContainerProps = {
+export type DrawerContainerProps = DrawerLayoutProps & {
   /**
    * Drawer wrap content.
    */
@@ -23,13 +24,13 @@ type DrawerContainerProps = {
   isDismissable?: boolean;
 
   /**
-   * Handler that is called when the overlay is closed.
+   * Requests dismissal. The owner must remove the child to close the drawer.
    */
   onDismiss?: () => void;
 };
 
 export function DrawerContainer(props: DrawerContainerProps) {
-  const { children, isDismissable = true, onDismiss = () => {} } = props;
+  const { children, isDismissable = true, onDismiss, placement, width } = props;
 
   const existingDrawerTriggerContext = useContext(DrawerTriggerContext);
   if (existingDrawerTriggerContext) {
@@ -40,7 +41,7 @@ export function DrawerContainer(props: DrawerContainerProps) {
 
   const childArray = React.Children.toArray(children);
   if (childArray.length > 1) {
-    throw new Error("Only a single child can be passed to ModalContainer.");
+    throw new Error("Only a single child can be passed to Drawer.Container.");
   }
 
   const [lastChild, setLastChild] = useState<ReactElement | null>(null);
@@ -62,7 +63,7 @@ export function DrawerContainer(props: DrawerContainerProps) {
     isOpen: Boolean(child),
     onOpenChange: (isOpen) => {
       if (!isOpen) {
-        onDismiss();
+        onDismiss?.();
       }
     },
   });
@@ -80,6 +81,8 @@ export function DrawerContainer(props: DrawerContainerProps) {
           setAnimationExited={setAnimationExited}
           state={state}
           isDismissable={isDismissable}
+          placement={placement}
+          width={width}
         >
           {lastChild ? cloneElement(lastChild, overlayProps) : null}
         </DrawerUnderlay>

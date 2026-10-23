@@ -1,12 +1,13 @@
 import React, { ReactElement, cloneElement, useMemo, useState } from "react";
 import { useOverlayTrigger } from "react-aria";
 import { useOverlayTriggerState } from "react-stately";
+import { DrawerLayoutProps } from "./types";
 import { DrawerUnderlay } from "./DrawerUnderlay";
 import { DrawerTriggerContext } from "./context";
 
 export type CloseableDrawerElement = (close: () => void) => ReactElement;
 
-export type DrawerTriggerProps = {
+export type DrawerTriggerProps = DrawerLayoutProps & {
   /**
    * Content of modal trigger. Must be exactly two elements.
    */
@@ -23,7 +24,7 @@ export type DrawerTriggerProps = {
   isDismissable?: boolean;
 
   /**
-   * Whether the modal is open by default (controlled).
+   * Whether the modal is open (controlled).
    */
   isOpen?: boolean;
 
@@ -34,7 +35,13 @@ export type DrawerTriggerProps = {
 };
 
 export function DrawerTrigger(props: DrawerTriggerProps) {
-  const { children, isDismissable = true, ...inTriggerProps } = props;
+  const {
+    children,
+    isDismissable = true,
+    placement,
+    width,
+    ...inTriggerProps
+  } = props;
 
   const state = useOverlayTriggerState(inTriggerProps);
   const { triggerProps, overlayProps } = useOverlayTrigger(
@@ -61,7 +68,9 @@ export function DrawerTrigger(props: DrawerTriggerProps) {
       {(state.isOpen || !animationExited) && (
         <DrawerUnderlay
           setAnimationExited={setAnimationExited}
-          {...props}
+          isDismissable={isDismissable}
+          placement={placement}
+          width={width}
           state={state}
         >
           {cloneElement(
