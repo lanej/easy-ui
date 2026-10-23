@@ -16,6 +16,11 @@ before composing a component. Use existing components, tokens, and documented
 package subpaths. Follow the package README for the stylesheet and Provider;
 avoid copying implementation code or inventing props from a screenshot.
 
+For application-owned workspace panels, use `WorkspaceTabs` with the shared
+`useWorkspaceTabIds` contract; keep selection and close policy in the application.
+React 16/17 server-rendered applications need one React Aria `SSRProvider` around
+the matching server and client roots; React 18+ does not need this wrapper.
+
 For charts, read the catalog's choosing-a-chart guidance and the selected
 component's examples. Keep aggregation, units, model bounds, and interpretation
 in the application. Supply accessible titles, descriptions, and exact-data
@@ -30,6 +35,10 @@ required coordinate system and color scale. Partial axis styling must preserve
 generated categories; authored arrays replace defaults. For intervals and
 prediction bands, preserve visible overlap when zoom endpoints lie inside a
 span, and respect explicit caller filtering.
+
+For side navigation, compose the existing Drawer modal with caller-owned routing.
+Use its documented placement, width, and controlled-container behavior; provide
+an accessible name even when omitting a visible heading.
 
 ## Change library components
 

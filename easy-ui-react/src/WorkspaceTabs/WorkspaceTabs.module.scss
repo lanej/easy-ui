@@ -1,0 +1,161 @@
+@use "../styles/common" as *;
+@use "../styles/unstyled";
+
+.workspace {
+  display: flex;
+  align-items: stretch;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  color: design-token("color.neutral.800");
+  background: design-token("color.neutral.000");
+  border-block-end: 1px solid design-token("color.neutral.200");
+}
+
+.tabs {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  flex: 1 1 0%;
+  min-inline-size: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  padding: 4px 4px 0;
+}
+
+.tablist {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  max-inline-size: min(280px, 100%);
+  min-inline-size: 0;
+  position: relative;
+  border-radius: 6px 6px 0 0;
+  border-block-end: 2px solid transparent;
+
+  &[data-selected] {
+    color: design-token("color.primary.600");
+    border-block-end-color: currentColor;
+    background: design-token("color.primary.100");
+  }
+
+  &[data-disabled] {
+    opacity: 0.45;
+  }
+
+  &:not([data-disabled]):hover {
+    background: design-token("color.neutral.100");
+  }
+}
+
+.tab {
+  @include unstyled.button;
+  @include font-style("subtitle2");
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  min-block-size: 44px;
+  padding: 8px 12px;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.count {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: design-token("color.neutral.100");
+  color: design-token("color.neutral.800");
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.close {
+  @include unstyled.button;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  inline-size: 32px;
+  min-block-size: 36px;
+  margin-inline-end: 4px;
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+
+  svg {
+    inline-size: 16px;
+    block-size: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+  }
+}
+
+.tab:disabled,
+.close:disabled {
+  cursor: not-allowed;
+}
+
+.tab:focus-visible,
+.close:focus-visible,
+.tablist:focus-visible {
+  outline-offset: -3px;
+
+  @include native-focus-ring;
+}
+
+.close:not(:disabled):hover {
+  background: design-token("color.neutral.200");
+}
+
+.trailing {
+  display: flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  max-inline-size: 50%;
+  padding: 4px 8px;
+  overflow-wrap: anywhere;
+}
+
+.workspace[data-variant="secondary"] {
+  background: transparent;
+
+  .tab {
+    min-block-size: 36px;
+    padding-block: 4px;
+  }
+
+  .item[data-selected] {
+    background: transparent;
+  }
+}
+
+@media (forced-colors: active) {
+  .item[data-selected] {
+    color: Highlight;
+  }
+
+  .item[data-disabled] {
+    color: GrayText;
+    opacity: 1;
+  }
+}

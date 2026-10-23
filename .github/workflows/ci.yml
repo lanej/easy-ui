@@ -59,6 +59,7 @@ jobs:
           WAFFLE_REPORT_DIR: ${{ runner.temp }}/waffle-chart-browser
           MAP_PRIMARY_REPORT_DIR: ${{ runner.temp }}/map-primary-insets
           EVIDENCE_TYPOGRAPHY_REPORT_DIR: ${{ runner.temp }}/evidence-typography-browser
+          DRAWER_PLACEMENT_REPORT_DIR: ${{ runner.temp }}/drawer-placement-browser
           NOTIFICATION_REPORT_DIR: ${{ runner.temp }}/notification-browser
           THEME_TOGGLE_REPORT_DIR: ${{ runner.temp }}/theme-toggle-browser
         run: |
@@ -87,6 +88,7 @@ jobs:
           node scripts/check-token-browser.mjs
           node scripts/check-notifications.mjs
           node scripts/check-theme-toggle.mjs
+          node scripts/check-drawer-placement.mjs
           node scripts/check-evidence-typography.mjs
       - name: Retain component browser evidence
         if: always()
@@ -102,6 +104,7 @@ jobs:
             ${{ runner.temp }}/map-primary-insets
             ${{ runner.temp }}/notification-browser
             ${{ runner.temp }}/theme-toggle-browser
+            ${{ runner.temp }}/drawer-placement-browser
             ${{ runner.temp }}/evidence-typography-browser
             ${{ runner.temp }}/facility-storybook.log
           if-no-files-found: ignore

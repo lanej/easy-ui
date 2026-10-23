@@ -68,6 +68,9 @@ export default defineConfig({
       external: (id) =>
         [
           "react",
+          // Keep WorkspaceTabs' legacy ID context shared with the application's
+          // React Aria SSRProvider rather than bundling a second private copy.
+          "react-aria/useId",
           "echarts",
           "@dagrejs/dagre",
           "maplibre-gl",
