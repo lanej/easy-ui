@@ -20,8 +20,14 @@ const results = [];
 let activePage;
 let activeCase;
 let activeErrors;
-// Virtual time controls timeout accounting, not the browser's CSS transitions or
-// IntersectionObserver delivery. Wait for real presentation before charging time.
+async function activate(page, name) {
+  // The notification overlay can cover demo triggers on narrow screens. Real
+  // keyboard activation keeps those controls operable without a forced click.
+  await page.getByRole("button", { name, exact: true }).focus();
+  await page.keyboard.press("Enter");
+}
+// Virtual time controls timeout accounting, not CSS/IntersectionObserver delivery.
+// Wait for real presentation before charging visible time.
 async function settlePresentation(page) {
   await page.clock.runFor(200);
   await page.waitForTimeout(200);
@@ -45,9 +51,7 @@ try {
       const clockStart = new Date("2026-01-01T00:00:00Z");
       await page.clock.install({ time: clockStart });
       await page.clock.pauseAt(new Date(clockStart.getTime() + 1000));
-      await page
-        .getByRole("button", { name: "Save two orders", exact: true })
-        .click();
+      await activate(page, "Save two orders");
       await settlePresentation(page);
       const closeA = page.getByRole("button", {
         name: "Dismiss Order A saved",
@@ -66,9 +70,7 @@ try {
       );
       for (const button of [closeA, closeB])
         assert.ok(await button.isVisible());
-      await page
-        .getByRole("button", { name: "Show long update", exact: true })
-        .click();
+      await activate(page, "Show long update");
       await settlePresentation(page);
       for (const item of await page.getByRole("alertdialog").all()) {
         const rect = await item.boundingBox();
@@ -114,12 +116,7 @@ try {
           .count(),
         2,
       );
-      await page
-        .getByRole("button", {
-          name: "Dismiss last repeated message",
-          exact: true,
-        })
-        .click();
+      await activate(page, "Dismiss last repeated message");
       await settlePresentation(page);
       assert.equal(
         await page
@@ -141,9 +138,7 @@ try {
       );
       await page.clock.runFor(2500);
       assert.equal(await page.getByRole("status").count(), 0);
-      await page
-        .getByRole("button", { name: "Repeat identical message", exact: true })
-        .click();
+      await activate(page, "Repeat identical message");
       const newestClose = page.getByRole("button", {
         name: "Dismiss Order saved",
         exact: true,
@@ -183,7 +178,7 @@ try {
         name: "Dismiss last repeated message",
         exact: true,
       });
-      await repeat.click();
+      await activate(page, "Repeat identical message");
       await settlePresentation(page);
       const originalClose = await page
         .getByRole("button", {
@@ -211,7 +206,7 @@ try {
 
       // Removing the final hovered region cannot leave the next region's
       // timers permanently paused after that old region has unmounted.
-      await repeat.click();
+      await activate(page, "Repeat identical message");
       await settlePresentation(page);
       await page
         .getByRole("button", { name: "Dismiss Order saved", exact: true })
@@ -219,8 +214,10 @@ try {
       await dismissLast.evaluate((element) => element.click());
       await settlePresentation(page);
       assert.equal(await page.getByRole("region").count(), 0);
-      await repeat.click();
+      // Leave while no region exists: entering/leaving the new region would
+      // accidentally repair the leaked global pause this sequence must catch.
       await page.mouse.move(0, 0);
+      await activate(page, "Repeat identical message");
       await repeat.focus();
       await settlePresentation(page);
       const remountPresentation = await page
@@ -259,9 +256,7 @@ try {
       await page.clock.runFor(5200);
       assert.equal(await page.getByRole("status").count(), 0);
 
-      await page
-        .getByRole("button", { name: "Show oversized update", exact: true })
-        .click();
+      await activate(page, "Show oversized update");
       await page.mouse.move(0, 0);
       await page
         .getByRole("button", { name: "Save two orders", exact: true })
@@ -292,9 +287,7 @@ try {
 
       // A burst taller than the viewport must remain start-aligned and must not
       // spend the visible duration of clipped messages before they are read.
-      await page
-        .getByRole("button", { name: "Show overflow burst", exact: true })
-        .click();
+      await activate(page, "Show overflow burst");
       await page.mouse.move(0, 0);
       await page
         .getByRole("button", { name: "Save two orders", exact: true })
@@ -371,9 +364,7 @@ try {
         await placementPage.goto(
           `${baseUrl}/iframe.html?id=components-notification--${placement}&viewMode=story&globals=colorScheme:${mode}`,
         );
-        await placementPage
-          .getByRole("button", { name: "Show overflow burst", exact: true })
-          .click();
+        await activate(placementPage, "Show overflow burst");
         await placementPage.mouse.move(0, 0);
         await placementPage.waitForTimeout(200);
         const placementRegion = placementPage.getByRole("region");
