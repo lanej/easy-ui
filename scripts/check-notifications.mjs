@@ -157,8 +157,67 @@ try {
       assert.ok(await alertClose.isVisible());
       await alertClose.focus();
       await page.keyboard.press("Enter");
+      assert.equal(
+        await page
+          .getByRole("region")
+          .evaluate((element) => getComputedStyle(element).pointerEvents),
+        "none",
+        "empty exit region cannot intercept clicks",
+      );
       await page.clock.runFor(200);
       assert.equal(await page.getByRole("alertdialog").count(), 0);
+
+      // Prepending multiple items must not make another item's removal steal
+      // focus from the surviving item a keyboard user is still reading.
+      const repeat = page.getByRole("button", {
+        name: "Repeat identical message",
+        exact: true,
+      });
+      const dismissLast = page.getByRole("button", {
+        name: "Dismiss last repeated message",
+        exact: true,
+      });
+      await repeat.click();
+      await page.clock.runFor(200);
+      const originalClose = await page
+        .getByRole("button", {
+          name: "Dismiss Order saved",
+          exact: true,
+        })
+        .elementHandle();
+      await originalClose.focus();
+      await repeat.evaluate((element) => element.click());
+      await repeat.evaluate((element) => element.click());
+      assert.equal(await page.getByRole("status").count(), 3);
+      await dismissLast.evaluate((element) => element.click());
+      await page.clock.runFor(200);
+      assert.ok(
+        await originalClose.evaluate(
+          (element) => element === document.activeElement,
+        ),
+      );
+      await originalClose.press("Enter");
+      await page.clock.runFor(200);
+      await page
+        .getByRole("button", { name: "Dismiss Order saved", exact: true })
+        .click();
+      await page.clock.runFor(200);
+
+      // Removing the final hovered region cannot leave the next region's
+      // timers permanently paused after that old region has unmounted.
+      await repeat.click();
+      await page.clock.runFor(200);
+      await page
+        .getByRole("button", { name: "Dismiss Order saved", exact: true })
+        .hover();
+      await dismissLast.evaluate((element) => element.click());
+      await page.clock.runFor(200);
+      assert.equal(await page.getByRole("region").count(), 0);
+      await repeat.click();
+      await page.mouse.move(0, 0);
+      await repeat.focus();
+      await page.clock.runFor(5200);
+      assert.equal(await page.getByRole("status").count(), 0);
 
       await page
         .getByRole("button", { name: "Show oversized update", exact: true })

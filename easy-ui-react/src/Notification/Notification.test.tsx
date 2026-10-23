@@ -336,6 +336,51 @@ describe("stacked notification interaction", () => {
     );
   });
 
+  it("keeps focus on a surviving oldest item after multiple prepends and a newer dismissal", () => {
+    render(
+      <NotificationProvider notificationOptions={{ stacking: true }}>
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showWarningAlert({ message: "Reading A" }));
+    const close = screen.getByRole("button", { name: "Dismiss Reading A" });
+    act(() => close.focus());
+    act(() => notification.showWarningAlert({ message: "New B" }));
+    let newest = "";
+    act(() => {
+      newest = notification.showWarningAlert({ message: "New C" });
+    });
+    act(() => notification.closeNotification(newest));
+    expect(close).toHaveFocus();
+  });
+
+  it("resumes future arrivals after the final hovered region unmounts", async () => {
+    const { user } = render(
+      <NotificationProvider
+        notificationOptions={{
+          stacking: true,
+          timeout: 1000,
+          isDismissable: true,
+        }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    let first = "";
+    act(() => {
+      first = notification.showSuccessToast({ message: "Hovered A" });
+    });
+    await user.hover(screen.getByRole("button", { name: "Dismiss Hovered A" }));
+    act(() => notification.closeNotification(first));
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
+    await user.unhover(document.body);
+    act(() => notification.showSuccessToast({ message: "Later B" }));
+    act(() => vi.advanceTimersByTime(999));
+    expect(screen.getByText("Later B")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.queryByText("Later B")).not.toBeInTheDocument();
+  });
+
   it("uses configured options from descendant layout effects, including after changes", () => {
     function LayoutArrival({ version }: { version: number }) {
       const current = useNotification();
@@ -628,6 +673,101 @@ describe("stacked notification interaction", () => {
         .getByRole("region")
         .parentElement!.style.getPropertyValue("--easy-ui-notification-top"),
     ).toBe("0px");
+  });
+
+  it("adapts presentation tracking when stacking is enabled without resetting an older toast", () => {
+    let onIntersection: IntersectionObserverCallback;
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(callback: IntersectionObserverCallback) {
+          onIntersection = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    try {
+      const { rerender, unmount } = render(
+        <NotificationProvider>
+          <Controls />
+        </NotificationProvider>,
+      );
+      act(() =>
+        notification.showSuccessToast({
+          message: "Predates stacking",
+          timeout: 5000,
+        }),
+      );
+      act(() => vi.advanceTimersByTime(1000));
+      rerender(
+        <NotificationProvider notificationOptions={{ stacking: true }}>
+          <Controls />
+        </NotificationProvider>,
+      );
+      const node = screen.getByRole("alertdialog");
+      act(() =>
+        onIntersection(
+          [
+            {
+              target: node,
+              boundingClientRect: node.getBoundingClientRect(),
+              intersectionRect: node.getBoundingClientRect(),
+              rootBounds: null,
+              time: 0,
+              isIntersecting: false,
+              intersectionRatio: 0,
+            } as IntersectionObserverEntry,
+          ],
+          {} as IntersectionObserver,
+        ),
+      );
+      act(() => vi.advanceTimersByTime(10000));
+      expect(screen.getByText("Predates stacking")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Dismiss Predates stacking" }),
+      ).not.toBeInTheDocument();
+      act(() =>
+        onIntersection(
+          [
+            {
+              target: node,
+              boundingClientRect: node.getBoundingClientRect(),
+              intersectionRect: node.getBoundingClientRect(),
+              rootBounds: null,
+              time: 0,
+              isIntersecting: true,
+              intersectionRatio: 1,
+            } as IntersectionObserverEntry,
+          ],
+          {} as IntersectionObserver,
+        ),
+      );
+      act(() => vi.advanceTimersByTime(3999));
+      expect(screen.getByText("Predates stacking")).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.queryByText("Predates stacking")).not.toBeInTheDocument();
+      unmount();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("makes the empty region pointer-transparent during the final exit", async () => {
+    enableReactTransitionGroup();
+    const { user } = render(
+      <NotificationProvider notificationOptions={{ stacking: true }}>
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showWarningAlert({ message: "Final alert" }));
+    fireEvent.transitionEnd(screen.getByRole("alertdialog"));
+    await user.click(
+      screen.getByRole("button", { name: "Dismiss Final alert" }),
+    );
+    expect(screen.getByRole("region")).toHaveStyle({ pointerEvents: "none" });
+    act(() => vi.advanceTimersByTime(200));
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
   });
 
   it("clears active timers when the provider unmounts", () => {

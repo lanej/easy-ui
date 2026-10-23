@@ -57,7 +57,7 @@ export type AlertProps = Omit<BaseNotificationProps, "type" | "status"> & {
 };
 
 export type QueuedNotification = QueuedToast<NotificationProps> & {
-  /** Presentation tracking is snapshotted when this item is added. */
+  /** Retain the stacked layout for items created before stacking is disabled. */
   isStacked?: boolean;
 };
 
@@ -112,6 +112,8 @@ export type NotificationItemStateProps = AriaToastProps<NotificationProps> & {
   state: NotificationInternalState;
   /** Remove exiting items from focus recovery and announcements during animation. */
   isExiting?: boolean;
+  /** Whether the current container uses the stacked scroll layout. */
+  isStacked?: boolean;
 };
 
 /**
@@ -128,7 +130,7 @@ export const Notification = React.forwardRef<
 >((props, forwardedRef) => {
   const ref = useRef<HTMLDivElement>(null);
   const mergedRef = useObjectRef(mergeRefs(ref, forwardedRef));
-  const { state, toast: notification, isExiting } = props;
+  const { state, toast: notification, isExiting, isStacked } = props;
   const {
     type = "toast",
     message,
@@ -150,10 +152,8 @@ export const Notification = React.forwardRef<
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    if (
-      !notification.isStacked ||
-      typeof IntersectionObserver === "undefined"
-    ) {
+    if (!isStacked || typeof IntersectionObserver === "undefined") {
+      setIsOversized(false);
       setPresented(notification.key, true);
       return () => setPresented(notification.key, false);
     }
@@ -200,7 +200,7 @@ export const Notification = React.forwardRef<
       window.removeEventListener("resize", onResize);
       setPresented(notification.key, false);
     };
-  }, [notification.key, notification.isStacked, setPresented]);
+  }, [notification.key, isStacked, setPresented]);
 
   const handleDismiss = () => {
     if (onDismiss) {

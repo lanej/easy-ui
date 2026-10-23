@@ -163,8 +163,10 @@ to toasts. Alerts stay persistent and dismissible unless overridden on that
 specific alert. `onDismiss` runs only for the individual close control, not for
 timeout, replacement, provider cleanup, or programmatic dismissal.
 
-Provider configuration changes affect future calls only. Existing messages keep
-their duration and close controls. Disabling stacking retains the current stack
+Duration and close-control defaults are captured when each message is added.
+Existing messages keep their duration and close controls. Presentation tracking
+follows the effective layout: enabling stacking also pauses an older message if
+new arrivals push it outside the scroll viewport. Disabling stacking retains the current stack
 until the next call, which replaces it. Provider unmount clears every timer.
 Zero, negative, and non-finite timeouts disable expiration.
 

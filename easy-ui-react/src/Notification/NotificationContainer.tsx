@@ -110,6 +110,7 @@ export function NotificationContainer(props: NotificationContainerProps) {
             >
               <NotificationRegion
                 state={state}
+                stacking={stacking}
                 onTransitionPendingChange={onTransitionPendingChange}
               />
             </div>,
