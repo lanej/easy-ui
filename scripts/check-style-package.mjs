@@ -263,6 +263,7 @@ import { DataGrid } from "@easypost/easy-ui/DataGrid";
 import { DatePicker } from "@easypost/easy-ui/DatePicker";
 import { DateRangePicker } from "@easypost/easy-ui/DateRangePicker";
 import { DrawerTable, DrawerRow } from "@easypost/easy-ui/DrawerTable";
+import { Drawer, DrawerContainer, type DrawerProps, type DrawerContainerProps, type DrawerTriggerProps, type DrawerLayoutProps } from "@easypost/easy-ui/Drawer";
 import { FacilitySummary, type FacilitySummaryProps } from "@easypost/easy-ui/FacilitySummary";
 import { DurationDistribution, DurationQuantileMetrics, type DurationDistributionProps } from "@easypost/easy-ui/DurationDistribution";
 import { Select } from "@easypost/easy-ui/Select";
@@ -359,6 +360,17 @@ export const example = <>
   <DateRangePicker label="Review period" startName="startDate" endName="endDate" isClearable isRequired validationBehavior="native" value={null} onChange={(range) => { void range; }} />
 </>;
 void [Select, SelectField, sort, invalidSort, menu, field, heading, icon, responsive, className];
+const drawerLayout: DrawerLayoutProps = { placement: "left", width: "280px" };
+const drawerContainer: DrawerContainerProps = { ...drawerLayout, children: null, onDismiss: () => undefined };
+const drawerTrigger: DrawerTriggerProps = { placement: "right", width: 440, isOpen: false, onOpenChange: () => undefined, children: [<Button>Open</Button>, <Drawer aria-label="Navigation"><Drawer.Body>Overview</Drawer.Body></Drawer>] };
+const drawerNaming: DrawerProps = { children: null, "aria-label": "Workspace navigation", "aria-describedby": "help" };
+const drawerComposition = <Drawer.Container {...drawerContainer}>{<Drawer {...drawerNaming} />}</Drawer.Container>;
+const drawerAlias = <DrawerContainer {...drawerContainer} />;
+// @ts-expect-error Drawer only supports physical left/right placement.
+const invalidDrawerPlacement: DrawerLayoutProps = { placement: "top" };
+// @ts-expect-error Width must be a CSS width, not a boolean.
+const invalidDrawerWidth: DrawerLayoutProps = { width: true };
+void [drawerTrigger, drawerComposition, drawerAlias, invalidDrawerPlacement, invalidDrawerWidth];
 const collapsedColumns: ScoreCompositionColumn[] = ["signals"];
 const investigationRecords: InvestigationRecords = { events: [{ id: "account", label: "Account updated" }] };
 const investigationSelection: InvestigationSelection = { type: "event", eventId: "account" };
@@ -422,7 +434,7 @@ for (const load of [require, (specifier) => import(specifier)]) {
 }
 const rawIcon = insideConsumer(require.resolve("@easypost/easy-ui-icons/svg/EasyUI.svg"));
 assert.equal(readFileSync(rawIcon, "utf8"), readFileSync("expected-icon.svg", "utf8"));
-for (const subpath of ["Chart", "Chart/index", "MetricCard", "WaffleChart", "WaffleChart/index", "NetworkMap", "ScoreComposition", "InvestigationWorkspace", "utilities/css"]) {
+for (const subpath of ["Drawer", "Drawer/index", "Chart", "Chart/index", "MetricCard", "WaffleChart", "WaffleChart/index", "NetworkMap", "ScoreComposition", "InvestigationWorkspace", "utilities/css"]) {
   const specifier = "@easypost/easy-ui/" + subpath;
   insideConsumer(require.resolve(specifier));
   insideConsumer(fileURLToPath(import.meta.resolve(specifier)));
@@ -525,6 +537,16 @@ for (const load of [require, (specifier) => import(specifier)]) {
   assert.match(inspector, /Application chart/);
   assert.match(inspector, /Packed sample/);
   assert.doesNotMatch(inspector, /Distribution not supplied/);
+  const { Drawer, DrawerContainer } = await load("@easypost/easy-ui/Drawer");
+  assert.equal(Drawer.Container, DrawerContainer);
+  assert.equal(typeof Drawer.Trigger, "function");
+  const drawer = renderToString(React.createElement(ThemeProvider, null, React.createElement(Drawer, { "aria-label": "Packed navigation" }, React.createElement(Drawer.Body, null, "Overview"))));
+  assert.match(drawer, /role="dialog"/);
+  assert.match(drawer, /aria-label="Packed navigation"/);
+  const drawerCss = readFileSync(require.resolve("@easypost/easy-ui/style.css"), "utf8");
+  assert.match(drawerCss, /data-placement=.?left/);
+  assert.match(drawerCss, /--ezui-c-drawer-width/);
+  assert.match(drawerCss, /max-width:\s*100%/);
   const { DrawerTable, DrawerRow } = await load("@easypost/easy-ui/DrawerTable");
   const drawers = renderToString(React.createElement(ThemeProvider, null, React.createElement(DrawerTable, {
     "aria-label": "Packed drawer rows",

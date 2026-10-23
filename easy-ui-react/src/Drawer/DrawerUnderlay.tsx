@@ -1,11 +1,13 @@
-import React, { ReactNode } from "react";
+import React, { CSSProperties, ReactNode } from "react";
 import { Overlay, useModalOverlay } from "react-aria";
 import { OverlayTriggerState } from "react-stately";
 import { CSSTransition } from "react-transition-group";
 
+import { DrawerLayoutProps } from "./types";
+
 import styles from "./Drawer.module.scss";
 
-type DrawerUnderlayProps = {
+type DrawerUnderlayProps = DrawerLayoutProps & {
   /**
    * Modal wrap content.
    */
@@ -28,7 +30,14 @@ type DrawerUnderlayProps = {
 };
 
 export function DrawerUnderlay(props: DrawerUnderlayProps) {
-  const { state, children, setAnimationExited, ...overlayProps } = props;
+  const {
+    state,
+    children,
+    setAnimationExited,
+    placement = "right",
+    width,
+    ...overlayProps
+  } = props;
   const { isDismissable = true } = overlayProps;
 
   const ref = React.useRef<HTMLDivElement | null>(null);
@@ -47,7 +56,7 @@ export function DrawerUnderlay(props: DrawerUnderlayProps) {
     (ref: React.MutableRefObject<HTMLDivElement | null>) =>
     (done: () => void) => {
       if (ref.current) {
-        ref.current.addEventListener("transitionend", done, false);
+        ref.current.addEventListener("transitionend", done, { once: true });
       }
     };
 
@@ -55,13 +64,18 @@ export function DrawerUnderlay(props: DrawerUnderlayProps) {
     <Overlay>
       <CSSTransition
         in={state.isOpen}
+        timeout={150}
         appear
         onEntered={() => setAnimationExited(false)}
         onExited={() => setAnimationExited(true)}
         nodeRef={underlayBgRef}
         addEndListener={createAnimationEndListener(underlayBgRef)}
         classNames={{
+          appear: styles.underlayBgEnter,
+          appearActive: styles.underlayBgEnterDone,
+          appearDone: styles.underlayBgEnterDone,
           enter: styles.underlayBgEnter,
+          enterActive: styles.underlayBgEnterDone,
           enterDone: styles.underlayBgEnterDone,
           exit: styles.underlayBgExit,
         }}
@@ -73,16 +87,32 @@ export function DrawerUnderlay(props: DrawerUnderlayProps) {
         >
           <CSSTransition
             in={state.isOpen}
+            timeout={150}
             appear
             nodeRef={ref}
             addEndListener={createAnimationEndListener(ref)}
             classNames={{
               appear: styles.underlayBoxAppear,
-              appearDone: styles.underlayBoxDone,
+              appearActive: styles.underlayBoxAppearDone,
+              appearDone: styles.underlayBoxAppearDone,
+              enter: styles.underlayBoxAppear,
+              enterActive: styles.underlayBoxAppearDone,
+              enterDone: styles.underlayBoxAppearDone,
               exit: styles.underlayBoxExit,
             }}
           >
-            <div {...modalProps} ref={ref} className={styles.underlayBox}>
+            <div
+              {...modalProps}
+              ref={ref}
+              className={styles.underlayBox}
+              data-placement={placement}
+              style={
+                {
+                  "--ezui-c-drawer-width":
+                    typeof width === "number" ? `${width}px` : width,
+                } as CSSProperties
+              }
+            >
               {children}
             </div>
           </CSSTransition>

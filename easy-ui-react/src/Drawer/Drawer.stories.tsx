@@ -5,6 +5,8 @@ import { Button } from "../Button";
 import { PlaceholderBox } from "../utilities/storybook";
 import { Drawer, DrawerContainer, useDrawerTrigger } from "./Drawer";
 import { DrawerTrigger } from "./DrawerTrigger";
+import { DrawerLayoutProps } from "./types";
+import styles from "./Drawer.examples.module.scss";
 import { Menu } from "../Menu";
 import { DropdownButton } from "../DropdownButton";
 import { VerticalStack } from "../VerticalStack";
@@ -226,5 +228,79 @@ function ManageAccountDrawer({ title }: { title: string }) {
         </Drawer.StandaloneContentArea>
       </Drawer.Body>
     </Drawer>
+  );
+}
+
+/** Controlled, headerless navigation. The application owns the destination. */
+export const LeftNavigation: DrawerStory = {
+  render: () => <NavigationExample placement="left" width="280px" />,
+};
+
+export const RightNavigation: DrawerStory = {
+  render: () => <NavigationExample placement="right" width={440} />,
+};
+
+/** Deliberately wider than a phone to demonstrate the viewport constraint. */
+export const WideNavigation: DrawerStory = {
+  render: () => <NavigationExample placement="left" width="960px" />,
+};
+
+function NavigationExample({ placement, width }: DrawerLayoutProps) {
+  const [open, setOpen] = useState(false);
+  const [destination, setDestination] = useState("Overview");
+  const [dismissals, setDismissals] = useState(0);
+  return (
+    <main className={styles.page}>
+      <VerticalStack gap="3">
+        <Text as="h1" variant="heading2">
+          Workspace
+        </Text>
+        <Button onPress={() => setOpen(true)}>Open navigation</Button>
+        <Text as="p">Current destination: {destination}</Text>
+        <Text as="p">Dismiss requests: {dismissals}</Text>
+        <Text as="p">
+          Overview, Orders, and Settings are synthetic destinations. The
+          application owns navigation.
+        </Text>
+      </VerticalStack>
+      <Drawer.Container
+        placement={placement}
+        width={width}
+        onDismiss={() => {
+          setDismissals((count) => count + 1);
+          setOpen(false);
+        }}
+      >
+        {open ? (
+          <Drawer aria-label="Workspace navigation">
+            <Drawer.Body>
+              <div className={styles.navigation}>
+                <VerticalStack gap="3">
+                  <HorizontalStack align="end">
+                    <Drawer.CloseButton />
+                  </HorizontalStack>
+                  <nav aria-label="Workspace destinations">
+                    <VerticalStack gap="2">
+                      {["Overview", "Orders", "Settings"].map((name) => (
+                        <Button
+                          key={name}
+                          variant={destination === name ? "filled" : "outlined"}
+                          onPress={() => {
+                            setDestination(name);
+                            setOpen(false);
+                          }}
+                        >
+                          {name}
+                        </Button>
+                      ))}
+                    </VerticalStack>
+                  </nav>
+                </VerticalStack>
+              </div>
+            </Drawer.Body>
+          </Drawer>
+        ) : null}
+      </Drawer.Container>
+    </main>
   );
 }

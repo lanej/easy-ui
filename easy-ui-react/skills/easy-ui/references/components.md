@@ -53,6 +53,15 @@ Use `DataGrid` for table semantics, columns, selection, and sorting. Use
 `DrawerTable` for a list of summary rows with independently rendered inline
 details; `DrawerRow` is exported from the same `DrawerTable` entry.
 
+Use `Drawer.Trigger` or controlled `Drawer.Container` (`DrawerContainer` remains
+available) with `placement="left" | "right"` and a CSS `width` (numbers are pixels).
+Right placement and the 608px default are unchanged; caller widths are constrained
+to the viewport. Give `Drawer` an `aria-label` or `aria-labelledby` without a
+`Drawer.Title`. For `Drawer.Container`, render the child only while open and remove
+it in `onDismiss`; the application owns routing. Preserve modal focus and dismissal
+rather than implementing a parallel navigation overlay. See [controlled left navigation](https://lanej.io/easy-ui/storybook/?path=/story/components-drawer--left-navigation)
+and [right navigation](https://lanej.io/easy-ui/storybook/?path=/story/components-drawer--right-navigation).
+
 Use `WorkspaceHeader` for a page title, caller-composed `navigation`, and actions;
 the surrounding page layout remains independent. See [page navigation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspaceheader--with-navigation).
 

@@ -1,5 +1,5 @@
 import React, { ElementRef, ReactNode, useMemo, useRef } from "react";
-import { useDialog } from "react-aria";
+import { AriaDialogProps, useDialog } from "react-aria";
 import { classNames } from "../utilities/css";
 import { DrawerBanner } from "./DrawerBanner";
 import { DrawerBody } from "./DrawerBody";
@@ -16,7 +16,10 @@ import { useIntersectionDetection } from "./useIntersectionDetection";
 
 import styles from "./Drawer.module.scss";
 
-export type DrawerProps = {
+export type DrawerProps = Pick<
+  AriaDialogProps,
+  "aria-label" | "aria-labelledby" | "aria-describedby"
+> & {
   /**
    * Content of the drawer.
    */
@@ -49,7 +52,7 @@ export type DrawerProps = {
  * </Drawer.Trigger>
  */
 export function Drawer(props: DrawerProps) {
-  const { children } = props;
+  const { children, ...dialogOptions } = props;
 
   const bodyRef = useRef<ElementRef<"div">>(null);
   const headerInterceptorRef = useRef<ElementRef<"div">>(null);
@@ -57,7 +60,10 @@ export function Drawer(props: DrawerProps) {
   const isHeaderStuck = useIntersectionDetection(headerInterceptorRef, bodyRef);
 
   const dialogRef = React.useRef(null);
-  const { dialogProps, titleProps } = useDialog({ role: "dialog" }, dialogRef);
+  const { dialogProps, titleProps } = useDialog(
+    { ...dialogOptions, role: "dialog" },
+    dialogRef,
+  );
 
   const context = useMemo(() => {
     return {
@@ -84,9 +90,9 @@ export function Drawer(props: DrawerProps) {
  * Represents the trigger for a `<Drawer />`.
  *
  * @remarks
- * A `<Drawer />` must be attached to a focusable trigger element such as a
- * `Button` through the `<Drawer.Trigger />` component. This ensures
- * the trigger and drawer are accessible.
+ * Use `<Drawer.Trigger />` with a focusable opener such as a `Button`, or
+ * `<Drawer.Container />` when the application controls the drawer's presence.
+ * Both preserve modal focus containment and restoration.
  *
  * `<Drawer.Trigger />` must contain exactly two direct children. The first
  * child must be a focusable trigger such as `Button`. The second child must
@@ -95,6 +101,9 @@ export function Drawer(props: DrawerProps) {
  * programmatically closing the `Drawer`.
  */
 Drawer.Trigger = DrawerTrigger;
+
+/** A drawer whose presence is controlled by its owner. */
+Drawer.Container = DrawerContainer;
 
 /**
  * Represents the header of a `<Drawer />`.
@@ -133,3 +142,6 @@ Drawer.StandaloneContentArea = DrawerStandaloneContentArea;
 Drawer.CloseButton = DrawerCloseButton;
 
 export { DrawerContainer, useDrawerTrigger };
+export type { DrawerContainerProps } from "./DrawerContainer";
+export type { DrawerTriggerProps } from "./DrawerTrigger";
+export type { DrawerLayoutProps } from "./types";
