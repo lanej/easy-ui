@@ -1,5 +1,5 @@
 import { AriaToastRegionProps, useToastRegion } from "@react-aria/toast";
-import React from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { TransitionGroup } from "react-transition-group";
 import { Notification, NotificationInternalState } from "./Notification";
 import styles from "./Notification.module.scss";
@@ -28,15 +28,58 @@ export type NotificationRegionProps = AriaToastRegionProps & {
  */
 export function NotificationRegion(props: NotificationRegionProps) {
   const { state, onTransitionPendingChange } = props;
-  const ref = React.useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const focusedKey = useRef<string | null>(null);
   const { regionProps } = useToastRegion(props, state, ref);
+  // React Aria tracks focus by array index. New arrivals prepend items, so an
+  // index can become stale while a user keeps reading an older notification.
+  // Recover by the stable key when that exact focused item is dismissed.
+  useLayoutEffect(() => {
+    if (
+      !focusedKey.current ||
+      state.visibleToasts.some((item) => item.key === focusedKey.current)
+    )
+      return;
+    const next = state.visibleToasts[0];
+    if (next) {
+      const node = Array.from(
+        ref.current?.querySelectorAll<HTMLElement>("[data-notification-key]") ??
+          [],
+      ).find((element) => element.dataset.notificationKey === next.key);
+      node?.focus();
+    }
+  }, [state.visibleToasts]);
   /**
    * `visibleToasts` and `toast` are artifacts of react-stately and in
    * Easy UI `visibleToasts` is being treated as `visibleNotifications` and
    * similarly, `toast` here is being treated as a `notification`.
    */
   return (
-    <div {...regionProps} ref={ref} className={styles.region}>
+    <div
+      {...regionProps}
+      ref={ref}
+      className={styles.region}
+      onFocusCapture={(event) => {
+        focusedKey.current =
+          (event.target as HTMLElement).closest<HTMLElement>(
+            "[data-notification-key]",
+          )?.dataset.notificationKey ?? null;
+      }}
+      onBlurCapture={(event) => {
+        if (event.relatedTarget) {
+          if (!event.currentTarget.contains(event.relatedTarget as Node))
+            focusedKey.current = null;
+        } else {
+          const key = (event.target as HTMLElement).closest<HTMLElement>(
+            "[data-notification-key]",
+          )?.dataset.notificationKey;
+          // A deliberate blur to the document is not a request to recover focus.
+          // Keep the key only when removal of this item caused the blur.
+          if (state.visibleToasts.some((item) => item.key === key))
+            focusedKey.current = null;
+        }
+      }}
+    >
       <TransitionGroup component={null}>
         {state.visibleToasts.map((toast) => (
           <NotificationTransition
@@ -44,8 +87,13 @@ export function NotificationRegion(props: NotificationRegionProps) {
             transitionKey={toast.key}
             onTransitionPendingChange={onTransitionPendingChange}
           >
-            {({ nodeRef }) => (
-              <Notification ref={nodeRef} toast={toast} state={state} />
+            {({ nodeRef, isExiting }) => (
+              <Notification
+                ref={nodeRef}
+                toast={toast}
+                state={state}
+                isExiting={isExiting}
+              />
             )}
           </NotificationTransition>
         ))}

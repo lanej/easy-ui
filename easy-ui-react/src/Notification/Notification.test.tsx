@@ -1,4 +1,4 @@
-import { act, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { UserEvent } from "@testing-library/user-event";
 import React from "react";
 import { vi } from "vitest";
@@ -168,3 +168,238 @@ function SimulatedNotificationTrigger(props: NotificationProps) {
 
   return <Button onPress={handlePress}>Trigger</Button>;
 }
+
+describe("stacked notification interaction", () => {
+  let notification: ReturnType<typeof useNotification>;
+  let restoreStyle: () => void;
+  function Controls() {
+    notification = useNotification();
+    return <button>Outside notifications</button>;
+  }
+  beforeEach(() => {
+    disableReactTransitionGroup();
+    restoreStyle = mockGetComputedStyle();
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    restoreStyle();
+    enableReactTransitionGroup();
+  });
+
+  it("retains rapid mixed messages, names close controls, and invokes only the dismissed callback", async () => {
+    const onDismiss = vi.fn();
+    const { user } = render(
+      <NotificationProvider
+        notificationOptions={{
+          stacking: true,
+          timeout: 5000,
+          isDismissable: true,
+        }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    let first = "";
+    act(() => {
+      first = notification.showSuccessToast({ message: "Order saved" });
+      notification.showSuccessToast({ message: "Order saved" });
+      notification.showWarningAlert({ message: "Review address", onDismiss });
+    });
+    expect(screen.getAllByText("Order saved")).toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", { name: "Dismiss Order saved" }),
+    ).toHaveLength(2);
+    act(() => notification.closeNotification(first));
+    expect(screen.getAllByText("Order saved")).toHaveLength(1);
+    await user.click(
+      screen.getByRole("button", { name: "Dismiss Review address" }),
+    );
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Review address")).not.toBeInTheDocument();
+    expect(screen.getByText("Order saved")).toBeInTheDocument();
+    // The live content belongs to each new item, never the whole region.
+    expect(screen.getByRole("region")).not.toHaveAttribute("aria-live");
+    expect(screen.getByRole("status")).toHaveTextContent("Order saved");
+  });
+
+  it("pauses for overlapping hover and keyboard interaction and resumes only remaining time", async () => {
+    const { user } = render(
+      <NotificationProvider
+        notificationOptions={{
+          stacking: true,
+          timeout: 5000,
+          isDismissable: true,
+        }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showSuccessToast({ message: "Order A saved" }));
+    const close = screen.getByRole("button", { name: "Dismiss Order A saved" });
+    act(() => vi.advanceTimersByTime(2000));
+    await user.hover(close);
+    act(() => close.focus());
+    await user.unhover(close);
+    act(() => {
+      notification.showSuccessToast({ message: "Order B saved" });
+      vi.advanceTimersByTime(10000);
+    });
+    expect(screen.getByText("Order A saved")).toBeInTheDocument();
+    expect(screen.getByText("Order B saved")).toBeInTheDocument();
+    act(() =>
+      screen.getByRole("button", { name: "Outside notifications" }).focus(),
+    );
+    act(() => vi.advanceTimersByTime(2999));
+    expect(screen.getByText("Order A saved")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.queryByText("Order A saved")).not.toBeInTheDocument();
+    expect(screen.getByText("Order B saved")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(2000));
+    expect(screen.queryByText("Order B saved")).not.toBeInTheDocument();
+  });
+
+  it("keeps existing DOM/live regions stable on arrival and supports keyboard individual dismissal", async () => {
+    const { user } = render(
+      <NotificationProvider
+        notificationOptions={{ stacking: true, isDismissable: true }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showSuccessToast({ message: "First saved" }));
+    const original = screen.getByRole("status");
+    act(() => notification.showSuccessToast({ message: "Second saved" }));
+    expect(screen.getByText("First saved").closest('[role="status"]')).toBe(
+      original,
+    );
+    const close = screen.getByRole("button", { name: "Dismiss First saved" });
+    act(() => close.focus());
+    await user.keyboard("{Enter}");
+    expect(screen.queryByText("First saved")).not.toBeInTheDocument();
+    expect(screen.getByText("Second saved")).toBeInTheDocument();
+    expect(screen.getByRole("alertdialog")).toHaveFocus();
+  });
+
+  it("moves keyboard focus past an exiting newest item with real transitions", async () => {
+    enableReactTransitionGroup();
+    const { user } = render(
+      <NotificationProvider
+        notificationOptions={{ stacking: true, isDismissable: true }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showSuccessToast({ message: "Older saved" }));
+    fireEvent.transitionEnd(screen.getByRole("alertdialog"));
+    act(() => notification.showSuccessToast({ message: "Newest saved" }));
+    const newest = screen
+      .getByRole("button", { name: "Dismiss Newest saved" })
+      .closest('[role="alertdialog"]')!;
+    fireEvent.transitionEnd(newest);
+    act(() =>
+      screen.getByRole("button", { name: "Dismiss Newest saved" }).focus(),
+    );
+    await user.keyboard("{Enter}");
+    expect(newest).toHaveAttribute("aria-hidden", "true");
+    expect(newest).not.toHaveAttribute("role");
+    expect(screen.getByRole("alertdialog")).toHaveFocus();
+    fireEvent.transitionEnd(newest);
+    expect(screen.getByRole("alertdialog")).toHaveFocus();
+    expect(screen.getByText("Older saved")).toBeInTheDocument();
+  });
+
+  it("recovers focus by key after a newer arrival shifts an older focused item", async () => {
+    const { user } = render(
+      <NotificationProvider notificationOptions={{ stacking: true }}>
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showWarningAlert({ message: "Reading this alert" }));
+    act(() =>
+      screen
+        .getByRole("button", { name: "Dismiss Reading this alert" })
+        .focus(),
+    );
+    act(() =>
+      notification.showSuccessToast({ message: "New nondismissible toast" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Dismiss Reading this alert" }),
+    ).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("alertdialog")).toHaveFocus();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "New nondismissible toast",
+    );
+  });
+
+  it("uses configured options from descendant layout effects, including after changes", () => {
+    function LayoutArrival({ version }: { version: number }) {
+      const current = useNotification();
+      React.useLayoutEffect(() => {
+        current.showSuccessToast({ message: `First ${version}` });
+        current.showSuccessToast({ message: `Second ${version}` });
+        // Only simulate a new committed application update, not queue renders.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [version]);
+      return <button>Outside</button>;
+    }
+    const { rerender } = render(
+      <NotificationProvider
+        notificationOptions={{ stacking: true, timeout: 5000 }}
+      >
+        <LayoutArrival version={1} />
+      </NotificationProvider>,
+    );
+    expect(screen.getAllByRole("status")).toHaveLength(2);
+    rerender(
+      <NotificationProvider
+        notificationOptions={{ stacking: true, timeout: 1000 }}
+      >
+        <LayoutArrival version={2} />
+      </NotificationProvider>,
+    );
+    expect(screen.getAllByRole("status")).toHaveLength(4);
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.getAllByRole("status")).toHaveLength(2);
+    expect(screen.getByText("First 1")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(4000));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("does not recover notification focus after an explicit blur to the document", () => {
+    render(
+      <NotificationProvider
+        notificationOptions={{ stacking: true, isDismissable: true }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    let first = "";
+    act(() => {
+      first = notification.showSuccessToast({ message: "First" });
+      notification.showSuccessToast({ message: "Second" });
+    });
+    const close = screen.getByRole("button", { name: "Dismiss First" });
+    act(() => close.focus());
+    act(() => close.blur());
+    act(() => notification.closeNotification(first));
+    expect(document.body).toHaveFocus();
+  });
+
+  it("clears active timers when the provider unmounts", () => {
+    const { unmount } = render(
+      <NotificationProvider notificationOptions={{ stacking: true }}>
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => {
+      notification.showSuccessToast({ message: "One" });
+      notification.showSuccessToast({ message: "Two" });
+    });
+    expect(vi.getTimerCount()).toBeGreaterThan(0);
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});

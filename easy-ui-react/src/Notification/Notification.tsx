@@ -26,6 +26,10 @@ export type BaseNotificationProps = {
   type?: NotificationType;
   /** Notification message */
   message: ReactNode;
+  /** Visible duration in milliseconds. Zero disables expiration. Alerts default to persistent. */
+  timeout?: number;
+  /** Show an individually named close control. Alerts default to true; toasts to false. */
+  isDismissable?: boolean;
   /**
    * Notification status
    * @default 'success'
@@ -54,27 +58,29 @@ export type NotificationInternalState = ToastState<NotificationProps>;
 /** The methods below are accessible on the object returned by the `useNotification` hook. */
 export type NotificationExternalState = {
   /** Shows promotional color status toast */
-  showPromotionalToast(content: ToastProps): void;
+  showPromotionalToast(content: ToastProps): string;
   /** Shows neutral color status toast */
-  showNeutralToast(content: ToastProps): void;
+  showNeutralToast(content: ToastProps): string;
   /** Shows success color status toast */
-  showSuccessToast(content: ToastProps): void;
+  showSuccessToast(content: ToastProps): string;
   /** Shows warning color status toast */
-  showWarningToast(content: ToastProps): void;
+  showWarningToast(content: ToastProps): string;
   /** Shows error color status toast */
-  showErrorToast(content: ToastProps): void;
+  showErrorToast(content: ToastProps): string;
   /** Shows promotional color status alert */
-  showPromotionalAlert(content: AlertProps): void;
+  showPromotionalAlert(content: AlertProps): string;
   /** Shows neutral color status alert */
-  showNeutralAlert(content: AlertProps): void;
+  showNeutralAlert(content: AlertProps): string;
   /** Shows success color status alert */
-  showSuccessAlert(content: AlertProps): void;
+  showSuccessAlert(content: AlertProps): string;
   /** Shows warning color status alert */
-  showWarningAlert(content: AlertProps): void;
+  showWarningAlert(content: AlertProps): string;
   /** Shows error color status alert */
-  showErrorAlert(content: AlertProps): void;
-  /** Closes active notification */
+  showErrorAlert(content: AlertProps): string;
+  /** Closes the most recently added notification that is still present. */
   closeActiveNotification(): void;
+  /** Closes one notification by the key returned from a show method. */
+  closeNotification(key: string): void;
 };
 
 export type NotificationCombinedState = NotificationInternalState &
@@ -91,6 +97,8 @@ export type NotificationItemStateProps = AriaToastProps<NotificationProps> & {
    * interact with the queue object. Consumers do not see this state.
    */
   state: NotificationInternalState;
+  /** Remove exiting items from focus recovery and announcements during animation. */
+  isExiting?: boolean;
 };
 
 /**
@@ -107,26 +115,22 @@ export const Notification = React.forwardRef<
 >((props, forwardedRef) => {
   const ref = useRef(null);
   const mergedRef = useObjectRef(mergeRefs(ref, forwardedRef));
-  const { state, toast: notification } = props;
+  const { state, toast: notification, isExiting } = props;
   const {
     type = "toast",
     message,
     status = "success",
     hasIcon = true,
     onDismiss,
+    isDismissable = type === "alert",
   } = notification.content;
 
   const {
     toastProps: notificationProps,
     titleProps,
+    contentProps,
     closeButtonProps,
   } = useToast(props, state, ref);
-
-  // default role alert
-  const notificationPropsWithAdjustedAriaRole =
-    type === "toast"
-      ? { ...notificationProps, role: "status" }
-      : notificationProps;
 
   const handleDismiss = () => {
     if (onDismiss) {
@@ -141,7 +145,11 @@ export const Notification = React.forwardRef<
 
   return (
     <div
-      {...notificationPropsWithAdjustedAriaRole}
+      {...notificationProps}
+      role={isExiting ? undefined : notificationProps.role}
+      aria-hidden={isExiting || undefined}
+      data-notification-key={notification.key}
+      tabIndex={isExiting ? -1 : notificationProps.tabIndex}
       ref={mergedRef}
       className={classNames(
         styles.Notification,
@@ -149,17 +157,30 @@ export const Notification = React.forwardRef<
         styles[variationName("type", type)],
       )}
     >
-      <div className={styles.iconText}>
+      <div
+        {...contentProps}
+        role={type === "alert" ? "alert" : "status"}
+        className={styles.iconText}
+      >
         {hasIcon && <Icon size="lg" symbol={getStatusIcon(status)} />}
         <div {...titleProps}>
           <Text weight="semibold">{message}</Text>
         </div>
       </div>
-      {type === "alert" && (
+      {isDismissable && (
         <span className={styles.closeButtonContainer}>
           <UnstyledButton
             {...closeButtonPropsWithDismiss}
+            aria-label={
+              typeof message === "string"
+                ? `Dismiss ${message}`
+                : "Dismiss notification"
+            }
+            aria-describedby={
+              typeof message === "string" ? undefined : titleProps.id
+            }
             className={styles.closeButton}
+            isDisabled={isExiting}
           >
             <Icon size="md" symbol={CloseIcon} />
           </UnstyledButton>
@@ -195,8 +216,8 @@ export const NotificationContext =
  *
  * @remarks
  * Toasts dispay a brief non-disruptive message to the user as a result of an action taken. The displayed message
- * is accompanied by an associated status icon and cannot be manually dismissed, instead toast messages automatically
- * timeout after `4000ms`. Toasts should not be used to display critical information such as a system failure,
+ * is accompanied by an associated status icon and by default automatically timeout after `4000ms` without a close control.
+ * Configure provider defaults with `notificationOptions`, or pass `timeout` and `isDismissable` to a show method. Toasts should not be used to display critical information such as a system failure,
  * use `alerts` for such behavior. They should also contain purely text and no elements such as links.
  *
  * Alerts display an important message near the top of the page that does not automatically timeout and requires
@@ -206,16 +227,16 @@ export const NotificationContext =
  * The following methods are available on the returned notification object:
  *
  * ```tsx
- * showPromotionalToast(content: ToastProps): void;
- * showNeutralToast(content: ToastProps): void;
- * showSuccessToast(content: ToastProps): void;
- * showWarningToast(content: ToastProps): void;
- * showErrorToast(content: ToastProps): void;
- * showPromotionalAlert(content: AlertProps): void;
- * showNeutralAlert(content: AlertProps): void;
- * showSuccessAlert(content: AlertProps): void;
- * showWarningAlert(content: AlertProps): void;
- * showErrorAlert(content: AlertProps): void;
+ * showPromotionalToast(content: ToastProps): string;
+ * showNeutralToast(content: ToastProps): string;
+ * showSuccessToast(content: ToastProps): string;
+ * showWarningToast(content: ToastProps): string;
+ * showErrorToast(content: ToastProps): string;
+ * showPromotionalAlert(content: AlertProps): string;
+ * showNeutralAlert(content: AlertProps): string;
+ * showSuccessAlert(content: AlertProps): string;
+ * showWarningAlert(content: AlertProps): string;
+ * showErrorAlert(content: AlertProps): string;
  * closeActiveNotification(): void;
  *
  * type ToastProps = {
@@ -342,11 +363,22 @@ export type NotificationPlacement = {
   offset?: NotificationOffset;
 };
 
+export type NotificationOptions = {
+  /** Retain concurrent notifications. Defaults to false (replace the previous notification). */
+  stacking?: boolean;
+  /** Default toast visible duration in milliseconds. Defaults to 4000; zero disables expiration. */
+  timeout?: number;
+  /** Default toast close control. Defaults to false. Alerts remain dismissible by default. */
+  isDismissable?: boolean;
+};
+
 export type NotificationProviderProps = {
   /** Child components */
   children: ReactNode;
   /** Notification placement props */
   notificationPlacement?: NotificationPlacement;
+  /** Defaults applied to notifications added after this render. */
+  notificationOptions?: NotificationOptions;
 };
 
 /**
@@ -356,8 +388,8 @@ export type NotificationProviderProps = {
  * be used on its own and is included in the general EasyUI Provider
  */
 export function NotificationProvider(props: NotificationProviderProps) {
-  const { children, notificationPlacement } = props;
-  const combinedState = useNotificationState();
+  const { children, notificationPlacement, notificationOptions } = props;
+  const combinedState = useNotificationState(notificationOptions);
 
   const state = {
     close: combinedState.close,
@@ -379,6 +411,7 @@ export function NotificationProvider(props: NotificationProviderProps) {
     showWarningToast: combinedState.showWarningToast,
     showWarningAlert: combinedState.showWarningAlert,
     closeActiveNotification: combinedState.closeActiveNotification,
+    closeNotification: combinedState.closeNotification,
   };
 
   return (
@@ -388,6 +421,7 @@ export function NotificationProvider(props: NotificationProviderProps) {
         offset={notificationPlacement?.offset}
         position={notificationPlacement?.position}
         state={state}
+        stacking={notificationOptions?.stacking}
       />
       {children}
     </NotificationContext.Provider>

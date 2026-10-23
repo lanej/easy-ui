@@ -32,7 +32,11 @@ Select **Save settings** to display a notification from the provider.
 
 Use `theme` to supply a theme creator and `colorScheme` to choose light, dark,
 system, or inverted colors. `notificationPlacement` sets notification offsets
-and an optional container. When nesting providers, explicitly supply a theme
+and an optional container. `notificationOptions` configures concurrent stacking,
+toast timeout, and toast close controls. Omitted options preserve replacement,
+four-second toasts, and persistent dismissible alerts. See
+[Notification](?path=/docs/components-notification--docs) for per-message overrides
+and timer/configuration lifecycle behavior. When nesting providers, explicitly supply a theme
 or color scheme.
 
 ## Examples

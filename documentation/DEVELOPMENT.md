@@ -112,3 +112,17 @@ For map-free timeline/inspector composition, also run `STORYBOOK_URL=http://loca
 Run the Chart tests (including `chartCatalog.test.tsx`), package build, and Storybook build. `node scripts/check-chart-package.mjs` checks all chart subpaths in both module formats without eager engine loading; `node scripts/check-style-package.mjs` verifies packed TypeScript consumers.
 
 With built Storybook served locally, run `STORYBOOK_URL=http://localhost:9013 node scripts/check-chart-catalog.mjs` with the existing Playwright browser dependencies. The harness checks all 17 analytical component entries, light/dark desktop and narrow layouts, keyboard exact-data disclosure, finite renderer geometry, accessibility, pattern edge cases, and the rendered API table. `CHART_CATALOG_REPORT_DIR` selects screenshots and measured results. The main CI workflow runs it alongside the existing facility checks.
+
+### Notification verification
+
+Run the focused `Notification` tests for queue defaults, independent keys,
+remaining-duration timers, paused arrivals, close controls, live-content identity,
+keyboard focus recovery, configuration changes, and unmount cleanup.
+With built Storybook and the locked `scripts/preview-metrics` dependencies, run
+`STORYBOOK_URL=http://localhost:9013 node scripts/check-notifications.mjs`.
+`NOTIFICATION_REPORT_DIR` selects captures and `report.json`; `BROWSER_EXECUTABLE`
+can select an installed Chromium. The harness covers rapid mixed alerts/toasts,
+identical messages and targeted dismissal, hover plus keyboard pause, expiration,
+and light/dark desktop/narrow layouts. CI retains its evidence with the other
+component browser reports. Package export/type/style checks remain separate from
+application consumer acceptance.

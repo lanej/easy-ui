@@ -21,6 +21,8 @@ export type NotificationContainerProps = {
    * interact with the queue object. Consumers do not see this state.
    */
   state: NotificationInternalState;
+  /** Retain concurrent notifications in a compact stack. */
+  stacking?: boolean;
 };
 
 /**
@@ -30,7 +32,13 @@ export type NotificationContainerProps = {
  * styles.
  */
 export function NotificationContainer(props: NotificationContainerProps) {
-  const { getContainer = null, position = "fixed", offset, state } = props;
+  const {
+    getContainer = null,
+    position = "fixed",
+    offset,
+    state,
+    stacking,
+  } = props;
   const { isTransitionPending, onTransitionPendingChange } =
     useNotificationTransitionTracking();
 
@@ -69,7 +77,10 @@ export function NotificationContainer(props: NotificationContainerProps) {
       {/** visibleToasts` is an artifact of react-stately */}
       {showNotifications
         ? createPortal(
-            <div className={style.container} style={containerStyles}>
+            <div
+              className={`${style.container} ${stacking ? style.stacked : ""}`}
+              style={containerStyles}
+            >
               <NotificationRegion
                 state={state}
                 onTransitionPendingChange={onTransitionPendingChange}

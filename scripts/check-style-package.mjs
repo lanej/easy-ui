@@ -247,6 +247,8 @@ const sassSource = `
 
 const typeSource = `
 import EasyUIIcon from "@easypost/easy-ui-icons/EasyUI";
+import { Provider } from "@easypost/easy-ui/Provider";
+import { useNotification, type NotificationOptions } from "@easypost/easy-ui/Notification";
 import { Chart, ChartLegend } from "@easypost/easy-ui/Chart";
 import { LineChart } from "@easypost/easy-ui/LineChart";
 import { BubbleChart, type BubbleChartSeries } from "@easypost/easy-ui/BubbleChart";
@@ -276,6 +278,16 @@ ${componentNames
       `import * as Component${index} from "@easypost/easy-ui/${name}";\nvoid Component${index};`,
   )
   .join("\n")}
+
+const notificationDefaults: NotificationOptions = { stacking: true, timeout: 5000, isDismissable: true };
+function PackedNotificationOptions() {
+  const notification = useNotification();
+  const key: string = notification.showSuccessToast({ message: "Packed notification", timeout: 5000, isDismissable: true });
+  notification.closeNotification(key);
+  const alertKey: string = notification.showWarningAlert({ message: "Packed alert", timeout: 0 });
+  return <Provider notificationOptions={notificationDefaults} notificationPlacement={{ offset: { bottom: "16px", right: "16px" } }}><span>{alertKey}</span></Provider>;
+}
+void PackedNotificationOptions;
 
 const sort: KeyedSortDescriptor<"cost"> = { column: "cost", direction: "ascending" };
 // @ts-expect-error Generic column keys must retain their declared constraint.
@@ -422,7 +434,7 @@ for (const load of [require, (specifier) => import(specifier)]) {
 }
 const rawIcon = insideConsumer(require.resolve("@easypost/easy-ui-icons/svg/EasyUI.svg"));
 assert.equal(readFileSync(rawIcon, "utf8"), readFileSync("expected-icon.svg", "utf8"));
-for (const subpath of ["Chart", "Chart/index", "MetricCard", "WaffleChart", "WaffleChart/index", "NetworkMap", "ScoreComposition", "InvestigationWorkspace", "utilities/css"]) {
+for (const subpath of ["Notification", "Provider", "Chart", "Chart/index", "MetricCard", "WaffleChart", "WaffleChart/index", "NetworkMap", "ScoreComposition", "InvestigationWorkspace", "utilities/css"]) {
   const specifier = "@easypost/easy-ui/" + subpath;
   insideConsumer(require.resolve(specifier));
   insideConsumer(fileURLToPath(import.meta.resolve(specifier)));

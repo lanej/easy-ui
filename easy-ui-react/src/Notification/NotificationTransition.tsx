@@ -8,7 +8,10 @@ export type NotificationTransitionProps = {
   /**
    * Children function that receives a ref to the node being transitioned.
    */
-  children: ChildrenFunction<{ nodeRef: RefObject<HTMLDivElement | null> }>;
+  children: ChildrenFunction<{
+    nodeRef: RefObject<HTMLDivElement | null>;
+    isExiting: boolean;
+  }>;
 
   /**
    * Unique key for the transition.
@@ -56,7 +59,10 @@ export function NotificationTransition({
         onTransitionPendingChange(false);
       }}
     >
-      {children({ nodeRef })}
+      {children({
+        nodeRef,
+        isExiting: (transitionGroupProps as { in?: boolean }).in === false,
+      })}
     </CSSTransition>
   );
 }
