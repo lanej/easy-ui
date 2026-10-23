@@ -1,9 +1,9 @@
 import { AriaLabelingProps } from "@react-types/shared";
+import { useLayoutEffect } from "@react-aria/utils";
+import { useId } from "react-aria/useId";
 import React, {
   KeyboardEvent,
   ReactNode,
-  useId,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -35,7 +35,10 @@ function encodeId(id: string) {
     .join("");
 }
 
-/** Call once per workspace and pass the same object to its tabs and panels. */
+/**
+ * Call once per workspace and pass the same object to its tabs and panels.
+ * React 16/17 server-rendered apps require React Aria's SSRProvider.
+ */
 export function useWorkspaceTabIds(): WorkspaceTabIds {
   const instanceId = useId();
   return useMemo(

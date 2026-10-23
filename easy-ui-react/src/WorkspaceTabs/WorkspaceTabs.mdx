@@ -18,6 +18,20 @@ import { useWorkspaceTabIds } from "@easypost/easy-ui/WorkspaceTabs";
 
 Call `useWorkspaceTabIds` once per instance, then share it with `WorkspaceTabs` and your external panels. Keys must be unique across both lists and remain stable. Opaque keys such as `order/a` and `order_002fa` get distinct DOM IDs; separate hook calls isolate separate workspaces. Do not construct, sanitize, or parse the generated IDs.
 
+The hook supports React 16.14, 17, 18, and 19. For server-rendered React 16/17 apps,
+wrap the application in one React Aria `SSRProvider` on both the server and client,
+as described in the package README. Import it with the same module format as Easy UI
+and keep a single React Aria dependency version. React 18+ does not need this wrapper.
+
+```tsx
+// React 16/17: use this same root for server rendering and hydration.
+import { SSRProvider } from "react-aria";
+
+<SSRProvider>
+  <App />
+</SSRProvider>;
+```
+
 ```tsx
 import { useState } from "react";
 
@@ -68,6 +82,14 @@ function Orders() {
 Each `WorkspaceTab` supplies `id`, string `label`, optional `count`, `isDisabled`, and `isClosable`. Pinned tabs never close. Open tabs close by default when `onClose` is supplied; set `isClosable={false}` on an item to suppress its close button. Disabled items cannot activate or close. `getCloseLabel` localizes the separate close buttons, whose default is “Close [label] tab”. Zero counts remain visible and part of the accessible tab name.
 
 ## Examples
+
+### Independent workspace IDs
+
+Each workspace below shares one hook result with its own external panels. Reusing
+opaque keys in another workspace does not reuse DOM IDs. Caller-supplied `ids`
+remain supported; omitting them generates internal IDs for the bar.
+
+<Canvas of={WorkspaceTabsStories.IsolatedWorkspaces} />
 
 ### Manual activation and controlled removal
 

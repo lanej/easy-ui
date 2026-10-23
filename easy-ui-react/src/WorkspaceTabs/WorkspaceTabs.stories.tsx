@@ -145,6 +145,39 @@ export const Narrow: Story = { render: () => <WorkspaceExample narrow /> };
 export const WidthTransition: Story = {
   render: () => <WorkspaceExample transition />,
 };
+export const IsolatedWorkspaces: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Two independent hook instances reuse opaque keys while keeping external-panel relationships isolated. React 16/17 server-rendered applications must wrap their server and client roots in React Aria's SSRProvider; React 18+ does not need it.",
+      },
+    },
+  },
+  render: () => (
+    <div style={{ display: "grid", gap: 24 }}>
+      <section aria-label="First workspace">
+        <WorkspaceExample />
+      </section>
+      <section aria-label="Second workspace">
+        <WorkspaceExample variant="secondary" />
+      </section>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const ids = Array.from(
+      canvasElement.querySelectorAll("[role=tab], [role=tabpanel]"),
+      (node) => node.id,
+    );
+    await expect(new Set(ids).size).toBe(ids.length);
+    for (const tab of canvasElement.querySelectorAll("[role=tab]")) {
+      const panel = canvasElement.ownerDocument.getElementById(
+        tab.getAttribute("aria-controls")!,
+      );
+      await expect(panel).toHaveAttribute("aria-labelledby", tab.id);
+    }
+  },
+};
 export const Empty: Story = {
   args: {
     "aria-label": "Workspace views",

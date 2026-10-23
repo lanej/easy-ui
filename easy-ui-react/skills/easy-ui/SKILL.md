@@ -18,6 +18,8 @@ avoid copying implementation code or inventing props from a screenshot.
 
 For application-owned workspace panels, use `WorkspaceTabs` with the shared
 `useWorkspaceTabIds` contract; keep selection and close policy in the application.
+React 16/17 server-rendered applications need one React Aria `SSRProvider` around
+the matching server and client roots; React 18+ does not need this wrapper.
 
 For charts, read the catalog's choosing-a-chart guidance and the selected
 component's examples. Keep aggregation, units, model bounds, and interpretation

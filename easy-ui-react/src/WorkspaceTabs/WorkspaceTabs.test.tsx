@@ -262,7 +262,15 @@ it("updates the entry point on external selection without overriding manual focu
 });
 
 it("shares collision-safe, stable IDs with external panels and separates instances", () => {
-  const keys = ["order/a", "order_002fa", "order-002f-a", "", "💌", "\\ud800"];
+  const keys = [
+    "order/a",
+    "order_002fa",
+    "order-002f-a",
+    "",
+    "💌",
+    "\ud800",
+    "\\ud800",
+  ];
   function Example() {
     const ids = useWorkspaceTabIds();
     return (
@@ -308,6 +316,24 @@ it("shares collision-safe, stable IDs with external panels and separates instanc
   expect(
     Array.from(container.querySelectorAll("[id]")).map((node) => node.id),
   ).toEqual(before);
+});
+
+it("uses explicitly supplied IDs for every ownership and external-panel relationship", () => {
+  const ids = {
+    tabId: (key: string) => `custom-tab-${key}`,
+    panelId: (key: string) => `custom-panel-${key}`,
+  };
+  render(<WorkspaceTabs {...setup()} ids={ids} />);
+  const tabs = screen.getAllByRole("tab");
+  expect(screen.getByRole("tablist")).toHaveAttribute(
+    "aria-owns",
+    tabs.map((tab) => tab.id).join(" "),
+  );
+  for (const [index, tab] of tabs.entries()) {
+    const key = [...pinnedTabs, ...openTabs][index].id;
+    expect(tab).toHaveAttribute("id", ids.tabId(key));
+    expect(tab).toHaveAttribute("aria-controls", ids.panelId(key));
+  }
 });
 
 it("supports a single application-owned shared panel and localized close labels", () => {
