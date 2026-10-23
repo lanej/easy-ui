@@ -297,7 +297,12 @@ export function WorkspaceTabs({
                   type="button"
                   className={styles.close}
                   disabled={tab.isDisabled}
+                  tabIndex={!tab.isDisabled && tab.id === rovingKey ? 0 : -1}
                   aria-label={getCloseLabel(tab)}
+                  onFocus={() => {
+                    setFocusedKey(tab.id);
+                    reveal(tab.id);
+                  }}
                   onClick={() => onClose(tab.id)}
                 >
                   <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">

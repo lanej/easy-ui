@@ -71,7 +71,7 @@ Each `WorkspaceTab` supplies `id`, string `label`, optional `count`, `isDisabled
 
 ### Manual activation and controlled removal
 
-Left/Right arrows wrap focus across enabled tabs without changing selection. Home/End focus enabled endpoints; Enter/Space activate. Right/Left direction follows RTL layouts. Close buttons are separate keyboard-accessible buttons, never nested in a tab. Closing another view does not activate it.
+Left/Right arrows wrap focus across enabled tabs without changing selection. Home/End focus enabled endpoints; Enter/Space activate. Right/Left direction follows RTL layouts. Close buttons are separate buttons, never nested in a tab. Initial keyboard entry targets the selected enabled tab, or the first enabled tab. Tab from a focused tab reaches its close button when present. To close another view with the keyboard, arrow to its tab and press Tab to reach its close button; this does not activate the view.
 
 The application must update `selectedKey` when its selected tab closes. A delayed controlled removal recovers focus to the next enabled tab at that position, then the preceding enabled tab, or the empty bar. It never changes selection or steals focus after the user leaves the bar.
 

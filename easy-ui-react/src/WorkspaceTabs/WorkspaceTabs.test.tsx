@@ -99,6 +99,61 @@ it("disabled tabs cannot activate or close and non-closable open tabs have no cl
   ).not.toBeInTheDocument();
 });
 
+it("enters at a later selected tab and tabs only through its roving close control", async () => {
+  const user = userEvent.setup();
+  const props = setup();
+  render(
+    <WorkspaceTabs
+      {...props}
+      selectedKey="order_002fa"
+      trailing={<button>Open order</button>}
+    />,
+  );
+  const orderA = screen.getByRole("tab", { name: "Order A 12" });
+  const orderB = screen.getByRole("tab", { name: "Order B" });
+  const closeA = screen.getByRole("button", { name: "Close Order A tab" });
+  const closeB = screen.getByRole("button", { name: "Close Order B tab" });
+  expect(closeA).toHaveAttribute("tabindex", "-1");
+  await user.tab();
+  expect(orderB).toHaveFocus();
+  await user.tab();
+  expect(closeB).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole("button", { name: "Open order" })).toHaveFocus();
+  await user.tab({ shift: true });
+  expect(closeB).toHaveFocus();
+  await user.tab({ shift: true });
+  expect(orderB).toHaveFocus();
+  await user.keyboard("{ArrowLeft}");
+  expect(orderA).toHaveFocus();
+  expect(closeB).toHaveAttribute("tabindex", "-1");
+  await user.tab();
+  expect(closeA).toHaveFocus();
+  await user.keyboard("{Enter}");
+  expect(props.onClose).toHaveBeenCalledExactlyOnceWith("order/a");
+  expect(props.onSelectionChange).not.toHaveBeenCalled();
+});
+
+it.each(["overview", "blocked"])(
+  "skips every close control when the entry point is pinned (selection %s)",
+  async (selectedKey) => {
+    const user = userEvent.setup();
+    render(
+      <WorkspaceTabs
+        {...setup()}
+        selectedKey={selectedKey}
+        trailing={<button>Open order</button>}
+      />,
+    );
+    await user.tab();
+    expect(screen.getByRole("tab", { name: "Overview 0" })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Open order" })).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(screen.getByRole("tab", { name: "Overview 0" })).toHaveFocus();
+  },
+);
+
 it.each(["tab", "close"])(
   "recovers %s focus after delayed controlled removal without changing selection",
   async (control) => {
@@ -136,18 +191,25 @@ it("falls back backward, skips disabled neighbors, and focuses the empty bar aft
   expect(screen.getByRole("tablist")).toHaveFocus();
 });
 
-it("recovers a focused control that becomes disabled", () => {
-  const props = setup();
-  const { rerender } = render(<WorkspaceTabs {...props} />);
-  act(() => screen.getByRole("tab", { name: "Order A 12" }).focus());
-  rerender(
-    <WorkspaceTabs
-      {...props}
-      openTabs={openTabs.map((tab) => ({ ...tab, isDisabled: true }))}
-    />,
-  );
-  expect(screen.getByRole("tab", { name: "Overview 0" })).toHaveFocus();
-});
+it.each(["tab", "close"])(
+  "recovers a focused %s control that becomes disabled",
+  (control) => {
+    const props = setup();
+    const { rerender } = render(<WorkspaceTabs {...props} />);
+    const target =
+      control === "tab"
+        ? screen.getByRole("tab", { name: "Order A 12" })
+        : screen.getByRole("button", { name: "Close Order A tab" });
+    act(() => target.focus());
+    rerender(
+      <WorkspaceTabs
+        {...props}
+        openTabs={openTabs.map((tab) => ({ ...tab, isDisabled: true }))}
+      />,
+    );
+    expect(screen.getByRole("tab", { name: "Overview 0" })).toHaveFocus();
+  },
+);
 
 it("does not steal focus after moving outside while a removal is pending", async () => {
   const user = userEvent.setup();

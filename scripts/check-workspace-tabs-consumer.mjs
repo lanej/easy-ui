@@ -182,6 +182,55 @@ try {
       });
       const errors = [];
       page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(
+        `http://127.0.0.1:9025/?theme=${theme}&selected=order_002fa`,
+      );
+      const entryRegion = page.getByRole("region", {
+        name: "Primary workspace",
+        exact: true,
+      });
+      const entryTab = entryRegion.getByRole("tab", {
+        name: "Order B",
+        exact: true,
+      });
+      await entryTab.waitFor();
+      await page.keyboard.press("Tab");
+      assert.equal(
+        await entryTab.evaluate((node) => node === document.activeElement),
+        true,
+        "Initial Tab entry skips earlier close controls for a later selected tab",
+      );
+      await page.keyboard.press("Tab");
+      assert.equal(
+        await entryRegion
+          .getByRole("button", { name: "Close Order B tab" })
+          .evaluate((node) => node === document.activeElement),
+        true,
+      );
+      await page.keyboard.press("Tab");
+      assert.equal(
+        await entryRegion
+          .getByRole("button", { name: "Open order" })
+          .evaluate((node) => node === document.activeElement),
+        true,
+        "Non-roving close controls are skipped when leaving the workspace bar",
+      );
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("ArrowLeft");
+      await page.keyboard.press("Tab");
+      assert.equal(
+        await entryRegion
+          .getByRole("button", { name: "Close Order A tab" })
+          .evaluate((node) => node === document.activeElement),
+        true,
+        "Arrowing to another tab makes its separate close control reachable",
+      );
+      assert.equal(await entryTab.getAttribute("aria-selected"), "true");
+      assert.equal(
+        await entryRegion.getByLabel("Activation count").textContent(),
+        "0",
+      );
       await page.goto(`http://127.0.0.1:9025/?theme=${theme}`);
       await page.getByRole("tab", { name: "Overview 12" }).first().waitFor();
       await page.evaluate(() => document.fonts.ready);

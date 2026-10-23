@@ -37,7 +37,9 @@ function Workspace({
   const ids: WorkspaceTabIds = useWorkspaceTabIds();
   const nextOrder = useRef(1);
   const [openTabs, setOpenTabs] = useState(initial);
-  const [selectedKey, setSelectedKey] = useState<string | null>("overview");
+  const [selectedKey, setSelectedKey] = useState<string | null>(
+    new URLSearchParams(location.search).get("selected") ?? "overview",
+  );
   const [activations, setActivations] = useState(0);
   const [pending, setPending] = useState<string | null>(null);
   const [defer, setDefer] = useState(false);
