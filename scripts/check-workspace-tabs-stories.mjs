@@ -227,6 +227,70 @@ try {
             path: join(output, screenshot),
             fullPage: true,
           });
+          let deliberateScroll;
+          if (story === "width-transition") {
+            const strip = lists.first().locator("..");
+            const update = page.getByRole("button", {
+              name: "Unrelated parent update",
+              exact: true,
+            });
+            await update.focus();
+            await strip.hover();
+            await page.mouse.wheel(500, 0);
+            await page.waitForFunction(
+              (node) => node.scrollLeft > 0,
+              await strip.elementHandle(),
+            );
+            deliberateScroll = await strip.evaluate(
+              (node) =>
+                new Promise((done, reject) => {
+                  let previous = node.scrollLeft;
+                  let stableFrames = 0;
+                  const deadline = performance.now() + 5000;
+                  function settle() {
+                    const current = node.scrollLeft;
+                    stableFrames = current === previous ? stableFrames + 1 : 0;
+                    previous = current;
+                    if (stableFrames >= 3) done(current);
+                    else if (performance.now() > deadline)
+                      reject(new Error("Strip scrolling did not settle"));
+                    else requestAnimationFrame(settle);
+                  }
+                  requestAnimationFrame(settle);
+                }),
+            );
+            assert.ok(
+              deliberateScroll > 0,
+              "The settled baseline must retain deliberate strip scrolling",
+            );
+            for (let revision = 1; revision <= 3; revision++) {
+              await update.click();
+              assert.equal(
+                await page.getByLabel("Parent revision").textContent(),
+                String(revision),
+              );
+              await page.evaluate(
+                () =>
+                  new Promise((done) =>
+                    requestAnimationFrame(() => requestAnimationFrame(done)),
+                  ),
+              );
+              assert.ok(
+                Math.abs(
+                  (await strip.evaluate((node) => node.scrollLeft)) -
+                    deliberateScroll,
+                ) <= 1,
+                "Equivalent parent updates must not undo deliberate strip scrolling with focus outside",
+              );
+              assert.equal(
+                await update.evaluate(
+                  (node) => node === document.activeElement,
+                ),
+                true,
+              );
+            }
+            await assertPageFits(page);
+          }
           const strips = [];
           for (const list of await lists.all())
             strips.push(await exerciseBar(page, list, width < 1280));
@@ -287,6 +351,7 @@ try {
             width,
             before,
             strips,
+            deliberateScroll,
             transitions,
             screenshot,
             keyboard: true,

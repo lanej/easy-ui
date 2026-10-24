@@ -44,6 +44,7 @@ function Workspace({
   const [pending, setPending] = useState<string | null>(null);
   const [defer, setDefer] = useState(false);
   const [width, setWidth] = useState(960);
+  const [revision, setRevision] = useState(0);
   function remove(id: string) {
     setOpenTabs((tabs) => tabs.filter((tab) => tab.id !== id));
     if (selectedKey === id) setSelectedKey("overview");
@@ -64,8 +65,9 @@ function Workspace({
         <WorkspaceTabs
           aria-label="Workspace views"
           ids={ids}
-          pinnedTabs={pinned}
-          openTabs={openTabs}
+          // Deliberately supply fresh equivalent arrays on unrelated parent updates.
+          pinnedTabs={pinned.map((tab) => ({ ...tab }))}
+          openTabs={openTabs.map((tab) => ({ ...tab }))}
           selectedKey={selectedKey}
           onSelectionChange={(id) => {
             setSelectedKey(id);
@@ -160,6 +162,10 @@ function Workspace({
         >
           Disable selected externally
         </button>
+        <button onClick={() => setRevision((value) => value + 1)}>
+          Unrelated parent update
+        </button>
+        <output aria-label="Parent revision">{revision}</output>
         <p data-outside style={{ margin: 0 }}>
           Outside content
         </p>
