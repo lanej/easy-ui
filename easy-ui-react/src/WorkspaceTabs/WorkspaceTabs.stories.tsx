@@ -44,6 +44,12 @@ function WorkspaceExample({
   }
   return (
     <div
+      onKeyDown={(event) => {
+        if (transition && event.key === "F2") {
+          event.preventDefault();
+          setSelectedKey("overview");
+        }
+      }}
       style={{
         maxWidth: "100%",
         width: narrow ? 320 : transition ? width : 1000,
@@ -66,7 +72,10 @@ function WorkspaceExample({
           <Button size="sm" onPress={() => setRevision((value) => value + 1)}>
             Unrelated parent update
           </Button>{" "}
-          <output aria-label="Parent revision">{revision}</output>
+          <output aria-label="Parent revision">{revision}</output>{" "}
+          <Button size="sm" onPress={() => setSelectedKey("overview")}>
+            Select overview (F2)
+          </Button>
         </div>
       )}
       <WorkspaceTabs

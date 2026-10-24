@@ -121,6 +121,15 @@ export function WorkspaceTabs({
     if (delta) viewport.scrollLeft += delta;
   }
 
+  function revealFocusOrSelection() {
+    const viewport = listRef.current;
+    reveal(
+      viewport?.contains(document.activeElement)
+        ? (focusedControl.current?.id ?? selectedKey)
+        : selectedKey,
+    );
+  }
+
   function focusTab(id: string) {
     setFocusedKey(id);
     buttonsRef.current.get(id)?.focus({ preventScroll: true });
@@ -197,7 +206,7 @@ export function WorkspaceTabs({
     if (!listRef.current?.contains(document.activeElement)) {
       setFocusedKey(initialKey ?? enabledTabs[0]?.id ?? null);
     }
-    reveal(selectedKey);
+    revealFocusOrSelection();
     // Only an actual selection change resets the entry point.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedKey]);
@@ -207,12 +216,7 @@ export function WorkspaceTabs({
   useLayoutEffect(() => {
     const viewport = listRef.current;
     if (!viewport || typeof ResizeObserver === "undefined") return;
-    revealCurrent.current = () =>
-      reveal(
-        viewport.contains(document.activeElement)
-          ? (focusedControl.current?.id ?? selectedKey)
-          : selectedKey,
-      );
+    revealCurrent.current = revealFocusOrSelection;
     const observer = (resizeObserver.current ??= new ResizeObserver(() =>
       revealCurrent.current(),
     ));

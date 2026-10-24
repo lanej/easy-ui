@@ -67,8 +67,10 @@ the surrounding page layout remains independent. See [page navigation](https://l
 
 Use `WorkspaceTabs` for application-owned workspace views with `pinnedTabs`,
 `openTabs`, controlled `selectedKey` / `onSelectionChange`, and separate `onClose`
-actions. Tabs use manual keyboard activation. Selection, focus, and actual layout or
-tab-order changes reveal the current tab; unrelated parent updates preserve deliberate
+actions. Tabs use manual keyboard activation. A focused tab or close control takes
+reveal priority over external selection changes; outside the bar, the new selection
+is revealed. Actual layout/tab-order changes use the same priority. Unrelated parent
+updates preserve deliberate
 scrolling while focus is outside the bar. Call `useWorkspaceTabIds` once per
 workspace, pass its `ids` object to the bar, and use `ids.tabId(key)` /
 `ids.panelId(key)` for external panels; never sanitize opaque keys yourself.
