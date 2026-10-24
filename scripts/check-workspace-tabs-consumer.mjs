@@ -238,6 +238,66 @@ try {
         name: "Primary workspace",
         exact: true,
       });
+      const strip = region
+        .getByRole("tablist", { name: "Workspace views" })
+        .locator("..");
+      const update = region.getByRole("button", {
+        name: "Unrelated parent update",
+        exact: true,
+      });
+      await update.focus();
+      await strip.hover();
+      await page.mouse.wheel(500, 0);
+      await page.waitForFunction(
+        (node) => node.scrollLeft > 0,
+        await strip.elementHandle(),
+      );
+      const deliberateScroll = await strip.evaluate(
+        (node) =>
+          new Promise((done, reject) => {
+            let previous = node.scrollLeft;
+            let stableFrames = 0;
+            const deadline = performance.now() + 5000;
+            function settle() {
+              const current = node.scrollLeft;
+              stableFrames = current === previous ? stableFrames + 1 : 0;
+              previous = current;
+              if (stableFrames >= 3) done(current);
+              else if (performance.now() > deadline)
+                reject(new Error("Strip scrolling did not settle"));
+              else requestAnimationFrame(settle);
+            }
+            requestAnimationFrame(settle);
+          }),
+      );
+      assert.ok(
+        deliberateScroll > 0,
+        "The settled baseline must retain deliberate strip scrolling",
+      );
+      for (let revision = 1; revision <= 3; revision++) {
+        await update.click();
+        assert.equal(
+          await region.getByLabel("Parent revision").textContent(),
+          String(revision),
+        );
+        await page.evaluate(
+          () =>
+            new Promise((done) =>
+              requestAnimationFrame(() => requestAnimationFrame(done)),
+            ),
+        );
+        assert.ok(
+          Math.abs(
+            (await strip.evaluate((node) => node.scrollLeft)) -
+              deliberateScroll,
+          ) <= 1,
+          "Unrelated parent renders with fresh arrays and callbacks must preserve deliberate scrolling",
+        );
+        assert.equal(
+          await update.evaluate((node) => node === document.activeElement),
+          true,
+        );
+      }
       const overview = region.getByRole("tab", { name: "Overview 12" });
       await overview.focus();
       await page.keyboard.press("ArrowRight");
@@ -409,6 +469,7 @@ try {
         keyboard: true,
         controlledClose: true,
         resize: true,
+        unrelatedUpdatesPreserveScroll: true,
       });
       await page.close();
     }

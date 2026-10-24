@@ -36,6 +36,7 @@ function WorkspaceExample({
   const [openTabs, setOpenTabs] = useState(orders);
   const [selectedKey, setSelectedKey] = useState<string | null>("overview");
   const [width, setWidth] = useState(840);
+  const [revision, setRevision] = useState(0);
   const tabs = [...pinned, ...openTabs];
   function close(id: string) {
     setOpenTabs((previous) => previous.filter((tab) => tab.id !== id));
@@ -50,25 +51,32 @@ function WorkspaceExample({
       }}
     >
       {transition && (
-        <label style={{ display: "block", marginBottom: 16 }}>
-          Workspace width{" "}
-          <input
-            aria-label="Workspace width"
-            type="range"
-            min="240"
-            max="1000"
-            value={width}
-            onChange={(event) => setWidth(Number(event.target.value))}
-          />
-        </label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", marginBottom: 12 }}>
+            Workspace width{" "}
+            <input
+              aria-label="Workspace width"
+              type="range"
+              min="240"
+              max="1000"
+              value={width}
+              onChange={(event) => setWidth(Number(event.target.value))}
+            />
+          </label>
+          <Button size="sm" onPress={() => setRevision((value) => value + 1)}>
+            Unrelated parent update
+          </Button>{" "}
+          <output aria-label="Parent revision">{revision}</output>
+        </div>
       )}
       <WorkspaceTabs
         aria-label="Workspace views"
         ids={ids}
-        pinnedTabs={pinned}
-        openTabs={openTabs}
+        // Fresh equivalent values exercise ordinary parent renders without geometry changes.
+        pinnedTabs={pinned.map((tab) => ({ ...tab }))}
+        openTabs={openTabs.map((tab) => ({ ...tab }))}
         selectedKey={selectedKey}
-        onSelectionChange={setSelectedKey}
+        onSelectionChange={(key) => setSelectedKey(key)}
         onClose={close}
         variant={variant}
         trailing={

@@ -105,7 +105,9 @@ For a single reused external panel, supply its ID with `panelId="order-panel"`, 
 
 ### Overflow and long labels
 
-The bar scrolls independently of the page, revealing focused/selected tabs. Long labels truncate visually while retaining their full accessible names and hover titles. Trailing content stays outside the tablist; keep actions compact in narrow workspaces.
+The bar scrolls independently of the page. Focus and selection changes reveal their tabs;
+actual strip, item-size, or tab-order changes keep the current focus or selection revealed.
+Unrelated parent updates preserve deliberate scrolling when focus is outside the bar. Long labels truncate visually while retaining their full accessible names and hover titles. Trailing content stays outside the tablist; keep actions compact in narrow workspaces.
 
 Give the surrounding layout a shrinkable track when composing a workspace in CSS Grid,
 for example `grid-template-columns: minmax(0, 1fr)`. This keeps the application-owned
@@ -116,6 +118,8 @@ panels and bar within the available width while the tab strip scrolls locally.
 ### Width transitions
 
 Resize the workspace while navigating to verify selected/focused items remain revealed.
+To check ordinary parent updates, focus the unrelated-update button, scroll the strip,
+and update the parent without changing the workspace. The deliberate scroll stays put.
 
 <Canvas of={WorkspaceTabsStories.WidthTransition} />
 
