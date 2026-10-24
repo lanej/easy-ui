@@ -1,0 +1,287 @@
+{
+  "sourceCommit": "833d444b4cbe22442f132553b5fc1de3e1bebc40",
+  "sourceTree": "e567ec4f4a3a25916fd0fb177606c67ecc349e10",
+  "workflowRun": "https://github.com/lanej/easy-ui/actions/runs/40058609267",
+  "artifactId": 12546577024,
+  "artifactDigest": "sha256:89c055582361cf2775c47fdc6276b72d45014af272c16f974bc745db6dbc4bc0",
+  "actualStorybookCases": 26,
+  "captures": [
+    {
+      "file": "workspace-tabs-desktop-dark.png",
+      "sha256": "140e14b3d950d1798c90540b57398a2cccb53ffaa38a73eb213bb158ebc4f90c",
+      "gitBlob": "e5d016dd0834840352d40d54d6ebed249e5ebbc1",
+      "width": 1200,
+      "height": 560
+    },
+    {
+      "file": "workspace-tabs-desktop-light.png",
+      "sha256": "c2c050a0c464c624af8e7acc0a79d56af6514b60a70394bed99eddfc5f99e67e",
+      "gitBlob": "030b6fdc810b3ab36046c06daa0fb94f9f2e79c0",
+      "width": 1200,
+      "height": 560
+    },
+    {
+      "file": "workspace-tabs-mobile-dark.png",
+      "sha256": "49e42eca3916aad6b6842f2430584cd16fb516380a7b97090f5e4b21ce61ae5f",
+      "gitBlob": "568d96fde92b7a28c4cc2c8cfde21159df133828",
+      "width": 390,
+      "height": 560
+    },
+    {
+      "file": "workspace-tabs-mobile-light.png",
+      "sha256": "60782a206b13ae678e55900def77c8e785da5c422ca7284a89625e35d8aa6dc2",
+      "gitBlob": "1dd3c75321520bb3ab5363bb095866bc6ff30d30",
+      "width": 390,
+      "height": 560
+    },
+    {
+      "file": "stories/default-320-dark.png",
+      "sha256": "421e887ea5c8b430d89599d20dd30fdf86405f030846ce177df6801bed168741",
+      "gitBlob": "31d1541d75ccbf463588af4e1da7e1c291773025",
+      "width": 320,
+      "height": 720
+    },
+    {
+      "file": "stories/default-320-light.png",
+      "sha256": "6f2b672424f08804b6546106ceeae1943f5c1e0871fe7c73d89a791ad17b5a0b",
+      "gitBlob": "cc56a144cdbfcb5e52e1ffa7031921085ba8f36e",
+      "width": 320,
+      "height": 720
+    },
+    {
+      "file": "stories/default-375-dark.png",
+      "sha256": "c7a91e2f7d0d88eca58427906e24cfeadc606d3f622571d849a8845c7f921ca1",
+      "gitBlob": "719e34ea4a6e5bf8d579ced5bb3c1dd7d08d2315",
+      "width": 375,
+      "height": 720
+    },
+    {
+      "file": "stories/default-375-light.png",
+      "sha256": "9d9cff56209ee9bf40682f1a2677895698523ea741ebf7c3bf31922501e13477",
+      "gitBlob": "228b1edb19aba10d5e81bac512f5085081911fb6",
+      "width": 375,
+      "height": 720
+    },
+    {
+      "file": "stories/isolated-workspaces-1280-dark.png",
+      "sha256": "126fe5ab2e7f0b958159d2958c3eeb30a862ee3d46d0dc8e63419c2376586dfa",
+      "gitBlob": "da70ae2b37f9d0e073317a0a7e8fdcf084e4b2c3",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "stories/isolated-workspaces-1280-light.png",
+      "sha256": "54bc58ddcc2859241b02f229ec98a1db87c4bc019c98b7e13323080b5594fddf",
+      "gitBlob": "68509d94749be5adbcb9032a1e157f0cb3d1e31f",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "stories/isolated-workspaces-320-dark.png",
+      "sha256": "90595c9446c6707cedc26941189288a7be725b61241d470af788a72f64c5a7f5",
+      "gitBlob": "a55778c898d9864c2d77093974a23667803405c2",
+      "width": 320,
+      "height": 720
+    },
+    {
+      "file": "stories/isolated-workspaces-320-light.png",
+      "sha256": "70b16759039d3693a3c1c204fab10035e7e86510f2b2e51175a8a1785ac51262",
+      "gitBlob": "12eb1f82eed35c196bd971652236285da6e495cd",
+      "width": 320,
+      "height": 720
+    },
+    {
+      "file": "stories/isolated-workspaces-375-dark.png",
+      "sha256": "6d50434c46a254d6311d817cf93773a2b4d6ce46ce1cff370e5049399aba4427",
+      "gitBlob": "d9e6376f6806ca5f26b5dba2f1da08f1e2f3d97c",
+      "width": 375,
+      "height": 720
+    },
+    {
+      "file": "stories/isolated-workspaces-375-light.png",
+      "sha256": "62d7a8f5c5a4e7eafa1e5af7afcc7a523dfa5b1af7a8c15f8eda89105fbfc19c",
+      "gitBlob": "d9d454e03b558a1fa7dce1f889df968b05494b1e",
+      "width": 375,
+      "height": 720
+    },
+    {
+      "file": "stories/narrow-320-dark.png",
+      "sha256": "029af14d49a5355babd5540d9dc9eca57e34c8286b6d145e5b235a0cb43bf7cb",
+      "gitBlob": "8a8bcbdd11659a0b4d6580f785e5d15728734ef4",
+      "width": 320,
+      "height": 720
+    },
+    {
+      "file": "stories/narrow-320-light.png",
+      "sha256": "8c53b48e606c790cda3aa2983a3815deb32867b600e4583c4ca4ff5c9517ce1e",
+      "gitBlob": "8c7012056bba1187202e01c65621868b7228af93",
+      "width": 320,
+      "height": 720
+    },
+    {
+      "file": "stories/narrow-375-dark.png",
+      "sha256": "790f463f2f1047d3afb47b8a0632d5758846db1b97f0f371371d0aa8218d7e38",
+      "gitBlob": "d139dd1f63e91236e04c72d82754d09f438a8959",
+      "width": 375,
+      "height": 720
+    },
+    {
+      "file": "stories/narrow-375-light.png",
+      "sha256": "2d1e21f58479e7d9574a9a9bcf1f9ff0f756dd3a3f00db9897995d2cab73d989",
+      "gitBlob": "ae4029cf0531932f7b3661169c8e8893c84be24d",
+      "width": 375,
+      "height": 720
+    },
+    {
+      "file": "stories/presentation-1280-dark.png",
+      "sha256": "e4039aeedb9d9b435851958be69e00938a14e8be671274a40961d3500679cbcb",
+      "gitBlob": "bb8a9967ba2d5dcc8b8b64fcbf28b09e97ff0925",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "stories/presentation-1280-light.png",
+      "sha256": "d05c8ce3b55f2c87db79e9cba471cc68149f82207a17948188a59015423529bb",
+      "gitBlob": "90794185da4991383daeb1826df9ec52511c2da6",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "stories/presentation-320-dark.png",
+      "sha256": "b168ff9ef6eac0faffdda6ef81278ea26a1ec23bc7484540df2084ad3d2181d4",
+      "gitBlob": "491799d4c961cdec03203833aae20ced7012755b",
+      "width": 320,
+      "height": 720
+    },
+    {
+      "file": "stories/presentation-320-light.png",
+      "sha256": "66905ca092f88019c7d42ac227e9e13e85a21cf53108a3415f5c30f2fb99e691",
+      "gitBlob": "fe7117bd21466a9f34a58b0f6087642f101c8a49",
+      "width": 320,
+      "height": 720
+    },
+    {
+      "file": "stories/presentation-375-dark.png",
+      "sha256": "fa9c019601f4ce045f723869d05274f017e497353530b3a337133bbc39315585",
+      "gitBlob": "0614fe4d6752f8c6f958b65e19e84d2542eb1e01",
+      "width": 375,
+      "height": 720
+    },
+    {
+      "file": "stories/presentation-375-light.png",
+      "sha256": "b6724d03bbf95124a4fb419a77109ef0d0afcda0d5a01af9be14445516be87e8",
+      "gitBlob": "860b6388935f9d7ef5f9406879fb491b0ec05ca6",
+      "width": 375,
+      "height": 720
+    },
+    {
+      "file": "stories/width-transition-1280-dark.png",
+      "sha256": "e0c55021eace47bddfd7f60020d1943f384b70ee30c15bf2aaf834724f0bc143",
+      "gitBlob": "797b43c8c21a98ac63c8c530ed2dd5f961d8ffa6",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "stories/width-transition-1280-light.png",
+      "sha256": "46256594cbe745de46f2923f519557df5e8d879ffc30ff86478d398faf3ed4d8",
+      "gitBlob": "06042f4c6e40e91f448f73e2ec5b483c461907be",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "stories/width-transition-320-dark.png",
+      "sha256": "b48ec09a9ddd32e7f0246545990d3a0dad45e6a0a00e6514e4362f32020c0afd",
+      "gitBlob": "785fc92c7ad1c4b51972ba45730f15458efdcabf",
+      "width": 320,
+      "height": 720
+    },
+    {
+      "file": "stories/width-transition-320-light.png",
+      "sha256": "c4a8ce5298dd223cc562eb4832bb19814c76ed278b64b8e30f628973cd788f70",
+      "gitBlob": "07e6d0d973d6eb38435dedf9d656f1bb77669615",
+      "width": 320,
+      "height": 720
+    },
+    {
+      "file": "stories/width-transition-375-dark.png",
+      "sha256": "a0288bdf499e091b14a9f60a3d250aae85bec8470b15586369d5440ca6f7d443",
+      "gitBlob": "fb3044b20f40286c209c97dfe4ca4f590eaadfd3",
+      "width": 375,
+      "height": 720
+    },
+    {
+      "file": "stories/width-transition-375-light.png",
+      "sha256": "dc5629a5a30a54c765c1b4310a9e2aa245a35ffda707e216c0da6523de2a4a4e",
+      "gitBlob": "73e87ba9c89b4bbd67103013958b61a91221bed8",
+      "width": 375,
+      "height": 720
+    }
+  ],
+  "checks": {
+    "actualStorybook": {
+      "cases": 26,
+      "widths": [
+        320,
+        375,
+        1280
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "documentFit": true,
+      "internalKeyboardReveal": true,
+      "focusedControlledResize": true
+    },
+    "packedLegacy": [
+      {
+        "version": "16.14.0",
+        "mode": "cjs",
+        "ssrFormat": "direct-cjs",
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      },
+      {
+        "version": "16.14.0",
+        "mode": "esm",
+        "ssrFormat": "bundled-esm",
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      },
+      {
+        "version": "16.14.0",
+        "mode": "client",
+        "ssrFormat": null,
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      },
+      {
+        "version": "17.0.2",
+        "mode": "cjs",
+        "ssrFormat": "direct-cjs",
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      },
+      {
+        "version": "17.0.2",
+        "mode": "esm",
+        "ssrFormat": "bundled-esm",
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      },
+      {
+        "version": "17.0.2",
+        "mode": "client",
+        "ssrFormat": null,
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      }
+    ]
+  }
+}

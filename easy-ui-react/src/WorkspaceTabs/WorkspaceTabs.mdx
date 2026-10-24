@@ -107,6 +107,10 @@ For a single reused external panel, supply its ID with `panelId="order-panel"`, 
 
 The bar scrolls independently of the page, revealing focused/selected tabs. Long labels truncate visually while retaining their full accessible names and hover titles. Trailing content stays outside the tablist; keep actions compact in narrow workspaces.
 
+Give the surrounding layout a shrinkable track when composing a workspace in CSS Grid,
+for example `grid-template-columns: minmax(0, 1fr)`. This keeps the application-owned
+panels and bar within the available width while the tab strip scrolls locally.
+
 <Canvas of={WorkspaceTabsStories.Narrow} />
 
 ### Width transitions
