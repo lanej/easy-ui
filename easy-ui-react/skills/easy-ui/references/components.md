@@ -78,7 +78,9 @@ see [independent workspaces](https://lanej.io/easy-ui/storybook/?path=/story/org
 `panelId` supports one shared panel instead. Applications choose the next
 selection after removal. Pinned and disabled tabs cannot close; zero counts
 remain accessible. Choose `variant="secondary"` for subordinate views and keep
-`trailing` actions compact. See [workspace interactions](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--default),
+`trailing` actions compact. In a CSS Grid host, use a shrinkable track such as
+`minmax(0, 1fr)` so the bar and application-owned panels fit the available width.
+See [workspace interactions](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--default),
 [narrow overflow](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--narrow),
 and [width transitions](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--width-transition).
 

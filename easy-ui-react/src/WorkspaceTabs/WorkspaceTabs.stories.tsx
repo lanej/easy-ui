@@ -155,7 +155,13 @@ export const IsolatedWorkspaces: Story = {
     },
   },
   render: () => (
-    <div style={{ display: "grid", gap: 24 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr)",
+        gap: 24,
+      }}
+    >
       <section aria-label="First workspace">
         <WorkspaceExample />
       </section>
@@ -189,7 +195,14 @@ export const Empty: Story = {
 
 export const Presentation: Story = {
   render: () => (
-    <div style={{ display: "grid", gap: 32, maxWidth: 1000 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr)",
+        gap: 32,
+        maxWidth: 1000,
+      }}
+    >
       <div>
         <h2 style={{ fontSize: 16, margin: "0 0 8px" }}>Primary workspace</h2>
         <WorkspaceExample />
