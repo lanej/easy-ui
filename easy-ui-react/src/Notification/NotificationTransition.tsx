@@ -79,9 +79,16 @@ export function NotificationTransition({
         onTransitionPendingChange(true);
       }}
       onEntered={() => removeEndListener.current?.()}
-      onExited={() => {
+      onExited={(...args) => {
         removeEndListener.current?.();
         onTransitionPendingChange(false);
+        // TransitionGroup needs its injected callback to release this wrapper,
+        // not just the inner DOM removed by CSSTransition's unmountOnExit.
+        (
+          transitionGroupProps as {
+            onExited?: (...args: unknown[]) => void;
+          }
+        ).onExited?.(...args);
       }}
     >
       {(status) =>
