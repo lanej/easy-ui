@@ -7,6 +7,65 @@ import { dirname, join, resolve } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+async function settleWorkspaceWidth(frame, expected, context) {
+  return frame.evaluate(
+    (node, { expected, context }) =>
+      new Promise((done, reject) => {
+        const deadline = performance.now() + 5000;
+        let previous = NaN;
+        let stableFrames = 0;
+        function sample() {
+          const { x, width, right } = node.getBoundingClientRect();
+          const measured = {
+            ...context,
+            actualViewportWidth: innerWidth,
+            expectedHostWidth: expected,
+            actualHostWidth: width,
+            hostLeft: x,
+            hostRight: right,
+          };
+          stableFrames =
+            Math.abs(width - expected) <= 1 &&
+            Math.abs(width - previous) <= 0.01
+              ? stableFrames + 1
+              : 0;
+          previous = width;
+          if (stableFrames >= 3) done(measured);
+          else if (performance.now() > deadline)
+            reject(
+              new Error(
+                `Workspace width did not settle: ${JSON.stringify(measured)}`,
+              ),
+            );
+          else requestAnimationFrame(sample);
+        }
+        requestAnimationFrame(sample);
+      }),
+    { expected, context },
+  );
+}
+
+async function driveWorkspaceWidth(
+  slider,
+  frame,
+  requested,
+  expected,
+  context,
+) {
+  await slider.evaluate((node, value) => {
+    Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    ).set.call(node, value);
+    node.dispatchEvent(new Event("input", { bubbles: true }));
+  }, requested);
+  assert.equal(await slider.inputValue(), requested, JSON.stringify(context));
+  return settleWorkspaceWidth(frame, expected, {
+    ...context,
+    requestedHostWidth: requested,
+  });
+}
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const output = resolve(
   process.env.WORKSPACE_TABS_REPORT_DIR ??
@@ -298,6 +357,29 @@ try {
           true,
         );
       }
+      const prioritySlider = region.getByRole("slider", {
+        name: "Workspace width",
+      });
+      const priorityFrame = region.locator("[data-workspace-frame]");
+      const originalRequestedWidth = await prioritySlider.inputValue();
+      const originalHostWidth = (await priorityFrame.boundingBox()).width;
+      const priorityContext = {
+        theme,
+        viewport: width,
+        fixture: "packed-consumer",
+      };
+      const focusPrioritySetup = {
+        originalRequestedWidth,
+        originalHostWidth,
+        checks: [],
+        narrowed: await driveWorkspaceWidth(
+          prioritySlider,
+          priorityFrame,
+          "240",
+          240,
+          priorityContext,
+        ),
+      };
       const overview = region.getByRole("tab", { name: "Overview 12" });
       const selectedOrder = region.getByRole("tab", {
         name: /International replenishment/,
@@ -325,18 +407,36 @@ try {
         await control.focus();
         const before = await overview.boundingBox();
         const viewport = await strip.boundingBox();
-        assert.ok(
-          before && viewport && before.x < viewport.x - 2,
-          "Overview must be outside the scrollport before the external selection",
-        );
         const focusedItem = await control.locator("..").boundingBox();
         const overviewItem = await overview.locator("..").boundingBox();
+        const geometry = {
+          ...priorityContext,
+          requestedHostWidth: "240",
+          host: await priorityFrame.boundingBox(),
+          strip: viewport,
+          overview: before,
+          focusedItem,
+          overviewItem,
+          unionSpan:
+            focusedItem && overviewItem
+              ? focusedItem.x + focusedItem.width - overviewItem.x
+              : null,
+        };
+        focusPrioritySetup.checks.push(geometry);
+        await writeFile(
+          join(output, `focus-priority-${width}-${theme}.json`),
+          JSON.stringify(focusPrioritySetup, null, 2),
+        );
+        assert.ok(
+          before && viewport && before.x < viewport.x - 2,
+          `Overview must be outside the scrollport before the external selection: ${JSON.stringify(geometry)}`,
+        );
         assert.ok(
           focusedItem &&
             overviewItem &&
             focusedItem.x + focusedItem.width - overviewItem.x >
               viewport.width + 2,
-          "The focused item and Overview must not fit together in this strip",
+          `The focused item and Overview must not fit together in this strip: ${JSON.stringify(geometry)}`,
         );
         await page.keyboard.press("F2"); // Real parent UI shortcut, no focus movement.
         await page.waitForFunction(
@@ -369,6 +469,12 @@ try {
       await page.reload();
       await overview.waitFor();
       await page.evaluate(() => document.fonts.ready);
+      assert.equal(await prioritySlider.inputValue(), originalRequestedWidth);
+      focusPrioritySetup.restored = await settleWorkspaceWidth(
+        priorityFrame,
+        originalHostWidth,
+        { ...priorityContext, requestedHostWidth: originalRequestedWidth },
+      );
       await overview.focus();
       await page.keyboard.press("ArrowRight");
       assert.equal(
@@ -541,6 +647,7 @@ try {
         resize: true,
         unrelatedUpdatesPreserveScroll: true,
         externalSelectionFocusPriority: true,
+        focusPrioritySetup,
       });
       await page.close();
     }
@@ -564,6 +671,16 @@ try {
   console.log(
     `Packed exports/types/styles and isolated consumer acceptance passed. Evidence: ${output}`,
   );
+} catch (error) {
+  await writeFile(
+    join(output, "failure.json"),
+    JSON.stringify(
+      { sourceCommit, consumer, completed: results, error: String(error) },
+      null,
+      2,
+    ),
+  );
+  throw error;
 } finally {
   await browser?.close();
   await new Promise((done) => server.httpServer.close(done));
