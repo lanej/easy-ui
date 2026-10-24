@@ -38,7 +38,7 @@ revision; use the installed declarations when the application pins another versi
 | Actions and action menus            | `Button`, `UnstyledButton`, `IconButton`, `DropdownButton`, `KebabButton`, `Menu`, `ExpandButton`, `CollapseButton`                                                               |
 | Text and selection inputs           | `InputField`, `TextField`, `Textarea`, `Select`, `MultiSelect`, `Checkbox`, `RadioGroup`, `RadioButtonGroup`, `Toggle`, `ColorPicker`, `PriceRangeSlider`, `SelectorErrorTooltip` |
 | Date inputs and calendars           | `DatePicker`, `DateRangePicker`, `Calendar`, `RangeCalendar`                                                                                                                      |
-| Navigation and pagination           | `Tabs`, `TabNav`, `TabPanels`, `VerticalNav`, `SearchNav`, `Stepper`, `Pagination`                                                                                                |
+| Navigation and pagination           | `Tabs`, `TabNav`, `TabPanels`, `WorkspaceTabs`, `VerticalNav`, `SearchNav`, `Stepper`, `Pagination`                                                                                                |
 | Page structures                     | `ProductLayout`, `FocusedProductLayout`, `CustomerPortalLayout`, `ForgeLayout`, `NexusLayout`, `MultipageSection`, `WorkspaceHeader`                                              |
 | Cards and selection shells          | `Card`, `SectionCard`, `PlanCard`, `EmptyStateCard`, `CardListItem`, `CheckableCard`, `ToggleCard`, `SplitToggleCard`                                                             |
 | Disclosure and overlays             | `Disclosure`, `Drawer`, `Modal`, `Popover`, `Tooltip`                                                                                                                             |
@@ -64,6 +64,29 @@ and [right navigation](https://lanej.io/easy-ui/storybook/?path=/story/component
 
 Use `WorkspaceHeader` for a page title, caller-composed `navigation`, and actions;
 the surrounding page layout remains independent. See [page navigation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspaceheader--with-navigation).
+
+Use `WorkspaceTabs` for application-owned workspace views with `pinnedTabs`,
+`openTabs`, controlled `selectedKey` / `onSelectionChange`, and separate `onClose`
+actions. Tabs use manual keyboard activation. A focused tab or close control takes
+reveal priority over external selection changes; outside the bar, the new selection
+is revealed. Actual layout/tab-order changes use the same priority. Unrelated parent
+updates preserve deliberate
+scrolling while focus is outside the bar. Call `useWorkspaceTabIds` once per
+workspace, pass its `ids` object to the bar, and use `ids.tabId(key)` /
+`ids.panelId(key)` for external panels; never sanitize opaque keys yourself.
+The hook supports React 16.14/17 as well as 18/19. For React 16/17 server rendering,
+wrap both server and client application roots in one `SSRProvider` from
+`react-aria`, using the same module format as Easy UI and one dependency version.
+React 18+ needs no SSR wrapper. Separate hook instances isolate repeated keys;
+see [independent workspaces](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--isolated-workspaces).
+`panelId` supports one shared panel instead. Applications choose the next
+selection after removal. Pinned and disabled tabs cannot close; zero counts
+remain accessible. Choose `variant="secondary"` for subordinate views and keep
+`trailing` actions compact. In a CSS Grid host, use a shrinkable track such as
+`minmax(0, 1fr)` so the bar and application-owned panels fit the available width.
+See [workspace interactions](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--default),
+[narrow overflow](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--narrow),
+and [width transitions](https://lanej.io/easy-ui/storybook/?path=/story/organisms-navigation-workspacetabs--width-transition).
 
 Control `ThemeToggle` with `mode` and `onModeChange`, and pass the same mode to
 `ThemeProvider`'s `colorScheme`. The application owns system-preference resolution

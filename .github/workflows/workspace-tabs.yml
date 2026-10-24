@@ -1,0 +1,67 @@
+name: Workspace tabs
+on:
+  pull_request:
+    paths:
+      - "easy-ui-react/src/WorkspaceTabs/**"
+      - "scripts/check-workspace-tabs-consumer.mjs"
+      - "scripts/check-workspace-tabs-stories.mjs"
+      - ".storybook/**"
+      - "scripts/workspace-tabs-consumer.tsx"
+      - "scripts/check-workspace-tabs-legacy.mjs"
+      - "scripts/workspace-tabs-legacy-consumer.mjs"
+      - "easy-ui-react/vite.config.mts"
+      - "easy-ui-react/package.json"
+      - ".github/workflows/workspace-tabs.yml"
+      - "package-lock.json"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: workspace-tabs-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  packed-consumer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: node scripts/check-style-package.mjs
+      - run: npm ci --prefix scripts/preview-metrics --no-audit --no-fund
+      - run: npx --prefix scripts/preview-metrics playwright install --with-deps chromium
+      - run: node scripts/check-workspace-tabs-legacy.mjs
+        env:
+          WORKSPACE_TABS_LEGACY_REPORT_DIR: ${{ runner.temp }}/workspace-tabs/legacy
+      - run: node scripts/check-workspace-tabs-consumer.mjs
+        env:
+          WORKSPACE_TABS_REPORT_DIR: ${{ runner.temp }}/workspace-tabs
+          WORKSPACE_TABS_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: npm run build:storybook
+      - name: Verify actual Storybook workspace compositions
+        env:
+          STORYBOOK_URL: http://127.0.0.1:9018
+          WORKSPACE_TABS_STORIES_REPORT_DIR: ${{ runner.temp }}/workspace-tabs/stories
+          WORKSPACE_TABS_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/workspace-tabs-storybook.log" 2>&1 &
+          server=$!
+          trap 'kill "$server"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
+          node scripts/check-workspace-tabs-stories.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workspace-tabs-consumer
+          path: ${{ runner.temp }}/workspace-tabs
+          if-no-files-found: ignore
