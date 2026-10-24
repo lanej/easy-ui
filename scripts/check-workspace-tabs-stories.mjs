@@ -81,11 +81,12 @@ async function assertBarFits(bar) {
   );
 }
 
-async function assertRevealed(tab, strip) {
-  assert.equal(
-    await tab.evaluate((node) => node === document.activeElement),
-    true,
-  );
+async function assertRevealed(tab, strip, focused = true) {
+  if (focused)
+    assert.equal(
+      await tab.evaluate((node) => node === document.activeElement),
+      true,
+    );
   const item = await tab.locator("..").boundingBox();
   const viewport = await strip.boundingBox();
   assert.ok(
@@ -302,6 +303,59 @@ try {
             const list = lists.first();
             const strip = list.locator("..");
             const order = strip.getByRole("tab", { name: /^Order B/ });
+            const bar = strip.locator("..");
+            const overview = bar.getByRole("tab", {
+              name: "Overview 12",
+              exact: true,
+            });
+            for (const control of [
+              order,
+              bar.getByRole("button", { name: /^Close Order B/ }),
+            ]) {
+              await order.focus();
+              await page.keyboard.press("Enter");
+              assert.equal(await order.getAttribute("aria-selected"), "true");
+              await control.focus();
+              const before = await overview.boundingBox();
+              const viewport = await strip.boundingBox();
+              assert.ok(
+                before && viewport && before.x < viewport.x - 2,
+                "Overview must be outside the scrollport before the external selection",
+              );
+              const focusedItem = await control.locator("..").boundingBox();
+              const overviewItem = await overview.locator("..").boundingBox();
+              assert.ok(
+                focusedItem &&
+                  overviewItem &&
+                  focusedItem.x + focusedItem.width - overviewItem.x >
+                    viewport.width + 2,
+                "The focused item and Overview must not fit together in this strip",
+              );
+              await page.keyboard.press("F2"); // Parent UI changes selection without moving focus.
+              await page.waitForFunction(
+                (node) => node.getAttribute("aria-selected") === "true",
+                await overview.elementHandle(),
+              );
+              // Never refocus after F2: that would repair and mask the regression.
+              await assertRevealed(control, strip);
+              await assertPageFits(page);
+            }
+            await order.focus();
+            await page.keyboard.press("Enter");
+            const select = page.getByRole("button", {
+              name: "Select overview (F2)",
+              exact: true,
+            });
+            await select.click();
+            await page.waitForFunction(
+              (node) => node.getAttribute("aria-selected") === "true",
+              await overview.elementHandle(),
+            );
+            assert.equal(
+              await select.evaluate((node) => node === document.activeElement),
+              true,
+            );
+            await assertRevealed(overview, strip, false);
             await order.focus();
             // Drive the real controlled input without moving focus. Refocusing the
             // tab after a resize would call onFocus/reveal and mask a resize regression.
@@ -353,6 +407,7 @@ try {
             strips,
             deliberateScroll,
             transitions,
+            externalSelectionFocusPriority: story === "width-transition",
             screenshot,
             keyboard: true,
           });

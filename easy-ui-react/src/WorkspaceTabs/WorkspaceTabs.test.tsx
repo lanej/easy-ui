@@ -555,6 +555,61 @@ describe("geometry observation", () => {
     expect(observers[0].disconnect).not.toHaveBeenCalled();
   });
 
+  it.each(["tab", "close", "outside"])(
+    "applies reveal priority with %s focus across external selection changes",
+    (control) => {
+      const props = setup();
+      const example = (selectedKey = "overview") => (
+        <>
+          <WorkspaceTabs {...props} selectedKey={selectedKey} />
+          <button>Elsewhere</button>
+        </>
+      );
+      const { rerender } = render(example());
+      const viewport = screen.getByRole("tablist").parentElement!;
+      const orderA = screen.getByRole("tab", { name: "Order A 12" });
+      const orderB = screen.getByRole("tab", { name: "Order B" });
+      vi.spyOn(viewport, "getBoundingClientRect").mockReturnValue({
+        left: 0,
+        right: 200,
+      } as DOMRect);
+      vi.spyOn(
+        orderA.parentElement!,
+        "getBoundingClientRect",
+      ).mockImplementation(
+        () =>
+          ({
+            left: -viewport.scrollLeft,
+            right: 100 - viewport.scrollLeft,
+          }) as DOMRect,
+      );
+      vi.spyOn(
+        orderB.parentElement!,
+        "getBoundingClientRect",
+      ).mockImplementation(
+        () =>
+          ({
+            left: 500 - viewport.scrollLeft,
+            right: 600 - viewport.scrollLeft,
+          }) as DOMRect,
+      );
+      const target =
+        control === "tab"
+          ? orderB
+          : control === "close"
+            ? screen.getByRole("button", { name: "Close Order B tab" })
+            : screen.getByRole("button", { name: "Elsewhere" });
+      act(() => target.focus());
+      viewport.scrollLeft = 400;
+      rerender(example("order/a"));
+      expect(orderA).toHaveAttribute("aria-selected", "true");
+      expect(target).toHaveFocus();
+      expect(viewport.scrollLeft).toBe(control === "outside" ? 0 : 400);
+      expect(observers).toHaveLength(1);
+      expect(observers[0].disconnect).not.toHaveBeenCalled();
+    },
+  );
+
   it("reconciles only changed DOM targets and reveals after insertion, reordering, and removal", () => {
     const props = { ...setup(), selectedKey: "order_002fa" };
     const { rerender } = render(<WorkspaceTabs {...props} />);

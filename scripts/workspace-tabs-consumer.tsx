@@ -51,7 +51,16 @@ function Workspace({
     setPending(null);
   }
   return (
-    <section aria-label={title} style={{ minWidth: 0 }}>
+    <section
+      aria-label={title}
+      style={{ minWidth: 0 }}
+      onKeyDown={(event) => {
+        if (event.key === "F2") {
+          event.preventDefault();
+          setSelectedKey("overview");
+        }
+      }}
+    >
       <h2 style={{ fontSize: 16, margin: "0 0 12px" }}>{title}</h2>
       <div
         data-workspace-frame
@@ -166,6 +175,9 @@ function Workspace({
           Unrelated parent update
         </button>
         <output aria-label="Parent revision">{revision}</output>
+        <button onClick={() => setSelectedKey("overview")}>
+          Select overview (F2)
+        </button>
         <p data-outside style={{ margin: 0 }}>
           Outside content
         </p>

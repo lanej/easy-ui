@@ -299,6 +299,76 @@ try {
         );
       }
       const overview = region.getByRole("tab", { name: "Overview 12" });
+      const selectedOrder = region.getByRole("tab", {
+        name: /International replenishment/,
+      });
+      async function assertWithinStrip(control) {
+        const item = await control.locator("..").boundingBox();
+        const bounds = await strip.boundingBox();
+        assert.ok(
+          item &&
+            bounds &&
+            item.x >= bounds.x - 2 &&
+            item.x + item.width <= bounds.x + bounds.width + 2,
+          "Focused control must remain revealed across external selection changes",
+        );
+      }
+      for (const control of [
+        selectedOrder,
+        region.getByRole("button", {
+          name: /^Close International replenishment/,
+        }),
+      ]) {
+        await selectedOrder.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(await selectedOrder.getAttribute("aria-selected"), "true");
+        await control.focus();
+        const before = await overview.boundingBox();
+        const viewport = await strip.boundingBox();
+        assert.ok(
+          before && viewport && before.x < viewport.x - 2,
+          "Overview must be outside the scrollport before the external selection",
+        );
+        const focusedItem = await control.locator("..").boundingBox();
+        const overviewItem = await overview.locator("..").boundingBox();
+        assert.ok(
+          focusedItem &&
+            overviewItem &&
+            focusedItem.x + focusedItem.width - overviewItem.x >
+              viewport.width + 2,
+          "The focused item and Overview must not fit together in this strip",
+        );
+        await page.keyboard.press("F2"); // Real parent UI shortcut, no focus movement.
+        await page.waitForFunction(
+          (node) => node.getAttribute("aria-selected") === "true",
+          await overview.elementHandle(),
+        );
+        assert.equal(
+          await control.evaluate((node) => node === document.activeElement),
+          true,
+        );
+        await assertWithinStrip(control); // No post-selection refocus that could mask the bug.
+      }
+      await selectedOrder.focus();
+      await page.keyboard.press("Enter");
+      const select = region.getByRole("button", {
+        name: "Select overview (F2)",
+        exact: true,
+      });
+      await select.click();
+      await page.waitForFunction(
+        (node) => node.getAttribute("aria-selected") === "true",
+        await overview.elementHandle(),
+      );
+      assert.equal(
+        await select.evaluate((node) => node === document.activeElement),
+        true,
+      );
+      await assertWithinStrip(overview);
+      // Restore a fresh fixture so all pre-existing activation/close assertions stay unchanged.
+      await page.reload();
+      await overview.waitFor();
+      await page.evaluate(() => document.fonts.ready);
       await overview.focus();
       await page.keyboard.press("ArrowRight");
       assert.equal(
@@ -470,6 +540,7 @@ try {
         controlledClose: true,
         resize: true,
         unrelatedUpdatesPreserveScroll: true,
+        externalSelectionFocusPriority: true,
       });
       await page.close();
     }
