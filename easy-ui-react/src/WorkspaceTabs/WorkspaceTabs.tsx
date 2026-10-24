@@ -95,6 +95,9 @@ export function WorkspaceTabs({
   const listRef = useRef<HTMLDivElement>(null);
   const tablistRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef(new Map<string, HTMLButtonElement>());
+  const resizeObserver = useRef<ResizeObserver | null>(null);
+  const observedElements = useRef<Element[]>([]);
+  const revealCurrent = useRef<() => void>(() => {});
   const focusedControl = useRef<{
     id: string;
     index: number;
@@ -116,6 +119,15 @@ export function WorkspaceTabs({
           : 0;
     // Scroll only this bar, never an ancestor or the application page.
     if (delta) viewport.scrollLeft += delta;
+  }
+
+  function revealFocusOrSelection() {
+    const viewport = listRef.current;
+    reveal(
+      viewport?.contains(document.activeElement)
+        ? (focusedControl.current?.id ?? selectedKey)
+        : selectedKey,
+    );
   }
 
   function focusTab(id: string) {
@@ -194,28 +206,50 @@ export function WorkspaceTabs({
     if (!listRef.current?.contains(document.activeElement)) {
       setFocusedKey(initialKey ?? enabledTabs[0]?.id ?? null);
     }
-    reveal(selectedKey);
+    revealFocusOrSelection();
     // Only an actual selection change resets the entry point.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedKey]);
 
-  // Width transitions and opening/closing neighbors can hide a previously
-  // visible item without changing selection. Keep the current focus visible.
+  // Refresh the committed state used by one stable observer. Equivalent parent
+  // renders must not reset deliberate scrolling or re-observe unchanged nodes.
   useLayoutEffect(() => {
     const viewport = listRef.current;
     if (!viewport || typeof ResizeObserver === "undefined") return;
-    const revealCurrent = () =>
-      reveal(
-        viewport.contains(document.activeElement)
-          ? (focusedControl.current?.id ?? selectedKey)
-          : selectedKey,
-      );
-    const observer = new ResizeObserver(revealCurrent);
-    observer.observe(viewport);
-    Array.from(viewport.children).forEach((child) => observer.observe(child));
-    revealCurrent();
-    return () => observer.disconnect();
+    revealCurrent.current = revealFocusOrSelection;
+    const observer = (resizeObserver.current ??= new ResizeObserver(() =>
+      revealCurrent.current(),
+    ));
+    const elements = [viewport, ...Array.from(viewport.children)];
+    const previous = observedElements.current;
+    if (
+      elements.length === previous.length &&
+      elements.every((element, index) => element === previous[index])
+    )
+      return;
+    const next = new Set(elements);
+    const prior = new Set(previous);
+    previous.forEach((element) => {
+      if (!next.has(element)) observer.unobserve(element);
+    });
+    elements.forEach((element) => {
+      if (!prior.has(element)) observer.observe(element);
+    });
+    observedElements.current = elements;
+    // Insertion, removal, and reordering can move a tab without resizing it.
+    // Width, label, and count changes are covered by the observed boxes.
+    revealCurrent.current();
   });
+
+  useLayoutEffect(
+    () => () => {
+      resizeObserver.current?.disconnect();
+      resizeObserver.current = null;
+      observedElements.current = [];
+      revealCurrent.current = () => {};
+    },
+    [],
+  );
 
   return (
     <div className={styles.workspace} data-variant={variant}>

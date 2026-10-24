@@ -6,6 +6,65 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+async function settleWorkspaceWidth(frame, expected, context) {
+  return frame.evaluate(
+    (node, { expected, context }) =>
+      new Promise((done, reject) => {
+        const deadline = performance.now() + 5000;
+        let previous = NaN;
+        let stableFrames = 0;
+        function sample() {
+          const { x, width, right } = node.getBoundingClientRect();
+          const measured = {
+            ...context,
+            actualViewportWidth: innerWidth,
+            expectedHostWidth: expected,
+            actualHostWidth: width,
+            hostLeft: x,
+            hostRight: right,
+          };
+          stableFrames =
+            Math.abs(width - expected) <= 1 &&
+            Math.abs(width - previous) <= 0.01
+              ? stableFrames + 1
+              : 0;
+          previous = width;
+          if (stableFrames >= 3) done(measured);
+          else if (performance.now() > deadline)
+            reject(
+              new Error(
+                `Workspace width did not settle: ${JSON.stringify(measured)}`,
+              ),
+            );
+          else requestAnimationFrame(sample);
+        }
+        requestAnimationFrame(sample);
+      }),
+    { expected, context },
+  );
+}
+
+async function driveWorkspaceWidth(
+  slider,
+  frame,
+  requested,
+  expected,
+  context,
+) {
+  await slider.evaluate((node, value) => {
+    Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    ).set.call(node, value);
+    node.dispatchEvent(new Event("input", { bubbles: true }));
+  }, requested);
+  assert.equal(await slider.inputValue(), requested, JSON.stringify(context));
+  return settleWorkspaceWidth(frame, expected, {
+    ...context,
+    requestedHostWidth: requested,
+  });
+}
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(
   new URL("./preview-metrics/package.json", import.meta.url),
@@ -81,11 +140,12 @@ async function assertBarFits(bar) {
   );
 }
 
-async function assertRevealed(tab, strip) {
-  assert.equal(
-    await tab.evaluate((node) => node === document.activeElement),
-    true,
-  );
+async function assertRevealed(tab, strip, focused = true) {
+  if (focused)
+    assert.equal(
+      await tab.evaluate((node) => node === document.activeElement),
+      true,
+    );
   const item = await tab.locator("..").boundingBox();
   const viewport = await strip.boundingBox();
   assert.ok(
@@ -227,10 +287,75 @@ try {
             path: join(output, screenshot),
             fullPage: true,
           });
+          let deliberateScroll;
+          if (story === "width-transition") {
+            const strip = lists.first().locator("..");
+            const update = page.getByRole("button", {
+              name: "Unrelated parent update",
+              exact: true,
+            });
+            await update.focus();
+            await strip.hover();
+            await page.mouse.wheel(500, 0);
+            await page.waitForFunction(
+              (node) => node.scrollLeft > 0,
+              await strip.elementHandle(),
+            );
+            deliberateScroll = await strip.evaluate(
+              (node) =>
+                new Promise((done, reject) => {
+                  let previous = node.scrollLeft;
+                  let stableFrames = 0;
+                  const deadline = performance.now() + 5000;
+                  function settle() {
+                    const current = node.scrollLeft;
+                    stableFrames = current === previous ? stableFrames + 1 : 0;
+                    previous = current;
+                    if (stableFrames >= 3) done(current);
+                    else if (performance.now() > deadline)
+                      reject(new Error("Strip scrolling did not settle"));
+                    else requestAnimationFrame(settle);
+                  }
+                  requestAnimationFrame(settle);
+                }),
+            );
+            assert.ok(
+              deliberateScroll > 0,
+              "The settled baseline must retain deliberate strip scrolling",
+            );
+            for (let revision = 1; revision <= 3; revision++) {
+              await update.click();
+              assert.equal(
+                await page.getByLabel("Parent revision").textContent(),
+                String(revision),
+              );
+              await page.evaluate(
+                () =>
+                  new Promise((done) =>
+                    requestAnimationFrame(() => requestAnimationFrame(done)),
+                  ),
+              );
+              assert.ok(
+                Math.abs(
+                  (await strip.evaluate((node) => node.scrollLeft)) -
+                    deliberateScroll,
+                ) <= 1,
+                "Equivalent parent updates must not undo deliberate strip scrolling with focus outside",
+              );
+              assert.equal(
+                await update.evaluate(
+                  (node) => node === document.activeElement,
+                ),
+                true,
+              );
+            }
+            await assertPageFits(page);
+          }
           const strips = [];
           for (const list of await lists.all())
             strips.push(await exerciseBar(page, list, width < 1280));
           const transitions = [];
+          let focusPrioritySetup;
           if (story === "width-transition") {
             const slider = page.getByRole("slider", {
               name: "Workspace width",
@@ -238,6 +363,99 @@ try {
             const list = lists.first();
             const strip = list.locator("..");
             const order = strip.getByRole("tab", { name: /^Order B/ });
+            const bar = strip.locator("..");
+            const originalRequestedWidth = await slider.inputValue();
+            const originalHostWidth = (await bar.boundingBox()).width;
+            const priorityContext = { story, theme, viewport: width };
+            focusPrioritySetup = {
+              originalRequestedWidth,
+              originalHostWidth,
+              checks: [],
+              narrowed: await driveWorkspaceWidth(
+                slider,
+                bar,
+                "240",
+                240,
+                priorityContext,
+              ),
+            };
+            const overview = bar.getByRole("tab", {
+              name: "Overview 12",
+              exact: true,
+            });
+            for (const control of [
+              order,
+              bar.getByRole("button", { name: /^Close Order B/ }),
+            ]) {
+              await order.focus();
+              await page.keyboard.press("Enter");
+              assert.equal(await order.getAttribute("aria-selected"), "true");
+              await control.focus();
+              const before = await overview.boundingBox();
+              const viewport = await strip.boundingBox();
+              const focusedItem = await control.locator("..").boundingBox();
+              const overviewItem = await overview.locator("..").boundingBox();
+              const geometry = {
+                ...priorityContext,
+                requestedHostWidth: "240",
+                host: await bar.boundingBox(),
+                strip: viewport,
+                overview: before,
+                focusedItem,
+                overviewItem,
+                unionSpan:
+                  focusedItem && overviewItem
+                    ? focusedItem.x + focusedItem.width - overviewItem.x
+                    : null,
+              };
+              focusPrioritySetup.checks.push(geometry);
+              await writeFile(
+                join(output, `focus-priority-${width}-${theme}.json`),
+                JSON.stringify(focusPrioritySetup, null, 2),
+              );
+              assert.ok(
+                before && viewport && before.x < viewport.x - 2,
+                `Overview must be outside the scrollport before the external selection: ${JSON.stringify(geometry)}`,
+              );
+              assert.ok(
+                focusedItem &&
+                  overviewItem &&
+                  focusedItem.x + focusedItem.width - overviewItem.x >
+                    viewport.width + 2,
+                `The focused item and Overview must not fit together in this strip: ${JSON.stringify(geometry)}`,
+              );
+              await page.keyboard.press("F2"); // Parent UI changes selection without moving focus.
+              await page.waitForFunction(
+                (node) => node.getAttribute("aria-selected") === "true",
+                await overview.elementHandle(),
+              );
+              // Never refocus after F2: that would repair and mask the regression.
+              await assertRevealed(control, strip);
+              await assertPageFits(page);
+            }
+            await order.focus();
+            await page.keyboard.press("Enter");
+            const select = page.getByRole("button", {
+              name: "Select overview (F2)",
+              exact: true,
+            });
+            await select.click();
+            await page.waitForFunction(
+              (node) => node.getAttribute("aria-selected") === "true",
+              await overview.elementHandle(),
+            );
+            assert.equal(
+              await select.evaluate((node) => node === document.activeElement),
+              true,
+            );
+            await assertRevealed(overview, strip, false);
+            focusPrioritySetup.restored = await driveWorkspaceWidth(
+              slider,
+              bar,
+              originalRequestedWidth,
+              originalHostWidth,
+              priorityContext,
+            );
             await order.focus();
             // Drive the real controlled input without moving focus. Refocusing the
             // tab after a resize would call onFocus/reveal and mask a resize regression.
@@ -287,7 +505,10 @@ try {
             width,
             before,
             strips,
+            deliberateScroll,
             transitions,
+            externalSelectionFocusPriority: story === "width-transition",
+            focusPrioritySetup,
             screenshot,
             keyboard: true,
           });

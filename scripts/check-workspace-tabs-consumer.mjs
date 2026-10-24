@@ -7,6 +7,65 @@ import { dirname, join, resolve } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+async function settleWorkspaceWidth(frame, expected, context) {
+  return frame.evaluate(
+    (node, { expected, context }) =>
+      new Promise((done, reject) => {
+        const deadline = performance.now() + 5000;
+        let previous = NaN;
+        let stableFrames = 0;
+        function sample() {
+          const { x, width, right } = node.getBoundingClientRect();
+          const measured = {
+            ...context,
+            actualViewportWidth: innerWidth,
+            expectedHostWidth: expected,
+            actualHostWidth: width,
+            hostLeft: x,
+            hostRight: right,
+          };
+          stableFrames =
+            Math.abs(width - expected) <= 1 &&
+            Math.abs(width - previous) <= 0.01
+              ? stableFrames + 1
+              : 0;
+          previous = width;
+          if (stableFrames >= 3) done(measured);
+          else if (performance.now() > deadline)
+            reject(
+              new Error(
+                `Workspace width did not settle: ${JSON.stringify(measured)}`,
+              ),
+            );
+          else requestAnimationFrame(sample);
+        }
+        requestAnimationFrame(sample);
+      }),
+    { expected, context },
+  );
+}
+
+async function driveWorkspaceWidth(
+  slider,
+  frame,
+  requested,
+  expected,
+  context,
+) {
+  await slider.evaluate((node, value) => {
+    Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    ).set.call(node, value);
+    node.dispatchEvent(new Event("input", { bubbles: true }));
+  }, requested);
+  assert.equal(await slider.inputValue(), requested, JSON.stringify(context));
+  return settleWorkspaceWidth(frame, expected, {
+    ...context,
+    requestedHostWidth: requested,
+  });
+}
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const output = resolve(
   process.env.WORKSPACE_TABS_REPORT_DIR ??
@@ -238,7 +297,184 @@ try {
         name: "Primary workspace",
         exact: true,
       });
+      const strip = region
+        .getByRole("tablist", { name: "Workspace views" })
+        .locator("..");
+      const update = region.getByRole("button", {
+        name: "Unrelated parent update",
+        exact: true,
+      });
+      await update.focus();
+      await strip.hover();
+      await page.mouse.wheel(500, 0);
+      await page.waitForFunction(
+        (node) => node.scrollLeft > 0,
+        await strip.elementHandle(),
+      );
+      const deliberateScroll = await strip.evaluate(
+        (node) =>
+          new Promise((done, reject) => {
+            let previous = node.scrollLeft;
+            let stableFrames = 0;
+            const deadline = performance.now() + 5000;
+            function settle() {
+              const current = node.scrollLeft;
+              stableFrames = current === previous ? stableFrames + 1 : 0;
+              previous = current;
+              if (stableFrames >= 3) done(current);
+              else if (performance.now() > deadline)
+                reject(new Error("Strip scrolling did not settle"));
+              else requestAnimationFrame(settle);
+            }
+            requestAnimationFrame(settle);
+          }),
+      );
+      assert.ok(
+        deliberateScroll > 0,
+        "The settled baseline must retain deliberate strip scrolling",
+      );
+      for (let revision = 1; revision <= 3; revision++) {
+        await update.click();
+        assert.equal(
+          await region.getByLabel("Parent revision").textContent(),
+          String(revision),
+        );
+        await page.evaluate(
+          () =>
+            new Promise((done) =>
+              requestAnimationFrame(() => requestAnimationFrame(done)),
+            ),
+        );
+        assert.ok(
+          Math.abs(
+            (await strip.evaluate((node) => node.scrollLeft)) -
+              deliberateScroll,
+          ) <= 1,
+          "Unrelated parent renders with fresh arrays and callbacks must preserve deliberate scrolling",
+        );
+        assert.equal(
+          await update.evaluate((node) => node === document.activeElement),
+          true,
+        );
+      }
+      const prioritySlider = region.getByRole("slider", {
+        name: "Workspace width",
+      });
+      const priorityFrame = region.locator("[data-workspace-frame]");
+      const originalRequestedWidth = await prioritySlider.inputValue();
+      const originalHostWidth = (await priorityFrame.boundingBox()).width;
+      const priorityContext = {
+        theme,
+        viewport: width,
+        fixture: "packed-consumer",
+      };
+      const focusPrioritySetup = {
+        originalRequestedWidth,
+        originalHostWidth,
+        checks: [],
+        narrowed: await driveWorkspaceWidth(
+          prioritySlider,
+          priorityFrame,
+          "240",
+          240,
+          priorityContext,
+        ),
+      };
       const overview = region.getByRole("tab", { name: "Overview 12" });
+      const selectedOrder = region.getByRole("tab", {
+        name: /International replenishment/,
+      });
+      async function assertWithinStrip(control) {
+        const item = await control.locator("..").boundingBox();
+        const bounds = await strip.boundingBox();
+        assert.ok(
+          item &&
+            bounds &&
+            item.x >= bounds.x - 2 &&
+            item.x + item.width <= bounds.x + bounds.width + 2,
+          "Focused control must remain revealed across external selection changes",
+        );
+      }
+      for (const control of [
+        selectedOrder,
+        region.getByRole("button", {
+          name: /^Close International replenishment/,
+        }),
+      ]) {
+        await selectedOrder.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(await selectedOrder.getAttribute("aria-selected"), "true");
+        await control.focus();
+        const before = await overview.boundingBox();
+        const viewport = await strip.boundingBox();
+        const focusedItem = await control.locator("..").boundingBox();
+        const overviewItem = await overview.locator("..").boundingBox();
+        const geometry = {
+          ...priorityContext,
+          requestedHostWidth: "240",
+          host: await priorityFrame.boundingBox(),
+          strip: viewport,
+          overview: before,
+          focusedItem,
+          overviewItem,
+          unionSpan:
+            focusedItem && overviewItem
+              ? focusedItem.x + focusedItem.width - overviewItem.x
+              : null,
+        };
+        focusPrioritySetup.checks.push(geometry);
+        await writeFile(
+          join(output, `focus-priority-${width}-${theme}.json`),
+          JSON.stringify(focusPrioritySetup, null, 2),
+        );
+        assert.ok(
+          before && viewport && before.x < viewport.x - 2,
+          `Overview must be outside the scrollport before the external selection: ${JSON.stringify(geometry)}`,
+        );
+        assert.ok(
+          focusedItem &&
+            overviewItem &&
+            focusedItem.x + focusedItem.width - overviewItem.x >
+              viewport.width + 2,
+          `The focused item and Overview must not fit together in this strip: ${JSON.stringify(geometry)}`,
+        );
+        await page.keyboard.press("F2"); // Real parent UI shortcut, no focus movement.
+        await page.waitForFunction(
+          (node) => node.getAttribute("aria-selected") === "true",
+          await overview.elementHandle(),
+        );
+        assert.equal(
+          await control.evaluate((node) => node === document.activeElement),
+          true,
+        );
+        await assertWithinStrip(control); // No post-selection refocus that could mask the bug.
+      }
+      await selectedOrder.focus();
+      await page.keyboard.press("Enter");
+      const select = region.getByRole("button", {
+        name: "Select overview (F2)",
+        exact: true,
+      });
+      await select.click();
+      await page.waitForFunction(
+        (node) => node.getAttribute("aria-selected") === "true",
+        await overview.elementHandle(),
+      );
+      assert.equal(
+        await select.evaluate((node) => node === document.activeElement),
+        true,
+      );
+      await assertWithinStrip(overview);
+      // Restore a fresh fixture so all pre-existing activation/close assertions stay unchanged.
+      await page.reload();
+      await overview.waitFor();
+      await page.evaluate(() => document.fonts.ready);
+      assert.equal(await prioritySlider.inputValue(), originalRequestedWidth);
+      focusPrioritySetup.restored = await settleWorkspaceWidth(
+        priorityFrame,
+        originalHostWidth,
+        { ...priorityContext, requestedHostWidth: originalRequestedWidth },
+      );
       await overview.focus();
       await page.keyboard.press("ArrowRight");
       assert.equal(
@@ -409,6 +645,9 @@ try {
         keyboard: true,
         controlledClose: true,
         resize: true,
+        unrelatedUpdatesPreserveScroll: true,
+        externalSelectionFocusPriority: true,
+        focusPrioritySetup,
       });
       await page.close();
     }
@@ -432,6 +671,16 @@ try {
   console.log(
     `Packed exports/types/styles and isolated consumer acceptance passed. Evidence: ${output}`,
   );
+} catch (error) {
+  await writeFile(
+    join(output, "failure.json"),
+    JSON.stringify(
+      { sourceCommit, consumer, completed: results, error: String(error) },
+      null,
+      2,
+    ),
+  );
+  throw error;
 } finally {
   await browser?.close();
   await new Promise((done) => server.httpServer.close(done));

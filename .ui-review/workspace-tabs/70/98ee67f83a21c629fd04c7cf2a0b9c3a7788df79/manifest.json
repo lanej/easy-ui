@@ -1,10 +1,240 @@
 {
-  "sourceCommit": "833d444b4cbe22442f132553b5fc1de3e1bebc40",
-  "sourceTree": "e567ec4f4a3a25916fd0fb177606c67ecc349e10",
-  "workflowRun": "https://github.com/lanej/easy-ui/actions/runs/40058609267",
-  "artifactId": 12546577024,
-  "artifactDigest": "sha256:89c055582361cf2775c47fdc6276b72d45014af272c16f974bc745db6dbc4bc0",
-  "actualStorybookCases": 26,
+  "sourceCommit": "98ee67f83a21c629fd04c7cf2a0b9c3a7788df79",
+  "sourceTree": "830737ac53e025e7ca5d764ec88d80abd4703179",
+  "sourceDirty": false,
+  "workflowRun": "https://github.com/lanej/easy-ui/actions/runs/40062660038",
+  "artifactId": 12547728837,
+  "artifactDigest": "sha256:b11c107c9745f483ef2f98d55c481cc33590576406ac741efe11d6da1fb2182b",
+  "packageIntegrity": "sha512-O06bvONLv+Rrz+Cx9AZ7c046aRUP7gbHRFl/QkjIQBDq0KKN6/9Hzc0MIXEjwLLbKihNkc0T8rOmFs7L+Yr7lQ==",
+  "checks": {
+    "storybookCases": 26,
+    "packedModern": [
+      {
+        "theme": "dark",
+        "width": 1200,
+        "keyboard": true,
+        "controlledClose": true,
+        "resize": true,
+        "unrelatedUpdatesPreserveScroll": true,
+        "externalSelectionFocusPriority": true,
+        "hostWidth": 240,
+        "unionSpans": [
+          706.171875,
+          706.171875
+        ],
+        "stripWidths": [
+          147.296875,
+          147.296875
+        ],
+        "restoredWidth": 960
+      },
+      {
+        "theme": "dark",
+        "width": 390,
+        "keyboard": true,
+        "controlledClose": true,
+        "resize": true,
+        "unrelatedUpdatesPreserveScroll": true,
+        "externalSelectionFocusPriority": true,
+        "hostWidth": 240,
+        "unionSpans": [
+          706.171875,
+          706.171875
+        ],
+        "stripWidths": [
+          147.296875,
+          147.296875
+        ],
+        "restoredWidth": 350
+      },
+      {
+        "theme": "light",
+        "width": 1200,
+        "keyboard": true,
+        "controlledClose": true,
+        "resize": true,
+        "unrelatedUpdatesPreserveScroll": true,
+        "externalSelectionFocusPriority": true,
+        "hostWidth": 240,
+        "unionSpans": [
+          706.171875,
+          706.171875
+        ],
+        "stripWidths": [
+          147.296875,
+          147.296875
+        ],
+        "restoredWidth": 960
+      },
+      {
+        "theme": "light",
+        "width": 390,
+        "keyboard": true,
+        "controlledClose": true,
+        "resize": true,
+        "unrelatedUpdatesPreserveScroll": true,
+        "externalSelectionFocusPriority": true,
+        "hostWidth": 240,
+        "unionSpans": [
+          706.171875,
+          706.171875
+        ],
+        "stripWidths": [
+          147.296875,
+          147.296875
+        ],
+        "restoredWidth": 350
+      }
+    ],
+    "storybookFocus": [
+      {
+        "theme": "light",
+        "width": 320,
+        "keyboard": true,
+        "externalSelectionFocusPriority": true,
+        "hostWidth": 240,
+        "unionSpans": [
+          635.046875,
+          635.046875
+        ],
+        "stripWidths": [
+          139,
+          139
+        ],
+        "restoredWidth": 288
+      },
+      {
+        "theme": "light",
+        "width": 375,
+        "keyboard": true,
+        "externalSelectionFocusPriority": true,
+        "hostWidth": 240,
+        "unionSpans": [
+          635.046875,
+          635.046875
+        ],
+        "stripWidths": [
+          139,
+          139
+        ],
+        "restoredWidth": 343
+      },
+      {
+        "theme": "light",
+        "width": 1280,
+        "keyboard": true,
+        "externalSelectionFocusPriority": true,
+        "hostWidth": 240,
+        "unionSpans": [
+          635.046875,
+          635.046875
+        ],
+        "stripWidths": [
+          139,
+          139
+        ],
+        "restoredWidth": 840
+      },
+      {
+        "theme": "dark",
+        "width": 320,
+        "keyboard": true,
+        "externalSelectionFocusPriority": true,
+        "hostWidth": 240,
+        "unionSpans": [
+          635.046875,
+          635.046875
+        ],
+        "stripWidths": [
+          139,
+          139
+        ],
+        "restoredWidth": 288
+      },
+      {
+        "theme": "dark",
+        "width": 375,
+        "keyboard": true,
+        "externalSelectionFocusPriority": true,
+        "hostWidth": 240,
+        "unionSpans": [
+          635.046875,
+          635.046875
+        ],
+        "stripWidths": [
+          139,
+          139
+        ],
+        "restoredWidth": 343
+      },
+      {
+        "theme": "dark",
+        "width": 1280,
+        "keyboard": true,
+        "externalSelectionFocusPriority": true,
+        "hostWidth": 240,
+        "unionSpans": [
+          635.046875,
+          635.046875
+        ],
+        "stripWidths": [
+          139,
+          139
+        ],
+        "restoredWidth": 840
+      }
+    ],
+    "packedLegacy": [
+      {
+        "version": "16.14.0",
+        "mode": "cjs",
+        "ssrFormat": "direct-cjs",
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      },
+      {
+        "version": "16.14.0",
+        "mode": "esm",
+        "ssrFormat": "bundled-esm",
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      },
+      {
+        "version": "16.14.0",
+        "mode": "client",
+        "ssrFormat": null,
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      },
+      {
+        "version": "17.0.2",
+        "mode": "cjs",
+        "ssrFormat": "direct-cjs",
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      },
+      {
+        "version": "17.0.2",
+        "mode": "esm",
+        "ssrFormat": "bundled-esm",
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      },
+      {
+        "version": "17.0.2",
+        "mode": "client",
+        "ssrFormat": null,
+        "renderer": "chromium",
+        "uniqueIds": 72,
+        "warnings": []
+      }
+    ]
+  },
   "captures": [
     {
       "file": "workspace-tabs-desktop-dark.png",
@@ -176,112 +406,49 @@
     },
     {
       "file": "stories/width-transition-1280-dark.png",
-      "sha256": "e0c55021eace47bddfd7f60020d1943f384b70ee30c15bf2aaf834724f0bc143",
-      "gitBlob": "797b43c8c21a98ac63c8c530ed2dd5f961d8ffa6",
+      "sha256": "16a7fab0cac82c0bcb05112a96ea7dd2f2909726ebe0a75dad48649b83535a57",
+      "gitBlob": "17bf069c7ef449380dded3cad28d884d9fa67a0c",
       "width": 1280,
       "height": 720
     },
     {
       "file": "stories/width-transition-1280-light.png",
-      "sha256": "46256594cbe745de46f2923f519557df5e8d879ffc30ff86478d398faf3ed4d8",
-      "gitBlob": "06042f4c6e40e91f448f73e2ec5b483c461907be",
+      "sha256": "bd98e67a664852f6126bda54db3e20472cf6ac750c7941a3d0411d14bb21769d",
+      "gitBlob": "dfa2871835f64f6e2d6c7676bc1f53e6394dc6c2",
       "width": 1280,
       "height": 720
     },
     {
       "file": "stories/width-transition-320-dark.png",
-      "sha256": "b48ec09a9ddd32e7f0246545990d3a0dad45e6a0a00e6514e4362f32020c0afd",
-      "gitBlob": "785fc92c7ad1c4b51972ba45730f15458efdcabf",
+      "sha256": "eee9176166fd4e8ce437685e0ad58d99ff53168ba557794301af9c4bb6b99c09",
+      "gitBlob": "9186a536c15926bdf4e2308a4a47f28a94fba282",
       "width": 320,
       "height": 720
     },
     {
       "file": "stories/width-transition-320-light.png",
-      "sha256": "c4a8ce5298dd223cc562eb4832bb19814c76ed278b64b8e30f628973cd788f70",
-      "gitBlob": "07e6d0d973d6eb38435dedf9d656f1bb77669615",
+      "sha256": "7e62b5f0530a090af20b76258dc1fa014a850c9e576b43c5bafd8181e34edc25",
+      "gitBlob": "89b6af5c4555205182bb3ca3b8c142f367c49a6b",
       "width": 320,
       "height": 720
     },
     {
       "file": "stories/width-transition-375-dark.png",
-      "sha256": "a0288bdf499e091b14a9f60a3d250aae85bec8470b15586369d5440ca6f7d443",
-      "gitBlob": "fb3044b20f40286c209c97dfe4ca4f590eaadfd3",
+      "sha256": "4ebf7a3899eb48e4b8623df961ccd0b93e7746915c6d70f2026bd66336a57f05",
+      "gitBlob": "fa0aa035e61eab3b9c05c6599ff823abf8b66f8e",
       "width": 375,
       "height": 720
     },
     {
       "file": "stories/width-transition-375-light.png",
-      "sha256": "dc5629a5a30a54c765c1b4310a9e2aa245a35ffda707e216c0da6523de2a4a4e",
-      "gitBlob": "73e87ba9c89b4bbd67103013958b61a91221bed8",
+      "sha256": "a901b434d77462eb709e0799643844d948de75aabcd6d53d475b3f45762e2496",
+      "gitBlob": "3c3a78f6de8aea453c308f50fbed9b3981d33cc2",
       "width": 375,
       "height": 720
     }
   ],
-  "checks": {
-    "actualStorybook": {
-      "cases": 26,
-      "widths": [
-        320,
-        375,
-        1280
-      ],
-      "themes": [
-        "light",
-        "dark"
-      ],
-      "documentFit": true,
-      "internalKeyboardReveal": true,
-      "focusedControlledResize": true
-    },
-    "packedLegacy": [
-      {
-        "version": "16.14.0",
-        "mode": "cjs",
-        "ssrFormat": "direct-cjs",
-        "renderer": "chromium",
-        "uniqueIds": 72,
-        "warnings": []
-      },
-      {
-        "version": "16.14.0",
-        "mode": "esm",
-        "ssrFormat": "bundled-esm",
-        "renderer": "chromium",
-        "uniqueIds": 72,
-        "warnings": []
-      },
-      {
-        "version": "16.14.0",
-        "mode": "client",
-        "ssrFormat": null,
-        "renderer": "chromium",
-        "uniqueIds": 72,
-        "warnings": []
-      },
-      {
-        "version": "17.0.2",
-        "mode": "cjs",
-        "ssrFormat": "direct-cjs",
-        "renderer": "chromium",
-        "uniqueIds": 72,
-        "warnings": []
-      },
-      {
-        "version": "17.0.2",
-        "mode": "esm",
-        "ssrFormat": "bundled-esm",
-        "renderer": "chromium",
-        "uniqueIds": 72,
-        "warnings": []
-      },
-      {
-        "version": "17.0.2",
-        "mode": "client",
-        "ssrFormat": null,
-        "renderer": "chromium",
-        "uniqueIds": 72,
-        "warnings": []
-      }
-    ]
+  "visualReview": {
+    "status": "pass",
+    "capturesActuallyViewed": 30
   }
 }
