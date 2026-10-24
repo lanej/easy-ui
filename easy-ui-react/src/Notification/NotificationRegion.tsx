@@ -106,12 +106,13 @@ export function NotificationRegion(props: NotificationRegionProps) {
             transitionKey={toast.key}
             onTransitionPendingChange={onTransitionPendingChange}
           >
-            {({ nodeRef, isExiting }) => (
+            {({ nodeRef, isExiting, isEntered }) => (
               <Notification
                 ref={nodeRef}
                 toast={toast}
                 state={state}
                 isExiting={isExiting}
+                isEntered={isEntered}
                 isStacked={stacking}
               />
             )}

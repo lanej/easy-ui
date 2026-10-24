@@ -514,6 +514,457 @@ describe("stacked notification interaction", () => {
     }
   });
 
+  it.each(["height", "width"] as const)(
+    "offers a persistent focused fallback for a timed item clipped by one pixel in %s",
+    (axis) => {
+      let callback: IntersectionObserverCallback;
+      vi.stubGlobal(
+        "IntersectionObserver",
+        class {
+          constructor(onIntersection: IntersectionObserverCallback) {
+            callback = onIntersection;
+          }
+          observe() {}
+          disconnect() {}
+        },
+      );
+      try {
+        render(
+          <NotificationProvider
+            notificationOptions={{ stacking: true, timeout: 80 }}
+          >
+            <Controls />
+          </NotificationProvider>,
+        );
+        act(() =>
+          notification.showSuccessToast({
+            message: "One pixel clipped",
+            isDismissable: false,
+          }),
+        );
+        const node = screen.getByRole("alertdialog");
+        vi.spyOn(node.parentElement!, "getBoundingClientRect").mockReturnValue(
+          new DOMRect(0, 0, 100, 100),
+        );
+        const observe = (size: number, ratio: number) =>
+          act(() =>
+            callback(
+              [
+                {
+                  target: node,
+                  isIntersecting: true,
+                  intersectionRatio: ratio,
+                  boundingClientRect: new DOMRect(
+                    0,
+                    0,
+                    axis === "width" ? size : 100,
+                    axis === "height" ? size : 100,
+                  ),
+                  intersectionRect: new DOMRect(0, 0, 100, 100),
+                  rootBounds: null,
+                  time: 0,
+                } as IntersectionObserverEntry,
+              ],
+              {} as IntersectionObserver,
+            ),
+          );
+        observe(101, 100 / 101);
+        act(() => vi.advanceTimersByTime(1000));
+        const close = screen.getByRole("button", {
+          name: "Dismiss One pixel clipped",
+        });
+        expect(node).toHaveAttribute(
+          "class",
+          expect.stringContaining("oversized"),
+        );
+        act(() => close.focus());
+        observe(100, 1);
+        expect(node).not.toHaveAttribute(
+          "class",
+          expect.stringContaining("oversized"),
+        );
+        expect(
+          screen.getByRole("button", { name: "Dismiss One pixel clipped" }),
+        ).toBe(close);
+        expect(close).toHaveFocus();
+        act(() => vi.advanceTimersByTime(1000));
+        expect(close).toHaveFocus();
+        act(() =>
+          screen.getByRole("button", { name: "Outside notifications" }).focus(),
+        );
+        act(() => vi.advanceTimersByTime(79));
+        expect(screen.getByText("One pixel clipped")).toBeInTheDocument();
+        act(() => vi.advanceTimersByTime(1));
+        expect(screen.queryByText("One pixel clipped")).not.toBeInTheDocument();
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    },
+  );
+
+  it("gives every fully intersecting stacked arrival its short duration only after its own entrance completes", () => {
+    enableReactTransitionGroup();
+    const callbacks = new Map<Element, IntersectionObserverCallback>();
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        node?: Element;
+        constructor(private callback: IntersectionObserverCallback) {}
+        observe(node: Element) {
+          this.node = node;
+          callbacks.set(node, this.callback);
+        }
+        disconnect() {
+          if (this.node) callbacks.delete(this.node);
+        }
+      },
+    );
+    try {
+      const { unmount } = render(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 80 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      act(() => {
+        notification.showSuccessToast({ message: "Lower rapid arrival" });
+        notification.showSuccessToast({ message: "Leading rapid arrival" });
+      });
+      for (const node of screen.getAllByRole("alertdialog")) {
+        act(() =>
+          callbacks.get(node)!(
+            [
+              {
+                target: node,
+                isIntersecting: true,
+                intersectionRatio: 1,
+                boundingClientRect: node.getBoundingClientRect(),
+                intersectionRect: node.getBoundingClientRect(),
+                rootBounds: null,
+                time: 0,
+              } as IntersectionObserverEntry,
+            ],
+            {} as IntersectionObserver,
+          ),
+        );
+      }
+      act(() => vi.advanceTimersByTime(80));
+      expect(screen.getAllByRole("status")).toHaveLength(2);
+      act(() => vi.advanceTimersByTime(69));
+      expect(screen.getAllByRole("status")).toHaveLength(2);
+      act(() => vi.advanceTimersByTime(1));
+      act(() => vi.advanceTimersByTime(79));
+      expect(screen.getAllByRole("status")).toHaveLength(2);
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(150));
+      expect(screen.queryByText("Lower rapid arrival")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Leading rapid arrival"),
+      ).not.toBeInTheDocument();
+      unmount();
+      expect(callbacks.size).toBe(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("tracks entrance completion independently for staggered arrivals without recreating observers", () => {
+    enableReactTransitionGroup();
+    const visibility = mockNotificationVisibility();
+    try {
+      render(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 80 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      act(() => notification.showSuccessToast({ message: "Earlier entrance" }));
+      visibility.observe(screen.getByRole("alertdialog"));
+      act(() => vi.advanceTimersByTime(100));
+      act(() => notification.showSuccessToast({ message: "Later entrance" }));
+      visibility.observe(
+        screen.getByText("Later entrance").closest("[data-notification-key]")!,
+      );
+      act(() => vi.advanceTimersByTime(50));
+      act(() => vi.advanceTimersByTime(79));
+      expect(screen.getAllByRole("status")).toHaveLength(2);
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.getByRole("status")).toHaveTextContent("Later entrance");
+      act(() => vi.advanceTimersByTime(20));
+      act(() => vi.advanceTimersByTime(79));
+      expect(screen.getByRole("status")).toHaveTextContent("Later entrance");
+      expect(visibility.creations()).toBe(2);
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("preserves remaining presentation time through clipping and reflow after entrance, and cleans up exits", () => {
+    enableReactTransitionGroup();
+    const visibility = mockNotificationVisibility();
+    try {
+      const { unmount, rerender } = render(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 80 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      act(() =>
+        notification.showSuccessToast({ message: "Reflow after entry" }),
+      );
+      const node = screen.getByRole("alertdialog");
+      visibility.observe(node, 0.5);
+      act(() => vi.advanceTimersByTime(150));
+      act(() => vi.advanceTimersByTime(1000));
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Reflow after entry",
+      );
+      visibility.observe(node);
+      act(() => vi.advanceTimersByTime(30));
+      visibility.observe(node, 0.5);
+      act(() => vi.advanceTimersByTime(1000));
+      rerender(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 5000 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      visibility.observe(node);
+      visibility.observe(node);
+      act(() => vi.advanceTimersByTime(49));
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Reflow after entry",
+      );
+      act(() => vi.advanceTimersByTime(1));
+      expect(node).toHaveAttribute("aria-hidden", "true");
+      visibility.observe(node);
+      act(() => vi.advanceTimersByTime(150));
+      expect(node).not.toBeInTheDocument();
+      expect(visibility.callbacks.size).toBe(0);
+      expect(visibility.creations()).toBe(1);
+      act(() =>
+        notification.showSuccessToast({ message: "Unmount during entry" }),
+      );
+      visibility.observe(screen.getByRole("alertdialog"));
+      unmount();
+      act(() => vi.advanceTimersByTime(10000));
+      expect(visibility.callbacks.size).toBe(0);
+      expect(screen.queryByRole("region")).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("retains entrance gating when stacking is disabled, then preserves immediate replacement timing", () => {
+    enableReactTransitionGroup();
+    const visibility = mockNotificationVisibility();
+    try {
+      const { rerender } = render(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 80 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      act(() =>
+        notification.showSuccessToast({ message: "Retained entering item" }),
+      );
+      visibility.observe(screen.getByRole("alertdialog"));
+      act(() => vi.advanceTimersByTime(40));
+      rerender(
+        <NotificationProvider
+          notificationOptions={{ stacking: false, timeout: 80 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      act(() => vi.advanceTimersByTime(110));
+      act(() => vi.advanceTimersByTime(79));
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Retained entering item",
+      );
+      act(() =>
+        notification.showSuccessToast({ message: "Immediate replacement" }),
+      );
+      act(() => vi.advanceTimersByTime(79));
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Immediate replacement",
+      );
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("waits for stacked entrance without IntersectionObserver but leaves nonstacked default timing unchanged", () => {
+    enableReactTransitionGroup();
+    const { rerender } = render(
+      <NotificationProvider
+        notificationOptions={{ stacking: true, timeout: 80 }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() => notification.showSuccessToast({ message: "No observer entry" }));
+    act(() => vi.advanceTimersByTime(149));
+    expect(screen.getByRole("status")).toHaveTextContent("No observer entry");
+    act(() => vi.advanceTimersByTime(1));
+    act(() => vi.advanceTimersByTime(79));
+    expect(screen.getByRole("status")).toHaveTextContent("No observer entry");
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(150));
+    rerender(
+      <NotificationProvider>
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() =>
+      notification.showSuccessToast({ message: "Default replacement" }),
+    );
+    act(() => vi.advanceTimersByTime(150));
+    act(() => vi.advanceTimersByTime(TOAST_TIMEOUT_DURATION - 151));
+    expect(screen.getByRole("status")).toHaveTextContent("Default replacement");
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("does not complete an entrance for a bubbled child or non-opacity transition", () => {
+    enableReactTransitionGroup();
+    render(
+      <NotificationProvider
+        notificationOptions={{ stacking: true, timeout: 80 }}
+      >
+        <Controls />
+      </NotificationProvider>,
+    );
+    act(() =>
+      notification.showSuccessToast({ message: <span>Child transition</span> }),
+    );
+    const node = screen.getByRole("alertdialog");
+    const transitionEnd = (target: Element, propertyName: string) => {
+      const event = new Event("transitionend", { bubbles: true });
+      Object.defineProperty(event, "propertyName", { value: propertyName });
+      fireEvent(target, event);
+    };
+    act(() => vi.advanceTimersByTime(20));
+    transitionEnd(screen.getByText("Child transition"), "opacity");
+    transitionEnd(node, "transform");
+    act(() => vi.advanceTimersByTime(80));
+    expect(screen.getByRole("status")).toHaveTextContent("Child transition");
+    act(() => vi.advanceTimersByTime(50));
+    act(() => vi.advanceTimersByTime(79));
+    expect(screen.getByRole("status")).toHaveTextContent("Child transition");
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    transitionEnd(node, "opacity");
+    expect(node).not.toBeInTheDocument();
+  });
+
+  it("ignores a disconnected observer's queued clipping after returning to nonstacked layout", () => {
+    const visibility = mockNotificationVisibility();
+    try {
+      const { rerender } = render(
+        <NotificationProvider notificationOptions={{ timeout: 80 }}>
+          <Controls />
+        </NotificationProvider>,
+      );
+      act(() => notification.showSuccessToast({ message: "Layout toggle" }));
+      act(() => vi.advanceTimersByTime(20));
+      rerender(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 80 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      const node = screen.getByRole("alertdialog");
+      const staleCallback = visibility.callbacks.get(node)!;
+      visibility.observe(node, 0.5);
+      rerender(
+        <NotificationProvider
+          notificationOptions={{ stacking: false, timeout: 80 }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      expect(visibility.callbacks.size).toBe(0);
+      act(() =>
+        staleCallback(
+          [notificationIntersection(node, 0.5)],
+          {} as IntersectionObserver,
+        ),
+      );
+      act(() => vi.advanceTimersByTime(59));
+      expect(screen.getByRole("status")).toHaveTextContent("Layout toggle");
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("ignores a disconnected portal observer that would bypass the remounted item's entrance", () => {
+    enableReactTransitionGroup();
+    const visibility = mockNotificationVisibility();
+    const firstPortal = document.createElement("div");
+    const secondPortal = document.createElement("div");
+    document.body.append(firstPortal, secondPortal);
+    try {
+      const { unmount, rerender } = render(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 80 }}
+          notificationPlacement={{ getContainer: () => firstPortal }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      act(() => notification.showSuccessToast({ message: "Portal remount" }));
+      const oldNode = screen.getByRole("alertdialog");
+      const staleCallback = visibility.callbacks.get(oldNode)!;
+      visibility.observe(oldNode);
+      act(() => vi.advanceTimersByTime(150));
+      act(() => vi.advanceTimersByTime(20));
+      rerender(
+        <NotificationProvider
+          notificationOptions={{ stacking: true, timeout: 80 }}
+          notificationPlacement={{ getContainer: () => secondPortal }}
+        >
+          <Controls />
+        </NotificationProvider>,
+      );
+      const newNode = screen.getByRole("alertdialog");
+      expect(newNode).not.toBe(oldNode);
+      visibility.observe(newNode);
+      act(() =>
+        staleCallback(
+          [notificationIntersection(oldNode)],
+          {} as IntersectionObserver,
+        ),
+      );
+      act(() => vi.advanceTimersByTime(60));
+      expect(screen.getByRole("status")).toHaveTextContent("Portal remount");
+      act(() => vi.advanceTimersByTime(90));
+      act(() => vi.advanceTimersByTime(59));
+      expect(screen.getByRole("status")).toHaveTextContent("Portal remount");
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+      unmount();
+    } finally {
+      firstPortal.remove();
+      secondPortal.remove();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("retains an oversized timed item's focused fallback after resize and resumes its captured duration", () => {
     let callback: IntersectionObserverCallback;
     let onResize: ResizeObserverCallback;
@@ -898,3 +1349,51 @@ describe("stacked notification interaction", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+function mockNotificationVisibility() {
+  const callbacks = new Map<Element, IntersectionObserverCallback>();
+  let creations = 0;
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      node?: Element;
+      constructor(private callback: IntersectionObserverCallback) {
+        creations++;
+      }
+      observe(node: Element) {
+        this.node = node;
+        callbacks.set(node, this.callback);
+      }
+      disconnect() {
+        if (this.node) callbacks.delete(this.node);
+      }
+    },
+  );
+  return {
+    callbacks,
+    creations: () => creations,
+    observe: (node: Element, ratio = 1) =>
+      act(() =>
+        callbacks.get(node)!(
+          [notificationIntersection(node, ratio)],
+          {} as IntersectionObserver,
+        ),
+      ),
+  };
+}
+
+function notificationIntersection(
+  node: Element,
+  ratio = 1,
+): IntersectionObserverEntry {
+  const bounds = node.getBoundingClientRect();
+  return {
+    target: node,
+    isIntersecting: ratio > 0,
+    intersectionRatio: ratio,
+    boundingClientRect: bounds,
+    intersectionRect: bounds,
+    rootBounds: null,
+    time: 0,
+  };
+}

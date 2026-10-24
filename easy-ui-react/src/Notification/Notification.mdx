@@ -148,12 +148,17 @@ Configure the public provider once, then use the same hook methods anywhere belo
 
 Each call returns a unique key, including calls with identical text. All retained
 notifications render immediately, newest first, with no hidden waiting queue.
-Each timer starts only when its item is fully presented within the viewport.
+Each stacked timer starts only after its own entrance transition completes and
+its item is fully presented within the viewport.
 Clipped overflow items do not expire unseen; scrolling away pauses their remaining
 duration until they are fully presented again. A timed item too large to fit
 remains available with an always-reachable close control, even when close controls
 were disabled for ordinary timed items. Once offered, that control stays until
 the item closes, preserving keyboard focus when resizing or reflow makes it fit.
+This also applies to durations shorter than the entrance animation.
+
+<Canvas of={NotificationStories.StackedPresentationTiming} />
+
 Omitted stacking retains the existing
 single-notification timer behavior. Hovering or focusing anywhere in the
 notification region pauses all timers, including new arrivals; leaving resumes

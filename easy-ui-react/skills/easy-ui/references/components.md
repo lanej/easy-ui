@@ -417,7 +417,9 @@ Show methods return unique keys; `closeNotification(key)` dismisses one item.
 Per-message `timeout` and `isDismissable` override defaults; zero disables expiry.
 Alerts remain persistent/dismissible unless explicitly overridden on that alert.
 Hover/focus pauses all retained timers with their remaining durations. Clipped
-scroll-overflow items only accumulate expiration time while fully presented.
+scroll-overflow items only accumulate expiration time while fully presented,
+after each item’s own entrance completes, even for short durations. See
+[presentation timing](https://lanej.io/easy-ui/storybook/?path=/story/components-notification--stacked-presentation-timing).
 Oversized timed items gain a reachable close control that remains after resizing
 or reflow, preserving keyboard focus. Stack sizing treats explicit `auto` offsets
 as unspecified edges, with the same 16px opposite-edge reading margin. See

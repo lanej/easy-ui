@@ -23,6 +23,8 @@ import { classNames, variationName } from "../utilities/css";
 import { UnstyledButton } from "../UnstyledButton";
 import styles from "./Notification.module.scss";
 
+const PRESENTATION_THRESHOLD = 0.999;
+
 export type NotificationType = "alert" | "toast";
 
 export type NotificationStatus =
@@ -112,6 +114,8 @@ export type NotificationItemStateProps = AriaToastProps<NotificationProps> & {
   state: NotificationInternalState;
   /** Remove exiting items from focus recovery and announcements during animation. */
   isExiting?: boolean;
+  /** Whether this item has completed its entrance transition. */
+  isEntered?: boolean;
   /** Whether the current container uses the stacked scroll layout. */
   isStacked?: boolean;
 };
@@ -130,7 +134,7 @@ export const Notification = React.forwardRef<
 >((props, forwardedRef) => {
   const ref = useRef<HTMLDivElement>(null);
   const mergedRef = useObjectRef(mergeRefs(ref, forwardedRef));
-  const { state, toast: notification, isExiting, isStacked } = props;
+  const { state, toast: notification, isExiting, isEntered, isStacked } = props;
   const {
     type = "toast",
     message,
@@ -150,15 +154,32 @@ export const Notification = React.forwardRef<
   const { setPresented } = state;
   const [isOversized, setIsOversized] = useState(false);
   const [hasDismissalFallback, setHasDismissalFallback] = useState(false);
+  const isFullyVisible = useRef(false);
+  const canPresent = useRef(false);
+  useEffect(() => {
+    // IntersectionObserver does not account for opacity. Each stacked item
+    // must finish its own entrance before spending any of its visible duration.
+    canPresent.current = !isExiting && (!isStacked || isEntered === true);
+    setPresented(
+      notification.key,
+      canPresent.current && isFullyVisible.current,
+    );
+  }, [notification.key, isExiting, isEntered, isStacked, setPresented]);
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+    const updatePresented = (fullyVisible: boolean) => {
+      isFullyVisible.current = fullyVisible;
+      setPresented(notification.key, canPresent.current && fullyVisible);
+    };
     if (!isStacked || typeof IntersectionObserver === "undefined") {
       setIsOversized(false);
-      setPresented(notification.key, true);
-      return () => setPresented(notification.key, false);
+      updatePresented(true);
+      return () => updatePresented(false);
     }
+    let disposed = false;
     const updateOversized = (bounds = node.getBoundingClientRect()) => {
+      if (disposed) return;
       const region = node.parentElement?.getBoundingClientRect();
       const availableHeight = Math.min(
         window.innerHeight,
@@ -168,9 +189,13 @@ export const Notification = React.forwardRef<
         window.innerWidth,
         region?.width || window.innerWidth,
       );
-      const oversized =
-        bounds.height > availableHeight + 1 ||
-        bounds.width > availableWidth + 1;
+      // Use the same area tolerance as presentation tracking. A fixed pixel
+      // allowance can leave a clipped short item neither timed nor dismissible.
+      const visibleHeight =
+        bounds.height > 0 ? Math.min(1, availableHeight / bounds.height) : 1;
+      const visibleWidth =
+        bounds.width > 0 ? Math.min(1, availableWidth / bounds.width) : 1;
+      const oversized = visibleHeight * visibleWidth < PRESENTATION_THRESHOLD;
       setIsOversized(oversized);
       // Once offered, keep this control for the item's lifetime. Removing it
       // after a resize/reflow would disconnect a keyboard user's focus target.
@@ -189,22 +214,26 @@ export const Notification = React.forwardRef<
     window.addEventListener("resize", onResize);
     const observer = new IntersectionObserver(
       (entries) => {
+        // Disconnect does not discard callbacks already queued for delivery.
+        // An old portal/layout must not change a surviving key's new timer.
+        if (disposed) return;
         for (const entry of entries) {
           updateOversized(entry.boundingClientRect);
-          setPresented(
-            notification.key,
-            entry.isIntersecting && entry.intersectionRatio >= 0.999,
+          updatePresented(
+            entry.isIntersecting &&
+              entry.intersectionRatio >= PRESENTATION_THRESHOLD,
           );
         }
       },
-      { threshold: [0, 0.999, 1] },
+      { threshold: [0, PRESENTATION_THRESHOLD, 1] },
     );
     observer.observe(node);
     return () => {
+      disposed = true;
       observer.disconnect();
       resizeObserver?.disconnect();
       window.removeEventListener("resize", onResize);
-      setPresented(notification.key, false);
+      updatePresented(false);
     };
   }, [notification.key, notification.timeout, isStacked, setPresented]);
 

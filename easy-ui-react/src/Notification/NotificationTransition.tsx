@@ -1,4 +1,11 @@
-import React, { Key, RefObject, useState, ReactNode, useCallback } from "react";
+import React, {
+  Key,
+  RefObject,
+  useState,
+  ReactNode,
+  useCallback,
+  useEffect,
+} from "react";
 import { CSSTransition } from "react-transition-group";
 import styles from "./NotificationTransition.module.scss";
 
@@ -11,6 +18,7 @@ export type NotificationTransitionProps = {
   children: ChildrenFunction<{
     nodeRef: RefObject<HTMLDivElement | null>;
     isExiting: boolean;
+    isEntered: boolean;
   }>;
 
   /**
@@ -31,10 +39,24 @@ export function NotificationTransition({
   ...transitionGroupProps
 }: NotificationTransitionProps) {
   const nodeRef = React.useRef<HTMLDivElement>(null);
+  const removeEndListener = React.useRef<(() => void) | null>(null);
+  useEffect(() => () => removeEndListener.current?.(), []);
   const transitionEndListener = useCallback((done: () => void) => {
-    if (nodeRef.current) {
-      nodeRef.current.addEventListener("transitionend", done, false);
-    }
+    removeEndListener.current?.();
+    const node = nodeRef.current;
+    if (!node) return;
+    const onEnd = (event: TransitionEvent) => {
+      // A message may contain its own shorter transition. Only the item's
+      // opacity transition can complete its entrance or exit.
+      if (event.target !== node || event.propertyName !== "opacity") return;
+      removeEndListener.current?.();
+      done();
+    };
+    node.addEventListener("transitionend", onEnd);
+    removeEndListener.current = () => {
+      node.removeEventListener("transitionend", onEnd);
+      removeEndListener.current = null;
+    };
   }, []);
   return (
     <CSSTransition
@@ -56,14 +78,19 @@ export function NotificationTransition({
       onEnter={() => {
         onTransitionPendingChange(true);
       }}
+      onEntered={() => removeEndListener.current?.()}
       onExited={() => {
+        removeEndListener.current?.();
         onTransitionPendingChange(false);
       }}
     >
-      {children({
-        nodeRef,
-        isExiting: (transitionGroupProps as { in?: boolean }).in === false,
-      })}
+      {(status) =>
+        children({
+          nodeRef,
+          isExiting: (transitionGroupProps as { in?: boolean }).in === false,
+          isEntered: status === "entered",
+        })
+      }
     </CSSTransition>
   );
 }

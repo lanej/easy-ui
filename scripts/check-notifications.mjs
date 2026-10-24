@@ -49,9 +49,183 @@ async function settlePresentation(page) {
   await page.clock.runFor(200);
   await page.waitForTimeout(200);
 }
+async function checkPresentationEdges(mode, width) {
+  const page = await browser.newPage({ viewport: { width, height: 720 } });
+  const errors = [];
+  activePage = page;
+  activeCase = `${mode}-${width}-presentation-edges`;
+  activeErrors = errors;
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto(
+    `${baseUrl}/iframe.html?id=components-notification--stacked-presentation-timing&viewMode=story&globals=colorScheme:${mode}`,
+  );
+  await page
+    .getByRole("button", { name: "Show short-lived burst", exact: true })
+    .waitFor();
+  // Observe real CSS and real timers together. Virtual time can complete RTG's
+  // fallback timeout before the browser has rendered the opacity transition.
+  await page.evaluate(() => {
+    const timings = {};
+    window.notificationPresentationTimings = timings;
+    const observer = new MutationObserver(() => {
+      for (const element of document.querySelectorAll(
+        "[data-notification-key]",
+      )) {
+        const message = element.textContent;
+        if (
+          !message.includes("Short lower update") &&
+          !message.includes("Short upper update")
+        )
+          continue;
+        const record = (timings[message] ??= { mounted: performance.now() });
+        const style = getComputedStyle(element);
+        const entering = /(?:appear|enter)Active/.test(element.className);
+        if (
+          !entering &&
+          style.opacity === "1" &&
+          !element.hasAttribute("aria-hidden")
+        )
+          record.presented ??= performance.now();
+        if (element.getAttribute("aria-hidden") === "true")
+          record.closed ??= performance.now();
+      }
+    });
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+    });
+    window.notificationPresentationObserver = observer;
+  });
+  await activate(page, "Show short-lived burst");
+  await page.waitForFunction(() => {
+    const entries = Object.values(window.notificationPresentationTimings);
+    return (
+      entries.length === 2 && entries.every((entry) => entry.closed != null)
+    );
+  });
+  const timings = await page.evaluate(() => {
+    window.notificationPresentationObserver.disconnect();
+    return window.notificationPresentationTimings;
+  });
+  for (const timing of Object.values(timings)) {
+    assert.ok(
+      timing.presented != null,
+      "a short stacked item reaches full opacity before closing",
+    );
+    assert.ok(
+      timing.presented - timing.mounted >= 125,
+      "each item completes its own 150ms entrance",
+    );
+    assert.ok(
+      timing.closed - timing.presented >= 75,
+      "each short item receives its full 80ms after entrance",
+    );
+  }
+  await writeFile(
+    resolve(output, `${mode}-${width}-short-timing.json`),
+    JSON.stringify(timings, null, 2),
+  );
+  await activate(page, "Clear timing examples");
+  await page.waitForTimeout(200);
+  const clockStart = new Date("2026-01-01T00:00:00Z");
+  await page.clock.install({ time: clockStart });
+  await page.clock.pauseAt(new Date(clockStart.getTime() + 1000));
+  for (const axis of ["height", "width"]) {
+    await activate(page, "Show edge-sized update");
+    await settlePresentation(page);
+    const item = page.getByRole("alertdialog");
+    await item.evaluate((element, axis) => {
+      const region = element.parentElement;
+      Object.assign(region.style, {
+        width: "100px",
+        height: "100px",
+        maxHeight: "100px",
+        overflow: "auto",
+      });
+      Object.assign(element.style, {
+        width: axis === "width" ? "101px" : "100px",
+        height: axis === "height" ? "101px" : "100px",
+        minHeight: axis === "height" ? "101px" : "100px",
+        maxWidth: "none",
+        flexShrink: "0",
+      });
+    }, axis);
+    const close = page.getByRole("button", {
+      name: "Dismiss One-pixel presentation edge",
+      exact: true,
+    });
+    await close.waitFor();
+    // ResizeObserver can offer the fallback before IntersectionObserver has
+    // delivered the new clipping state. Let real IO settle before virtual time.
+    await item.evaluate(
+      (element) =>
+        new Promise((resolve) => {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              if (entries.some((entry) => entry.intersectionRatio < 0.999)) {
+                observer.disconnect();
+                resolve();
+              }
+            },
+            { threshold: [0, 0.999, 1] },
+          );
+          observer.observe(element);
+        }),
+    );
+    const geometry = await item.evaluate((element) => ({
+      item: element.getBoundingClientRect().toJSON(),
+      region: element.parentElement.getBoundingClientRect().toJSON(),
+      oversized: element.className.includes("oversized"),
+    }));
+    assert.ok(
+      Math.abs(geometry.item[axis] - geometry.region[axis] - 1) < 0.1,
+      `test exercises exactly one clipped pixel in ${axis}`,
+    );
+    assert.equal(geometry.oversized, true);
+    await page.clock.runFor(6000);
+    assert.equal(
+      await item.count(),
+      1,
+      "a one-pixel-clipped timed item cannot expire unseen",
+    );
+    await close.focus();
+    const focusedFallback = await close.elementHandle();
+    await item.evaluate((element) =>
+      Object.assign(element.style, {
+        width: "100px",
+        height: "100px",
+        minHeight: "100px",
+      }),
+    );
+    await page.waitForFunction(
+      () =>
+        !document
+          .querySelector("[data-notification-key]")
+          .className.includes("oversized"),
+    );
+    await page.clock.runFor(10000);
+    assert.ok(
+      await focusedFallback.evaluate(
+        (element) => element.isConnected && element === document.activeElement,
+      ),
+      "one-pixel fallback survives shrink and preserves focus",
+    );
+    await page.screenshot({
+      path: resolve(output, `${mode}-${width}-one-pixel-${axis}.png`),
+    });
+    await activate(page, "Clear timing examples");
+    await settlePresentation(page);
+  }
+  assert.deepEqual(errors, []);
+  results.push({ mode, width, case: "presentation-edges", passed: true });
+  await page.close();
+}
+
 try {
   for (const mode of ["light", "dark"]) {
     for (const width of [1280, 320]) {
+      await checkPresentationEdges(mode, width);
       const page = await browser.newPage({ viewport: { width, height: 720 } });
       const errors = [];
       activePage = page;

@@ -388,3 +388,73 @@ export const StackedDefaultPlacement: Story = {
     </EasyUIProvider>
   ),
 };
+
+function PresentationTimingExample() {
+  const notification = useNotification();
+  const keys = React.useRef<string[]>([]);
+  return (
+    <div style={{ padding: 16, minHeight: 360 }}>
+      <p>
+        Each stacked toast starts its duration after its own entrance finishes.
+        Even the two 80ms updates below the leading alert get their full
+        duration.
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <Button
+          onPress={() => {
+            keys.current.push(
+              notification.showSuccessToast({
+                message: "Short lower update",
+                timeout: 80,
+              }),
+              notification.showSuccessToast({
+                message: "Short upper update",
+                timeout: 80,
+              }),
+              notification.showWarningAlert({
+                message: "Persistent entrance anchor",
+              }),
+            );
+          }}
+        >
+          Show short-lived burst
+        </Button>
+        <Button
+          onPress={() =>
+            keys.current.push(
+              notification.showSuccessToast({
+                message: "One-pixel presentation edge",
+              }),
+            )
+          }
+        >
+          Show edge-sized update
+        </Button>
+        <Button
+          onPress={() => {
+            keys.current.forEach((key) => notification.closeNotification(key));
+            keys.current = [];
+          }}
+        >
+          Clear timing examples
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export const StackedPresentationTiming: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{
+        stacking: true,
+        timeout: 5000,
+        isDismissable: false,
+      }}
+      notificationPlacement={{ offset: { bottom: "16px", right: "16px" } }}
+    >
+      <PresentationTimingExample />
+    </EasyUIProvider>
+  ),
+};
