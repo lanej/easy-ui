@@ -41,6 +41,10 @@ export type BaseNotificationProps = {
    * @default true
    */
   hasIcon?: boolean;
+  /** Visible duration in milliseconds; zero disables expiration. */
+  timeout?: number;
+  /** Show an individually named close control. */
+  isDismissable?: boolean;
 };
 
 export type ToastProps = Omit<BaseNotificationProps, "type" | "status">;
@@ -57,27 +61,29 @@ export type AlertProps = Omit<BaseNotificationProps, "type" | "status"> & {
 /** The methods below are accessible on the object returned by the `useNotification` hook. */
 export type NotificationExternalState = {
   /** Shows promotional color status toast */
-  showPromotionalToast(content: ToastProps): void;
+  showPromotionalToast(content: ToastProps): string;
   /** Shows neutral color status toast */
-  showNeutralToast(content: ToastProps): void;
+  showNeutralToast(content: ToastProps): string;
   /** Shows success color status toast */
-  showSuccessToast(content: ToastProps): void;
+  showSuccessToast(content: ToastProps): string;
   /** Shows warning color status toast */
-  showWarningToast(content: ToastProps): void;
+  showWarningToast(content: ToastProps): string;
   /** Shows error color status toast */
-  showErrorToast(content: ToastProps): void;
+  showErrorToast(content: ToastProps): string;
   /** Shows promotional color status alert */
-  showPromotionalAlert(content: AlertProps): void;
+  showPromotionalAlert(content: AlertProps): string;
   /** Shows neutral color status alert */
-  showNeutralAlert(content: AlertProps): void;
+  showNeutralAlert(content: AlertProps): string;
   /** Shows success color status alert */
-  showSuccessAlert(content: AlertProps): void;
+  showSuccessAlert(content: AlertProps): string;
   /** Shows warning color status alert */
-  showWarningAlert(content: AlertProps): void;
+  showWarningAlert(content: AlertProps): string;
   /** Shows error color status alert */
-  showErrorAlert(content: AlertProps): void;
-  /** Closes active notification */
+  showErrorAlert(content: AlertProps): string;
+  /** Closes the latest notification that remains visible. */
   closeActiveNotification(): void;
+  /** Closes only the notification with this returned key. */
+  closeNotification(key: string): void;
 };
 ```
 
@@ -109,6 +115,11 @@ export type NotificationPlacement = {
 export interface ProviderProps {
   /** Notification placement props */
   notificationPlacement?: NotificationPlacement;
+  notificationOptions?: {
+    stacking?: boolean;
+    timeout?: number;
+    isDismissable?: boolean;
+  };
   /** Rest of EasyUI Provider props */
 }
 ```
@@ -120,9 +131,70 @@ export interface ProviderProps {
 Notifications of type `alert` and `toast` can be displayed via Easy UI's `useNotification` hook. The hook returns a notification
 object on which methods can be invoked to display the appropriate notification. Use the `Show code` tab below for the associated code sample.
 
+### Concurrent order updates
+
+Configure the public provider once, then use the same hook methods anywhere below it:
+
+```tsx
+<Provider
+  notificationOptions={{ stacking: true, timeout: 5000, isDismissable: true }}
+  notificationPlacement={{ offset: { bottom: "16px", right: "16px" } }}
+>
+  <Orders />
+</Provider>
+```
+
+<Canvas of={NotificationStories.StackedNotifications} />
+
+Each call returns a unique key, including calls with identical text. All retained
+notifications render immediately, newest first, with no hidden waiting queue.
+Each stacked timer starts only after its own entrance transition completes and
+its item is fully presented within the viewport.
+Clipped overflow items do not expire unseen; scrolling away pauses their remaining
+duration until they are fully presented again. A timed item too large to fit
+remains available with an always-reachable close control, even when close controls
+were disabled for ordinary timed items. Once offered, that control stays until
+the item closes, preserving keyboard focus when resizing or reflow makes it fit.
+This also applies to durations shorter than the entrance animation.
+
+<Canvas of={NotificationStories.StackedPresentationTiming} />
+
+Omitted stacking retains the existing
+single-notification timer behavior. Hovering or focusing anywhere in the
+notification region pauses all timers, including new arrivals; leaving resumes
+the remaining duration, not a fresh timeout. Overflow remains start-aligned and scrollable on small screens.
+
+The defaults remain replacement, four-second toasts without close controls,
+and persistent dismissible alerts. Provider `timeout` and `isDismissable` apply
+to toasts. Alerts stay persistent and dismissible unless overridden on that
+specific alert. `onDismiss` runs only for the individual close control, not for
+timeout, replacement, provider cleanup, or programmatic dismissal.
+
+Duration and close-control defaults are captured when each message is added.
+Existing messages keep their duration and close controls. Presentation tracking
+follows the effective layout: enabling stacking also pauses an older message if
+new arrivals push it outside the scroll viewport. Disabling stacking retains the current stack
+until the next call, which replaces it. Provider unmount clears every timer.
+Zero, negative, and non-finite timeouts disable expiration.
+
+### Per-message duration and close controls
+
+Pass `timeout` and `isDismissable` on an individual toast or alert to override its
+defaults. An alert only becomes timed when explicitly given a positive timeout.
+Use alerts rather than timed toasts for critical information.
+
+<Canvas of={NotificationStories.PerMessageOptions} />
+
 ### Programmatic dismissal
 
 <Canvas of={NotificationStories.ProgrammaticDismissal} />
+
+```tsx
+const key = notification.showSuccessToast({ message: "Order saved" });
+notification.closeNotification(key); // Other messages and timers stay intact.
+```
+
+`closeActiveNotification()` closes the newest retained item, not the whole stack.
 
 ### Custom placement
 
@@ -130,9 +202,24 @@ Notifications can have custom placement on a per app basis. Use the `notificatio
 
 <Canvas of={NotificationStories.CustomPlacement} />
 
+Stack size accounts for configured offsets on both axes. Its available size uses
+the actual positioning containing block: viewport for fixed positioning, or the
+positioned ancestor for absolute positioning. An unspecified opposite edge keeps
+a 16px reading margin. Explicit `auto` edges are also treated as unspecified for
+stack sizing and alignment. Keep offsets inside the available containing block.
+
+<Canvas of={NotificationStories.StackedPlacementOffsets} />
+
+<Canvas of={NotificationStories.StackedAutoPlacement} />
+
 ### Custom placement within container
 
 Notifications by default render into `document.body` via a portal. To render notifications into a custom container, pass a callback function
 to `getContainer` that returns a valid `HTMLElement`.
 
 <Canvas of={NotificationStories.CustomPlacementWithinContainer} />
+
+Stacking can also be bounded by a positioned custom container. Its scroll region
+reserves the configured offsets rather than borrowing the full viewport height.
+
+<Canvas of={NotificationStories.StackedWithinContainer} />

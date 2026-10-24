@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - "easy-ui-react/src/WorkspaceTabs/**"
+      - "easy-ui-react/src/Provider/**"
+      - "easy-ui-react/src/Notification/**"
+      - "easy-ui-react/src/Drawer/**"
       - "scripts/check-workspace-tabs-consumer.mjs"
       - "scripts/check-workspace-tabs-stories.mjs"
       - ".storybook/**"

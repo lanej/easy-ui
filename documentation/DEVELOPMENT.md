@@ -127,3 +127,17 @@ and desktop → mobile → desktop resizing without losing focus. The dedicated
 Drawer workflow retains this evidence. Actual packed exports, declarations,
 CJS/ESM aliases, naming, styles, and skill installation are checked separately by
 `node scripts/check-style-package.mjs`; neither suite claims application adoption.
+
+### Notification verification
+
+Run the focused `Notification` tests for queue defaults, independent keys,
+remaining-duration timers, paused arrivals, close controls, live-content identity,
+keyboard focus recovery, configuration changes, and unmount cleanup.
+With built Storybook and the locked `scripts/preview-metrics` dependencies, run
+`STORYBOOK_URL=http://localhost:9013 node scripts/check-notifications.mjs`.
+`NOTIFICATION_REPORT_DIR` selects captures and `report.json`; `BROWSER_EXECUTABLE`
+can select an installed Chromium. The harness covers rapid mixed alerts/toasts,
+identical messages and targeted dismissal, hover plus keyboard pause, expiration,
+and light/dark desktop/narrow layouts. CI retains its evidence with the other
+component browser reports. Package export/type/style checks remain separate from
+application consumer acceptance.

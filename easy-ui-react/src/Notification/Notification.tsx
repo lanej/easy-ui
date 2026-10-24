@@ -1,4 +1,11 @@
-import React, { ReactNode, useRef, useContext, createContext } from "react";
+import React, {
+  ReactNode,
+  useRef,
+  useContext,
+  createContext,
+  useEffect,
+  useState,
+} from "react";
 import { mergeRefs, useObjectRef } from "@react-aria/utils";
 import CloseIcon from "@easypost/easy-ui-icons/Close";
 import ErrorIcon from "@easypost/easy-ui-icons/Error";
@@ -16,6 +23,8 @@ import { classNames, variationName } from "../utilities/css";
 import { UnstyledButton } from "../UnstyledButton";
 import styles from "./Notification.module.scss";
 
+const PRESENTATION_THRESHOLD = 0.999;
+
 export type NotificationType = "alert" | "toast";
 
 export type NotificationStatus =
@@ -26,6 +35,10 @@ export type BaseNotificationProps = {
   type?: NotificationType;
   /** Notification message */
   message: ReactNode;
+  /** Visible duration in milliseconds. Zero disables expiration. Alerts default to persistent. */
+  timeout?: number;
+  /** Show an individually named close control. Alerts default to true; toasts to false. */
+  isDismissable?: boolean;
   /**
    * Notification status
    * @default 'success'
@@ -45,36 +58,44 @@ export type AlertProps = Omit<BaseNotificationProps, "type" | "status"> & {
   onDismiss?: () => void;
 };
 
-export type QueuedNotification = QueuedToast<NotificationProps>;
+export type QueuedNotification = QueuedToast<NotificationProps> & {
+  /** Retain the stacked layout for items created before stacking is disabled. */
+  isStacked?: boolean;
+};
 
 export type NotificationProps = BaseNotificationProps & ToastProps & AlertProps;
 
-export type NotificationInternalState = ToastState<NotificationProps>;
+export type NotificationInternalState = ToastState<NotificationProps> & {
+  /** Track whether an item is fully presented in the scroll viewport. */
+  setPresented(key: string, presented: boolean): void;
+};
 
 /** The methods below are accessible on the object returned by the `useNotification` hook. */
 export type NotificationExternalState = {
   /** Shows promotional color status toast */
-  showPromotionalToast(content: ToastProps): void;
+  showPromotionalToast(content: ToastProps): string;
   /** Shows neutral color status toast */
-  showNeutralToast(content: ToastProps): void;
+  showNeutralToast(content: ToastProps): string;
   /** Shows success color status toast */
-  showSuccessToast(content: ToastProps): void;
+  showSuccessToast(content: ToastProps): string;
   /** Shows warning color status toast */
-  showWarningToast(content: ToastProps): void;
+  showWarningToast(content: ToastProps): string;
   /** Shows error color status toast */
-  showErrorToast(content: ToastProps): void;
+  showErrorToast(content: ToastProps): string;
   /** Shows promotional color status alert */
-  showPromotionalAlert(content: AlertProps): void;
+  showPromotionalAlert(content: AlertProps): string;
   /** Shows neutral color status alert */
-  showNeutralAlert(content: AlertProps): void;
+  showNeutralAlert(content: AlertProps): string;
   /** Shows success color status alert */
-  showSuccessAlert(content: AlertProps): void;
+  showSuccessAlert(content: AlertProps): string;
   /** Shows warning color status alert */
-  showWarningAlert(content: AlertProps): void;
+  showWarningAlert(content: AlertProps): string;
   /** Shows error color status alert */
-  showErrorAlert(content: AlertProps): void;
-  /** Closes active notification */
+  showErrorAlert(content: AlertProps): string;
+  /** Closes the most recently added notification that is still present. */
   closeActiveNotification(): void;
+  /** Closes one notification by the key returned from a show method. */
+  closeNotification(key: string): void;
 };
 
 export type NotificationCombinedState = NotificationInternalState &
@@ -91,6 +112,12 @@ export type NotificationItemStateProps = AriaToastProps<NotificationProps> & {
    * interact with the queue object. Consumers do not see this state.
    */
   state: NotificationInternalState;
+  /** Remove exiting items from focus recovery and announcements during animation. */
+  isExiting?: boolean;
+  /** Whether this item has completed its entrance transition. */
+  isEntered?: boolean;
+  /** Whether the current container uses the stacked scroll layout. */
+  isStacked?: boolean;
 };
 
 /**
@@ -105,28 +132,110 @@ export const Notification = React.forwardRef<
   HTMLDivElement,
   NotificationItemStateProps
 >((props, forwardedRef) => {
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   const mergedRef = useObjectRef(mergeRefs(ref, forwardedRef));
-  const { state, toast: notification } = props;
+  const { state, toast: notification, isExiting, isEntered, isStacked } = props;
   const {
     type = "toast",
     message,
     status = "success",
     hasIcon = true,
     onDismiss,
+    isDismissable = type === "alert",
   } = notification.content;
 
   const {
     toastProps: notificationProps,
     titleProps,
+    contentProps,
     closeButtonProps,
   } = useToast(props, state, ref);
 
-  // default role alert
-  const notificationPropsWithAdjustedAriaRole =
-    type === "toast"
-      ? { ...notificationProps, role: "status" }
-      : notificationProps;
+  const { setPresented } = state;
+  const [isOversized, setIsOversized] = useState(false);
+  const [hasDismissalFallback, setHasDismissalFallback] = useState(false);
+  const isFullyVisible = useRef(false);
+  const canPresent = useRef(false);
+  useEffect(() => {
+    // IntersectionObserver does not account for opacity. Each stacked item
+    // must finish its own entrance before spending any of its visible duration.
+    canPresent.current = !isExiting && (!isStacked || isEntered === true);
+    setPresented(
+      notification.key,
+      canPresent.current && isFullyVisible.current,
+    );
+  }, [notification.key, isExiting, isEntered, isStacked, setPresented]);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const updatePresented = (fullyVisible: boolean) => {
+      isFullyVisible.current = fullyVisible;
+      setPresented(notification.key, canPresent.current && fullyVisible);
+    };
+    if (!isStacked || typeof IntersectionObserver === "undefined") {
+      setIsOversized(false);
+      updatePresented(true);
+      return () => updatePresented(false);
+    }
+    let disposed = false;
+    const updateOversized = (bounds = node.getBoundingClientRect()) => {
+      if (disposed) return;
+      const region = node.parentElement?.getBoundingClientRect();
+      const availableHeight = Math.min(
+        window.innerHeight,
+        region?.height || window.innerHeight,
+      );
+      const availableWidth = Math.min(
+        window.innerWidth,
+        region?.width || window.innerWidth,
+      );
+      // Use the same area tolerance as presentation tracking. A fixed pixel
+      // allowance can leave a clipped short item neither timed nor dismissible.
+      const visibleHeight =
+        bounds.height > 0 ? Math.min(1, availableHeight / bounds.height) : 1;
+      const visibleWidth =
+        bounds.width > 0 ? Math.min(1, availableWidth / bounds.width) : 1;
+      const oversized = visibleHeight * visibleWidth < PRESENTATION_THRESHOLD;
+      setIsOversized(oversized);
+      // Once offered, keep this control for the item's lifetime. Removing it
+      // after a resize/reflow would disconnect a keyboard user's focus target.
+      if (oversized && notification.timeout != null) {
+        setHasDismissalFallback(true);
+      }
+    };
+    updateOversized();
+    const onResize = () => updateOversized();
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver(onResize);
+    resizeObserver?.observe(node);
+    if (node.parentElement) resizeObserver?.observe(node.parentElement);
+    window.addEventListener("resize", onResize);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Disconnect does not discard callbacks already queued for delivery.
+        // An old portal/layout must not change a surviving key's new timer.
+        if (disposed) return;
+        for (const entry of entries) {
+          updateOversized(entry.boundingClientRect);
+          updatePresented(
+            entry.isIntersecting &&
+              entry.intersectionRatio >= PRESENTATION_THRESHOLD,
+          );
+        }
+      },
+      { threshold: [0, PRESENTATION_THRESHOLD, 1] },
+    );
+    observer.observe(node);
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", onResize);
+      updatePresented(false);
+    };
+  }, [notification.key, notification.timeout, isStacked, setPresented]);
 
   const handleDismiss = () => {
     if (onDismiss) {
@@ -141,25 +250,44 @@ export const Notification = React.forwardRef<
 
   return (
     <div
-      {...notificationPropsWithAdjustedAriaRole}
+      {...notificationProps}
+      role={isExiting ? undefined : notificationProps.role}
+      aria-hidden={isExiting || undefined}
+      data-notification-key={notification.key}
+      tabIndex={isExiting ? -1 : notificationProps.tabIndex}
       ref={mergedRef}
       className={classNames(
         styles.Notification,
         styles[variationName("status", status)],
         styles[variationName("type", type)],
+        isOversized && styles.oversized,
+        isExiting && styles.exiting,
       )}
     >
-      <div className={styles.iconText}>
+      <div
+        {...contentProps}
+        role={type === "alert" ? "alert" : "status"}
+        className={styles.iconText}
+      >
         {hasIcon && <Icon size="lg" symbol={getStatusIcon(status)} />}
         <div {...titleProps}>
           <Text weight="semibold">{message}</Text>
         </div>
       </div>
-      {type === "alert" && (
+      {(isDismissable || hasDismissalFallback) && (
         <span className={styles.closeButtonContainer}>
           <UnstyledButton
             {...closeButtonPropsWithDismiss}
+            aria-label={
+              typeof message === "string"
+                ? `Dismiss ${message}`
+                : "Dismiss notification"
+            }
+            aria-describedby={
+              typeof message === "string" ? undefined : titleProps.id
+            }
             className={styles.closeButton}
+            isDisabled={isExiting}
           >
             <Icon size="md" symbol={CloseIcon} />
           </UnstyledButton>
@@ -195,8 +323,8 @@ export const NotificationContext =
  *
  * @remarks
  * Toasts dispay a brief non-disruptive message to the user as a result of an action taken. The displayed message
- * is accompanied by an associated status icon and cannot be manually dismissed, instead toast messages automatically
- * timeout after `4000ms`. Toasts should not be used to display critical information such as a system failure,
+ * is accompanied by an associated status icon and by default automatically timeout after `4000ms` without a close control.
+ * Configure provider defaults with `notificationOptions`, or pass `timeout` and `isDismissable` to a show method. Toasts should not be used to display critical information such as a system failure,
  * use `alerts` for such behavior. They should also contain purely text and no elements such as links.
  *
  * Alerts display an important message near the top of the page that does not automatically timeout and requires
@@ -206,16 +334,16 @@ export const NotificationContext =
  * The following methods are available on the returned notification object:
  *
  * ```tsx
- * showPromotionalToast(content: ToastProps): void;
- * showNeutralToast(content: ToastProps): void;
- * showSuccessToast(content: ToastProps): void;
- * showWarningToast(content: ToastProps): void;
- * showErrorToast(content: ToastProps): void;
- * showPromotionalAlert(content: AlertProps): void;
- * showNeutralAlert(content: AlertProps): void;
- * showSuccessAlert(content: AlertProps): void;
- * showWarningAlert(content: AlertProps): void;
- * showErrorAlert(content: AlertProps): void;
+ * showPromotionalToast(content: ToastProps): string;
+ * showNeutralToast(content: ToastProps): string;
+ * showSuccessToast(content: ToastProps): string;
+ * showWarningToast(content: ToastProps): string;
+ * showErrorToast(content: ToastProps): string;
+ * showPromotionalAlert(content: AlertProps): string;
+ * showNeutralAlert(content: AlertProps): string;
+ * showSuccessAlert(content: AlertProps): string;
+ * showWarningAlert(content: AlertProps): string;
+ * showErrorAlert(content: AlertProps): string;
  * closeActiveNotification(): void;
  *
  * type ToastProps = {
@@ -342,11 +470,22 @@ export type NotificationPlacement = {
   offset?: NotificationOffset;
 };
 
+export type NotificationOptions = {
+  /** Retain concurrent notifications. Defaults to false (replace the previous notification). */
+  stacking?: boolean;
+  /** Default toast visible duration in milliseconds. Defaults to 4000; zero disables expiration. */
+  timeout?: number;
+  /** Default toast close control. Defaults to false. Alerts remain dismissible by default. */
+  isDismissable?: boolean;
+};
+
 export type NotificationProviderProps = {
   /** Child components */
   children: ReactNode;
   /** Notification placement props */
   notificationPlacement?: NotificationPlacement;
+  /** Defaults applied to notifications added after this render. */
+  notificationOptions?: NotificationOptions;
 };
 
 /**
@@ -356,14 +495,15 @@ export type NotificationProviderProps = {
  * be used on its own and is included in the general EasyUI Provider
  */
 export function NotificationProvider(props: NotificationProviderProps) {
-  const { children, notificationPlacement } = props;
-  const combinedState = useNotificationState();
+  const { children, notificationPlacement, notificationOptions } = props;
+  const combinedState = useNotificationState(notificationOptions);
 
   const state = {
     close: combinedState.close,
     add: combinedState.add,
     pauseAll: combinedState.pauseAll,
     resumeAll: combinedState.resumeAll,
+    setPresented: combinedState.setPresented,
     visibleToasts: combinedState.visibleToasts,
   };
 
@@ -379,6 +519,7 @@ export function NotificationProvider(props: NotificationProviderProps) {
     showWarningToast: combinedState.showWarningToast,
     showWarningAlert: combinedState.showWarningAlert,
     closeActiveNotification: combinedState.closeActiveNotification,
+    closeNotification: combinedState.closeNotification,
   };
 
   return (
@@ -388,6 +529,12 @@ export function NotificationProvider(props: NotificationProviderProps) {
         offset={notificationPlacement?.offset}
         position={notificationPlacement?.position}
         state={state}
+        stacking={
+          notificationOptions?.stacking ||
+          combinedState.visibleToasts.some(
+            (item) => (item as QueuedNotification).isStacked,
+          )
+        }
       />
       {children}
     </NotificationContext.Provider>

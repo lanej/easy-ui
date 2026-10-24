@@ -60,6 +60,7 @@ jobs:
           MAP_PRIMARY_REPORT_DIR: ${{ runner.temp }}/map-primary-insets
           EVIDENCE_TYPOGRAPHY_REPORT_DIR: ${{ runner.temp }}/evidence-typography-browser
           DRAWER_PLACEMENT_REPORT_DIR: ${{ runner.temp }}/drawer-placement-browser
+          NOTIFICATION_REPORT_DIR: ${{ runner.temp }}/notification-browser
           THEME_TOGGLE_REPORT_DIR: ${{ runner.temp }}/theme-toggle-browser
         run: |
           python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/facility-storybook.log" 2>&1 &
@@ -85,6 +86,7 @@ jobs:
           node scripts/check-dependency-tree.mjs
           node scripts/check-storybook-docs.mjs
           node scripts/check-token-browser.mjs
+          node scripts/check-notifications.mjs
           node scripts/check-theme-toggle.mjs
           node scripts/check-drawer-placement.mjs
           node scripts/check-evidence-typography.mjs
@@ -100,6 +102,7 @@ jobs:
             ${{ runner.temp }}/token-browser
             ${{ runner.temp }}/waffle-chart-browser
             ${{ runner.temp }}/map-primary-insets
+            ${{ runner.temp }}/notification-browser
             ${{ runner.temp }}/theme-toggle-browser
             ${{ runner.temp }}/drawer-placement-browser
             ${{ runner.temp }}/evidence-typography-browser

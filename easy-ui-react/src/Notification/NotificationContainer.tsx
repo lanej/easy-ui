@@ -21,6 +21,8 @@ export type NotificationContainerProps = {
    * interact with the queue object. Consumers do not see this state.
    */
   state: NotificationInternalState;
+  /** Retain concurrent notifications in a compact stack. */
+  stacking?: boolean;
 };
 
 /**
@@ -30,7 +32,13 @@ export type NotificationContainerProps = {
  * styles.
  */
 export function NotificationContainer(props: NotificationContainerProps) {
-  const { getContainer = null, position = "fixed", offset, state } = props;
+  const {
+    getContainer = null,
+    position = "fixed",
+    offset,
+    state,
+    stacking,
+  } = props;
   const { isTransitionPending, onTransitionPendingChange } =
     useNotificationTransitionTracking();
 
@@ -59,9 +67,44 @@ export function NotificationContainer(props: NotificationContainerProps) {
     position: !requestFailed ? position : "fixed",
   };
 
+  // CSS auto is an unset edge, not a length that can participate in calc().
+  // Preserve the original positioning values, including non-stacked placement.
+  const stackEdge = (value: string | number | undefined) =>
+    typeof value === "string" && value.trim().toLowerCase() === "auto"
+      ? undefined
+      : value;
+  const stackLength = (value: string | number | undefined) => {
+    const edge = stackEdge(value);
+    return edge === 0 ||
+      (typeof edge === "string" && /^[-+]?0(?:\.0+)?$/.test(edge.trim()))
+      ? "0px"
+      : (edge ?? "16px");
+  };
   const containerStyles = {
     ...positionStyleProps,
     ...positionProps,
+    ...(stacking
+      ? {
+          "--easy-ui-notification-top": stackLength(positionStyleProps.top),
+          "--easy-ui-notification-right": stackLength(
+            "right" in positionStyleProps
+              ? positionStyleProps.right
+              : undefined,
+          ),
+          "--easy-ui-notification-bottom": stackLength(
+            "bottom" in positionStyleProps
+              ? positionStyleProps.bottom
+              : undefined,
+          ),
+          "--easy-ui-notification-left": stackLength(positionStyleProps.left),
+          justifyContent:
+            "bottom" in positionStyleProps &&
+            stackEdge(positionStyleProps.bottom) != null &&
+            stackEdge(positionStyleProps.top) == null
+              ? "flex-end"
+              : "flex-start",
+        }
+      : {}),
   } as React.CSSProperties;
 
   return (
@@ -69,9 +112,13 @@ export function NotificationContainer(props: NotificationContainerProps) {
       {/** visibleToasts` is an artifact of react-stately */}
       {showNotifications
         ? createPortal(
-            <div className={style.container} style={containerStyles}>
+            <div
+              className={`${style.container} ${stacking ? style.stacked : ""}`}
+              style={containerStyles}
+            >
               <NotificationRegion
                 state={state}
+                stacking={stacking}
                 onTransitionPendingChange={onTransitionPendingChange}
               />
             </div>,

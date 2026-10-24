@@ -1,0 +1,58 @@
+name: Notification browser evidence
+
+on:
+  pull_request:
+    paths:
+      - "easy-ui-react/src/Notification/**"
+      - "easy-ui-react/src/Provider/**"
+      - "scripts/check-notifications.mjs"
+      - ".github/workflows/notification-browser.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notification-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  notifications:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build:react
+      - run: npm run build:storybook
+      - run: npm run check:storybook
+      - run: npm ci --no-audit --no-fund
+        working-directory: scripts/preview-metrics
+      - run: npx playwright install --with-deps chromium
+        working-directory: scripts/preview-metrics
+      - name: Verify notifications and capture both themes
+        env:
+          STORYBOOK_URL: http://127.0.0.1:9021
+          NOTIFICATION_REPORT_DIR: ${{ runner.temp }}/notification-browser
+        run: |
+          python3 -m http.server 9021 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/notification-storybook.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
+          node scripts/check-notifications.mjs
+      - name: Retain notification screenshots and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notification-browser-evidence
+          path: |
+            ${{ runner.temp }}/notification-browser
+            ${{ runner.temp }}/notification-storybook.log
+          if-no-files-found: warn

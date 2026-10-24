@@ -1,7 +1,11 @@
 import { RouterProvider as ReactAriaRouterProvider } from "@react-aria/utils";
 import { Href, RouterOptions } from "@react-types/shared";
 import React, { ReactElement, ReactNode } from "react";
-import { NotificationPlacement, NotificationProvider } from "../Notification";
+import {
+  NotificationOptions,
+  NotificationPlacement,
+  NotificationProvider,
+} from "../Notification";
 import type { ColorScheme, ThemeCreator } from "../Theme";
 import { ThemeProvider } from "../Theme";
 
@@ -36,6 +40,8 @@ export type ProviderProps = {
   colorScheme?: ColorScheme;
   /** Notification placement props. */
   notificationPlacement?: NotificationPlacement;
+  /** Notification stacking, visible duration, and toast dismissal defaults. */
+  notificationOptions?: NotificationOptions;
 } & Omit<EasyUIRouterProviderProps, "children">;
 
 /**
@@ -108,13 +114,17 @@ export function Provider({
   theme,
   colorScheme,
   notificationPlacement,
+  notificationOptions,
   navigate,
   useHref,
 }: ProviderProps) {
   return (
     <EasyUIRouterProvider navigate={navigate} useHref={useHref}>
       <ThemeProvider theme={theme} colorScheme={colorScheme}>
-        <NotificationProvider notificationPlacement={notificationPlacement}>
+        <NotificationProvider
+          notificationPlacement={notificationPlacement}
+          notificationOptions={notificationOptions}
+        >
           {children}
         </NotificationProvider>
       </ThemeProvider>

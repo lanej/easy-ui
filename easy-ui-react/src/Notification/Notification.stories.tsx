@@ -1,5 +1,6 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
 import React from "react";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 import {
   Notification,
   NotificationProps,
@@ -191,3 +192,269 @@ function SimulatedNotificationTrigger(props: NotificationProps) {
     </Button>
   );
 }
+
+function StackingExample() {
+  const notification = useNotification();
+  const [lastKey, setLastKey] = React.useState<string>();
+  const arrivals = () => {
+    notification.showSuccessToast({ message: "Order A saved" });
+    notification.showSuccessToast({ message: "Order B saved" });
+    notification.showWarningAlert({ message: "Address review required" });
+  };
+  return (
+    <div style={{ minHeight: 360, padding: 16, maxWidth: 640 }}>
+      <h2>Order updates</h2>
+      <p>
+        Toasts stay visible for five seconds. Hover or focus the notification
+        region to pause. Alerts remain until dismissed.
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <Button onPress={arrivals}>Save two orders</Button>
+        <Button
+          onPress={() =>
+            notification.showNeutralToast({
+              message: (
+                <span>
+                  Oversized update:{" "}
+                  {"A lengthy shipment update remains readable while you scroll. ".repeat(
+                    90,
+                  )}
+                </span>
+              ),
+              isDismissable: false,
+            })
+          }
+        >
+          Show oversized update
+        </Button>
+        <Button
+          onPress={() => {
+            for (let index = 0; index < 50; index++)
+              notification.showSuccessToast({
+                message: `Burst update ${index}: shipment saved for review`,
+              });
+          }}
+        >
+          Show overflow burst
+        </Button>
+        <Button
+          onPress={() =>
+            setLastKey(
+              notification.showSuccessToast({ message: "Order saved" }),
+            )
+          }
+        >
+          Repeat identical message
+        </Button>
+        <Button
+          onPress={() => {
+            if (lastKey) notification.closeNotification(lastKey);
+          }}
+        >
+          Dismiss last repeated message
+        </Button>
+        <Button
+          onPress={() =>
+            notification.showNeutralToast({
+              message:
+                "A longer shipment update wraps without hiding the individual close control on narrow screens.",
+            })
+          }
+        >
+          Show long update
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export const StackedNotifications: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{
+        stacking: true,
+        timeout: 5000,
+        isDismissable: true,
+      }}
+      notificationPlacement={{ offset: { bottom: "16px", right: "16px" } }}
+    >
+      <StackingExample />
+    </EasyUIProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
+    await userEvent.click(
+      canvas.getByRole("button", { name: "Save two orders" }),
+    );
+    await waitFor(() => {
+      expect(body.getByText("Order A saved")).toBeVisible();
+      expect(body.getByText("Order B saved")).toBeVisible();
+    });
+    await userEvent.click(
+      body.getByRole("button", { name: "Dismiss Order A saved" }),
+    );
+    await expect(body.getByText("Order B saved")).toBeVisible();
+    await userEvent.click(
+      body.getByRole("button", { name: "Dismiss Order B saved" }),
+    );
+    await userEvent.click(
+      body.getByRole("button", { name: "Dismiss Address review required" }),
+    );
+    canvasElement.dataset.notificationInteractions = "complete";
+  },
+};
+
+export const PerMessageOptions: Story = {
+  render: () => {
+    const notification = useNotification();
+    return (
+      <Button
+        onPress={() =>
+          notification.showNeutralToast({
+            message: "This update stays until you close it",
+            timeout: 0,
+            isDismissable: true,
+          })
+        }
+      >
+        Show persistent dismissible toast
+      </Button>
+    );
+  },
+};
+
+export const StackedPlacementOffsets: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{ stacking: true, timeout: 0, isDismissable: true }}
+      notificationPlacement={{ offset: { bottom: "80px", right: "80px" } }}
+    >
+      <StackingExample />
+    </EasyUIProvider>
+  ),
+};
+
+export const StackedAutoPlacement: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{ stacking: true, timeout: 0, isDismissable: true }}
+      notificationPlacement={{
+        offset: { top: "auto", left: "auto", bottom: "16px", right: "16px" },
+      }}
+    >
+      <StackingExample />
+    </EasyUIProvider>
+  ),
+};
+
+export const StackedWithinContainer: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{ stacking: true, timeout: 0, isDismissable: true }}
+      notificationPlacement={{
+        position: "absolute",
+        getContainer: () =>
+          document.getElementById("notification-placement-container"),
+        offset: { bottom: "80px", right: "80px" },
+      }}
+    >
+      <div
+        id="notification-placement-container"
+        style={{
+          position: "relative",
+          width: "min(100%, 560px)",
+          height: 400,
+          boxSizing: "border-box",
+        }}
+      >
+        <StackingExample />
+      </div>
+    </EasyUIProvider>
+  ),
+};
+
+export const StackedDefaultPlacement: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{ stacking: true, timeout: 0, isDismissable: true }}
+    >
+      <StackingExample />
+    </EasyUIProvider>
+  ),
+};
+
+function PresentationTimingExample() {
+  const notification = useNotification();
+  const keys = React.useRef<string[]>([]);
+  return (
+    <div style={{ padding: 16, minHeight: 360 }}>
+      <p>
+        Each stacked toast starts its duration after its own entrance finishes.
+        Even the two 80ms updates below the leading alert get their full
+        duration.
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <Button
+          onPress={() => {
+            keys.current.push(
+              notification.showSuccessToast({
+                message: "Short lower update",
+                timeout: 80,
+              }),
+              notification.showSuccessToast({
+                message: "Short upper update",
+                timeout: 80,
+              }),
+              notification.showWarningAlert({
+                message: "Persistent entrance anchor",
+              }),
+            );
+          }}
+        >
+          Show short-lived burst
+        </Button>
+        <Button
+          onPress={() =>
+            keys.current.push(
+              notification.showSuccessToast({
+                message: "One-pixel presentation edge",
+              }),
+            )
+          }
+        >
+          Show edge-sized update
+        </Button>
+        <Button
+          onPress={() => {
+            keys.current.forEach((key) => notification.closeNotification(key));
+            keys.current = [];
+          }}
+        >
+          Clear timing examples
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export const StackedPresentationTiming: Story = {
+  render: (_, context) => (
+    <EasyUIProvider
+      colorScheme={context.globals.colorScheme === "dark" ? "dark" : "light"}
+      notificationOptions={{
+        stacking: true,
+        timeout: 5000,
+        isDismissable: false,
+      }}
+      notificationPlacement={{ offset: { bottom: "16px", right: "16px" } }}
+    >
+      <PresentationTimingExample />
+    </EasyUIProvider>
+  ),
+};

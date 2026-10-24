@@ -404,3 +404,28 @@ Resource cards use a compact identity/status row and tight attribute spacing wit
 Supply `edge.change` (`add`, `remove`, `update`, `unchanged`, or `unknown`) independently of resource operations. Include removed links in the supplied graph. A caller-matched `update` renders one yellow modified link. Reference value changes alone do not imply relationship changes. Omit both attribute paths for explicit block-level `depends_on`. Added/removed links keep separate routes even with collapsed groups, use green/red arrows without status symbols, and remain individually selectable in relationship details. Changes scope includes their endpoints.
 
 Edges may specify `sourceAttributePath` / `targetAttributePath` to connect visible expanded field rows. Hidden/missing fields fall back to card endpoints; supplied paths remain in relationship details. Routing uses rounded orthogonal lanes around cards and group headings.
+
+## Concurrent notifications
+
+Use `useNotification` from `@easypost/easy-ui/Notification` inside `Provider`.
+Set `notificationOptions={{ stacking: true, timeout: 5000, isDismissable: true }}`
+on `Provider` for concurrent individually closable five-second toasts, and use
+`notificationPlacement={{ offset: { bottom: "16px", right: "16px" } }}` for
+bottom-right placement. See [stacked notifications](https://lanej.io/easy-ui/storybook/?path=/story/components-notification--stacked-notifications).
+
+Show methods return unique keys; `closeNotification(key)` dismisses one item.
+Per-message `timeout` and `isDismissable` override defaults; zero disables expiry.
+Alerts remain persistent/dismissible unless explicitly overridden on that alert.
+Hover/focus pauses all retained timers with their remaining durations. Clipped
+scroll-overflow items only accumulate expiration time while fully presented,
+after each item’s own entrance completes, even for short durations. See
+[presentation timing](https://lanej.io/easy-ui/storybook/?path=/story/components-notification--stacked-presentation-timing).
+Oversized timed items gain a reachable close control that remains after resizing
+or reflow, preserving keyboard focus. Stack sizing treats explicit `auto` offsets
+as unspecified edges, with the same 16px opposite-edge reading margin. See
+[auto-edge placement](https://lanej.io/easy-ui/storybook/?path=/story/components-notification--stacked-auto-placement).
+Duration and close-control defaults apply to future calls; presentation tracking
+follows the effective stacked layout, including older messages. Disabling stacking
+replaces retained items on the next call. Unmount clears timers.
+Omitted configuration retains replacement,
+4000ms non-dismissible toasts, and persistent dismissible alerts.
