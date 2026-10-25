@@ -69,6 +69,12 @@ retain the changes in Git. When checking published examples, compare
 
 ## Automatic PR writing and code review
 
+For every PR creation, resubmission, or description update, load and follow the
+project [pr-screenshots skill](.agents/skills/pr-screenshots/SKILL.md).
+Embed current, inspected screenshots in the PR body, including for package,
+build, documentation, and tooling changes. This requirement also applies when
+the behavior under review needs nonvisual test evidence.
+
 For every proposed PR creation or revision, invoke `pull-request-writer`
 as a separate subagent with the final diff, motivation, repository
 requirements, and relevant validation evidence. Wait for its draft,
@@ -88,8 +94,9 @@ Report a delegation gap if neither route is available.
 
 Keep PR descriptions concise: explain the final change, why, and useful result.
 Do not duplicate automated checks, test inventories, or implementation history.
-Include actual current screenshots only when they help assess a visual change;
-use durable image URLs and verify that they render on GitHub.
+Include actual current screenshots using immutable image URLs and verify that
+they render on GitHub. Follow the project skill for capture provenance and
+nonvisual changes; do not silently omit screenshots.
 
 ## Git worktree cleanup
 

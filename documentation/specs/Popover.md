@@ -269,7 +269,7 @@ Four details in there are load-bearing:
 
 - **`aria-label` and `aria-labelledby` go on the `Dialog`, not on the positioned element.** React Aria Components would otherwise label a roleless `div`.
 - **`id` on the `Dialog` comes from `useOverlayTrigger`'s `overlayProps`**, and is required: React Aria Components drops `props.id` from the positioned element when `isDialog` is false, so without this the trigger's `aria-controls` would point at nothing.
-- **`data-testid="underlay"`** is React Aria Components'. `vite-plugin-react-remove-attributes` strips `data-testid` from production builds, so tests must not depend on it; they click `document.body` for outside-press instead.
+- **`data-testid="underlay"`** is React Aria Components' implementation detail rather than an Easy UI public test hook. Package builds preserve test identifiers, but tests should not depend on this undocumented selector; they click `document.body` for outside-press instead.
 - **The `Box` sits between the two, not around them.** The width custom properties have to be on the positioned element, because that's what React Aria measures and what `--trigger-width` is relative to; the role and accessible name have to be on the `Dialog`. The container is the layer in between with neither job, which is why it can be handed to the consumer.
 
 The positioned element's `position`, `top`, `left`, and — near a viewport edge — `max-height` are written inline by React Aria. The stylesheet only adds the flex column and the width custom properties.

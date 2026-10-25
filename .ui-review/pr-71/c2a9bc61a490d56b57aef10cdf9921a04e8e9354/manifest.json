@@ -1,0 +1,47 @@
+{
+  "sourceRevision": "c2a9bc61a490d56b57aef10cdf9921a04e8e9354",
+  "capturedAt": "2026-10-25T14:40:57.551Z",
+  "artifact": {
+    "file": "easypost-easy-ui-1.0.0-alpha.137.tgz",
+    "sha256": "a528ae4d190881583ce0a28e248d9616a9eadaa0fcbba23072f8951d9c409266",
+    "integrity": "sha512-nZI3MslxEA8wrP9MiuO/AB/5FDelvU6Li8OEIHxhSrr6YIx+9vJWVWh4loeQ9VcTCytlqW6T0V57tUk+Ttyimw=="
+  },
+  "publicImport": "@easypost/easy-ui/CardListItem (ESM)",
+  "browser": "153.0.8010.0",
+  "captureCommand": "Start npm run dev, then BROWSER_EXECUTABLE=<extracted Chromium binary> CAPTURE_OUTPUT=<evidence directory> npm run capture",
+  "preparation": "At sourceRevision, run npm ci --ignore-scripts and npm run build:react. Pack easy-ui-react/dist and easy-ui-icons/dist into this fixture directory, then run npm install --ignore-scripts --package-lock=false.",
+  "scope": "Actual installed npm tarball; synthetic content. DOM snippets are read from mounted elements. These images supplement the automated CommonJS/ESM artifact tests; they do not independently prove all package contracts.",
+  "captures": [
+    {
+      "file": "card-list-item-light.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1040,
+        "height": 680
+      },
+      "deviceScaleFactor": 1,
+      "callbackCount": 1,
+      "surfaces": {
+        "selectable-card": "BUTTON",
+        "read-only-card": "DIV"
+      },
+      "pageErrors": []
+    },
+    {
+      "file": "card-list-item-dark.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1040,
+        "height": 680
+      },
+      "deviceScaleFactor": 1,
+      "callbackCount": 1,
+      "surfaces": {
+        "selectable-card": "BUTTON",
+        "read-only-card": "DIV"
+      },
+      "pageErrors": []
+    }
+  ],
+  "browserPreparation": "@sparticuz/chromium@153.0.0; extracted bundled Brotli archives using node:zlib and tar --no-same-owner for this container."
+}
