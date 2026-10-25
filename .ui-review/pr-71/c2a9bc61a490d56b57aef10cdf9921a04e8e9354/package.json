@@ -1,0 +1,21 @@
+{
+  "name": "card-list-item-package-proof",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 4177 --strictPort",
+    "capture": "node capture.mjs"
+  },
+  "dependencies": {
+    "@easypost/easy-ui": "file:./easypost-easy-ui-1.0.0-alpha.137.tgz",
+    "@easypost/easy-ui-icons": "file:./easypost-easy-ui-icons-1.0.0-alpha.61.tgz",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-is": "18.3.1"
+  },
+  "devDependencies": {
+    "vite": "6.3.5",
+    "playwright": "1.62.1",
+    "@sparticuz/chromium": "153.0.0"
+  }
+}

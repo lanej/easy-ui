@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR Screenshots"
+  short_description: "Require current screenshots in Easy UI pull requests"
+  default_prompt: "Use $pr-screenshots to prepare or update an Easy UI pull request with verified screenshot evidence."
