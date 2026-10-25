@@ -51,6 +51,14 @@ See our [Storybook](https://main--63f50c7c86f6514d2e0ef4be.chromatic.com/) for d
 
 Packages support TypeScript's legacy `moduleResolution: "node"` as well as modern export-aware resolution. The build generates package-root component entries, deep declarations such as `DataGrid/types` and `Select/SelectField`, flat utilities, and CSS/Sass compatibility files that forward to or copy the canonical `dist` outputs. These retain the original named exports; a default export is forwarded only when the target actually provides one. No application `tsconfig` changes are required.
 
+### Test identifiers
+
+Package builds preserve `data-testid` attributes. `CardListItem`'s public `testId`
+prop applies to its button or non-interactive div; omitting the prop adds no
+attribute. Components that forward native attributes also retain caller-supplied
+test identifiers. Built-in identifiers remain implementation details rather than
+stable public selectors.
+
 ### Agent skill
 
 The package includes an `easy-ui` skill for component usage and library
@@ -176,6 +184,10 @@ When server rendering an app that uses Easy UI and React <18, your app must be w
 We use Storybook to create a simple, hot-reloading playground for development on these components.
 
 After building, `node scripts/check-style-package.mjs` from the repository root packs both the workspace package and its release `dist` directory, installs each tarball in a separate temporary consumer, and checks legacy and modern TypeScript resolution, generated compatibility entries, public CommonJS/ESM imports, server rendering, all Sass dependencies, and emitted production CSS. Normal workspace tarballs include `dist` and generated compatibility files; release-directory metadata rebases the same public exports to that directory. Turbo caches the generated files together with `dist`, and `clean` removes only generated files whose recorded contents still match.
+
+The same check renders installed CommonJS and ESM components in a DOM and queries
+their test identifiers, including both `CardListItem` variants, omitted IDs,
+public export aliases, forwarded attributes, and representative built-in IDs.
 
 ### Commands
 

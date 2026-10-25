@@ -812,6 +812,8 @@ try {
             typescript: "5.7.3",
             sass: "1.89.2",
             vite: "6.3.5",
+            jsdom: "26.1.0",
+            "@testing-library/react": "16.3.2",
           },
         },
         null,
@@ -848,6 +850,10 @@ try {
     );
     await writeFile(join(consumer, "check.mjs"), runner);
     await writeFile(
+      join(consumer, "check-test-ids.mjs"),
+      await readFile(join(repository, "scripts/fixtures/test-id-contract.mjs")),
+    );
+    await writeFile(
       join(folder, "install.log"),
       run(
         npm,
@@ -879,6 +885,26 @@ try {
       join(consumer, "node_modules/@easypost/easy-ui"),
       folder,
     );
+    const testIds = spawnSync(
+      process.execPath,
+      ["--test", "check-test-ids.mjs"],
+      {
+        cwd: consumer,
+        encoding: "utf8",
+        maxBuffer: 20 * 1024 * 1024,
+      },
+    );
+    await writeFile(
+      join(folder, "test-ids.log"),
+      (testIds.stdout ?? "") + (testIds.stderr ?? ""),
+    );
+    if (testIds.error) throw testIds.error;
+    assert.equal(
+      testIds.status,
+      0,
+      "Packed test ID contract failed; inspect " + join(folder, "test-ids.log"),
+    );
+    console.log(mode + ": packed test ID contract passed (CommonJS + ESM)");
     const output = run(process.execPath, ["check.mjs"], consumer);
     await writeFile(join(folder, "result.log"), output);
     console.log(mode + ": " + output.trim());

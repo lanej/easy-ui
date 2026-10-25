@@ -25,7 +25,7 @@ jobs:
         run: node --test scripts/generateCompatibilityEntries.test.mjs
       - name: Verify browser CI evidence selection
         run: node --test scripts/browser-proof.test.mjs
-      - name: Verify isolated tarball imports and Sass assets
+      - name: Verify isolated tarball imports, test IDs, and Sass assets
         run: node scripts/check-style-package.mjs
       - name: Retain packed-consumer logs on failure
         if: failure()

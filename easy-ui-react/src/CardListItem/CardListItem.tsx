@@ -8,6 +8,7 @@ export interface CardListItemProps {
   children: ReactNode;
   selected?: boolean;
   onSelect?: () => void;
+  /** Applied as data-testid to the button or non-interactive div. */
   testId?: string;
   ariaExpanded?: boolean;
 }

@@ -38,6 +38,7 @@ function FacilityList({ interactive = true }: { interactive?: boolean }) {
         {facilities.map((facility) => (
           <CardListItem
             key={facility.id}
+            testId={`facility-${facility.id}`}
             selected={interactive && selected === facility.id}
             onSelect={interactive ? () => setSelected(facility.id) : undefined}
           >
