@@ -188,9 +188,8 @@ try {
       );
       // React Aria dismisses an open tooltip before the menu. Let the
       // existing copied confirmation finish before testing menu dismissal.
-      await page.getByRole("tooltip").filter({ hasText: "Copied!" }).waitFor({
-        state: "hidden",
-      });
+      await page.mouse.move(0, 0);
+      await page.getByRole("tooltip").waitFor({ state: "hidden" });
       await page.getByRole("button", { name: "JSON", exact: true }).click();
       await page.getByRole("menu").waitFor({ state: "visible" });
       await page.waitForFunction(() =>
@@ -200,6 +199,11 @@ try {
       );
       await page.keyboard.press("Escape");
       await page.getByRole("menu").waitFor({ state: "hidden" });
+      await page.waitForFunction(
+        () =>
+          document.activeElement?.getAttribute("aria-haspopup") === "menu" &&
+          document.activeElement?.textContent?.trim() === "JSON",
+      );
       await page.getByRole("button", { name: "JSON", exact: true }).click();
       await page
         .getByRole("menuitem", { name: "Node.js", exact: true })
