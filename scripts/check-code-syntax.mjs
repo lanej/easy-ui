@@ -28,6 +28,7 @@ const browser = await chromium.launch({
 const results = [];
 const screenshots = [];
 const errors = [];
+let activePage;
 
 function contrast(foreground, background) {
   const luminance = (rgb) => {
@@ -48,6 +49,7 @@ function contrast(foreground, background) {
 }
 
 async function open(page, component, story, scheme = "light") {
+  activePage = page;
   await page.goto(
     `${baseUrl}/iframe.html?id=components-code-${component}--${story}&viewMode=story&globals=colorScheme:${scheme}`,
   );
@@ -112,7 +114,7 @@ async function capture(page, name, theme) {
 }
 
 try {
-  for (const scheme of ["light", "dark"]) {
+  for (const scheme of ["dark", "light"]) {
     for (const width of [1280, 390]) {
       const context = await browser.newContext({
         viewport: { width, height: 650 },
@@ -167,6 +169,7 @@ try {
         await pre.evaluate((el) => el.scrollHeight > el.clientHeight),
         "maxLines keeps content scrollable",
       );
+      await capture(page, `block-${scheme}-${width}`, scheme);
       await pre.focus();
       await page.keyboard.press("ArrowDown");
       await page.waitForFunction(
@@ -185,13 +188,12 @@ try {
       );
       await page.getByRole("button", { name: "JSON", exact: true }).click();
       await page.keyboard.press("Escape");
-      assert.equal(await page.getByRole("menu").count(), 0);
+      await page.getByRole("menu").waitFor({ state: "hidden" });
       await page.getByRole("button", { name: "JSON", exact: true }).click();
       await page
         .getByRole("menuitem", { name: "Node.js", exact: true })
         .click();
       await page.locator("code.language-javascript").waitFor();
-      await capture(page, `block-${scheme}-${width}`, scheme);
       await context.close();
     }
   }
@@ -258,7 +260,7 @@ try {
     );
     await page.close();
 
-    for (const scheme of ["light", "dark"]) {
+    for (const scheme of ["dark", "light"]) {
       const customPage = await browser.newPage();
       await open(customPage, component, "custom-theme", scheme);
       const custom = customPage
@@ -301,6 +303,18 @@ try {
   console.log(
     `Code syntax browser checks passed (${results.length} states, ${screenshots.length} screenshots).`,
   );
+} catch (error) {
+  if (activePage && !activePage.isClosed()) {
+    await activePage.screenshot({
+      path: resolve(output, "failure.png"),
+      fullPage: true,
+    });
+    await writeFile(
+      resolve(output, "failure.html"),
+      await activePage.content(),
+    );
+  }
+  throw error;
 } finally {
   await writeFile(
     resolve(output, "manifest.json"),
