@@ -1,0 +1,8 @@
+{
+  "source": "User-provided screenshot",
+  "description": "EPQ report in dark mode with monochrome JSON syntax under its consumer workaround",
+  "capture_environment": "Not supplied",
+  "image_sha256": "d8846e15b29468e50f7e05540d1d960438e751696cdff48f524175891719cf0c",
+  "observed_consumer_easy_ui_source": "f0f139306265d22284fd16f3f7c5a53e6a8be8c4",
+  "native_component_render_without_workaround": "Not demonstrated by this image"
+}
