@@ -84,10 +84,21 @@ async function inspect(page, name) {
             ),
           ],
           text: code.textContent,
+          inlineProseColor: code.matches(
+            '[data-inline-scope="active"], [data-inline-scope="inverted"]',
+          )
+            ? getComputedStyle(code.parentElement).color
+            : undefined,
         };
       }),
     );
   for (const code of measured) {
+    if (code.inlineProseColor)
+      assert.equal(
+        code.inlineProseColor,
+        code.foreground,
+        `${name}: themed prose`,
+      );
     for (const color of code.colors)
       assert.ok(
         contrast(color, code.background) >= 4.5,

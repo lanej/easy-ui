@@ -119,7 +119,7 @@ function ThemeScopesExample() {
       <Box background="neutral.050" padding="2">
         <VerticalStack gap="3">
           <ThemeToggle mode={mode} onModeChange={setMode} />
-          <Text as="p">
+          <Text as="p" color="primary.800">
             Set{" "}
             <InlineCode
               data-inline-scope="active"
@@ -131,7 +131,7 @@ function ThemeScopesExample() {
           <div>
             <ThemeProvider colorScheme="inverted">
               <Box background="neutral.050" padding="2">
-                <Text as="p">
+                <Text as="p" color="primary.800">
                   The inverted scope returns{" "}
                   <InlineCode
                     data-inline-scope="inverted"
