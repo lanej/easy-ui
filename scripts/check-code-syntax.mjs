@@ -200,9 +200,10 @@ try {
       await page.keyboard.press("Escape");
       await page.getByRole("menu").waitFor({ state: "hidden" });
       await page.waitForFunction(
-        () =>
-          document.activeElement?.getAttribute("aria-haspopup") === "menu" &&
-          document.activeElement?.textContent?.trim() === "JSON",
+        (trigger) => document.activeElement === trigger,
+        await page
+          .getByRole("button", { name: "JSON", exact: true })
+          .elementHandle(),
       );
       await page.getByRole("button", { name: "JSON", exact: true }).click();
       await page
