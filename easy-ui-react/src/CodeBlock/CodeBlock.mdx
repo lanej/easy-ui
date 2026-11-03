@@ -27,6 +27,11 @@ import { CodeBlock } from "@easypost/easy-ui/CodeBlock";
 
 `<CodeBlock />` is a controlled component. It requires the consumer to provide a selected language and manage its state. Use the `language` and `onLanguageChange` props to control the currently active `<CodeSnippet />`.
 
+Syntax highlighting follows the nearest `Provider` or `ThemeProvider`, including
+light, dark, system, inverted, and custom themes, just like `CodeSnippet`.
+
+<Canvas of={CodeBlockStories.SyntaxColors} />
+
 ### Single Language Mode
 
 If `<CodeBlock />` contains only one `<CodeBlock.Snippet />`, the `<CodeBlock />` will be in single language mode and not show a language selector.

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { getSnippetEntries as getAllSnippetEntries } from "../CodeSnippet/CodeSnippet.stories";
 import { CodeBlock, CodeBlockProps } from "./CodeBlock";
 import { HorizontalGrid } from "../HorizontalGrid";
+import { SnippetLanguage } from "../CodeSnippet/SyntaxHighlighter";
 
 type Story = StoryObj<typeof CodeBlock>;
 type TemplateProps = Omit<CodeBlockProps, "language" | "onLanguageChange">;
@@ -124,4 +125,40 @@ export const SideBySide: Story = {
       </HorizontalGrid>
     );
   },
+};
+
+function SyntaxColorsExample() {
+  const [language, setLanguage] = useState<SnippetLanguage>("javascript");
+  return (
+    <CodeBlock language={language} onLanguageChange={setLanguage}>
+      <CodeBlock.Header>Example</CodeBlock.Header>
+      <CodeBlock.Snippet
+        code={`// Theme-aware syntax with scrollable content.
+const label = "Sample package";
+const count = 3;
+function describe() {
+  return { label, count, ready: true };
+}
+console.log(describe());`}
+        language="javascript"
+        maxLines={4}
+        showLineNumbers
+      />
+      <CodeBlock.Snippet
+        code={`{
+  "label": "Sample package",
+  "count": 3,
+  "ready": true,
+  "destination": null
+}`}
+        language="json"
+        maxLines={4}
+        showLineNumbers
+      />
+    </CodeBlock>
+  );
+}
+
+export const SyntaxColors: Story = {
+  render: () => <SyntaxColorsExample />,
 };

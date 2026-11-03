@@ -42,3 +42,22 @@ A `<CodeSnippet />` can limit its height to a maximum number of lines using the 
 <Canvas of={CodeSnippetStories.MaxLines} />
 
 <Controls of={CodeSnippetStories.MaxLines} include={["maxLines"]} />
+
+### Syntax colors and themes
+
+Syntax colors follow the nearest `Provider` or `ThemeProvider`, including light,
+dark, system, and inverted color schemes. JSON values, strings, keywords,
+comments, and line numbers retain distinct syntax roles without consumer CSS
+overrides.
+
+<Canvas of={CodeSnippetStories.SyntaxColors} />
+
+Switching the active theme updates mounted snippets, including a nested inverted
+provider.
+
+<Canvas of={CodeSnippetStories.ThemeScopes} />
+
+A custom theme can override syntax tokens. This example overrides
+`color.positive.700` for strings.
+
+<Canvas of={CodeSnippetStories.CustomTheme} />

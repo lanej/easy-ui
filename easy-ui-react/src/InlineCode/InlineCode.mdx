@@ -1,0 +1,74 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes } from "../../../.storybook/DocsApi";
+import { InlineCode } from "./InlineCode";
+import * as InlineCodeStories from "./InlineCode.stories";
+
+<Meta of={InlineCodeStories} />
+
+# InlineCode
+
+`<InlineCode />` displays a short code fragment within a sentence, with optional
+syntax highlighting. It renders one semantic `<code>` element without a block
+wrapper or line numbers and works inside `<Text>` or ordinary prose.
+
+## Usage
+
+```tsx
+import { InlineCode } from "@easypost/easy-ui/InlineCode";
+import { Text } from "@easypost/easy-ui/Text";
+
+<Text>
+  Read <InlineCode code="response.status" language="javascript" /> to continue.
+</Text>;
+```
+
+<Canvas of={InlineCodeStories.Default} />
+
+## Props
+
+<ArgTypes of={InlineCode} exclude={["children"]} />
+
+Use `code` for the source string. Normal HTML attributes, `className`, `style`,
+and a ref apply to the `<code>` element. Content is escaped rather than treated
+as HTML.
+
+## Examples
+
+Combine highlighted expressions and plain identifiers naturally within prose.
+
+<Canvas of={InlineCodeStories.SyntaxColors} />
+
+### Syntax languages
+
+Set `language` to highlight a known language. Supported values are `csharp`,
+`go`, `java`, `javascript`, `json`, `php`, `python`, `ruby`, and `shell`, using
+the same grammars as `CodeSnippet`.
+
+<Canvas of={InlineCodeStories.Json} />
+
+Omit `language` for identifiers or plain text. Languages are never guessed.
+Unsupported language values received at runtime also render as plain text.
+
+<Canvas of={InlineCodeStories.PlainText} />
+
+### Prose and narrow layouts
+
+Code inherits the surrounding font size and line height, preserves spaces and
+line breaks, and wraps long tokens in narrow containers. Prefer `CodeSnippet`
+for multi-line examples that need a block surface or line numbers.
+
+<Canvas of={InlineCodeStories.LongContent} />
+
+### Themes
+
+Syntax colors and the code surface follow the nearest `Provider` or
+`ThemeProvider`, including light, dark, system, inverted, and custom themes.
+Mounted code updates when the theme changes. The nested inverted scope follows
+the opposite color scheme as the active scope.
+
+<Canvas of={InlineCodeStories.ThemeScopes} />
+
+This separate example overrides `color.positive.700` for strings while
+inheriting the color scheme selected in the Storybook toolbar.
+
+<Canvas of={InlineCodeStories.CustomTheme} />
