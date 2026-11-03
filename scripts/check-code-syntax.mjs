@@ -158,7 +158,7 @@ try {
 
       await open(page, "codeblock", "syntax-colors", scheme);
       await inspect(page, `block-${scheme}-${width}`);
-      const pre = page.locator("pre");
+      const pre = page.locator("#storybook-root pre");
       assert.equal(
         await pre.evaluate((el) => getComputedStyle(el).webkitLineClamp),
         "4",
@@ -170,7 +170,7 @@ try {
       await pre.focus();
       await page.keyboard.press("ArrowDown");
       await page.waitForFunction(
-        () => document.querySelector("pre").scrollTop > 0,
+        () => document.querySelector("#storybook-root pre").scrollTop > 0,
       );
       await page.getByRole("button", { name: "Node.js", exact: true }).click();
       await page.getByRole("menuitem", { name: "JSON", exact: true }).click();
@@ -277,20 +277,22 @@ try {
     const system = await browser.newPage({ colorScheme: "light" });
     await open(system, component, "syntax-colors", "system");
     const first = await system
-      .locator("code")
+      .locator("#storybook-root code")
       .first()
       .evaluate((el) => getComputedStyle(el).color);
     await system.emulateMedia({ colorScheme: "dark" });
     await system.waitForFunction(
       (value) =>
-        getComputedStyle(document.querySelector("code")).color !== value,
+        getComputedStyle(document.querySelector("#storybook-root code"))
+          .color !== value,
       first,
     );
     await inspect(system, `${component}-system-dark`);
     await system.emulateMedia({ colorScheme: "light" });
     await system.waitForFunction(
       (value) =>
-        getComputedStyle(document.querySelector("code")).color === value,
+        getComputedStyle(document.querySelector("#storybook-root code"))
+          .color === value,
       first,
     );
     await system.close();
