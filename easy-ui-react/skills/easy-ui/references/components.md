@@ -34,7 +34,7 @@ revision; use the installed declarations when the application pins another versi
 | Responsibility                      | Public entries                                                                                                                                                                    |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Theme and design-token layout       | `Provider`, `Theme`, `ThemeToggle`, `Box`, `HorizontalGrid`, `HorizontalStack`, `VerticalStack`, `FormLayout`                                                                     |
-| Text, symbols, and formatted values | `Text`, `Icon`, `SignedValue`, `DurationValue`, `CodeSnippet`, `CodeBlock`                                                                                                        |
+| Text, symbols, and formatted values | `Text`, `Icon`, `SignedValue`, `DurationValue`, `CodeSnippet`, `CodeBlock`, `InlineCode`                                                                                                        |
 | Actions and action menus            | `Button`, `UnstyledButton`, `IconButton`, `DropdownButton`, `KebabButton`, `Menu`, `ExpandButton`, `CollapseButton`                                                               |
 | Text and selection inputs           | `InputField`, `TextField`, `Textarea`, `Select`, `MultiSelect`, `Checkbox`, `RadioGroup`, `RadioButtonGroup`, `Toggle`, `ColorPicker`, `PriceRangeSlider`, `SelectorErrorTooltip` |
 | Date inputs and calendars           | `DatePicker`, `DateRangePicker`, `Calendar`, `RangeCalendar`                                                                                                                      |
@@ -92,6 +92,14 @@ Control `ThemeToggle` with `mode` and `onModeChange`, and pass the same mode to
 `ThemeProvider`'s `colorScheme`. The application owns system-preference resolution
 and persistence. See [theme selection](https://lanej.io/easy-ui/storybook/?path=/docs/atoms-actions-themetoggle--docs)
 and the rendered [design tokens](https://lanej.io/easy-ui/storybook/?path=/docs/foundations-design-tokens--docs).
+
+Use `CodeSnippet` for highlighted code and `CodeBlock` for language selection and
+copy controls. Use `InlineCode` for code inside a sentence, with an optional
+`language` for highlighting and plain text when omitted. Syntax colors follow the nearest provider, including system,
+inverted, and custom themes; avoid flattening token colors with broad `pre`,
+`code`, or `span` overrides. See [syntax colors](https://lanej.io/easy-ui/storybook/?path=/story/components-code-codesnippet--syntax-colors)
+[nested theme scopes](https://lanej.io/easy-ui/storybook/?path=/story/components-code-codesnippet--theme-scopes),
+and [inline syntax](https://lanej.io/easy-ui/storybook/?path=/story/components-code-inlinecode--syntax-colors).
 
 Applications supply assessments, freshness, thresholds, units, and scores.
 Use `HealthAssessment` to compose a supplied observation with its assessment and

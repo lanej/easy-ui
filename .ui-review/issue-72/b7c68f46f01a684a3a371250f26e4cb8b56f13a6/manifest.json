@@ -1,0 +1,1010 @@
+{
+  "sourceRevision": "b7c68f46f01a684a3a371250f26e4cb8b56f13a6",
+  "dirtyPaths": "",
+  "browser": "153.0.8010.12",
+  "command": "node scripts/check-code-syntax.mjs",
+  "screenshots": [
+    {
+      "file": "snippets-dark-1280.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-codesnippet--syntax-colors&viewMode=story&globals=colorScheme%3Adark",
+      "sha256": "5f618b69ac48bf7ed34ed4e9d4df85a5a0dfe0ed7de681d981fa862e6a75d9ac"
+    },
+    {
+      "file": "inline-dark-1280.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-inlinecode--syntax-colors&viewMode=story&globals=colorScheme%3Adark",
+      "sha256": "77c75940f593785777ddb4245050eeaafeb6f408ca7981f9a7b17584127749db"
+    },
+    {
+      "file": "block-dark-1280.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-codeblock--syntax-colors&viewMode=story&globals=colorScheme%3Adark",
+      "sha256": "73e1fc9efbeafda07f99e544b79a9593eaf46af36a08f47e400489d50adf94ad"
+    },
+    {
+      "file": "snippets-dark-390.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-codesnippet--syntax-colors&viewMode=story&globals=colorScheme%3Adark",
+      "sha256": "8701d4f591e6f2ad56b205d88dd6697aec8ef687b197c59e101f2b2c520aa2b2"
+    },
+    {
+      "file": "inline-dark-390.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-inlinecode--syntax-colors&viewMode=story&globals=colorScheme%3Adark",
+      "sha256": "80d1b168fa00176d60d15331e3745ce5ec1d4118992750e7c8197fc5456c0feb"
+    },
+    {
+      "file": "block-dark-390.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-codeblock--syntax-colors&viewMode=story&globals=colorScheme%3Adark",
+      "sha256": "4186c81e0a895c109df2921177c974e1f8c75bdf21ee39034b2259a4cdc82358"
+    },
+    {
+      "file": "snippets-light-1280.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-codesnippet--syntax-colors&viewMode=story&globals=colorScheme%3Alight",
+      "sha256": "f6e766df8e3ea886c29dee8d29e2f6b43420b74ddba0e326f7539cb5778a9088"
+    },
+    {
+      "file": "inline-light-1280.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-inlinecode--syntax-colors&viewMode=story&globals=colorScheme%3Alight",
+      "sha256": "f4c81a4d4a2fd8fb6ef0bf31e73c0ecfc7e2f7114d4804a12762b155379c80cb"
+    },
+    {
+      "file": "block-light-1280.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-codeblock--syntax-colors&viewMode=story&globals=colorScheme%3Alight",
+      "sha256": "305d5a09b49930da606a779242bdfc7741fce9ee87f10601d61efc7815898703"
+    },
+    {
+      "file": "snippets-light-390.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-codesnippet--syntax-colors&viewMode=story&globals=colorScheme%3Alight",
+      "sha256": "a283c5d3e3756ba46e79bea71d7d81c2a800c5cd70b0cdaebfe99497b5331840"
+    },
+    {
+      "file": "inline-light-390.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-inlinecode--syntax-colors&viewMode=story&globals=colorScheme%3Alight",
+      "sha256": "e345f1a1d5f672bc0f7b236f9daa56aa1bc7f3b7a08edff3062be65bcd5070d6"
+    },
+    {
+      "file": "block-light-390.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-codeblock--syntax-colors&viewMode=story&globals=colorScheme%3Alight",
+      "sha256": "0f2bad1cbaec443ac477bcdaffad8fcf96f27edfe983a6d6ef69ece629b9c520"
+    },
+    {
+      "file": "codesnippet-scopes-light.png",
+      "theme": "light with inverted dark scope",
+      "viewport": {
+        "width": 1280,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-codesnippet--theme-scopes&viewMode=story&globals=colorScheme%3Alight",
+      "sha256": "d88004d10f20ffc65d0655e626ace8faf9178252902022bd1cc01cb4de202f65"
+    },
+    {
+      "file": "codesnippet-scopes-dark.png",
+      "theme": "dark with inverted light scope",
+      "viewport": {
+        "width": 1280,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-codesnippet--theme-scopes&viewMode=story&globals=colorScheme%3Alight",
+      "sha256": "062f87a88155eee3f1f95e4df1c4207fab46ecd60a72be898e61d73fdb7b1fd9"
+    },
+    {
+      "file": "inlinecode-scopes-light.png",
+      "theme": "light with inverted dark scope",
+      "viewport": {
+        "width": 1280,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-inlinecode--theme-scopes&viewMode=story&globals=colorScheme%3Alight",
+      "sha256": "b6c1016630cd6d793cc2559d809bb2b599ee1aaececd399c234f54402e8df205"
+    },
+    {
+      "file": "inlinecode-scopes-dark.png",
+      "theme": "dark with inverted light scope",
+      "viewport": {
+        "width": 1280,
+        "height": 650
+      },
+      "url": "http://127.0.0.1:9018/iframe.html?id=components-code-inlinecode--theme-scopes&viewMode=story&globals=colorScheme%3Alight",
+      "sha256": "75a0b3c7d155d88fe56d778f25a28d44f3db725a34b338cd4b7dffef96d6ebce"
+    }
+  ],
+  "results": [
+    {
+      "name": "snippets-dark-1280",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(110, 147, 255)"
+          ],
+          "text": "1{\n2  \"name\": \"Sample package\",\n3  \"ready\": true,\n4  \"count\": 3,\n5  \"destination\": null\n6}"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)",
+            "rgb(253, 190, 189)",
+            "rgb(254, 222, 222)"
+          ],
+          "text": "1// Readable comments and distinct syntax roles.\n2const message = \"Ready to preview\";\n3function describe(count) {\n4  return /ready/i.test(message) ? count + 1 : 0;\n5}\n6console.log(describe(3));"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "inline-dark-1280",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)"
+          ],
+          "text": "const status = \"ready\";"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(198, 208, 227)",
+            "rgb(255, 252, 240)",
+            "rgb(254, 222, 222)"
+          ],
+          "text": "items.length > 0"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)"
+          ],
+          "text": "{ \"status\": \"ready\", \"enabled\": true, \"count\": 3 }"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)"
+          ],
+          "text": "preview_status"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(204, 250, 239)"
+          ],
+          "text": "\"preview_configuration_for_a_very_long_synthetic_resource_name_without_spaces\""
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "block-dark-1280",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(253, 190, 189)"
+          ],
+          "text": "1// Theme-aware syntax with scrollable content.\n2const label = \"Sample package\";\n3const count = 3;\n4function describe() {\n5  return { label, count, ready: true };\n6}\n7console.log(describe());"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "block-json-dark-1280",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(110, 147, 255)"
+          ],
+          "text": "1{\n2  \"label\": \"Sample package\",\n3  \"count\": 3,\n4  \"ready\": true,\n5  \"destination\": null\n6}"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "snippets-dark-390",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(110, 147, 255)"
+          ],
+          "text": "1{\n2  \"name\": \"Sample package\",\n3  \"ready\": true,\n4  \"count\": 3,\n5  \"destination\": null\n6}"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)",
+            "rgb(253, 190, 189)",
+            "rgb(254, 222, 222)"
+          ],
+          "text": "1// Readable comments and distinct syntax roles.\n2const message = \"Ready to preview\";\n3function describe(count) {\n4  return /ready/i.test(message) ? count + 1 : 0;\n5}\n6console.log(describe(3));"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "inline-dark-390",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)"
+          ],
+          "text": "const status = \"ready\";"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(198, 208, 227)",
+            "rgb(255, 252, 240)",
+            "rgb(254, 222, 222)"
+          ],
+          "text": "items.length > 0"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)"
+          ],
+          "text": "{ \"status\": \"ready\", \"enabled\": true, \"count\": 3 }"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)"
+          ],
+          "text": "preview_status"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(204, 250, 239)"
+          ],
+          "text": "\"preview_configuration_for_a_very_long_synthetic_resource_name_without_spaces\""
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "block-dark-390",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(253, 190, 189)"
+          ],
+          "text": "1// Theme-aware syntax with scrollable content.\n2const label = \"Sample package\";\n3const count = 3;\n4function describe() {\n5  return { label, count, ready: true };\n6}\n7console.log(describe());"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "block-json-dark-390",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(110, 147, 255)"
+          ],
+          "text": "1{\n2  \"label\": \"Sample package\",\n3  \"count\": 3,\n4  \"ready\": true,\n5  \"destination\": null\n6}"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "snippets-light-1280",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(71, 84, 127)",
+            "rgb(56, 67, 89)",
+            "rgb(126, 46, 45)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(22, 77, 255)"
+          ],
+          "text": "1{\n2  \"name\": \"Sample package\",\n3  \"ready\": true,\n4  \"count\": 3,\n5  \"destination\": null\n6}"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(71, 84, 127)",
+            "rgb(22, 77, 255)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(56, 67, 89)",
+            "rgb(188, 69, 67)",
+            "rgb(126, 46, 45)"
+          ],
+          "text": "1// Readable comments and distinct syntax roles.\n2const message = \"Ready to preview\";\n3function describe(count) {\n4  return /ready/i.test(message) ? count + 1 : 0;\n5}\n6console.log(describe(3));"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "inline-light-1280",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(22, 77, 255)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(56, 67, 89)"
+          ],
+          "text": "const status = \"ready\";"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(56, 67, 89)",
+            "rgb(108, 74, 7)",
+            "rgb(126, 46, 45)"
+          ],
+          "text": "items.length > 0"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(56, 67, 89)",
+            "rgb(126, 46, 45)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)"
+          ],
+          "text": "{ \"status\": \"ready\", \"enabled\": true, \"count\": 3 }"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)"
+          ],
+          "text": "preview_status"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(0, 115, 87)"
+          ],
+          "text": "\"preview_configuration_for_a_very_long_synthetic_resource_name_without_spaces\""
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "block-light-1280",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(71, 84, 127)",
+            "rgb(22, 77, 255)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(56, 67, 89)",
+            "rgb(126, 46, 45)",
+            "rgb(188, 69, 67)"
+          ],
+          "text": "1// Theme-aware syntax with scrollable content.\n2const label = \"Sample package\";\n3const count = 3;\n4function describe() {\n5  return { label, count, ready: true };\n6}\n7console.log(describe());"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "block-json-light-1280",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(71, 84, 127)",
+            "rgb(56, 67, 89)",
+            "rgb(126, 46, 45)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(22, 77, 255)"
+          ],
+          "text": "1{\n2  \"label\": \"Sample package\",\n3  \"count\": 3,\n4  \"ready\": true,\n5  \"destination\": null\n6}"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "snippets-light-390",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(71, 84, 127)",
+            "rgb(56, 67, 89)",
+            "rgb(126, 46, 45)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(22, 77, 255)"
+          ],
+          "text": "1{\n2  \"name\": \"Sample package\",\n3  \"ready\": true,\n4  \"count\": 3,\n5  \"destination\": null\n6}"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(71, 84, 127)",
+            "rgb(22, 77, 255)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(56, 67, 89)",
+            "rgb(188, 69, 67)",
+            "rgb(126, 46, 45)"
+          ],
+          "text": "1// Readable comments and distinct syntax roles.\n2const message = \"Ready to preview\";\n3function describe(count) {\n4  return /ready/i.test(message) ? count + 1 : 0;\n5}\n6console.log(describe(3));"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "inline-light-390",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(22, 77, 255)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(56, 67, 89)"
+          ],
+          "text": "const status = \"ready\";"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(56, 67, 89)",
+            "rgb(108, 74, 7)",
+            "rgb(126, 46, 45)"
+          ],
+          "text": "items.length > 0"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(56, 67, 89)",
+            "rgb(126, 46, 45)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)"
+          ],
+          "text": "{ \"status\": \"ready\", \"enabled\": true, \"count\": 3 }"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)"
+          ],
+          "text": "preview_status"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(0, 115, 87)"
+          ],
+          "text": "\"preview_configuration_for_a_very_long_synthetic_resource_name_without_spaces\""
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "block-light-390",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(71, 84, 127)",
+            "rgb(22, 77, 255)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(56, 67, 89)",
+            "rgb(126, 46, 45)",
+            "rgb(188, 69, 67)"
+          ],
+          "text": "1// Theme-aware syntax with scrollable content.\n2const label = \"Sample package\";\n3const count = 3;\n4function describe() {\n5  return { label, count, ready: true };\n6}\n7console.log(describe());"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "block-json-light-390",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(71, 84, 127)",
+            "rgb(56, 67, 89)",
+            "rgb(126, 46, 45)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(22, 77, 255)"
+          ],
+          "text": "1{\n2  \"label\": \"Sample package\",\n3  \"count\": 3,\n4  \"ready\": true,\n5  \"destination\": null\n6}"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "codesnippet-scopes-light",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(71, 84, 127)",
+            "rgb(22, 77, 255)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(56, 67, 89)",
+            "rgb(188, 69, 67)",
+            "rgb(126, 46, 45)"
+          ],
+          "text": "// Readable comments and distinct syntax roles.\nconst message = \"Ready to preview\";\nfunction describe(count) {\n  return /ready/i.test(message) ? count + 1 : 0;\n}\nconsole.log(describe(3));"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)",
+            "rgb(253, 190, 189)",
+            "rgb(254, 222, 222)"
+          ],
+          "text": "// Readable comments and distinct syntax roles.\nconst message = \"Ready to preview\";\nfunction describe(count) {\n  return /ready/i.test(message) ? count + 1 : 0;\n}\nconsole.log(describe(3));"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "codesnippet-scopes-dark",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)",
+            "rgb(253, 190, 189)",
+            "rgb(254, 222, 222)"
+          ],
+          "text": "// Readable comments and distinct syntax roles.\nconst message = \"Ready to preview\";\nfunction describe(count) {\n  return /ready/i.test(message) ? count + 1 : 0;\n}\nconsole.log(describe(3));"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(71, 84, 127)",
+            "rgb(22, 77, 255)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(56, 67, 89)",
+            "rgb(188, 69, 67)",
+            "rgb(126, 46, 45)"
+          ],
+          "text": "// Readable comments and distinct syntax roles.\nconst message = \"Ready to preview\";\nfunction describe(count) {\n  return /ready/i.test(message) ? count + 1 : 0;\n}\nconsole.log(describe(3));"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "codesnippet-custom-dark",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(255, 252, 240)",
+            "rgb(196, 167, 255)",
+            "rgb(110, 147, 255)"
+          ],
+          "text": "{\n  \"name\": \"Sample package\",\n  \"ready\": true,\n  \"count\": 3,\n  \"destination\": null\n}"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "codesnippet-custom-light",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(56, 67, 89)",
+            "rgb(126, 46, 45)",
+            "rgb(108, 74, 7)",
+            "rgb(110, 59, 189)",
+            "rgb(22, 77, 255)"
+          ],
+          "text": "{\n  \"name\": \"Sample package\",\n  \"ready\": true,\n  \"count\": 3,\n  \"destination\": null\n}"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "codesnippet-system-dark",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(110, 147, 255)"
+          ],
+          "text": "1{\n2  \"name\": \"Sample package\",\n3  \"ready\": true,\n4  \"count\": 3,\n5  \"destination\": null\n6}"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(163, 178, 206)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)",
+            "rgb(253, 190, 189)",
+            "rgb(254, 222, 222)"
+          ],
+          "text": "1// Readable comments and distinct syntax roles.\n2const message = \"Ready to preview\";\n3function describe(count) {\n4  return /ready/i.test(message) ? count + 1 : 0;\n5}\n6console.log(describe(3));"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "inlinecode-scopes-light",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(22, 77, 255)",
+            "rgb(108, 74, 7)",
+            "rgb(0, 115, 87)",
+            "rgb(56, 67, 89)"
+          ],
+          "text": "const status = \"ready\";",
+          "inlineProseColor": "rgb(6, 19, 64)"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(255, 252, 240)"
+          ],
+          "text": "{ \"ready\": true, \"count\": 3 }",
+          "inlineProseColor": "rgb(208, 219, 255)"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "inlinecode-scopes-dark",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)"
+          ],
+          "text": "const status = \"ready\";",
+          "inlineProseColor": "rgb(208, 219, 255)"
+        },
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(56, 67, 89)",
+            "rgb(126, 46, 45)",
+            "rgb(108, 74, 7)"
+          ],
+          "text": "{ \"ready\": true, \"count\": 3 }",
+          "inlineProseColor": "rgb(6, 19, 64)"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "inlinecode-custom-dark",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(196, 167, 255)",
+            "rgb(198, 208, 227)"
+          ],
+          "text": "const status = \"ready\";"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "inlinecode-custom-light",
+      "measured": [
+        {
+          "background": "rgb(255, 255, 255)",
+          "foreground": "rgb(6, 19, 64)",
+          "colors": [
+            "rgb(6, 19, 64)",
+            "rgb(22, 77, 255)",
+            "rgb(108, 74, 7)",
+            "rgb(110, 59, 189)",
+            "rgb(56, 67, 89)"
+          ],
+          "text": "const status = \"ready\";"
+        }
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "inlinecode-system-dark",
+      "measured": [
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(110, 147, 255)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)",
+            "rgb(198, 208, 227)"
+          ],
+          "text": "const status = \"ready\";"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(198, 208, 227)",
+            "rgb(255, 252, 240)",
+            "rgb(254, 222, 222)"
+          ],
+          "text": "items.length > 0"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(198, 208, 227)",
+            "rgb(254, 222, 222)",
+            "rgb(255, 252, 240)",
+            "rgb(204, 250, 239)"
+          ],
+          "text": "{ \"status\": \"ready\", \"enabled\": true, \"count\": 3 }"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)"
+          ],
+          "text": "preview_status"
+        },
+        {
+          "background": "rgb(19, 27, 42)",
+          "foreground": "rgb(208, 219, 255)",
+          "colors": [
+            "rgb(208, 219, 255)",
+            "rgb(204, 250, 239)"
+          ],
+          "text": "\"preview_configuration_for_a_very_long_synthetic_resource_name_without_spaces\""
+        }
+      ],
+      "overflow": 0
+    }
+  ],
+  "errors": [],
+  "captureWorkflow": "https://github.com/lanej/easy-ui/actions/runs/41684221672",
+  "artifactSha256": "9b6d7a2d25117b05615edfd1964598d3af92821580f1af1bdbf9077c9455053a"
+}

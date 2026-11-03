@@ -1,0 +1,72 @@
+name: Code syntax browser evidence
+
+on:
+  push:
+    paths:
+      - "easy-ui-react/src/CodeSnippet/**"
+      - "easy-ui-react/src/CodeBlock/**"
+      - "easy-ui-react/src/InlineCode/**"
+      - "easy-ui-react/src/Theme/**"
+      - "easy-ui-tokens/**"
+      - "scripts/check-code-syntax.mjs"
+      - ".github/workflows/code-syntax.yml"
+  pull_request:
+    paths:
+      - "easy-ui-react/src/CodeSnippet/**"
+      - "easy-ui-react/src/CodeBlock/**"
+      - "easy-ui-react/src/InlineCode/**"
+      - "easy-ui-react/src/Theme/**"
+      - "easy-ui-tokens/**"
+      - "scripts/check-code-syntax.mjs"
+      - ".github/workflows/code-syntax.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: code-syntax-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build:react
+      - run: npm run test --workspace=@easypost/easy-ui -- src/CodeSnippet src/CodeBlock src/InlineCode
+      - run: npm run build:storybook
+      - run: npm run check:storybook
+      - run: npm ci --prefix scripts/preview-metrics --no-audit --no-fund
+      - run: npx --prefix scripts/preview-metrics playwright install --with-deps chromium
+      - name: Verify syntax themes, inline layout, and interactions
+        env:
+          STORYBOOK_URL: http://127.0.0.1:9018
+          CODE_SYNTAX_REPORT_DIR: ${{ runner.temp }}/code-syntax
+        run: |
+          python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/code-syntax-storybook.log" 2>&1 &
+          server=$!
+          trap 'kill "$server"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
+          node scripts/check-code-syntax.mjs
+      - name: Retain syntax screenshots and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-syntax-evidence
+          path: |
+            ${{ runner.temp }}/code-syntax
+            ${{ runner.temp }}/code-syntax-storybook.log
+          if-no-files-found: warn

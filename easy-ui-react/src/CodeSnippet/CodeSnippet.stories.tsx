@@ -1,5 +1,9 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
-import React from "react";
+import React, { useState } from "react";
+import { Box } from "../Box";
+import { ThemeProvider, createTheme } from "../Theme";
+import { ThemeToggle } from "../ThemeToggle";
+import { VerticalStack } from "../VerticalStack";
 import { CodeSnippet, CodeSnippetProps } from "./CodeSnippet";
 import { SnippetLanguages, SnippetLanguage } from "./SyntaxHighlighter";
 
@@ -40,6 +44,70 @@ export const MaxLines: Story = {
     maxLines: 8,
     showLineNumbers: true,
   },
+};
+
+const syntaxExample = `// Readable comments and distinct syntax roles.
+const message = "Ready to preview";
+function describe(count) {
+  return /ready/i.test(message) ? count + 1 : 0;
+}
+console.log(describe(3));`;
+
+const jsonExample = `{
+  "name": "Sample package",
+  "ready": true,
+  "count": 3,
+  "destination": null
+}`;
+
+export const SyntaxColors: Story = {
+  render: () => (
+    <VerticalStack gap="3">
+      <CodeSnippet code={jsonExample} language="json" showLineNumbers />
+      <CodeSnippet code={syntaxExample} language="javascript" showLineNumbers />
+    </VerticalStack>
+  ),
+};
+
+const customSyntaxTheme = createTheme(({ colorScheme }) => ({
+  "color.positive.700": colorScheme === "light" ? "#6e3bbd" : "#c4a7ff",
+}));
+
+function ThemeScopesExample() {
+  const [mode, setMode] = useState<"light" | "dark">("light");
+  return (
+    <ThemeProvider colorScheme={mode}>
+      <Box background="neutral.050" padding="2">
+        <VerticalStack gap="3">
+          <ThemeToggle mode={mode} onModeChange={setMode} />
+          <div data-syntax-scope="active">
+            <CodeSnippet code={syntaxExample} language="javascript" />
+          </div>
+          <div>
+            <ThemeProvider colorScheme="inverted">
+              <div data-syntax-scope="inverted">
+                <CodeSnippet code={syntaxExample} language="javascript" />
+              </div>
+            </ThemeProvider>
+          </div>
+        </VerticalStack>
+      </Box>
+    </ThemeProvider>
+  );
+}
+
+export const ThemeScopes: Story = {
+  render: () => <ThemeScopesExample />,
+};
+
+export const CustomTheme: Story = {
+  render: () => (
+    <ThemeProvider theme={customSyntaxTheme}>
+      <div data-syntax-scope="custom">
+        <CodeSnippet code={jsonExample} language="json" />
+      </div>
+    </ThemeProvider>
+  ),
 };
 
 export function getSnippetEntries() {
