@@ -63,6 +63,10 @@ The ledger defaults map connections to a subdued theme color and hides ordinary 
 <Canvas of={Stories.CompactLedger} />
 <Canvas of={Stories.UnassignedDelivery} />
 
+The ledger example's local basemap follows the active theme, including live OS preference changes for `system` and `inverted`. It updates the existing basemap's paint to retain the map camera, overlays, and selection. This example inverts the surrounding theme; choose System in the toolbar to follow the opposite OS preference. Applications supply their own `map.mapStyle`.
+
+<Canvas of={Stories.BranchingHistoriesInverted} />
+
 ### Assessment placement
 
 | Scope                | Placement                                                     | Supplied content                                                           |

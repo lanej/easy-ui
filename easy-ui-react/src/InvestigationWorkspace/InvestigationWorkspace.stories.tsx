@@ -26,7 +26,7 @@ import {
 } from "../DurationDistribution";
 import { Button } from "../Button";
 import { Text } from "../Text";
-import { useColorScheme } from "../Theme";
+import { ThemeProvider, useColorScheme } from "../Theme";
 import styles from "./InvestigationWorkspace.stories.module.scss";
 import { InvestigationLedgerExample } from "./InvestigationLedger.examples";
 
@@ -272,6 +272,13 @@ export const CompactLedger: Story = {
 };
 export const BranchingHistories: Story = {
   render: () => <InvestigationLedgerExample />,
+};
+export const BranchingHistoriesInverted: Story = {
+  render: () => (
+    <ThemeProvider colorScheme="inverted">
+      <InvestigationLedgerExample />
+    </ThemeProvider>
+  ),
 };
 export const BranchingHistoriesNarrow: Story = {
   render: () => <InvestigationLedgerExample narrow />,

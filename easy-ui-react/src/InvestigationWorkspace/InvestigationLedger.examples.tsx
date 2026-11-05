@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import tokens from "@easypost/easy-ui-tokens/js/tokens";
 import type { FeatureCollection } from "geojson";
-import type { StyleSpecification } from "maplibre-gl";
+import type { Map as MapInstance, StyleSpecification } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { InvestigationWorkspace } from "./InvestigationWorkspace";
 import {
@@ -54,6 +54,20 @@ function mapStyle(scheme: "light" | "dark"): StyleSpecification {
 }
 const lightStyle = mapStyle("light");
 const darkStyle = mapStyle("dark");
+
+function updateBasemapColors(map: MapInstance, scheme: "light" | "dark") {
+  for (const [layer, property, token] of [
+    ["background", "background-color", "000"],
+    ["land", "fill-color", "100"],
+    ["state-borders", "line-color", "300"],
+  ] as const) {
+    map.setPaintProperty(
+      layer,
+      property,
+      tokens[`theme.${scheme}.color.neutral.${token}`],
+    );
+  }
+}
 
 function LedgerDetails({
   event,
@@ -164,6 +178,44 @@ export function InvestigationLedgerExample({
   unassigned?: boolean;
 }) {
   const { resolvedColorScheme } = useColorScheme();
+  const [systemDark, setSystemDark] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      !!window.matchMedia?.("(prefers-color-scheme: dark)").matches,
+  );
+  useEffect(() => {
+    if (
+      resolvedColorScheme !== "system" &&
+      resolvedColorScheme !== "inverted"
+    ) {
+      return;
+    }
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const update = () => setSystemDark(media?.matches ?? false);
+    update();
+    media?.addEventListener("change", update);
+    return () => media?.removeEventListener("change", update);
+  }, [resolvedColorScheme]);
+  // ThemeProvider resolves nesting but leaves system preference to CSS.
+  const colorScheme =
+    resolvedColorScheme === "system"
+      ? systemDark
+        ? "dark"
+        : "light"
+      : resolvedColorScheme === "inverted"
+        ? systemDark
+          ? "light"
+          : "dark"
+        : resolvedColorScheme;
+  // Replacing mapStyle recreates the engine. Paint updates retain its camera,
+  // loaded overlays, and interaction state across all theme changes.
+  const initialStyle = useRef(colorScheme === "dark" ? darkStyle : lightStyle);
+  const mapInstance = useRef<MapInstance | null>(null);
+  useEffect(() => {
+    if (mapInstance.current) {
+      updateBasemapColors(mapInstance.current, colorScheme);
+    }
+  }, [colorScheme]);
   const [selection, setSelection] = useState<InvestigationSelection>({
     type: "event",
     eventId: unassigned
@@ -232,7 +284,7 @@ export function InvestigationLedgerExample({
         map={{
           title: "Reported locations",
           description: "Supplied connections · traveled route unconfirmed",
-          mapStyle: resolvedColorScheme === "dark" ? darkStyle : lightStyle,
+          mapStyle: initialStyle.current,
           workerUrl,
           controls: {
             fitAll: true,
@@ -245,6 +297,11 @@ export function InvestigationLedgerExample({
             scale: true,
           },
           onMapReady: (map) => {
+            mapInstance.current = map;
+            map.once("remove", () => {
+              if (mapInstance.current === map) mapInstance.current = null;
+            });
+            updateBasemapColors(map, colorScheme);
             (window as unknown as { ledgerMap: typeof map }).ledgerMap = map;
           },
         }}
