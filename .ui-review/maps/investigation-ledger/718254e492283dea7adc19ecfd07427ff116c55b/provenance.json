@@ -1,0 +1,247 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "lanej/easy-ui",
+    "revision": "718254e492283dea7adc19ecfd07427ff116c55b",
+    "tree": "6ad812bd652e025843d0ef68110d4061be35c98c",
+    "workingDirectory": "/workspace/scratch/421401351d04/easy-ui",
+    "sourceEditsDuringCapture": false,
+    "identityVerification": "Local HEAD and HEAD^{tree} were checked immediately before capture and while writing this manifest. The builder verified the staged source tree against the preserved remote source tree."
+  },
+  "build": {
+    "commands": [
+      "npm run build:storybook > /tmp/easy-ui-ledger-storybook-final.log 2>&1",
+      "npm run build:react > /tmp/easy-ui-ledger-package-final.log 2>&1"
+    ],
+    "workingDirectory": "/workspace/scratch/421401351d04/easy-ui",
+    "specialEnvironmentOverrides": {},
+    "prerequisitesReportedByBuilder": [
+      "npm ci --ignore-scripts --no-audit --no-fund",
+      "Token and icon packages built before the final Storybook and React builds."
+    ],
+    "node": "v24.22.1",
+    "npm": "11.19.0",
+    "inputTree": "6ad812bd652e025843d0ef68110d4061be35c98c",
+    "timingNote": "Builds completed from the identical staged tree before creation of the source commit object. No source edits occurred after staging; the tree identity is the provenance link to the named commit.",
+    "renderedArtifact": "storybook-static",
+    "artifactFileCount": 604,
+    "artifactTotalBytes": 18156499,
+    "artifactTreeSha256": "9ab5e9c1b29b04294ec7b381fafc15d802dfaa0c5f8eaae0e65bc06907f3088a",
+    "artifactTreeHashDefinition": "SHA-256 of UTF-8 lines <file sha256><two spaces><relative POSIX path><newline>, sorted lexicographically by relative path across every file in storybook-static.",
+    "entryFiles": [
+      {
+        "file": "storybook-static/index.json",
+        "sha256": "68b8697e342bee250f9d6602e6fa083c0a86d35b420b3fc7d084d6b0755a29e6"
+      },
+      {
+        "file": "storybook-static/iframe.html",
+        "sha256": "f0f31d21e92987bbc1326342fed0876105467725373eb30a88383ea8fc99ec3c"
+      }
+    ],
+    "scope": "These images render the built Storybook implementation with synthetic fixtures; they are not evidence of consumer application adoption or a packed-package rendering."
+  },
+  "capture": {
+    "command": "INVESTIGATION_REPORT_DIR=/workspace/scratch/421401351d04/easy-ui/.ui-review/maps/investigation-ledger/718254e492283dea7adc19ecfd07427ff116c55b node /workspace/scratch/421401351d04/run-ledger-browser-checks.mjs",
+    "workingDirectory": "/workspace/scratch/421401351d04/easy-ui",
+    "orchestration": "A Python static server and the Node browser-check process were child processes of the same launcher invocation so they shared the available local network namespace. The server was terminated when the browser suite exited.",
+    "launcherSha256": "9f6aee6fc60895db7016b52cf64a3c25a046012522be84475b65012f7adf0df5",
+    "launcherSource": "import { spawn } from 'node:child_process';\nimport { openSync, closeSync } from 'node:fs';\nconst cwd='/workspace/scratch/421401351d04/easy-ui';\nconst report=process.env.INVESTIGATION_REPORT_DIR??'/workspace/scratch/421401351d04/ledger-browser-current';\nconst log=openSync('/workspace/scratch/421401351d04/ledger-browser-server.log','w');\nconst server=spawn('python3',['-u','-m','http.server','9019','--bind','127.0.0.1','--directory','storybook-static'],{cwd,stdio:['ignore',log,log]});\ntry{\n for(let i=0;i<50;i++){\n  try{const res=await fetch('http://127.0.0.1:9019/index.json');if(res.ok)break;}catch{}\n  if(i===49)throw new Error('Storybook test server did not start');\n  await new Promise(resolve=>setTimeout(resolve,100));\n }\n const child=spawn(process.execPath,[process.env.LEDGER_BROWSER_SCRIPT??'scripts/check-investigation-workspace.mjs'],{cwd,stdio:'inherit',env:{...process.env,INVESTIGATION_LEDGER_ONLY:'1',INVESTIGATION_REPORT_DIR:report,STORYBOOK_URL:'http://127.0.0.1:9019',PLAYWRIGHT_MODULE:'/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright',BROWSER_EXECUTABLE_PATH:'/workspace/scratch/421401351d04/chromium-runtime/chromium',BROWSER_LAUNCH_ARGS:'[\"--no-sandbox\",\"--disable-dev-shm-usage\"]'}});\n process.exitCode=await new Promise((resolve,reject)=>{child.on('error',reject);child.on('exit',code=>resolve(code??1));});\n}finally{server.kill('SIGTERM');closeSync(log);}\n",
+    "serverCommand": "python3 -u -m http.server 9019 --bind 127.0.0.1 --directory storybook-static",
+    "checkCommand": "node scripts/check-investigation-workspace.mjs",
+    "checkScriptSha256": "fea337c933e1de1a4f91ebcea5337b9513e007b455a2467259900ce4e4bcd55f",
+    "environment": {
+      "INVESTIGATION_LEDGER_ONLY": "1",
+      "INVESTIGATION_REPORT_DIR": "/workspace/scratch/421401351d04/easy-ui/.ui-review/maps/investigation-ledger/718254e492283dea7adc19ecfd07427ff116c55b",
+      "STORYBOOK_URL": "http://127.0.0.1:9019",
+      "PLAYWRIGHT_MODULE": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright",
+      "BROWSER_EXECUTABLE_PATH": "/workspace/scratch/421401351d04/chromium-runtime/chromium",
+      "BROWSER_LAUNCH_ARGS": "[\"--no-sandbox\",\"--disable-dev-shm-usage\"]"
+    },
+    "browser": {
+      "name": "Chromium",
+      "version": "133.0.6943.0",
+      "headless": true,
+      "deviceScaleFactor": 1.5,
+      "launchArguments": [
+        "--use-gl=angle",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader",
+        "--no-sandbox",
+        "--disable-dev-shm-usage"
+      ]
+    },
+    "presentationChanges": "None. Final images use the built source without injected CSS or application changes. The capture helper clears hover/focus and dismisses transient popovers before taking each image.",
+    "data": "Synthetic observations and caller-supplied candidate relationships from the committed InvestigationLedger fixture."
+  },
+  "validation": {
+    "reportFile": "report.json",
+    "reportSha256": "58611aa7d092ee886cc1bc114bdb8e5fe7a108887858fb48129045fec3aa3384",
+    "result": "pass",
+    "checkGroups": 15,
+    "axeAuditGroups": 14,
+    "axeTags": [
+      "wcag2a",
+      "wcag2aa",
+      "wcag21aa"
+    ],
+    "checks": [
+      "branching-histories-light-1200",
+      "branching-histories-light-390",
+      "branching-histories-light-390-expanded",
+      "branching-histories-light-390-map",
+      "branching-histories-dark-1200",
+      "branching-histories-dark-390",
+      "branching-histories-dark-390-expanded",
+      "branching-histories-dark-390-map",
+      "ledger-explicit-topology-selection-filter-and-keyboard",
+      "ledger-mobile-selection-camera-and-focus",
+      "branching-histories-light-390x640",
+      "branching-histories-light-390x640-expanded",
+      "compact-ledger-light-1200",
+      "branching-histories-narrow-light-1200",
+      "unassigned-delivery-light-1200"
+    ],
+    "runtimeErrors": [],
+    "axeViolations": 0,
+    "verifiedBehavior": [
+      "11 canonical rows and graph nodes; 8 explicit links",
+      "Shared observations rendered once",
+      "Independent origin and unassigned delivery remain roots",
+      "Path and repeated-location filtering create no false bridges",
+      "Event type and assessment remain distinct; absent assessment is Unassessed",
+      "Map selection highlights corresponding supplied segments; candidate highlight remains dashed",
+      "Selection and Events/Map switching preserve the map camera",
+      "Keyboard row navigation, native relationship disclosure, and responsive focus retention",
+      "Complete selected row remains visible in its pane and is not covered by the inspector",
+      "390 by 640 collapsed and expanded inspector is reachable by normal page scrolling"
+    ],
+    "limits": [
+      "Chromium browser proof only; no Safari or Firefox run.",
+      "Automated accessibility audits do not establish complete accessibility conformance.",
+      "No production records, history inference, or consumer adoption are asserted by the fixture."
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "branching-histories-light-1200.png",
+      "storyId": "organisms-investigation-investigationworkspace--branching-histories",
+      "url": "http://127.0.0.1:9019/iframe.html?id=organisms-investigation-investigationworkspace--branching-histories&viewMode=story&globals=colorScheme:light",
+      "theme": "light",
+      "viewportCssPixels": {
+        "width": 1200,
+        "height": 1100
+      },
+      "deviceScaleFactor": 1.5,
+      "captureTarget": "#storybook-root",
+      "captureMode": "Playwright locator screenshot of the full element bounds; raster height can exceed viewport height.",
+      "state": "All observations; b-delivered selected; desktop map and event assessment visible.",
+      "caption": "Compact observation ledger with shared origins, separate candidate histories, event types and scoped risk.",
+      "sha256": "c97e8774859a83240336d2339204118465362e6cb3354f9c9362578ed8aff8fe",
+      "bytes": 325275,
+      "dimensionsPixels": {
+        "width": 1752,
+        "height": 1365
+      },
+      "capturedAtUtc": "2026-11-05T22:59:41.328880+00:00",
+      "visuallyInspected": true,
+      "inspection": "Inspected at readable resolution for loading, text overlap, clipping, event/risk placement, graph connections, and selected-state consistency. Intentional scrolling of the observation pane may clip nonselected rows at its boundary."
+    },
+    {
+      "file": "branching-histories-dark-1200.png",
+      "storyId": "organisms-investigation-investigationworkspace--branching-histories",
+      "url": "http://127.0.0.1:9019/iframe.html?id=organisms-investigation-investigationworkspace--branching-histories&viewMode=story&globals=colorScheme:dark",
+      "theme": "dark",
+      "viewportCssPixels": {
+        "width": 1200,
+        "height": 1100
+      },
+      "deviceScaleFactor": 1.5,
+      "captureTarget": "#storybook-root",
+      "captureMode": "Playwright locator screenshot of the full element bounds; raster height can exceed viewport height.",
+      "state": "All observations; b-delivered selected; desktop map and event assessment visible.",
+      "caption": "The same investigation in the dark theme, retaining neutral graph rails and separate risk labels.",
+      "sha256": "698f3cdeb9f17737bb92609c81a3aec26d839bda92e5201ef68b1150b4f24462",
+      "bytes": 333914,
+      "dimensionsPixels": {
+        "width": 1752,
+        "height": 1365
+      },
+      "capturedAtUtc": "2026-11-05T22:59:46.660889+00:00",
+      "visuallyInspected": true,
+      "inspection": "Inspected at readable resolution for loading, text overlap, clipping, event/risk placement, graph connections, and selected-state consistency. Intentional scrolling of the observation pane may clip nonselected rows at its boundary."
+    },
+    {
+      "file": "branching-histories-light-390-map.png",
+      "storyId": "organisms-investigation-investigationworkspace--branching-histories",
+      "url": "http://127.0.0.1:9019/iframe.html?id=organisms-investigation-investigationworkspace--branching-histories&viewMode=story&globals=colorScheme:light",
+      "theme": "light",
+      "viewportCssPixels": {
+        "width": 390,
+        "height": 1100
+      },
+      "deviceScaleFactor": 1.5,
+      "captureTarget": "#storybook-root",
+      "captureMode": "Playwright locator screenshot of the full element bounds; raster height can exceed viewport height.",
+      "state": "Map tab active; b-delivered selected; inspector expanded.",
+      "caption": "Narrow map view with the selected delivered observation and its separate high-risk assessment.",
+      "sha256": "84d247b969ed83c8c17873435b005e7d173218a57de2940317f6ac5827ece6e7",
+      "bytes": 160766,
+      "dimensionsPixels": {
+        "width": 537,
+        "height": 1562
+      },
+      "capturedAtUtc": "2026-11-05T22:59:43.948838+00:00",
+      "visuallyInspected": true,
+      "inspection": "Inspected at readable resolution for loading, text overlap, clipping, event/risk placement, graph connections, and selected-state consistency. Intentional scrolling of the observation pane may clip nonselected rows at its boundary."
+    },
+    {
+      "file": "branching-histories-light-390x640-expanded.png",
+      "storyId": "organisms-investigation-investigationworkspace--branching-histories",
+      "url": "http://127.0.0.1:9019/iframe.html?id=organisms-investigation-investigationworkspace--branching-histories&viewMode=story&globals=colorScheme:light",
+      "theme": "light",
+      "viewportCssPixels": {
+        "width": 390,
+        "height": 640
+      },
+      "deviceScaleFactor": 1.5,
+      "captureTarget": "#storybook-root",
+      "captureMode": "Playwright locator screenshot of the full element bounds; raster height can exceed viewport height.",
+      "state": "Observations tab active; b-delivered selected; list auto-revealed the complete selected row; inspector expanded and reached through normal document scrolling.",
+      "caption": "Short-screen layout keeps the selected row unobscured while the expanded inspector follows in normal document flow.",
+      "sha256": "42b3bd1da2079d19cac0fc8afaf50b2200ae74795ebc121bbb6e1be7f29b879e",
+      "bytes": 137495,
+      "dimensionsPixels": {
+        "width": 537,
+        "height": 1467
+      },
+      "capturedAtUtc": "2026-11-05T22:59:56.469088+00:00",
+      "visuallyInspected": true,
+      "inspection": "Inspected at readable resolution for loading, text overlap, clipping, event/risk placement, graph connections, and selected-state consistency. Intentional scrolling of the observation pane may clip nonselected rows at its boundary."
+    },
+    {
+      "file": "unassigned-delivery-light-1200.png",
+      "storyId": "organisms-investigation-investigationworkspace--unassigned-delivery",
+      "url": "http://127.0.0.1:9019/iframe.html?id=organisms-investigation-investigationworkspace--unassigned-delivery&viewMode=story&globals=colorScheme:light",
+      "theme": "light",
+      "viewportCssPixels": {
+        "width": 1200,
+        "height": 1100
+      },
+      "deviceScaleFactor": 1.5,
+      "captureTarget": "#storybook-root",
+      "captureMode": "Playwright locator screenshot of the full element bounds; raster height can exceed viewport height.",
+      "state": "All observations; unassigned-delivery selected; no selected graph or map connections.",
+      "caption": "An unassigned delivered observation remains disconnected and explicitly unassessed.",
+      "sha256": "39047c6977bb092eb190537612103ee5128c4fdc019cc3452a3ba38b61a5ce27",
+      "bytes": 328695,
+      "dimensionsPixels": {
+        "width": 1752,
+        "height": 1365
+      },
+      "capturedAtUtc": "2026-11-05T23:00:02.717221+00:00",
+      "visuallyInspected": true,
+      "inspection": "Inspected at readable resolution for loading, text overlap, clipping, event/risk placement, graph connections, and selected-state consistency. Intentional scrolling of the observation pane may clip nonselected rows at its boundary."
+    }
+  ],
+  "manifestCreatedAtUtc": "2026-11-05T23:01:40.180061+00:00"
+}
