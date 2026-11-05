@@ -22,6 +22,97 @@ import { EventTimeline } from "@easypost/easy-ui/EventTimeline";
 
 ## Examples
 
+### Location-first ledger
+
+Use `variant="ledger"` for a compact navigator beside a map and persistent
+inspector. Location is the headline, `event.label` remains the visible event
+type, and the occurrence label sits below it. Events without a location keep
+their event label as the headline. The original `"timeline"` variant remains
+the default.
+
+`renderTrailing` supplies a separate event assessment, such as a labeled risk
+pill. It stays outside the event-selection button, remains independently
+interactive, and is associated with the button's accessible description.
+Event types, selection, and risk never share a severity color or inference.
+The example below supplies its risk labels directly; missing assessment is
+shown as **Not assessed**, never inferred to be low risk.
+
+```tsx
+<EventTimeline
+  variant="ledger"
+  size="compact"
+  events={events}
+  selectedId={selectedId}
+  onSelectedIdChange={setSelectedId}
+  renderTrailing={(event) => <EventRisk assessment={risks[event.id]} />}
+/>
+```
+
+The selected background spans the row, including its trailing assessment.
+Ledger rows preserve caller order and do not draw an implicit connection
+between adjacent events. Repeated locations and multiple delivery reports
+remain separate records. `detailLabel` stays visible even in compact ledger
+rows so supplied receipt or source distinctions are not lost. Detailed rows
+also show the separately labeled receipt time; an event with no occurrence
+label shows any available receipt time at every ledger size.
+
+For a shared inspector, keep rich details in that inspector rather than
+populating `renderDetails` on every row. Inline metrics remain outside the
+native selection button and inside the selected row; below metrics and
+interval content retain their existing separate slots.
+
+<Canvas of={Stories.Ledger} />
+<Canvas of={Stories.LedgerFullTimestamps} />
+
+### Explicit candidate relationships
+
+Supply `connections` to draw a bounded graph gutter alongside the rows. Each
+`EventTimelineConnection` names its own `id`, `fromEventId`, and `toEventId`;
+optional `pathIds` and `label` preserve caller-owned context. Connections are
+candidate relationships between observations, not a reconstructed physical
+route. Shared path membership, matching locations, equal timestamps, and
+adjacent rows never create a connection on their own.
+
+```tsx
+import {
+  EventTimeline,
+  type EventTimelineConnection,
+} from "@easypost/easy-ui/EventTimeline";
+
+const connections: EventTimelineConnection[] = [
+  { id: "north", fromEventId: "shared", toEventId: "north-delivery" },
+  { id: "east", fromEventId: "shared", toEventId: "east-delivery" },
+];
+
+<EventTimeline
+  variant="ledger"
+  events={events}
+  connections={connections}
+  selectedConnectionIds={["east"]}
+/>;
+```
+
+A fork has one shared event and separate outgoing links. An independent origin
+starts a new root; an unassigned delivery stays unconnected. Returning to a
+place remains a distinct event with its own ID, and only explicit links decide
+how that event relates to earlier observations. Multiple deliveries and
+duplicate-looking observations are retained.
+
+`selectedConnectionIds` emphasizes supplied relationships independently of
+event selection. Rows keep the existing keyboard controls; the decorative
+graph introduces no extra selection targets. Its native **candidate
+relationships** disclosure lists every directed connection. Backward links,
+self-links, and links with an endpoint outside the supplied event list receive
+an explanation there. If more than four rails are required, the complete list
+replaces the graph rather than hiding relationships or implying false joins.
+Supplying `connections={[]}` also suppresses the ordinary chronology connector.
+
+The example below has two candidate deliveries sharing earlier observations,
+a separate origin-to-delivery history, and an unassigned delivery. Risk remains
+an independent caller-supplied annotation.
+
+<Canvas of={Stories.BranchingLedger} />
+
 ### Complete timestamps
 
 Supply full occurrence and receipt labels, including dates and timezone, when the evidence requires them. Native timestamps stay at least 12px in narrow containers. Their 96px column keeps dates and clock values readable, wrapping complete UTC labels at spaces without shortening the supplied evidence. Receipt time remains separate from occurrence time.

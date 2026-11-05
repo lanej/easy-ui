@@ -6,6 +6,12 @@
   min-inline-size: 0;
 }
 
+.ledgerExample {
+  inline-size: 360px;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
 .comparison {
   display: grid;
   gap: 20px;

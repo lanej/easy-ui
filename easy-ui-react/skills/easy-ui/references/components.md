@@ -311,6 +311,16 @@ stay at least 12px and wrap at spaces in a readable column.
 See [full timestamps](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--full-timestamps).
 See [timeline presentations](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--presentation-modes).
 
+Use `EventTimeline variant="ledger"` for compact location-first observations with
+visible event types and occurrence times. `renderTrailing` holds labeled event
+assessments outside the selection button. Supply `connections` with stable IDs,
+`fromEventId`, `toEventId`, and optional `pathIds`/`label` for a branching gutter.
+An empty array means no relationships; omission retains chronological connectors.
+Never derive candidate edges from location or time order. Shared observations
+appear once; revisits require distinct event IDs. Backward or unavailable
+endpoints remain in the relationship list; more than four rails use that list.
+See [branching observations](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--branching-ledger).
+
 Use `InvestigationWorkspace` to coordinate timeline, map, and persistent details
 through one controlled `InvestigationSelection`. Supply stable event, location,
 path, and segment IDs with explicit memberships. Scoped event stepping preserves
@@ -319,6 +329,16 @@ camera. Narrow layouts retain the same mounted views behind Events / Map tabs.
 Use `PathComparison` with the same selection for caller-aligned candidate rows.
 The application supplies ordering, alignment, and confidence; neither component
 chooses a true history or repairs timestamps.
+Use `InvestigationWorkspace variant="ledger"` for a joined ledger, subdued map,
+and persistent inspector. `InvestigationConnection` adds optional `segmentId` to
+an event connection; only that explicit association links event edges to map
+geometry. Keep investigation assessment in the application header, event risk in
+`timeline.renderTrailing`, and candidate risk in `renderPathTrailing`. Put reasons,
+assessment time, and available reference data in `renderDetails`. Event type,
+selection, candidate identity, and risk are separate. Missing assessment is not
+low risk. Keep disjoint roots and delivery claims separate, including unassigned
+observations. Caller map colors and label visibility remain authoritative.
+See [compact branching investigation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--branching-histories).
 See [linked investigation](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-investigation-investigationworkspace--docs)
 and [candidate comparison](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-investigation-pathcomparison--docs).
 

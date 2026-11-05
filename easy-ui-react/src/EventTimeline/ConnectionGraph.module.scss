@@ -1,0 +1,119 @@
+@use "../styles/common" as *;
+
+.graph {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.casing,
+.rail {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+// A small break at crossings prevents unrelated rails from reading as joins.
+// Actual joins always have the one shared event circle painted above the rails.
+.casing {
+  stroke: design-token("color.neutral.000");
+  stroke-width: 5;
+}
+
+.rail {
+  stroke: design-token("color.neutral.400");
+  stroke-width: 1.5;
+}
+
+.edge[data-selected="true"] .rail {
+  stroke: design-token("color.primary.600");
+  stroke-width: 2;
+}
+
+.node {
+  fill: design-token("color.neutral.000");
+  stroke: design-token("color.neutral.500");
+  stroke-width: 1.5;
+
+  &[data-selected="true"] {
+    stroke: design-token("color.primary.600");
+    stroke-width: 2;
+  }
+}
+
+.relationships {
+  min-inline-size: 0;
+  margin-block-start: 8px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid design-token("color.neutral.200");
+  color: design-token("color.neutral.700");
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+
+  > summary {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 4px;
+  }
+
+  > summary:focus-visible {
+    outline: 2px solid design-token("color.primary.600");
+    outline-offset: 2px;
+  }
+
+  > p {
+    margin-block: 8px;
+  }
+
+  > ul {
+    margin-block: 8px 0;
+    padding-inline-start: 20px;
+  }
+
+  li {
+    margin-block: 8px;
+    padding: 4px;
+    border-radius: 4px;
+  }
+
+  li[data-selected="true"] {
+    background: design-token("color.primary.050");
+    color: design-token("color.neutral.900");
+  }
+}
+
+.context,
+.selectedLabel {
+  display: block;
+  margin-block-start: 2px;
+}
+
+.selectedLabel {
+  color: design-token("color.primary.700");
+}
+
+@media (forced-colors: active) {
+  .casing,
+  .node {
+    forced-color-adjust: none;
+    stroke: Canvas;
+  }
+
+  .node {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+
+  .rail {
+    stroke: CanvasText;
+  }
+
+  .edge[data-selected="true"] .rail,
+  .node[data-selected="true"] {
+    stroke: Highlight;
+  }
+}

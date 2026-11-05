@@ -28,13 +28,19 @@ page.on("pageerror", (error) => {
   errors.push(error.message);
 });
 const base = process.env.STORYBOOK_URL ?? "http://localhost:9019";
+const ledgerOnly = process.env.INVESTIGATION_LEDGER_ONLY === "1";
+const mapHandle = ledgerOnly ? "ledgerMap" : "investigationMap";
 const root = () =>
   page.getByRole("region", { name: "Event investigation", exact: true });
 const details = () =>
   page.getByRole("region", { name: "Selection details", exact: true });
-const timeline = () => page.getByRole("list", { name: "Events", exact: true });
-async function open(story, theme = "light", width = 1200) {
-  await page.setViewportSize({ width, height: 1100 });
+const timeline = () =>
+  page.getByRole("list", {
+    name: ledgerOnly ? "Observations" : "Events",
+    exact: true,
+  });
+async function open(story, theme = "light", width = 1200, height = 1100) {
+  await page.setViewportSize({ width, height });
   await page.goto(
     `${base}/iframe.html?id=organisms-investigation-investigationworkspace--${story}&viewMode=story&globals=colorScheme:${theme}`,
   );
@@ -47,9 +53,8 @@ async function open(story, theme = "light", width = 1200) {
   await waitForResponsiveLayout();
   if ((await root().getAttribute("data-narrow")) !== "true") await waitForMap();
   await page.waitForFunction(
-    () =>
-      document.fonts.status === "loaded" &&
-      window.investigationMap?.isStyleLoaded(),
+    (key) => document.fonts.status === "loaded" && window[key]?.isStyleLoaded(),
+    mapHandle,
   );
 }
 async function waitForResponsiveLayout() {
@@ -64,8 +69,8 @@ async function waitForResponsiveLayout() {
   });
 }
 async function waitForMap() {
-  await page.waitForFunction(() => {
-    const map = window.investigationMap;
+  await page.waitForFunction((key) => {
+    const map = window[key];
     const element = map?.getContainer();
     return (
       element?.clientWidth > 0 &&
@@ -75,7 +80,7 @@ async function waitForMap() {
       map.getCanvas().clientWidth === element.clientWidth &&
       map.getCanvas().clientHeight === element.clientHeight
     );
-  });
+  }, mapHandle);
 }
 async function showMap() {
   const tab = page.getByRole("tab", { name: "Map", exact: true });
@@ -143,6 +148,37 @@ async function audit(name) {
       `${name}: short inspectors stay directly below the map`,
     );
   }
+  if (ledgerOnly) {
+    const panel = root().locator('[data-view-panel="events"]');
+    if (await panel.isVisible()) {
+      assert(
+        await panel.evaluate((panel) => {
+          const current = panel
+            .querySelector('[aria-current="true"]')
+            ?.closest("li");
+          if (!current) return true;
+          const row = current.getBoundingClientRect();
+          const viewport = panel
+            .querySelector("[data-timeline-scroll]")
+            .getBoundingClientRect();
+          const inspector = document
+            .querySelector('[aria-label="Selection details"]')
+            .getBoundingClientRect();
+          const covered =
+            row.bottom > inspector.top + 1 &&
+            row.top < inspector.bottom - 1 &&
+            row.right > inspector.left + 1 &&
+            row.left < inspector.right - 1;
+          return (
+            row.top >= viewport.top - 1 &&
+            row.bottom <= viewport.bottom + 1 &&
+            !covered
+          );
+        }),
+        `${name}: the selected row's event type, time and assessment remain visible`,
+      );
+    }
+  }
   const headline = details().getByRole("group", {
     name: "Current dwell",
     exact: true,
@@ -170,7 +206,378 @@ async function screenshot(name) {
     .locator("#storybook-root")
     .screenshot({ path: `${output}/${name}.png` });
 }
-try {
+async function checkLedger() {
+  const eventIds = [
+    "accepted",
+    "sorted",
+    "a-transit",
+    "b-transit",
+    "c-accepted",
+    "a-delivered",
+    "b-out",
+    "b-revisit",
+    "c-delivered",
+    "b-delivered",
+    "unassigned-delivery",
+  ];
+  const connectionIds = [
+    "accepted-sorted",
+    "sorted-a",
+    "a-delivery",
+    "sorted-b",
+    "b-out",
+    "b-return",
+    "b-delivery",
+    "c-delivery",
+  ];
+  const graph = () => root().locator("[data-connection-graph]");
+  const camera = () =>
+    page.evaluate(
+      (key) => ({
+        center: window[key].getCenter().toArray(),
+        zoom: window[key].getZoom(),
+      }),
+      mapHandle,
+    );
+  const selectedMapSegments = () =>
+    page.evaluate((key) => {
+      const sources = window[key].getStyle().sources;
+      const source = Object.entries(sources).find(([id]) =>
+        decodeURIComponent(id).endsWith("-investigation-connections"),
+      )?.[1];
+      return source?.data.features
+        .filter((feature) => feature.properties.selected)
+        .map((feature) => feature.id)
+        .sort();
+    }, mapHandle);
+  const eventButton = (name) => timeline().getByRole("button", { name });
+  async function expectGraph(nodes, edges, roots) {
+    // ResizeObserver measures the native row buttons after filtering or wrapping.
+    await page.waitForFunction(
+      ({ nodeCount, edgeCount }) => {
+        const graph = document.querySelector("[data-connection-graph]");
+        return (
+          graph?.querySelectorAll("[data-event-id]").length === nodeCount &&
+          graph.querySelectorAll("[data-connection-id]").length === edgeCount
+        );
+      },
+      { nodeCount: nodes.length, edgeCount: edges.length },
+    );
+    assert.equal(await timeline().getByRole("button").count(), nodes.length);
+    assert.deepEqual(
+      await graph()
+        .locator("[data-event-id]")
+        .evaluateAll((nodes) => nodes.map((node) => node.dataset.eventId)),
+      nodes,
+      "Every canonical observation has one row and one graph node",
+    );
+    assert.deepEqual(
+      await graph()
+        .locator("[data-connection-id]")
+        .evaluateAll((edges) =>
+          edges.map((edge) => edge.dataset.connectionId).sort(),
+        ),
+      [...edges].sort(),
+      "Only supplied connections with both endpoints in this view are drawn",
+    );
+    if (roots)
+      assert.deepEqual(
+        await graph()
+          .locator('[data-event-id][data-root="true"]')
+          .evaluateAll((nodes) => nodes.map((node) => node.dataset.eventId)),
+        roots,
+        "Independent origins and unassigned observations retain separate roots",
+      );
+  }
+
+  // Audit the full composition in both themes and responsive layouts. The other
+  // stories below isolate changed behavior without repeating the full matrix.
+  for (const theme of ["light", "dark"]) {
+    for (const width of [1200, 390]) {
+      await open("branching-histories", theme, width);
+      await expectGraph(eventIds, connectionIds, [
+        "accepted",
+        "c-accepted",
+        "unassigned-delivery",
+      ]);
+      await audit(`branching-histories-${theme}-${width}`);
+      if (width === 1200)
+        await screenshot(`branching-histories-${theme}-${width}`);
+      else {
+        await details()
+          .getByRole("button", { name: "Show details", exact: true })
+          .click();
+        await audit(`branching-histories-${theme}-${width}-expanded`);
+        await showMap();
+        await audit(`branching-histories-${theme}-${width}-map`);
+        if (theme === "light")
+          await screenshot("branching-histories-light-390-map");
+      }
+    }
+  }
+
+  await open("branching-histories");
+  const originalCamera = await camera();
+  assert.deepEqual(
+    await selectedMapSegments(),
+    ["b-delivery"],
+    "The map highlights the selected event's supplied connection",
+  );
+  assert(
+    await page.evaluate(
+      (key) =>
+        window[key]
+          .getStyle()
+          .layers.some(
+            (layer) =>
+              layer.id.endsWith("/candidate-selection") &&
+              layer.paint?.["line-dasharray"]?.length > 0,
+          ),
+      mapHandle,
+    ),
+    "Candidate map highlights remain dashed",
+  );
+  assert(
+    await details()
+      .getByRole("heading", { name: "Delivered", exact: true })
+      .isVisible(),
+  );
+  assert(
+    await details()
+      .getByRole("region", { name: "Event assessment" })
+      .getByText("High risk", { exact: true })
+      .isVisible(),
+  );
+  assert(
+    await details()
+      .getByText("Oct 23 · 12:29 UTC", { exact: true })
+      .isVisible(),
+  );
+  const revisit = eventButton(/Stotts City, MO.*Oct 23.*09:18.*Return visit/);
+  assert.equal(
+    await eventButton(/Stotts City, MO/).count(),
+    2,
+    "A revisit is a distinct observation at the same location",
+  );
+  await revisit.click();
+  assert(
+    await details()
+      .getByRole("heading", { name: "Arrived at facility", exact: true })
+      .isVisible(),
+  );
+  assert(await details().getByText("High risk", { exact: true }).isVisible());
+  assert(
+    await timeline().getByText("Return visit", { exact: true }).isVisible(),
+  );
+  await eventButton(/Ludington, MI.*Accepted/).click();
+  assert(await details().getByText("Unassessed", { exact: true }).isVisible());
+  assert(
+    await details()
+      .getByText(
+        "Candidate membership: History A, History B. No dwell or facility baseline supplied.",
+        { exact: true },
+      )
+      .isVisible(),
+  );
+
+  await root().getByRole("button", { name: "History B", exact: true }).click();
+  assert.equal(
+    await timeline().getByRole("button").count(),
+    11,
+    "Selecting a history preserves canonical observations",
+  );
+  await root()
+    .getByRole("checkbox", { name: "Related only", exact: true })
+    .check();
+  await expectGraph(
+    ["accepted", "sorted", "b-transit", "b-out", "b-revisit", "b-delivered"],
+    ["accepted-sorted", "sorted-b", "b-out", "b-return", "b-delivery"],
+    ["accepted"],
+  );
+  await root().getByRole("button", { name: "History C", exact: true }).click();
+  await expectGraph(
+    ["c-accepted", "c-delivered"],
+    ["c-delivery"],
+    ["c-accepted"],
+  );
+  await root()
+    .getByRole("button", { name: "All observations", exact: true })
+    .click();
+  await expectGraph(eventIds, connectionIds);
+
+  // The two Stotts observations are not adjacent in any supplied relationship.
+  // Filtering to their location must leave two isolated nodes, never a bridge.
+  await page
+    .getByRole("button", { name: "Select Stotts City, MO", exact: true })
+    .click();
+  assert(
+    await details()
+      .getByText("Location · 2 events", { exact: true })
+      .isVisible(),
+  );
+  await expectGraph(["b-transit", "b-revisit"], [], ["b-transit", "b-revisit"]);
+  for (let i = 0; i < 2; i++)
+    await details()
+      .getByRole("button", { name: "Next event", exact: true })
+      .click();
+  assert(
+    await details()
+      .getByText("Oct 23 · 09:18 UTC", { exact: true })
+      .isVisible(),
+  );
+  await root()
+    .getByRole("button", { name: "All observations", exact: true })
+    .click();
+  await expectGraph(eventIds, connectionIds);
+
+  // Native disclosure exposes every edge to keyboard and assistive technology.
+  const relationships = root().getByText("8 candidate relationships", {
+    exact: true,
+  });
+  await relationships.focus();
+  await page.keyboard.press("Enter");
+  const relationshipList = root().getByRole("list", {
+    name: "Candidate relationships",
+    exact: true,
+  });
+  assert(await relationshipList.isVisible());
+  assert.equal(await relationshipList.getByRole("listitem").count(), 8);
+  assert(
+    await relationships.evaluate((node) => node === document.activeElement),
+  );
+  await page.keyboard.press("Enter");
+
+  await eventButton(/Ludington, MI.*Accepted/).focus();
+  await page.keyboard.press("ArrowDown");
+  const sorted = eventButton(/Grand Rapids, MI.*Arrived at facility/);
+  assert.equal(await sorted.getAttribute("aria-current"), "true");
+  assert(
+    await sorted.evaluate((node) => node === document.activeElement),
+    "Arrow navigation follows the focused row",
+  );
+  await page.keyboard.press("End");
+  const unassigned = eventButton(/Ottawa, KS.*Unassigned observation/);
+  assert.equal(await unassigned.getAttribute("aria-current"), "true");
+  assert.equal(
+    await graph().locator('[data-connection-id][data-selected="true"]').count(),
+    0,
+  );
+  assert(await details().getByText("Unassessed", { exact: true }).isVisible());
+  assert(
+    await details()
+      .getByText(
+        "No candidate history assigned. No dwell or facility baseline supplied.",
+        { exact: true },
+      )
+      .isVisible(),
+  );
+  assert.deepEqual(
+    await selectedMapSegments(),
+    [],
+    "An unassigned observation does not select an unrelated map connection",
+  );
+  assert.deepEqual(
+    await camera(),
+    originalCamera,
+    "Event, path and location selections preserve the camera",
+  );
+  checks.push("ledger-explicit-topology-selection-filter-and-keyboard");
+
+  await revisit.focus();
+  await page.keyboard.press("Enter");
+  await page.evaluate(() => {
+    window.savedLedgerMap = window.ledgerMap;
+  });
+  await page.setViewportSize({ width: 390, height: 1100 });
+  await waitForResponsiveLayout();
+  assert(
+    await revisit.evaluate((node) => node === document.activeElement),
+    "Narrowing retains event focus",
+  );
+  const observationsTab = page.getByRole("tab", {
+    name: "Observations",
+    exact: true,
+  });
+  assert.equal(await observationsTab.getAttribute("aria-selected"), "true");
+  await observationsTab.focus();
+  await page.keyboard.press("ArrowRight");
+  const mapTab = page.getByRole("tab", { name: "Map", exact: true });
+  assert(await mapTab.evaluate((node) => node === document.activeElement));
+  await waitForMap();
+  assert(
+    await page.evaluate(() => window.savedLedgerMap === window.ledgerMap),
+    "Responsive layout preserves the map instance",
+  );
+  assert(
+    await details()
+      .getByText("Oct 23 · 09:18 UTC", { exact: true })
+      .isVisible(),
+  );
+  const narrowCamera = await camera();
+  await observationsTab.click();
+  assert.equal(await revisit.getAttribute("aria-current"), "true");
+  await mapTab.click();
+  await waitForMap();
+  assert.deepEqual(
+    await camera(),
+    narrowCamera,
+    "Events/Map switching retains the camera",
+  );
+  await audit("ledger-mobile-selection-camera-and-focus");
+
+  await open("branching-histories", "light", 390, 640);
+  for (const expanded of [false, true]) {
+    if (expanded)
+      await details()
+        .getByRole("button", { name: "Show details", exact: true })
+        .click();
+    // Short screens may scroll the document to reach the inspector; its normal
+    // flow must not cover the selected row in the events pane.
+    await details().scrollIntoViewIfNeeded();
+    assert(
+      await details().evaluate((inspector) => {
+        const box = inspector.getBoundingClientRect();
+        return box.top >= -1 && box.bottom <= innerHeight + 1;
+      }),
+      "The short-screen inspector is reachable by normal page scrolling",
+    );
+    await audit(
+      `branching-histories-light-390x640${expanded ? "-expanded" : ""}`,
+    );
+  }
+  await screenshot("branching-histories-light-390x640-expanded");
+
+  await open("compact-ledger");
+  await expectGraph(
+    ["accepted", "sorted", "a-transit", "a-delivered"],
+    ["accepted-sorted", "sorted-a", "a-delivery"],
+    ["accepted"],
+  );
+  await audit("compact-ledger-light-1200");
+  await open("branching-histories-narrow");
+  assert.equal(
+    await root().getAttribute("data-narrow"),
+    "true",
+    "The container width controls the narrow layout",
+  );
+  await expectGraph(eventIds, connectionIds);
+  await audit("branching-histories-narrow-light-1200");
+  await open("unassigned-delivery");
+  await expectGraph(eventIds, connectionIds, [
+    "accepted",
+    "c-accepted",
+    "unassigned-delivery",
+  ]);
+  assert.equal(
+    await graph().locator('[data-connection-id][data-selected="true"]').count(),
+    0,
+  );
+  assert(await details().getByText("Unassessed", { exact: true }).isVisible());
+  await audit("unassigned-delivery-light-1200");
+  await screenshot("unassigned-delivery-light-1200");
+}
+
+async function checkDefault() {
   const stories = [
     "linked-selection",
     "shared-connection",
@@ -567,6 +974,11 @@ try {
     );
   }
   await audit("responsive-outside-focus");
+}
+
+try {
+  if (ledgerOnly) await checkLedger();
+  else await checkDefault();
   assert.deepEqual(errors, [], "Browser runtime errors");
   await writeFile(
     `${output}/report.json`,

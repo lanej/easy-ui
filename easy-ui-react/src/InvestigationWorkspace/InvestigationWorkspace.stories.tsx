@@ -28,6 +28,7 @@ import { Button } from "../Button";
 import { Text } from "../Text";
 import { useColorScheme } from "../Theme";
 import styles from "./InvestigationWorkspace.stories.module.scss";
+import { InvestigationLedgerExample } from "./InvestigationLedger.examples";
 
 // Local schematic basemap keeps the examples independent of tile credentials/network access.
 const mapStyle: StyleSpecification = {
@@ -266,6 +267,18 @@ const meta: Meta<typeof InvestigationWorkspace> = {
 };
 export default meta;
 type Story = StoryObj<InvestigationWorkspaceProps>;
+export const CompactLedger: Story = {
+  render: () => <InvestigationLedgerExample singleHistory />,
+};
+export const BranchingHistories: Story = {
+  render: () => <InvestigationLedgerExample />,
+};
+export const BranchingHistoriesNarrow: Story = {
+  render: () => <InvestigationLedgerExample narrow />,
+};
+export const UnassignedDelivery: Story = {
+  render: () => <InvestigationLedgerExample unassigned />,
+};
 export const LinkedSelection: Story = { render: () => <Example /> };
 export const WithEventMetrics: Story = {
   render: () => <Example withMetrics />,

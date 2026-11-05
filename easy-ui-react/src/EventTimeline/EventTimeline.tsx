@@ -1,5 +1,10 @@
 import React, { useRef, useState } from "react";
 import { EventItem, type EventTimelineEvent } from "./EventItem";
+import { ConnectionGraph } from "./ConnectionGraph";
+import {
+  getConnectionGraphLayout,
+  type EventTimelineConnection,
+} from "./connectionGraph";
 import styles from "./EventTimeline.module.scss";
 
 export type EventTimelineProps = {
@@ -29,6 +34,12 @@ export type EventTimelineProps = {
   emptyLabel?: string;
   ariaLabel?: string;
   size?: "compact" | "default" | "detailed";
+  /** Location-first rows without an implied single chronology connector. */
+  variant?: "timeline" | "ledger";
+  /** Explicit candidate relationships. Supplying [] also suppresses the ordinary connector. */
+  connections?: readonly EventTimelineConnection[];
+  /** Emphasize supplied relationships without deriving them from timestamp adjacency. */
+  selectedConnectionIds?: readonly string[];
 };
 
 /** Evidence-oriented chronology, with controlled selection and explicit caller ordering. */
@@ -47,6 +58,9 @@ export function EventTimeline({
   emptyLabel = "No observations",
   ariaLabel = "Event timeline",
   size = "default",
+  variant = "timeline",
+  connections,
+  selectedConnectionIds,
 }: EventTimelineProps) {
   const [internalId, setInternalId] = useState<string | null>(
     defaultSelectedId,
@@ -54,6 +68,11 @@ export function EventTimeline({
   const activeId = selectedId === undefined ? internalId : selectedId;
   const related = relatedIds && new Set(relatedIds);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
+  const graphRoot = useRef<HTMLDivElement>(null);
+  const graph =
+    connections === undefined
+      ? undefined
+      : getConnectionGraphLayout(events, connections);
   const choose = (event: EventTimelineEvent) => {
     if (selectedId === undefined) setInternalId(event.id);
     onSelectedIdChange?.(event.id);
@@ -74,9 +93,14 @@ export function EventTimeline({
     buttons.current.get(target.id)?.focus();
     return true;
   };
-  if (!events.length) return <div className={styles.empty}>{emptyLabel}</div>;
-  return (
-    <ol className={styles.timeline} aria-label={ariaLabel} data-size={size}>
+  const timeline = events.length ? (
+    <ol
+      className={styles.timeline}
+      aria-label={ariaLabel}
+      data-size={size}
+      data-variant={variant}
+      data-connected={connections !== undefined || undefined}
+    >
       {events.map((event, index) => {
         const details = renderDetails?.(event);
         const metrics = renderMetrics?.(event);
@@ -92,6 +116,7 @@ export function EventTimeline({
             <EventItem
               event={event}
               size={size}
+              variant={variant}
               trailing={renderTrailing?.(event)}
               inline={metricsPlacement === "inline"}
               inlineMetrics={
@@ -127,5 +152,26 @@ export function EventTimeline({
         );
       })}
     </ol>
+  ) : (
+    <div className={styles.empty}>{emptyLabel}</div>
+  );
+  if (connections === undefined || !graph) return timeline;
+  return (
+    <div
+      ref={graphRoot}
+      className={styles.graphTimeline}
+      style={
+        { "--connection-gutter": `${graph.width}px` } as React.CSSProperties
+      }
+    >
+      {timeline}
+      <ConnectionGraph
+        events={events}
+        connections={connections}
+        selectedConnectionIds={selectedConnectionIds}
+        rowElements={buttons.current}
+        rootRef={graphRoot}
+      />
+    </div>
   );
 }

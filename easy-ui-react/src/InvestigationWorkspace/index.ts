@@ -3,6 +3,7 @@ export type { InvestigationWorkspaceProps } from "./InvestigationWorkspace";
 export type {
   InvestigationSelection,
   InvestigationPath,
+  InvestigationConnection,
   InvestigationDetailsContext,
 } from "./selection";
 

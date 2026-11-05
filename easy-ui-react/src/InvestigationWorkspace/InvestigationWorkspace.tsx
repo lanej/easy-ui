@@ -26,6 +26,7 @@ import {
   type InvestigationDetailsContext,
   type InvestigationRecords,
   type InvestigationSelection,
+  type InvestigationPath,
 } from "./selection";
 import styles from "./InvestigationWorkspace.module.scss";
 
@@ -47,6 +48,10 @@ export type InvestigationWorkspaceProps = InvestigationRecords & {
   map: MapOptions;
   /** Caller content below the persistent selection summary; may include charts and actions. */
   renderDetails?: (context: InvestigationDetailsContext) => ReactNode;
+  /** Compact location-first ledger, quiet map, and a single joined inspection surface. */
+  variant?: "default" | "ledger";
+  /** Caller-owned candidate assessment; separate from the candidate selection button. */
+  renderPathTrailing?: (path: InvestigationPath) => ReactNode;
   /** Reuse the timeline's optional content slots and density. */
   timeline?: Pick<
     EventTimelineProps,
@@ -56,6 +61,7 @@ export type InvestigationWorkspaceProps = InvestigationRecords & {
     | "renderInterval"
     | "renderDetails"
     | "size"
+    | "variant"
     | "emptyLabel"
   >;
   ariaLabel?: string;
@@ -85,16 +91,62 @@ export function InvestigationWorkspace({
   locations = [],
   segments = [],
   paths = [],
+  connections: eventConnections,
   selection,
   onSelectionChange,
   map,
   timeline,
   renderDetails,
+  variant = "default",
+  renderPathTrailing,
   ariaLabel = "Event investigation",
   labels,
 }: InvestigationWorkspaceProps) {
   const id = useId();
   const root = useRef<HTMLElement>(null);
+  const [mapColors, setMapColors] = useState({
+    primary: "#608cff",
+    muted: "#6a7e9d",
+  });
+  // Read inherited CSS tokens, including system/inverted schemes and partial
+  // custom themes. MapLibre paint cannot resolve CSS custom properties itself.
+  useEffect(() => {
+    const element = root.current;
+    if (!element || variant !== "ledger") return;
+    const scheme = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const update = () => {
+      const css = getComputedStyle(element);
+      const primary =
+        css.getPropertyValue("--ezui-color-primary-600").trim() || "#608cff";
+      const muted =
+        css.getPropertyValue("--ezui-color-neutral-500").trim() || "#6a7e9d";
+      setMapColors((previous) =>
+        previous.primary === primary && previous.muted === muted
+          ? previous
+          : { primary, muted },
+      );
+    };
+    update();
+    // ThemeProvider can replace its style text without rerendering this child.
+    // Observe only its style nodes, not map/marker mutations during interaction.
+    const observer = new MutationObserver(update);
+    document
+      .querySelectorAll('style[id^="ezui-theme-style-level-"]')
+      .forEach((style) => {
+        observer.observe(style, {
+          childList: true,
+          characterData: true,
+          subtree: true,
+        });
+      });
+    scheme?.addEventListener("change", update);
+    return () => {
+      observer.disconnect();
+      scheme?.removeEventListener("change", update);
+    };
+  });
+  const primary = variant === "ledger" ? mapColors.primary : "#608cff";
+  const muted = mapColors.muted;
   const [isNarrow, setIsNarrow] = useState(false);
   const [view, setView] = useState<"events" | "map">("events");
   const [relatedOnly, setRelatedOnly] = useState(false);
@@ -148,7 +200,7 @@ export function InvestigationWorkspace({
   }, [isNarrow]);
   const overlayId = `${id}-investigation-connections`;
   const context = resolveSelection(
-    { events, locations, segments, paths },
+    { events, locations, segments, paths, connections: eventConnections },
     selection,
   );
   const { event, location, path, segment, isAvailable } = context;
@@ -179,10 +231,14 @@ export function InvestigationWorkspace({
     const active = panel?.querySelector<HTMLElement>('[aria-current="true"]');
     if (!panel || !active) return;
     const bounds = panel.getBoundingClientRect();
-    const row = active.getBoundingClientRect();
-    if (row.top < bounds.top) panel.scrollTop += row.top - bounds.top - 8;
-    else if (row.bottom > bounds.bottom)
-      panel.scrollTop += row.bottom - bounds.bottom + 8;
+    const row = (active.closest("li") ?? active).getBoundingClientRect();
+    // Reveal the whole compact record when it fits. An expanded evidence row
+    // can exceed the viewport; preserve its selected headline in that case.
+    const target =
+      row.height <= bounds.height - 16 ? row : active.getBoundingClientRect();
+    if (target.top < bounds.top) panel.scrollTop += target.top - bounds.top - 8;
+    else if (target.bottom > bounds.bottom)
+      panel.scrollTop += target.bottom - bounds.bottom + 8;
   }, [event?.id, isNarrow, view, relatedOnly]);
   const text = {
     timeline: "Events",
@@ -203,7 +259,29 @@ export function InvestigationWorkspace({
   const selectedSegments = new Set(
     segment
       ? [segment.id]
-      : context.paths.flatMap((item) => [...item.segmentIds]),
+      : variant === "ledger" && eventConnections !== undefined && !path
+        ? (context.connections ?? []).flatMap((item) =>
+            selection && item.segmentId ? [item.segmentId] : [],
+          )
+        : context.paths.flatMap((item) => [...item.segmentIds]),
+  );
+  // Preserve explicit caller colors and label policies. Quiet defaults are presentation only.
+  const mapLocations = useMemo(
+    () =>
+      variant === "ledger"
+        ? locations.map((item) => ({
+            ...item,
+            labelMinZoom: item.labelMinZoom ?? 24,
+          }))
+        : locations,
+    [locations, variant],
+  );
+  const mapSegments = useMemo(
+    () =>
+      variant === "ledger"
+        ? segments.map((item) => ({ ...item, color: item.color ?? muted }))
+        : segments,
+    [segments, variant, muted],
   );
   // Membership is presentation only: do not infer geometry or remove conflicting records.
   const geometry = useMemo(
@@ -228,17 +306,54 @@ export function InvestigationWorkspace({
       {
         id: "selection",
         type: "line",
-        filter: ["==", ["get", "selected"], true],
+        filter:
+          variant === "ledger"
+            ? [
+                "all",
+                ["==", ["get", "selected"], true],
+                [
+                  "!",
+                  [
+                    "in",
+                    ["get", "evidence"],
+                    ["literal", ["planned", "inferred"]],
+                  ],
+                ],
+              ]
+            : ["==", ["get", "selected"], true],
         paint: {
-          "line-color": "#608cff",
-          "line-width": 12,
-          "line-opacity": 0.35,
+          "line-color": primary,
+          "line-width": variant === "ledger" ? 5 : 12,
+          "line-opacity": variant === "ledger" ? 0.65 : 0.35,
         },
       },
+      ...(variant === "ledger"
+        ? ([
+            {
+              id: "candidate-selection",
+              type: "line",
+              filter: [
+                "all",
+                ["==", ["get", "selected"], true],
+                [
+                  "in",
+                  ["get", "evidence"],
+                  ["literal", ["planned", "inferred"]],
+                ],
+              ],
+              paint: {
+                "line-color": primary,
+                "line-width": 4,
+                "line-opacity": 0.8,
+                "line-dasharray": [2, 2],
+              },
+            },
+          ] satisfies MapOverlay["layers"])
+        : []),
       {
         id: "hit-area",
         type: "line",
-        paint: { "line-color": "#608cff", "line-width": 18, "line-opacity": 0 },
+        paint: { "line-color": primary, "line-width": 18, "line-opacity": 0 },
       },
     ],
   };
@@ -302,6 +417,7 @@ export function InvestigationWorkspace({
       className={styles.root}
       aria-label={ariaLabel}
       data-narrow={isNarrow}
+      data-variant={variant}
     >
       {paths.length > 0 && (
         <div className={styles.paths} role="group" aria-label={text.paths}>
@@ -320,18 +436,29 @@ export function InvestigationWorkspace({
           >
             {text.allPaths}
           </Button>
-          {paths.map((item) => (
-            <Button
-              key={item.id}
-              size="sm"
-              variant={path?.id === item.id ? "filled" : "outlined"}
-              aria-pressed={path?.id === item.id}
-              onPress={() =>
-                onSelectionChange({ type: "path", pathId: item.id })
-              }
-            >
-              {item.label}
-            </Button>
+          {paths.map((item, index) => (
+            <div className={styles.pathOption} key={item.id}>
+              <Button
+                size="sm"
+                variant={path?.id === item.id ? "filled" : "outlined"}
+                aria-pressed={path?.id === item.id}
+                aria-describedby={
+                  renderPathTrailing
+                    ? `${id}-path-${index}-annotation`
+                    : undefined
+                }
+                onPress={() =>
+                  onSelectionChange({ type: "path", pathId: item.id })
+                }
+              >
+                {item.label}
+              </Button>
+              {renderPathTrailing && (
+                <div id={`${id}-path-${index}-annotation`}>
+                  {renderPathTrailing(item)}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -420,6 +547,17 @@ export function InvestigationWorkspace({
             )}
             <EventTimeline
               {...timeline}
+              variant={
+                timeline?.variant ??
+                (variant === "ledger" ? "ledger" : "timeline")
+              }
+              size={
+                timeline?.size ?? (variant === "ledger" ? "compact" : undefined)
+              }
+              connections={eventConnections}
+              selectedConnectionIds={
+                selection ? context.connections?.map((item) => item.id) : []
+              }
               events={visibleEvents.map((item) =>
                 repeatedLabels.has(item.id) &&
                 item.receivedTimeLabel &&
@@ -459,8 +597,8 @@ export function InvestigationWorkspace({
               segment?.id,
             ])}
             aria-label={map["aria-label"] ?? text.map}
-            facilities={locations}
-            segments={segments}
+            facilities={mapLocations}
+            segments={mapSegments}
             selectedFacilityId={location?.id}
             selectedSegmentId={segment?.id}
             onFacilitySelect={(locationId) =>
