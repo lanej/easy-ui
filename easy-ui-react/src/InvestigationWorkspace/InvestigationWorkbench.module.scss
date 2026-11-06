@@ -67,6 +67,8 @@
 .headerMeta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  min-inline-size: 0;
   gap: 10px;
   color: design-token("color.neutral.700");
   font-size: 12px;
@@ -542,7 +544,7 @@
   .title h2 {
     font-size: 16px;
   }
-  .headerMeta {
+  .headerCounts {
     display: none;
   }
   .modeSwitch button {

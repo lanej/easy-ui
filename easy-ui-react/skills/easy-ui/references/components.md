@@ -340,12 +340,20 @@ unselected. The inspector preserves source and time for applicable event,
 connection, and focused-path assessments, including non-event selections.
 Forecast geometry never creates scan events; supplied
 comparison claims carry source and time. Use `renderConnectionMetrics` for incoming
-edge evidence, not adjacent-row intervals. Existing `InvestigationWorkspace`
+edge evidence, not adjacent-row intervals. Explicit connections between unassigned
+observations retain their metrics and risk indicators in focused history, and
+selecting one reveals its row without stealing focus. Caller-owned header
+`actions` remain available at narrow widths. Widening restores focused view
+buttons to their panel without borrowing focus from sibling workbenches. Repeating Analyze deviation or
+Deviation analysis reveals the Deviation inspector; controlled mode changes
+still require the owner to accept the requested state. Existing `InvestigationWorkspace`
 consumers use `timeline.renderConnectionMetrics` for the same explicit-edge
 evidence. Forecasts split dateline crossings while preserving supplied gaps.
 Full references belong in the persistent
 inspector. See [Workbench deviation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-deviation)
 and [narrow workbench](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-narrow).
+See [unassigned connection evidence](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-unassigned-evidence)
+for supplied relationships outside any candidate history.
 
 Use `InvestigationWorkspace` to coordinate timeline, map, and persistent details
 through one controlled `InvestigationSelection`. Supply stable event, location,

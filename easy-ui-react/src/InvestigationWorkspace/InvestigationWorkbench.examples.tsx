@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 import tokens from "@easypost/easy-ui-tokens/js/tokens";
 import type { FeatureCollection } from "geojson";
 import type { Map as MapInstance, StyleSpecification } from "maplibre-gl";
@@ -19,6 +19,7 @@ import {
   type DurationHistogramBin,
 } from "../DurationDistribution";
 import { useColorScheme } from "../Theme";
+import { Button } from "../Button";
 import { Pill } from "../Pill";
 import geography from "./InvestigationLedger.geography.json";
 import styles from "./InvestigationWorkbench.examples.module.scss";
@@ -42,6 +43,38 @@ export const workbenchGraph: InvestigationGraph = {
       .filter((connection) => connection.pathIds.includes(path.id))
       .map((connection) => connection.id),
   })),
+};
+/** Explicit evidence can connect observations without assigning them to a history. */
+export const workbenchUnassignedGraph: InvestigationGraph = {
+  ...workbenchGraph,
+  events: workbenchGraph.events.flatMap((event) =>
+    event.id === "unassigned-delivery"
+      ? [
+          {
+            id: "unassigned-origin",
+            label: "Accepted",
+            locationId: "santa-rosa",
+            locationLabel: "Santa Rosa, NM",
+            timeLabel: "Oct 27 · 10:42 UTC",
+            detailLabel: "Unassigned origin",
+          },
+          {
+            ...event,
+            description:
+              "An explicit incoming relationship was supplied, without candidate history membership or a traveled-route claim.",
+          },
+        ]
+      : [event],
+  ),
+  connections: [
+    ...workbenchGraph.connections,
+    {
+      id: "unassigned-report-link",
+      fromEventId: "unassigned-origin",
+      toEventId: "unassigned-delivery",
+      label: "Unassigned acceptance → delivery report",
+    },
+  ],
 };
 export const workbenchPredictions: readonly InvestigationPrediction[] =
   ledgerPredictions.map((prediction, index) => ({
@@ -127,6 +160,13 @@ const bins = (counts: number[], width: number) =>
     count,
   }));
 const references: Record<string, Reference | undefined> = {
+  "unassigned-report-link": {
+    value: 3,
+    valueLabel: "3 h",
+    pair: "Santa Rosa reports",
+    domain: [0, 24],
+    bins: bins([8, 24, 30, 18, 10, 5, 3, 2], 3),
+  },
   "a-transfer-link": {
     value: 1916 / 60,
     valueLabel: "31 h 56 m",
@@ -234,13 +274,17 @@ export function InvestigationWorkbenchExample({
   narrow = false,
   assessments = workbenchAssessments,
   initialSelection = { type: "event", eventId: "revisit" },
+  withUnassignedEvidence = false,
 }: {
   mode?: InvestigationMode;
   narrow?: boolean;
   assessments?: readonly InvestigationAssessment[];
   initialSelection?: InvestigationSelection;
+  withUnassignedEvidence?: boolean;
 }) {
   const { resolvedColorScheme } = useColorScheme();
+  const [showNotes, setShowNotes] = useState(false);
+  const notesId = useId();
   const [systemDark, setSystemDark] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -283,7 +327,7 @@ export function InvestigationWorkbenchExample({
   useEffect(() => {
     if (map.current) updatePaint(map.current);
   }, [updatePaint]);
-  const themedGraph = useMemoGraph(scheme);
+  const themedGraph = useMemoGraph(scheme, withUnassignedEvidence);
   return (
     <div className={styles.example} style={{ maxWidth: narrow ? 390 : 1680 }}>
       <InvestigationWorkbench
@@ -294,9 +338,40 @@ export function InvestigationWorkbenchExample({
             Illustrative
           </Pill>
         }
+        actions={
+          <Button
+            size="sm"
+            variant="outlined"
+            color="neutral"
+            aria-expanded={showNotes}
+            aria-controls={notesId}
+            onPress={() => setShowNotes((shown) => !shown)}
+          >
+            Data notes
+          </Button>
+        }
         predictions={workbenchPredictions}
         deviations={workbenchDeviations}
-        assessments={assessments}
+        assessments={
+          withUnassignedEvidence
+            ? [
+                ...assessments,
+                {
+                  id: "unassigned-edge-finding",
+                  target: {
+                    type: "connection",
+                    connectionId: "unassigned-report-link",
+                  },
+                  label: "Evidence review",
+                  tone: "warning",
+                  summary:
+                    "This supplied finding belongs to the unassigned reports' explicit connection.",
+                  source: "Illustrative review policy",
+                  asOf: "Oct 27 · 14:05 UTC",
+                },
+              ]
+            : assessments
+        }
         defaultState={{
           mode,
           focusedPathId: mode === "overview" ? null : "a",
@@ -376,6 +451,10 @@ export function InvestigationWorkbenchExample({
           ) : null
         }
       />
+      <p id={notesId} hidden={!showNotes} className={styles.caption}>
+        Data notes: city centers are illustrative; connections and assessments
+        are explicitly supplied. No traveled route or risk is inferred.
+      </p>
       <p className={styles.caption}>
         Synthetic observations, candidate connections, reference distributions
         and supplied comparison findings. No live shipment or inferred route.
@@ -383,10 +462,13 @@ export function InvestigationWorkbenchExample({
     </div>
   );
 }
-function useMemoGraph(scheme: "light" | "dark") {
+function useMemoGraph(
+  scheme: "light" | "dark",
+  withUnassignedEvidence: boolean,
+) {
   return React.useMemo(
     () => ({
-      ...workbenchGraph,
+      ...(withUnassignedEvidence ? workbenchUnassignedGraph : workbenchGraph),
       paths: workbenchGraph.paths.map((path, index) => ({
         ...path,
         color: (scheme === "dark"
@@ -394,6 +476,6 @@ function useMemoGraph(scheme: "light" | "dark") {
           : ["#2563eb", "#7c3aed", "#087f8c"])[index],
       })),
     }),
-    [scheme],
+    [scheme, withUnassignedEvidence],
   );
 }

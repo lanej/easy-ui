@@ -447,3 +447,10 @@ export const WorkbenchAssessmentScopes: Story = {
     />
   ),
 };
+
+/** Unassigned observations retain their supplied edge evidence while a history is focused. */
+export const WorkbenchUnassignedEvidence: Story = {
+  render: () => (
+    <InvestigationWorkbenchExample mode="focused" withUnassignedEvidence />
+  ),
+};

@@ -8,11 +8,18 @@ import type { InvestigationWorkbenchState } from "./workbenchState";
 /** Stable geometry, membership and offsets. Focus changes paint, never camera or topology. */
 export function workbenchMapData(
   records: Required<InvestigationRecords>,
-  state: InvestigationWorkbenchState,
+  state: Pick<
+    InvestigationWorkbenchState,
+    "mode" | "focusedPathId" | "enabledPredictionIds" | "comparisonPredictionId"
+  >,
   predictions: readonly InvestigationPrediction[],
   prefix: string,
 ) {
-  const focused = state.mode !== "overview" ? state.focusedPathId : null;
+  const focused =
+    state.mode !== "overview" &&
+    records.paths.some((path) => path.id === state.focusedPathId)
+      ? state.focusedPathId
+      : null;
   const geometry = segmentData(records.locations, records.segments);
   const bySegment = new Map(
     records.segments.map((segment) => [

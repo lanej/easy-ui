@@ -78,12 +78,20 @@ one arbitrarily. `state` / `onStateChange` support controlled use;
 `defaultState` supports initial uncontrolled state. The public
 `InvestigationWorkbenchState`, `initialInvestigationWorkbenchState`, and
 `reduceInvestigationWorkbench` expose the same state transitions.
+Analyze deviation and Deviation analysis reveal the Deviation inspector on every
+successful command, including when that mode is already active. Controlled mode
+changes still wait for the application to accept the requested state. If the focused
+history is removed, remaining map histories return to undimmed context without
+choosing a replacement or discarding the unavailable selection.
 
 **Evidence belongs to explicit connections.** `renderConnectionMetrics` receives
 an incoming connection and both endpoints. It can compose compact
 `DurationDistribution` histograms; `renderEvidence` expands their reference and
 provenance in the persistent inspector. Two incoming edges remain independently
-addressable. Risk annotations are supplied as `InvestigationAssessment` records
+addressable. Focusing a history retains explicit connections between unassigned
+observations in their separate disclosure, including the same incoming metrics
+and event/connection risk indicators. Connections crossing out of that group are
+not drawn as if both endpoints belonged to it. Risk annotations are supplied as `InvestigationAssessment` records
 with event, connection or path targets, labels, tone, source and assessment time.
 The Event inspector shows applicable path assessments while that history is
 focused, event assessments for the selected observation, and connection assessments
@@ -106,15 +114,23 @@ reported in text. Missing assessment means unavailable, never zero deviation.
 `renderDeviationEvidence` provides application-owned comparison charts.
 
 At narrow widths, the history controls collapse and Events / Map buttons switch
-between the same mounted views. The inspector remains in normal page flow.
+between the same mounted views. Widening with focus on Events or Map moves focus
+to its retained panel. Resize handling never takes focus or view choice from a
+sibling workbench. The inspector remains in normal page flow.
 Inspector tabs support arrow keys and Home/End. Selection stays visible inside
-the ledger's own scroll region. Theme changes preserve the map instance.
+the ledger's own scroll region; selecting an unassigned visit reveals its
+disclosure before scrolling without moving keyboard focus. Caller-owned `actions`
+remain visible and wrap in the header at all widths; only observation/history
+counts are omitted below 1150px. The Data notes action demonstrates this in the
+examples. Selection changes preserve map geometry/overlay references and the
+camera. Theme changes preserve the map instance.
 
 <Canvas of={Stories.WorkbenchOverview} />
 <Canvas of={Stories.WorkbenchFocused} />
 <Canvas of={Stories.WorkbenchDeviation} />
 <Canvas of={Stories.WorkbenchNarrow} />
 <Canvas of={Stories.WorkbenchAssessmentScopes} />
+<Canvas of={Stories.WorkbenchUnassignedEvidence} />
 
 ### Compact observations and candidate histories
 

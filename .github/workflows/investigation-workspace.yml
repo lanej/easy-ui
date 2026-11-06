@@ -12,7 +12,7 @@ on:
       - "easy-ui-react/src/PathComparison/**"
       - "easy-ui-react/src/NetworkMap/**"
       - "easy-ui-react/src/HealthAssessment/**"
-      - "easy-ui-react/src/HealthOutcome/**"
+      - "easy-ui-react/src/HealthIndicator/**"
       - "easy-ui-react/src/ConcentrationReference/**"
       - "easy-ui-react/src/DurationDistribution/**"
       - "easy-ui-react/src/PercentileDistribution/**"

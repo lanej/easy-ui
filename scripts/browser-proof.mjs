@@ -51,6 +51,7 @@ export function reusable(artifact, run, context, now = Date.now()) {
     Number.isFinite(created) &&
     created <= now &&
     now - created < maxAge &&
+    run.status === "completed" &&
     run.conclusion === "success" &&
     run.path === context.workflow &&
     run.event === context.event &&
@@ -75,6 +76,18 @@ export async function findProof(name, context, request) {
     const run = await request(`/actions/runs/${artifact.workflow_run.id}`);
     if (reusable(artifact, run, context)) return run.html_url;
   }
+}
+
+export function gitMetadata(args) {
+  // Checkout is bind-mounted into the root-owned browser container. Trust only
+  // this checkout for this read, without changing global Git configuration.
+  return execFileSync(
+    "git",
+    ["-c", `safe.directory=${process.cwd()}`, ...args],
+    {
+      encoding: "utf8",
+    },
+  );
 }
 
 async function main() {
@@ -107,31 +120,27 @@ async function main() {
       suite.startsWith("charts-") || suite === "event-timeline"
         ? "scripts/preview-metrics"
         : "scripts/preview-maps";
-    const inputs = execFileSync(
-      "git",
-      [
-        "ls-files",
-        "-z",
-        preview,
-        workflow,
-        ".nvmrc",
-        "scripts/browser-proof.mjs",
-        ".github/actions/browser-proof",
-        ...(suite === "charts-layout" ? [".ui-review"] : []),
-        ...(suite === "maps-layout" ? [".ui-review/maps"] : []),
-        ...(suite === "hosted-maps" ? ["scripts/build-docs.mjs"] : []),
-        ...(suite === "event-timeline"
-          ? [
-              "scripts/check-event-timeline.mjs",
-              "scripts/check-investigation-workspace.mjs",
-              "scripts/check-investigation-workbench.mjs",
-              "scripts/check-map-free-investigation.mjs",
-              "scripts/check-investigation-toolkit.mjs",
-            ]
-          : []),
-      ],
-      { encoding: "utf8" },
-    )
+    const inputs = gitMetadata([
+      "ls-files",
+      "-z",
+      preview,
+      workflow,
+      ".nvmrc",
+      "scripts/browser-proof.mjs",
+      ".github/actions/browser-proof",
+      ...(suite === "charts-layout" ? [".ui-review"] : []),
+      ...(suite === "maps-layout" ? [".ui-review/maps"] : []),
+      ...(suite === "hosted-maps" ? ["scripts/build-docs.mjs"] : []),
+      ...(suite === "event-timeline"
+        ? [
+            "scripts/check-event-timeline.mjs",
+            "scripts/check-investigation-workspace.mjs",
+            "scripts/check-investigation-workbench.mjs",
+            "scripts/check-map-free-investigation.mjs",
+            "scripts/check-investigation-toolkit.mjs",
+          ]
+        : []),
+    ])
       .split("\0")
       .filter(
         (file) =>
@@ -148,6 +157,8 @@ async function main() {
       os: env.RUNNER_OS,
       image: env.ImageOS,
       imageVersion: env.ImageVersion,
+      browserEnvironment: env.PROOF_BROWSER_ENVIRONMENT,
+      browserVersion: env.PROOF_BROWSER_VERSION,
     });
   }
   if (!/^[a-f0-9]{64}$/.test(key ?? ""))
@@ -158,6 +169,8 @@ async function main() {
   if (
     mode === "check" &&
     env.GITHUB_EVENT_NAME !== "workflow_dispatch" &&
+    (!event.pull_request ||
+      event.pull_request.head.repo.full_name === env.GITHUB_REPOSITORY) &&
     Number(env.GITHUB_RUN_ATTEMPT) === 1
   ) {
     try {

@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -58,6 +59,7 @@ export type InvestigationWorkbenchProps = {
   title?: string;
   /** Optional investigation-level assessment; never inferred from event annotations. */
   summary?: ReactNode;
+  /** Caller-owned header actions remain available at every width. */
   actions?: ReactNode;
   predictions?: readonly InvestigationPrediction[];
   deviations?: readonly InvestigationDeviation[];
@@ -266,10 +268,23 @@ export function InvestigationWorkbench({
       records,
       predictions,
     );
+    // Repeated analysis commands must reveal their inspector even when the
+    // mode is already active. A rejected command must not navigate the tabs;
+    // controlled mode changes still wait for the owner to accept the state.
+    if (
+      next !== state &&
+      state.mode === "deviation" &&
+      next.mode === "deviation" &&
+      (action.type === "compare" ||
+        (action.type === "mode" && action.mode === "deviation"))
+    )
+      setTab("deviation");
     if (controlledState === undefined) setInternalState(next);
     onStateChange?.(next);
   };
   const [narrow, setNarrow] = useState(false);
+  const narrowMode = useRef(false);
+  const focusAfterResize = useRef<"events" | "map" | "sidebar" | null>(null);
   const [mobileView, setMobileView] = useState<"events" | "map">("events");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [mapInstance, setMapInstance] = useState<MapInstance | null>(null);
@@ -278,20 +293,43 @@ export function InvestigationWorkbench({
   useEffect(() => {
     const element = root.current;
     if (!element || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => {
-      const next = element.getBoundingClientRect().width <= 760;
+    const update = () => {
+      const width = element.getBoundingClientRect().width;
+      if (width <= 0) return;
+      const next = width <= 760;
+      if (next === narrowMode.current) return;
+      focusAfterResize.current = null;
       const active = document.activeElement;
-      if (next && active instanceof HTMLElement) {
-        if (active.closest("[data-workbench-sidebar]"))
-          setSidebarExpanded(true);
-        if (active.closest("[data-workbench-map]")) setMobileView("map");
-        if (active.closest("[data-workbench-events]")) setMobileView("events");
+      if (active instanceof HTMLElement && element.contains(active)) {
+        if (next) {
+          if (active.closest("[data-workbench-sidebar]"))
+            setSidebarExpanded(true);
+          if (active.closest("[data-workbench-map]")) setMobileView("map");
+          if (active.closest("[data-workbench-events]"))
+            setMobileView("events");
+        } else if (active.dataset.workbenchView) {
+          focusAfterResize.current = active.dataset.workbenchView as
+            "events" | "map";
+        } else if (active.matches("[data-workbench-sidebar] > summary")) {
+          focusAfterResize.current = "sidebar";
+        }
       }
+      narrowMode.current = next;
       setNarrow(next);
-    });
+    };
+    update();
+    const observer = new ResizeObserver(update);
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
+  useLayoutEffect(() => {
+    const target = focusAfterResize.current;
+    focusAfterResize.current = null;
+    if (target)
+      root.current
+        ?.querySelector<HTMLElement>(`[data-workbench-${target}]`)
+        ?.focus({ preventScroll: true });
+  }, [narrow]);
   useEffect(() => {
     setTab(state.mode === "deviation" ? "deviation" : "event");
   }, [state.mode]);
@@ -314,6 +352,13 @@ export function InvestigationWorkbench({
     () => records.events.filter((item) => !item.pathIds?.length),
     [records.events],
   );
+  const disconnectedConnections = useMemo(() => {
+    const ids = new Set(disconnected.map((item) => item.id));
+    return records.connections.filter(
+      (connection) =>
+        ids.has(connection.fromEventId) && ids.has(connection.toEventId),
+    );
+  }, [records.connections, disconnected]);
   const visibleEvents = useMemo(
     () =>
       records.events.filter((item) =>
@@ -337,9 +382,29 @@ export function InvestigationWorkbench({
       Object.fromEntries(records.paths.map((path) => [path.id, path.color!])),
     [records.paths],
   );
+  const { mode, focusedPathId, enabledPredictionIds, comparisonPredictionId } =
+    state;
   const mapData = useMemo(
-    () => workbenchMapData(records, state, predictions, id),
-    [records, state, predictions, id],
+    () =>
+      workbenchMapData(
+        records,
+        { mode, focusedPathId, enabledPredictionIds, comparisonPredictionId },
+        predictions,
+        id,
+      ),
+    [
+      records,
+      mode,
+      focusedPathId,
+      enabledPredictionIds,
+      comparisonPredictionId,
+      predictions,
+      id,
+    ],
+  );
+  const overlays = useMemo(
+    () => [...(map.overlays ?? []), ...mapData.overlays],
+    [map.overlays, mapData.overlays],
   );
   const applicableDeviations = deviations.filter(
     (deviation) => deviation.predictionId === comparedPrediction?.id,
@@ -398,6 +463,34 @@ export function InvestigationWorkbench({
       </span>
     );
   };
+  const connectionEvidence = (
+    connectionContext: EventTimelineConnectionContext,
+  ) => {
+    const flags = state.showRisks
+      ? assessments.filter(
+          (assessment) =>
+            assessment.target.type === "connection" &&
+            assessment.target.connectionId === connectionContext.connection.id,
+        )
+      : [];
+    const metrics = renderConnectionMetrics?.(connectionContext);
+    if (!flags.length) return metrics;
+    return (
+      <>
+        <span className={styles.riskFlags}>
+          {flags.map((flag) => (
+            <Pill key={flag.id} size="xs" tone={flag.tone}>
+              {flag.label}
+            </Pill>
+          ))}
+        </span>
+        {metrics}
+      </>
+    );
+  };
+  const selectedConnectionIds = state.selection
+    ? context.connections?.map((connection) => connection.id)
+    : [];
   const selectedIndex = visibleEvents.findIndex(
     (item) => item.id === event?.id,
   );
@@ -408,12 +501,26 @@ export function InvestigationWorkbench({
     );
     const selected = panel?.querySelector<HTMLElement>('[aria-current="true"]');
     if (!panel || !selected) return;
+    // A map/location selection may target a row inside the closed unassigned
+    // disclosure. Reveal it before measuring without moving keyboard focus.
+    let disclosure = selected.closest("details");
+    while (disclosure && panel.contains(disclosure)) {
+      disclosure.open = true;
+      disclosure = disclosure.parentElement?.closest("details") ?? null;
+    }
     const bounds = panel.getBoundingClientRect();
     const row = selected.getBoundingClientRect();
     if (row.top < bounds.top) panel.scrollTop += row.top - bounds.top - 8;
     else if (row.bottom > bounds.bottom)
       panel.scrollTop += row.bottom - bounds.bottom + 8;
-  }, [event?.id, narrow, mobileView, focused?.id]);
+  }, [
+    event?.id,
+    records.events,
+    state.showDisconnected,
+    narrow,
+    mobileView,
+    focused?.id,
+  ]);
   const currentTab = tab;
   const inspectorTabs = ["event", "deviation", "evidence"] as const;
   const changeTab = (next: typeof tab) => {
@@ -495,14 +602,18 @@ export function InvestigationWorkbench({
           ))}
         </div>
         <div className={styles.headerMeta}>
-          {records.events.length} observations · {records.paths.length}{" "}
-          histories{actions}
+          <span className={styles.headerCounts}>
+            {records.events.length} observations · {records.paths.length}{" "}
+            histories
+          </span>
+          {actions}
         </div>
       </header>
       <div className={styles.body}>
         <details
           className={styles.sidebar}
           data-workbench-sidebar
+          tabIndex={-1}
           open={!narrow || sidebarExpanded}
           onToggle={(e) => {
             if (narrow) setSidebarExpanded(e.currentTarget.open);
@@ -657,6 +768,8 @@ export function InvestigationWorkbench({
           >
             <button
               type="button"
+              data-workbench-view="events"
+              aria-controls={`${id}-events`}
               aria-pressed={mobileView === "events"}
               onClick={() => setMobileView("events")}
             >
@@ -664,6 +777,8 @@ export function InvestigationWorkbench({
             </button>
             <button
               type="button"
+              data-workbench-view="map"
+              aria-controls={`${id}-map`}
               aria-pressed={mobileView === "map"}
               onClick={() => setMobileView("map")}
             >
@@ -674,6 +789,8 @@ export function InvestigationWorkbench({
         <section
           className={styles.timelinePanel}
           data-workbench-events
+          id={`${id}-events`}
+          tabIndex={-1}
           hidden={narrow && mobileView !== "events"}
           aria-label="Observation ledger"
         >
@@ -709,11 +826,7 @@ export function InvestigationWorkbench({
               ledgerColumns
               metricsPlacement="inline"
               selectedId={event?.id ?? null}
-              selectedConnectionIds={
-                state.selection
-                  ? context.connections?.map((connection) => connection.id)
-                  : []
-              }
+              selectedConnectionIds={selectedConnectionIds}
               onSelectedIdChange={(eventId) =>
                 dispatch({
                   type: "select",
@@ -721,30 +834,7 @@ export function InvestigationWorkbench({
                 })
               }
               renderTrailing={showEventRisks}
-              renderConnectionMetrics={(connectionContext) => {
-                const flags = state.showRisks
-                  ? assessments.filter(
-                      (assessment) =>
-                        assessment.target.type === "connection" &&
-                        assessment.target.connectionId ===
-                          connectionContext.connection.id,
-                    )
-                  : [];
-                const metrics = renderConnectionMetrics?.(connectionContext);
-                if (!flags.length) return metrics;
-                return (
-                  <>
-                    <span className={styles.riskFlags}>
-                      {flags.map((flag) => (
-                        <Pill key={flag.id} size="xs" tone={flag.tone}>
-                          {flag.label}
-                        </Pill>
-                      ))}
-                    </span>
-                    {metrics}
-                  </>
-                );
-              }}
+              renderConnectionMetrics={connectionEvidence}
             />
             {focused && state.showDisconnected && disconnected.length > 0 && (
               <details className={styles.disconnected}>
@@ -753,9 +843,14 @@ export function InvestigationWorkbench({
                 </summary>
                 <EventTimeline
                   events={disconnected}
-                  connections={[]}
+                  connections={disconnectedConnections}
+                  pathColors={palette}
                   variant="ledger"
                   size="compact"
+                  ledgerColumns
+                  metricsPlacement="inline"
+                  selectedConnectionIds={selectedConnectionIds}
+                  renderConnectionMetrics={connectionEvidence}
                   selectedId={event?.id ?? null}
                   renderTrailing={showEventRisks}
                   onSelectedIdChange={(eventId) =>
@@ -776,6 +871,8 @@ export function InvestigationWorkbench({
         <section
           className={styles.mapPanel}
           data-workbench-map
+          id={`${id}-map`}
+          tabIndex={-1}
           hidden={narrow && mobileView !== "map"}
           aria-label="History map"
         >
@@ -791,7 +888,7 @@ export function InvestigationWorkbench({
                 selection: { type: "location", locationId },
               })
             }
-            overlays={[...(map.overlays ?? []), ...mapData.overlays]}
+            overlays={overlays}
             onOverlaySelect={overlaySelection}
             onMapReady={(instance) => {
               setMapInstance(instance);
@@ -827,39 +924,49 @@ export function InvestigationWorkbench({
             showDataTable={false}
             showViewScale={false}
             showSelectionDetails={false}
-            renderOverlayHoverDetails={(hover) => (
-              <div className={styles.overlayDetails}>
-                {hover.selections
-                  .filter((hit) => hit.overlayId.startsWith(`${id}-`))
-                  .map((hit) => (
-                    <div key={`${hit.overlayId}-${hit.feature.id}`}>
-                      <strong>
-                        {String(
-                          hit.feature.properties?.label ??
-                            "Candidate connection",
+            renderOverlayHoverDetails={(hover) => {
+              const external = {
+                ...hover,
+                selections: hover.selections.filter(
+                  (hit) => !hit.overlayId.startsWith(`${id}-`),
+                ),
+                overlays: hover.overlays.filter(
+                  (overlay) => !overlay.id.startsWith(`${id}-`),
+                ),
+              };
+              return (
+                <div className={styles.overlayDetails}>
+                  {hover.selections
+                    .filter((hit) => hit.overlayId.startsWith(`${id}-`))
+                    .map((hit) => (
+                      <div key={`${hit.overlayId}-${hit.feature.id}`}>
+                        <strong>
+                          {String(
+                            hit.feature.properties?.label ??
+                              "Candidate connection",
+                          )}
+                        </strong>
+                        {hit.feature.properties?.predictionId ? (
+                          <span>
+                            Forecast · {String(hit.feature.properties.source)} ·{" "}
+                            {String(hit.feature.properties.asOf)}
+                          </span>
+                        ) : (
+                          <span>Supplied candidate relationship</span>
                         )}
-                      </strong>
-                      {hit.feature.properties?.predictionId ? (
-                        <span>
-                          Forecast · {String(hit.feature.properties.source)} ·{" "}
-                          {String(hit.feature.properties.asOf)}
-                        </span>
-                      ) : (
-                        <span>Supplied candidate relationship</span>
-                      )}
-                    </div>
-                  ))}
-                {map.renderOverlayHoverDetails?.({
-                  ...hover,
-                  selections: hover.selections.filter(
-                    (hit) => !hit.overlayId.startsWith(`${id}-`),
-                  ),
-                  overlays: hover.overlays.filter(
-                    (overlay) => !overlay.id.startsWith(`${id}-`),
-                  ),
-                })}
-              </div>
-            )}
+                      </div>
+                    ))}
+                  {external.overlays.length > 0 &&
+                    (map.renderOverlayHoverDetails
+                      ? map.renderOverlayHoverDetails(external)
+                      : external.selections.map((hit, index) => (
+                          <React.Fragment key={index}>
+                            {map.renderOverlayDetails?.(hit)}
+                          </React.Fragment>
+                        )))}
+                </div>
+              );
+            }}
           />
           <DivergenceCallout
             map={mapInstance}

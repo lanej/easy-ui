@@ -3,10 +3,15 @@ import { test } from "node:test";
 import { mkdtemp, mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
-import { fingerprint, findProof, reusable } from "./browser-proof.mjs";
+import {
+  fingerprint,
+  findProof,
+  reusable,
+  gitMetadata,
+} from "./browser-proof.mjs";
 
 test("manual runs, reruns, and unavailable evidence execute fresh checks", async () => {
   const root = await mkdtemp(join(tmpdir(), "easy-ui-proof-cli-"));
@@ -22,13 +27,32 @@ test("manual runs, reruns, and unavailable evidence execute fresh checks", async
         },
       }),
     );
-    for (const [event, attempt, suite] of [
+    const environmentDigests = [];
+    for (const [
+      index,
+      [event, attempt, suite, browserEnvironment, browserVersion, fork],
+    ] of [
       ["workflow_dispatch", "1", "maps-chrome"],
       ["pull_request", "2", "maps-chrome"],
       ["pull_request", "1", "maps-chrome"],
       ["workflow_dispatch", "1", "event-timeline"],
-    ]) {
-      const output = join(root, `${event}-${attempt}-${suite}.out`);
+      ["pull_request", "1", "maps-chrome", undefined, undefined, true],
+      ["workflow_dispatch", "1", "maps-chrome", "pinned-image-1", "Chrome 157"],
+      ["workflow_dispatch", "1", "maps-chrome", "pinned-image-2", "Chrome 157"],
+      ["workflow_dispatch", "1", "maps-chrome", "pinned-image-1", "Chrome 158"],
+    ].entries()) {
+      await writeFile(
+        join(root, "event.json"),
+        JSON.stringify({
+          pull_request: {
+            number: 1,
+            head: {
+              repo: { full_name: fork ? "outside/easy-ui" : "lanej/easy-ui" },
+            },
+          },
+        }),
+      );
+      const output = join(root, `${index}.out`);
       const { stderr } = await promisify(execFile)(
         process.execPath,
         [fileURLToPath(new URL("./browser-proof.mjs", import.meta.url))],
@@ -38,6 +62,8 @@ test("manual runs, reruns, and unavailable evidence execute fresh checks", async
             PROOF_MODE: "check",
             PROOF_SUITE: suite,
             PROOF_BUILT: join(root, "dist"),
+            PROOF_BROWSER_ENVIRONMENT: browserEnvironment,
+            PROOF_BROWSER_VERSION: browserVersion,
             GH_TOKEN: "fixture",
             GITHUB_API_URL: "http://127.0.0.1:1",
             GITHUB_EVENT_PATH: join(root, "event.json"),
@@ -53,12 +79,20 @@ test("manual runs, reruns, and unavailable evidence execute fresh checks", async
           },
         },
       );
-      assert.match(await readFile(output, "utf8"), /^reuse=false\n/);
+      const result = await readFile(output, "utf8");
+      assert.match(result, /^reuse=false\n/);
+      if (browserEnvironment)
+        environmentDigests.push(result.match(/digest=([a-f0-9]+)/)[1]);
       assert.equal(
         stderr.includes("Previous evidence unavailable"),
-        event === "pull_request" && attempt === "1",
+        event === "pull_request" && attempt === "1" && !fork,
       );
     }
+    assert.equal(
+      new Set(environmentDigests).size,
+      3,
+      "container or browser version changes invalidate proof",
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -129,6 +163,7 @@ const context = {
 const run = {
   path: context.workflow,
   event: context.event,
+  status: "completed",
   conclusion: "success",
   head_repository: { full_name: context.headRepository },
   pull_requests: [{ number: 1 }],
@@ -138,6 +173,8 @@ const run = {
 test("only recent completed successes on the same workflow and PR qualify", () => {
   assert.equal(reusable(artifact, run, context, now), true);
   for (const change of [
+    { status: "in_progress" },
+    { status: "queued" },
     { conclusion: "failure" },
     { conclusion: "cancelled" },
     { conclusion: null },
@@ -201,4 +238,73 @@ test("lookup requires the exact evidence key and ignores failed runs", async () 
     }),
     /unavailable/,
   );
+});
+
+test("container metadata reads trust only this checkout without global Git changes", () => {
+  const overrides = {
+    GIT_TEST_ASSUME_DIFFERENT_OWNER: "1",
+    GIT_CONFIG_GLOBAL: "/dev/null",
+    GIT_CONFIG_SYSTEM: "/dev/null",
+  };
+  const previous = Object.fromEntries(
+    Object.keys(overrides).map((key) => [key, process.env[key]]),
+  );
+  Object.assign(process.env, overrides);
+  try {
+    assert.throws(
+      () => execFileSync("git", ["ls-tree", "HEAD"], { stdio: "pipe" }),
+      /dubious ownership/,
+    );
+    assert.match(gitMetadata(["ls-tree", "HEAD"]), /package\.json/);
+    assert.match(
+      gitMetadata(["ls-files", "package.json"]),
+      /^package\.json\n$/,
+    );
+    assert.throws(
+      () => execFileSync("git", ["ls-tree", "HEAD"], { stdio: "pipe" }),
+      /dubious ownership/,
+    );
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
+test("component suites cannot use preview proof reuse", async () => {
+  await assert.rejects(
+    promisify(execFile)(
+      process.execPath,
+      [fileURLToPath(new URL("./browser-proof.mjs", import.meta.url))],
+      {
+        env: {
+          ...process.env,
+          PROOF_MODE: "check",
+          PROOF_SUITE: "components-graphs",
+        },
+      },
+    ),
+    /Unknown browser suite: components-graphs/,
+  );
+});
+
+test("investigation browser coverage includes the HealthIndicator used by EventMetrics", async () => {
+  const workflow = await readFile(
+    new URL(
+      "../.github/workflows/investigation-workspace.yml",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const metrics = await readFile(
+    new URL(
+      "../easy-ui-react/src/EventMetrics/EventMetrics.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(metrics, /from "\.\.\/HealthIndicator"/);
+  assert.match(workflow, /- "easy-ui-react\/src\/HealthIndicator\/\*\*"/);
+  assert.doesNotMatch(workflow, /HealthOutcome/);
 });
