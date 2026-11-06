@@ -335,9 +335,15 @@ See [branching observations](https://lanej.io/easy-ui/storybook/?path=/story/org
 Use `InvestigationWorkbench` (exported from the `InvestigationWorkspace` entrypoint)
 for three-panel overview, focused-history and deviation analysis. Its canonical
 `InvestigationGraph` derives all memberships from path connection IDs. Focus and
-selection are independent. Forecast geometry never creates scan events; supplied
+selection are independent. Controlled `selection: null` leaves both ledgers
+unselected. The inspector preserves source and time for applicable event,
+connection, and focused-path assessments, including non-event selections.
+Forecast geometry never creates scan events; supplied
 comparison claims carry source and time. Use `renderConnectionMetrics` for incoming
-edge evidence, not adjacent-row intervals. Full references belong in the persistent
+edge evidence, not adjacent-row intervals. Existing `InvestigationWorkspace`
+consumers use `timeline.renderConnectionMetrics` for the same explicit-edge
+evidence. Forecasts split dateline crossings while preserving supplied gaps.
+Full references belong in the persistent
 inspector. See [Workbench deviation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-deviation)
 and [narrow workbench](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-narrow).
 

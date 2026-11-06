@@ -830,3 +830,30 @@ describe("InvestigationWorkspace", () => {
     ).toBeVisible();
   });
 });
+
+it("exposes incoming connection evidence through the workspace timeline options", () => {
+  const legacyInterval = vi.fn(() => <span>Legacy interval</span>);
+  render(
+    <InvestigationWorkspace
+      {...records}
+      connections={ledgerConnections}
+      map={map}
+      selection={null}
+      onSelectionChange={vi.fn()}
+      timeline={{
+        renderInterval: legacyInterval,
+        renderConnectionMetrics: ({ connection, fromEvent, toEvent }) => (
+          <span>
+            Evidence {connection.id}: {fromEvent.label} to {toEvent.label}
+          </span>
+        ),
+      }}
+    />,
+  );
+  for (const connection of ledgerConnections) {
+    expect(
+      screen.getByText(new RegExp(`^Evidence ${connection.id}:`)),
+    ).toBeVisible();
+  }
+  expect(legacyInterval).not.toHaveBeenCalled();
+});

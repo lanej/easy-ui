@@ -24,6 +24,8 @@ on:
       - "scripts/check-event-timeline.mjs"
       - "scripts/check-investigation-workspace.mjs"
       - "scripts/check-investigation-workbench.mjs"
+      - "scripts/check-map-free-investigation.mjs"
+      - "scripts/check-investigation-toolkit.mjs"
       - "scripts/preview-metrics/package*.json"
       - ".github/workflows/investigation-workspace.yml"
       - ".github/actions/browser-proof/**"
@@ -81,6 +83,8 @@ jobs:
           node scripts/check-event-timeline.mjs
           node scripts/check-investigation-workspace.mjs
           node scripts/check-investigation-workbench.mjs
+          node scripts/check-map-free-investigation.mjs
+          node scripts/check-investigation-toolkit.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

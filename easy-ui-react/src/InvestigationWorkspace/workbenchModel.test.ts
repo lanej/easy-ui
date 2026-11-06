@@ -435,3 +435,50 @@ describe("map presentation", () => {
     ).toHaveLength(3);
   });
 });
+
+it("splits each forecast independently at the antimeridian", () => {
+  const input: InvestigationPrediction = {
+    ...predictions[0],
+    lines: [
+      [
+        [179, 40],
+        [-179, 42],
+      ],
+      [
+        [10, 20],
+        [12, 22],
+      ],
+    ],
+  };
+  const result = workbenchMapData(
+    records,
+    {
+      ...initial,
+      mode: "focused",
+      focusedPathId: "a",
+      enabledPredictionIds: ["p"],
+    },
+    [input],
+    "test",
+  );
+  expect(
+    result.overlays.find((o) => o.id === "test-forecast-p")?.data.features[0]
+      .geometry,
+  ).toEqual({
+    type: "MultiLineString",
+    coordinates: [
+      [
+        [179, 40],
+        [180, 41],
+      ],
+      [
+        [-180, 41],
+        [-179, 42],
+      ],
+      [
+        [10, 20],
+        [12, 22],
+      ],
+    ],
+  });
+});

@@ -125,6 +125,8 @@ async function main() {
               "scripts/check-event-timeline.mjs",
               "scripts/check-investigation-workspace.mjs",
               "scripts/check-investigation-workbench.mjs",
+              "scripts/check-map-free-investigation.mjs",
+              "scripts/check-investigation-toolkit.mjs",
             ]
           : []),
       ],

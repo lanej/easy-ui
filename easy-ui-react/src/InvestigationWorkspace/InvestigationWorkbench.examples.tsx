@@ -11,6 +11,7 @@ import type {
   InvestigationAssessment,
 } from "./workbenchModel";
 import type { InvestigationMode } from "./workbenchState";
+import type { InvestigationSelection } from "./selection";
 import { ledgerRecords } from "./InvestigationLedger.fixtures";
 import { ledgerPredictions } from "./InvestigationPredictions.examples";
 import {
@@ -231,9 +232,13 @@ const light = mapStyle("light"),
 export function InvestigationWorkbenchExample({
   mode = "deviation",
   narrow = false,
+  assessments = workbenchAssessments,
+  initialSelection = { type: "event", eventId: "revisit" },
 }: {
   mode?: InvestigationMode;
   narrow?: boolean;
+  assessments?: readonly InvestigationAssessment[];
+  initialSelection?: InvestigationSelection;
 }) {
   const { resolvedColorScheme } = useColorScheme();
   const [systemDark, setSystemDark] = useState(
@@ -291,11 +296,11 @@ export function InvestigationWorkbenchExample({
         }
         predictions={workbenchPredictions}
         deviations={workbenchDeviations}
-        assessments={workbenchAssessments}
+        assessments={assessments}
         defaultState={{
           mode,
           focusedPathId: mode === "overview" ? null : "a",
-          selection: { type: "event", eventId: "revisit" },
+          selection: initialSelection,
           enabledPredictionIds: workbenchPredictions.map(
             (prediction) => prediction.id,
           ),

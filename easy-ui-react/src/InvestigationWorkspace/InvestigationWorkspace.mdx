@@ -69,7 +69,8 @@ a history reduces visible graph scope without inventing joins.
 
 **Focus is separate from selection.** Overview shows all observations and no
 forecasts. Focused history emphasizes one history while retaining other map
-histories as faint context. Deviation analysis compares that history with an
+histories as faint context. `map.controls={false}` hides all map controls.
+Deviation analysis compares that history with an
 explicitly chosen forecast. Selecting an event, revisit, location or connection
 does not clear focus or prediction choices, and no such action requests a new
 map camera. Location selection offers its distinct visits rather than choosing
@@ -84,11 +85,17 @@ an incoming connection and both endpoints. It can compose compact
 provenance in the persistent inspector. Two incoming edges remain independently
 addressable. Risk annotations are supplied as `InvestigationAssessment` records
 with event, connection or path targets, labels, tone, source and assessment time.
-Event types, path identity, selection and risk remain separate.
+The Event inspector shows applicable path assessments while that history is
+focused, event assessments for the selected observation, and connection assessments
+for a selected mapped segment or observation's incident connections, always with
+source and assessment time. Event types, path identity, selection and risk remain
+separate. A controlled `state.selection: null` keeps both ledgers unselected until
+the application accepts a selection change.
 
 **Predictions are not scans.** `InvestigationPrediction` supplies a history ID,
 label, color, source, issuance time, disjoint geographic lines and optional dash
-pattern. Each has an independent visibility toggle; choices survive leaving
+pattern. Each supplied line is split at antimeridian crossings without joining
+separate lines. Each has an independent visibility toggle; choices survive leaving
 and returning to the history. Optional confidence must include a formatted value
 and an explanation of what it measures. The UI derives neither probabilities
 nor risk thresholds from histogram percentiles or map separation.
@@ -107,6 +114,7 @@ the ledger's own scroll region. Theme changes preserve the map instance.
 <Canvas of={Stories.WorkbenchFocused} />
 <Canvas of={Stories.WorkbenchDeviation} />
 <Canvas of={Stories.WorkbenchNarrow} />
+<Canvas of={Stories.WorkbenchAssessmentScopes} />
 
 ### Compact observations and candidate histories
 
@@ -144,6 +152,10 @@ the ledger's own scroll region. Theme changes preserve the map instance.
 The ledger puts `event.label` first, followed by `event.locationLabel` and the occurrence time. Occurrence and receipt labels remain separate; supplied `detailLabel` can distinguish a revisit or an observation source. Selection is independent from event status and assessment. Optional `header` content joins the same surface above the compact history controls; the application owns its title, summary counts, and overall assessment.
 
 `connections` contains explicit directed event relationships. `InvestigationConnection` extends `EventTimelineConnection` with an optional `segmentId` linking a relationship to caller-supplied map geometry. Matching times, locations, path memberships, or map endpoints never create event edges. A shared observation appears once and may have multiple `pathIds`; returning to a location requires a distinct event ID. Disjoint origins, separate delivery claims, and unassigned events remain separate. Rows retain caller order, including records after a delivery observation.
+
+For existing workspaces with explicit connections, pass the replacement callback
+through `timeline.renderConnectionMetrics`. `timeline.renderInterval` applies only
+to the ordinary sequential presentation and is not called for explicit edges.
 
 Supplying `connections`, including an empty array, replaces the timeline's ordinary sequential connector. Omitting it retains the existing chronological presentation. The graph draws only forward relationships in the supplied row order. Backward links, self-links, and endpoints outside a filtered view remain in the accessible relationship list with an explanation. More than four simultaneous rails use that complete list instead of compressing unrelated connections together. The graph is a candidate relationship view; it does not establish a physical parcel split or a confirmed route.
 

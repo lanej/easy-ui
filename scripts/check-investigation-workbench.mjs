@@ -197,23 +197,46 @@ try {
   await open("light", 1680, 1120, "workbench-overview");
   await readyMap();
   await capture("workbench-overview.png", "light");
-  await open("light", 390, 900, "workbench-narrow");
-  await accessible();
-  await capture("workbench-narrow-events.png", "light");
-  assert.ok(
-    await root().evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
-    "Narrow workbench overflows horizontally",
-  );
-  await readyMap();
-  await capture("workbench-narrow-map.png", "light");
-  const before = await camera();
-  await page.getByRole("button", { name: "Events", exact: true }).click();
-  await page.getByRole("button", { name: "Map", exact: true }).click();
-  sameCamera(before, await camera());
-  await accessible();
-  checks.push(
-    "390px: no horizontal overflow, event/map switching preserves camera, persistent inspector",
-  );
+  for (const theme of ["light", "dark"]) {
+    await open(theme, 390, 900, "workbench-narrow");
+    await accessible();
+    await capture(`workbench-${theme}-narrow-events.png`, theme);
+    assert.ok(
+      await root().evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+      "Narrow workbench overflows horizontally",
+    );
+    await readyMap();
+    await capture(`workbench-${theme}-narrow-map.png`, theme);
+    const before = await camera();
+    await page.getByRole("button", { name: "Events", exact: true }).click();
+    await page.getByRole("button", { name: "Map", exact: true }).click();
+    sameCamera(before, await camera());
+    await accessible();
+    checks.push(
+      `${theme} 390px: no horizontal overflow, event/map switching preserves camera, persistent inspector`,
+    );
+    await open(theme, 1680, 1120, "workbench-assessment-scopes");
+    await readyMap();
+    await page
+      .getByText(
+        "This supplied finding applies to history A, independently of its selected observation.",
+      )
+      .waitFor();
+    assert.equal(await ledger().locator('[aria-current="true"]').count(), 0);
+    await capture(`workbench-assessments-${theme}-desktop.png`, theme);
+    await ledger()
+      .getByRole("button", { name: /In transit Avondale.*Return visit/ })
+      .click();
+    await page
+      .getByText(
+        "This supplied finding applies to the return connection. Select its map segment or incoming observation to inspect it.",
+      )
+      .waitFor();
+    await accessible();
+    checks.push(
+      `${theme}: focused path and incoming connection assessments retain provenance`,
+    );
+  }
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ checks, errors, screenshots }, null, 2));
 } finally {

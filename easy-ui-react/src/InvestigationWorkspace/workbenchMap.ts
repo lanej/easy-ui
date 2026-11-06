@@ -1,6 +1,6 @@
 import type { FeatureCollection } from "geojson";
 import type { MapOverlay, MapFacility } from "../NetworkMap";
-import { segmentData } from "../NetworkMap/geometry";
+import { segmentData, splitAntimeridian } from "../NetworkMap/geometry";
 import type { InvestigationRecords } from "./selection";
 import type { InvestigationPrediction } from "./workbenchModel";
 import type { InvestigationWorkbenchState } from "./workbenchState";
@@ -129,8 +129,8 @@ export function workbenchMapData(
               },
               geometry: {
                 type: "MultiLineString",
-                coordinates: prediction.lines.map((line) =>
-                  line.map(([lon, lat]) => [lon, lat]),
+                coordinates: prediction.lines.flatMap((line) =>
+                  splitAntimeridian(line),
                 ),
               },
             },

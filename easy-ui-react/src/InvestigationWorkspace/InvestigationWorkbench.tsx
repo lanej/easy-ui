@@ -708,10 +708,12 @@ export function InvestigationWorkbench({
               size="compact"
               ledgerColumns
               metricsPlacement="inline"
-              selectedId={event?.id}
-              selectedConnectionIds={context.connections?.map(
-                (connection) => connection.id,
-              )}
+              selectedId={event?.id ?? null}
+              selectedConnectionIds={
+                state.selection
+                  ? context.connections?.map((connection) => connection.id)
+                  : []
+              }
               onSelectedIdChange={(eventId) =>
                 dispatch({
                   type: "select",
@@ -754,7 +756,7 @@ export function InvestigationWorkbench({
                   connections={[]}
                   variant="ledger"
                   size="compact"
-                  selectedId={event?.id}
+                  selectedId={event?.id ?? null}
                   renderTrailing={showEventRisks}
                   onSelectedIdChange={(eventId) =>
                     dispatch({
@@ -802,17 +804,21 @@ export function InvestigationWorkbench({
                 ? `${focused.label} · ${visiblePredictions.length} forecasts visible`
                 : "Candidate histories · no predictions in overview")
             }
-            controls={{
-              fitAll: true,
-              latestEvent: false,
-              selectedSegment: false,
-              risk: false,
-              weather: false,
-              deliverySurface: false,
-              navigation: true,
-              scale: true,
-              ...map.controls,
-            }}
+            controls={
+              map.controls === false
+                ? false
+                : {
+                    fitAll: true,
+                    latestEvent: false,
+                    selectedSegment: false,
+                    risk: false,
+                    weather: false,
+                    deliverySurface: false,
+                    navigation: true,
+                    scale: true,
+                    ...map.controls,
+                  }
+            }
             controlLabels={{ fitAll: "Fit", ...map.controlLabels }}
             height={map.height ?? (narrow ? 280 : 350)}
             controlPlacement={map.controlPlacement ?? "map"}
@@ -1014,17 +1020,6 @@ export function InvestigationWorkbench({
                     showEventId
                     showLocation={false}
                   />
-                  {selectedAssessments.map((assessment) => (
-                    <div key={assessment.id} className={styles.assessment}>
-                      <Pill size="xs" tone={assessment.tone}>
-                        {assessment.label}
-                      </Pill>
-                      <p>{assessment.summary}</p>
-                      <small>
-                        {assessment.source} · {assessment.asOf}
-                      </small>
-                    </div>
-                  ))}
                   {!selectedAssessments.length && (
                     <p className={styles.muted}>
                       No assessment supplied for this observation.
@@ -1074,6 +1069,21 @@ export function InvestigationWorkbench({
                       location does not choose an arbitrary visit.
                     </p>
                   )}
+                </>
+              )}
+              {state.selection && context.isAvailable && (
+                <>
+                  {selectedAssessments.map((assessment) => (
+                    <div key={assessment.id} className={styles.assessment}>
+                      <Pill size="xs" tone={assessment.tone}>
+                        {assessment.label}
+                      </Pill>
+                      <p>{assessment.summary}</p>
+                      <small>
+                        {assessment.source} · {assessment.asOf}
+                      </small>
+                    </div>
+                  ))}
                 </>
               )}
             </div>

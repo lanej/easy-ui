@@ -301,3 +301,104 @@ describe("InvestigationWorkbench", () => {
     expect(container.querySelector("button button")).toBeNull();
   });
 });
+
+describe("selection and assessment regressions", () => {
+  it("clears the ledger's selected visit when a repeated location is inspected", () => {
+    render(<InvestigationWorkbench {...props} />);
+    fireEvent.click(
+      within(ledger()).getByRole("button", { name: /Return Origin/ }),
+    );
+    expect(
+      within(ledger()).getByRole("button", { name: /Return Origin/ }),
+    ).toHaveAttribute("aria-current", "true");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Inspect repeated location" }),
+    );
+    expect(
+      within(inspector()).getByText(
+        "2 observations at this location. Repeated visits remain separate.",
+      ),
+    ).toBeVisible();
+    expect(ledger().querySelector('[aria-current="true"]')).toBeNull();
+  });
+
+  it("shows a path assessment when that path is selected", () => {
+    render(
+      <InvestigationWorkbench
+        {...props}
+        assessments={[
+          {
+            id: "path-risk",
+            target: { type: "path", pathId: "a" },
+            label: "Path risk",
+            tone: "danger",
+            summary: "Supplied path finding",
+            source: "Policy",
+            asOf: "Now",
+          },
+        ]}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /History A.*3 observations/ }),
+    );
+    expect(screen.getByText("Supplied path finding")).toBeVisible();
+  });
+});
+
+it("shows a supplied connection assessment when the mapped segment is selected", () => {
+  render(
+    <InvestigationWorkbench
+      {...props}
+      defaultState={{ selection: { type: "segment", segmentId: "s1" } }}
+      assessments={[
+        {
+          id: "risk-c",
+          target: { type: "connection", connectionId: "c1" },
+          label: "Risk",
+          tone: "danger",
+          summary: "Connection finding",
+          source: "Policy",
+          asOf: "Now",
+        },
+      ]}
+    />,
+  );
+  expect(screen.getByText("Connection finding")).toBeVisible();
+});
+
+it.each(["Accepted", "Delivered"])(
+  "keeps %s unselected while the controlled owner retains null",
+  (label) => {
+    render(
+      <InvestigationWorkbench
+        {...props}
+        state={{
+          mode: "focused",
+          focusedPathId: "a",
+          selection: null,
+          enabledPredictionIds: [],
+          comparisonPredictionId: null,
+          showDisconnected: true,
+          showRisks: true,
+        }}
+      />,
+    );
+    fireEvent.click(within(ledger()).getByText(label).closest("button")!);
+    expect(ledger().querySelector('[aria-current="true"]')).toBeNull();
+  },
+);
+
+it("does not mark every relationship selected when the selection is empty", () => {
+  render(<InvestigationWorkbench {...props} />);
+  expect(within(ledger()).queryAllByText("In selected context")).toHaveLength(
+    0,
+  );
+});
+
+it("honors an explicit false map controls setting", () => {
+  render(
+    <InvestigationWorkbench {...props} map={{ ...map, controls: false }} />,
+  );
+  expect(mapProps.controls).toBe(false);
+});

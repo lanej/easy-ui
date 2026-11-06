@@ -28,7 +28,10 @@ import { Button } from "../Button";
 import { Text } from "../Text";
 import { ThemeProvider, useColorScheme } from "../Theme";
 import styles from "./InvestigationWorkspace.stories.module.scss";
-import { InvestigationWorkbenchExample } from "./InvestigationWorkbench.examples";
+import {
+  InvestigationWorkbenchExample,
+  workbenchAssessments,
+} from "./InvestigationWorkbench.examples";
 import { InvestigationLedgerExample } from "./InvestigationLedger.examples";
 
 // Local schematic basemap keeps the examples independent of tile credentials/network access.
@@ -410,4 +413,37 @@ export const WorkbenchDeviation: Story = {
 };
 export const WorkbenchNarrow: Story = {
   render: () => <InvestigationWorkbenchExample narrow />,
+};
+
+/** Supplied path and connection findings remain available without an event selection. */
+export const WorkbenchAssessmentScopes: Story = {
+  render: () => (
+    <InvestigationWorkbenchExample
+      mode="focused"
+      initialSelection={{ type: "path", pathId: "a" }}
+      assessments={[
+        ...workbenchAssessments,
+        {
+          id: "history-finding",
+          target: { type: "path", pathId: "a" },
+          label: "History review",
+          tone: "warning",
+          summary:
+            "This supplied finding applies to history A, independently of its selected observation.",
+          source: "Illustrative review policy",
+          asOf: "Oct 24 · 12:10 UTC",
+        },
+        {
+          id: "connection-finding",
+          target: { type: "connection", connectionId: "a-return-link" },
+          label: "Connection review",
+          tone: "warning",
+          summary:
+            "This supplied finding applies to the return connection. Select its map segment or incoming observation to inspect it.",
+          source: "Illustrative review policy",
+          asOf: "Oct 24 · 12:10 UTC",
+        },
+      ]}
+    />
+  ),
 };
