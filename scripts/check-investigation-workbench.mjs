@@ -207,11 +207,9 @@ try {
       "Map and full ledger must remain side by side",
     );
     assert.equal(
-      await page
-        .locator('[aria-label="Map legend"]')
-        .getByText(/· history/)
-        .count(),
-      3,
+      await ledger().getByRole("group", { name: "Candidate histories" }).getByRole("button").count(),
+      4,
+      "All plus three color-coded history selection controls belong in the ledger",
     );
     checks.push(
       `${theme}: all 11 observations, forks, rejoin and independent roots in one leftmost graph at 1100×820`,
@@ -235,17 +233,7 @@ try {
     assert.equal(await root().getAttribute("data-mode"), "overview");
     assert.equal(await allRows.count(), 11);
     assert.equal(await root().locator("[data-connection-graph]").count(), 1);
-    assert.equal(
-      await page.getByRole("region", { name: "Map legend" }).count(),
-      0,
-    ); // legend is a named div, not a redundant region
-    assert.equal(
-      await page
-        .locator('[aria-label="Map legend"]')
-        .getByText(/· forecast/)
-        .count(),
-      0,
-    );
+    assert.equal(await map().locator('[aria-label="Map legend"]').count(), 0);
     await page
       .getByRole("button", { name: "Focused history", exact: true })
       .click();
@@ -275,6 +263,10 @@ try {
       .getByText(/synthetic 49-day reference/)
       .first()
       .waitFor();
+    assert.ok(
+      await inspector().getByRole("region", { name: "Supplemental investigation graph" }).count() > 0,
+      "An actual optional distribution occupies the lower-right inspector",
+    );
     for (const [tab, command] of [
       ["Evidence", "Compare Via Santa Rosa"],
       ["Event", "Deviation analysis"],
@@ -314,6 +306,26 @@ try {
       await root().evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
     );
     await capture(`workbench-overview-${width}.png`, "light");
+    if (width === 1100) {
+      const start = await camera();
+      const accepted = ledger().getByRole("button", { name: /Accepted Ludington/ });
+      const hammond = ledger().getByRole("button", { name: /In transit Hammond/ });
+      await accepted.click();
+      await hammond.click({ modifiers: ["Shift"] });
+      assert.ok(await ledger().locator('li[data-marked="true"]').count() >= 2);
+      await page.getByRole("button", { name: "Expand map to full screen" }).click();
+      assert.equal(await map().getAttribute("data-expanded"), "true");
+      assert.ok(await page.evaluate(() => window.workbenchMap.getCanvas().clientWidth > 400));
+      await page.screenshot({
+        path: resolve(output, "workbench-map-expanded.png"),
+        animations: "disabled",
+      });
+      await page.getByRole("button", { name: "Restore map to workspace" }).click();
+      assert.equal(await map().getAttribute("data-expanded"), null);
+      sameCamera(start, await camera());
+      assert.ok(await ledger().locator('li[data-marked="true"]').count() >= 2);
+      checks.push("1100px: range selection, map expansion, and camera/selection restoration");
+    }
     checks.push(
       `${width}px: all histories with map alongside, one leftmost graph and no horizontal overflow`,
     );
