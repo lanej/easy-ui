@@ -827,7 +827,7 @@ export function InvestigationWorkbench({
                 // container containment. CSS expansion remains the fallback.
                 void expandedPanel.current?.requestFullscreen?.().catch(() => {});
               }
-            }
+            }}
           >
             {mapExpanded ? "Restore map" : "Expand map"}
           </button>
