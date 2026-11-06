@@ -1,0 +1,250 @@
+{
+  "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+  "browser": "156.0.8078.79",
+  "command": "node scripts/check-investigation-workbench.mjs",
+  "screenshots": [
+    {
+      "file": "prediction-controls-light.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "f3257f64a147864fe06b14bf00c434ed3a9aa67c966995c394a428297d2e2142",
+      "actualComponent": true
+    },
+    {
+      "file": "timeline-controls-light.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "fbea4d372cd1e7d20803fe532a97ba34ec731f738e0f813b0c24d223edb58743",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "81490967b5cbf471e565346ba9dd0a836dfcfe4653981da3df64bebc35f878da",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "prediction-controls-dark.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "dd93c3938a6a7b7fc3d4b71c6233d5809f5fe1bc8958399265859713e38903ca",
+      "actualComponent": true
+    },
+    {
+      "file": "timeline-controls-dark.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "0d24acdb79da1ccff5e74c6f1758a750d501280419fb40f31b667ad07d15050e",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-desktop.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "e1b5d6cab273f3149bb6db39b64e808a7ad3f001129afe02e8342937b20c17eb",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-overview.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "c3188701efcf473d02e0334c4e5b4b2752651566c744373f55ac672f9fad20e7",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-overview-960.png",
+      "theme": "light",
+      "viewport": {
+        "width": 960,
+        "height": 820
+      },
+      "sha256": "781b4b9f3e7e1dc40a5f4b1fec8e9baf5cc2d71fd68d15f9688e3cf9c572677d",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-overview-1100.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "c3188701efcf473d02e0334c4e5b4b2752651566c744373f55ac672f9fad20e7",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-map-expanded.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "3ac8b0a263833555caecc1b782a276b54b8ee4fc7a36251c2799ce3d78445f8a",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-narrow-events.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "ba2c206272be08f25e72077962565e779595fb297ec49080015d47e0a8b87852",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-narrow-map.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "8943e1d246c1b3550122c848630eae8668e47d1bddbc763d1ba276ac7ccf3985",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-assessments-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "844ac07ecb97ae8da5137ae7dc7190250105bede29b8a71bc05059bcea8273e7",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-narrow-events.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "50e30e09178c94966e15f155eb26955b718e31f010773d49aa9171ea8d5aa3e2",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-narrow-map.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "25e58c61a6362506fdac5e1ef7779bae9520a34711f17a036c0d192cea76e8cb",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-assessments-dark-desktop.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "ca5748e5c306cc3b356ea3021cca6eba052bab7f8e361515a9436d718b1b12c1",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-header-action-1150.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1150,
+        "height": 820
+      },
+      "sha256": "201659f890e495aeb298d25ea4bab60b3b327e1eb668064e19947fd6078acfab",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-unassigned-evidence-light-1100.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "04b96ce821cc6334e970bb1f5d38a3a83ebbcdf9c853668c5a070af0e40561c2",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-unassigned-evidence-light-390.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "9ed0655a364500c59c4405f65a962937bbe3c4f138d2db51d1f1aa1011e9460c",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-header-action-1150.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1150,
+        "height": 820
+      },
+      "sha256": "3c7fe8299dffeff8cbf56c6516e4715550c7c8e21e83b4e3543bec4f7352683f",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-unassigned-evidence-dark-1100.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "f072bcbe9eba61486431d48a967b80b37cda26fca69a61499bd441a422465b45",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-unassigned-evidence-dark-390.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "6a8edf27d970cf09116d5f619b6a4dd41704870e0cc78eec7c8f0f9a950505a3",
+      "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+      "actualComponent": true
+    }
+  ],
+  "limitations": [
+    "Synthetic data, not live shipments.",
+    "Automated accessibility check excludes color contrast; visual review is separate.",
+    "No claim of downstream application adoption."
+  ]
+}
