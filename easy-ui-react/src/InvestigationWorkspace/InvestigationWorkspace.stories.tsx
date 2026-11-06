@@ -28,6 +28,10 @@ import { Button } from "../Button";
 import { Text } from "../Text";
 import { ThemeProvider, useColorScheme } from "../Theme";
 import styles from "./InvestigationWorkspace.stories.module.scss";
+import {
+  InvestigationWorkbenchExample,
+  workbenchAssessments,
+} from "./InvestigationWorkbench.examples";
 import { InvestigationLedgerExample } from "./InvestigationLedger.examples";
 
 // Local schematic basemap keeps the examples independent of tile credentials/network access.
@@ -395,4 +399,58 @@ function MapFreeComposition({ narrow = false }: { narrow?: boolean }) {
 export const MapFree: Story = { render: () => <MapFreeComposition /> };
 export const MapFreeNarrow: Story = {
   render: () => <MapFreeComposition narrow />,
+};
+
+/** Three-panel investigation using a normalized graph and caller-owned forecasts. */
+export const WorkbenchOverview: Story = {
+  render: () => <InvestigationWorkbenchExample mode="overview" />,
+};
+export const WorkbenchFocused: Story = {
+  render: () => <InvestigationWorkbenchExample mode="focused" />,
+};
+export const WorkbenchDeviation: Story = {
+  render: () => <InvestigationWorkbenchExample />,
+};
+export const WorkbenchNarrow: Story = {
+  render: () => <InvestigationWorkbenchExample narrow />,
+};
+
+/** Supplied path and connection findings remain available without an event selection. */
+export const WorkbenchAssessmentScopes: Story = {
+  render: () => (
+    <InvestigationWorkbenchExample
+      mode="focused"
+      initialSelection={{ type: "path", pathId: "a" }}
+      assessments={[
+        ...workbenchAssessments,
+        {
+          id: "history-finding",
+          target: { type: "path", pathId: "a" },
+          label: "History review",
+          tone: "warning",
+          summary:
+            "This supplied finding applies to history A, independently of its selected observation.",
+          source: "Illustrative review policy",
+          asOf: "Oct 24 · 12:10 UTC",
+        },
+        {
+          id: "connection-finding",
+          target: { type: "connection", connectionId: "a-return-link" },
+          label: "Connection review",
+          tone: "warning",
+          summary:
+            "This supplied finding applies to the return connection. Select its map segment or incoming observation to inspect it.",
+          source: "Illustrative review policy",
+          asOf: "Oct 24 · 12:10 UTC",
+        },
+      ]}
+    />
+  ),
+};
+
+/** Unassigned observations retain their supplied edge evidence while a history is focused. */
+export const WorkbenchUnassignedEvidence: Story = {
+  render: () => (
+    <InvestigationWorkbenchExample mode="focused" withUnassignedEvidence />
+  ),
 };

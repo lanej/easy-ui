@@ -288,3 +288,23 @@ test("component suites cannot use preview proof reuse", async () => {
     /Unknown browser suite: components-graphs/,
   );
 });
+
+test("investigation browser coverage includes the HealthIndicator used by EventMetrics", async () => {
+  const workflow = await readFile(
+    new URL(
+      "../.github/workflows/investigation-workspace.yml",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const metrics = await readFile(
+    new URL(
+      "../easy-ui-react/src/EventMetrics/EventMetrics.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(metrics, /from "\.\.\/HealthIndicator"/);
+  assert.match(workflow, /- "easy-ui-react\/src\/HealthIndicator\/\*\*"/);
+  assert.doesNotMatch(workflow, /HealthOutcome/);
+});

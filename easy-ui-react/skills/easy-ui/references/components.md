@@ -330,7 +330,49 @@ Optional `pathColors` maps explicit path IDs to colors. Single-membership edges
 retain their color through selection; shared edges alternate their supplied
 colors along the same geometry. Labels and the relationship list remain the
 non-color equivalent. Omit the dictionary to retain the neutral presentation.
+`selectedIds` highlights a caller-owned set independently of `selectedId`;
+`multiSelectable` makes row buttons expose `aria-pressed`. The optional
+`onSelectedIdChange(id, { shiftKey, ctrlKey, metaKey })` modifiers support
+additive and range selection without changing the base chronological model.
 See [branching observations](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--branching-ledger).
+
+Use `InvestigationWorkbench` (exported from the `InvestigationWorkspace` entrypoint)
+for all-history overview, focused-history and deviation analysis. Its canonical
+`InvestigationGraph` derives all memberships from path connection IDs. Focus and
+selection are independent. Focus emphasizes a history without filtering the
+shared chronology: one Git-style graph occupies the leftmost column, and all
+map histories retain their colors. Short color-coded history chips sit inside
+the ledger's header; `showHistoryLabels` opts into full descriptive labels.
+The ledger's Display menu holds Unassigned and Risk visibility controls.
+`selectedEventIds` tracks a selected subset independently of the primary
+inspector selection, allowing a full candidate history, Shift-click range,
+Ctrl/Cmd-click addition, touch-friendly Select points toggle, or a map
+location with multiple distinct visits. Only explicitly supplied segments
+between selected events are emphasized; disjoint selected points do not become
+a fictitious route. Focused forecast controls sit below the map.
+The map's Expand/Restore control preserves its map instance, camera, history,
+selections, and predictions; native fullscreen is used when available.
+`renderInspectorGraph` supplies optional chart evidence below inspector tabs
+and is omitted entirely when its result is null. Examples use 1100px
+viewports. Controlled `selection: null` leaves the ledger unselected. The inspector preserves source and time for applicable event,
+connection, and focused-path assessments, including non-event selections.
+Forecast geometry never creates scan events; supplied
+comparison claims carry source and time. Use `renderConnectionMetrics` for incoming
+edge evidence, not adjacent-row intervals. Explicit connections between unassigned
+observations retain their metrics and risk indicators in focused history, and
+unassigned visits stay inline unless their explicit display toggle hides them.
+Selecting a visit scrolls it into view without stealing focus. Caller-owned header
+`actions` remain available at narrow widths. Widening restores focused view
+buttons to their panel without borrowing focus from sibling workbenches. Repeating Analyze deviation or
+Deviation analysis reveals the Deviation inspector; controlled mode changes
+still require the owner to accept the requested state. Existing `InvestigationWorkspace`
+consumers use `timeline.renderConnectionMetrics` for the same explicit-edge
+evidence. Forecasts split dateline crossings while preserving supplied gaps.
+Full references belong in the persistent
+inspector. See [Workbench deviation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-deviation)
+and [narrow workbench](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-narrow).
+See [unassigned connection evidence](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-unassigned-evidence)
+for supplied relationships outside any candidate history.
 
 Use `InvestigationWorkspace` to coordinate timeline, map, and persistent details
 through one controlled `InvestigationSelection`. Supply stable event, location,
@@ -494,3 +536,8 @@ follows the effective stacked layout, including older messages. Disabling stacki
 replaces retained items on the next call. Unmount clears timers.
 Omitted configuration retains replacement,
 4000ms non-dismissible toasts, and persistent dismissible alerts.
+
+Workbench prediction visibility and comparison are separate actions. Keep each
+prediction's checkbox, swatch, name and Analyze button on a single aligned row.
+`MapOverlayHoverDetailsContext.pinned` distinguishes click-pinned from hover
+inspection when delegating legacy click-only renderers.

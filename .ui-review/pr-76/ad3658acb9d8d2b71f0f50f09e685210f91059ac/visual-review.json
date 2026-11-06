@@ -1,0 +1,50 @@
+{
+  "sourceRevision": "ad3658acb9d8d2b71f0f50f09e685210f91059ac",
+  "captureCommit": "3da939ead5b8b75ceb68fef1ca8b1c3d1b68153f",
+  "verificationRun": "https://github.com/lanej/easy-ui/actions/runs/42264942707",
+  "browser": "Chromium 156.0.8078.79",
+  "scope": "Prediction-control wrapping and timeline history-control density; actual built Storybook components with synthetic data.",
+  "inspected": [
+    {
+      "file": "prediction-controls-dark.png",
+      "viewport": {"width": 1100, "height": 820},
+      "sha256": "dd93c3938a6a7b7fc3d4b71c6233d5809f5fe1bc8958399265859713e38903ca",
+      "gitBlobSha": "be48cb9839f54667dcbb9ea4e3aaf96761b1ce68",
+      "repositoryBlobVerified": true,
+      "result": "Heading occupies its own row. Both predictions keep visibility checkbox, patterned color swatch and route name together, with Analyze aligned on the right. The active comparison is visibly distinct."
+    },
+    {
+      "file": "timeline-controls-dark.png",
+      "viewport": {"width": 1100, "height": 820},
+      "sha256": "0d24acdb79da1ccff5e74c6f1758a750d501280419fb40f31b667ad07d15050e",
+      "result": "Compact All/A/B/C controls occupy the ledger header. Select points and Display remain grouped on the right. Descriptive history labels and expanded visibility checkboxes are not repeated."
+    },
+    {
+      "file": "workbench-dark-desktop.png",
+      "viewport": {"width": 1100, "height": 820},
+      "sha256": "e1b5d6cab273f3149bb6db39b64e808a7ad3f001129afe02e8342937b20c17eb",
+      "result": "Both corrected control areas are visible within the actual coordinated workbench. Branch colors, incoming histograms and optional lower-right reference distribution remain visible. The ledger and inspector have independent vertical scrolling."
+    },
+    {
+      "file": "workbench-light-narrow-map.png",
+      "viewport": {"width": 390, "height": 900},
+      "sha256": "8943e1d246c1b3550122c848630eae8668e47d1bddbc763d1ba276ac7ccf3985",
+      "result": "Prediction identities and Analyze actions remain aligned within the narrow map panel without horizontal overflow. Expand map, inspector and optional graph remain available in page flow."
+    }
+  ],
+  "checks": {
+    "fullReactUnitSuite": "passed",
+    "lint": "passed",
+    "storybookBuildAndCoverage": "passed",
+    "actualPackedPackage": "passed",
+    "workbenchBrowserCheckGroups": 21,
+    "timelineBrowserCheckGroups": 58,
+    "workbenchRuntimeErrors": 0
+  },
+  "limitations": [
+    "The existing first-divergence map callout can overlap the selected place label in the focused desktop view; the inspector retains those details.",
+    "Automated accessibility checks exclude color contrast.",
+    "The prediction crop's repository blob SHA matches the downloaded capture. Direct public raw-URL rendering could not be checked because public browsing was unavailable.",
+    "Independent reviewer and pull-request-writer delegation were unavailable. This inspection does not claim independent approval or completed PR-wide CI."
+  ]
+}

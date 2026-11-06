@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { EventItem, type EventTimelineEvent } from "./EventItem";
 import { ConnectionGraph } from "./ConnectionGraph";
 import {
@@ -6,6 +6,12 @@ import {
   type EventTimelineConnection,
 } from "./connectionGraph";
 import styles from "./EventTimeline.module.scss";
+
+export type EventTimelineConnectionContext = {
+  connection: EventTimelineConnection;
+  fromEvent: EventTimelineEvent;
+  toEvent: EventTimelineEvent;
+};
 
 export type EventTimelineProps = {
   /** Caller-ordered observations; never sorted or deduplicated internally. */
@@ -15,7 +21,14 @@ export type EventTimelineProps = {
   /** Emphasize observations belonging to an externally selected context without filtering. */
   relatedIds?: readonly string[];
   defaultSelectedId?: string | null;
-  onSelectedIdChange?: (id: string) => void;
+  onSelectedIdChange?: (
+    id: string,
+    modifiers?: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
+  ) => void;
+  /** Highlight a selected set without implying relationships between its members. */
+  selectedIds?: readonly string[];
+  /** Row buttons act as selection toggles, including on touch devices. */
+  multiSelectable?: boolean;
   /** Optional map coordination. This does not navigate or zoom a map itself. */
   onLocationSelect?: (locationId: string, eventId: string) => void;
   /** Optional right-side summary, separate from the selected event button. */
@@ -24,7 +37,13 @@ export type EventTimelineProps = {
   renderMetrics?: (event: EventTimelineEvent) => React.ReactNode;
   /** Flow metrics with event identity, or place them beneath it. */
   metricsPlacement?: "inline" | "below";
-  /** Content associated with the interval following an event. */
+  /** Compact incoming-connection evidence. Never uses chronological adjacency. */
+  renderConnectionMetrics?: (
+    context: EventTimelineConnectionContext,
+  ) => React.ReactNode;
+  /** Side-by-side timestamp, event and evidence when the ledger has enough width. */
+  ledgerColumns?: boolean;
+  /** Content associated with the interval following an event; not used with explicit connections. */
   renderInterval?: (
     event: EventTimelineEvent,
     following: EventTimelineEvent | undefined,
@@ -51,8 +70,12 @@ export function EventTimeline({
   relatedIds,
   defaultSelectedId = null,
   onSelectedIdChange,
+  selectedIds,
+  multiSelectable = false,
   onLocationSelect,
   renderInterval,
+  renderConnectionMetrics,
+  ledgerColumns = false,
   renderDetails,
   renderTrailing,
   renderMetrics,
@@ -72,13 +95,34 @@ export function EventTimeline({
   const related = relatedIds && new Set(relatedIds);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const graphRoot = useRef<HTMLDivElement>(null);
-  const graph =
-    connections === undefined
-      ? undefined
-      : getConnectionGraphLayout(events, connections);
-  const choose = (event: EventTimelineEvent) => {
+  const graph = useMemo(
+    () =>
+      connections === undefined
+        ? undefined
+        : getConnectionGraphLayout(events, connections),
+    [events, connections],
+  );
+  const incoming = useMemo(() => {
+    const byId = new Map(events.map((event) => [event.id, event]));
+    const result = new Map<string, EventTimelineConnectionContext[]>();
+    for (const connection of connections ?? []) {
+      const fromEvent = byId.get(connection.fromEventId);
+      const toEvent = byId.get(connection.toEventId);
+      if (!fromEvent || !toEvent) continue;
+      const contexts = result.get(toEvent.id) ?? [];
+      contexts.push({ connection, fromEvent, toEvent });
+      result.set(toEvent.id, contexts);
+    }
+    return result;
+  }, [events, connections]);
+  const choose = (
+    event: EventTimelineEvent,
+    modifiers?: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
+  ) => {
     if (selectedId === undefined) setInternalId(event.id);
-    onSelectedIdChange?.(event.id);
+    if (modifiers?.shiftKey || modifiers?.ctrlKey || modifiers?.metaKey)
+      onSelectedIdChange?.(event.id, modifiers);
+    else onSelectedIdChange?.(event.id);
   };
   const navigate = (event: EventTimelineEvent, key: string) => {
     const index = events.findIndex((candidate) => candidate.id === event.id);
@@ -102,16 +146,38 @@ export function EventTimeline({
       aria-label={ariaLabel}
       data-size={size}
       data-variant={variant}
+      data-ledger-columns={ledgerColumns || undefined}
       data-connected={connections !== undefined || undefined}
     >
       {events.map((event, index) => {
         const details = renderDetails?.(event);
-        const metrics = renderMetrics?.(event);
+        const eventMetrics = renderMetrics?.(event);
+        const connectionMetrics = (incoming.get(event.id) ?? []).flatMap(
+          (context) => {
+            const rendered = renderConnectionMetrics?.(context);
+            return rendered == null || rendered === false
+              ? []
+              : [
+                  <React.Fragment key={context.connection.id}>
+                    {rendered}
+                  </React.Fragment>,
+                ];
+          },
+        );
+        const metrics = connectionMetrics.length ? (
+          <>
+            {eventMetrics}
+            {connectionMetrics}
+          </>
+        ) : (
+          eventMetrics
+        );
         return (
           <li
             className={styles.entry}
             key={event.id}
             data-related={related?.has(event.id) || undefined}
+            data-marked={selectedIds?.includes(event.id) || undefined}
             aria-description={
               related?.has(event.id) ? "In selected context" : undefined
             }
@@ -126,11 +192,13 @@ export function EventTimeline({
                 metricsPlacement === "inline" ? metrics : undefined
               }
               current={event.id === activeId}
+              marked={selectedIds?.includes(event.id)}
+              multiSelectable={multiSelectable}
               registerButton={(node) => {
                 if (node) buttons.current.set(event.id, node);
                 else buttons.current.delete(event.id);
               }}
-              onSelect={() => choose(event)}
+              onSelect={(modifiers) => choose(event, modifiers)}
               onKeyDown={(key) => navigate(event, key)}
             />
             {metricsPlacement === "below" && metrics != null && (
@@ -146,11 +214,13 @@ export function EventTimeline({
               </button>
             )}
             {details != null && <div className={styles.details}>{details}</div>}
-            {renderInterval && index < events.length - 1 && (
-              <div className={styles.interval}>
-                {renderInterval(event, events[index + 1])}
-              </div>
-            )}
+            {connections === undefined &&
+              renderInterval &&
+              index < events.length - 1 && (
+                <div className={styles.interval}>
+                  {renderInterval(event, events[index + 1])}
+                </div>
+              )}
           </li>
         );
       })}

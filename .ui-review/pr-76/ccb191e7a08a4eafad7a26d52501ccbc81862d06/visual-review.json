@@ -1,0 +1,23 @@
+{
+  "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+  "evidenceCommit": "f039934027499255ba9057516d5f3b936b609c27",
+  "verificationRun": "https://github.com/lanej/easy-ui/actions/runs/42241788174",
+  "browser": "156.0.8078.79",
+  "inspection": "Actual built components visually inspected at readable resolution. Git graph is the leftmost ledger column; all three histories stay in the shared chronology and map legend; compact histograms, risk indicators, and responsive views are retained.",
+  "screenshots": [
+    {"file":"workbench-overview-1100.png","sha256":"1febde75f6b505fc4bf6517f26a62f9ff54757525a8ea1c5b7f00b1fdf91f72f","viewport":{"width":1100,"height":820},"dimensions":[1068,886],"inspected":true},
+    {"file":"workbench-overview-960.png","sha256":"29b6d989455809f8840ffdcc2ed6c39fe8c4e62a91544d4066e53040d157bbbb","viewport":{"width":960,"height":820},"dimensions":[928,858],"inspected":true},
+    {"file":"workbench-light-desktop.png","sha256":"fe00662a276b54432170b358db3b68002574f525e80c17af66a65e8ec5b03c75","viewport":{"width":1100,"height":820},"dimensions":[1068,960],"inspected":true},
+    {"file":"workbench-dark-desktop.png","sha256":"ef76c86459d34262bf1beb078bcb333eb5ef234eacbe75d7b19f1a9357b1d604","viewport":{"width":1100,"height":820},"dimensions":[1068,960],"inspected":true},
+    {"file":"workbench-light-narrow-events.png","sha256":"674908dd6c3ee4332b13cf752baa245788e87fcbc42913e06539437240c2be2d","viewport":{"width":390,"height":900},"dimensions":[358,1598],"inspected":true},
+    {"file":"workbench-light-narrow-map.png","sha256":"bef0b95e0d77cab08e9130281e4bd8604afe29e5f4f8a39f6a49422f469faa1d","viewport":{"width":390,"height":900},"dimensions":[358,1625],"inspected":true}
+  ],
+  "rawImageVerification": "All six immutable raw URLs were fetched in the verification run and compared byte-for-byte with the captured files. See raw-image-urls.log in its artifact.",
+  "validation": {"targetedTests":192,"workbenchBrowserCheckGroups":18,"timelineBrowserCheckGroups":58,"runtimeErrors":0,"fullReactSuiteLocal":{"passed":2399,"skipped":2}},
+  "limits": [
+    "Component screenshots include vertically scrolling panels and can extend beyond the capture viewport.",
+    "The existing first-divergence callout can overlap the selected place label in the focused desktop map; full divergence details remain available in the inspector.",
+    "Automated workbench accessibility excludes color contrast.",
+    "Separate reviewer and PR-writer delegation were unavailable; no independent approval or downstream adoption is claimed."
+  ]
+}

@@ -30,7 +30,16 @@ export type EventItemProps = {
   size?: "compact" | "default" | "detailed";
   /** Ledger stacks event type, location, and occurrence time in compact rows. */
   variant?: "timeline" | "ledger";
-  onSelect?: () => void;
+  /** Event activation modifiers support explicit range and additive selection. */
+  onSelect?: (modifiers: {
+    shiftKey: boolean;
+    ctrlKey: boolean;
+    metaKey: boolean;
+  }) => void;
+  /** Selected as part of a caller-owned set; independent from inspector current row. */
+  marked?: boolean;
+  /** Expose selection toggle semantics for keyboard and touch. */
+  multiSelectable?: boolean;
   onKeyDown?: (key: string) => boolean;
   registerButton?: (node: HTMLButtonElement | null) => void;
   /** Caller-owned summary outside the selection button; never a nested button. */
@@ -48,6 +57,8 @@ export function EventItem({
   size = "default",
   variant = "timeline",
   onSelect,
+  marked = false,
+  multiSelectable = false,
   onKeyDown,
   registerButton,
   trailing,
@@ -116,6 +127,12 @@ export function EventItem({
       )}
     </>
   );
+  const activate = (e: React.MouseEvent<HTMLButtonElement>) =>
+    onSelect?.({
+      shiftKey: e.shiftKey,
+      ctrlKey: e.ctrlKey,
+      metaKey: e.metaKey,
+    });
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (
       ["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) &&
@@ -138,6 +155,7 @@ export function EventItem({
         data-variant="ledger"
         data-size={size}
         data-current={current || undefined}
+        data-marked={marked || undefined}
         data-has-trailing={trailing != null || undefined}
       >
         <div className={styles.ledgerContent} data-event-content>
@@ -146,6 +164,7 @@ export function EventItem({
             type="button"
             className={styles.ledgerSelect}
             aria-current={current ? "true" : undefined}
+            aria-pressed={multiSelectable ? marked : undefined}
             aria-labelledby={[
               `${id}-ledger-title`,
               ledgerLocation && `${id}-ledger-location`,
@@ -164,7 +183,7 @@ export function EventItem({
                 .filter(Boolean)
                 .join(" ") || undefined
             }
-            onClick={onSelect}
+            onClick={activate}
             onKeyDown={handleKeyDown}
           >
             <span id={`${id}-ledger-title`} className={styles.ledgerTitle}>
@@ -217,6 +236,7 @@ export function EventItem({
       type="button"
       className={styles.select}
       aria-current={current ? "true" : undefined}
+      aria-pressed={multiSelectable ? marked : undefined}
       aria-labelledby={
         inline
           ? [
@@ -239,7 +259,7 @@ export function EventItem({
               .join(". ") || undefined
           : undefined
       }
-      onClick={onSelect}
+      onClick={activate}
       onKeyDown={handleKeyDown}
     >
       {inline ? (
@@ -262,6 +282,7 @@ export function EventItem({
       className={styles.item}
       data-size={size}
       data-current={current || undefined}
+      data-marked={marked || undefined}
       data-has-trailing={trailing != null || undefined}
       data-metrics-placement={inline ? "inline" : undefined}
     >

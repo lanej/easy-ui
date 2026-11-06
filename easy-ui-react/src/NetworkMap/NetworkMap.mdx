@@ -734,3 +734,8 @@ Under `NetworkMapProvider`, wrap a named, focusable control in `NetworkMapInspec
 Interactive details use a named, nonmodal region rather than an ARIA tooltip. Ordinary Tooltip remains the primitive for short, noninteractive help. Rich inspectors reuse NetworkMap's existing details popover and React Aria dismissal. A null or false renderer omits its card and accessible description, clears its inspection state, and does not suppress delivery-cell inspection or pin an invisible card. Inspectors provide 12px of body padding; custom renderers do not need an outer padding wrapper. The default `NetworkMapCellDetails` retains its standalone padding without doubling it inside an inspector. Viewport cards grow to fit their content within the available window height and inherit live nested/system theme changes. Only overflowing content scrolls, while the header controls remain visible. Delivery-cell cards stay within the map above its attribution.
 
 The local `scripts/preview-maps/rich-inspection.html` example demonstrates both renderers, shared routes, public keyboard triggers, nested Light/Dark themes, immutable refreshes and explicit context dismissal without external tiles.
+
+The `renderOverlayHoverDetails` context includes `pinned` to distinguish click-
+pinned inspection from transient hover. Wrappers that combine hover rendering
+with the legacy `renderOverlayDetails` callback should invoke the latter only
+when `pinned` is true, and only for the first selected feature.

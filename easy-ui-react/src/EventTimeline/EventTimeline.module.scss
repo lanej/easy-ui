@@ -477,3 +477,62 @@
     }
   }
 }
+
+// Column layout is opt-in. The evidence yields first on narrow containers.
+@container event-timeline (min-width: 420px) {
+  .timeline[data-ledger-columns="true"] .item[data-variant="ledger"] {
+    grid-template-columns: minmax(0, 1fr) minmax(116px, 0.48fr);
+    align-items: center;
+    min-block-size: 54px;
+    padding-block: 6px;
+    border-block-end: 1px solid design-token("color.neutral.200");
+    .ledgerContent {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .ledgerTitle {
+      font-size: 13px;
+      line-height: 20px;
+    }
+    .ledgerSelect {
+      grid-template-columns: 86px minmax(0, 1fr);
+      column-gap: 8px;
+      row-gap: 2px;
+      .time {
+        grid-column: 1;
+        grid-row: 1 / span 3;
+      }
+      .ledgerTitle,
+      .ledgerLocation,
+      .received {
+        grid-column: 2;
+      }
+    }
+    .inlineMetrics {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      margin-block-start: 0;
+    }
+    .ledgerTrailing {
+      grid-column: 1;
+      grid-row: 2;
+      margin-inline-start: 94px;
+      margin-block-start: 4px;
+    }
+  }
+}
+
+/* Group selection is separate from the currently inspected event. */
+.entry[data-marked="true"] .item[data-variant="ledger"] {
+  background: design-token("color.primary.050");
+  box-shadow: inset 2px 0 design-token("color.primary.500");
+}
+.item[data-variant="ledger"][data-marked="true"]:not([data-current="true"])
+  .ledgerSelect {
+  font-weight: 600;
+}
+@media (forced-colors: active) {
+  .entry[data-marked="true"] .item[data-variant="ledger"] {
+    outline: 1px solid Highlight;
+  }
+}

@@ -1,0 +1,26 @@
+name: Workbench layout revision
+on:
+  push:
+    branches: [codex/investigation-workbench]
+    paths: [.github/workflows/workbench-layout-revision.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Export source without credentials or historical evidence
+        run: |
+          git rev-parse HEAD > "$RUNNER_TEMP/source-revision.txt"
+          tar --exclude='./.git' --exclude='./.ui-review' --exclude='./node_modules' --exclude='*/node_modules' --exclude='./.turbo' -czf "$RUNNER_TEMP/workbench-source.tar.gz" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workbench-layout-source
+          path: |
+            ${{ runner.temp }}/workbench-source.tar.gz
+            ${{ runner.temp }}/source-revision.txt
+          retention-days: 1

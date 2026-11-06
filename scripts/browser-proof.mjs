@@ -132,7 +132,13 @@ async function main() {
       ...(suite === "maps-layout" ? [".ui-review/maps"] : []),
       ...(suite === "hosted-maps" ? ["scripts/build-docs.mjs"] : []),
       ...(suite === "event-timeline"
-        ? ["scripts/check-event-timeline.mjs"]
+        ? [
+            "scripts/check-event-timeline.mjs",
+            "scripts/check-investigation-workspace.mjs",
+            "scripts/check-investigation-workbench.mjs",
+            "scripts/check-map-free-investigation.mjs",
+            "scripts/check-investigation-toolkit.mjs",
+          ]
         : []),
     ])
       .split("\0")

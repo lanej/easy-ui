@@ -1,0 +1,25 @@
+{
+  "sourceRevision": "6a6cfe2bdee516283bc1a41605142ea33fee3553",
+  "captureWorkflowRun": 42153069237,
+  "inspection": {
+    "method": "Visual inspection of the downloaded actual Chromium component captures at readable resolution; image hashes verified against provenance.json.",
+    "files": ["workbench-light-desktop.png", "workbench-dark-desktop.png", "workbench-overview.png", "workbench-narrow-events.png", "workbench-narrow-map.png"],
+    "result": "No loading failures, horizontal overflow, clipped labels or overlapping controls observed in these states. Narrow views scroll vertically; the selected row remains accessible.",
+    "limits": "This is not an independent design review or a quantified contrast audit. The narrow-events capture is byte-identical to the previously inspected capture."
+  },
+  "verification": {
+    "affectedTests": 165,
+    "testFiles": 14,
+    "typescript": "passed",
+    "storybook": "build and coverage passed",
+    "packedConsumer": "CommonJS, ESM, SSR and node/bundler TypeScript resolution passed for actual source and publish-directory tarballs",
+    "browser": "Light/dark desktop and 390px checks passed with no runtime errors; automated accessibility excludes color contrast",
+    "cacheHarnessTests": 4,
+    "cacheHarnessNote": "The subsequent nonvisual CI integration adds all investigation harnesses to the browser-proof fingerprint. Existing browser-proof tests pass locally."
+  },
+  "delegation": {
+    "independentCodeReviewer": false,
+    "independentPRWriter": false,
+    "reason": "Separate subagent tools were unavailable in this execution environment. No independent review or drafting is claimed."
+  }
+}

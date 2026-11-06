@@ -68,6 +68,7 @@ export type InvestigationWorkspaceProps = InvestigationRecords & {
     | "renderMetrics"
     | "metricsPlacement"
     | "renderInterval"
+    | "renderConnectionMetrics"
     | "renderDetails"
     | "size"
     | "variant"

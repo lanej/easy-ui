@@ -52,6 +52,8 @@ export type MapFacilityDetailsContext = { facility: MapFacility };
 
 /** All original features under the pointer, deduplicated across layers and tiles. */
 export type MapOverlayHoverDetailsContext = {
+  /** True for a click-pinned inspection; absent/false for transient hover. */
+  pinned?: boolean;
   /** Inspected collections, including geometry-free collections targeted by a DOM control. */
   overlays: readonly MapOverlay[];
   selections: readonly MapOverlayDetailsContext[];
