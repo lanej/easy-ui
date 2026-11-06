@@ -1,0 +1,24 @@
+{
+  "source_revision": "9334c0d2838af3c629844a5865a7c4ceb9960e0d",
+  "source_tree": "26b82b6459ca72b358a529a600f1c324ee92dd46",
+  "rendered_url": "https://github.com/lanej/easy-ui/blob/9334c0d2838af3c629844a5865a7c4ceb9960e0d/documentation/CI.md",
+  "source_document_sha256": "91b40f36e8f491bdc1551c65753d6707960d886866f9ca225846904cd18ed0d2",
+  "recorded_at": "2026-11-06T02:33:31Z",
+  "capture_command": "Browser full-page screenshot of the GitHub-rendered documentation: tab.screenshot({ fullPage: true })",
+  "browser": "Cloud Chrome (version not exposed by the browser interface)",
+  "viewport_css": {
+    "width": 1180,
+    "height": 757
+  },
+  "image": {
+    "file": "workflow-documentation.jpg",
+    "width": 1165,
+    "height": 2324,
+    "bytes": 407600,
+    "sha256": "f6d4a1a4515fc76c89902244fd58d5bf9b8c61e315aa8903d79834359a6b6585"
+  },
+  "theme": "light",
+  "inspection": "Actual rendered document inspected at readable resolution, with no clipped content, overlapping text, or loading overlays.",
+  "scope": "CI and documentation only. This image demonstrates documentation rendering, not browser-container execution or runtime improvement.",
+  "validation": "25 focused tests, workflow YAML and shell syntax passed. Vite preview returned HTTP 200 for iframe.html and HTTP 404 for a missing page. End-to-end container validation is delegated to GitHub Actions; Docker is unavailable locally."
+}
