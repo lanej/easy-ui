@@ -17,41 +17,36 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - name: Apply locally tested patch against verified file hashes
+      - name: Apply exact locally tested patches
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import base64, hashlib, json, pathlib, subprocess, zlib
-          encoded = 'eNq1W/tz20aS/ldmValdKiRBPPgAZUmOLWfPrkvilJ29/cHyFQfAgMQKBLgAKIlR6X+/r2cGLxKUlY3OD1ECZnp6ur9+zujhZMXzlchPztjDieD5briNhpngfjHKM3/0IbkVeREteRGlyT/T7CbfcF8cPvZE4q+MdRpsY2Hkfk70Tjwr5GZgjceW5c/5dGxObC5se2K7junbwhYzx+Z8KrzZ2AznIgxmU9u1QmH5/kQEoTgZsD/NUpHfEyuONbUnztwNzMl8NrG98TyYzSaT2dQCQ9yaONz3wMrYDsy571nCGQceDzzLH4f+zHKn3az8Ioo7rPQz34yK3UbkWE0uZk546JhjYc7mvmmOQ5Pb44kZTqf+dD6zXRObm4eumJgOhrieO8FDe8aDMZ/M5jP/m4ttc4GPD0m+ET5tV6/rubZwJqFw+MRxx9bc5RN7FgjXDmZh6M/dydTn/ti0MC6YT6cz150IK5xYTui5WPZl5I2HpdDnnjtz7ckc+/KEFfiOY7uubbljbzoLfH/sBLaYu3YY2mIcCDFxMMadh1MOofsQx0vwI+75ehNL1UieoIIAMpgF87k1FnNz5vFxEIbmxPQmvm8G/izE0zCYO747dbnlW8DK3AZG56YbBOF/oJuGRGwgwjZDPg9tEPOtCUBg8cARc8c051hhZrrj6djioe04c2duBVOACdzSeN+xX0IiuYg7OHNc15oIZz5xTG/qWR4sFWiBiMY2dAcpBWI2CafOfDz3Zq7jz8eQmzXDA9MEhPif40w+NtaBZMWFw3CtwIMozOnY4VPLsaGtCVArfLgGy7YCG+biu2N7PAaEXdPxfUgwBNa48L6povrbckn4oakwYQteKLgj8Be6mNsex37DCZ94c27NfMufBS5YAarhzOawXxueY+KO3Y4lb6I4zkf64SgTocggfpGP/HS9SRORFDlWl4uPJ6E9FjN7CoLYzty0XC/0vMAUMAQOvqZ2wKGSmYsBgWkJNzR9gNK1PXs+k5DM/SzaFCC+Ev7NMGrKd3hX++d/ST8BxAVwtr5wLH/iCNg+LA8e1xWuE5jBPJi6M/dydTn/ti0MC6YT6cz150IK5xYTui5WPZl5I2HpdDnnjtz7ckc+/KEFfiOY7uubbljbzoLfH/sBLaYu3YY2mIcCDFxMMadh1MOofsQx0vwI+75ehNL1UieoIIAMpgF87k1FnNz5vFxEIbmxPQmvm8G/izE0zCYO747dbnlW8DK3AZG56YbBOF/oJuGRGwgwjZDPg9tEPOtCUBg8cARc8c051hhZrrj6djioe04c2duBVOACdzSeN+xX0IiuYg7OHNc15oIZz5xTG/qWR4sFWiBiMY2dAcpBWI2CafOfDz3Zq7jz8eQmzXDA9MEhPif40w+NtaBZMWFw3CtwIMozOnY4VPLsaGtCVArfLgGy7YCG+biu2N7PAaEXdPxfUgwBNa48L6povrbckn4oakwYQteKLgj8Be6mNsex37DCZ94c27NfMufBS5YAarhzOawXxueY+KO3Y4lb6I4zkf64SgTocggfpGP/HS9SRORFDlWl4uPJ6E9FjN7CoLYzty0XC/0vMAUMAQOvqZ2wKGSmYsBgWkJNzR9gNK1PXs+k5DM/SzaFCC+Ev7NMGrKd3hX++d/ST8BxAVwtr5wLH/iCNg+LA8e1xWuE5jBPJi6'
-          # Explicit transport verification prevents partial or corrupted source writes.
-          assert hashlib.sha256(encoded.encode()).hexdigest() == '6de4dcbff7c18e424c79663f5f2f2373b37ab5f45b79f4acb22192faa72a7b4e', 'Patch transport mismatch'
-          payload = json.loads(zlib.decompress(base64.b64decode(encoded)))
-          for name, digest in payload['hashes'].items():
-              assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest() == digest, name + ' changed concurrently'
-          patch = pathlib.Path('/tmp/workbench-controls.patch')
-          patch.write_text(payload['patch'])
-          subprocess.run(['git', 'apply', '--check', str(patch)], check=True)
-          subprocess.run(['git', 'apply', str(patch)], check=True)
-          subprocess.run(['git', 'add', '--', *payload['hashes']], check=True)
-          PY
-      - name: Retain exact code revision
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/workbench-local-verification-inputs.yml
-          git commit -m 'Align prediction rows and compact history controls; preserve pinned overlay details'
-          git push origin HEAD:codex/investigation-workbench
-          echo "SOURCE_REVISION=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo '85fc980ef5d70c24319e6b4e0b5a523eca627c8f9ea89e70673b4b1e1b2dc2c5  .ui-review/pr-76-control-layout.patch' | sha256sum --check
+          echo 'f393629168794912bfa1fe0c21982fba05697fb8201ef77899a73d94f066d87e  .ui-review/pr-76-callback-compatibility.patch' | sha256sum --check
+          git apply --check .ui-review/pr-76-control-layout.patch .ui-review/pr-76-callback-compatibility.patch
+          git apply .ui-review/pr-76-control-layout.patch .ui-review/pr-76-callback-compatibility.patch
       - run: npm ci --no-audit --no-fund
       - name: Verify unit tests and lint
         run: |
           npm test --workspace @easypost/easy-ui
           npm run lint --workspace @easypost/easy-ui
+      - name: Retain exact verified code revision
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/workbench-local-verification-inputs.yml .ui-review/pr-76-control-layout.patch .ui-review/pr-76-callback-compatibility.patch
+          git add easy-ui-react/src/InvestigationWorkspace easy-ui-react/src/EventTimeline/EventTimeline.tsx easy-ui-react/src/NetworkMap easy-ui-react/skills/easy-ui/references/components.md scripts/check-investigation-workbench.mjs
+          git commit -m 'Align prediction rows and compact history controls; fix overlay and selection callbacks'
+          git push origin HEAD:codex/investigation-workbench
+          echo "SOURCE_REVISION=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - name: Build real components
         run: npm run build:storybook
         env:
           STORYBOOK_TEST_RECIPES: 'true'
+      - name: Verify public component coverage and packed package
+        run: |
+          npm run check:storybook
+          node scripts/check-style-package.mjs
       - name: Prepare browser libraries
         working-directory: scripts/preview-metrics
         run: npm ci --no-audit --no-fund
