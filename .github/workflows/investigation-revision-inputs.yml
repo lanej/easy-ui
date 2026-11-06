@@ -31,7 +31,8 @@ jobs:
           set -euo pipefail
           python3 .github/revisions/apply-all-histories.py
           python3 .github/revisions/fix-inspector-focus.py
-          rm .github/revisions/apply-all-histories.py .github/revisions/fix-inspector-focus.py .github/workflows/investigation-revision-inputs.yml
+          python3 .github/revisions/settle-branch-graph.py
+          rm .github/revisions/apply-all-histories.py .github/revisions/fix-inspector-focus.py .github/revisions/settle-branch-graph.py .github/workflows/investigation-revision-inputs.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
