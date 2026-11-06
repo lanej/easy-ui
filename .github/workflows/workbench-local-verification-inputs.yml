@@ -1,0 +1,35 @@
+name: Temporary workbench verification inputs
+on:
+  push:
+    branches: [codex/investigation-workbench]
+    paths: [.github/workflows/workbench-local-verification-inputs.yml]
+permissions:
+  contents: read
+jobs:
+  inputs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Archive exact source and installed build dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > "$RUNNER_TEMP/source-revision.txt"
+          git archive --format=tar.gz --output="$RUNNER_TEMP/source.tar.gz" HEAD
+          tar -czf "$RUNNER_TEMP/dependencies.tar.gz" node_modules easy-ui-react/node_modules easy-ui-tokens/dist easy-ui-icons/dist easy-ui-react/dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workbench-verification-inputs
+          path: |
+            ${{ runner.temp }}/source-revision.txt
+            ${{ runner.temp }}/source.tar.gz
+            ${{ runner.temp }}/dependencies.tar.gz
+          retention-days: 1
