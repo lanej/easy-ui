@@ -38,6 +38,8 @@ import { EventDetails } from "@easypost/easy-ui/EventDetails";
 
 Inline facts wrap with their container. Stacked facts use aligned label/value rows with a bounded label column; labels and long identifiers wrap without truncation, including at enlarged text sizes. Provenance and identifiers are presentation only, and do not establish that an observation or inferred path is true.
 
+Set `showLocation={false}` when the surrounding inspector already names the location. The default remains `true`; occurrence and receipt remain visible and distinct in either presentation. The compact investigation inspector uses this option to avoid repeating its location heading.
+
 <Canvas of={Stories.Stacked} />
 <Canvas of={Stories.Unknown} />
 <Canvas of={Stories.LongIdentifiers} />

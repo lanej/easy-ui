@@ -176,14 +176,14 @@
   color: design-token("color.neutral.700");
 }
 
-// Location-first rows are a navigator for a shared inspector. Their full
+// Event-first rows are a navigator for a shared inspector. Their full
 // selected surface includes caller-owned summaries without nesting controls.
 .timeline[data-variant="ledger"] {
   display: grid;
-  gap: 2px;
+  gap: 0;
 
   .entry {
-    --content-inset: 10px;
+    --content-inset: 9px;
   }
 }
 
@@ -205,10 +205,18 @@
 .item[data-variant="ledger"] {
   position: relative;
   isolation: isolate;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 0 8px;
+  box-sizing: border-box;
+  min-block-size: 64px;
+  padding: 6px 9px;
   border-radius: 6px;
+
+  &[data-has-trailing="true"] {
+    grid-template-columns: minmax(0, 1fr) fit-content(42%);
+  }
 
   &[data-current="true"],
   &:has(.ledgerSelect:hover) {
@@ -221,6 +229,7 @@
 
   .time {
     padding: 0;
+    font-size: 12px;
     line-height: 16px;
   }
 
@@ -230,13 +239,12 @@
 }
 
 .ledgerContent {
-  flex: 1 1 0%;
-  display: grid;
-  gap: 1px;
   min-inline-size: 0;
 }
 
 .ledgerSelect {
+  display: grid;
+  gap: 1px;
   border: 0;
   padding: 0;
   inline-size: 100%;
@@ -266,28 +274,40 @@
 }
 
 .ledgerTitle {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
   min-inline-size: 0;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 16px;
   overflow-wrap: anywhere;
 }
 
-.ledgerType {
-  font-size: 12px;
-  line-height: 16px;
-  color: design-token("color.neutral.700");
+.ledgerLocation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 5px;
+  min-inline-size: 0;
+  font-size: 13px;
+  line-height: 18px;
   overflow-wrap: anywhere;
+
+  .locationIcon {
+    margin-block-start: 2px;
+  }
+}
+
+.ledgerQualifier {
+  font-size: 11px;
+  color: design-token("color.neutral.700");
 }
 
 .ledgerTrailing {
   position: relative;
   z-index: 2;
-  flex: 0 1 auto;
-  max-inline-size: 42%;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  max-inline-size: 100%;
   min-inline-size: 0;
   overflow-wrap: anywhere;
 }
@@ -413,14 +433,17 @@
 }
 
 .item[data-variant="ledger"] .inlineMetrics {
-  margin-block-start: 2px;
+  display: block;
+  grid-column: 1 / -1;
+  min-inline-size: 0;
+  margin-block-start: 4px;
 }
 
 // Compact row summaries share space with a readable event identity. Their
 // contents can wrap within the trailing slot without moving below the event.
 .item[data-size="compact"][data-has-trailing="true"]:not(
     [data-metrics-placement="inline"]
-  ) {
+  ):not([data-variant="ledger"]) {
   align-items: flex-start;
   gap: 8px;
 

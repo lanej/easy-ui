@@ -36,7 +36,7 @@ const details = () =>
   page.getByRole("region", { name: "Selection details", exact: true });
 const timeline = () =>
   page.getByRole("list", {
-    name: ledgerOnly ? "Observations" : "Events",
+    name: ledgerOnly ? "Event history" : "Events",
     exact: true,
   });
 async function open(story, theme = "light", width = 1200, height = 1100) {
@@ -64,7 +64,10 @@ async function waitForResponsiveLayout() {
     );
     return (
       workspace?.getAttribute("data-narrow") ===
-      String(workspace.getBoundingClientRect().width <= 740)
+      String(
+        workspace.getBoundingClientRect().width <=
+          (workspace.dataset.variant === "ledger" ? 640 : 740),
+      )
     );
   });
 }
@@ -202,35 +205,78 @@ async function screenshot(name) {
   await page.mouse.move(0, 0);
   await page.keyboard.press("Escape");
   await page.evaluate(() => document.activeElement?.blur());
-  await page
-    .locator("#storybook-root")
-    .screenshot({ path: `${output}/${name}.png` });
+  await page.locator("#storybook-root").screenshot({
+    path: `${output}/${name}.png`,
+    ...(ledgerOnly ? { scale: "css" } : {}),
+  });
 }
 async function checkLedger() {
-  const eventIds = [
+  const eventNames = {
+    accepted: /^(?=.*Ludington, MI)(?=.*Accepted)/,
+    "shared-transit": /Hammond, IN.*Oct 22.*12:23/,
+    "a-transit": /Avondale, AZ.*Oct 23.*20:19/,
+    "a-wellton": /Wellton, AZ.*Oct 24.*04:20/,
+    "b-transit": /Wellton, AZ.*Oct 24.*07:56/,
+    revisit: /^(?=.*Avondale, AZ)(?=.*Oct 24)(?=.*11:25)(?=.*Return visit)/,
+    "out-for-delivery": /^(?=.*El Cajon, CA)(?=.*Out for delivery)/,
+    delivered: /^(?=.*El Cajon, CA)(?=.*Delivered)/,
+    "c-accepted": /^(?=.*Kansas City, KS)(?=.*Accepted)/,
+    "c-delivered": /^(?=.*Ottawa, KS)(?=.*Delivered)/,
+    "unassigned-delivery": /^(?=.*Santa Rosa, NM)(?=.*Oct 27)(?=.*13:42)/,
+  };
+  const eventIds = Object.keys(eventNames);
+  const connections = [
+    ["shared-link", "accepted", "shared-transit"],
+    ["a-transfer-link", "shared-transit", "a-transit"],
+    ["a-west-link", "a-transit", "a-wellton"],
+    ["a-return-link", "a-wellton", "revisit"],
+    ["a-out-link", "revisit", "out-for-delivery"],
+    ["b-transfer-link", "shared-transit", "b-transit"],
+    ["b-out-link", "b-transit", "out-for-delivery"],
+    ["delivery-link", "out-for-delivery", "delivered"],
+    ["c-delivery-link", "c-accepted", "c-delivered"],
+  ];
+  const connectionIds = connections.map(([id]) => id);
+  const independentRoots = ["accepted", "c-accepted", "unassigned-delivery"];
+  const historyA = [
     "accepted",
-    "sorted",
+    "shared-transit",
     "a-transit",
-    "b-transit",
-    "c-accepted",
-    "a-delivered",
-    "b-out",
-    "b-revisit",
-    "c-delivered",
-    "b-delivered",
-    "unassigned-delivery",
+    "a-wellton",
+    "revisit",
+    "out-for-delivery",
+    "delivered",
   ];
-  const connectionIds = [
-    "accepted-sorted",
-    "sorted-a",
-    "a-delivery",
-    "sorted-b",
-    "b-out",
-    "b-return",
-    "b-delivery",
-    "c-delivery",
+  const historyAConnections = [
+    "shared-link",
+    "a-transfer-link",
+    "a-west-link",
+    "a-return-link",
+    "a-out-link",
+    "delivery-link",
   ];
+  const referenceFixtures = {
+    "a-transit": {
+      minutes: 1916,
+      label: "31 h 56 m",
+      previous: "Hammond · Oct 22, 12:23 UTC",
+      width: 4,
+      counts: [4, 9, 18, 30, 42, 45, 40, 29, 17, 10, 6, 2],
+    },
+    revisit: {
+      minutes: 425,
+      label: "7 h 05 m",
+      previous: "Wellton · Oct 24, 04:20 UTC",
+      width: 2,
+      counts: [6, 18, 32, 44, 36, 24, 16, 10, 6, 4, 2, 2],
+    },
+  };
   const graph = () => root().locator("[data-connection-graph]");
+  const eventButton = (id) =>
+    timeline().getByRole("button", { name: eventNames[id] });
+  const eventRow = (id) => eventButton(id).locator("xpath=ancestor::li[1]");
+  const histories = () =>
+    root().getByRole("group", { name: "Histories", exact: true });
   const camera = () =>
     page.evaluate(
       (key) => ({
@@ -250,20 +296,34 @@ async function checkLedger() {
         .map((feature) => feature.id)
         .sort();
     }, mapHandle);
-  const eventButton = (name) => timeline().getByRole("button", { name });
+
   async function expectGraph(nodes, edges, roots) {
-    // ResizeObserver measures the native row buttons after filtering or wrapping.
+    // Row histograms change row height. Each rail must retain its location
+    // headline anchor after those changes, filtering and responsive wrapping.
     await page.waitForFunction(
       ({ nodeCount, edgeCount }) => {
         const graph = document.querySelector("[data-connection-graph]");
+        const circles = graph?.querySelectorAll("[data-event-id]");
+        const buttons = document.querySelectorAll(
+          'ol[aria-label="Event history"] button',
+        );
         return (
-          graph?.querySelectorAll("[data-event-id]").length === nodeCount &&
-          graph.querySelectorAll("[data-connection-id]").length === edgeCount
+          circles?.length === nodeCount &&
+          buttons.length === nodeCount &&
+          graph.querySelectorAll("[data-connection-id]").length === edgeCount &&
+          [...circles].every((circle, index) => {
+            const node = circle.getBoundingClientRect();
+            const button = buttons[index].getBoundingClientRect();
+            return (
+              Math.abs(
+                node.y + node.height / 2 - button.y - button.height / 2,
+              ) < 1.5
+            );
+          })
         );
       },
       { nodeCount: nodes.length, edgeCount: edges.length },
     );
-    assert.equal(await timeline().getByRole("button").count(), nodes.length);
     assert.deepEqual(
       await graph()
         .locator("[data-event-id]")
@@ -288,26 +348,240 @@ async function checkLedger() {
         roots,
         "Independent origins and unassigned observations retain separate roots",
       );
+    const geometry = await graph().evaluate(
+      (svg, expected) =>
+        expected.map(([id, fromId, toId]) => {
+          const path = svg.querySelector(`[data-connection-id="${id}"] path`);
+          const from = svg.querySelector(`[data-event-id="${fromId}"]`);
+          const to = svg.querySelector(`[data-event-id="${toId}"]`);
+          const start = path.getPointAtLength(0);
+          const end = path.getPointAtLength(path.getTotalLength());
+          const distance = (point, node) =>
+            Math.hypot(
+              point.x - Number(node.getAttribute("cx")),
+              point.y - Number(node.getAttribute("cy")),
+            );
+          return {
+            id,
+            startDistance: distance(start, from),
+            endDistance: distance(end, to),
+          };
+        }),
+      connections.filter(([id]) => edges.includes(id)),
+    );
+    assert(
+      geometry.every(
+        ({ startDistance, endDistance }) =>
+          startDistance < 0.1 && endDistance < 0.1,
+      ),
+      `Forks, rejoin and disconnected histories preserve supplied endpoints: ${JSON.stringify(geometry)}`,
+    );
   }
 
-  // Audit the full composition in both themes and responsive layouts. The other
-  // stories below isolate changed behavior without repeating the full matrix.
-  for (const theme of ["light", "dark"]) {
-    for (const width of [1200, 390]) {
-      await open("branching-histories", theme, width);
-      await expectGraph(eventIds, connectionIds, [
-        "accepted",
-        "c-accepted",
-        "unassigned-delivery",
-      ]);
+  async function expectEvidence(id, expanded = true) {
+    const fixture = referenceFixtures[id];
+    const row = eventRow(id);
+    const rowPlot = row.locator('[data-visualization="histogram"]');
+    const bins = fixture.counts.map((count, index) => ({
+      from: index * fixture.width,
+      to: (index + 1) * fixture.width,
+      count,
+    }));
+    const readBins = (plot) =>
+      plot.locator("[data-bin-from]").evaluateAll((bins) =>
+        bins.map((bin) => ({
+          from: Number(bin.dataset.binFrom),
+          to: Number(bin.dataset.binTo),
+          count: Number(bin.dataset.binCount),
+        })),
+      );
+    assert(
+      await row
+        .getByText(`A · Scan interval ${fixture.label}`, { exact: true })
+        .isVisible(),
+    );
+    assert.deepEqual(
+      await readBins(rowPlot),
+      bins,
+      `${id}: row shows the supplied count histogram`,
+    );
+    const plotBox = await rowPlot.getByRole("img").boundingBox();
+    assert(
+      plotBox.height >= 31 && plotBox.height <= 33,
+      `${id}: row plot stays compact`,
+    );
+    const expectedOffset =
+      (fixture.minutes / 60 / (fixture.width * fixture.counts.length)) * 100;
+    assert(
+      Math.abs(
+        (await rowPlot
+          .locator("[data-current-assessment]")
+          .evaluate((marker) => parseFloat(marker.style.left))) -
+          expectedOffset,
+      ) < 0.01,
+      `${id}: current marker uses the explicit candidate interval`,
+    );
+    if (!expanded) return;
+    const selectedPlot = details().locator('[data-visualization="histogram"]');
+    assert.deepEqual(
+      await readBins(selectedPlot),
+      bins,
+      `${id}: inspector retains the same bins as its row`,
+    );
+    assert(
+      await details().getByText(fixture.previous, { exact: false }).isVisible(),
+    );
+    assert(
+      await details()
+        .getByText(
+          `Sep 3–Oct 21, 2026 · UTC · n=${fixture.counts.reduce((total, count) => total + count, 0)} reported intervals`,
+          { exact: true },
+        )
+        .isVisible(),
+    );
+    assert(await selectedPlot.getByText(`0 h`, { exact: true }).isVisible());
+    assert(
+      await selectedPlot
+        .getByText(`${fixture.width * fixture.counts.length} h`, {
+          exact: true,
+        })
+        .isVisible(),
+    );
+    assert(
+      await selectedPlot.getByText("Intervals", { exact: true }).isVisible(),
+    );
+    const selectedBox = await selectedPlot.getByRole("img").boundingBox();
+    assert(
+      selectedBox.height >= 99,
+      `${id}: expanded reference has a readable count plot`,
+    );
+    assert.equal(
+      await selectedPlot
+        .locator('[data-current-assessment="unassessed"]')
+        .count(),
+      1,
+      `${id}: the observation marker does not infer health or event risk`,
+    );
+  }
+
+  async function expectCompactLayout(width) {
+    const header = page
+      .getByRole("heading", { name: "Parcel history", exact: true })
+      .locator("xpath=ancestor::header[1]");
+    const box = await header.boundingBox();
+    const pane = await root()
+      .locator('[data-view-panel="events"]')
+      .boundingBox();
+    assert(
+      box.height <= (width === 390 ? 96 : 72),
+      "The parcel header remains compact",
+    );
+    assert(
+      pane.y - box.y <= (width === 390 ? 180 : 128),
+      "Header and history controls do not consume the event pane",
+    );
+    if (width !== 390) {
+      const workspace = await root().boundingBox();
+      const map = await root().locator('[data-view-panel="map"]').boundingBox();
+      assert(
+        Math.abs(pane.width - map.width) <=
+          Math.max(pane.width, map.width) * 0.12,
+        "The ledger gives its two columns comparable width",
+      );
+      const canvas = await page.locator(".maplibregl-canvas").boundingBox();
+      assert(
+        canvas.height >= 223 && canvas.height <= 227,
+        "The quiet map stays at its 225px reference height",
+      );
+      if (width === 800) {
+        assert(
+          Math.abs(workspace.width - 768) <= 2,
+          "The approval comparison uses a 768px-wide component",
+        );
+        const viewport = await root()
+          .locator("[data-timeline-scroll]")
+          .boundingBox();
+        const last = await eventRow("unassigned-delivery").boundingBox();
+        assert(
+          last.y + last.height <= viewport.y + viewport.height + 1,
+          "All eleven observations fit in the primary comparison capture",
+        );
+        console.log(
+          JSON.stringify({
+            ledgerGeometry: {
+              surfaceWidth: workspace.width,
+              headerHeight: box.height,
+              headerToEvents: pane.y - box.y,
+              eventColumnWidth: pane.width,
+              mapColumnWidth: map.width,
+              mapHeight: canvas.height,
+              ordinaryRowHeight: (await eventRow("accepted").boundingBox())
+                .height,
+              transitEvidenceRowHeight: (
+                await eventRow("a-transit").boundingBox()
+              ).height,
+              revisitEvidenceRowHeight: (
+                await eventRow("revisit").boundingBox()
+              ).height,
+              finalRowVisible:
+                last.y + last.height <= viewport.y + viewport.height + 1,
+            },
+          }),
+        );
+      }
+    }
+    assert.equal(
+      await root()
+        .locator(
+          "button button, button a[href], button input, button select, button textarea, button summary, summary button",
+        )
+        .count(),
+      0,
+      "Selection, chart disclosures and other controls are never nested in buttons",
+    );
+    assert.equal(
+      await timeline().locator('[data-visualization="histogram"]').count(),
+      2,
+      "Only observations with supplied reference data add row histograms",
+    );
+    assert.equal(
+      await timeline().locator("[data-inline-metrics]").count(),
+      2,
+      "Unmeasured observations do not retain empty metric wrappers or extra row spacing",
+    );
+    assert.equal(
+      await timeline().getByText("Unassessed", { exact: true }).count(),
+      0,
+      "Unassessed observations do not add repeated row badges",
+    );
+  }
+
+  // Keep a limited visual matrix and capture the exact 768px design-comparison
+  // width as well as the existing wide and mobile representatives.
+  const reviewOnly = process.env.INVESTIGATION_LEDGER_REVIEW_ONLY === "1";
+  for (const theme of reviewOnly ? ["light"] : ["light", "dark"]) {
+    for (const width of reviewOnly ? [800] : [800, 1200, 390]) {
+      await open(
+        "branching-histories",
+        theme,
+        width,
+        width === 800 ? 1200 : 1100,
+      );
+      if (reviewOnly) await screenshot(`branching-histories-${theme}-${width}`);
+      await expectGraph(eventIds, connectionIds, independentRoots);
+      await expectCompactLayout(width);
+      await expectEvidence("revisit", width !== 390);
       await audit(`branching-histories-${theme}-${width}`);
-      if (width === 1200)
+      if (width !== 390 || theme === "light")
         await screenshot(`branching-histories-${theme}-${width}`);
-      else {
+      if (width === 390) {
         await details()
           .getByRole("button", { name: "Show details", exact: true })
           .click();
+        await expectEvidence("revisit");
         await audit(`branching-histories-${theme}-${width}-expanded`);
+        if (theme === "light")
+          await screenshot("branching-histories-light-390-expanded");
         await showMap();
         await audit(`branching-histories-${theme}-${width}-map`);
         if (theme === "light")
@@ -315,13 +589,14 @@ async function checkLedger() {
       }
     }
   }
+  if (reviewOnly) return;
 
   await open("branching-histories");
   const originalCamera = await camera();
   assert.deepEqual(
     await selectedMapSegments(),
-    ["b-delivery"],
-    "The map highlights the selected event's supplied connection",
+    ["a-out", "a-return"],
+    "The map highlights both supplied connections incident to the revisit",
   );
   assert(
     await page.evaluate(
@@ -339,48 +614,69 @@ async function checkLedger() {
   );
   assert(
     await details()
-      .getByRole("heading", { name: "Delivered", exact: true })
+      .getByRole("heading", { name: "Avondale, AZ", exact: true })
       .isVisible(),
   );
+  assert(await details().getByText("Moderate", { exact: true }).isVisible());
   assert(
     await details()
-      .getByRole("region", { name: "Event assessment" })
-      .getByText("High risk", { exact: true })
+      .getByText("Oct 24 · 11:41 UTC", { exact: true })
       .isVisible(),
   );
-  assert(
-    await details()
-      .getByText("Oct 23 · 12:29 UTC", { exact: true })
-      .isVisible(),
-  );
-  const revisit = eventButton(/Stotts City, MO.*Oct 23.*09:18.*Return visit/);
   assert.equal(
-    await eventButton(/Stotts City, MO/).count(),
+    await timeline()
+      .getByRole("button", { name: /Avondale, AZ/ })
+      .count(),
     2,
     "A revisit is a distinct observation at the same location",
   );
-  await revisit.click();
-  assert(
-    await details()
-      .getByRole("heading", { name: "Arrived at facility", exact: true })
-      .isVisible(),
-  );
-  assert(await details().getByText("High risk", { exact: true }).isVisible());
-  assert(
-    await timeline().getByText("Return visit", { exact: true }).isVisible(),
-  );
-  await eventButton(/Ludington, MI.*Accepted/).click();
-  assert(await details().getByText("Unassessed", { exact: true }).isVisible());
-  assert(
-    await details()
-      .getByText(
-        "Candidate membership: History A, History B. No dwell or facility baseline supplied.",
-        { exact: true },
-      )
-      .isVisible(),
+  await expectEvidence("revisit");
+  assert.equal(
+    await eventRow("revisit")
+      .getByText(/3 h 29 m/)
+      .count(),
+    0,
+    "The A interval does not use B's preceding chronological observation",
   );
 
-  await root().getByRole("button", { name: "History B", exact: true }).click();
+  // Exact bins remain reachable by native keyboard disclosure, independently of
+  // event selection; a subsequent event replaces the complete reference.
+  const referenceValues = details().getByText("Reference values", {
+    exact: true,
+  });
+  await referenceValues.focus();
+  await page.keyboard.press("Enter");
+  assert(
+    await referenceValues.evaluate((node) => node.closest("details").open),
+  );
+  assert.equal(
+    await eventButton("revisit").getAttribute("aria-current"),
+    "true",
+  );
+  await page.keyboard.press("Enter");
+  await eventButton("a-transit").click();
+  await expectEvidence("a-transit");
+  assert(await details().getByText("Unassessed", { exact: true }).isVisible());
+  await eventButton("out-for-delivery").click();
+  assert.equal(
+    await details().locator('[data-visualization="histogram"]').count(),
+    0,
+    "A shared multi-parent rejoin does not invent an interval reference",
+  );
+  assert.deepEqual(
+    await graph()
+      .locator('[data-connection-id][data-selected="true"]')
+      .evaluateAll((edges) =>
+        edges.map((edge) => edge.dataset.connectionId).sort(),
+      ),
+    ["a-out-link", "b-out-link", "delivery-link"],
+    "The shared rejoin retains both candidate parents and its one shared delivery continuation",
+  );
+  await eventButton("accepted").click();
+  assert(await details().getByText("Unassessed", { exact: true }).isVisible());
+  checks.push("ledger-explicit-candidate-intervals-and-shared-reference-bins");
+
+  await histories().getByRole("button", { name: "B", exact: true }).click();
   assert.equal(
     await timeline().getByRole("button").count(),
     11,
@@ -390,48 +686,64 @@ async function checkLedger() {
     .getByRole("checkbox", { name: "Related only", exact: true })
     .check();
   await expectGraph(
-    ["accepted", "sorted", "b-transit", "b-out", "b-revisit", "b-delivered"],
-    ["accepted-sorted", "sorted-b", "b-out", "b-return", "b-delivery"],
+    [
+      "accepted",
+      "shared-transit",
+      "b-transit",
+      "out-for-delivery",
+      "delivered",
+    ],
+    ["shared-link", "b-transfer-link", "b-out-link", "delivery-link"],
     ["accepted"],
   );
-  await root().getByRole("button", { name: "History C", exact: true }).click();
+  await histories().getByRole("button", { name: "A", exact: true }).click();
+  await expectGraph(historyA, historyAConnections, ["accepted"]);
+  await histories().getByRole("button", { name: "C", exact: true }).click();
   await expectGraph(
     ["c-accepted", "c-delivered"],
-    ["c-delivery"],
+    ["c-delivery-link"],
     ["c-accepted"],
   );
-  await root()
-    .getByRole("button", { name: "All observations", exact: true })
-    .click();
-  await expectGraph(eventIds, connectionIds);
+  await histories().getByRole("button", { name: "All", exact: true }).click();
+  await expectGraph(eventIds, connectionIds, independentRoots);
 
-  // The two Stotts observations are not adjacent in any supplied relationship.
-  // Filtering to their location must leave two isolated nodes, never a bridge.
+  // The two Avondale observations are not adjacent on a supplied connection.
+  // Filtering to their location must retain two isolated nodes, never a bridge.
   await page
-    .getByRole("button", { name: "Select Stotts City, MO", exact: true })
+    .getByRole("button", { name: "Select Avondale, AZ", exact: true })
     .click();
   assert(
     await details()
       .getByText("Location · 2 events", { exact: true })
       .isVisible(),
   );
-  await expectGraph(["b-transit", "b-revisit"], [], ["b-transit", "b-revisit"]);
+  await expectGraph(["a-transit", "revisit"], [], ["a-transit", "revisit"]);
+  // Dismiss the map's independent inspection card before using the persistent
+  // inspector underneath it. Escape must not clear the selected location.
+  await page.keyboard.press("Escape");
+  await page
+    .getByRole("region", { name: "Facility details", exact: true })
+    .waitFor({ state: "hidden" });
+  assert(
+    await details()
+      .getByText("Location · 2 events", { exact: true })
+      .isVisible(),
+    "Dismissing the map inspection card retains the selected location",
+  );
   for (let i = 0; i < 2; i++)
     await details()
       .getByRole("button", { name: "Next event", exact: true })
       .click();
   assert(
     await details()
-      .getByText("Oct 23 · 09:18 UTC", { exact: true })
+      .getByText("Oct 24 · 11:25 UTC", { exact: true })
       .isVisible(),
   );
-  await root()
-    .getByRole("button", { name: "All observations", exact: true })
-    .click();
-  await expectGraph(eventIds, connectionIds);
+  await expectEvidence("revisit");
+  await histories().getByRole("button", { name: "All", exact: true }).click();
+  await expectGraph(eventIds, connectionIds, independentRoots);
 
-  // Native disclosure exposes every edge to keyboard and assistive technology.
-  const relationships = root().getByText("8 candidate relationships", {
+  const relationships = root().getByText("9 candidate relationships", {
     exact: true,
   });
   await relationships.focus();
@@ -441,48 +753,52 @@ async function checkLedger() {
     exact: true,
   });
   assert(await relationshipList.isVisible());
-  assert.equal(await relationshipList.getByRole("listitem").count(), 8);
+  assert.equal(await relationshipList.getByRole("listitem").count(), 9);
   assert(
     await relationships.evaluate((node) => node === document.activeElement),
   );
   await page.keyboard.press("Enter");
 
-  await eventButton(/Ludington, MI.*Accepted/).focus();
+  await eventButton("accepted").focus();
   await page.keyboard.press("ArrowDown");
-  const sorted = eventButton(/Grand Rapids, MI.*Arrived at facility/);
-  assert.equal(await sorted.getAttribute("aria-current"), "true");
+  assert.equal(
+    await eventButton("shared-transit").getAttribute("aria-current"),
+    "true",
+  );
   assert(
-    await sorted.evaluate((node) => node === document.activeElement),
+    await eventButton("shared-transit").evaluate(
+      (node) => node === document.activeElement,
+    ),
     "Arrow navigation follows the focused row",
   );
   await page.keyboard.press("End");
-  const unassigned = eventButton(/Ottawa, KS.*Unassigned observation/);
-  assert.equal(await unassigned.getAttribute("aria-current"), "true");
+  assert.equal(
+    await eventButton("unassigned-delivery").getAttribute("aria-current"),
+    "true",
+  );
   assert.equal(
     await graph().locator('[data-connection-id][data-selected="true"]').count(),
     0,
   );
-  assert(await details().getByText("Unassessed", { exact: true }).isVisible());
+  assert(await details().getByText("High risk", { exact: true }).isVisible());
   assert(
     await details()
-      .getByText(
-        "No candidate history assigned. No dwell or facility baseline supplied.",
-        { exact: true },
-      )
+      .getByText(/No candidate history assigned\./)
       .isVisible(),
   );
   assert.deepEqual(
     await selectedMapSegments(),
     [],
-    "An unassigned observation does not select an unrelated map connection",
+    "An unassigned high-risk observation does not select an unrelated map connection",
   );
   assert.deepEqual(
     await camera(),
     originalCamera,
     "Event, path and location selections preserve the camera",
   );
-  checks.push("ledger-explicit-topology-selection-filter-and-keyboard");
+  checks.push("ledger-fork-rejoin-disjoint-selection-filter-and-keyboard");
 
+  const revisit = eventButton("revisit");
   await revisit.focus();
   await page.keyboard.press("Enter");
   await page.evaluate(() => {
@@ -494,12 +810,12 @@ async function checkLedger() {
     await revisit.evaluate((node) => node === document.activeElement),
     "Narrowing retains event focus",
   );
-  const observationsTab = page.getByRole("tab", {
-    name: "Observations",
+  const eventsTab = page.getByRole("tab", {
+    name: "Event history",
     exact: true,
   });
-  assert.equal(await observationsTab.getAttribute("aria-selected"), "true");
-  await observationsTab.focus();
+  assert.equal(await eventsTab.getAttribute("aria-selected"), "true");
+  await eventsTab.focus();
   await page.keyboard.press("ArrowRight");
   const mapTab = page.getByRole("tab", { name: "Map", exact: true });
   assert(await mapTab.evaluate((node) => node === document.activeElement));
@@ -510,18 +826,18 @@ async function checkLedger() {
   );
   assert(
     await details()
-      .getByText("Oct 23 · 09:18 UTC", { exact: true })
+      .getByText("Oct 24 · 11:25 UTC", { exact: true })
       .isVisible(),
   );
   const narrowCamera = await camera();
-  await observationsTab.click();
+  await eventsTab.click();
   assert.equal(await revisit.getAttribute("aria-current"), "true");
   await mapTab.click();
   await waitForMap();
   assert.deepEqual(
     await camera(),
     narrowCamera,
-    "Events/Map switching retains the camera",
+    "Event history/Map switching retains the camera",
   );
   await audit("ledger-mobile-selection-camera-and-focus");
 
@@ -531,8 +847,8 @@ async function checkLedger() {
       await details()
         .getByRole("button", { name: "Show details", exact: true })
         .click();
-    // Short screens may scroll the document to reach the inspector; its normal
-    // flow must not cover the selected row in the events pane.
+    // Normal page flow must keep the inspector reachable without covering the
+    // selected event's identity, timestamp or supplied reference strip.
     await details().scrollIntoViewIfNeeded();
     assert(
       await details().evaluate((inspector) => {
@@ -548,11 +864,8 @@ async function checkLedger() {
   await screenshot("branching-histories-light-390x640-expanded");
 
   await open("compact-ledger");
-  await expectGraph(
-    ["accepted", "sorted", "a-transit", "a-delivered"],
-    ["accepted-sorted", "sorted-a", "a-delivery"],
-    ["accepted"],
-  );
+  await expectGraph(historyA, historyAConnections, ["accepted"]);
+  await expectEvidence("a-transit");
   await audit("compact-ledger-light-1200");
   await open("branching-histories-narrow");
   assert.equal(
@@ -560,19 +873,20 @@ async function checkLedger() {
     "true",
     "The container width controls the narrow layout",
   );
-  await expectGraph(eventIds, connectionIds);
+  await expectGraph(eventIds, connectionIds, independentRoots);
   await audit("branching-histories-narrow-light-1200");
   await open("unassigned-delivery");
-  await expectGraph(eventIds, connectionIds, [
-    "accepted",
-    "c-accepted",
-    "unassigned-delivery",
-  ]);
+  await expectGraph(eventIds, connectionIds, independentRoots);
   assert.equal(
     await graph().locator('[data-connection-id][data-selected="true"]').count(),
     0,
   );
-  assert(await details().getByText("Unassessed", { exact: true }).isVisible());
+  assert(await details().getByText("High risk", { exact: true }).isVisible());
+  assert.equal(
+    await details().locator('[data-visualization="histogram"]').count(),
+    0,
+    "A missing reference stays missing independently of event risk",
+  );
   await audit("unassigned-delivery-light-1200");
   await screenshot("unassigned-delivery-light-1200");
 }

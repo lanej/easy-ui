@@ -34,7 +34,7 @@ export type EventTimelineProps = {
   emptyLabel?: string;
   ariaLabel?: string;
   size?: "compact" | "default" | "detailed";
-  /** Location-first rows without an implied single chronology connector. */
+  /** Compact event type, location, and occurrence rows; optional supplied graph connections. */
   variant?: "timeline" | "ledger";
   /** Explicit candidate relationships. Supplying [] also suppresses the ordinary connector. */
   connections?: readonly EventTimelineConnection[];

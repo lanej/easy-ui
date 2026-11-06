@@ -28,7 +28,7 @@ export type EventItemProps = {
   event: EventTimelineEvent;
   current?: boolean;
   size?: "compact" | "default" | "detailed";
-  /** Ledger makes location the headline and retains the event type and time beneath it. */
+  /** Ledger stacks event type, location, and occurrence time in compact rows. */
   variant?: "timeline" | "ledger";
   onSelect?: () => void;
   onKeyDown?: (key: string) => boolean;
@@ -99,7 +99,7 @@ export function EventItem({
   );
   const context = (
     <>
-      {showDetail && (
+      {showDetail && (variant !== "ledger" || !hasLocation) && (
         <span id={`${id}-detail`} className={styles.received}>
           {event.detailLabel}
         </span>
@@ -125,11 +125,9 @@ export function EventItem({
   };
 
   if (variant === "ledger") {
-    const hasLocationLabel = Boolean(event.locationLabel);
-    const showEventType =
-      hasLocationLabel && event.label !== event.locationLabel;
+    const ledgerLocation = event.locationLabel || event.locationTypeLabel;
     const metadata = [
-      event.locationTypeLabel,
+      event.locationLabel ? event.locationTypeLabel : undefined,
       event.statusLabel !== event.label ? event.statusLabel : undefined,
     ]
       .filter(Boolean)
@@ -140,6 +138,7 @@ export function EventItem({
         data-variant="ledger"
         data-size={size}
         data-current={current || undefined}
+        data-has-trailing={trailing != null || undefined}
       >
         <div className={styles.ledgerContent} data-event-content>
           <button
@@ -149,7 +148,7 @@ export function EventItem({
             aria-current={current ? "true" : undefined}
             aria-labelledby={[
               `${id}-ledger-title`,
-              showEventType && `${id}-ledger-type`,
+              ledgerLocation && `${id}-ledger-location`,
               `${id}-time`,
               showDetail && `${id}-detail`,
               showReceived && `${id}-received`,
@@ -169,21 +168,26 @@ export function EventItem({
             onKeyDown={handleKeyDown}
           >
             <span id={`${id}-ledger-title`} className={styles.ledgerTitle}>
-              {event.locationIcon && (
-                <span className={styles.locationIcon} aria-hidden="true">
-                  {event.locationIcon}
-                </span>
-              )}
-              <span>{event.locationLabel || event.label}</span>
-            </span>
-          </button>
-          {showEventType && (
-            <span id={`${id}-ledger-type`} className={styles.ledgerType}>
               {event.label}
             </span>
-          )}
-          {time}
-          {context}
+            {ledgerLocation && (
+              <span className={styles.ledgerLocation}>
+                {event.locationIcon && (
+                  <span className={styles.locationIcon} aria-hidden="true">
+                    {event.locationIcon}
+                  </span>
+                )}
+                <span id={`${id}-ledger-location`}>{ledgerLocation}</span>
+                {showDetail && (
+                  <span id={`${id}-detail`} className={styles.ledgerQualifier}>
+                    {event.detailLabel}
+                  </span>
+                )}
+              </span>
+            )}
+            {time}
+            {context}
+          </button>
           {metadata && (
             <span
               id={`${id}-ledger-metadata`}
@@ -192,15 +196,15 @@ export function EventItem({
               {metadata}
             </span>
           )}
-          {inlineMetrics != null && (
-            <div className={styles.inlineMetrics} data-inline-metrics>
-              {inlineMetrics}
-            </div>
-          )}
         </div>
         {trailing != null && (
           <div id={`${id}-trailing`} className={styles.ledgerTrailing}>
             {trailing}
+          </div>
+        )}
+        {inlineMetrics != null && (
+          <div className={styles.inlineMetrics} data-inline-metrics>
+            {inlineMetrics}
           </div>
         )}
       </div>

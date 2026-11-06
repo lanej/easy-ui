@@ -63,6 +63,7 @@ export function NetworkMapHeading() {
   return (
     <div
       className={styles.heading}
+      data-map-heading
       style={visualizationTypographyStyle(options.typography)}
     >
       <div>

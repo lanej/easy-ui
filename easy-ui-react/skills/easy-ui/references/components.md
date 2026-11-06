@@ -271,6 +271,13 @@ For map composition, import `NetworkMapSurface`, `NetworkMapProvider`,
 Follow the package README for MapLibre stylesheet and worker setup. Use
 `GraphChart` for abstract relationships without geographical coordinates.
 
+Use `connectionStyle="subtle"` for thinner connections beside an event ledger.
+It halves evidence stroke widths, hides white casing, and reduces the selection
+halo while retaining supplied colors, evidence dashes, geometry, and relative
+flow widths. The default presentation is unchanged. Updates preserve the map
+and camera, propagate to close-ups, and respect consumer paint overrides.
+See [connection presentation](https://lanej.io/easy-ui/storybook/?path=/story/components-networkmap--subtle-connections).
+
 Use `zoomSections` for caller-defined journey groups with crowded stops. Selecting
 an overlapping group opens one close-up; **Zoom to area** moves the main map there.
 Insets share selection and metrics and omit inspection cards. Use
@@ -311,8 +318,8 @@ stay at least 12px and wrap at spaces in a readable column.
 See [full timestamps](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--full-timestamps).
 See [timeline presentations](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--presentation-modes).
 
-Use `EventTimeline variant="ledger"` for compact location-first observations with
-visible event types and occurrence times. `renderTrailing` holds labeled event
+Use `EventTimeline variant="ledger"` for compact event-first observations with
+visible locations and occurrence times. `renderTrailing` holds labeled event
 assessments outside the selection button. Supply `connections` with stable IDs,
 `fromEventId`, `toEventId`, and optional `pathIds`/`label` for a branching gutter.
 An empty array means no relationships; omission retains chronological connectors.
@@ -332,12 +339,21 @@ chooses a true history or repairs timestamps.
 Use `InvestigationWorkspace variant="ledger"` for a joined ledger, subdued map,
 and persistent inspector. `InvestigationConnection` adds optional `segmentId` to
 an event connection; only that explicit association links event edges to map
-geometry. Keep investigation assessment in the application header, event risk in
+geometry. The optional `header` joins title, metadata, and overall assessment
+above compact history controls. Its equal columns use a 225px map and switch to
+Events / Map tabs at 640px; default workspace behavior retains its 740px breakpoint.
+Keep investigation assessment in the application header, event risk in
 `timeline.renderTrailing`, and candidate risk in `renderPathTrailing`. Put reasons,
 assessment time, and available reference data in `renderDetails`. Event type,
 selection, candidate identity, and risk are separate. Missing assessment is not
 low risk. Keep disjoint roots and delivery claims separate, including unassigned
 observations. Caller map colors and label visibility remain authoritative.
+In a ledger, `metricsPlacement="inline"` gives `renderMetrics` a full-width strip
+below identity and outside the selection button. Compose minimal `EventMetrics`
+with `DurationDistribution` for supplied row references; expand the same bins,
+units, sample count, reference window, and exact values in the shared inspector.
+Interval evidence follows an explicit candidate connection, not the preceding
+time-sorted row. Missing reference data is not a zero value or low risk.
 See [compact branching investigation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--branching-histories).
 See [linked investigation](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-investigation-investigationworkspace--docs)
 and [candidate comparison](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-investigation-pathcomparison--docs).
@@ -353,7 +369,10 @@ Inspector `clear()` requests `null`; `renderDetails(context)` supplies rich cont
 Geometry records are optional. The standalone inspector detects its own narrow
 container and keeps content mounted behind Show details; `isNarrow` is an optional
 parent-layout override. Widening a focused detail disclosure returns focus to the
-inspector region. Labels accept partial overrides.
+inspector region. Labels accept partial overrides. `variant="compact"` uses a
+location heading with the event type below it and avoids repeating location in
+metadata; this is the ledger workspace default. `EventDetails showLocation={false}`
+is also available when the surrounding UI already names the location.
 See [map-free composition](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--map-free)
 and [narrow inspector](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--map-free-narrow).
 

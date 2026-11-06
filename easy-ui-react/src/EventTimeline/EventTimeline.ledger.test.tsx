@@ -35,7 +35,7 @@ const ledgerEvents: EventTimelineEvent[] = [
 ];
 
 describe("EventTimeline ledger", () => {
-  it("places location first while retaining event type, occurrence time, and separately named risk", () => {
+  it("places event type before location and occurrence time, with separately named risk", () => {
     render(
       <EventTimeline
         events={ledgerEvents}
@@ -51,13 +51,13 @@ describe("EventTimeline ledger", () => {
     );
 
     const accepted = screen.getByRole("button", {
-      name: "Hammond, IN Accepted Oct 22 · 12:23 UTC",
+      name: "Accepted Hammond, IN Oct 22 · 12:23 UTC",
     });
     expect(accepted).toHaveAccessibleDescription(
       "Origin facility Not assessed",
     );
     const delivery = screen.getByRole("button", {
-      name: /Stotts City, MO Delivered.*Source A/,
+      name: /Delivered Stotts City, MO.*Source A/,
     });
     expect(delivery).toHaveAccessibleDescription("High risk");
     expect(delivery).toHaveAttribute("aria-current", "true");
@@ -66,6 +66,9 @@ describe("EventTimeline ledger", () => {
     expect(within(row).getAllByText("Delivered")).toHaveLength(1);
     expect(within(row).getByText("Oct 23 · 11:26 UTC")).toBeVisible();
     expect(within(row).queryByRole("img")).not.toBeInTheDocument();
+    expect(within(accepted).getByText("Accepted")).toBeVisible();
+    expect(within(accepted).getByText("Hammond, IN")).toBeVisible();
+    expect(within(accepted).getByText("Oct 22 · 12:23 UTC")).toBeVisible();
   });
 
   it("keeps duplicate reports visibly distinguishable without merging or changing caller order", () => {
@@ -152,6 +155,7 @@ describe("EventTimeline ledger", () => {
           metricsPlacement={metricsPlacement}
           onSelectedIdChange={onSelectedIdChange}
           renderMetrics={(event) => <button>Inspect {event.id} metric</button>}
+          renderTrailing={() => <Pill size="xs">Assessed</Pill>}
           renderDetails={(event) => (
             <button>Inspect {event.id} evidence</button>
           )}
@@ -167,6 +171,15 @@ describe("EventTimeline ledger", () => {
         });
         expect(metric.parentElement?.closest("button")).toBeNull();
         expect(evidence.parentElement?.closest("button")).toBeNull();
+        if (metricsPlacement === "inline") {
+          const slot = metric.closest("[data-inline-metrics]");
+          const row = metric.closest("li")!;
+          // References span below both identity and a separate risk badge,
+          // so a trailing summary cannot squeeze them into the text column.
+          expect(slot?.parentElement).toBe(
+            row.querySelector('[data-variant="ledger"]'),
+          );
+        }
         fireEvent.click(metric);
       }
       expect(onSelectedIdChange).not.toHaveBeenCalled();

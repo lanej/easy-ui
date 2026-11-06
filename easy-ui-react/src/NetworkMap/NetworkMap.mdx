@@ -227,11 +227,35 @@ When a linked panel already shows the selected facility's identity and decision 
 
 `labelMinZoom` progressively reveals local facilities. Selected, last-observed and `primaryFacilityIds` labels receive priority; collision placement hides lower-priority labels when space is insufficient. Marker buttons and the data table retain complete names. Repeated scans at one facility should share one facility ID and one marker. This component is intended for bounded investigation cohorts; use a server-filtered or clustered source for very large fleets.
 
+### Connection presentation
+
+Set `connectionStyle="subtle"` for a compact map beside an event ledger or
+inspector. Transfer and measured strokes use half their default widths: 2px
+without a supplied volume, while relative flow widths remain proportional.
+Planned and inferred strokes use 1.5px. White casing is hidden, and the
+selection halo is narrower and quieter. Supplied colors, evidence dash
+patterns, directional marks, geometry, and selection remain intact.
+
+Omitting the prop or using `connectionStyle="default"` retains the original
+presentation. The option updates in place, preserving the camera and map
+instance; close-ups inherit it. Consumer paint overrides remain authoritative
+when the presentation changes.
+
+```tsx
+<NetworkMap {...mapProps} connectionStyle="subtle" />
+```
+
+<Canvas of={NetworkMapStories.SubtleConnections} />
+
 ### Styling through the map instance
 
 `onMapReady` receives the initialized map after the component's first source and paint updates. It runs once per map instance, including a replacement instance after changing `mapStyle` or `workerUrl`. Retain the instance to manage application-owned layers or later updates.
 
 Paint overrides set through this callback or the retained instance survive data, selection, and layer-visibility changes. When you override `easy-ui-observed`'s `line-color`, your expression owns that property's selection behavior. To return to automatic color styling, unset it with `map.setPaintProperty("easy-ui-observed", "line-color", null)`; the next component update restores the current automatic color expression. Source data and visibility continue updating while a paint override is active. An independent halo identifies the selected segment across every evidence type without replacing supplied colors or evidence dashes.
+
+Connection width, casing-opacity, and selection-halo overrides also survive
+`connectionStyle` updates. Clear one of those paint properties with `null` to
+resume the current presentation's default on the next component update.
 
 ### Controls and layer visibility
 

@@ -11,6 +11,7 @@ import { Tabs } from "../Tabs";
 import { Checkbox } from "../Checkbox";
 import { InvestigationDetails } from "./InvestigationDetails";
 import { Button } from "../Button";
+import { UnstyledButton } from "../UnstyledButton";
 import { Text } from "../Text";
 import { EventTimeline, type EventTimelineProps } from "../EventTimeline";
 import {
@@ -48,8 +49,10 @@ export type InvestigationWorkspaceProps = InvestigationRecords & {
   map: MapOptions;
   /** Caller content below the persistent selection summary; may include charts and actions. */
   renderDetails?: (context: InvestigationDetailsContext) => ReactNode;
-  /** Compact location-first ledger, quiet map, and a single joined inspection surface. */
+  /** Compact event-first ledger, quiet map, and a single joined inspection surface. */
   variant?: "default" | "ledger";
+  /** Caller-owned title, metadata, and investigation assessment above the history controls. */
+  header?: ReactNode;
   /** Caller-owned candidate assessment; separate from the candidate selection button. */
   renderPathTrailing?: (path: InvestigationPath) => ReactNode;
   /** Reuse the timeline's optional content slots and density. */
@@ -98,6 +101,7 @@ export function InvestigationWorkspace({
   timeline,
   renderDetails,
   variant = "default",
+  header,
   renderPathTrailing,
   ariaLabel = "Event investigation",
   labels,
@@ -151,6 +155,7 @@ export function InvestigationWorkspace({
   const [view, setView] = useState<"events" | "map">("events");
   const [relatedOnly, setRelatedOnly] = useState(false);
   const narrowMode = useRef(false);
+  const narrowBreakpoint = variant === "ledger" ? 640 : 740;
   const focusAfterResize = useRef<string | null>(null);
   useEffect(() => {
     const element = root.current;
@@ -158,7 +163,7 @@ export function InvestigationWorkspace({
     const update = () => {
       const width = element.getBoundingClientRect().width;
       if (width <= 0) return;
-      const narrow = width <= 740;
+      const narrow = width <= narrowBreakpoint;
       if (narrow === narrowMode.current) return;
       // Capture focus before React hides a panel or removes the mobile tabs.
       focusAfterResize.current = null;
@@ -183,7 +188,7 @@ export function InvestigationWorkspace({
     const observer = new ResizeObserver(update);
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [narrowBreakpoint]);
   useLayoutEffect(() => {
     const targetId = focusAfterResize.current;
     focusAfterResize.current = null;
@@ -323,7 +328,7 @@ export function InvestigationWorkspace({
             : ["==", ["get", "selected"], true],
         paint: {
           "line-color": primary,
-          "line-width": variant === "ledger" ? 5 : 12,
+          "line-width": variant === "ledger" ? 2.5 : 12,
           "line-opacity": variant === "ledger" ? 0.65 : 0.35,
         },
       },
@@ -343,7 +348,7 @@ export function InvestigationWorkspace({
               ],
               paint: {
                 "line-color": primary,
-                "line-width": 4,
+                "line-width": 2.5,
                 "line-opacity": 0.8,
                 "line-dasharray": [2, 2],
               },
@@ -359,6 +364,14 @@ export function InvestigationWorkspace({
   };
   const chooseEvent = (eventId: string) =>
     onSelectionChange(selectEvent(context, eventId));
+  const CandidateButton = variant === "ledger" ? UnstyledButton : Button;
+  const candidateButtonProps = (selected: boolean) =>
+    variant === "ledger"
+      ? { className: styles.pathButton }
+      : {
+          size: "sm" as const,
+          variant: selected ? ("filled" as const) : ("outlined" as const),
+        };
   const inspectConnections = (hover: MapOverlayHoverDetailsContext) => {
     const hits = hover.selections.filter(
       (item) => item.overlayId === overlayId,
@@ -419,14 +432,14 @@ export function InvestigationWorkspace({
       data-narrow={isNarrow}
       data-variant={variant}
     >
+      {header && <div className={styles.summary}>{header}</div>}
       {paths.length > 0 && (
         <div className={styles.paths} role="group" aria-label={text.paths}>
           <Text as="span" variant="caption" color="subdued">
             {text.paths}
           </Text>
-          <Button
-            size="sm"
-            variant={!path ? "filled" : "outlined"}
+          <CandidateButton
+            {...candidateButtonProps(!path)}
             aria-pressed={!path}
             onPress={() =>
               onSelectionChange(
@@ -435,12 +448,11 @@ export function InvestigationWorkspace({
             }
           >
             {text.allPaths}
-          </Button>
+          </CandidateButton>
           {paths.map((item, index) => (
             <div className={styles.pathOption} key={item.id}>
-              <Button
-                size="sm"
-                variant={path?.id === item.id ? "filled" : "outlined"}
+              <CandidateButton
+                {...candidateButtonProps(path?.id === item.id)}
                 aria-pressed={path?.id === item.id}
                 aria-describedby={
                   renderPathTrailing
@@ -452,7 +464,7 @@ export function InvestigationWorkspace({
                 }
               >
                 {item.label}
-              </Button>
+              </CandidateButton>
               {renderPathTrailing && (
                 <div id={`${id}-path-${index}-annotation`}>
                   {renderPathTrailing(item)}
@@ -522,7 +534,11 @@ export function InvestigationWorkspace({
         >
           <div className={styles.timelineContent} data-timeline-scroll>
             <div className={styles.heading}>
-              <Text as="h3" variant="heading5" id={`${id}-events`}>
+              <Text
+                as="h3"
+                variant={variant === "ledger" ? "subtitle2" : "heading5"}
+                id={`${id}-events`}
+              >
                 {text.timeline}
               </Text>
               <Text as="span" variant="caption" color="subdued">
@@ -632,8 +648,15 @@ export function InvestigationWorkspace({
             showSelectionDetails={false}
             showLegend={map.showLegend ?? false}
             showDataTable={map.showDataTable ?? false}
-            height={map.height ?? (isNarrow ? 260 : "fill")}
+            height={
+              map.height ??
+              (variant === "ledger" ? 225 : isNarrow ? 260 : "fill")
+            }
             controlPlacement={map.controlPlacement ?? "map"}
+            connectionStyle={
+              map.connectionStyle ??
+              (variant === "ledger" ? "subtle" : "default")
+            }
           />
           <details className={styles.index}>
             <summary>Browse locations and connections</summary>
@@ -669,6 +692,7 @@ export function InvestigationWorkspace({
         </section>
         <InvestigationDetails
           context={context}
+          variant={variant === "ledger" ? "compact" : "default"}
           isNarrow={isNarrow}
           chooseEvent={chooseEvent}
           clear={() => onSelectionChange(null)}

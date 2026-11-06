@@ -1155,6 +1155,132 @@ describe("consumer paint ownership", () => {
   const observedColor = () =>
     paintProperties.get("easy-ui-observed")?.get("line-color");
 
+  it("changes connection presentation without changing evidence, source data, or the camera", async () => {
+    const view = render(<NetworkMap {...routeProps} />);
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const map = constructor.mock.calls[0][0] as FakeMap;
+    const baselineColor = structuredClone(observedColor());
+    const baselineUnobservedColor = map.getPaintProperty(
+      "easy-ui-unobserved",
+      "line-color",
+    );
+    const baselineSource = structuredClone(sourceDefs.get("easy-ui-transfers"));
+    expect(map.getPaintProperty("easy-ui-observed", "line-width")).toEqual([
+      "get",
+      "width",
+    ]);
+    expect(map.getPaintProperty("easy-ui-unobserved", "line-width")).toBe(3);
+    expect(map.getPaintProperty("easy-ui-casing", "line-opacity")).toBe(0.85);
+    expect(map.getPaintProperty("easy-ui-selection", "line-width")).toEqual([
+      "+",
+      ["get", "width"],
+      10,
+    ]);
+    expect(map.getPaintProperty("easy-ui-selection", "line-opacity")).toBe(
+      0.45,
+    );
+    setData.mockClear();
+
+    view.rerender(<NetworkMap {...routeProps} connectionStyle="subtle" />);
+    expect(map.getPaintProperty("easy-ui-observed", "line-width")).toEqual([
+      "*",
+      ["get", "width"],
+      0.5,
+    ]);
+    expect(map.getPaintProperty("easy-ui-unobserved", "line-width")).toBe(1.5);
+    expect(map.getPaintProperty("easy-ui-casing", "line-opacity")).toBe(0);
+    expect(map.getPaintProperty("easy-ui-selection", "line-width")).toEqual([
+      "+",
+      ["*", ["get", "width"], 0.5],
+      3,
+    ]);
+    expect(map.getPaintProperty("easy-ui-selection", "line-opacity")).toBe(
+      0.18,
+    );
+    expect(observedColor()).toEqual(baselineColor);
+    expect(map.getPaintProperty("easy-ui-unobserved", "line-color")).toEqual(
+      baselineUnobservedColor,
+    );
+    expect(
+      map.getPaintProperty("easy-ui-unobserved", "line-dasharray"),
+    ).toEqual([2, 2]);
+    expect(sourceDefs.get("easy-ui-transfers")).toEqual(baselineSource);
+    expect(setData).not.toHaveBeenCalled();
+
+    view.rerender(<NetworkMap {...routeProps} connectionStyle="default" />);
+    expect(map.getPaintProperty("easy-ui-observed", "line-width")).toEqual([
+      "get",
+      "width",
+    ]);
+    expect(map.getPaintProperty("easy-ui-unobserved", "line-width")).toBe(3);
+    expect(map.getPaintProperty("easy-ui-casing", "line-opacity")).toBe(0.85);
+    expect(map.getPaintProperty("easy-ui-selection", "line-opacity")).toBe(
+      0.45,
+    );
+    expect(constructor).toHaveBeenCalledTimes(1);
+    expect(fitBounds).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves consumer width, casing, and halo overrides across connection-style changes", async () => {
+    const onMapReady = vi.fn((map) => {
+      map.setPaintProperty("easy-ui-observed", "line-width", 7);
+      map.setPaintProperty("easy-ui-casing", "line-opacity", 0.3);
+      map.setPaintProperty("easy-ui-selection", "line-opacity", 0.6);
+      map.setPaintProperty("easy-ui-unobserved", "line-dasharray", [3, 1]);
+    });
+    const view = render(
+      <NetworkMapSurface
+        {...routeProps}
+        connectionStyle="subtle"
+        onMapReady={onMapReady}
+      />,
+    );
+    await waitFor(() => expect(constructor).toHaveBeenCalledTimes(1));
+    act(() => listeners.load());
+    const map = constructor.mock.calls[0][0] as FakeMap;
+    view.rerender(
+      <NetworkMapSurface
+        {...routeProps}
+        connectionStyle="default"
+        selectedSegmentId="leg"
+        onMapReady={onMapReady}
+      />,
+    );
+    expect(map.getPaintProperty("easy-ui-observed", "line-width")).toBe(7);
+    expect(map.getPaintProperty("easy-ui-casing", "line-opacity")).toBe(0.3);
+    expect(map.getPaintProperty("easy-ui-selection", "line-opacity")).toBe(0.6);
+    expect(
+      map.getPaintProperty("easy-ui-unobserved", "line-dasharray"),
+    ).toEqual([3, 1]);
+    expect(map.getPaintProperty("easy-ui-unobserved", "line-width")).toBe(3);
+    expect(layerDefs.get("easy-ui-selection")?.filter).toEqual([
+      "==",
+      ["get", "id"],
+      "leg",
+    ]);
+
+    map.setPaintProperty("easy-ui-observed", "line-width", null);
+    view.rerender(
+      <NetworkMapSurface
+        {...routeProps}
+        connectionStyle="subtle"
+        selectedSegmentId="leg"
+        onMapReady={onMapReady}
+      />,
+    );
+    expect(map.getPaintProperty("easy-ui-observed", "line-width")).toEqual([
+      "*",
+      ["get", "width"],
+      0.5,
+    ]);
+    expect(map.getPaintProperty("easy-ui-casing", "line-opacity")).toBe(0.3);
+    expect(map.getPaintProperty("easy-ui-selection", "line-opacity")).toBe(0.6);
+    expect(onMapReady).toHaveBeenCalledTimes(1);
+    expect(constructor).toHaveBeenCalledTimes(1);
+    expect(fitBounds).toHaveBeenCalledTimes(1);
+  });
+
   it.each([undefined, []])(
     "preserves onMapReady overrides through readiness, data, selection, and layer updates (areas=%s)",
     async (areas) => {

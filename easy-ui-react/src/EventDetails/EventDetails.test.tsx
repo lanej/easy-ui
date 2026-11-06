@@ -62,4 +62,25 @@ describe("EventDetails", () => {
     );
     expect(screen.queryByText("Received")).not.toBeInTheDocument();
   });
+  it("can omit a surrounding location heading without hiding occurrence or receipt", () => {
+    render(
+      <EventDetails
+        event={{
+          id: "one",
+          timeLabel: "Oct 24 · 11:25 UTC",
+          receivedTimeLabel: "Oct 24 · 11:41 UTC",
+          locationLabel: "Avondale, AZ",
+        }}
+        showLocation={false}
+      />,
+    );
+    expect(screen.queryByText("Location")).not.toBeInTheDocument();
+    expect(screen.queryByText("Avondale, AZ")).not.toBeInTheDocument();
+    expect(screen.getByText("Event").nextElementSibling).toHaveTextContent(
+      "11:25 UTC",
+    );
+    expect(screen.getByText("Received").nextElementSibling).toHaveTextContent(
+      "11:41 UTC",
+    );
+  });
 });

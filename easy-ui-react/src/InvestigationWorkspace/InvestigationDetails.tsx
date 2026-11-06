@@ -35,6 +35,8 @@ export type InvestigationDetailsProps = {
   clear: () => void;
   renderDetails?: (context: InvestigationDetailsContext) => ReactNode;
   labels?: Partial<InvestigationDetailsLabels>;
+  /** Compact identity and metadata for the joined ledger surface. */
+  variant?: "default" | "compact";
 };
 
 /** Persistent inspector, usable with EventTimeline without a map or workspace. */
@@ -45,6 +47,7 @@ export function InvestigationDetails({
   clear,
   renderDetails,
   labels,
+  variant = "default",
 }: InvestigationDetailsProps) {
   const text: InvestigationDetailsLabels = {
     details: "Selection details",
@@ -141,15 +144,26 @@ export function InvestigationDetails({
   const scopeLabel = event
     ? `${scope ?? "All events"} · ${position}`
     : `${path ? "Candidate path" : segment ? "Connection" : "Location"} · ${position}${segment ? " across candidate paths" : ""}`;
+  const eventLocation = event?.locationLabel || location?.label;
   const title = !isAvailable
     ? "Selection unavailable"
-    : (event?.label ??
+    : ((variant === "compact" && event ? eventLocation : undefined) ??
+      event?.label ??
       location?.label ??
       path?.label ??
       segment?.label ??
       text.details);
   const description =
     event?.description ?? path?.description ?? location?.detail;
+  const eventSubtitle = event
+    ? [event.label !== title && event.label, event.detailLabel]
+        .filter(Boolean)
+        .join(" · ")
+    : undefined;
+  const announcedTitle =
+    variant === "compact" && event && event.label !== title
+      ? `${event.label} · ${title}`
+      : title;
   const extra = selection && isAvailable ? renderDetails?.(context) : null;
   const hasMore = Boolean(description || extra);
   return (
@@ -160,15 +174,24 @@ export function InvestigationDetails({
       className={styles.details}
       aria-label={text.details}
       data-expanded={!isNarrow || expanded}
+      data-variant={variant}
     >
       <div className={styles.detailHeader}>
         <div className={styles.identity}>
           {selection && isAvailable && (
             <p className={styles.scope}>{scopeLabel}</p>
           )}
-          <Text as="h3" variant="heading5">
+          <Text
+            as="h3"
+            variant={variant === "compact" ? "subtitle1" : "heading5"}
+          >
             {title}
           </Text>
+          {variant === "compact" && eventSubtitle && (
+            <Text as="p" variant="caption" color="subdued">
+              {eventSubtitle}
+            </Text>
+          )}
         </div>
         <div className={styles.actions}>
           {selection && isAvailable && events.length > 0 && (
@@ -204,7 +227,7 @@ export function InvestigationDetails({
       </div>
       <span className={styles.announcement} role="status">
         {selection
-          ? `${title}${event ? ` · ${event.timeLabel ?? "Time unknown"} · ${event.receivedTimeLabel ? `Received ${event.receivedTimeLabel} · ` : ""}${position}` : ""}`
+          ? `${announcedTitle}${event ? ` · ${event.timeLabel ?? "Time unknown"} · ${event.receivedTimeLabel ? `Received ${event.receivedTimeLabel} · ` : ""}${position}` : ""}`
           : "Selection cleared"}
       </span>
       {!selection ? (
@@ -224,7 +247,11 @@ export function InvestigationDetails({
           )}
           <div className={styles.metadata}>
             {event && (
-              <EventDetails event={event} locationLabel={location?.label} />
+              <EventDetails
+                event={event}
+                locationLabel={location?.label}
+                showLocation={variant !== "compact" || !eventLocation}
+              />
             )}
             {isNarrow && hasMore && (
               <Button

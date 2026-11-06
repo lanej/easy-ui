@@ -23,11 +23,10 @@
 
 .ledgerExample {
   display: grid;
-  gap: 16px;
+  gap: 8px;
   min-inline-size: 0;
   margin-inline: auto;
 }
-.ledgerHeader,
 .assessmentHeading,
 .investigationAssessment {
   display: flex;
@@ -35,18 +34,39 @@
   flex-wrap: wrap;
   gap: 8px;
 }
-.ledgerHeader,
 .assessmentHeading {
   justify-content: space-between;
+}
+.ledgerHeader {
+  display: grid;
+  gap: 4px;
+  h2 {
+    font-size: 18px;
+    line-height: 1.5;
+  }
+  > p {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+}
+.ledgerTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
 }
 .ledgerDetails {
   display: grid;
   gap: 12px;
+  p {
+    font-size: 12px;
+  }
 }
 .assessment {
   display: grid;
   gap: 6px;
-  padding: 12px;
+  padding: 10px;
   border-radius: 6px;
   background: design-token("color.neutral.050");
 }

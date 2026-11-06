@@ -12,6 +12,11 @@ import { useColorScheme } from "../Theme";
 import { Pill } from "../Pill";
 import { Text } from "../Text";
 import { ledgerRecords, eventFindings } from "./InvestigationLedger.fixtures";
+import {
+  LedgerRowEvidence,
+  LedgerSelectedEvidence,
+  hasLedgerEvidence,
+} from "./InvestigationLedgerEvidence.examples";
 import geography from "./InvestigationLedger.geography.json";
 import styles from "./InvestigationWorkspace.stories.module.scss";
 
@@ -91,7 +96,7 @@ function LedgerDetails({
                 finding?.level === "high"
                   ? "danger"
                   : finding
-                    ? "success"
+                    ? "warning"
                     : "neutral"
               }
             >
@@ -118,20 +123,14 @@ function LedgerDetails({
             <Text as="span" variant="subtitle2">
               Candidate history assessment
             </Text>
-            <Pill size="xs" tone={path.id === "b" ? "danger" : "neutral"}>
-              {path.id === "b" ? "High risk" : "Unassessed"}
+            <Pill size="xs" tone="neutral">
+              Unassessed
             </Pill>
           </div>
           <Text as="p" variant="body2" color="subdued">
-            {path.id === "b"
-              ? "The supplied assessment flags the return visit and delivery observation on History B. It does not establish History A as the confirmed journey."
-              : "No assessment was supplied for this candidate history."}
+            No assessment was supplied for this candidate history. Its
+            connections do not establish a confirmed journey.
           </Text>
-          {path.id === "b" && (
-            <Text as="p" variant="caption" color="subdued">
-              Assessed Oct 23 · 13:10 UTC
-            </Text>
-          )}
         </section>
       )}
       {selection?.type === "path" && !event && (
@@ -141,12 +140,14 @@ function LedgerDetails({
         </Text>
       )}
       {event && (
-        <Text as="p" variant="caption" color="subdued">
-          {paths.length
-            ? `Candidate membership: ${paths.map((path) => path.label).join(", ")}.`
-            : "No candidate history assigned."}{" "}
-          No dwell or facility baseline supplied.
-        </Text>
+        <>
+          <LedgerSelectedEvidence event={event} />
+          <Text as="p" variant="caption" color="subdued">
+            {paths.length
+              ? `Candidate membership: ${paths.map((path) => path.label).join(", ")}.`
+              : "No candidate history assigned."}
+          </Text>
+        </>
       )}
       {connections.length > 0 && (
         <details className={styles.relationshipDisclosure}>
@@ -222,7 +223,7 @@ export function InvestigationLedgerExample({
       ? "unassigned-delivery"
       : singleHistory
         ? "a-transit"
-        : "b-delivered",
+        : "revisit",
   });
   const records = singleHistory
     ? {
@@ -238,7 +239,7 @@ export function InvestigationLedgerExample({
           ledgerRecords.paths[0].segmentIds.includes(segment.id),
         ),
         locations: ledgerRecords.locations.filter((location) =>
-          ["ludington", "grand-rapids", "hammond", "kansas-city"].includes(
+          ["ludington", "hammond", "avondale", "wellton", "el-cajon"].includes(
             location.id,
           ),
         ),
@@ -247,43 +248,53 @@ export function InvestigationLedgerExample({
   return (
     <div
       className={styles.ledgerExample}
-      style={{ maxWidth: narrow ? 390 : 1120 }}
+      style={{ maxWidth: narrow ? 390 : 960 }}
     >
-      <header className={styles.ledgerHeader}>
-        <div>
-          <Text as="h2" variant="heading3">
-            Tracking investigation
-          </Text>
-          <Text as="p" variant="caption" color="subdued">
-            Illustrative observations · Oct 22–23, 2026 · UTC
-          </Text>
-        </div>
-        <div
-          className={styles.investigationAssessment}
-          aria-label="Investigation assessment"
-        >
-          <Text as="span" variant="caption" color="subdued">
-            Investigation
-          </Text>
-          <Pill size="sm" tone="warning">
-            Review needed
-          </Pill>
-        </div>
-      </header>
       <InvestigationWorkspace
         {...records}
         variant="ledger"
+        header={
+          <header className={styles.ledgerHeader}>
+            <div className={styles.ledgerTitle}>
+              <Text as="h2" variant="subtitle1">
+                Parcel history
+              </Text>
+              <div
+                className={styles.investigationAssessment}
+                aria-label="Investigation assessment"
+              >
+                <Text as="span" variant="caption" color="subdued">
+                  Parcel risk
+                </Text>
+                <Pill size="xs" tone="warning">
+                  Elevated
+                </Pill>
+              </div>
+            </div>
+            <Text as="p" variant="caption" color="subdued">
+              Illustrative · {singleHistory ? "Oct 22–24" : "Oct 22–27"}, 2026 ·{" "}
+              {records.events.length} observations ·{" "}
+              {singleHistory
+                ? "1 origin · 1 delivery"
+                : "2 origins · 3 deliveries"}{" "}
+              · UTC
+            </Text>
+          </header>
+        }
         selection={selection}
         onSelectionChange={setSelection}
         labels={{
-          timeline: "Observations",
-          paths: "Candidate histories",
-          allPaths: "All observations",
+          timeline: "Event history",
+          paths: "Histories",
+          allPaths: "All",
           map: "Reported locations",
         }}
         map={{
           title: "Reported locations",
-          description: "Supplied connections · traveled route unconfirmed",
+          description: "City centers",
+          showViewScale: false,
+          typography: { title: 12, description: 11, control: 12, label: 12 },
+          controlLabels: { fitAll: "Fit" },
           mapStyle: initialStyle.current,
           workerUrl,
           controls: {
@@ -306,37 +317,26 @@ export function InvestigationLedgerExample({
           },
         }}
         timeline={{
+          metricsPlacement: "inline",
+          renderMetrics: (event) =>
+            hasLedgerEvidence(event.id) ? (
+              <LedgerRowEvidence event={event} />
+            ) : null,
           renderTrailing: (event) => {
             const finding = eventFindings[event.id];
+            if (!finding) return null;
             return (
-              <span
-                aria-label={`Event assessment: ${finding?.label ?? "Unassessed"}`}
-              >
+              <span aria-label={`Event assessment: ${finding.label}`}>
                 <Pill
                   size="xs"
-                  tone={
-                    finding?.level === "high"
-                      ? "danger"
-                      : finding
-                        ? "success"
-                        : "neutral"
-                  }
+                  tone={finding.level === "high" ? "danger" : "warning"}
                 >
-                  {finding?.label ?? "Unassessed"}
+                  {finding.label}
                 </Pill>
               </span>
             );
           },
         }}
-        renderPathTrailing={(path) =>
-          path.id === "b" ? (
-            <span aria-label="History B assessment: High risk">
-              <Pill size="xs" tone="danger">
-                High risk
-              </Pill>
-            </span>
-          ) : null
-        }
         renderDetails={LedgerDetails}
       />
       <Text as="p" variant="caption" color="subdued">

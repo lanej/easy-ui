@@ -14,6 +14,8 @@ export type EventDetailsProps = {
   sourceLabel?: string;
   identifiers?: readonly EventDetailsIdentifier[];
   showEventId?: boolean;
+  /** Omit a location already present in the surrounding selection heading. */
+  showLocation?: boolean;
   layout?: "inline" | "stacked";
   labels?: Partial<
     Record<
@@ -36,6 +38,7 @@ export function EventDetails({
   sourceLabel,
   identifiers = [],
   showEventId = false,
+  showLocation = true,
   layout = "inline",
   labels,
 }: EventDetailsProps) {
@@ -54,10 +57,14 @@ export function EventDetails({
     ...(event.receivedTimeLabel
       ? [{ label: text.received, value: event.receivedTimeLabel }]
       : []),
-    {
-      label: text.location,
-      value: event.locationLabel || locationLabel || text.notSupplied,
-    },
+    ...(showLocation
+      ? [
+          {
+            label: text.location,
+            value: event.locationLabel || locationLabel || text.notSupplied,
+          },
+        ]
+      : []),
     ...(sourceLabel ? [{ label: text.source, value: sourceLabel }] : []),
     ...(showEventId ? [{ label: text.id, value: event.id }] : []),
     ...identifiers,

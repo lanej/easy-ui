@@ -118,7 +118,7 @@ describe("InvestigationWorkspace", () => {
       />,
     );
     const arrival = within(timeline()).getByRole("button", {
-      name: /^Central Exchange Arrived at exchange 10:30 Received 10:34$/,
+      name: /^Arrived at exchange Central Exchange 10:30 Received 10:34$/,
     });
     expect(arrival).toHaveAttribute("aria-current", "true");
     expect(arrival).toHaveAccessibleDescription("Inspect arrived risk");
@@ -155,7 +155,7 @@ describe("InvestigationWorkspace", () => {
     expect(renderDetails.mock.lastCall?.[0].connections).toEqual([]);
     expect(
       within(timeline()).getByRole("button", {
-        name: /^Central Exchange Arrived at exchange 10:30 Received 11:05$/,
+        name: /^Arrived at exchange Central Exchange 10:30 Received 11:05$/,
       }),
     ).toHaveAttribute("aria-current", "true");
   });
@@ -238,7 +238,7 @@ describe("InvestigationWorkspace", () => {
     expect(highlightedSegments()).toEqual([]);
     expect(
       within(timeline()).getByRole("button", {
-        name: "North Harbor Accepted 08:00",
+        name: "Accepted North Harbor 08:00",
       }),
     ).toHaveAttribute("aria-current", "true");
   });

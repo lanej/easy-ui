@@ -9,6 +9,7 @@ import { useId } from "react-aria";
 import { Button } from "../Button";
 import type {
   GeoJSONSource,
+  LineLayerSpecification,
   Map as MapInstance,
   MapLayerMouseEvent,
   Marker,
@@ -46,6 +47,39 @@ import {
 } from "../visualization/typography";
 import styles from "./NetworkMap.module.scss";
 import { NetworkMapRouteContext } from "./NetworkMapRouteContext";
+
+type ConnectionPaint = Record<
+  | "easy-ui-selection"
+  | "easy-ui-casing"
+  | "easy-ui-observed"
+  | "easy-ui-unobserved",
+  Pick<
+    NonNullable<LineLayerSpecification["paint"]>,
+    "line-width" | "line-opacity"
+  >
+>;
+
+function connectionPaint(
+  style: NetworkMapProps["connectionStyle"],
+): ConnectionPaint {
+  const subtle = style === "subtle";
+  return {
+    "easy-ui-selection": {
+      "line-width": subtle
+        ? ["+", ["*", ["get", "width"], 0.5], 3]
+        : ["+", ["get", "width"], 10],
+      "line-opacity": subtle ? 0.18 : 0.45,
+    },
+    "easy-ui-casing": {
+      "line-width": ["+", ["get", "width"], 3],
+      "line-opacity": subtle ? 0 : 0.85,
+    },
+    "easy-ui-observed": {
+      "line-width": subtle ? ["*", ["get", "width"], 0.5] : ["get", "width"],
+    },
+    "easy-ui-unobserved": { "line-width": subtle ? 1.5 : 3 },
+  };
+}
 
 /** Rendering and engine lifecycle only. Compose under NetworkMapProvider to share state with companions,
  * or supply mapStyle/workerUrl and data directly for a standalone surface. Attribution is retained.
@@ -589,6 +623,7 @@ function NetworkMapSurfaceView() {
         // A different authored value belongs to the consumer (including onMapReady overrides),
         // so selection/data refreshes must leave it alone. Clearing it restores automatic color.
         let lastObservedColor: string | undefined;
+        const lastConnectionPaint = new Map<string, string | undefined>();
         const update = () => {
           if (disposed || !map.getSource("easy-ui-transfers")) return false;
           element.dataset.mapIdle = "false";
@@ -655,6 +690,31 @@ function NetworkMapSurfaceView() {
             ["get", "id"],
             p.selectedSegmentId ?? "",
           ]);
+          for (const [id, paint] of Object.entries(
+            connectionPaint(p.connectionStyle),
+          )) {
+            for (const property of ["line-width", "line-opacity"] as const) {
+              const value = paint[property];
+              if (value === undefined) continue;
+              const key = `${id}/${property}`;
+              const current = map.getPaintProperty(id, property);
+              const currentKey = JSON.stringify(current);
+              // Capture authored defaults before onMapReady. A different value
+              // belongs to the consumer, including across presentation changes.
+              if (
+                !lastConnectionPaint.has(key) ||
+                current == null ||
+                currentKey === lastConnectionPaint.get(key)
+              ) {
+                if (currentKey !== JSON.stringify(value))
+                  map.setPaintProperty(id, property, value);
+                lastConnectionPaint.set(
+                  key,
+                  JSON.stringify(map.getPaintProperty(id, property)),
+                );
+              }
+            }
+          }
           if (map.getSource("easy-ui-facility-clusters"))
             map.setLayoutProperty(
               "easy-ui-facility-cluster-count",
@@ -909,6 +969,9 @@ function NetworkMapSurfaceView() {
             },
           );
           // The halo is behind evidence strokes/casing, keeping caller colors and dashes intact.
+          const connectionDefaults = connectionPaint(
+            latest.current.connectionStyle,
+          );
           map.addLayer({
             id: "easy-ui-selection",
             type: "line",
@@ -921,8 +984,7 @@ function NetworkMapSurfaceView() {
             layout: { "line-join": "round", "line-cap": "round" },
             paint: {
               "line-color": blue,
-              "line-width": ["+", ["get", "width"], 10],
-              "line-opacity": 0.45,
+              ...connectionDefaults["easy-ui-selection"],
             },
           });
           map.addLayer({
@@ -932,8 +994,7 @@ function NetworkMapSurfaceView() {
             layout: { "line-join": "round", "line-cap": "round" },
             paint: {
               "line-color": "#fff",
-              "line-width": ["+", ["get", "width"], 3],
-              "line-opacity": 0.85,
+              ...connectionDefaults["easy-ui-casing"],
             },
           });
           map.addLayer({
@@ -948,7 +1009,7 @@ function NetworkMapSurfaceView() {
             layout: { "line-join": "round", "line-cap": "round" },
             paint: {
               "line-color": ["coalesce", ["get", "color"], blue],
-              "line-width": ["get", "width"],
+              ...connectionDefaults["easy-ui-observed"],
               "line-opacity": 0.9,
             },
           });
@@ -963,7 +1024,7 @@ function NetworkMapSurfaceView() {
             ],
             paint: {
               "line-color": ["coalesce", ["get", "color"], amber],
-              "line-width": 3,
+              ...connectionDefaults["easy-ui-unobserved"],
               "line-dasharray": [2, 2],
             },
           });
@@ -1331,6 +1392,7 @@ function NetworkMapSurfaceView() {
     options.primaryFacilityIds,
     onFacilitySelect,
     options.typography,
+    options.connectionStyle,
     risk,
     weather,
     deliverySurface,

@@ -22,13 +22,15 @@ import { EventTimeline } from "@easypost/easy-ui/EventTimeline";
 
 ## Examples
 
-### Location-first ledger
+### Compact event ledger
 
 Use `variant="ledger"` for a compact navigator beside a map and persistent
-inspector. Location is the headline, `event.label` remains the visible event
-type, and the occurrence label sits below it. Events without a location keep
-their event label as the headline. The original `"timeline"` variant remains
-the default.
+inspector. Each row starts with the semibold event type (`event.label`),
+followed by its location and occurrence time on separate lines. Event types
+and times are 12px; locations are 13px. Ordinary rows have a 64px minimum
+height, with extra context and evidence increasing only the rows that need
+them. Events without a location retain their event type and time. The
+original `"timeline"` variant remains the default.
 
 `renderTrailing` supplies a separate event assessment, such as a labeled risk
 pill. It stays outside the event-selection button, remains independently
@@ -49,6 +51,9 @@ shown as **Not assessed**, never inferred to be low risk.
 ```
 
 The selected background spans the row, including its trailing assessment.
+Trailing assessments align with the event type at the top of the row. A
+persistent inspector can show unassessed states while ordinary rows remain
+free of repeated availability badges.
 Ledger rows preserve caller order and do not draw an implicit connection
 between adjacent events. Repeated locations and multiple delivery reports
 remain separate records. `detailLabel` stays visible even in compact ledger
@@ -57,9 +62,13 @@ also show the separately labeled receipt time; an event with no occurrence
 label shows any available receipt time at every ledger size.
 
 For a shared inspector, keep rich details in that inspector rather than
-populating `renderDetails` on every row. Inline metrics remain outside the
-native selection button and inside the selected row; below metrics and
-interval content retain their existing separate slots.
+populating `renderDetails` on every row. In ledger rows, `metricsPlacement="inline"`
+places an evidence strip across the full row beneath event type, location,
+and time. Compact histograms or other supplied references keep their width
+even beside a trailing risk badge. Metrics remain outside the native
+selection button and inside the selected row; below metrics and interval
+content retain their existing separate slots. Only return a metric strip for
+events with evidence to show; rows without it keep their ordinary height.
 
 <Canvas of={Stories.Ledger} />
 <Canvas of={Stories.LedgerFullTimestamps} />
@@ -158,9 +167,9 @@ import { EventMetrics } from "@easypost/easy-ui/EventMetrics";
 
 For **minimal**, use `size="compact"`, `metricsPlacement="inline"`, and `renderMetrics` with `<EventMetrics variant="minimal" />`. The event label, visible facility type and location, and individual pills flow together. Rows without metrics use the same inline identity layout. The pills remain outside the native event-selection button, so metric controls retain their own actions.
 
-`renderMetrics` is available on every event, including the final observation. `metricsPlacement` defaults to `"below"` for compact or expanded references; `"inline"` includes the content in the event's wrapping identity flow. Both placements keep metric content outside the event-selection button. `EventMetrics` accepts already formatted values and references, so durations, percentages, counts, and other measurements can share this composition without a domain dictionary in the timeline.
+`renderMetrics` is available on every event, including the final observation. `metricsPlacement` defaults to `"below"` for compact or expanded references. In the default timeline variant, `"inline"` includes content in the event's wrapping identity flow; ledger rows put inline content in the full-width evidence strip described above. Both placements keep metric content outside the event-selection button. `EventMetrics` accepts already formatted values and references, so durations, percentages, counts, and other measurements can share this composition without a domain dictionary in the timeline.
 
-`locationIcon` accepts a caller-supplied icon. Inline placement displays the facility type and location at every event size. In the default layout, compact event size keeps the icon and location while retaining the facility type for assistive technology; default and detailed sizes also display the facility type. Keep the metric presentation independent of the event's size.
+`locationIcon` accepts a caller-supplied icon. In the timeline variant, inline placement displays the facility type and location at every event size. In its default layout, compact event size keeps the icon and location while retaining the facility type for assistive technology; default and detailed sizes also display the facility type. Ledger rows place the icon beside the location and retain the facility type in the event's accessible description. Keep the metric presentation independent of the event's size.
 
 ### Narrow and map-adjacent views
 
