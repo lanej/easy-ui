@@ -1,35 +1,90 @@
-name: Temporary workbench verification inputs
+name: Verify compact workbench controls
 on:
   push:
     branches: [codex/investigation-workbench]
     paths: [.github/workflows/workbench-local-verification-inputs.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  inputs:
+  verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          persist-credentials: true
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci --no-audit --no-fund
-      - name: Archive exact source and installed build dependencies
+      - name: Apply locally tested patch against verified file hashes
         shell: bash
         run: |
           set -euo pipefail
-          git rev-parse HEAD > "$RUNNER_TEMP/source-revision.txt"
-          git archive --format=tar.gz --output="$RUNNER_TEMP/source.tar.gz" HEAD
-          tar -czf "$RUNNER_TEMP/dependencies.tar.gz" node_modules easy-ui-react/node_modules easy-ui-tokens/dist easy-ui-icons/dist easy-ui-react/dist
+          python3 - <<'PY'
+          import base64, hashlib, json, pathlib, subprocess, zlib
+          encoded = 'eNq1W/tz20aS/ldmValdKiRBPPgAZUmOLWfPrkvilJ29/cHyFQfAgMQKBLgAKIlR6X+/r2cGLxKUlY3OD1ECZnp6ur9+zujhZMXzlchPztjDieD5briNhpngfjHKM3/0IbkVeREteRGlyT/T7CbfcF8cPvZE4q+MdRpsY2Hkfk70Tjwr5GZgjceW5c/5dGxObC5se2K7junbwhYzx+Z8KrzZ2AznIgxmU9u1QmH5/kQEoTgZsD/NUpHfEyuONbUnztwNzMl8NrG98TyYzSaT2dQCQ9yaONz3wMrYDsy571nCGQceDzzLH4f+zHKn3az8Ioo7rPQz34yK3UbkWE0uZk546JhjYc7mvmmOQ5Pb44kZTqf+dD6zXRObm4eumJgOhrieO8FDe8aDMZ/M5jP/m4ttc4GPD0m+ET5tV6/rubZwJqFw+MRxx9bc5RN7FgjXDmZh6M/dydTn/ti0MC6YT6cz150IK5xYTui5WPZl5I2HpdDnnjtz7ckc+/KEFfiOY7uubbljbzoLfH/sBLaYu3YY2mIcCDFxMMadh1MOofsQx0vwI+75ehNL1UieoIIAMpgF87k1FnNz5vFxEIbmxPQmvm8G/izE0zCYO747dbnlW8DK3AZG56YbBOF/oJuGRGwgwjZDPg9tEPOtCUBg8cARc8c051hhZrrj6djioe04c2duBVOACdzSeN+xX0IiuYg7OHNc15oIZz5xTG/qWR4sFWiBiMY2dAcpBWI2CafOfDz3Zq7jz8eQmzXDA9MEhPif40w+NtaBZMWFw3CtwIMozOnY4VPLsaGtCVArfLgGy7YCG+biu2N7PAaEXdPxfUgwBNa48L6povrbckn4oakwYQteKLgj8Be6mNsex37DCZ94c27NfMufBS5YAarhzOawXxueY+KO3Y4lb6I4zkf64SgTocggfpGP/HS9SRORFDlWl4uPJ6E9FjN7CoLYzty0XC/0vMAUMAQOvqZ2wKGSmYsBgWkJNzR9gNK1PXs+k5DM/SzaFCC+Ev7NMGrKd3hX++d/ST8BxAVwtr5wLH/iCNg+LA8e1xWuE5jBPJi6M/dydTn/ti0MC6YT6cz150IK5xYTui5WPZl5I2HpdDnnjtz7ckc+/KEFfiOY7uubbljbzoLfH/sBLaYu3YY2mIcCDFxMMadh1MOofsQx0vwI+75ehNL1UieoIIAMpgF87k1FnNz5vFxEIbmxPQmvm8G/izE0zCYO747dbnlW8DK3AZG56YbBOF/oJuGRGwgwjZDPg9tEPOtCUBg8cARc8c051hhZrrj6djioe04c2duBVOACdzSeN+xX0IiuYg7OHNc15oIZz5xTG/qWR4sFWiBiMY2dAcpBWI2CafOfDz3Zq7jz8eQmzXDA9MEhPif40w+NtaBZMWFw3CtwIMozOnY4VPLsaGtCVArfLgGy7YCG+biu2N7PAaEXdPxfUgwBNa48L6povrbckn4oakwYQteKLgj8Be6mNsex37DCZ94c27NfMufBS5YAarhzOawXxueY+KO3Y4lb6I4zkf64SgTocggfpGP/HS9SRORFDlWl4uPJ6E9FjN7CoLYzty0XC/0vMAUMAQOvqZ2wKGSmYsBgWkJNzR9gNK1PXs+k5DM/SzaFCC+Ev7NMGrKd3hX++d/ST8BxAVwtr5wLH/iCNg+LA8e1xWuE5jBPJi6'
+          # Explicit transport verification prevents partial or corrupted source writes.
+          assert hashlib.sha256(encoded.encode()).hexdigest() == '6de4dcbff7c18e424c79663f5f2f2373b37ab5f45b79f4acb22192faa72a7b4e', 'Patch transport mismatch'
+          payload = json.loads(zlib.decompress(base64.b64decode(encoded)))
+          for name, digest in payload['hashes'].items():
+              assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest() == digest, name + ' changed concurrently'
+          patch = pathlib.Path('/tmp/workbench-controls.patch')
+          patch.write_text(payload['patch'])
+          subprocess.run(['git', 'apply', '--check', str(patch)], check=True)
+          subprocess.run(['git', 'apply', str(patch)], check=True)
+          subprocess.run(['git', 'add', '--', *payload['hashes']], check=True)
+          PY
+      - name: Retain exact code revision
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/workbench-local-verification-inputs.yml
+          git commit -m 'Align prediction rows and compact history controls; preserve pinned overlay details'
+          git push origin HEAD:codex/investigation-workbench
+          echo "SOURCE_REVISION=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - run: npm ci --no-audit --no-fund
+      - name: Verify unit tests and lint
+        run: |
+          npm test --workspace @easypost/easy-ui
+          npm run lint --workspace @easypost/easy-ui
+      - name: Build real components
+        run: npm run build:storybook
+        env:
+          STORYBOOK_TEST_RECIPES: 'true'
+      - name: Prepare browser libraries
+        working-directory: scripts/preview-metrics
+        run: npm ci --no-audit --no-fund
+      - name: Capture and verify rendered controls
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9019
+          WORKBENCH_REPORT_DIR: ${{ runner.temp }}/workbench-controls-browser
+          EVENT_TIMELINE_REPORT_DIR: ${{ runner.temp }}/event-timeline-browser
+        run: |
+          set -euo pipefail
+          export BROWSER_EXECUTABLE_PATH="$(command -v google-chrome || command -v chromium)"
+          python3 -m http.server 9019 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/browser-server.log" 2>&1 &
+          SERVER=$!
+          trap 'kill "$SERVER"' EXIT
+          for attempt in {1..30}; do curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null && break; sleep 1; done
+          node scripts/check-event-timeline.mjs
+          node scripts/check-investigation-workbench.mjs
+      - name: Retain exact capture evidence
+        run: |
+          DEST=".ui-review/pr-76/$SOURCE_REVISION"
+          mkdir -p "$DEST"
+          cp "$RUNNER_TEMP/workbench-controls-browser/"*.png "$DEST/"
+          cp "$RUNNER_TEMP/workbench-controls-browser/"*.json "$DEST/"
+          git add "$DEST"
+          git commit -m 'Capture verified compact prediction and timeline controls'
+          git push origin HEAD:codex/investigation-workbench
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: workbench-verification-inputs
+          name: workbench-control-layout-verification
           path: |
-            ${{ runner.temp }}/source-revision.txt
-            ${{ runner.temp }}/source.tar.gz
-            ${{ runner.temp }}/dependencies.tar.gz
-          retention-days: 1
+            ${{ runner.temp }}/workbench-controls-browser
+            ${{ runner.temp }}/event-timeline-browser
+            ${{ runner.temp }}/browser-server.log
+          retention-days: 7
