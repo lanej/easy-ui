@@ -200,7 +200,11 @@ export function selectedObservationOverlays(
     ),
   );
   const segments = segmentData(records.locations, records.segments).features
-    .filter((feature) => selectedSegmentIds.has(String(feature.id)));
+    .filter((feature) => selectedSegmentIds.has(String(feature.id)))
+    .map((feature) => ({
+      ...feature,
+      properties: { ...feature.properties, segmentId: String(feature.id) },
+    }));
   const overlays: MapOverlay[] = records.paths.flatMap((path) => {
     const pathSegments = new Set(
       selectedConnections
