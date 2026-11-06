@@ -17,6 +17,14 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Select installed browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          BROWSER=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)
+          test -n "$BROWSER"
+          "$BROWSER" --version
+          echo "BROWSER_EXECUTABLE_PATH=$BROWSER" >> "$GITHUB_ENV"
       - name: Apply source-verified revision
         shell: bash
         run: |
@@ -43,9 +51,12 @@ jobs:
         env:
           STORYBOOK_TEST_RECIPES: 'true'
         run: npm run build:storybook && npm run check:storybook
-      - name: Install browser dependencies
+      - name: Install browser test libraries
         working-directory: scripts/preview-metrics
-        run: npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+        timeout-minutes: 4
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm ci --no-audit --no-fund
       - name: Check all-history graph, interactions and smaller viewports
         shell: bash
         env:
@@ -75,6 +86,13 @@ jobs:
           git add "$DEST"
           git commit -m 'Capture actual all-history workbench at compact viewports'
           git push origin HEAD:codex/investigation-workbench
+          EVIDENCE=$(git rev-parse HEAD)
+          for IMAGE in "$DEST"/*.png; do
+            URL="https://raw.githubusercontent.com/lanej/easy-ui/$EVIDENCE/$IMAGE"
+            curl --fail --silent --show-error --retry 5 --retry-all-errors "$URL" -o "$RUNNER_TEMP/check-image.png"
+            cmp "$IMAGE" "$RUNNER_TEMP/check-image.png"
+            echo "Verified $URL" >> "$RUNNER_TEMP/raw-image-urls.log"
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -89,4 +107,5 @@ jobs:
             ${{ runner.temp }}/browser-checks.log
             ${{ runner.temp }}/timeline-checks.log
             ${{ runner.temp }}/storybook-server.log
+            ${{ runner.temp }}/raw-image-urls.log
           retention-days: 7
