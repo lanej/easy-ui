@@ -131,18 +131,19 @@ jobs:
           BROWSER_CI_SUITE: ${{ matrix.suite }}
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
           STORYBOOK_URL: http://127.0.0.1:9018
-          FACILITY_REPORT_DIR: ${{ runner.temp }}/facility-summary-browser
-          CHART_CATALOG_REPORT_DIR: ${{ runner.temp }}/chart-catalog-browser
-          STORYBOOK_DOCS_REPORT_DIR: ${{ runner.temp }}/storybook-docs-browser
-          TOKEN_BROWSER_REPORT_DIR: ${{ runner.temp }}/token-browser
-          WAFFLE_REPORT_DIR: ${{ runner.temp }}/waffle-chart-browser
-          MAP_PRIMARY_REPORT_DIR: ${{ runner.temp }}/map-primary-insets
-          EVIDENCE_TYPOGRAPHY_REPORT_DIR: ${{ runner.temp }}/evidence-typography-browser
-          DRAWER_PLACEMENT_REPORT_DIR: ${{ runner.temp }}/drawer-placement-browser
-          NOTIFICATION_REPORT_DIR: ${{ runner.temp }}/notification-browser
-          THEME_TOGGLE_REPORT_DIR: ${{ runner.temp }}/theme-toggle-browser
+          FACILITY_REPORT_DIR: .browser-ci-reports/facility-summary-browser
+          CHART_CATALOG_REPORT_DIR: .browser-ci-reports/chart-catalog-browser
+          STORYBOOK_DOCS_REPORT_DIR: .browser-ci-reports/storybook-docs-browser
+          TOKEN_BROWSER_REPORT_DIR: .browser-ci-reports/token-browser
+          WAFFLE_REPORT_DIR: .browser-ci-reports/waffle-chart-browser
+          MAP_PRIMARY_REPORT_DIR: .browser-ci-reports/map-primary-insets
+          EVIDENCE_TYPOGRAPHY_REPORT_DIR: .browser-ci-reports/evidence-typography-browser
+          DRAWER_PLACEMENT_REPORT_DIR: .browser-ci-reports/drawer-placement-browser
+          NOTIFICATION_REPORT_DIR: .browser-ci-reports/notification-browser
+          THEME_TOGGLE_REPORT_DIR: .browser-ci-reports/theme-toggle-browser
         run: |
-          node --input-type=module -e 'import { preview } from "vite"; await preview({ configFile: false, appType: "mpa", build: { outDir: "storybook-static" }, preview: { host: "127.0.0.1", port: 9018, strictPort: true } });' > "$RUNNER_TEMP/facility-storybook.log" 2>&1 &
+          mkdir -p .browser-ci-reports
+          node --input-type=module -e 'import { preview } from "vite"; await preview({ configFile: false, appType: "mpa", build: { outDir: "storybook-static" }, preview: { host: "127.0.0.1", port: 9018, strictPort: true } });' > .browser-ci-reports/facility-storybook.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
           for attempt in {1..30}; do
@@ -156,18 +157,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: component-browser-${{ matrix.suite }}
-          path: |
-            ${{ runner.temp }}/facility-summary-browser
-            ${{ runner.temp }}/chart-catalog-browser
-            ${{ runner.temp }}/storybook-docs-browser
-            ${{ runner.temp }}/token-browser
-            ${{ runner.temp }}/waffle-chart-browser
-            ${{ runner.temp }}/map-primary-insets
-            ${{ runner.temp }}/notification-browser
-            ${{ runner.temp }}/theme-toggle-browser
-            ${{ runner.temp }}/drawer-placement-browser
-            ${{ runner.temp }}/evidence-typography-browser
-            ${{ runner.temp }}/facility-storybook.log
+          path: .browser-ci-reports/
+          include-hidden-files: true
           if-no-files-found: ignore
 
       - uses: ./.github/actions/browser-proof

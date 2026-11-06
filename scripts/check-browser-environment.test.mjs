@@ -57,7 +57,12 @@ test("preserves real browser coverage without repeated Linux font installation",
   );
   assert.match(browser, /shell: bash/);
   assert.match(browser, /appType: "mpa"/);
-  assert.doesNotMatch(browser, /python3|playwright install/);
+  assert.doesNotMatch(browser, /python3|playwright install|runner\.temp/);
+  assert.match(browser, /mkdir -p \.browser-ci-reports/);
+  assert.match(
+    browser,
+    /path: \.browser-ci-reports\/\n          include-hidden-files: true/,
+  );
   const mapBrowser = maps.slice(
     maps.indexOf("  browser:"),
     maps.indexOf("  layout:"),

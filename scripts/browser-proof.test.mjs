@@ -13,6 +13,7 @@ import {
   reusable,
   componentInputPaths,
   producerFingerprint,
+  gitMetadata,
 } from "./browser-proof.mjs";
 
 test("manual runs, reruns, and unavailable evidence execute fresh checks", async () => {
@@ -624,4 +625,36 @@ test("a divergent base/merge producer conservatively invalidates branch-head pro
     },
   ];
   assert.notEqual(producerFingerprint(head), producerFingerprint(merge));
+});
+
+test("container metadata reads trust only this checkout without global Git changes", () => {
+  const overrides = {
+    GIT_TEST_ASSUME_DIFFERENT_OWNER: "1",
+    GIT_CONFIG_GLOBAL: "/dev/null",
+    GIT_CONFIG_SYSTEM: "/dev/null",
+  };
+  const previous = Object.fromEntries(
+    Object.keys(overrides).map((key) => [key, process.env[key]]),
+  );
+  Object.assign(process.env, overrides);
+  try {
+    assert.throws(
+      () => execFileSync("git", ["ls-tree", "HEAD"], { stdio: "pipe" }),
+      /dubious ownership/,
+    );
+    assert.match(gitMetadata(["ls-tree", "HEAD"]), /package\.json/);
+    assert.match(
+      gitMetadata(["ls-files", "package.json"]),
+      /^package\.json\n$/,
+    );
+    assert.throws(
+      () => execFileSync("git", ["ls-tree", "HEAD"], { stdio: "pipe" }),
+      /dubious ownership/,
+    );
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 });

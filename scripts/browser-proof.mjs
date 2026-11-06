@@ -117,10 +117,20 @@ export function producerFingerprint(entries) {
   );
 }
 
+export function gitMetadata(args) {
+  // Checkout is bind-mounted into the root-owned browser container. Trust only
+  // this checkout for this read, without changing global Git configuration.
+  return execFileSync(
+    "git",
+    ["-c", `safe.directory=${process.cwd()}`, ...args],
+    {
+      encoding: "utf8",
+    },
+  );
+}
+
 function currentProducer() {
-  const entries = execFileSync("git", ["ls-tree", "-r", "-z", "HEAD"], {
-    encoding: "utf8",
-  })
+  const entries = gitMetadata(["ls-tree", "-r", "-z", "HEAD"])
     .split("\0")
     .filter(Boolean)
     .map((entry) => {
@@ -190,29 +200,25 @@ async function main() {
       suite.startsWith("charts-") || suite === "event-timeline"
         ? "scripts/preview-metrics"
         : "scripts/preview-maps";
-    const inputs = execFileSync(
-      "git",
-      [
-        "ls-files",
-        "-z",
-        ...(componentSuite
-          ? componentInputPaths(workflow)
-          : [
-              preview,
-              workflow,
-              ".nvmrc",
-              "scripts/browser-proof.mjs",
-              ".github/actions/browser-proof",
-              ...(suite === "charts-layout" ? [".ui-review"] : []),
-              ...(suite === "maps-layout" ? [".ui-review/maps"] : []),
-              ...(suite === "hosted-maps" ? ["scripts/build-docs.mjs"] : []),
-              ...(suite === "event-timeline"
-                ? ["scripts/check-event-timeline.mjs"]
-                : []),
-            ]),
-      ],
-      { encoding: "utf8" },
-    )
+    const inputs = gitMetadata([
+      "ls-files",
+      "-z",
+      ...(componentSuite
+        ? componentInputPaths(workflow)
+        : [
+            preview,
+            workflow,
+            ".nvmrc",
+            "scripts/browser-proof.mjs",
+            ".github/actions/browser-proof",
+            ...(suite === "charts-layout" ? [".ui-review"] : []),
+            ...(suite === "maps-layout" ? [".ui-review/maps"] : []),
+            ...(suite === "hosted-maps" ? ["scripts/build-docs.mjs"] : []),
+            ...(suite === "event-timeline"
+              ? ["scripts/check-event-timeline.mjs"]
+              : []),
+          ]),
+    ])
       .split("\0")
       .filter(
         (file) =>
