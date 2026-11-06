@@ -695,6 +695,7 @@ export function InvestigationWorkbench({
                 type="button"
                 className={styles.historyButton}
                 aria-pressed={!focused}
+                aria-label="All histories"
                 onClick={() => dispatch({ type: "mode", mode: "overview" })}
               >
                 All
@@ -706,7 +707,7 @@ export function InvestigationWorkbench({
                     key={path.id}
                     type="button"
                     className={styles.historyButton}
-                    aria-label={`Select all observations in ${path.label}`}
+                    aria-label={`${path.label} · ${records.events.filter((item) => item.pathIds?.includes(path.id)).length} observations · select history`}
                     title={path.label}
                     aria-pressed={focused?.id === path.id}
                     onClick={() => dispatch({ type: "focus", pathId: path.id })}
