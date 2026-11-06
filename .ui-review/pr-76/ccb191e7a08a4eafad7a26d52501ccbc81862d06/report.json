@@ -1,0 +1,212 @@
+{
+  "checks": [
+    "light: all 11 observations, forks, rejoin and independent roots in one leftmost graph at 1100×820",
+    "light: repeated analysis commands reveal inspector; header action; overview/focus/deviation, forecast toggles, camera, edge evidence, keyboard tabs, accessibility",
+    "dark: all 11 observations, forks, rejoin and independent roots in one leftmost graph at 1100×820",
+    "dark: repeated analysis commands reveal inspector; header action; overview/focus/deviation, forecast toggles, camera, edge evidence, keyboard tabs, accessibility",
+    "960px: all histories with map alongside, one leftmost graph and no horizontal overflow",
+    "1100px: all histories with map alongside, one leftmost graph and no horizontal overflow",
+    "light 390px: no horizontal overflow, event/map switching preserves camera, persistent inspector",
+    "light: focused path and incoming connection assessments retain provenance",
+    "dark 390px: no horizontal overflow, event/map switching preserves camera, persistent inspector",
+    "dark: focused path and incoming connection assessments retain provenance",
+    "light 1150px: caller header action is visible and operable",
+    "light 960px: caller header action is visible and operable",
+    "light 1100px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained",
+    "light 390px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained",
+    "dark 1150px: caller header action is visible and operable",
+    "dark 960px: caller header action is visible and operable",
+    "dark 1100px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained",
+    "dark 390px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained"
+  ],
+  "errors": [],
+  "screenshots": [
+    {
+      "file": "workbench-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "fe00662a276b54432170b358db3b68002574f525e80c17af66a65e8ec5b03c75",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-desktop.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "ef76c86459d34262bf1beb078bcb333eb5ef234eacbe75d7b19f1a9357b1d604",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-overview.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "1febde75f6b505fc4bf6517f26a62f9ff54757525a8ea1c5b7f00b1fdf91f72f",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-overview-960.png",
+      "theme": "light",
+      "viewport": {
+        "width": 960,
+        "height": 820
+      },
+      "sha256": "29b6d989455809f8840ffdcc2ed6c39fe8c4e62a91544d4066e53040d157bbbb",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-overview-1100.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "1febde75f6b505fc4bf6517f26a62f9ff54757525a8ea1c5b7f00b1fdf91f72f",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-narrow-events.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "674908dd6c3ee4332b13cf752baa245788e87fcbc42913e06539437240c2be2d",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-narrow-map.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "bef0b95e0d77cab08e9130281e4bd8604afe29e5f4f8a39f6a49422f469faa1d",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-assessments-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "44fa6f7ffa6c077a300a2913f4e56aa9778b7aed980f006f5c81a6c9c101465a",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-narrow-events.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "4dbe8bbd1cac5e681d1072ed10faa5f8a7eb16c16185f430623dad32910310e7",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-narrow-map.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "759569aa12a6577a1dd4835c06e852bc9e7947528b85084b2a7f04941b59d012",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-assessments-dark-desktop.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "364fb9876f9b6872cee13d1f60511e5b6360c23735c2bd87a42fda6a2febd500",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-header-action-1150.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1150,
+        "height": 820
+      },
+      "sha256": "e7d9a4fe186f71afdf7847c4cb568fa00c81315a5d79474e5216e45c9b13865e",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-unassigned-evidence-light-1100.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "3d31946f2f73a97f72fb00237ed9ec2aca6cc85b261985449b349191c0437616",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-unassigned-evidence-light-390.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "1221b08d8cf80a171b46f933d4c1f6cb545ff1ce61add28eaea76270686cb99d",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-header-action-1150.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1150,
+        "height": 820
+      },
+      "sha256": "1e2f97fbe4398f3c424c7d7caa38e51207ce69f0b096a9df11ebeef0a587e6dd",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-unassigned-evidence-dark-1100.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "d38bd84af71672bb736f13b63a6d615fd7757044c2adc4c39b9675f0cb960e68",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-unassigned-evidence-dark-390.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "32c20857fb5999a6d00cae8a94b44375315e1c031bcdf94d57a78e7a96ae7caf",
+      "sourceRevision": "ccb191e7a08a4eafad7a26d52501ccbc81862d06",
+      "actualComponent": true
+    }
+  ]
+}
