@@ -37,7 +37,7 @@ jobs:
       - name: Verify browser CI evidence selection
         run: node --test scripts/browser-proof.test.mjs
       - name: Verify browser CI suite coverage and failure propagation
-        run: node --test scripts/run-browser-ci.test.mjs
+        run: node --test scripts/run-browser-ci.test.mjs scripts/check-browser-environment.test.mjs
       - name: Verify isolated tarball imports, test IDs, and Sass assets
         run: node scripts/check-style-package.mjs
       - name: Retain packed-consumer logs on failure
@@ -83,6 +83,15 @@ jobs:
     name: Browser (${{ matrix.suite }})
     needs: storybook
     runs-on: ubuntu-latest
+    # Matching official browser binaries, OS libraries and fonts are already installed.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      options: --ipc=host
+    env:
+      PROOF_BROWSER_ENVIRONMENT: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -97,6 +106,8 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             scripts/preview-metrics/package-lock.json
+      - name: Verify pinned browser environment
+        run: node scripts/check-browser-environment.mjs scripts/preview-metrics
       # No token, run-id or external artifact source: download from this run only.
       - uses: actions/download-artifact@v4
         with:
@@ -113,10 +124,6 @@ jobs:
         if: steps.proof.outputs.reuse != 'true'
         working-directory: scripts/preview-metrics
         run: npm ci --no-audit --no-fund
-      - name: Install Chromium
-        if: steps.proof.outputs.reuse != 'true'
-        working-directory: scripts/preview-metrics
-        run: npx playwright install --with-deps chromium
       - name: Verify component browser suite
         if: steps.proof.outputs.reuse != 'true'
         timeout-minutes: 10
@@ -135,7 +142,7 @@ jobs:
           NOTIFICATION_REPORT_DIR: ${{ runner.temp }}/notification-browser
           THEME_TOGGLE_REPORT_DIR: ${{ runner.temp }}/theme-toggle-browser
         run: |
-          python3 -m http.server 9018 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/facility-storybook.log" 2>&1 &
+          node --input-type=module -e 'import { preview } from "vite"; await preview({ configFile: false, appType: "mpa", build: { outDir: "storybook-static" }, preview: { host: "127.0.0.1", port: 9018, strictPort: true } });' > "$RUNNER_TEMP/facility-storybook.log" 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
           for attempt in {1..30}; do

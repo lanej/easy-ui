@@ -25,9 +25,11 @@ workflow and pull request/ref. Fork pull requests always run fresh. The fingerpr
 - Fresh Storybook assets and all three compiled workspace package trees.
 - Browser scripts and helpers, authored MDX, and Storybook configuration.
 - Package manifests and lockfiles, the workflow, proof action, and Node/runner image.
+- The immutable browser container and, for map Chrome checks, the installed Chrome version.
 
 If these inputs match, the job links to the successful evidence and skips dependency
-installation, Chromium installation, browser tests, and duplicate screenshots.
+installation, browser tests, and duplicate screenshots. The pinned container already
+contains the matching Chromium binaries, system libraries, and fonts.
 Screenshot-only commits can therefore reuse successful browser results. The producing run’s immutable Git tree must also match the current source, apart from narrowly recognized review images, logs, and report/provenance files. Artifact names alone cannot authorize reuse. Changes to
 shared components, themes, tokens, icons, or dependencies still invalidate the
 results when their source or built output changes. Other source changes conservatively run fresh, even when their browser impact is unclear.
@@ -42,6 +44,23 @@ Evidence expires after seven days. Failed, incomplete, expired, inaccessible, or
 missing evidence runs fresh. Manual runs and reruns always run fresh. Reusing a
 result does not extend its original expiry. Package tests, lint, and the fresh
 builds still run; the workflow is never skipped with path filters.
+
+## Avoid repeated browser system setup
+
+Linux component browser jobs and the Chrome/Firefox map jobs use the official
+Playwright 1.63.0 Noble image, pinned by SHA-256 digest. A guard checks both preview
+manifest and lockfile versions against the image. Updating Playwright requires
+updating the image and digest together. This retains the browser fonts and system
+libraries while avoiding repeated OS package downloads from Ubuntu mirrors.
+
+The first live map run spent 8m30s downloading 21.9 MB of font packages, while its
+actual Vite build took 13 seconds. The prepared image targets that setup bottleneck;
+image pulls still have a cost and must be measured in Actions.
+
+Map Chrome remains branded Google Chrome, installed separately without Playwright's
+OS-dependency installation. Its actual version is fingerprinted before evidence
+lookup. Firefox retains Xvfb and software rendering. Safari still runs on macOS.
+The Storybook server uses the already-installed Vite package, not Python.
 
 ## Cache and artifact boundaries
 

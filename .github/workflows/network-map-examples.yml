@@ -9,6 +9,8 @@ on:
       - "scripts/preview-tokens.mjs"
       - "scripts/browser-proof.mjs"
       - "scripts/browser-proof.test.mjs"
+      - "scripts/check-browser-environment.mjs"
+      - "scripts/check-browser-environment.test.mjs"
       - "easy-ui-react/src/NetworkMap/**"
       - "easy-ui-react/src/Map*/**"
       - "easy-ui-react/src/styles/**"
@@ -35,30 +37,44 @@ jobs:
         include:
           - browser: chrome
             os: ubuntu-latest
+            container: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
           - browser: firefox
             os: ubuntu-latest
+            container: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
           - browser: safari
             os: macos-15
     runs-on: ${{ matrix.os }}
+    # Empty scalar means no container for the real macOS Safari job.
+    container: ${{ matrix.container || '' }}
+    env:
+      PROOF_BROWSER_ENVIRONMENT: ${{ matrix.container || '' }}
     timeout-minutes: 20
     defaults:
       run:
+        shell: bash
         working-directory: scripts/preview-maps
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
+      - name: Verify pinned browser environment
+        if: matrix.browser != 'safari'
+        run: node ../check-browser-environment.mjs .
       - run: npm ci --no-audit --no-fund
       - run: npm run build
       - run: npm run measure
+      # Chrome stable is mutable: identify the real browser before checking evidence.
+      - name: Install and identify Google Chrome
+        if: matrix.browser == 'chrome'
+        run: |
+          npx playwright install chrome
+          echo "PROOF_BROWSER_VERSION=$(google-chrome --version)" >> "$GITHUB_ENV"
       - id: proof
         uses: ./.github/actions/browser-proof
         with:
           suite: maps-${{ matrix.browser }}
           built: scripts/preview-maps/dist
-      - if: steps.proof.outputs.reuse != 'true' && matrix.browser != 'safari'
-        run: npx playwright install --with-deps ${{ matrix.browser }}
       - if: steps.proof.outputs.reuse != 'true' && matrix.browser == 'chrome'
         run: npm run capture
         env:

@@ -29,13 +29,20 @@ test("manual runs, reruns, and unavailable evidence execute fresh checks", async
         },
       }),
     );
-    for (const [event, attempt, suite] of [
+    const environmentDigests = [];
+    for (const [
+      index,
+      [event, attempt, suite, browserEnvironment, browserVersion],
+    ] of [
       ["workflow_dispatch", "1", "maps-chrome"],
       ["pull_request", "2", "maps-chrome"],
       ["pull_request", "1", "maps-chrome"],
       ["workflow_dispatch", "1", "event-timeline"],
-    ]) {
-      const output = join(root, `${event}-${attempt}-${suite}.out`);
+      ["workflow_dispatch", "1", "maps-chrome", "pinned-image-1", "Chrome 157"],
+      ["workflow_dispatch", "1", "maps-chrome", "pinned-image-2", "Chrome 157"],
+      ["workflow_dispatch", "1", "maps-chrome", "pinned-image-1", "Chrome 158"],
+    ].entries()) {
+      const output = join(root, `${index}.out`);
       const { stderr } = await promisify(execFile)(
         process.execPath,
         [fileURLToPath(new URL("./browser-proof.mjs", import.meta.url))],
@@ -45,6 +52,8 @@ test("manual runs, reruns, and unavailable evidence execute fresh checks", async
             PROOF_MODE: "check",
             PROOF_SUITE: suite,
             PROOF_BUILT: join(root, "dist"),
+            PROOF_BROWSER_ENVIRONMENT: browserEnvironment,
+            PROOF_BROWSER_VERSION: browserVersion,
             GH_TOKEN: "fixture",
             GITHUB_API_URL: "http://127.0.0.1:1",
             GITHUB_EVENT_PATH: join(root, "event.json"),
@@ -60,12 +69,20 @@ test("manual runs, reruns, and unavailable evidence execute fresh checks", async
           },
         },
       );
-      assert.match(await readFile(output, "utf8"), /^reuse=false\n/);
+      const result = await readFile(output, "utf8");
+      assert.match(result, /^reuse=false\n/);
+      if (browserEnvironment)
+        environmentDigests.push(result.match(/digest=([a-f0-9]+)/)[1]);
       assert.equal(
         stderr.includes("Previous evidence unavailable"),
         event === "pull_request" && attempt === "1",
       );
     }
+    assert.equal(
+      new Set(environmentDigests).size,
+      3,
+      "container or browser version changes invalidate proof",
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

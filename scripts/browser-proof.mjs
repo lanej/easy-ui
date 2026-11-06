@@ -240,6 +240,8 @@ async function main() {
       os: env.RUNNER_OS,
       image: env.ImageOS,
       imageVersion: env.ImageVersion,
+      browserEnvironment: env.PROOF_BROWSER_ENVIRONMENT,
+      browserVersion: env.PROOF_BROWSER_VERSION,
     });
   }
   if (!/^[a-f0-9]{64}$/.test(key ?? ""))
