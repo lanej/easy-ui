@@ -104,8 +104,8 @@
 .body {
   display: grid;
   grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
-  grid-template-rows: auto auto 1fr;
-  grid-template-areas: "controls controls" "timeline map" "timeline inspector";
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "timeline map" "timeline inspector";
   gap: 8px;
   padding: 8px;
   align-items: start;
@@ -229,6 +229,9 @@
 .timelinePanel {
   grid-area: timeline;
   align-self: stretch;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
 }
 .panelHeading {
   display: flex;
@@ -274,6 +277,7 @@
 .mapPanel {
   grid-area: map;
   align-self: start;
+  position: relative;
   > :where(div:first-child) {
     border: 0;
     border-radius: 0;
@@ -519,21 +523,9 @@
   }
   .body {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "controls" "views" "active" "inspector";
+    grid-template-areas: "views" "active" "inspector";
     gap: 8px;
     padding: 8px;
-  }
-  .sidebar {
-    border: 1px solid design-token("color.neutral.200");
-    border-radius: 7px;
-    padding: 0 10px;
-    background: design-token("color.neutral.000");
-    > summary {
-      display: list-item;
-    }
-  }
-  .sidebarContent {
-    padding-block: 8px 12px;
   }
   .timelinePanel,
   .mapPanel {
@@ -569,5 +561,112 @@
   }
   .history[data-active] {
     border: 1px solid Highlight;
+  }
+}
+
+/* History selection belongs to the chronology, not a global toolbar. */
+.timelineControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 4px 8px;
+  border-block-end: 1px solid design-token("color.neutral.200");
+  position: relative;
+  z-index: 3;
+}
+.timelineActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.smallControl,
+.displayMenu > summary {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 29px;
+  padding: 3px 7px;
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 6px;
+  color: inherit;
+  background: design-token("color.neutral.000");
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.smallControl[aria-pressed="true"] {
+  border-color: design-token("color.primary.300");
+  background: design-token("color.primary.050");
+}
+.displayMenu {
+  position: relative;
+  > summary { list-style: none; }
+  > summary::-webkit-details-marker { display: none; }
+}
+.displayOptions {
+  display: grid;
+  gap: 8px;
+  position: absolute;
+  z-index: 4;
+  inset-block-start: calc(100% + 4px);
+  inset-inline-end: 0;
+  min-inline-size: 190px;
+  padding: 12px;
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 8px;
+  box-shadow: 0 6px 18px #00000024;
+  background: design-token("color.neutral.000");
+  white-space: nowrap;
+}
+.expandMap {
+  position: absolute;
+  z-index: 5;
+  inset-block-start: 52px;
+  inset-inline-end: 65px;
+  border: 1px solid design-token("color.neutral.300");
+  background: design-token("color.neutral.000");
+  color: design-token("color.neutral.900");
+  border-radius: 5px;
+  padding: 4px 9px;
+  box-shadow: 0 1px 5px #00000025;
+  font-size: 11px;
+}
+.mapPanel[data-expanded="true"] {
+  position: fixed;
+  z-index: 1100;
+  inset: 8px;
+  inline-size: auto;
+  block-size: calc(100dvh - 16px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 14px 60px #00000055;
+  border: 1px solid design-token("color.neutral.300");
+  border-radius: 10px;
+  overflow: hidden;
+  > div:first-of-type {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    min-inline-size: 0;
+  }
+  .expandMap { inset-block-start: 52px; }
+  .forecastControls { flex: 0 0 auto; }
+}
+.inspectorGraph {
+  border-block-start: 1px solid design-token("color.neutral.200");
+  padding: 10px 12px;
+  max-block-size: 240px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+@container investigation-workbench (max-width: 760px) {
+  .timelineControls { align-items: flex-start; }
+  .expandMap { inset-inline-end: 64px; }
+  .mapPanel[data-expanded="true"] {
+    inset: 0;
+    block-size: 100dvh;
+    border: 0;
+    border-radius: 0;
   }
 }
