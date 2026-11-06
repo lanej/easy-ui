@@ -245,6 +245,7 @@ export function InvestigationWorkbench({
   const [mapExpanded, setMapExpanded] = useState(false);
   const anchorId = useRef<string | null>(null);
   const expandButton = useRef<HTMLButtonElement>(null);
+  const expandedPanel = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!mapExpanded) return;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -253,8 +254,18 @@ export function InvestigationWorkbench({
         expandButton.current?.focus({ preventScroll: true });
       }
     };
+    const closeOnNativeExit = () => {
+      if (!document.fullscreenElement) {
+        setMapExpanded(false);
+        expandButton.current?.focus({ preventScroll: true });
+      }
+    };
     document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
+    document.addEventListener("fullscreenchange", closeOnNativeExit);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("fullscreenchange", closeOnNativeExit);
+    };
   }, [mapExpanded]);
   useEffect(() => {
     if (!mapInstance) return;
@@ -790,6 +801,7 @@ export function InvestigationWorkbench({
         </section>
         <section
           className={styles.mapPanel}
+          ref={expandedPanel}
           data-workbench-map
           id={`${id}-map`}
           tabIndex={-1}
@@ -804,9 +816,18 @@ export function InvestigationWorkbench({
             aria-expanded={mapExpanded}
             aria-label={mapExpanded ? "Restore map to workspace" : "Expand map to full screen"}
             onClick={() => {
-              if (narrow) setMobileView("map");
-              setMapExpanded((value) => !value);
-            }}
+              if (mapExpanded) {
+                if (document.fullscreenElement === expandedPanel.current)
+                  void document.exitFullscreen?.();
+                setMapExpanded(false);
+              } else {
+                if (narrow) setMobileView("map");
+                setMapExpanded(true);
+                // Native Fullscreen lifts the existing MapLibre node out of
+                // container containment. CSS expansion remains the fallback.
+                void expandedPanel.current?.requestFullscreen?.().catch(() => {});
+              }
+            }
           >
             {mapExpanded ? "Restore map" : "Expand map"}
           </button>
