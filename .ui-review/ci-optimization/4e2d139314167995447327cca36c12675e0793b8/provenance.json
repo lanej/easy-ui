@@ -1,0 +1,25 @@
+{
+  "source_revision": "4e2d139314167995447327cca36c12675e0793b8",
+  "source_tree": "04951579baf92d93e85400111d521dcdfaf7785c",
+  "source_url": "https://github.com/lanej/easy-ui/blob/4e2d139314167995447327cca36c12675e0793b8/documentation/CI.md",
+  "source_file": "documentation/CI.md",
+  "source_file_sha256": "6d98c88783286f92906d474faf173ee8dc5d4deebf19956aee5821e9851599c3",
+  "capture_date": "2026-11-06",
+  "capture_command": "Cloud browser tab screenshot({ fullPage: true }) of the GitHub-rendered source document; no generated imagery or page modification.",
+  "viewport_css": {
+    "width": 1180,
+    "height": 757
+  },
+  "theme": "light",
+  "browser": "Cloud Chrome; exact version not exposed by the capture API",
+  "image": {
+    "file": "workflow-documentation.jpg",
+    "width": 1165,
+    "height": 2112,
+    "bytes": 372771,
+    "sha256": "c63bd9047d28403d28a7a66563e4c0fdbca249c9e8eff569edfeb8bb270219ae",
+    "git_blob_sha": "a81e73fa9ff31f948070fc9d2ea9e708ca557606"
+  },
+  "inspection": "Inspected the actual captured pixels: the current document is readable, fully loaded, and unclipped. The capture shows always-running component checks and retained narrower map/chart reuse.",
+  "nonvisual_scope": "This tooling/documentation capture does not establish CI execution or performance. Focused tests and linked live Actions runs provide that evidence."
+}
