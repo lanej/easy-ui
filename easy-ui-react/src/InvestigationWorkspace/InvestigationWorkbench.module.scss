@@ -670,3 +670,26 @@
     border-radius: 0;
   }
 }
+
+.relationshipPicker {
+  border-block-start: 1px solid design-token("color.neutral.200");
+  padding-block-start: 8px;
+  > summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  > div {
+    display: grid;
+    gap: 4px;
+    padding-block-start: 8px;
+  }
+  button {
+    text-align: start;
+    padding: 6px 8px;
+    border: 1px solid design-token("color.neutral.200");
+    border-radius: 5px;
+    color: inherit;
+    background: design-token("color.neutral.050");
+  }
+}
