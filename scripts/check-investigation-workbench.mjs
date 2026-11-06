@@ -316,9 +316,19 @@ try {
       await page.getByRole("button", { name: "Expand map to full screen" }).click();
       assert.equal(await map().getAttribute("data-expanded"), "true");
       assert.ok(await page.evaluate(() => window.workbenchMap.getCanvas().clientWidth > 400));
-      await page.screenshot({
+      const expandedImage = await page.screenshot({
         path: resolve(output, "workbench-map-expanded.png"),
         animations: "disabled",
+      });
+      screenshots.push({
+        file: "workbench-map-expanded.png",
+        theme: "light",
+        viewport: page.viewportSize(),
+        sha256: createHash("sha256").update(expandedImage).digest("hex"),
+        sourceRevision: execFileSync("git", ["rev-parse", "HEAD"], {
+          encoding: "utf8",
+        }).trim(),
+        actualComponent: true,
       });
       await page.getByRole("button", { name: "Restore map to workspace" }).click();
       assert.equal(await map().getAttribute("data-expanded"), null);
