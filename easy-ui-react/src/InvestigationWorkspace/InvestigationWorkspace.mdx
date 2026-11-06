@@ -29,7 +29,7 @@ For dense tracking investigations, use `variant="ledger"`: compact event-first o
 `InvestigationWorkbench` is an opt-in composition exported from
 `@easypost/easy-ui/InvestigationWorkspace`. Existing workspace and ledger
 presentations are unchanged. The workbench adds a compact header, collapsible
-history controls, one Git-style branch graph at the far left of the shared
+history controls embedded in the event ledger, one Git-style branch graph at the far left of the shared
 event-and-evidence ledger, map, and Event / Deviation /
 Evidence inspector. It uses the native map, timeline, graph, pills and histogram
 components rather than a separate prototype.
@@ -52,6 +52,10 @@ import { InvestigationWorkbench } from "@easypost/easy-ui/InvestigationWorkspace
     />
   )}
   renderEvidence={renderApplicationEvidence}
+  renderInspectorGraph={({ event, selectedEventIds }) =>
+    event ? <ApplicationDistribution event={event} selection={selectedEventIds} /> : null
+  }
+  showHistoryLabels={false}
 />;
 ```
 
@@ -72,8 +76,12 @@ a history does not remove other branches or invent joins.
 forecasts. Focused history emphasizes one history without filtering the ledger.
 Every history, independent root and unassigned observation remains in the same
 chronology, with a single continuous Git-style graph as the leftmost column.
-Other map histories and their legend entries remain visible. The All histories
-control returns to the unfiltered overview; it does not clear selection. `map.controls={false}` hides all map controls.
+Other map histories remain visible. The history chips sit within the event ledger
+and retain accessible full names even when the default short labels are shown;
+`showHistoryLabels` opt-in displays descriptive labels. The All histories
+control returns to overview without discarding the current selection.
+The Display menu contains unassigned-observation and risk-visibility switches.
+`map.controls={false}` hides all built-in map controls.
 Deviation analysis compares that history with an
 explicitly chosen forecast. Selecting an event, revisit, location or connection
 does not clear focus or prediction choices, and no such action requests a new
@@ -87,6 +95,26 @@ successful command, including when that mode is already active. Controlled mode
 changes still wait for the application to accept the requested state. If the focused
 history is removed, remaining map histories return to undimmed context without
 choosing a replacement or discarding the unavailable selection.
+
+**Selection is explicit and multi-event.** A history chip focuses and selects all
+of its member observations without hiding other candidates. A plain event click
+inspects that observation and selects one point; Shift-click selects a contiguous
+range of supplied list entries, while Ctrl/Cmd-click adds or removes individual
+entries. The ledger's Select points control enables the same additive toggles on
+touch devices. In that mode, clicking a map location adds or removes all
+observations at that location while preserving distinct revisits.
+`state.selectedEventIds` stores the subset independently of
+`state.selection` (the inspector's primary record). Only caller-supplied map
+segments associated with explicit connections between selected observations are
+highlighted. Disconnected selected points stay disconnected. Clearing the subset
+does not synthesize a path.
+
+**Map expansion preserves the investigation.** Expand map uses the same mounted
+map instance and changes only layout, not the selected observations, focused
+history, forecast toggles, comparison or camera. Restore map or press Escape to
+return. The optional `renderInspectorGraph` slot receives the current selection,
+selected event IDs, and focused history ID and places application-owned charts
+below the inspector's tabs. Returning null omits the graph entirely.
 
 **Evidence belongs to explicit connections.** `renderConnectionMetrics` receives
 an incoming connection and both endpoints. It can compose compact
@@ -122,7 +150,7 @@ scrollable inspector beneath it. Desktop validation uses 1100 × 820 and 960 × 
 viewports rather than an oversized desktop capture. Histograms stay in compact
 connection-evidence rows; the inspector retains the full reference.
 
-At narrow widths, the history controls collapse and Events / Map buttons switch
+At narrow widths, Events / Map buttons switch
 between the same mounted views. Widening with focus on Events or Map moves focus
 to its retained panel. Resize handling never takes focus or view choice from a
 sibling workbench. The inspector remains in normal page flow.
