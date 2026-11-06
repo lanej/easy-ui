@@ -712,7 +712,7 @@ export function InvestigationWorkbench({
                 All
               </button>
               {records.paths.map((path) => {
-                const short = path.label.split(" · ")[0] || path.id;
+                const short = path.label.match(/\b[A-Z]\b/)?.[0] ?? path.id.slice(0, 3);
                 return (
                   <button
                     key={path.id}
