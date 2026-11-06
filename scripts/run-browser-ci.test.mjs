@@ -171,3 +171,18 @@ test("uses same-run artifacts and read-only permissions without path skipping", 
       ),
     );
 });
+
+test("component shards always execute instead of trusting prior proof", () => {
+  const browser = workflow.slice(
+    workflow.indexOf("  browser:"),
+    workflow.indexOf("  # Preserve"),
+  );
+  assert.doesNotMatch(
+    browser.replace("if: always()", ""),
+    /browser-proof|steps\.proof|reuse|if:/,
+  );
+  assert.match(
+    browser,
+    /node scripts\/run-browser-ci\.mjs "\$BROWSER_CI_SUITE"/,
+  );
+});

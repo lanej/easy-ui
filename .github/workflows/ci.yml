@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 # Superseded PR heads do not need to finish. Keep main/manual runs independent.
 concurrency:
@@ -112,20 +111,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: storybook-browser-inputs
-      - id: proof
-        uses: ./.github/actions/browser-proof
-        with:
-          suite: components-${{ matrix.suite }}
-          built: storybook-static
       # Consume the prebuilt artifacts; do not rerun workspace prepare builds.
-      - if: steps.proof.outputs.reuse != 'true'
-        run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Install browser test dependencies
-        if: steps.proof.outputs.reuse != 'true'
         working-directory: scripts/preview-metrics
         run: npm ci --no-audit --no-fund
       - name: Verify component browser suite
-        if: steps.proof.outputs.reuse != 'true'
         timeout-minutes: 10
         env:
           BROWSER_CI_SUITE: ${{ matrix.suite }}
@@ -153,20 +144,13 @@ jobs:
           curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
           node scripts/run-browser-ci.mjs "$BROWSER_CI_SUITE"
       - name: Retain component browser evidence
-        if: always() && steps.proof.outputs.reuse != 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: component-browser-${{ matrix.suite }}
           path: .browser-ci-reports/
           include-hidden-files: true
           if-no-files-found: ignore
-
-      - uses: ./.github/actions/browser-proof
-        if: success() && steps.proof.outputs.reuse != 'true'
-        with:
-          mode: record
-          suite: components-${{ matrix.suite }}
-          digest: ${{ steps.proof.outputs.digest }}
 
   # Preserve the existing required check name, including on failed/skipped jobs.
   build:

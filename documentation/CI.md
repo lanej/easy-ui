@@ -17,33 +17,28 @@ time. The final **build** check requires package, Storybook, and every browser j
 to succeed. Failed, cancelled, and unexpectedly skipped jobs cannot turn it green.
 Superseded pull-request runs are cancelled; main and manual runs remain independent.
 
-## Skip unchanged browser work safely
+## Cache downloads; always run component checks
 
-Each browser job compares its inputs with a recent successful run of the same
-workflow and pull request/ref. Fork pull requests always run fresh. The fingerprint includes:
+npm's lockfile-keyed download cache avoids repeated package downloads. All five
+component browser suites still execute on every CI run, including screenshot-only
+changes. No path filters or prior-success bypass can skip them.
 
-- Fresh Storybook assets and all three compiled workspace package trees.
-- Browser scripts and helpers, authored MDX, and Storybook configuration.
-- Package manifests and lockfiles, the workflow, proof action, and Node/runner image.
-- The immutable browser container and, for map Chrome checks, the installed Chrome version.
+Component result reuse was investigated but is not enabled. Storybook writes a
+build timestamp, and its TypeScript docgen metadata can change ordering for
+identical source. Reusing those results safely needs deterministic builds and live
+validation first. The workflow does not weaken asset hashes or guess a component's
+transitive dependency closure to force a cache hit.
 
-If these inputs match, the job links to the successful evidence and skips dependency
-installation, browser tests, and duplicate screenshots. The pinned container already
-contains the matching Chromium binaries, system libraries, and fonts.
-Screenshot-only commits can therefore reuse successful browser results. The producing run’s immutable Git tree must also match the current source, apart from narrowly recognized review images, logs, and report/provenance files. Artifact names alone cannot authorize reuse. Changes to
-shared components, themes, tokens, icons, or dependencies still invalidate the
-results when their source or built output changes. Other source changes conservatively run fresh, even when their browser impact is unclear.
+The existing map and chart preview workflows retain their narrower evidence reuse.
+Those proofs include fresh built assets, test/configuration inputs, Node and runner
+image, the immutable browser container, and the actual Chrome version where used.
+Only recent completed successful runs on the same workflow and PR/ref qualify.
+Fork pull requests, manual runs, reruns, missing evidence and lookup failures run
+fresh. Evidence expires after seven days; reuse does not extend its expiry.
 
-If the PR branch is behind its base, differing merge and head trees may conservatively force fresh checks. The same base revision is required for reuse.
-
-This is deliberately more conservative than a component-folder allowlist: a changed
-Storybook asset invalidates all five browser suites. It does not assume that only
-the latest commit matters or that a source file affects only its own component.
-
-Evidence expires after seven days. Failed, incomplete, expired, inaccessible, or
-missing evidence runs fresh. Manual runs and reruns always run fresh. Reusing a
-result does not extend its original expiry. Package tests, lint, and the fresh
-builds still run; the workflow is never skipped with path filters.
+The map workflow's unchanged-evidence path has been observed skipping Chrome,
+Firefox and Safari captures while retaining its layout checks. Package tests, lint,
+fresh builds and the required component CI gate remain independent of that reuse.
 
 ## Avoid repeated browser system setup
 
