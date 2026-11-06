@@ -37,7 +37,7 @@ import {
   type InvestigationWorkbenchAction,
   type InvestigationMode,
 } from "./workbenchState";
-import { workbenchMapData } from "./workbenchMap";
+import { workbenchMapData, selectedObservationOverlays } from "./workbenchMap";
 import styles from "./InvestigationWorkbench.module.scss";
 
 type WorkbenchMapOptions = Omit<
@@ -58,6 +58,15 @@ export type InvestigationWorkbenchProps = {
   summary?: ReactNode;
   /** Caller-owned header actions remain available at every width. */
   actions?: ReactNode;
+  /** Show full descriptive history names; default is compact color + short identity. */
+  showHistoryLabels?: boolean;
+  /** Optional chart or other analysis below the inspector tabs; supplied by the caller. */
+  renderInspectorGraph?: (
+    context: InvestigationDetailsContext & {
+      selectedEventIds: readonly string[];
+      focusedPathId: string | null;
+    },
+  ) => ReactNode;
   predictions?: readonly InvestigationPrediction[];
   deviations?: readonly InvestigationDeviation[];
   assessments?: readonly InvestigationAssessment[];
@@ -171,6 +180,8 @@ export function InvestigationWorkbench({
   title = "Investigation",
   summary,
   actions,
+  showHistoryLabels = false,
+  renderInspectorGraph,
   predictions = noPredictions,
   deviations = noDeviations,
   assessments = noAssessments,
@@ -231,6 +242,26 @@ export function InvestigationWorkbench({
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [mapInstance, setMapInstance] = useState<MapInstance | null>(null);
   const [tab, setTab] = useState<"event" | "deviation" | "evidence">("event");
+  const [multiSelect, setMultiSelect] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(false);
+  const anchorId = useRef<string | null>(null);
+  const expandButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!mapExpanded) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMapExpanded(false);
+        expandButton.current?.focus({ preventScroll: true });
+      }
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [mapExpanded]);
+  useEffect(() => {
+    if (!mapInstance) return;
+    const frame = requestAnimationFrame(() => mapInstance.resize());
+    return () => cancelAnimationFrame(frame);
+  }, [mapInstance, mapExpanded, narrow, mobileView]);
   const tabsId = `${id}-inspector`;
   useEffect(() => {
     const element = root.current;
@@ -289,6 +320,12 @@ export function InvestigationWorkbench({
     (prediction) => prediction.id === state.comparisonPredictionId,
   );
   const context = resolveSelection(records, state.selection);
+  const selectedEventIds = useMemo(
+    () => (state.selectedEventIds ?? []).filter((eventId) =>
+      records.events.some((event) => event.id === eventId),
+    ),
+    [state.selectedEventIds, records.events],
+  );
   const event = context.event;
   const disconnected = useMemo(
     () => records.events.filter((item) => !item.pathIds?.length),
@@ -344,9 +381,13 @@ export function InvestigationWorkbench({
       id,
     ],
   );
+  const selectionOverlays = useMemo(
+    () => selectedObservationOverlays(records, selectedEventIds, id),
+    [records, selectedEventIds, id],
+  );
   const overlays = useMemo(
-    () => [...(map.overlays ?? []), ...mapData.overlays],
-    [map.overlays, mapData.overlays],
+    () => [...(map.overlays ?? []), ...mapData.overlays, ...selectionOverlays],
+    [map.overlays, mapData.overlays, selectionOverlays],
   );
   const applicableDeviations = deviations.filter(
     (deviation) => deviation.predictionId === comparedPrediction?.id,
@@ -382,11 +423,61 @@ export function InvestigationWorkbench({
           )
         : assessment.target.pathId === focused?.id,
   );
-  const selectEvent = (item: EventTimelineEvent) =>
+  const selectEvent = (item: EventTimelineEvent) => {
+    anchorId.current = item.id;
     dispatch({
       type: "select",
       selection: { type: "event", eventId: item.id },
     });
+  };
+  const activateEvent = (
+    eventId: string,
+    modifiers?: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
+  ) => {
+    const ids = visibleEvents.map((item) => item.id);
+    const anchor = anchorId.current;
+    let selected: string[];
+    if (modifiers?.shiftKey && anchor && ids.includes(anchor)) {
+      const a = ids.indexOf(anchor), b = ids.indexOf(eventId);
+      selected = ids.slice(Math.min(a, b), Math.max(a, b) + 1);
+    } else if (multiSelect || modifiers?.metaKey || modifiers?.ctrlKey) {
+      const current = new Set(selectedEventIds);
+      if (current.has(eventId)) current.delete(eventId);
+      else current.add(eventId);
+      selected = ids.filter((id) => current.has(id));
+      anchorId.current = eventId;
+    } else {
+      selected = [eventId];
+      anchorId.current = eventId;
+    }
+    dispatch({
+      type: "selectEvents",
+      ids: selected,
+      selection: selected.length
+        ? { type: "event", eventId }
+        : null,
+    });
+  };
+  const selectLocation = (locationId: string) => {
+    if (!multiSelect) {
+      dispatch({ type: "select", selection: { type: "location", locationId } });
+      return;
+    }
+    const atLocation = records.events
+      .filter((item) => item.locationId === locationId)
+      .map((item) => item.id);
+    const current = new Set(selectedEventIds);
+    const remove = atLocation.every((eventId) => current.has(eventId));
+    for (const eventId of atLocation) {
+      if (remove) current.delete(eventId);
+      else current.add(eventId);
+    }
+    dispatch({
+      type: "selectEvents",
+      ids: records.events.filter((item) => current.has(item.id)).map((item) => item.id),
+      selection: { type: "location", locationId },
+    });
+  };
   const showEventRisks = (item: EventTimelineEvent) => {
     if (!state.showRisks) return null;
     const flags = assessments.filter(
@@ -466,9 +557,16 @@ export function InvestigationWorkbench({
   };
   const overlaySelection: NetworkMapProps["onOverlaySelect"] = (hit) => {
     const segmentId = hit.feature.properties?.segmentId;
+    const locationId = hit.feature.properties?.locationId;
     const predictionId = hit.feature.properties?.predictionId;
     if (
-      hit.overlayId.startsWith(`${id}-history-`) &&
+      hit.overlayId === `${id}-selected-points` &&
+      typeof locationId === "string"
+    ) selectLocation(locationId);
+    else if (
+      (hit.overlayId.startsWith(`${id}-history-`) ||
+        hit.overlayId.startsWith(`${id}-selected-history-`) ||
+        hit.overlayId === `${id}-selected-unassigned`) &&
       typeof segmentId === "string"
     )
       dispatch({ type: "select", selection: { type: "segment", segmentId } });
@@ -502,6 +600,7 @@ export function InvestigationWorkbench({
       aria-label={title}
       data-mode={state.mode}
       data-narrow={narrow}
+      data-map-expanded={mapExpanded || undefined}
     >
       <header className={styles.header}>
         <div className={styles.title}>
