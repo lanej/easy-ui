@@ -416,6 +416,20 @@ export function InvestigationWorkbenchExample({
             </div>
           ) : null;
         }}
+        renderInspectorGraph={({ event, selectedEventIds }) => {
+          const incoming = workbenchGraph.connections.find(
+            (connection) =>
+              connection.toEventId === event?.id && references[connection.id],
+          );
+          const reference = incoming && references[incoming.id];
+          return reference ? (
+            <div className={styles.references}>
+              <h4>Reference distribution</h4>
+              <p>{selectedEventIds.length} selected observations · supplied incoming interval</p>
+              <ReferenceChart reference={reference} />
+            </div>
+          ) : null;
+        }}
         renderDeviationEvidence={(deviation) =>
           deviation.id === "return-vs-south" ? (
             <div className={styles.forecastReference}>
