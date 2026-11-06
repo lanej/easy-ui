@@ -536,3 +536,8 @@ follows the effective stacked layout, including older messages. Disabling stacki
 replaces retained items on the next call. Unmount clears timers.
 Omitted configuration retains replacement,
 4000ms non-dismissible toasts, and persistent dismissible alerts.
+
+Workbench prediction visibility and comparison are separate actions. Keep each
+prediction's checkbox, swatch, name and Analyze button on a single aligned row.
+`MapOverlayHoverDetailsContext.pinned` distinguishes click-pinned from hover
+inspection when delegating legacy click-only renderers.

@@ -790,6 +790,16 @@ it("preserves the legacy external overlay details fallback", () => {
     overlays: [owned, external],
     selections: [ownedHit, hit],
   });
+  expect(fallback).not.toHaveBeenCalled();
+  mapProps.renderOverlayHoverDetails!({
+    pinned: true,
+    overlays: [owned, external],
+    selections: [
+      ownedHit,
+      hit,
+      { ...hit, feature: { ...hit.feature, id: "second" } },
+    ],
+  });
   expect(fallback).toHaveBeenCalledExactlyOnceWith(hit);
 });
 

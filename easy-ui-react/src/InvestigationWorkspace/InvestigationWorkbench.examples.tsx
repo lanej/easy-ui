@@ -416,7 +416,7 @@ export function InvestigationWorkbenchExample({
             </div>
           ) : null;
         }}
-        renderInspectorGraph={({ event, selectedEventIds }) => {
+        renderInspectorGraph={({ event }) => {
           const incoming = workbenchGraph.connections.find(
             (connection) =>
               connection.toEventId === event?.id && references[connection.id],
@@ -425,10 +425,7 @@ export function InvestigationWorkbenchExample({
           return reference ? (
             <div className={styles.references}>
               <h4>Reference distribution</h4>
-              <p>
-                {selectedEventIds.length} selected observations · supplied
-                incoming interval
-              </p>
+              <p>Supplied incoming interval · reference distribution</p>
               <ReferenceChart reference={reference} />
             </div>
           ) : null;

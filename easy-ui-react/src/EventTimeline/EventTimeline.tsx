@@ -120,7 +120,9 @@ export function EventTimeline({
     modifiers?: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
   ) => {
     if (selectedId === undefined) setInternalId(event.id);
-    onSelectedIdChange?.(event.id, modifiers);
+    if (modifiers?.shiftKey || modifiers?.ctrlKey || modifiers?.metaKey)
+      onSelectedIdChange?.(event.id, modifiers);
+    else onSelectedIdChange?.(event.id);
   };
   const navigate = (event: EventTimelineEvent, key: string) => {
     const index = events.findIndex((candidate) => candidate.id === event.id);

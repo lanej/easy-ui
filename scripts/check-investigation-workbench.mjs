@@ -99,6 +99,61 @@ function sameCamera(a, b) {
     assert.ok(Math.abs(n - b[i]) < 0.00001, `Camera changed: ${a} -> ${b}`),
   );
 }
+async function checkPredictionRows(theme) {
+  const comparison = page.getByRole("region", { name: "Forecast comparison" });
+  const rows = comparison.locator("[data-prediction-id]");
+  assert.equal(await rows.count(), 2);
+  const panel = await comparison.boundingBox();
+  let bottom = 0;
+  for (const row of await rows.all()) {
+    const bounds = await row.boundingBox();
+    const checkbox = await row.getByRole("checkbox").boundingBox();
+    const analyze = await row
+      .getByRole("button", { name: /^Compare / })
+      .boundingBox();
+    assert.ok(
+      bounds.y >= bottom,
+      "Each prediction occupies its own complete row",
+    );
+    assert.ok(
+      analyze.x + analyze.width <= panel.x + panel.width + 1,
+      "Analyze stays within map width",
+    );
+    assert.ok(
+      checkbox.y < analyze.y + analyze.height &&
+        analyze.y < checkbox.y + checkbox.height,
+      "Checkbox and Analyze action remain on the same row",
+    );
+    bottom = bounds.y + bounds.height;
+  }
+  const file = `prediction-controls-${theme}.png`;
+  const image = await comparison.screenshot({
+    path: resolve(output, file),
+    animations: "disabled",
+  });
+  screenshots.push({
+    file,
+    theme,
+    viewport: page.viewportSize(),
+    sha256: createHash("sha256").update(image).digest("hex"),
+    actualComponent: true,
+  });
+  const controls = page.locator("[data-workbench-controls]");
+  const controlsImage = await controls.screenshot({
+    path: resolve(output, `timeline-controls-${theme}.png`),
+    animations: "disabled",
+  });
+  screenshots.push({
+    file: `timeline-controls-${theme}.png`,
+    theme,
+    viewport: page.viewportSize(),
+    sha256: createHash("sha256").update(controlsImage).digest("hex"),
+    actualComponent: true,
+  });
+  checks.push(
+    `${theme}: prediction row alignment and compact timeline control captures`,
+  );
+}
 async function capture(name, theme) {
   await page.mouse.move(0, 0);
   await page.keyboard.press("Escape");
@@ -151,6 +206,7 @@ try {
     await page.getByText("+3 h 05 m", { exact: true }).waitFor();
     await checkHeaderAction();
     await accessible();
+    await checkPredictionRows(theme);
     await capture(`workbench-${theme}-desktop.png`, theme);
     const allRows = ledger().locator('ol[data-variant="ledger"] > li');
     assert.equal(

@@ -259,6 +259,7 @@ export function useMapInspection(options: NetworkMapProps) {
       ? facility && options.renderFacilityDetails?.({ facility })
       : overlays.length && options.renderOverlayHoverDetails
         ? options.renderOverlayHoverDetails({
+            pinned: inspection.pinned,
             overlays,
             selections: selections ?? [],
             coordinate: inspection.coordinate,

@@ -349,6 +349,7 @@ it("inspects collection metadata without fabricating geographic features", () =>
   expect(result.current.content).toBe("scans");
   expect(result.current.selections).toEqual([]);
   expect(renderDetails).toHaveBeenLastCalledWith({
+    pinned: true,
     overlays: [empty],
     selections: [],
     coordinate: undefined,

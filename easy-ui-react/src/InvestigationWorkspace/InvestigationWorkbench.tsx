@@ -697,13 +697,13 @@ export function InvestigationWorkbench({
               <h3>All reported observations</h3>
               <span className={styles.panelMeta}>
                 {visibleEvents.length} of {records.events.length} observations
-                {focused
+                {focused && showHistoryLabels
                   ? ` · ${focused.label} emphasized`
-                  : " · all histories"}
+                  : ""}
               </span>
             </div>
           </header>
-          <div className={styles.timelineControls}>
+          <div className={styles.timelineControls} data-workbench-controls>
             <div
               className={styles.historyList}
               role="group"
@@ -929,7 +929,11 @@ export function InvestigationWorkbench({
                       </div>
                     ))}
                   {external.overlays.length > 0 &&
-                    map.renderOverlayHoverDetails?.(external)}
+                    (map.renderOverlayHoverDetails
+                      ? map.renderOverlayHoverDetails(external)
+                      : hover.pinned && external.selections[0]
+                        ? map.renderOverlayDetails?.(external.selections[0])
+                        : null)}
                 </div>
               );
             }}
@@ -962,7 +966,11 @@ export function InvestigationWorkbench({
                 </p>
               ) : (
                 availablePredictions.map((prediction) => (
-                  <div className={styles.forecastOption} key={prediction.id}>
+                  <div
+                    className={styles.forecastOption}
+                    key={prediction.id}
+                    data-prediction-id={prediction.id}
+                  >
                     <Checkbox
                       isSelected={state.enabledPredictionIds.includes(
                         prediction.id,
@@ -975,7 +983,7 @@ export function InvestigationWorkbench({
                         })
                       }
                     >
-                      <span>
+                      <span className={styles.forecastLabel}>
                         <Swatch
                           color={prediction.color}
                           dash={prediction.dash ?? [6, 3]}
@@ -985,7 +993,7 @@ export function InvestigationWorkbench({
                     </Checkbox>
                     {prediction.confidence && (
                       <span
-                        className={styles.muted}
+                        className={styles.forecastConfidence}
                         title={prediction.confidence.description}
                       >
                         {prediction.confidence.valueLabel}
@@ -995,11 +1003,15 @@ export function InvestigationWorkbench({
                       type="button"
                       className={styles.textButton}
                       aria-label={`Compare ${prediction.label}`}
+                      aria-pressed={
+                        state.mode === "deviation" &&
+                        state.comparisonPredictionId === prediction.id
+                      }
                       onClick={() =>
                         dispatch({ type: "compare", id: prediction.id })
                       }
                     >
-                      Analyze deviation
+                      Analyze
                     </button>
                   </div>
                 ))

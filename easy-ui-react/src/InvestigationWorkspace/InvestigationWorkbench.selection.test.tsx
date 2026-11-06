@@ -146,6 +146,19 @@ describe("InvestigationWorkbench explicit subset and expand behavior", () => {
     ).toBe(true);
   });
 
+  it("makes descriptive history labels optional without losing accessible names", () => {
+    const view = render(<InvestigationWorkbench {...props} />);
+    const history = () =>
+      within(ledger()).getByRole("button", { name: /A · First history/ });
+    expect(history()).toHaveTextContent("A");
+    expect(history()).not.toHaveTextContent("First history");
+    expect(
+      within(ledger()).queryByText(/First history emphasized/),
+    ).not.toBeInTheDocument();
+    view.rerender(<InvestigationWorkbench {...props} showHistoryLabels />);
+    expect(history()).toHaveTextContent("A · First history");
+  });
+
   it("supports Shift ranges, additive selection, and touch-friendly toggles", () => {
     const change = vi.fn();
     render(<InvestigationWorkbench {...props} onStateChange={change} />);
