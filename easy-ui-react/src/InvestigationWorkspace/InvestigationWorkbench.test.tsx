@@ -533,7 +533,7 @@ describe("workbench review regressions", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /Risk indicators/ }));
     expectStable();
     fireEvent.click(
-      screen.getByRole("checkbox", { name: /Unassigned observations/ }),
+      screen.getByRole("checkbox", { name: /Unassigned/ }),
     );
     expectStable();
     fireEvent.click(screen.getByRole("button", { name: "Overview" }));
