@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: investigation-workbench-development
   cancel-in-progress: false
@@ -25,27 +29,17 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - name: Apply the checksum-verified implementation
+      - name: Apply reviewed compatibility patch
         run: |
-          if test -d .github/workbench-upload; then
-            node --input-type=module <<'NODE'
-          import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
-          import { brotliDecompressSync } from 'node:zlib';
-          import { createHash } from 'node:crypto';
-          const dir = '.github/workbench-upload';
-          const encoded = readdirSync(dir).sort().map(name => readFileSync(`${dir}/${name}`, 'utf8').trim()).join('');
-          const patch = brotliDecompressSync(Buffer.from(encoded, 'base64'));
-          const digest = createHash('sha256').update(patch).digest('hex');
-          if (digest !== 'bc74e4f36a7d7183775432bc705847a1745a3da03276e232e1f4498ce909514b') throw new Error(`Patch checksum mismatch: ${digest}`);
-          writeFileSync('/tmp/workbench.patch', patch);
-          NODE
-            git apply --check /tmp/workbench.patch
-            git apply /tmp/workbench.patch
+          set -euo pipefail
+          if test -f .github/workbench-packaging.patch; then
+            git apply --check .github/workbench-packaging.patch
+            git apply .github/workbench-packaging.patch
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add easy-ui-react .changeset scripts/check-investigation-workbench.mjs
-            git rm -r .github/workbench-upload
-            git commit -m 'Build three-panel investigation workbench with explicit edge evidence'
+            git add easy-ui-react/src/InvestigationWorkspace/InvestigationWorkbench.tsx
+            git rm .github/workbench-packaging.patch
+            git commit -m 'Load divergence marker lazily for CommonJS and SSR consumers'
             git push origin HEAD:codex/investigation-workbench
           fi
           echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
@@ -61,6 +55,8 @@ jobs:
           npm run check:storybook
         env:
           STORYBOOK_TEST_RECIPES: 'true'
+      - name: Verify packed consumer
+        run: node scripts/check-style-package.mjs 2>&1 | tee "$RUNNER_TEMP/workbench-package.log"
       - name: Install browser dependencies
         working-directory: scripts/preview-metrics
         run: npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
@@ -78,8 +74,6 @@ jobs:
             sleep 1
           done
           node scripts/check-investigation-workbench.mjs 2>&1 | tee "$RUNNER_TEMP/workbench-browser.log"
-      - name: Verify packed consumer
-        run: node scripts/check-style-package.mjs 2>&1 | tee "$RUNNER_TEMP/workbench-package.log"
       - name: Retain successful browser evidence
         run: |
           git config user.name 'github-actions[bot]'
@@ -94,7 +88,7 @@ jobs:
         with:
           name: investigation-workbench-verification
           path: |
-            .ui-review/maps/investigation-workbench
+            .ui-review/maps/investigation-workbench/${{ env.SOURCE_SHA }}
             ${{ runner.temp }}/workbench-tests.log
             ${{ runner.temp }}/workbench-browser.log
             ${{ runner.temp }}/workbench-package.log
