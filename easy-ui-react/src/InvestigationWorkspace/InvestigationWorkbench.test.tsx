@@ -141,7 +141,7 @@ describe("InvestigationWorkbench", () => {
     expect(
       screen.getByRole("button", { name: "Focused history" }),
     ).toHaveAttribute("aria-pressed", "true");
-    expect(mapProps.overlays).toHaveLength(3);
+    expect(mapProps.overlays?.some((overlay) => overlay.id.includes("-selected-history-a"))).toBe(true);
     expect(mapProps.focus).toBe(focus);
     expect(
       within(ledger()).getByRole("button", { name: /Delivered Hub/ }),
@@ -184,7 +184,7 @@ describe("InvestigationWorkbench", () => {
       type: "event",
       eventId: "e3",
     });
-    expect(mapProps.overlays).toHaveLength(3);
+    expect(mapProps.overlays?.some((overlay) => overlay.id.includes("-selected-points"))).toBe(true);
   });
   it("renders only caller-supplied deviations and supports accessible inspector tabs", () => {
     render(
@@ -512,11 +512,14 @@ describe("workbench review regressions", () => {
       />,
     );
     const { facilities, segments, overlays } = mapProps;
+    const baseLayers = overlays?.slice(0, 4);
     const expectStable = () => {
       expect(mapProps.facilities).toBe(facilities);
       expect(mapProps.segments).toBe(segments);
-      expect(mapProps.overlays).toBe(overlays);
       expect(mapProps.overlays?.[0]).toBe(external);
+      baseLayers?.forEach((layer, index) =>
+        expect(mapProps.overlays?.[index]).toBe(layer),
+      );
     };
     fireEvent.click(
       within(ledger()).getByRole("button", { name: /Return Origin/ }),
@@ -526,6 +529,7 @@ describe("workbench review regressions", () => {
       screen.getByRole("button", { name: "Inspect repeated location" }),
     );
     expectStable();
+    fireEvent.click(screen.getByText("Display"));
     fireEvent.click(screen.getByRole("checkbox", { name: /Risk indicators/ }));
     expectStable();
     fireEvent.click(
@@ -534,13 +538,13 @@ describe("workbench review regressions", () => {
     expectStable();
     fireEvent.click(screen.getByRole("button", { name: "Overview" }));
     expect(mapProps.overlays).not.toBe(overlays);
-    expect(mapProps.overlays).toHaveLength(3);
+    expect(mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-"))).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
-    expect(mapProps.overlays).toHaveLength(4);
+    expect(mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-"))).toHaveLength(1);
     const compared = mapProps.overlays;
     fireEvent.click(screen.getByRole("checkbox", { name: "Forecast south" }));
     expect(mapProps.overlays).not.toBe(compared);
-    expect(mapProps.overlays).toHaveLength(3);
+    expect(mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-"))).toHaveLength(0);
   });
 
   const unassignedGraph: InvestigationGraph = {
@@ -651,6 +655,7 @@ describe("workbench review regressions", () => {
       within(disclosure).getByText("Explicit unassigned evidence"),
     ).toBeInTheDocument();
     expect(within(disclosure).getByText("mixed-link: e2 → e4")).toBeVisible();
+    fireEvent.click(screen.getByText("Display"));
     fireEvent.click(screen.getByRole("checkbox", { name: /Risk indicators/ }));
     expect(within(disclosure).queryByText("Edge warning")).toBeNull();
     expect(within(disclosure).queryByText("Event warning")).toBeNull();
@@ -911,9 +916,8 @@ it("does not borrow view or sidebar focus from a sibling workbench during resize
     history.focus();
     resizeSecond(390);
     expect(
-      second.querySelector<HTMLDetailsElement>("[data-workbench-sidebar]")!
-        .open,
-    ).toBe(false);
+      within(second).getByRole("group", { name: "Candidate histories" }),
+    ).toBeInTheDocument();
     expect(history).toHaveFocus();
   } finally {
     vi.unstubAllGlobals();
@@ -959,8 +963,9 @@ it("reveals a retained unassigned selection when unassigned observations are sho
       }}
     />,
   );
+  fireEvent.click(screen.getByText("Display"));
   const toggle = screen.getByRole("checkbox", {
-    name: /Unassigned observations/,
+    name: /Unassigned/,
   });
   fireEvent.click(toggle);
   fireEvent.click(toggle);
@@ -1005,7 +1010,7 @@ it("keeps every history, fork and independent root in a single ledger while focu
     <InvestigationWorkbench {...props} graph={allHistories} />,
   );
   const eventIds = () =>
-    within(ledger())
+    within(ledger().querySelector('ol[data-variant="ledger"]')!)
       .getAllByRole("button")
       .map((button) => button.textContent);
   const initialRows = eventIds();
@@ -1026,10 +1031,12 @@ it("keeps every history, fork and independent root in a single ledger while focu
       .getByRole("button", { name: /Delivered Hub/ })
       .closest("details"),
   ).toBeNull();
-  const legend = container.querySelector('[aria-label="Map legend"]')!;
-  expect(legend).toHaveTextContent("History A");
-  expect(legend).toHaveTextContent("History B");
-  expect(legend).toHaveTextContent("History C");
+  const histories = within(ledger()).getByRole("group", {
+    name: "Candidate histories",
+  });
+  expect(within(histories).getByRole("button", { name: /History A/ })).toBeInTheDocument();
+  expect(within(histories).getByRole("button", { name: /History B/ })).toBeInTheDocument();
+  expect(within(histories).getByRole("button", { name: /History C/ })).toBeInTheDocument();
   fireEvent.click(
     within(ledger()).getByRole("button", { name: /Alternative arrival/ }),
   );
@@ -1042,7 +1049,7 @@ it("keeps every history, fork and independent root in a single ledger while focu
   fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
   expect(eventIds()).toEqual(initialRows);
   expect(
-    mapProps.overlays?.filter((overlay) => overlay.id.includes("-history-")),
+    mapProps.overlays?.filter((overlay) => overlay.id.includes("-history-") && !overlay.id.includes("-selected-history-")),
   ).toHaveLength(3);
   fireEvent.click(screen.getByRole("button", { name: "All histories" }));
   expect(eventIds()).toEqual(initialRows);
