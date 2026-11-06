@@ -1,0 +1,31 @@
+{
+  "sourceRevision": "e420e957b550373fb63fcaa7044294f8db1d90dc",
+  "sourceTree": "094a2cfe9e48d0d59ce2f8d7fbea4fb67f7ed401",
+  "document": "documentation/CI.md",
+  "url": "https://github.com/lanej/easy-ui/blob/e420e957b550373fb63fcaa7044294f8db1d90dc/documentation/CI.md",
+  "captureCommand": "ciDocTab.screenshot({ fullPage: true })",
+  "viewportCssPixels": {
+    "width": 1165,
+    "height": 757
+  },
+  "imagePixels": {
+    "width": 1165,
+    "height": 1898
+  },
+  "browser": "Cloud Chrome browser; version not exposed by the control interface",
+  "theme": "GitHub light theme",
+  "imageSha256": "17caaf61161719eda205c30d43ffc89e2a8c7177dc7ffbcf0223c61fe73fa2c2",
+  "visuallyInspected": true,
+  "inspection": "Actual published document is fully rendered and readable, without loading overlays, clipped text or layout overlap. No image editing or UI injection.",
+  "scope": "Screenshot of the actual GitHub-rendered CI documentation. It does not establish test execution or a measured CI speedup.",
+  "validation": {
+    "focusedTests": 22,
+    "unitTestsPassed": 2337,
+    "unitTestsSkipped": 2,
+    "storybookComponents": 117,
+    "storybookSkillLinks": 57,
+    "packageBuild": "passed",
+    "lint": "passed",
+    "liveActions": "not yet run"
+  }
+}
