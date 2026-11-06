@@ -7,7 +7,7 @@ import React, {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { Marker, type Map as MapInstance } from "maplibre-gl";
+import type { Marker as MapMarker, Map as MapInstance } from "maplibre-gl";
 import { Checkbox } from "../Checkbox";
 import { Pill } from "../Pill";
 import { EventDetails } from "../EventDetails";
@@ -174,17 +174,37 @@ function DivergenceCallout({
   const [element] = useState(() =>
     typeof document === "undefined" ? null : document.createElement("div"),
   );
+  const [unavailable, setUnavailable] = useState(false);
   const lon = coordinate?.[0];
   const lat = coordinate?.[1];
   useEffect(() => {
     if (!map || !element || lon === undefined || lat === undefined) return;
-    const marker = new Marker({ element, anchor: "bottom", offset: [0, -16] })
-      .setLngLat([lon, lat])
-      .addTo(map);
+    let cancelled = false;
+    let marker: MapMarker | undefined;
+    setUnavailable(false);
+    // MapLibre is ESM-only. Loading inside the effect keeps the public entry
+    // importable by CommonJS and server-rendered consumers without a DOM.
+    void import("maplibre-gl")
+      .then(({ Marker }) => {
+        if (cancelled) return;
+        marker = new Marker({ element, anchor: "bottom", offset: [0, -16] })
+          .setLngLat([lon, lat])
+          .addTo(map);
+      })
+      .catch(() => {
+        if (!cancelled) setUnavailable(true);
+      });
     return () => {
-      marker.remove();
+      cancelled = true;
+      marker?.remove();
     };
   }, [map, element, lon, lat]);
+  if (unavailable && coordinate)
+    return (
+      <p role="status" className={styles.muted}>
+        Map callout unavailable. Inspect the supplied divergence below.
+      </p>
+    );
   return element && coordinate
     ? createPortal(
         <button
@@ -795,6 +815,7 @@ export function InvestigationWorkbench({
             }}
             controlLabels={{ fitAll: "Fit", ...map.controlLabels }}
             height={map.height ?? (narrow ? 280 : 350)}
+            controlPlacement={map.controlPlacement ?? "map"}
             connectionStyle="subtle"
             showLegend={false}
             showDataTable={false}
