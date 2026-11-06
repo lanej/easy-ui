@@ -173,3 +173,122 @@ export function workbenchMapData(
     overlays,
   };
 }
+
+/**
+ * Highlight only supplied observation locations and explicitly connected edges.
+ * A selected set never creates a synthetic travel link between its members.
+ */
+export function selectedObservationOverlays(
+  records: Required<InvestigationRecords>,
+  selectedEventIds: readonly string[],
+  prefix: string,
+): MapOverlay[] {
+  if (!selectedEventIds.length) return [];
+  const ids = new Set(selectedEventIds);
+  const locationIds = new Set(
+    records.events
+      .filter((event) => ids.has(event.id) && event.locationId)
+      .map((event) => event.locationId!),
+  );
+  const selectedConnections = records.connections.filter(
+    (connection) =>
+      ids.has(connection.fromEventId) && ids.has(connection.toEventId),
+  );
+  const selectedSegmentIds = new Set(
+    selectedConnections.flatMap((connection) =>
+      connection.segmentId ? [connection.segmentId] : [],
+    ),
+  );
+  const segments = segmentData(records.locations, records.segments).features
+    .filter((feature) => selectedSegmentIds.has(String(feature.id)));
+  const overlays: MapOverlay[] = records.paths.flatMap((path) => {
+    const pathSegments = new Set(
+      selectedConnections
+        .filter((connection) => connection.pathIds?.includes(path.id))
+        .flatMap((connection) =>
+          connection.segmentId ? [connection.segmentId] : [],
+        ),
+    );
+    const features = segments.filter((feature) =>
+      pathSegments.has(String(feature.id)),
+    );
+    return features.length
+      ? [{
+          id: `${prefix}-selected-history-${path.id}`,
+          label: `Selected connections · ${path.label}`,
+          data: { type: "FeatureCollection" as const, features },
+          layers: [{
+            id: "selection",
+            type: "line" as const,
+            layout: { "line-cap": "round" as const, "line-join": "round" as const },
+            paint: {
+              "line-color": path.color ?? "#2563eb",
+              "line-width": 5,
+              "line-opacity": 1,
+            },
+          }],
+        }]
+      : [];
+  });
+  const assigned = new Set(
+    records.paths.flatMap((path) =>
+      selectedConnections
+        .filter((connection) => connection.pathIds?.includes(path.id))
+        .flatMap((connection) =>
+          connection.segmentId ? [connection.segmentId] : [],
+        ),
+    ),
+  );
+  const unassigned = segments.filter(
+    (feature) => !assigned.has(String(feature.id)),
+  );
+  if (unassigned.length)
+    overlays.push({
+      id: `${prefix}-selected-unassigned`,
+      label: "Selected unassigned connections",
+      data: { type: "FeatureCollection", features: unassigned },
+      layers: [{
+        id: "selection",
+        type: "line",
+        paint: {
+          "line-color": "#64748b",
+          "line-width": 5,
+          "line-opacity": 1,
+          "line-dasharray": [2, 2],
+        },
+      }],
+    });
+  const locations = records.locations.filter((location) =>
+    locationIds.has(location.id),
+  );
+  if (locations.length)
+    overlays.push({
+      id: `${prefix}-selected-points`,
+      label: "Selected observations",
+      data: {
+        type: "FeatureCollection",
+        features: locations.map((location) => ({
+          type: "Feature" as const,
+          id: location.id,
+          properties: { locationId: location.id, label: location.label },
+          geometry: {
+            type: "Point" as const,
+            coordinates: [...location.coordinates],
+          },
+        })),
+      },
+      layers: [{
+        id: "selection",
+        type: "circle",
+        paint: {
+          "circle-radius": 10,
+          "circle-color": "#ffffff",
+          "circle-opacity": 0.12,
+          "circle-stroke-color": "#1e293b",
+          "circle-stroke-width": 2.5,
+          "circle-stroke-opacity": 0.95,
+        },
+      }],
+    });
+  return overlays;
+}
