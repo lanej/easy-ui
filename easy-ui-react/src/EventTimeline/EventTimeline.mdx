@@ -229,7 +229,7 @@ Supply `selectedId` and `onSelectedIdChange` to coordinate selection with an ext
 
 Supply `relatedIds` to highlight events within a selected location, connection, or candidate path while keeping the complete timeline available. Selection and context highlighting are independent. An event's optional `detailLabel` adds concise caller-supplied context, such as a receipt time that distinguishes otherwise identical observations. It appears below the location in default and detailed rows; compact rows expose it as an accessible description.
 
-Event time and received time are different fields; no implicit ordering or timestamp repair occurs. `renderTrailing` remains available for caller-owned side summaries. `renderMetrics` places measurements inline or below identity according to `metricsPlacement`. `renderDetails` supplies other content associated with an event. `renderInterval` supplies content associated with the interval following an event and is not rendered after the final event.
+Event time and received time are different fields; no implicit ordering or timestamp repair occurs. `renderTrailing` remains available for caller-owned side summaries. `renderMetrics` places measurements inline or below identity according to `metricsPlacement`. `renderDetails` supplies other content associated with an event. `renderInterval` supplies content associated with the interval following an event only when `connections` is omitted, and is not rendered after the final event. With explicit connections (including an empty array), chronological adjacency is not a relationship: use `renderConnectionMetrics` instead.
 
 Keyboard navigation supports Up/Down and Home/End while retaining native button activation by Enter and Space.
 
@@ -245,3 +245,16 @@ Keyboard navigation supports Up/Down and Home/End while retaining native button 
 <Canvas of={Stories.MinimalMetrics} />
 <Canvas of={Stories.CompactMetrics} />
 <Canvas of={Stories.ExpandedMetrics} />
+
+### Connection-based evidence
+
+`renderConnectionMetrics({ connection, fromEvent, toEvent })` attaches evidence
+to each supplied incoming connection at its destination row. Missing endpoints
+are not rendered, and multiple predecessors remain separate. It composes with
+`renderMetrics` and `metricsPlacement`; it never substitutes the preceding row
+for an explicit endpoint. Supplying `connections`, including `[]`, disables the
+legacy chronological `renderInterval` callback.
+
+`ledgerColumns` opts into side-by-side time, identity and evidence columns when
+a ledger has at least 480px available. Narrow columns retain stacked readable
+identity and evidence. Existing layouts remain unchanged when it is omitted.

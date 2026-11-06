@@ -24,6 +24,90 @@ For dense tracking investigations, use `variant="ledger"`: compact event-first o
 
 ## Examples
 
+### Three-panel investigation workbench
+
+`InvestigationWorkbench` is an opt-in composition exported from
+`@easypost/easy-ui/InvestigationWorkspace`. Existing workspace and ledger
+presentations are unchanged. The workbench adds a compact header, collapsible
+history/branch navigator, event-and-evidence ledger, map, and Event / Deviation /
+Evidence inspector. It uses the native map, timeline, graph, pills and histogram
+components rather than a separate prototype.
+
+```tsx
+import { InvestigationWorkbench } from "@easypost/easy-ui/InvestigationWorkspace";
+
+<InvestigationWorkbench
+  title="Parcel investigation"
+  graph={graph}
+  map={{ mapStyle, workerUrl }}
+  predictions={predictions}
+  deviations={deviations}
+  assessments={assessments}
+  renderConnectionMetrics={({ connection, fromEvent, toEvent }) => (
+    <ApplicationInterval
+      connection={connection}
+      from={fromEvent}
+      to={toEvent}
+    />
+  )}
+  renderEvidence={renderApplicationEvidence}
+/>;
+```
+
+**One graph owns membership.** `InvestigationGraph` contains events, connections,
+paths, and optional map locations/segments. Each path lists `connectionIds` and
+optional `isolatedEventIds`, plus its label and stable literal paint color.
+`normalizeInvestigationGraph` derives the event, connection and segment
+memberships used by every view. It does not infer adjacency from row order,
+shared locations or timestamps. Revisits retain their distinct event IDs;
+independent roots, unassigned deliveries, forks and rejoins remain distinct.
+Invalid IDs, references or mapped endpoints produce visible validation errors,
+not silent repairs. `kind="recorded"` is caller-supplied, not inferred by the UI;
+map line styling still follows each segment's measured/transfer/inferred/planned
+provenance. Large branch graphs retain the relationship-list fallback; focusing
+a history reduces visible graph scope without inventing joins.
+
+**Focus is separate from selection.** Overview shows all observations and no
+forecasts. Focused history emphasizes one history while retaining other map
+histories as faint context. Deviation analysis compares that history with an
+explicitly chosen forecast. Selecting an event, revisit, location or connection
+does not clear focus or prediction choices, and no such action requests a new
+map camera. Location selection offers its distinct visits rather than choosing
+one arbitrarily. `state` / `onStateChange` support controlled use;
+`defaultState` supports initial uncontrolled state. The public
+`InvestigationWorkbenchState`, `initialInvestigationWorkbenchState`, and
+`reduceInvestigationWorkbench` expose the same state transitions.
+
+**Evidence belongs to explicit connections.** `renderConnectionMetrics` receives
+an incoming connection and both endpoints. It can compose compact
+`DurationDistribution` histograms; `renderEvidence` expands their reference and
+provenance in the persistent inspector. Two incoming edges remain independently
+addressable. Risk annotations are supplied as `InvestigationAssessment` records
+with event, connection or path targets, labels, tone, source and assessment time.
+Event types, path identity, selection and risk remain separate.
+
+**Predictions are not scans.** `InvestigationPrediction` supplies a history ID,
+label, color, source, issuance time, disjoint geographic lines and optional dash
+pattern. Each has an independent visibility toggle; choices survive leaving
+and returning to the history. Optional confidence must include a formatted value
+and an explanation of what it measures. The UI derives neither probabilities
+nor risk thresholds from histogram percentiles or map separation.
+`InvestigationDeviation` supplies the comparison forecast, observation, optional
+first-divergence observation, facts, source and assessment time. A first-divergence
+map callout is shown only for one consistent supplied claim; disagreement is
+reported in text. Missing assessment means unavailable, never zero deviation.
+`renderDeviationEvidence` provides application-owned comparison charts.
+
+At narrow widths, the history controls collapse and Events / Map buttons switch
+between the same mounted views. The inspector remains in normal page flow.
+Inspector tabs support arrow keys and Home/End. Selection stays visible inside
+the ledger's own scroll region. Theme changes preserve the map instance.
+
+<Canvas of={Stories.WorkbenchOverview} />
+<Canvas of={Stories.WorkbenchFocused} />
+<Canvas of={Stories.WorkbenchDeviation} />
+<Canvas of={Stories.WorkbenchNarrow} />
+
 ### Compact observations and candidate histories
 
 ```tsx

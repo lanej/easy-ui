@@ -477,3 +477,47 @@
     }
   }
 }
+
+// Column layout is opt-in. The evidence yields first on narrow containers.
+@container event-timeline (min-width: 480px) {
+  .timeline[data-ledger-columns="true"] .item[data-variant="ledger"] {
+    grid-template-columns: minmax(0, 1fr) minmax(126px, 0.52fr);
+    align-items: center;
+    min-block-size: 76px;
+    padding-block: 12px;
+    border-block-end: 1px solid design-token("color.neutral.200");
+    .ledgerContent {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .ledgerTitle {
+      font-size: 14px;
+      line-height: 20px;
+    }
+    .ledgerSelect {
+      grid-template-columns: 80px minmax(0, 1fr);
+      column-gap: 12px;
+      row-gap: 4px;
+      .time {
+        grid-column: 1;
+        grid-row: 1 / span 3;
+      }
+      .ledgerTitle,
+      .ledgerLocation,
+      .received {
+        grid-column: 2;
+      }
+    }
+    .inlineMetrics {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      margin-block-start: 0;
+    }
+    .ledgerTrailing {
+      grid-column: 1;
+      grid-row: 2;
+      margin-inline-start: 92px;
+      margin-block-start: 4px;
+    }
+  }
+}

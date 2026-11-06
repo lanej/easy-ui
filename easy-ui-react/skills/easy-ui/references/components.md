@@ -332,6 +332,15 @@ colors along the same geometry. Labels and the relationship list remain the
 non-color equivalent. Omit the dictionary to retain the neutral presentation.
 See [branching observations](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--branching-ledger).
 
+Use `InvestigationWorkbench` (exported from the `InvestigationWorkspace` entrypoint)
+for three-panel overview, focused-history and deviation analysis. Its canonical
+`InvestigationGraph` derives all memberships from path connection IDs. Focus and
+selection are independent. Forecast geometry never creates scan events; supplied
+comparison claims carry source and time. Use `renderConnectionMetrics` for incoming
+edge evidence, not adjacent-row intervals. Full references belong in the persistent
+inspector. See [Workbench deviation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-deviation)
+and [narrow workbench](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-narrow).
+
 Use `InvestigationWorkspace` to coordinate timeline, map, and persistent details
 through one controlled `InvestigationSelection`. Supply stable event, location,
 path, and segment IDs with explicit memberships. Scoped event stepping preserves

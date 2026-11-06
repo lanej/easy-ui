@@ -1,0 +1,63 @@
+@use "../styles/common" as *;
+.example {
+  min-inline-size: 0;
+  margin-inline: auto;
+}
+.caption {
+  font-size: 11px;
+  color: design-token("color.neutral.700");
+  margin-block: 10px 0;
+}
+.compactReference {
+  min-inline-size: 0;
+  [data-visualization="histogram"] [role="img"] {
+    block-size: 28px;
+    min-block-size: 28px;
+  }
+}
+.metricLabel {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  margin-block-end: 3px;
+  span {
+    font-size: 10px;
+    color: design-token("color.neutral.700");
+  }
+  strong {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+.compactReference,
+.reference,
+.forecastReference {
+  [data-current-assessment="unassessed"] {
+    color: design-token("color.primary.600");
+  }
+}
+.references,
+.reference,
+.forecastReference {
+  display: grid;
+  gap: 10px;
+  min-inline-size: 0;
+  p {
+    font-size: 11px;
+    color: design-token("color.neutral.700");
+  }
+}
+.forecastReference h4 {
+  font-size: 12px;
+  margin: 0;
+}
+@media (forced-colors: active) {
+  .compactReference,
+  .reference,
+  .forecastReference {
+    [data-current-assessment="unassessed"] {
+      color: CanvasText;
+    }
+  }
+}
