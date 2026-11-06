@@ -519,6 +519,11 @@ export function InvestigationWorkbench({
   const selectedConnectionIds = state.selection
     ? context.connections?.map((connection) => connection.id)
     : [];
+  const inspectorGraph = renderInspectorGraph?.({
+    ...context,
+    selectedEventIds,
+    focusedPathId: focused?.id ?? null,
+  });
   const selectedIndex = visibleEvents.findIndex(
     (item) => item.id === event?.id,
   );
@@ -1264,13 +1269,9 @@ export function InvestigationWorkbench({
               )}
             </div>
           </div>
-          {renderInspectorGraph && (
+          {inspectorGraph != null && (
             <section className={styles.inspectorGraph} aria-label="Supplemental investigation graph">
-              {renderInspectorGraph({
-                ...context,
-                selectedEventIds,
-                focusedPathId: focused?.id ?? null,
-              })}
+              {inspectorGraph}
             </section>
           )}
         </section>
