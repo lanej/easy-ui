@@ -164,7 +164,6 @@ export function EventItem({
             type="button"
             className={styles.ledgerSelect}
             aria-current={current ? "true" : undefined}
-      aria-pressed={multiSelectable ? marked : undefined}
             aria-pressed={multiSelectable ? marked : undefined}
             aria-labelledby={[
               `${id}-ledger-title`,
@@ -237,6 +236,7 @@ export function EventItem({
       type="button"
       className={styles.select}
       aria-current={current ? "true" : undefined}
+      aria-pressed={multiSelectable ? marked : undefined}
       aria-labelledby={
         inline
           ? [
