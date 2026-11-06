@@ -904,36 +904,44 @@ export function InvestigationWorkbench({
                   (overlay) => !overlay.id.startsWith(`${id}-`),
                 ),
               };
+              const owned = hover.selections.filter((hit) =>
+                hit.overlayId.startsWith(`${id}-`),
+              );
+              const externalContent = external.overlays.length
+                ? map.renderOverlayHoverDetails
+                  ? map.renderOverlayHoverDetails(external)
+                  : hover.pinned && external.selections[0]
+                    ? map.renderOverlayDetails?.(external.selections[0])
+                    : null
+                : null;
+              if (
+                !owned.length &&
+                (externalContent == null || externalContent === false)
+              )
+                return null;
               return (
                 <div className={styles.overlayDetails}>
-                  {hover.selections
-                    .filter((hit) => hit.overlayId.startsWith(`${id}-`))
-                    .map((hit) => (
-                      <div key={`${hit.overlayId}-${hit.feature.id}`}>
-                        <strong>
-                          {String(
-                            hit.feature.properties?.label ??
-                              "Candidate connection",
-                          )}
-                        </strong>
-                        {hit.overlayId === `${id}-selected-points` ? (
-                          <span>Selected observation location</span>
-                        ) : hit.feature.properties?.predictionId ? (
-                          <span>
-                            Forecast · {String(hit.feature.properties.source)} ·{" "}
-                            {String(hit.feature.properties.asOf)}
-                          </span>
-                        ) : (
-                          <span>Supplied candidate relationship</span>
+                  {owned.map((hit) => (
+                    <div key={`${hit.overlayId}-${hit.feature.id}`}>
+                      <strong>
+                        {String(
+                          hit.feature.properties?.label ??
+                            "Candidate connection",
                         )}
-                      </div>
-                    ))}
-                  {external.overlays.length > 0 &&
-                    (map.renderOverlayHoverDetails
-                      ? map.renderOverlayHoverDetails(external)
-                      : hover.pinned && external.selections[0]
-                        ? map.renderOverlayDetails?.(external.selections[0])
-                        : null)}
+                      </strong>
+                      {hit.overlayId === `${id}-selected-points` ? (
+                        <span>Selected observation location</span>
+                      ) : hit.feature.properties?.predictionId ? (
+                        <span>
+                          Forecast · {String(hit.feature.properties.source)} ·{" "}
+                          {String(hit.feature.properties.asOf)}
+                        </span>
+                      ) : (
+                        <span>Supplied candidate relationship</span>
+                      )}
+                    </div>
+                  ))}
+                  {externalContent}
                 </div>
               );
             }}

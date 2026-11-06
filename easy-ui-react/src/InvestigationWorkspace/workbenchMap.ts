@@ -5,6 +5,101 @@ import type { InvestigationRecords } from "./selection";
 import type { InvestigationPrediction } from "./workbenchModel";
 import type { InvestigationWorkbenchState } from "./workbenchState";
 
+function connectionGeometry(
+  records: Required<InvestigationRecords>,
+): FeatureCollection {
+  const segments = new Map(
+    records.segments.map((segment) => [segment.id, segment]),
+  );
+  const geometry = segmentData(records.locations, records.segments);
+  return {
+    ...geometry,
+    features: geometry.features.map((feature) => ({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        label: segments.get(String(feature.id))?.label,
+      },
+    })),
+  };
+}
+
+/** Keep membership offsets stable when focus or the selected subset changes. */
+function segmentMemberships(records: Required<InvestigationRecords>) {
+  return new Map(
+    records.segments.map((segment) => [
+      segment.id,
+      records.paths
+        .filter((path) => path.segmentIds.includes(segment.id))
+        .sort((a, b) => a.id.localeCompare(b.id)),
+    ]),
+  );
+}
+
+function historyFeatures(
+  geometry: FeatureCollection,
+  segmentIds: ReadonlySet<string>,
+  pathId: string,
+  membersBySegment: ReturnType<typeof segmentMemberships>,
+) {
+  return geometry.features
+    .filter((feature) => segmentIds.has(String(feature.id)))
+    .map((feature) => {
+      const members = membersBySegment.get(String(feature.id)) ?? [];
+      return {
+        ...feature,
+        properties: {
+          ...feature.properties,
+          candidateId: pathId,
+          segmentId: String(feature.id),
+          offset:
+            (members.findIndex((member) => member.id === pathId) -
+              (members.length - 1) / 2) *
+            4,
+        },
+      };
+    });
+}
+
+/** Selection changes emphasis only, never a connection's evidence class. */
+function connectionLayers(
+  color: string,
+  observedWidth: number,
+  candidateWidth: number,
+  observedOpacity: number,
+  candidateOpacity = observedOpacity,
+): MapOverlay["layers"] {
+  return [
+    {
+      id: "observed",
+      type: "line",
+      filter: [
+        "!",
+        ["in", ["get", "evidence"], ["literal", ["inferred", "planned"]]],
+      ],
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": color,
+        "line-width": observedWidth,
+        "line-opacity": observedOpacity,
+        "line-offset": ["get", "offset"],
+      },
+    },
+    {
+      id: "candidate",
+      type: "line",
+      filter: ["in", ["get", "evidence"], ["literal", ["inferred", "planned"]]],
+      paint: {
+        "line-color": color,
+        "line-width": candidateWidth,
+        "line-opacity": candidateOpacity,
+        "line-offset": ["get", "offset"],
+        "line-dasharray": [2, 2],
+      },
+    },
+  ];
+}
+
 /** Stable geometry, membership and offsets. Focus changes paint, never camera or topology. */
 export function workbenchMapData(
   records: Required<InvestigationRecords>,
@@ -20,15 +115,8 @@ export function workbenchMapData(
     records.paths.some((path) => path.id === state.focusedPathId)
       ? state.focusedPathId
       : null;
-  const geometry = segmentData(records.locations, records.segments);
-  const bySegment = new Map(
-    records.segments.map((segment) => [
-      segment.id,
-      records.paths
-        .filter((path) => path.segmentIds.includes(segment.id))
-        .sort((a, b) => a.id.localeCompare(b.id)),
-    ]),
-  );
+  const geometry = connectionGeometry(records);
+  const bySegment = segmentMemberships(records);
   const memberships = new Map<string, Set<string>>();
   for (const event of records.events) {
     if (!event.locationId) continue;
@@ -56,60 +144,20 @@ export function workbenchMapData(
       label: `History ${path.label}`,
       data: {
         type: "FeatureCollection",
-        features: geometry.features
-          .filter((feature) => path.segmentIds.includes(String(feature.id)))
-          .map((feature) => {
-            const members = bySegment.get(String(feature.id)) ?? [];
-            return {
-              ...feature,
-              properties: {
-                ...feature.properties,
-                candidateId: path.id,
-                segmentId: String(feature.id),
-                offset:
-                  (members.findIndex((member) => member.id === path.id) -
-                    (members.length - 1) / 2) *
-                  4,
-                label: records.segments.find(
-                  (segment) => segment.id === String(feature.id),
-                )?.label,
-              },
-            };
-          }),
+        features: historyFeatures(
+          geometry,
+          new Set(path.segmentIds),
+          path.id,
+          bySegment,
+        ),
       } as FeatureCollection,
-      layers: [
-        {
-          id: "observed",
-          type: "line",
-          filter: [
-            "!",
-            ["in", ["get", "evidence"], ["literal", ["inferred", "planned"]]],
-          ],
-          layout: { "line-cap": "round", "line-join": "round" },
-          paint: {
-            "line-color": path.color ?? "#8794a6",
-            "line-width": focused === path.id ? 3.5 : 2.5,
-            "line-opacity": active ? 0.95 : 0.55,
-            "line-offset": ["get", "offset"],
-          },
-        },
-        {
-          id: "candidate",
-          type: "line",
-          filter: [
-            "in",
-            ["get", "evidence"],
-            ["literal", ["inferred", "planned"]],
-          ],
-          paint: {
-            "line-color": path.color ?? "#8794a6",
-            "line-width": focused === path.id ? 3 : 2,
-            "line-opacity": active ? 0.9 : 0.55,
-            "line-offset": ["get", "offset"],
-            "line-dasharray": [2, 2],
-          },
-        },
-      ],
+      layers: connectionLayers(
+        path.color ?? "#8794a6",
+        focused === path.id ? 3.5 : 2.5,
+        focused === path.id ? 3 : 2,
+        active ? 0.95 : 0.55,
+        active ? 0.9 : 0.55,
+      ),
     };
   });
   if (focused) {
@@ -199,12 +247,21 @@ export function selectedObservationOverlays(
       connection.segmentId ? [connection.segmentId] : [],
     ),
   );
-  const segments = segmentData(records.locations, records.segments)
+  const segments = connectionGeometry(records)
     .features.filter((feature) => selectedSegmentIds.has(String(feature.id)))
     .map((feature) => ({
       ...feature,
-      properties: { ...feature.properties, segmentId: String(feature.id) },
+      properties: {
+        ...feature.properties,
+        segmentId: String(feature.id),
+        offset: 0,
+      },
     }));
+  const bySegment = segmentMemberships(records);
+  const selectedGeometry: FeatureCollection = {
+    type: "FeatureCollection",
+    features: segments,
+  };
   const overlays: MapOverlay[] = records.paths.flatMap((path) => {
     const pathSegments = new Set(
       selectedConnections
@@ -213,8 +270,11 @@ export function selectedObservationOverlays(
           connection.segmentId ? [connection.segmentId] : [],
         ),
     );
-    const features = segments.filter((feature) =>
-      pathSegments.has(String(feature.id)),
+    const features = historyFeatures(
+      selectedGeometry,
+      pathSegments,
+      path.id,
+      bySegment,
     );
     return features.length
       ? [
@@ -222,21 +282,7 @@ export function selectedObservationOverlays(
             id: `${prefix}-selected-history-${path.id}`,
             label: `Selected connections · ${path.label}`,
             data: { type: "FeatureCollection" as const, features },
-            layers: [
-              {
-                id: "selection",
-                type: "line" as const,
-                layout: {
-                  "line-cap": "round" as const,
-                  "line-join": "round" as const,
-                },
-                paint: {
-                  "line-color": path.color ?? "#2563eb",
-                  "line-width": 5,
-                  "line-opacity": 1,
-                },
-              },
-            ],
+            layers: connectionLayers(path.color ?? "#2563eb", 5, 5, 1),
           },
         ]
       : [];
@@ -258,18 +304,7 @@ export function selectedObservationOverlays(
       id: `${prefix}-selected-unassigned`,
       label: "Selected unassigned connections",
       data: { type: "FeatureCollection", features: unassigned },
-      layers: [
-        {
-          id: "selection",
-          type: "line",
-          paint: {
-            "line-color": "#64748b",
-            "line-width": 5,
-            "line-opacity": 1,
-            "line-dasharray": [2, 2],
-          },
-        },
-      ],
+      layers: connectionLayers("#64748b", 5, 5, 1),
     });
   const locations = records.locations.filter((location) =>
     locationIds.has(location.id),
