@@ -10,6 +10,7 @@ import {
 } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { suites as componentSuites } from "./run-browser-ci.mjs";
 
 const maxAge = 7 * 24 * 60 * 60 * 1000;
 const digest = (value) => createHash("sha256").update(value).digest("hex");
@@ -30,7 +31,10 @@ export async function fingerprint(root, built, inputs, environment) {
         ]);
     }
   }
-  await visit(resolve(root, built));
+  if (Array.isArray(built)) {
+    for (const [index, directory] of built.entries())
+      await visit(resolve(root, directory), `${index}/`);
+  } else await visit(resolve(root, built));
   if (!entries.some(([name]) => name.endsWith(".html")))
     throw new Error("Browser reuse requires an actual preview build");
   for (const file of inputs)
@@ -51,12 +55,17 @@ export function reusable(artifact, run, context, now = Date.now()) {
     Number.isFinite(created) &&
     created <= now &&
     now - created < maxAge &&
+    run.status === "completed" &&
     run.conclusion === "success" &&
     run.path === context.workflow &&
     run.event === context.event &&
     run.head_repository?.full_name === context.headRepository &&
     (context.event === "pull_request"
-      ? run.pull_requests?.some((pr) => pr.number === context.pr)
+      ? run.pull_requests?.some(
+          (pr) =>
+            pr.number === context.pr &&
+            (!context.baseSha || pr.base?.sha === context.baseSha),
+        )
       : run.head_branch === context.branch)
   );
 }
@@ -73,14 +82,83 @@ export async function findProof(name, context, request) {
     )
       continue;
     const run = await request(`/actions/runs/${artifact.workflow_run.id}`);
-    if (reusable(artifact, run, context)) return run.html_url;
+    if (!reusable(artifact, run, context)) continue;
+    if (context.producer) {
+      // Artifact names are not attestations. Authenticate the producer source
+      // against GitHub's immutable tree, not bytes supplied in the artifact.
+      if (!/^[a-f0-9]{40}$/.test(run.head_sha ?? "")) continue;
+      const tree = await request(`/git/trees/${run.head_sha}?recursive=1`);
+      if (tree.truncated || !Array.isArray(tree.tree))
+        throw new Error("Producer tree is incomplete");
+      if (producerFingerprint(tree.tree) !== context.producer) continue;
+    }
+    return run.html_url;
   }
+}
+
+export function producerFingerprint(entries) {
+  const evidence = (path) =>
+    /^\.ui-review\/(?:pr-\d+|ci-optimization)\/.+\.(?:png|jpe?g|webp|log)$/.test(
+      path,
+    ) ||
+    /^\.ui-review\/(?:pr-\d+|ci-optimization)\/.+\/(?:provenance|report)\.json$/.test(
+      path,
+    );
+  return digest(
+    JSON.stringify(
+      entries
+        .filter(
+          ({ type, path, mode }) =>
+            type !== "tree" && !(mode === "100644" && evidence(path)),
+        )
+        .map(({ path, mode, type, sha }) => ({ path, mode, type, sha }))
+        .sort((a, b) => a.path.localeCompare(b.path)),
+    ),
+  );
+}
+
+function currentProducer() {
+  const entries = execFileSync("git", ["ls-tree", "-r", "-z", "HEAD"], {
+    encoding: "utf8",
+  })
+    .split("\0")
+    .filter(Boolean)
+    .map((entry) => {
+      const separator = entry.indexOf("\t");
+      const [mode, type, sha] = entry.slice(0, separator).split(" ");
+      return { path: entry.slice(separator + 1), mode, type, sha };
+    });
+  return producerFingerprint(entries);
+}
+
+export function componentInputPaths(workflow) {
+  // Browser checks can read raw MDX and import built packages. Hash harness
+  // helpers and dependency manifests as well as the rendered assets, rather
+  // than guessing a source component's transitive dependency closure.
+  return [
+    "scripts",
+    "package.json",
+    "package-lock.json",
+    ":(glob)easy-ui-*/package.json",
+    "eslint-config-easy-ui/package.json",
+    "stylelint-easy-ui/package.json",
+    ":(glob)easy-ui-react/src/**/*.mdx",
+    ".storybook",
+    workflow,
+    ".github/actions/browser-proof",
+    ".nvmrc",
+    ".npmrc",
+  ];
 }
 
 async function main() {
   const env = process.env;
   const { PROOF_MODE: mode, PROOF_SUITE: suite, PROOF_BUILT: built } = env;
+  const componentSuite =
+    suite?.startsWith("components-") &&
+    Object.hasOwn(componentSuites, suite.slice("components-".length));
   if (
+    !componentSuite &&
     !/^(?:maps|charts)-(?:chrome|firefox|safari|screenshots|layout)$|^(?:hosted-maps|event-timeline)$/.test(
       suite ?? "",
     )
@@ -100,6 +178,11 @@ async function main() {
       event.pull_request?.head.repo.full_name ?? env.GITHUB_REPOSITORY,
     pr: event.pull_request?.number,
     branch: env.GITHUB_REF_NAME,
+    producer: componentSuite ? currentProducer() : undefined,
+    baseSha:
+      componentSuite && event.pull_request
+        ? event.pull_request.base.sha
+        : undefined,
   };
   let key = env.PROOF_DIGEST;
   if (mode === "check") {
@@ -112,17 +195,21 @@ async function main() {
       [
         "ls-files",
         "-z",
-        preview,
-        workflow,
-        ".nvmrc",
-        "scripts/browser-proof.mjs",
-        ".github/actions/browser-proof",
-        ...(suite === "charts-layout" ? [".ui-review"] : []),
-        ...(suite === "maps-layout" ? [".ui-review/maps"] : []),
-        ...(suite === "hosted-maps" ? ["scripts/build-docs.mjs"] : []),
-        ...(suite === "event-timeline"
-          ? ["scripts/check-event-timeline.mjs"]
-          : []),
+        ...(componentSuite
+          ? componentInputPaths(workflow)
+          : [
+              preview,
+              workflow,
+              ".nvmrc",
+              "scripts/browser-proof.mjs",
+              ".github/actions/browser-proof",
+              ...(suite === "charts-layout" ? [".ui-review"] : []),
+              ...(suite === "maps-layout" ? [".ui-review/maps"] : []),
+              ...(suite === "hosted-maps" ? ["scripts/build-docs.mjs"] : []),
+              ...(suite === "event-timeline"
+                ? ["scripts/check-event-timeline.mjs"]
+                : []),
+            ]),
       ],
       { encoding: "utf8" },
     )
@@ -130,13 +217,24 @@ async function main() {
       .filter(
         (file) =>
           file &&
-          !file.endsWith(".md") &&
-          // Rendered preview files are represented by the build, including their
-          // transitive component, Sass, token and asset dependencies.
-          !/\.(?:tsx?|s?css|html)$/.test(file) &&
-          !(suite === "charts-layout" && file.startsWith(".ui-review/maps/")),
+          (componentSuite ||
+            (!file.endsWith(".md") &&
+              // Rendered preview files are represented by the build, including their
+              // transitive component, Sass, token and asset dependencies.
+              !/\.(?:tsx?|s?css|html)$/.test(file) &&
+              !(
+                suite === "charts-layout" && file.startsWith(".ui-review/maps/")
+              ))),
       );
-    key = await fingerprint(process.cwd(), built, inputs, {
+    const builds = componentSuite
+      ? [
+          built,
+          "easy-ui-react/dist",
+          "easy-ui-icons/dist",
+          "easy-ui-tokens/dist",
+        ]
+      : built;
+    key = await fingerprint(process.cwd(), builds, inputs, {
       suite,
       node: process.version,
       os: env.RUNNER_OS,
@@ -152,6 +250,8 @@ async function main() {
   if (
     mode === "check" &&
     env.GITHUB_EVENT_NAME !== "workflow_dispatch" &&
+    (!event.pull_request ||
+      event.pull_request.head.repo.full_name === env.GITHUB_REPOSITORY) &&
     Number(env.GITHUB_RUN_ATTEMPT) === 1
   ) {
     try {

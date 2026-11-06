@@ -6,17 +6,28 @@ on:
   pull_request: ~
   workflow_dispatch: ~
 
+permissions:
+  contents: read
+  actions: read
+
+# Superseded PR heads do not need to finish. Keep main/manual runs independent.
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  build:
+  checks:
+    name: Package, lint and unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v1
-      - name: Use Node.js from .nvmrc
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
+          cache: npm
       - name: Install dependencies
-        run: npm i
+        run: npm ci --no-audit --no-fund
       - name: Build
         run: npm run build
       - name: Verify chart package imports and server rendering
@@ -25,6 +36,8 @@ jobs:
         run: node --test scripts/generateCompatibilityEntries.test.mjs
       - name: Verify browser CI evidence selection
         run: node --test scripts/browser-proof.test.mjs
+      - name: Verify browser CI suite coverage and failure propagation
+        run: node --test scripts/run-browser-ci.test.mjs
       - name: Verify isolated tarball imports, test IDs, and Sass assets
         run: node scripts/check-style-package.mjs
       - name: Retain packed-consumer logs on failure
@@ -38,18 +51,77 @@ jobs:
         run: npm run lint
       - name: Unit tests
         run: npm run test
-      - name: Build storybook
-        run: npm run build:storybook
-      - name: Verify every component has stories and documentation
-        run: npm run check:storybook
+
+  storybook:
+    name: Build browser inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # The docs check also imports built workspace packages on each shard.
+      - run: npm run build
+      - run: npm run build:storybook
+      - run: npm run check:storybook
+      - name: Share this run's built browser inputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-browser-inputs
+          path: |
+            storybook-static/
+            easy-ui-react/dist/
+            easy-ui-icons/dist/
+            easy-ui-tokens/dist/
+          retention-days: 2
+          if-no-files-found: error
+
+  browser:
+    name: Browser (${{ matrix.suite }})
+    needs: storybook
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [graphs, charts, metrics, catalog, overlays]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            scripts/preview-metrics/package-lock.json
+      # No token, run-id or external artifact source: download from this run only.
+      - uses: actions/download-artifact@v4
+        with:
+          name: storybook-browser-inputs
+      - id: proof
+        uses: ./.github/actions/browser-proof
+        with:
+          suite: components-${{ matrix.suite }}
+          built: storybook-static
+      # Consume the prebuilt artifacts; do not rerun workspace prepare builds.
+      - if: steps.proof.outputs.reuse != 'true'
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Install browser test dependencies
+        if: steps.proof.outputs.reuse != 'true'
         working-directory: scripts/preview-metrics
         run: npm ci --no-audit --no-fund
       - name: Install Chromium
+        if: steps.proof.outputs.reuse != 'true'
         working-directory: scripts/preview-metrics
         run: npx playwright install --with-deps chromium
-      - name: Verify facility, chart, and proportion layouts
+      - name: Verify component browser suite
+        if: steps.proof.outputs.reuse != 'true'
+        timeout-minutes: 10
         env:
+          BROWSER_CI_SUITE: ${{ matrix.suite }}
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
           STORYBOOK_URL: http://127.0.0.1:9018
           FACILITY_REPORT_DIR: ${{ runner.temp }}/facility-summary-browser
@@ -67,34 +139,16 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
           for attempt in {1..30}; do
-            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then
-              break
-            fi
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
             sleep 1
           done
           curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null
-          node scripts/check-waffle-chart.mjs
-          node scripts/check-map-primary-insets.mjs
-          node scripts/check-metric-card.mjs
-          node scripts/check-facility-summary.mjs
-          node scripts/check-chart-catalog.mjs
-          node scripts/check-proportion-bar.mjs
-          node scripts/check-meter-bar-comparison.mjs
-          node scripts/check-dependency-graph.mjs
-          node scripts/check-dependency-graph-arrowheads.mjs
-          node scripts/check-dependency-graph-groups.mjs
-          node scripts/check-dependency-tree.mjs
-          node scripts/check-storybook-docs.mjs
-          node scripts/check-token-browser.mjs
-          node scripts/check-notifications.mjs
-          node scripts/check-theme-toggle.mjs
-          node scripts/check-drawer-placement.mjs
-          node scripts/check-evidence-typography.mjs
+          node scripts/run-browser-ci.mjs "$BROWSER_CI_SUITE"
       - name: Retain component browser evidence
-        if: always()
+        if: always() && steps.proof.outputs.reuse != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: facility-summary-browser
+          name: component-browser-${{ matrix.suite }}
           path: |
             ${{ runner.temp }}/facility-summary-browser
             ${{ runner.temp }}/chart-catalog-browser
@@ -108,3 +162,32 @@ jobs:
             ${{ runner.temp }}/evidence-typography-browser
             ${{ runner.temp }}/facility-storybook.log
           if-no-files-found: ignore
+
+      - uses: ./.github/actions/browser-proof
+        if: success() && steps.proof.outputs.reuse != 'true'
+        with:
+          mode: record
+          suite: components-${{ matrix.suite }}
+          digest: ${{ steps.proof.outputs.digest }}
+
+  # Preserve the existing required check name, including on failed/skipped jobs.
+  build:
+    name: build
+    if: always()
+    needs: [checks, storybook, browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every CI job to pass
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          results = json.loads(os.environ["RESULTS"])
+          bad = {name: job["result"] for name, job in results.items() if job["result"] != "success"}
+          if bad:
+              print(f"CI did not pass: {bad}")
+              sys.exit(1)
+          print("Package, unit, Storybook, and all browser suites passed.")
+          PY
