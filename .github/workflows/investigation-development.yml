@@ -1,4 +1,4 @@
-name: Investigation development snapshot
+name: Investigation workbench verification
 
 on:
   push:
@@ -6,28 +6,98 @@ on:
     paths: [.github/workflows/investigation-development.yml]
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: investigation-workbench-development
+  cancel-in-progress: false
 
 jobs:
-  runtime:
+  verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          ref: codex/investigation-workbench
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci --no-audit --no-fund
-      - run: npm run build:tokens && npm run build:icons
-      - name: Package isolated development inputs
+      - name: Apply the checksum-verified implementation
         run: |
-          tar --exclude='./.git' --exclude='./.turbo' --exclude='./.ui-review' --exclude='*/.cache' -czf "$RUNNER_TEMP/investigation-runtime.tar.gz" .
+          if test -d .github/workbench-upload; then
+            node --input-type=module <<'NODE'
+          import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+          import { brotliDecompressSync } from 'node:zlib';
+          import { createHash } from 'node:crypto';
+          const dir = '.github/workbench-upload';
+          const encoded = readdirSync(dir).sort().map(name => readFileSync(`${dir}/${name}`, 'utf8').trim()).join('');
+          const patch = brotliDecompressSync(Buffer.from(encoded, 'base64'));
+          const digest = createHash('sha256').update(patch).digest('hex');
+          if (digest !== 'bc74e4f36a7d7183775432bc705847a1745a3da03276e232e1f4498ce909514b') throw new Error(`Patch checksum mismatch: ${digest}`);
+          writeFileSync('/tmp/workbench.patch', patch);
+          NODE
+            git apply --check /tmp/workbench.patch
+            git apply /tmp/workbench.patch
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add easy-ui-react .changeset scripts/check-investigation-workbench.mjs
+            git rm -r .github/workbench-upload
+            git commit -m 'Build three-panel investigation workbench with explicit edge evidence'
+            git push origin HEAD:codex/investigation-workbench
+          fi
+          echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - run: npm ci --no-audit --no-fund
+      - name: Check affected behavior and types
+        run: |
+          npm run test --workspace @easypost/easy-ui -- src/InvestigationWorkspace src/EventTimeline 2>&1 | tee "$RUNNER_TEMP/workbench-tests.log"
+          node node_modules/typescript/bin/tsc -p easy-ui-react/tsconfig.json --noEmit --emitDeclarationOnly false
+      - name: Build actual package and Storybook
+        run: |
+          npm run build:react
+          npm run build:storybook
+          npm run check:storybook
+        env:
+          STORYBOOK_TEST_RECIPES: 'true'
+      - name: Install browser dependencies
+        working-directory: scripts/preview-metrics
+        run: npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: Verify and capture actual components
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9019
+          WORKBENCH_REPORT_DIR: ${{ github.workspace }}/.ui-review/maps/investigation-workbench/${{ env.SOURCE_SHA }}
+        run: |
+          python3 -m http.server 9019 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/workbench-storybook.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/check-investigation-workbench.mjs 2>&1 | tee "$RUNNER_TEMP/workbench-browser.log"
+      - name: Verify packed consumer
+        run: node scripts/check-style-package.mjs 2>&1 | tee "$RUNNER_TEMP/workbench-package.log"
+      - name: Retain successful browser evidence
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f ".ui-review/maps/investigation-workbench/$SOURCE_SHA"
+          if ! git diff --cached --quiet; then
+            git commit -m 'Capture verified investigation workbench states'
+            git push origin HEAD:codex/investigation-workbench
+          fi
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: investigation-development-runtime
-          path: ${{ runner.temp }}/investigation-runtime.tar.gz
-          retention-days: 1
-          compression-level: 0
+          name: investigation-workbench-verification
+          path: |
+            .ui-review/maps/investigation-workbench
+            ${{ runner.temp }}/workbench-tests.log
+            ${{ runner.temp }}/workbench-browser.log
+            ${{ runner.temp }}/workbench-package.log
+            ${{ runner.temp }}/workbench-storybook.log
+          retention-days: 7
+          if-no-files-found: warn
