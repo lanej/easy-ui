@@ -237,9 +237,8 @@ export function InvestigationWorkbench({
   };
   const [narrow, setNarrow] = useState(false);
   const narrowMode = useRef(false);
-  const focusAfterResize = useRef<"events" | "map" | "sidebar" | null>(null);
+  const focusAfterResize = useRef<"events" | "map" | null>(null);
   const [mobileView, setMobileView] = useState<"events" | "map">("events");
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [mapInstance, setMapInstance] = useState<MapInstance | null>(null);
   const [tab, setTab] = useState<"event" | "deviation" | "evidence">("event");
   const [multiSelect, setMultiSelect] = useState(false);
@@ -275,16 +274,12 @@ export function InvestigationWorkbench({
       const active = document.activeElement;
       if (active instanceof HTMLElement && element.contains(active)) {
         if (next) {
-          if (active.closest("[data-workbench-sidebar]"))
-            setSidebarExpanded(true);
           if (active.closest("[data-workbench-map]")) setMobileView("map");
           if (active.closest("[data-workbench-events]"))
             setMobileView("events");
         } else if (active.dataset.workbenchView) {
           focusAfterResize.current = active.dataset.workbenchView as
             "events" | "map";
-        } else if (active.matches("[data-workbench-sidebar] > summary")) {
-          focusAfterResize.current = "sidebar";
         }
       }
       narrowMode.current = next;
