@@ -1293,9 +1293,10 @@ export function InvestigationWorkbench({
               {records.connections.some((connection) => connection.segmentId) && (
                 <details className={styles.relationshipPicker}>
                   <summary>Mapped connections</summary>
-                  <div>
+                  <div className={styles.relationshipPickerItems}>
                     {records.connections.filter((connection) => connection.segmentId).map((connection) => (
                       <button
+                        className={styles.relationshipPickerButton}
                         key={connection.id}
                         type="button"
                         aria-label={`Inspect connection ${connection.label ?? connection.id}`}
