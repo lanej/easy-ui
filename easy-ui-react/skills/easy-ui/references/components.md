@@ -333,16 +333,20 @@ non-color equivalent. Omit the dictionary to retain the neutral presentation.
 See [branching observations](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--branching-ledger).
 
 Use `InvestigationWorkbench` (exported from the `InvestigationWorkspace` entrypoint)
-for three-panel overview, focused-history and deviation analysis. Its canonical
+for all-history overview, focused-history and deviation analysis. Its canonical
 `InvestigationGraph` derives all memberships from path connection IDs. Focus and
-selection are independent. Controlled `selection: null` leaves both ledgers
-unselected. The inspector preserves source and time for applicable event,
+selection are independent. Focus emphasizes a history without filtering the
+shared chronology: one Git-style graph occupies the leftmost column, and all
+map histories retain their colors and legend entries. History controls sit above
+the ledger; focused forecast controls sit below the map. Examples use 1100px
+viewports. Controlled `selection: null` leaves the ledger unselected. The inspector preserves source and time for applicable event,
 connection, and focused-path assessments, including non-event selections.
 Forecast geometry never creates scan events; supplied
 comparison claims carry source and time. Use `renderConnectionMetrics` for incoming
 edge evidence, not adjacent-row intervals. Explicit connections between unassigned
 observations retain their metrics and risk indicators in focused history, and
-selecting one reveals its row without stealing focus. Caller-owned header
+unassigned visits stay inline unless their explicit display toggle hides them.
+Selecting a visit scrolls it into view without stealing focus. Caller-owned header
 `actions` remain available at narrow widths. Widening restores focused view
 buttons to their panel without borrowing focus from sibling workbenches. Repeating Analyze deviation or
 Deviation analysis reveals the Deviation inspector; controlled mode changes

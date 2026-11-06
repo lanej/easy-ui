@@ -144,7 +144,7 @@ describe("InvestigationWorkbench", () => {
     expect(mapProps.overlays).toHaveLength(3);
     expect(mapProps.focus).toBe(focus);
     expect(
-      within(ledger()).getByText("Unassigned observations (1)"),
+      within(ledger()).getByRole("button", { name: /Delivered Hub/ }),
     ).toBeInTheDocument();
   });
   it("uses independent focus and selected event state through location and revisit inspection", () => {
@@ -563,7 +563,7 @@ describe("workbench review regressions", () => {
     ],
   };
 
-  it("reveals a map-selected unassigned visit before measuring it, without taking focus", () => {
+  it("keeps a map-selected unassigned visit in the shared ledger without taking focus", () => {
     const { rerender } = render(
       <InvestigationWorkbench
         {...props}
@@ -571,16 +571,12 @@ describe("workbench review regressions", () => {
         defaultState={{ mode: "focused", focusedPathId: "a" }}
       />,
     );
-    const disclosure = within(ledger())
-      .getByText("Unassigned observations (2)")
-      .closest("details")!;
-    expect(disclosure.open).toBe(false);
-    const row = within(disclosure).getByText("Delivered").closest("button")!;
-    const measuredOpen: boolean[] = [];
-    vi.spyOn(row, "getBoundingClientRect").mockImplementation(() => {
-      measuredOpen.push(disclosure.open);
-      return { top: 1200, bottom: 1250 } as DOMRect;
-    });
+    const row = within(ledger()).getByRole("button", { name: /Delivered Hub/ });
+    expect(row.closest("details")).toBeNull();
+    const measure = vi.spyOn(row, "getBoundingClientRect").mockReturnValue({
+      top: 1200,
+      bottom: 1250,
+    } as DOMRect);
     const mapButton = screen.getByRole("button", {
       name: "Inspect repeated location",
     });
@@ -601,8 +597,8 @@ describe("workbench review regressions", () => {
       />,
     );
     expect(row).toHaveAttribute("aria-current", "true");
-    expect(disclosure.open).toBe(true);
-    expect(measuredOpen).toEqual([true]);
+    expect(row.closest("details")).toBeNull();
+    expect(measure).toHaveBeenCalledOnce();
     expect(mapButton).toHaveFocus();
   });
 
@@ -645,14 +641,7 @@ describe("workbench review regressions", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /History A.*3 observations/ }),
     );
-    const disclosure = within(ledger())
-      .getByText("Unassigned observations (2)")
-      .closest("details")!;
-    fireEvent.click(
-      within(disclosure).getByText("Unassigned observations (2)"),
-    );
-    // jsdom does not implement the summary's native disclosure toggle.
-    disclosure.open = true;
+    const disclosure = ledger(); // No separate or collapsed unassigned ledger.
     expect(
       within(disclosure).getByText("unassigned-link: e5 → e4"),
     ).toBeVisible();
@@ -661,7 +650,7 @@ describe("workbench review regressions", () => {
     expect(
       within(disclosure).getByText("Explicit unassigned evidence"),
     ).toBeInTheDocument();
-    expect(within(disclosure).queryByText(/mixed-link/)).toBeNull();
+    expect(within(disclosure).getByText("mixed-link: e2 → e4")).toBeVisible();
     fireEvent.click(screen.getByRole("checkbox", { name: /Risk indicators/ }));
     expect(within(disclosure).queryByText("Edge warning")).toBeNull();
     expect(within(disclosure).queryByText("Event warning")).toBeNull();
@@ -954,13 +943,9 @@ it("reveals a selected observation that becomes unassigned in a new graph snapsh
       }}
     />,
   );
-  const disclosure = within(ledger())
-    .getByText("Unassigned observations (2)")
-    .closest("details")!;
-  expect(
-    within(disclosure).getByText("Return").closest("button"),
-  ).toHaveAttribute("aria-current", "true");
-  expect(disclosure.open).toBe(true);
+  const row = within(ledger()).getByRole("button", { name: /Return Origin/ });
+  expect(row).toHaveAttribute("aria-current", "true");
+  expect(row.closest("details")).toBeNull();
 });
 
 it("reveals a retained unassigned selection when unassigned observations are shown again", () => {
@@ -979,11 +964,94 @@ it("reveals a retained unassigned selection when unassigned observations are sho
   });
   fireEvent.click(toggle);
   fireEvent.click(toggle);
-  const disclosure = within(ledger())
-    .getByText("Unassigned observations (1)")
-    .closest("details")!;
+  const row = within(ledger()).getByRole("button", { name: /Delivered Hub/ });
+  expect(row).toHaveAttribute("aria-current", "true");
+  expect(row.closest("details")).toBeNull();
+});
+
+it("keeps every history, fork and independent root in a single ledger while focused", () => {
+  const allHistories: InvestigationGraph = {
+    ...graph,
+    events: [
+      ...graph.events,
+      {
+        id: "branch",
+        label: "Alternative arrival",
+        locationLabel: "Other hub",
+      },
+      {
+        id: "independent",
+        label: "Independent origin",
+        locationLabel: "Other origin",
+      },
+    ],
+    connections: [
+      ...graph.connections,
+      { id: "fork", fromEventId: "e2", toEventId: "branch" },
+    ],
+    paths: [
+      graph.paths[0],
+      { ...graph.paths[1], connectionIds: ["c1", "fork"] },
+      {
+        id: "c",
+        label: "History C",
+        color: "#087f8c",
+        connectionIds: [],
+        isolatedEventIds: ["independent"],
+      },
+    ],
+  };
+  const { container } = render(
+    <InvestigationWorkbench {...props} graph={allHistories} />,
+  );
+  const eventIds = () =>
+    within(ledger())
+      .getAllByRole("button")
+      .map((button) => button.textContent);
+  const initialRows = eventIds();
+  expect(initialRows).toHaveLength(6);
+  fireEvent.click(
+    screen.getByRole("button", { name: /History A.*3 observations/ }),
+  );
+  expect(eventIds()).toEqual(initialRows);
+  expect(container.querySelectorAll('ol[data-variant="ledger"]')).toHaveLength(
+    1,
+  );
+  expect(screen.queryByText("Branches & observations")).not.toBeInTheDocument();
   expect(
-    within(disclosure).getByText("Delivered").closest("button"),
+    within(ledger()).getByRole("button", { name: /Independent origin/ }),
+  ).toBeVisible();
+  expect(
+    within(ledger())
+      .getByRole("button", { name: /Delivered Hub/ })
+      .closest("details"),
+  ).toBeNull();
+  const legend = container.querySelector('[aria-label="Map legend"]')!;
+  expect(legend).toHaveTextContent("History A");
+  expect(legend).toHaveTextContent("History B");
+  expect(legend).toHaveTextContent("History C");
+  fireEvent.click(
+    within(ledger()).getByRole("button", { name: /Alternative arrival/ }),
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /History A.*3 observations/ }),
+  );
+  expect(
+    within(ledger()).getByRole("button", { name: /Alternative arrival/ }),
   ).toHaveAttribute("aria-current", "true");
-  expect(disclosure.open).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
+  expect(eventIds()).toEqual(initialRows);
+  expect(
+    mapProps.overlays?.filter((overlay) => overlay.id.includes("-history-")),
+  ).toHaveLength(3);
+  fireEvent.click(screen.getByRole("button", { name: "All histories" }));
+  expect(eventIds()).toEqual(initialRows);
+});
+
+it("provides a named keyboard focus target for the scrollable inspector", () => {
+  render(<InvestigationWorkbench {...props} />);
+  const content = screen.getByRole("region", { name: "Inspector content" });
+  expect(content).toHaveAttribute("tabindex", "0");
+  content.focus();
+  expect(content).toHaveFocus();
 });

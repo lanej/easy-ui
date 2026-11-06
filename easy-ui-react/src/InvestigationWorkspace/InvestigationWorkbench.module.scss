@@ -33,7 +33,12 @@
   [hidden] {
     display: none !important;
   }
-  :where(button:focus-visible, select:focus-visible, summary:focus-visible) {
+  :where(
+    button:focus-visible,
+    select:focus-visible,
+    summary:focus-visible,
+    [tabindex]:focus-visible
+  ) {
     outline: 2px solid design-token("color.primary.600");
     outline-offset: 3px;
   }
@@ -44,8 +49,8 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 8px 18px;
-  padding: 12px 16px;
-  min-block-size: 60px;
+  padding: 8px 12px;
+  min-block-size: 48px;
   box-sizing: border-box;
   border-block-end: 1px solid design-token("color.neutral.200");
   background: design-token("color.neutral.000");
@@ -56,7 +61,7 @@
   gap: 10px;
   min-inline-size: 0;
   h2 {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 650;
     line-height: 1.4;
   }
@@ -98,19 +103,16 @@
 }
 .body {
   display: grid;
-  grid-template-columns: 212px minmax(0, 1.06fr) minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
-  grid-template-areas: "sidebar timeline map" "sidebar timeline inspector";
-  gap: 12px;
-  padding: 12px;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas: "controls controls" "timeline map" "timeline inspector";
+  gap: 8px;
+  padding: 8px;
   align-items: start;
 }
 .sidebar {
-  grid-area: sidebar;
+  grid-area: controls;
   min-inline-size: 0;
-  padding: 4px 12px 8px 0;
-  align-self: stretch;
-  border-inline-end: 1px solid design-token("color.neutral.200");
   > summary {
     display: none;
     cursor: pointer;
@@ -119,8 +121,11 @@
   }
 }
 .sidebarContent {
-  display: grid;
-  gap: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
 }
 .sidebarContent > section {
   min-inline-size: 0;
@@ -130,47 +135,43 @@
   color: design-token("color.neutral.700");
   font-size: 12px;
 }
-.sidebar h3 {
-  margin-block-end: 4px;
-}
 .historyList {
-  display: grid;
-  gap: 6px;
-  margin-block-start: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
 }
 .history {
-  border-radius: 7px;
-  padding: 2px;
-}
-.history[data-active] {
-  background: design-token("color.primary.050");
+  min-inline-size: 0;
 }
 .historyButton {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  inline-size: 100%;
-  padding: 7px 5px;
-  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-block-size: 32px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
   border-radius: 6px;
   text-align: start;
   color: inherit;
   background: transparent;
 }
 .historyButton > span {
-  display: grid;
-  gap: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-inline-size: 0;
 }
 .historyName {
-  font-size: 13px;
+  font-size: 12px;
 }
 .historyButton small {
   font-size: 11px;
   color: design-token("color.neutral.700");
 }
-.historyButton[aria-pressed="true"] .historyName {
-  color: design-token("color.primary.700");
+.historyButton[aria-pressed="true"] {
+  border-color: design-token("color.primary.300");
+  background: design-token("color.primary.050");
 }
 .swatch {
   display: inline-block;
@@ -178,63 +179,21 @@
   margin-inline-end: 5px;
   vertical-align: -1px;
 }
-.branchDisclosure {
-  font-size: 11px;
-  summary {
-    padding: 3px 7px;
-    color: design-token("color.neutral.700");
-    cursor: pointer;
-  }
-}
-.branchList {
-  position: relative;
-  min-inline-size: 0;
-  margin-block: 6px;
-  ol {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  button {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    inline-size: 100%;
-    min-block-size: 29px;
-    padding: 4px;
-    border: 0;
-    border-radius: 4px;
-    color: inherit;
-    background: transparent;
-    text-align: start;
-  }
-  .branchName {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  button[aria-current="true"] {
-    background: design-token("color.primary.100");
-    font-weight: 600;
-  }
-  > details {
-    font-size: 10px;
-    padding: 4px;
-  }
-}
-.eventCode {
-  color: design-token("color.neutral.700");
-  font-variant-numeric: tabular-nums;
-  font-size: 10px;
-}
 .forecastControls {
   border-block-start: 1px solid design-token("color.neutral.200");
-  padding-block-start: 14px;
+  padding: 8px 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  h3 {
+    font-size: 12px;
+  }
 }
 .forecastOption {
   display: grid;
   gap: 2px;
-  margin-block-start: 12px;
+  margin-block-start: 0;
   min-inline-size: 0;
   > label {
     align-items: start;
@@ -253,10 +212,10 @@
   font-size: 11px !important;
 }
 .showOptions {
-  display: grid;
-  gap: 10px;
-  padding-block-start: 16px;
-  border-block-start: 1px solid design-token("color.neutral.200");
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 12px;
 }
 .timelinePanel,
 .mapPanel,
@@ -276,10 +235,10 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  padding: 14px 14px 12px;
+  padding: 8px 10px;
   border-block-end: 1px solid design-token("color.neutral.200");
   h3 {
-    font-size: 15px;
+    font-size: 13px;
   }
   .panelMeta {
     font-size: 12px;
@@ -288,35 +247,24 @@
 }
 .columnLabels {
   display: grid;
-  grid-template-columns: 80px minmax(0, 1fr) minmax(126px, 0.52fr);
+  grid-template-columns: 86px minmax(0, 1fr) minmax(116px, 0.48fr);
   gap: 12px;
-  padding: 9px 18px 9px 40px;
+  padding: 5px 16px 5px 48px;
   border-block-end: 1px solid design-token("color.neutral.200");
   font-size: 11px;
   color: design-token("color.neutral.700");
 }
 .timelineScroll {
-  max-block-size: min(78dvh, 780px);
+  max-block-size: min(76dvh, 660px);
   overflow: auto;
   overscroll-behavior: contain;
-  padding: 6px;
+  padding: 2px 4px;
 }
 .timelineFootnote {
-  padding: 10px 14px;
+  padding: 7px 10px;
   font-size: 11px;
   color: design-token("color.neutral.700");
   border-block-start: 1px solid design-token("color.neutral.200");
-}
-.disconnected {
-  margin-block-start: 8px;
-  padding-block-start: 10px;
-  border-block-start: 1px solid design-token("color.neutral.200");
-  summary {
-    cursor: pointer;
-    padding: 5px 8px;
-    font-size: 12px;
-    font-weight: 600;
-  }
 }
 .riskFlags {
   display: flex;
@@ -335,7 +283,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 5px 15px;
-  padding: 9px 12px;
+  padding: 6px 10px;
   border-block-start: 1px solid design-token("color.neutral.200");
   font-size: 11px;
   > span {
@@ -345,14 +293,14 @@
 }
 .inspector {
   grid-area: inspector;
-  align-self: stretch;
+  align-self: start;
 }
 .inspectorHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 12px 16px 10px;
+  padding: 8px 10px 6px;
   h3 {
     font-size: 16px;
     line-height: 1.4;
@@ -378,7 +326,7 @@
   padding-inline: 12px;
   border-block-end: 1px solid design-token("color.neutral.200");
   button {
-    padding: 9px 13px;
+    padding: 6px 10px;
     border: 0;
     border-block-end: 2px solid transparent;
     background: transparent;
@@ -391,8 +339,12 @@
   }
 }
 .inspectorBody {
-  padding: 14px 16px;
-  min-block-size: 210px;
+  padding: 10px;
+  min-block-size: 160px;
+  box-sizing: border-box;
+  max-block-size: 230px;
+  overflow: auto;
+  overscroll-behavior: contain;
   > div {
     display: grid;
     gap: 12px;
@@ -533,17 +485,6 @@
 }
 
 @container investigation-workbench (max-width: 1150px) {
-  .body {
-    grid-template-columns: 176px minmax(0, 1fr) minmax(0, 1fr);
-    gap: 8px;
-    padding: 8px;
-  }
-  .columnLabels {
-    display: none;
-  }
-  .title h2 {
-    font-size: 16px;
-  }
   .headerCounts {
     display: none;
   }
@@ -551,17 +492,10 @@
     padding-inline: 9px;
     font-size: 12px;
   }
-  .sidebar {
-    padding-inline-end: 8px;
-  }
 }
-@container investigation-workbench (max-width: 960px) and (min-width: 761px) {
-  .body {
-    grid-template-columns: 160px minmax(0, 1fr);
-    grid-template-areas: "sidebar timeline" "sidebar map" "sidebar inspector";
-  }
-  .timelineScroll {
-    max-block-size: 420px;
+@container investigation-workbench (max-width: 960px) {
+  .columnLabels {
+    display: none;
   }
 }
 .root[data-narrow="true"] {
@@ -585,7 +519,7 @@
   }
   .body {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "sidebar" "views" "active" "inspector";
+    grid-template-areas: "controls" "views" "active" "inspector";
     gap: 8px;
     padding: 8px;
   }
@@ -613,6 +547,7 @@
   }
   .inspectorBody {
     padding: 12px;
+    max-block-size: none;
   }
   .divergenceLink {
     grid-template-columns: minmax(0, 1fr);

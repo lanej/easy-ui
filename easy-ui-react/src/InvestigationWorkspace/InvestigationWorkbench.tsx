@@ -17,13 +17,10 @@ import {
   type EventTimelineConnectionContext,
   type EventTimelineEvent,
 } from "../EventTimeline";
-import { ConnectionGraph } from "../EventTimeline/ConnectionGraph";
-import { getConnectionGraphLayout } from "../EventTimeline/connectionGraph";
 import { NetworkMap, type NetworkMapProps } from "../NetworkMap";
 import {
   resolveSelection,
   type InvestigationDetailsContext,
-  type InvestigationRecords,
 } from "./selection";
 import {
   normalizeInvestigationGraph,
@@ -104,61 +101,6 @@ function Swatch({ color, dash }: { color: string; dash?: readonly number[] }) {
         strokeDasharray={dash?.join(" ")}
       />
     </svg>
-  );
-}
-
-function BranchList({
-  events,
-  connections,
-  colors,
-  selectedId,
-  onSelect,
-}: {
-  events: readonly EventTimelineEvent[];
-  connections: Required<InvestigationRecords>["connections"];
-  colors: Readonly<Record<string, string>>;
-  selectedId?: string;
-  onSelect: (event: EventTimelineEvent) => void;
-}) {
-  const root = useRef<HTMLDivElement>(null);
-  const buttons = useRef(new Map<string, HTMLButtonElement>());
-  const layout = useMemo(
-    () => getConnectionGraphLayout(events, connections),
-    [events, connections],
-  );
-  return (
-    <div ref={root} className={styles.branchList}>
-      <ol style={{ paddingInlineStart: layout.width }}>
-        {events.map((event, index) => (
-          <li key={event.id}>
-            <button
-              type="button"
-              ref={(node) => {
-                if (node) buttons.current.set(event.id, node);
-                else buttons.current.delete(event.id);
-              }}
-              aria-current={event.id === selectedId ? "true" : undefined}
-              title={`${event.label} · ${event.locationLabel ?? "Location unknown"} · ${event.timeLabel ?? "Time unknown"}`}
-              onClick={() => onSelect(event)}
-            >
-              <span className={styles.eventCode}>
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <span className={styles.branchName}>
-                {event.locationLabel ?? event.label}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ol>
-      <ConnectionGraph
-        events={events}
-        connections={connections}
-        pathColors={colors}
-        rowElements={buttons.current}
-        rootRef={root}
-      />
-    </div>
   );
 }
 
@@ -352,31 +294,31 @@ export function InvestigationWorkbench({
     () => records.events.filter((item) => !item.pathIds?.length),
     [records.events],
   );
-  const disconnectedConnections = useMemo(() => {
-    const ids = new Set(disconnected.map((item) => item.id));
-    return records.connections.filter(
-      (connection) =>
-        ids.has(connection.fromEventId) && ids.has(connection.toEventId),
-    );
-  }, [records.connections, disconnected]);
+  // Focus is emphasis, not a filter: keep forks, rejoins and disjoint histories
+  // in one chronology. Only the explicit unassigned toggle removes any rows.
   const visibleEvents = useMemo(
     () =>
-      records.events.filter((item) =>
-        focused
-          ? item.pathIds?.includes(focused.id)
-          : state.showDisconnected || item.pathIds?.length,
+      records.events.filter(
+        (item) => state.showDisconnected || item.pathIds?.length,
       ),
-    [records.events, focused, state.showDisconnected],
+    [records.events, state.showDisconnected],
   );
   const visibleConnections = useMemo(() => {
     const ids = new Set(visibleEvents.map((item) => item.id));
     return records.connections.filter(
       (connection) =>
-        ids.has(connection.fromEventId) &&
-        ids.has(connection.toEventId) &&
-        (!focused || connection.pathIds?.includes(focused.id)),
+        ids.has(connection.fromEventId) && ids.has(connection.toEventId),
     );
-  }, [records.connections, visibleEvents, focused]);
+  }, [records.connections, visibleEvents]);
+  const relatedIds = useMemo(
+    () =>
+      focused
+        ? visibleEvents
+            .filter((item) => item.pathIds?.includes(focused.id))
+            .map((item) => item.id)
+        : undefined,
+    [visibleEvents, focused],
+  );
   const palette = useMemo(
     () =>
       Object.fromEntries(records.paths.map((path) => [path.id, path.color!])),
@@ -501,13 +443,6 @@ export function InvestigationWorkbench({
     );
     const selected = panel?.querySelector<HTMLElement>('[aria-current="true"]');
     if (!panel || !selected) return;
-    // A map/location selection may target a row inside the closed unassigned
-    // disclosure. Reveal it before measuring without moving keyboard focus.
-    let disclosure = selected.closest("details");
-    while (disclosure && panel.contains(disclosure)) {
-      disclosure.open = true;
-      disclosure = disclosure.parentElement?.closest("details") ?? null;
-    }
     const bounds = panel.getBoundingClientRect();
     const row = selected.getBoundingClientRect();
     if (row.top < bounds.top) panel.scrollTop += row.top - bounds.top - 8;
@@ -619,18 +554,21 @@ export function InvestigationWorkbench({
             if (narrow) setSidebarExpanded(e.currentTarget.open);
           }}
         >
-          <summary>Histories &amp; comparisons</summary>
+          <summary>Histories &amp; display options</summary>
           <div className={styles.sidebarContent}>
             <section aria-label="Histories">
-              <h3>Histories</h3>
-              <p className={styles.muted}>Select a history to focus</p>
               <div className={styles.historyList}>
+                <button
+                  type="button"
+                  className={styles.historyButton}
+                  aria-pressed={!focused}
+                  onClick={() => dispatch({ type: "mode", mode: "overview" })}
+                >
+                  <strong>All histories</strong>
+                </button>
                 {records.paths.map((path) => {
                   const members = records.events.filter((item) =>
                     item.pathIds?.includes(path.id),
-                  );
-                  const pathLinks = records.connections.filter((connection) =>
-                    connection.pathIds?.includes(path.id),
                   );
                   const isFocused = focused?.id === path.id;
                   return (
@@ -642,6 +580,8 @@ export function InvestigationWorkbench({
                       <button
                         type="button"
                         className={styles.historyButton}
+                        aria-label={`${path.label} · ${members.length} observations`}
+                        title="Emphasize this history without hiding other histories"
                         aria-pressed={isFocused}
                         onClick={() =>
                           dispatch({ type: "focus", pathId: path.id })
@@ -652,26 +592,9 @@ export function InvestigationWorkbench({
                           <strong className={styles.historyName}>
                             {path.label}
                           </strong>
-                          <small>
-                            {members.length} observations ·{" "}
-                            {graph.paths.find((item) => item.id === path.id)
-                              ?.kind ?? "candidate"}
-                          </small>
+                          <small aria-hidden="true">{members.length}</small>
                         </span>
                       </button>
-                      <details
-                        className={styles.branchDisclosure}
-                        open={isFocused || undefined}
-                      >
-                        <summary>Branches &amp; observations</summary>
-                        <BranchList
-                          events={members}
-                          connections={pathLinks}
-                          colors={palette}
-                          selectedId={event?.id}
-                          onSelect={selectEvent}
-                        />
-                      </details>
                     </div>
                   );
                 })}
@@ -683,68 +606,9 @@ export function InvestigationWorkbench({
               </div>
             </section>
             <section
-              aria-label="Forecast comparison"
-              className={styles.forecastControls}
-            >
-              <h3>Compare predictions</h3>
-              {!focused ? (
-                <p className={styles.muted}>
-                  Focus a history to reveal its forecasts.
-                </p>
-              ) : !availablePredictions.length ? (
-                <p className={styles.muted}>
-                  No forecasts supplied for {focused.label}.
-                </p>
-              ) : (
-                availablePredictions.map((prediction) => (
-                  <div className={styles.forecastOption} key={prediction.id}>
-                    <Checkbox
-                      isSelected={state.enabledPredictionIds.includes(
-                        prediction.id,
-                      )}
-                      onChange={(enabled) =>
-                        dispatch({
-                          type: "prediction",
-                          id: prediction.id,
-                          enabled,
-                        })
-                      }
-                    >
-                      <span>
-                        <Swatch
-                          color={prediction.color}
-                          dash={prediction.dash ?? [6, 3]}
-                        />
-                        {prediction.label}
-                      </span>
-                    </Checkbox>
-                    {prediction.confidence && (
-                      <span
-                        className={styles.muted}
-                        title={prediction.confidence.description}
-                      >
-                        {prediction.confidence.valueLabel}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      className={styles.textButton}
-                      aria-label={`Compare ${prediction.label}`}
-                      onClick={() =>
-                        dispatch({ type: "compare", id: prediction.id })
-                      }
-                    >
-                      Analyze deviation
-                    </button>
-                  </div>
-                ))
-              )}
-            </section>
-            <section
               className={styles.showOptions}
               aria-label="Display options"
             >
-              <h3>Show</h3>
               <Checkbox
                 isSelected={state.showDisconnected}
                 onChange={(show) => dispatch({ type: "disconnected", show })}
@@ -796,18 +660,12 @@ export function InvestigationWorkbench({
         >
           <header className={styles.panelHeading}>
             <div>
-              <h3>
-                {focused ? (
-                  <>
-                    <Swatch color={focused.color!} />
-                    {focused.label}
-                  </>
-                ) : (
-                  "All reported observations"
-                )}
-              </h3>
+              <h3>All reported observations</h3>
               <span className={styles.panelMeta}>
-                {visibleEvents.length} observations · caller-supplied order
+                {visibleEvents.length} of {records.events.length} observations
+                {focused
+                  ? ` · ${focused.label} emphasized`
+                  : " · all histories"}
               </span>
             </div>
           </header>
@@ -827,6 +685,7 @@ export function InvestigationWorkbench({
               metricsPlacement="inline"
               selectedId={event?.id ?? null}
               selectedConnectionIds={selectedConnectionIds}
+              relatedIds={relatedIds}
               onSelectedIdChange={(eventId) =>
                 dispatch({
                   type: "select",
@@ -836,32 +695,6 @@ export function InvestigationWorkbench({
               renderTrailing={showEventRisks}
               renderConnectionMetrics={connectionEvidence}
             />
-            {focused && state.showDisconnected && disconnected.length > 0 && (
-              <details className={styles.disconnected}>
-                <summary>
-                  Unassigned observations ({disconnected.length})
-                </summary>
-                <EventTimeline
-                  events={disconnected}
-                  connections={disconnectedConnections}
-                  pathColors={palette}
-                  variant="ledger"
-                  size="compact"
-                  ledgerColumns
-                  metricsPlacement="inline"
-                  selectedConnectionIds={selectedConnectionIds}
-                  renderConnectionMetrics={connectionEvidence}
-                  selectedId={event?.id ?? null}
-                  renderTrailing={showEventRisks}
-                  onSelectedIdChange={(eventId) =>
-                    dispatch({
-                      type: "select",
-                      selection: { type: "event", eventId },
-                    })
-                  }
-                />
-              </details>
-            )}
           </div>
           <footer className={styles.timelineFootnote}>
             Connections are supplied relationships, not proof of a traveled
@@ -917,7 +750,7 @@ export function InvestigationWorkbench({
                   }
             }
             controlLabels={{ fitAll: "Fit", ...map.controlLabels }}
-            height={map.height ?? (narrow ? 280 : 350)}
+            height={map.height ?? (narrow ? 260 : 230)}
             controlPlacement={map.controlPlacement ?? "map"}
             connectionStyle="subtle"
             showLegend={false}
@@ -981,7 +814,7 @@ export function InvestigationWorkbench({
             }}
           />
           <div className={styles.legend} aria-label="Map legend">
-            {(focused ? [focused] : records.paths).map((path) => (
+            {records.paths.map((path) => (
               <span key={path.id}>
                 <Swatch
                   color={path.color!}
@@ -1008,6 +841,66 @@ export function InvestigationWorkbench({
               </span>
             ))}
           </div>
+          {focused && (
+            <section
+              aria-label="Forecast comparison"
+              className={styles.forecastControls}
+            >
+              <h3>Compare predictions</h3>
+              {!focused ? (
+                <p className={styles.muted}>
+                  Focus a history to reveal its forecasts.
+                </p>
+              ) : !availablePredictions.length ? (
+                <p className={styles.muted}>
+                  No forecasts supplied for {focused.label}.
+                </p>
+              ) : (
+                availablePredictions.map((prediction) => (
+                  <div className={styles.forecastOption} key={prediction.id}>
+                    <Checkbox
+                      isSelected={state.enabledPredictionIds.includes(
+                        prediction.id,
+                      )}
+                      onChange={(enabled) =>
+                        dispatch({
+                          type: "prediction",
+                          id: prediction.id,
+                          enabled,
+                        })
+                      }
+                    >
+                      <span>
+                        <Swatch
+                          color={prediction.color}
+                          dash={prediction.dash ?? [6, 3]}
+                        />
+                        {prediction.label}
+                      </span>
+                    </Checkbox>
+                    {prediction.confidence && (
+                      <span
+                        className={styles.muted}
+                        title={prediction.confidence.description}
+                      >
+                        {prediction.confidence.valueLabel}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.textButton}
+                      aria-label={`Compare ${prediction.label}`}
+                      onClick={() =>
+                        dispatch({ type: "compare", id: prediction.id })
+                      }
+                    >
+                      Analyze deviation
+                    </button>
+                  </div>
+                ))
+              )}
+            </section>
+          )}
         </section>
         <section
           className={styles.inspector}
@@ -1106,7 +999,12 @@ export function InvestigationWorkbench({
               ? `Selected ${event.label}, ${event.locationLabel ?? "location unknown"}, ${event.timeLabel ?? "time unknown"}`
               : "Selection updated"}
           </div>
-          <div className={styles.inspectorBody}>
+          <div
+            className={styles.inspectorBody}
+            role="region"
+            aria-label="Inspector content"
+            tabIndex={0}
+          >
             <div
               role="tabpanel"
               id={`${tabsId}-event-panel`}

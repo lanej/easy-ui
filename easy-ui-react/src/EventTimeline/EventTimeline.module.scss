@@ -479,25 +479,25 @@
 }
 
 // Column layout is opt-in. The evidence yields first on narrow containers.
-@container event-timeline (min-width: 480px) {
+@container event-timeline (min-width: 420px) {
   .timeline[data-ledger-columns="true"] .item[data-variant="ledger"] {
-    grid-template-columns: minmax(0, 1fr) minmax(126px, 0.52fr);
+    grid-template-columns: minmax(0, 1fr) minmax(116px, 0.48fr);
     align-items: center;
-    min-block-size: 76px;
-    padding-block: 12px;
+    min-block-size: 54px;
+    padding-block: 6px;
     border-block-end: 1px solid design-token("color.neutral.200");
     .ledgerContent {
       grid-column: 1;
       grid-row: 1;
     }
     .ledgerTitle {
-      font-size: 14px;
+      font-size: 13px;
       line-height: 20px;
     }
     .ledgerSelect {
-      grid-template-columns: 80px minmax(0, 1fr);
-      column-gap: 12px;
-      row-gap: 4px;
+      grid-template-columns: 86px minmax(0, 1fr);
+      column-gap: 8px;
+      row-gap: 2px;
       .time {
         grid-column: 1;
         grid-row: 1 / span 3;
@@ -516,7 +516,7 @@
     .ledgerTrailing {
       grid-column: 1;
       grid-row: 2;
-      margin-inline-start: 92px;
+      margin-inline-start: 94px;
       margin-block-start: 4px;
     }
   }

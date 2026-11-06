@@ -89,7 +89,7 @@ export function workbenchMapData(
           paint: {
             "line-color": path.color ?? "#8794a6",
             "line-width": focused === path.id ? 3.5 : 2.5,
-            "line-opacity": active ? 0.95 : 0.18,
+            "line-opacity": active ? 0.95 : 0.55,
             "line-offset": ["get", "offset"],
           },
         },
@@ -104,7 +104,7 @@ export function workbenchMapData(
           paint: {
             "line-color": path.color ?? "#8794a6",
             "line-width": focused === path.id ? 3 : 2,
-            "line-opacity": active ? 0.9 : 0.18,
+            "line-opacity": active ? 0.9 : 0.55,
             "line-offset": ["get", "offset"],
             "line-dasharray": [2, 2],
           },

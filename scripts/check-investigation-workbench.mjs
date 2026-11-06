@@ -22,7 +22,7 @@ const browser = await chromium.launch({
   ],
 });
 const page = await browser.newPage({
-  viewport: { width: 1680, height: 1120 },
+  viewport: { width: 1100, height: 820 },
   deviceScaleFactor: 1,
 });
 page.setDefaultTimeout(20000);
@@ -55,8 +55,8 @@ async function checkHeaderAction() {
 }
 async function open(
   theme = "light",
-  width = 1680,
-  height = 1120,
+  width = 1100,
+  height = 820,
   story = "workbench-deviation",
 ) {
   await page.setViewportSize({ width, height });
@@ -152,6 +152,70 @@ try {
     await checkHeaderAction();
     await accessible();
     await capture(`workbench-${theme}-desktop.png`, theme);
+    const allRows = ledger().locator('ol[data-variant="ledger"] > li');
+    assert.equal(
+      await allRows.count(),
+      11,
+      "Focus must not filter other histories or unassigned observations",
+    );
+    assert.equal(
+      await root().locator("[data-connection-graph]").count(),
+      1,
+      "Use one shared graph, not separate per-history lists",
+    );
+    for (const connection of [
+      "a-transfer-link",
+      "b-transfer-link",
+      "b-out-link",
+      "delivery-link",
+      "c-delivery-link",
+    ]) {
+      assert.equal(
+        await ledger()
+          .locator(
+            `[data-connection-graph] [data-connection-id="${connection}"]`,
+          )
+          .count(),
+        1,
+      );
+    }
+    for (const id of [
+      "accepted",
+      "revisit",
+      "c-accepted",
+      "unassigned-delivery",
+    ]) {
+      assert.equal(
+        await ledger()
+          .locator(`[data-connection-graph] [data-event-id="${id}"]`)
+          .count(),
+        1,
+      );
+    }
+    const graphBounds = await ledger()
+      .locator("[data-connection-graph]")
+      .boundingBox();
+    const ledgerBounds = await ledger().boundingBox();
+    const mapBounds = await map().boundingBox();
+    assert.ok(
+      graphBounds.x - ledgerBounds.x < 12,
+      "Git graph must occupy the leftmost ledger column",
+    );
+    assert.ok(
+      ledgerBounds.x < mapBounds.x &&
+        Math.abs(ledgerBounds.y - mapBounds.y) < 2,
+      "Map and full ledger must remain side by side",
+    );
+    assert.equal(
+      await page
+        .locator('[aria-label="Map legend"]')
+        .getByText(/· history/)
+        .count(),
+      3,
+    );
+    checks.push(
+      `${theme}: all 11 observations, forks, rejoin and independent roots in one leftmost graph at 1100×820`,
+    );
     const before = await camera();
     await ledger()
       .getByRole("button", { name: /In transit Hammond/ })
@@ -169,6 +233,8 @@ try {
     sameCamera(before, await camera());
     await page.getByRole("button", { name: "Overview", exact: true }).click();
     assert.equal(await root().getAttribute("data-mode"), "overview");
+    assert.equal(await allRows.count(), 11);
+    assert.equal(await root().locator("[data-connection-graph]").count(), 1);
     assert.equal(
       await page.getByRole("region", { name: "Map legend" }).count(),
       0,
@@ -228,9 +294,30 @@ try {
       `${theme}: repeated analysis commands reveal inspector; header action; overview/focus/deviation, forecast toggles, camera, edge evidence, keyboard tabs, accessibility`,
     );
   }
-  await open("light", 1680, 1120, "workbench-overview");
+  await open("light", 1100, 820, "workbench-overview");
   await readyMap();
   await capture("workbench-overview.png", "light");
+  for (const width of [960, 1100]) {
+    await open("light", width, 820, "workbench-overview");
+    await readyMap();
+    const ledgerBounds = await ledger().boundingBox();
+    const mapBounds = await map().boundingBox();
+    assert.ok(
+      ledgerBounds.x < mapBounds.x &&
+        Math.abs(ledgerBounds.y - mapBounds.y) < 2,
+    );
+    assert.equal(
+      await ledger().locator('ol[data-variant="ledger"] > li').count(),
+      11,
+    );
+    assert.ok(
+      await root().evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+    );
+    await capture(`workbench-overview-${width}.png`, "light");
+    checks.push(
+      `${width}px: all histories with map alongside, one leftmost graph and no horizontal overflow`,
+    );
+  }
   for (const theme of ["light", "dark"]) {
     await open(theme, 390, 900, "workbench-narrow");
     await checkHeaderAction();
@@ -281,7 +368,7 @@ try {
     checks.push(
       `${theme} 390px: no horizontal overflow, event/map switching preserves camera, persistent inspector`,
     );
-    await open(theme, 1680, 1120, "workbench-assessment-scopes");
+    await open(theme, 1100, 820, "workbench-assessment-scopes");
     await readyMap();
     await page
       .getByText(
@@ -317,17 +404,24 @@ try {
         `${theme} ${width}px: caller header action is visible and operable`,
       );
     }
-    for (const width of [1680, 390]) {
+    for (const width of [1100, 390]) {
       await open(
         theme,
         width,
-        width === 390 ? 900 : 1120,
+        width === 390 ? 900 : 820,
         "workbench-unassigned-evidence",
       );
-      const disclosure = ledger()
-        .getByText("Unassigned observations (2)", { exact: true })
-        .locator("..");
-      assert.equal(await disclosure.getAttribute("open"), null);
+      const sharedLedger = ledger();
+      assert.equal(
+        await sharedLedger.locator('ol[data-variant="ledger"]').count(),
+        1,
+      );
+      assert.equal(
+        await sharedLedger
+          .getByRole("button", { name: /Delivered Santa Rosa/ })
+          .count(),
+        1,
+      );
       await readyMap();
       const before = await camera();
       await page
@@ -348,12 +442,7 @@ try {
         );
         await page.getByRole("button", { name: "Events", exact: true }).click();
       }
-      assert.equal(
-        await disclosure.evaluate((el) => el.open),
-        true,
-        "Selected unassigned visit must reveal its disclosure",
-      );
-      const selected = disclosure.getByRole("button", {
+      const selected = sharedLedger.getByRole("button", {
         name: /Delivered Santa Rosa/,
       });
       assert.equal(await selected.getAttribute("aria-current"), "true");
@@ -369,17 +458,25 @@ try {
       });
       assert.ok(
         visible,
-        "Selected unassigned row must be measured after opening and scrolled inside its panel",
+        "Selected unassigned row must remain inline and scroll inside its panel",
       );
-      await disclosure.getByText("Evidence review", { exact: true }).waitFor();
-      await disclosure.getByText("High risk", { exact: true }).waitFor();
-      await disclosure.getByText("3 h", { exact: true }).first().waitFor();
-      assert.equal(
-        (await disclosure
-          .locator('[data-connection-id="unassigned-report-link"]')
-          .count()) > 0,
-        true,
+      await sharedLedger
+        .getByText("Evidence review", { exact: true })
+        .waitFor();
+      await sharedLedger.getByText("High risk", { exact: true }).waitFor();
+      await sharedLedger.getByText("3 h", { exact: true }).first().waitFor();
+      // Showing the mobile event panel remeasures SVG endpoints asynchronously.
+      // Wait for that exact connection, rather than sampling a transient count.
+      const unassignedConnection = sharedLedger.locator(
+        '[data-connection-id="unassigned-report-link"]',
       );
+      try {
+        await unassignedConnection.first().waitFor({ state: "attached" });
+      } catch (error) {
+        await capture(`missing-connection-${theme}-${width}.png`, theme);
+        throw error;
+      }
+      assert.ok((await unassignedConnection.count()) > 0);
       sameCamera(before, await camera());
       await accessible();
       await capture(
@@ -387,7 +484,7 @@ try {
         theme,
       );
       checks.push(
-        `${theme} ${width}px: map-selected unassigned visit reveals and scrolls its row; explicit connection, metrics and risks survive focus; camera retained`,
+        `${theme} ${width}px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained`,
       );
     }
   }

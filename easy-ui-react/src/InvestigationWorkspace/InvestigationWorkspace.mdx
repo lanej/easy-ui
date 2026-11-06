@@ -24,12 +24,13 @@ For dense tracking investigations, use `variant="ledger"`: compact event-first o
 
 ## Examples
 
-### Three-panel investigation workbench
+### All-history investigation workbench
 
 `InvestigationWorkbench` is an opt-in composition exported from
 `@easypost/easy-ui/InvestigationWorkspace`. Existing workspace and ledger
 presentations are unchanged. The workbench adds a compact header, collapsible
-history/branch navigator, event-and-evidence ledger, map, and Event / Deviation /
+history controls, one Git-style branch graph at the far left of the shared
+event-and-evidence ledger, map, and Event / Deviation /
 Evidence inspector. It uses the native map, timeline, graph, pills and histogram
 components rather than a separate prototype.
 
@@ -64,12 +65,15 @@ independent roots, unassigned deliveries, forks and rejoins remain distinct.
 Invalid IDs, references or mapped endpoints produce visible validation errors,
 not silent repairs. `kind="recorded"` is caller-supplied, not inferred by the UI;
 map line styling still follows each segment's measured/transfer/inferred/planned
-provenance. Large branch graphs retain the relationship-list fallback; focusing
-a history reduces visible graph scope without inventing joins.
+provenance. Large branch graphs retain the relationship-list fallback. Focusing
+a history does not remove other branches or invent joins.
 
 **Focus is separate from selection.** Overview shows all observations and no
-forecasts. Focused history emphasizes one history while retaining other map
-histories as faint context. `map.controls={false}` hides all map controls.
+forecasts. Focused history emphasizes one history without filtering the ledger.
+Every history, independent root and unassigned observation remains in the same
+chronology, with a single continuous Git-style graph as the leftmost column.
+Other map histories and their legend entries remain visible. The All histories
+control returns to the unfiltered overview; it does not clear selection. `map.controls={false}` hides all map controls.
 Deviation analysis compares that history with an
 explicitly chosen forecast. Selecting an event, revisit, location or connection
 does not clear focus or prediction choices, and no such action requests a new
@@ -88,16 +92,16 @@ choosing a replacement or discarding the unavailable selection.
 an incoming connection and both endpoints. It can compose compact
 `DurationDistribution` histograms; `renderEvidence` expands their reference and
 provenance in the persistent inspector. Two incoming edges remain independently
-addressable. Focusing a history retains explicit connections between unassigned
-observations in their separate disclosure, including the same incoming metrics
-and event/connection risk indicators. Connections crossing out of that group are
-not drawn as if both endpoints belonged to it. Risk annotations are supplied as `InvestigationAssessment` records
+addressable. All explicit connections, including those between unassigned
+observations or across histories, retain their incoming metrics and risk indicators
+in the shared ledger. Only the explicit Unassigned observations display toggle
+hides those rows; no other history is silently filtered. Risk annotations are supplied as `InvestigationAssessment` records
 with event, connection or path targets, labels, tone, source and assessment time.
 The Event inspector shows applicable path assessments while that history is
 focused, event assessments for the selected observation, and connection assessments
 for a selected mapped segment or observation's incident connections, always with
 source and assessment time. Event types, path identity, selection and risk remain
-separate. A controlled `state.selection: null` keeps both ledgers unselected until
+separate. A controlled `state.selection: null` keeps the ledger unselected until
 the application accepts a selection change.
 
 **Predictions are not scans.** `InvestigationPrediction` supplies a history ID,
@@ -113,13 +117,18 @@ map callout is shown only for one consistent supplied claim; disagreement is
 reported in text. Missing assessment means unavailable, never zero deviation.
 `renderDeviationEvidence` provides application-owned comparison charts.
 
+The examples are capped at 1100px, with a 230px map beside the ledger and a
+scrollable inspector beneath it. Desktop validation uses 1100 × 820 and 960 × 820
+viewports rather than an oversized desktop capture. Histograms stay in compact
+connection-evidence rows; the inspector retains the full reference.
+
 At narrow widths, the history controls collapse and Events / Map buttons switch
 between the same mounted views. Widening with focus on Events or Map moves focus
 to its retained panel. Resize handling never takes focus or view choice from a
 sibling workbench. The inspector remains in normal page flow.
 Inspector tabs support arrow keys and Home/End. Selection stays visible inside
-the ledger's own scroll region; selecting an unassigned visit reveals its
-disclosure before scrolling without moving keyboard focus. Caller-owned `actions`
+the ledger's own scroll region without moving keyboard focus. Unassigned visits
+are ordinary visible rows, not a closed secondary list. Caller-owned `actions`
 remain visible and wrap in the header at all widths; only observation/history
 counts are omitted below 1150px. The Data notes action demonstrates this in the
 examples. Selection changes preserve map geometry/overlay references and the

@@ -329,7 +329,7 @@ export function InvestigationWorkbenchExample({
   }, [updatePaint]);
   const themedGraph = useMemoGraph(scheme, withUnassignedEvidence);
   return (
-    <div className={styles.example} style={{ maxWidth: narrow ? 390 : 1680 }}>
+    <div className={styles.example} style={{ maxWidth: narrow ? 390 : 1100 }}>
       <InvestigationWorkbench
         graph={themedGraph}
         title="Parcel investigation"

@@ -308,7 +308,7 @@ describe("workbench state", () => {
     );
     expect(state.focusedPathId).toBe("a");
   });
-  it("retains shared selection when switching histories, but does not select an arbitrary event", () => {
+  it("retains event selection across history focus, including observations on other histories", () => {
     const selected = {
       ...initial,
       selection: { type: "event" as const, eventId: "origin" },
@@ -324,7 +324,7 @@ describe("workbench state", () => {
         records,
         predictions,
       ).selection,
-    ).toEqual({ type: "path", pathId: "b" });
+    ).toEqual({ type: "event", eventId: "return" });
   });
   it("preserves prediction choices across overview and selects an applicable comparison", () => {
     const focused = reduce(

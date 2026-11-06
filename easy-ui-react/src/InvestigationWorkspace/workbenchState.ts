@@ -45,11 +45,7 @@ export function reduceInvestigationWorkbench(
     if (!records.paths?.some((path) => path.id === action.pathId)) return state;
     const eventId = state.selection?.eventId;
     const retained =
-      eventId &&
-      records.events.some(
-        (event) =>
-          event.id === eventId && event.pathIds?.includes(action.pathId),
-      );
+      eventId && records.events.some((event) => event.id === eventId);
     return {
       ...state,
       mode: "focused",
