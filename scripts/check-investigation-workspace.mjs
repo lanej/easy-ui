@@ -556,6 +556,60 @@ async function checkLedger() {
     );
   }
 
+  async function expectPathColors(theme) {
+    const palette =
+      theme === "dark"
+        ? { a: "#83a8ff", b: "#c4a1ff", c: "#5fd3c6" }
+        : { a: "#2563eb", b: "#7c3aed", c: "#087f8c" };
+    for (const [id, color] of Object.entries(palette)) {
+      const stripes = graph().locator(`path[data-path-id="${id}"]`);
+      assert(
+        (await stripes.count()) > 0,
+        `History ${id} has a visible graph color`,
+      );
+      const rgb = `rgb(${[1, 3, 5].map((offset) => parseInt(color.slice(offset, offset + 2), 16)).join(", ")})`;
+      assert.deepEqual(
+        [
+          ...new Set(
+            await stripes.evaluateAll((items) =>
+              items.map((item) => getComputedStyle(item).stroke),
+            ),
+          ),
+        ],
+        [rgb],
+        "Selection preserves the history's graph color",
+      );
+      assert.equal(
+        await histories()
+          .locator(`[data-path-id="${id}"]`)
+          .getAttribute("data-path-color"),
+        color,
+      );
+      const mapColors = await page.evaluate(
+        ({ key, id }) =>
+          window[key]
+            .getStyle()
+            .layers.filter((layer) => layer.id.endsWith(`/path-${id}-dashed`))
+            .map((layer) => layer.paint["line-color"]),
+        { key: mapHandle, id },
+      );
+      assert.deepEqual(
+        mapColors,
+        [color],
+        "Graph, history control and map use the same candidate color",
+      );
+    }
+    assert.deepEqual(
+      await graph()
+        .locator('[data-connection-id="shared-link"] path[data-path-id]')
+        .evaluateAll((items) =>
+          items.map((item) => item.dataset.pathId).sort(),
+        ),
+      ["a", "b"],
+      "A shared graph connection visibly retains both candidate colors",
+    );
+  }
+
   // Keep a limited visual matrix and capture the exact 768px design-comparison
   // width as well as the existing wide and mobile representatives.
   const reviewOnly = process.env.INVESTIGATION_LEDGER_REVIEW_ONLY === "1";
@@ -571,6 +625,7 @@ async function checkLedger() {
       await expectGraph(eventIds, connectionIds, independentRoots);
       await expectCompactLayout(width);
       await expectEvidence("revisit", width !== 390);
+      await expectPathColors(theme);
       await audit(`branching-histories-${theme}-${width}`);
       if (width !== 390 || theme === "light")
         await screenshot(`branching-histories-${theme}-${width}`);
@@ -889,6 +944,183 @@ async function checkLedger() {
   );
   await audit("unassigned-delivery-light-1200");
   await screenshot("unassigned-delivery-light-1200");
+
+  for (const theme of ["light", "dark"]) {
+    await open("predicted-path-comparison", theme, 800, 1300);
+    await expectGraph(eventIds, connectionIds, independentRoots);
+    await expectPathColors(theme);
+    const comparison = root().getByRole("region", {
+      name: "Predicted path comparison",
+      exact: true,
+    });
+    const south = comparison.getByRole("checkbox", {
+      name: "Via Santa Rosa",
+      exact: true,
+    });
+    const central = comparison.getByRole("checkbox", {
+      name: "Via Kansas City",
+      exact: true,
+    });
+    assert((await south.isChecked()) && (await central.isChecked()));
+    const before = await camera();
+    const forecasts = () =>
+      page.evaluate(
+        (key) =>
+          window[key]
+            .getStyle()
+            .layers.filter(
+              (layer) =>
+                layer.id.includes("forecast-a-") &&
+                layer.id.endsWith("/forecast"),
+            )
+            .map((layer) => ({
+              id: layer.id,
+              visible: layer.layout?.visibility !== "none",
+              dash: layer.paint["line-dasharray"],
+            })),
+        mapHandle,
+      );
+    let layers = await forecasts();
+    assert.equal(
+      layers.filter((layer) => layer.visible).length,
+      2,
+      "Both supplied predictions can be overlaid together",
+    );
+    assert.notDeepEqual(
+      layers[0].dash,
+      layers[1].dash,
+      "Alternative predictions retain distinct patterns",
+    );
+    await root()
+      .getByRole("checkbox", { name: "Related only", exact: true })
+      .check();
+    await expectGraph(historyA, historyAConnections, ["accepted"]);
+    await audit(`predicted-path-comparison-${theme}-800`);
+    await screenshot(`predicted-path-comparison-${theme}-800`);
+    await root()
+      .locator('[data-view-panel="map"]')
+      .screenshot({
+        path: `${output}/predicted-path-map-${theme}-800.png`,
+        scale: "css",
+      });
+    await root()
+      .getByRole("checkbox", { name: "Related only", exact: true })
+      .uncheck();
+    await south.focus();
+    await page.keyboard.press("Space");
+    await waitForMap();
+    layers = await forecasts();
+    assert.equal(
+      layers.filter((layer) => layer.visible).length,
+      1,
+      "Forecast visibility controls are independent",
+    );
+    assert.equal(
+      await timeline().getByRole("button").count(),
+      11,
+      "Predictions do not fabricate timeline observations",
+    );
+    await details()
+      .getByRole("button", { name: "Next event", exact: true })
+      .click();
+    assert(
+      await comparison.isVisible(),
+      "Stepping within a focused candidate retains its comparison",
+    );
+    assert(!(await south.isChecked()) && (await central.isChecked()));
+    await histories().getByRole("button", { name: "B", exact: true }).click();
+    assert.equal(
+      await comparison.count(),
+      0,
+      "A's predictions are hidden while inspecting B",
+    );
+    await waitForMap();
+    assert.equal(
+      (await forecasts()).filter((layer) => layer.visible).length,
+      0,
+    );
+    await histories().getByRole("button", { name: "A", exact: true }).click();
+    assert(
+      !(await south.isChecked()) && (await central.isChecked()),
+      "Returning to A retains the user's overlay choices",
+    );
+    await histories().getByRole("button", { name: "All", exact: true }).click();
+    await waitForMap();
+    assert.equal(
+      await comparison.count(),
+      0,
+      "All-history overview has no forecast comparison controls",
+    );
+    assert.equal(
+      (await forecasts()).filter((layer) => layer.visible).length,
+      0,
+    );
+    assert.deepEqual(
+      await camera(),
+      before,
+      "Prediction toggles and focused comparison do not reset the camera",
+    );
+    await expectGraph(eventIds, connectionIds, independentRoots);
+    checks.push(`focused-predictions-${theme}-scope-visibility-camera`);
+  }
+  await open("predicted-path-comparison-narrow", "light", 390, 900);
+  await showMap();
+  const narrowComparison = root().getByRole("region", {
+    name: "Predicted path comparison",
+    exact: true,
+  });
+  assert(await narrowComparison.isVisible());
+  const narrowBefore = await camera();
+  await narrowComparison
+    .getByRole("checkbox", { name: "Via Santa Rosa", exact: true })
+    .uncheck();
+  await page.getByRole("tab", { name: "Event history", exact: true }).click();
+  await page.getByRole("tab", { name: "Map", exact: true }).click();
+  await waitForMap();
+  assert(
+    !(await narrowComparison
+      .getByRole("checkbox", { name: "Via Santa Rosa", exact: true })
+      .isChecked()),
+  );
+  assert.deepEqual(
+    await camera(),
+    narrowBefore,
+    "Narrow prediction controls preserve overlay choice and camera across views",
+  );
+  await audit("predicted-path-comparison-narrow-map");
+  await screenshot("predicted-path-comparison-light-390-map");
+  await open("branching-histories", "light", 800, 1200);
+  await page.emulateMedia({ forcedColors: "active" });
+  const forced = await graph().evaluate((svg) => {
+    const systemColor = (name) => {
+      const probe = document.createElement("span");
+      probe.style.color = name;
+      document.body.append(probe);
+      const color = getComputedStyle(probe).color;
+      probe.remove();
+      return color;
+    };
+    return {
+      shared: getComputedStyle(svg.querySelector('[data-event-id="accepted"]'))
+        .stroke,
+      selected: getComputedStyle(svg.querySelector('[data-event-id="revisit"]'))
+        .stroke,
+      text: systemColor("CanvasText"),
+      highlight: systemColor("Highlight"),
+    };
+  });
+  assert.equal(
+    forced.shared,
+    forced.text,
+    "Unselected shared nodes use system text in forced colors",
+  );
+  assert.equal(
+    forced.selected,
+    forced.highlight,
+    "Selected colored nodes use system highlight in forced colors",
+  );
+  await page.emulateMedia({ forcedColors: "none" });
+  checks.push("candidate-colors-forced-color-equivalent");
 }
 
 async function checkDefault() {

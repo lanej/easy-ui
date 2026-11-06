@@ -10,6 +10,8 @@ export type InvestigationPath = {
   label: string;
   segmentIds: readonly string[];
   description?: string;
+  /** Stable caller-supplied candidate identity color, using a literal MapLibre paint color. */
+  color?: string;
 };
 
 /** An explicit candidate relationship between observations, independent of geography. */

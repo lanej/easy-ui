@@ -6,10 +6,29 @@ export type EventTimelineConnection = {
   id: string;
   fromEventId: string;
   toEventId: string;
+  /** Explicit candidate memberships; optional pathColors key into these IDs. */
   pathIds?: readonly string[];
   /** Additional caller-owned context; endpoint identities remain available. */
   label?: string;
 };
+
+/** Resolve only supplied memberships; an unmapped shared membership stays present. */
+export function resolveConnectionGraphMemberships(
+  pathIds: readonly string[] | undefined,
+  pathColors: Readonly<Record<string, string>> | undefined,
+): { pathId: string; color?: string }[] {
+  return Array.from(new Set(pathIds ?? []), (pathId) => {
+    const supplied =
+      pathColors && Object.prototype.hasOwnProperty.call(pathColors, pathId)
+        ? pathColors[pathId]
+        : undefined;
+    return {
+      pathId,
+      color:
+        typeof supplied === "string" ? supplied.trim() || undefined : undefined,
+    };
+  });
+}
 
 export type ConnectionGraphNode = {
   eventId: string;

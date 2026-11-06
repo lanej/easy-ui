@@ -24,23 +24,40 @@
 }
 
 .rail {
-  stroke: design-token("color.neutral.400");
+  stroke: var(--connection-path-color, #{design-token("color.neutral.400")});
   stroke-width: 1.5;
 }
 
-.edge[data-selected="true"] .rail {
-  stroke: design-token("color.primary.600");
+.edge[data-colored="true"] .rail {
   stroke-width: 2;
+}
+
+.edge[data-shared="true"] .rail {
+  // Complementary dash phases meet cleanly without one color covering the next.
+  stroke-linecap: butt;
+}
+
+.edge[data-selected="true"] .rail {
+  stroke: var(--connection-path-color, #{design-token("color.primary.600")});
+  stroke-width: 2;
+}
+
+.edge[data-colored="true"][data-selected="true"] .rail {
+  stroke-width: 3;
 }
 
 .node {
   fill: design-token("color.neutral.000");
-  stroke: design-token("color.neutral.500");
+  stroke: var(--connection-path-color, #{design-token("color.neutral.500")});
   stroke-width: 1.5;
 
   &[data-selected="true"] {
-    stroke: design-token("color.primary.600");
+    stroke: var(--connection-path-color, #{design-token("color.primary.600")});
     stroke-width: 2;
+  }
+
+  &[data-shared="true"] {
+    stroke: design-token("color.neutral.500");
   }
 }
 
@@ -103,7 +120,8 @@
     stroke: Canvas;
   }
 
-  .node {
+  .node,
+  .node[data-shared="true"] {
     fill: Canvas;
     stroke: CanvasText;
   }

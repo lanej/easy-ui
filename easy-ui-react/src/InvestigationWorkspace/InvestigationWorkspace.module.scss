@@ -27,6 +27,25 @@
   gap: 6px;
   min-inline-size: 0;
 }
+.pathSwatch {
+  display: inline-block;
+  inline-size: 8px;
+  block-size: 8px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+.pathComparison {
+  min-inline-size: 0;
+  padding: design-token("space.3") design-token("space.4");
+  border-block-start: 1px solid design-token("color.neutral.200");
+}
+
+@media (forced-colors: active) {
+  .pathSwatch {
+    outline: 1px solid CanvasText;
+  }
+}
 .layout {
   display: grid;
   grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.4fr);

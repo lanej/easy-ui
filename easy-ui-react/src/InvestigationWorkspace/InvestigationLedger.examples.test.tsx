@@ -193,11 +193,25 @@ it("retains the engine style, selection, and records through repeated OS and exp
       "events",
       "locations",
       "segments",
-      "paths",
       "connections",
     ] as const) {
       expect(currentProps()[key]).toBe(records[key]);
     }
+    // Candidate identity and membership remain stable while the supplied
+    // presentation colors follow the theme on the same map instance.
+    const pathRecords = (props: InvestigationWorkspaceProps) =>
+      props.paths?.map(({ id, label, segmentIds, description }) => ({
+        id,
+        label,
+        segmentIds,
+        description,
+      }));
+    expect(pathRecords(currentProps())).toEqual(pathRecords(records));
+    expect(currentProps().paths?.map((path) => path.color)).toEqual(
+      scheme === "dark"
+        ? ["#83a8ff", "#c4a1ff", "#5fd3c6"]
+        : ["#2563eb", "#7c3aed", "#087f8c"],
+    );
   };
   for (const dark of [true, false, true, false]) {
     preference.change(dark);
@@ -251,6 +265,52 @@ it.each([
     expectPalette(expected);
   },
 );
+
+it("keeps forecasts optional and scoped to one candidate without adding observations", () => {
+  mockSystemPreference(false);
+  render(
+    <ThemeProvider colorScheme="light">
+      <InvestigationLedgerExample withPredictions />
+    </ThemeProvider>,
+  );
+  const original = currentProps();
+  const forecasts = original.map.overlays!;
+  expect(forecasts).toHaveLength(2);
+  expect(forecasts.every((overlay) => overlay.visible)).toBe(true);
+  expect(forecasts.map((overlay) => overlay.layers[0])).toEqual([
+    expect.objectContaining({
+      paint: expect.objectContaining({
+        "line-color": "#2563eb",
+        "line-dasharray": [6, 3],
+      }),
+    }),
+    expect.objectContaining({
+      paint: expect.objectContaining({
+        "line-color": "#2563eb",
+        "line-dasharray": [1, 3],
+      }),
+    }),
+  ]);
+  act(() => currentProps().onSelectionChange({ type: "path", pathId: "b" }));
+  expect(currentProps().map.overlays).toEqual([]);
+  act(() =>
+    currentProps().onSelectionChange({
+      type: "path",
+      pathId: "a",
+      eventId: "a-transit",
+    }),
+  );
+  expect(currentProps().map.overlays?.every((overlay) => overlay.visible)).toBe(
+    true,
+  );
+  act(() =>
+    currentProps().onSelectionChange({ type: "event", eventId: "revisit" }),
+  );
+  expect(currentProps().map.overlays).toEqual([]);
+  expect(currentProps().events).toBe(original.events);
+  expect(currentProps().connections).toBe(original.connections);
+  expect(currentProps().map.mapStyle).toBe(original.map.mapStyle);
+});
 
 it.each([
   ["light", "light"],

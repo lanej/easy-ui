@@ -12,6 +12,27 @@
   min-inline-size: 0;
 }
 
+.pathLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-block-end: 12px;
+  font-size: 12px;
+
+  > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.pathSwatch {
+  display: inline-block;
+  inline-size: 9px;
+  block-size: 9px;
+  border-radius: 50%;
+}
+
 .comparison {
   display: grid;
   gap: 20px;

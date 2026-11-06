@@ -63,7 +63,7 @@ The ledger puts `event.label` first, followed by `event.locationLabel` and the o
 
 Supplying `connections`, including an empty array, replaces the timeline's ordinary sequential connector. Omitting it retains the existing chronological presentation. The graph draws only forward relationships in the supplied row order. Backward links, self-links, and endpoints outside a filtered view remain in the accessible relationship list with an explanation. More than four simultaneous rails use that complete list instead of compressing unrelated connections together. The graph is a candidate relationship view; it does not establish a physical parcel split or a confirmed route.
 
-The ledger defaults map connections to a subdued theme color, uses `connectionStyle="subtle"`, and hides ordinary labels until a location is selected. Caller-supplied segment colors, connection style, and `labelMinZoom` values remain authoritative. With explicit connections, selecting an event highlights only its incident event relationships and their supplied `segmentId` mappings; path selection highlights the candidate's supplied segments. Selection never moves the camera.
+Without a candidate palette, the ledger defaults map connections to a subdued theme color. It uses `connectionStyle="subtle"` and hides ordinary labels until a location is selected. Caller-supplied segment colors, connection style, and `labelMinZoom` values remain authoritative. With explicit connections, selecting an event highlights only its incident event relationships and their supplied `segmentId` mappings; path selection highlights the candidate's supplied segments. Selection never moves the camera.
 
 <Canvas of={Stories.CompactLedger} />
 <Canvas of={Stories.UnassignedDelivery} />
@@ -71,6 +71,38 @@ The ledger defaults map connections to a subdued theme color, uses `connectionSt
 The ledger example's local basemap follows the active theme, including live OS preference changes for `system` and `inverted`. It updates the existing basemap's paint to retain the map camera, overlays, and selection. This example inverts the surrounding theme; choose System in the toolbar to follow the opposite OS preference. Applications supply their own `map.mapStyle`.
 
 <Canvas of={Stories.BranchingHistoriesInverted} />
+
+### Candidate colors and predicted paths
+
+Give a candidate path an optional `color` to use the same identity color in its control, event relationship graph, and mapped connections:
+
+```tsx
+const candidateHistories = [
+  {
+    id: "a",
+    label: "A",
+    color: "#2563eb",
+    segmentIds: ["shared", "a-transfer"],
+  },
+  {
+    id: "b",
+    label: "B",
+    color: "#7c3aed",
+    segmentIds: ["shared", "b-transfer"],
+  },
+];
+```
+
+Use literal MapLibre-compatible colors and supply the appropriate palette for the active theme. Colors identify caller-supplied membership and remain stable while selection changes emphasis. Shared mapped geometry displays parallel candidate strokes from one canonical segment; inferred and planned connections keep their dashes. A shared connection with only some candidate colors retains a muted stroke for each uncolored member. Shared graph links show their supplied candidate colors together, while shared event nodes remain neutral. An explicit `segment.color` takes precedence on the map. The graph derives its palette from `paths` by default; `timeline.pathColors` can override individual graph colors without changing the map or controls. Omit both palettes to retain the existing uncolored presentation.
+
+With a candidate palette, location markers use the union of explicit `event.pathIds` across all supplied events at that `locationId`. A location with exactly one colored candidate uses that color; shared, unassigned, or uncolored membership stays neutral. This makes short connections discoverable through their endpoints without inferring a candidate from nearby geometry. Selecting one visit does not recolor the location or hide another visit's membership. Explicit location `color` remains authoritative.
+
+`renderPathComparison(context)` provides optional controls or a legend immediately below the map. The workspace calls it only for an available focused path, including a path selection with a scoped `eventId`. Selecting an event, location, connection, or all histories removes this content. Return `null` for a candidate with no comparison. Its controls sit outside path and event selection buttons.
+
+The application supplies predicted geometry through existing `map.overlays` and controls its visibility. Keep those overlays scoped to the same focused candidate; the workspace does not create, filter, or score forecasts. This example focuses A and offers two independently visible synthetic alternatives with an explicit as-of time and source. They add no observations to the timeline and compute no deviation or confidence score. Changing their visibility preserves the selected event and map camera.
+
+<Canvas of={Stories.PredictedPathComparison} />
+<Canvas of={Stories.PredictedPathComparisonNarrow} />
 
 ### Assessment placement
 
@@ -121,7 +153,7 @@ const [selection, setSelection] = useState<InvestigationSelection>(null);
 
 Selection is `null`, `{type: "event", eventId}`, `{type: "location", locationId}`, `{type: "path", pathId}`, or `{type: "segment", segmentId}`. Location, path, and segment selections may include `eventId` for scoped stepping. Selecting a member event retains that scope; selecting an unrelated event switches to event selection. Callbacks request a change; only the caller updates the controlled value.
 
-Events use the timeline's stable IDs, `locationId`, and optional `pathIds`. Candidate paths have stable `id`, `label`, optional `description`, and `segmentIds` referencing supplied map connections. No timestamps are sorted and no duplicate descriptions are collapsed. A path choice highlights supplied connections and related timeline rows. “Related only” filters that same event list while preserving caller order and the active scope. Event selection highlights its location and all supplied candidate memberships. Shared-connection selection reports how many candidate paths share the connection. The timeline highlights events across those paths, without asserting those events occurred on the selected connection. Events with identical occurrence labels expose supplied receipt times; these are also associated with the selection buttons for screen readers. The inspector retains the location/path/connection scope and position while stepping, and never duplicates the event list.
+Events use the timeline's stable IDs, `locationId`, and optional `pathIds`. Candidate paths have stable `id`, `label`, optional `description` and `color`, and `segmentIds` referencing supplied map connections. No timestamps are sorted and no duplicate descriptions are collapsed. A path choice highlights supplied connections and related timeline rows. “Related only” filters that same event list while preserving caller order and the active scope. Event selection highlights its location and all supplied candidate memberships. Shared-connection selection reports how many candidate paths share the connection. The timeline highlights events across those paths, without asserting those events occurred on the selected connection. Events with identical occurrence labels expose supplied receipt times; these are also associated with the selection buttons for screen readers. The inspector retains the location/path/connection scope and position while stepping, and never duplicates the event list.
 
 <Canvas of={Stories.LinkedSelection} />
 

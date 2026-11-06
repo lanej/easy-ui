@@ -9,6 +9,7 @@ import {
   connectionGraphEdgePath,
   connectionGraphLaneX,
   getConnectionGraphLayout,
+  resolveConnectionGraphMemberships,
   type ConnectionGraphOmission,
   type EventTimelineConnection,
 } from "./connectionGraph";
@@ -19,12 +20,15 @@ type Observation = {
   label: string;
   locationLabel?: string;
   timeLabel?: string;
+  pathIds?: readonly string[];
 };
 
 export type ConnectionGraphProps = {
   events: readonly Observation[];
   connections: readonly EventTimelineConnection[];
   selectedConnectionIds?: readonly string[];
+  /** Stable CSS colors for explicit memberships; no color or topology is inferred. */
+  pathColors?: Readonly<Record<string, string>>;
   /** Native event buttons supply the headline centers, including wrapped rows. */
   rowElements: ReadonlyMap<string, HTMLElement>;
   /** Positioned ancestor shared by the event list and this decorative layer. */
@@ -51,6 +55,7 @@ export function ConnectionGraph({
   events,
   connections,
   selectedConnectionIds,
+  pathColors,
   rowElements,
   rootRef,
 }: ConnectionGraphProps) {
@@ -59,6 +64,12 @@ export function ConnectionGraph({
     [events, connections],
   );
   const selected = new Set(selectedConnectionIds);
+  const eventMemberships = new Map(
+    events.map((event) => [
+      event.id,
+      resolveConnectionGraphMemberships(event.pathIds, pathColors),
+    ]),
+  );
   const highlightedEvents = new Set(
     connections.flatMap((connection) =>
       selected.has(connection.id)
@@ -168,11 +179,34 @@ export function ConnectionGraph({
             .map((edge) => {
               const path = connectionGraphEdgePath(edge, geometry.centers);
               if (!path) return null;
+              const memberships = resolveConnectionGraphMemberships(
+                edge.connection.pathIds,
+                pathColors,
+              );
+              const hasColor = memberships.some(
+                (membership) => membership.color,
+              );
+              const shared = hasColor && memberships.length > 1;
+              // With no resolved colors, retain the original continuous rail.
+              // A partial palette keeps a default-colored slice for each missing member.
+              const paints = hasColor
+                ? memberships
+                : [
+                    {
+                      pathId:
+                        memberships.length === 1
+                          ? memberships[0].pathId
+                          : undefined,
+                      color: undefined,
+                    },
+                  ];
               return (
                 <g
                   key={edge.connection.id}
                   data-connection-id={edge.connection.id}
                   data-selected={selected.has(edge.connection.id) || undefined}
+                  data-colored={hasColor || undefined}
+                  data-shared={shared || undefined}
                   className={styles.edge}
                 >
                   <path
@@ -180,17 +214,39 @@ export function ConnectionGraph({
                     d={path}
                     vectorEffect="non-scaling-stroke"
                   />
-                  <path
-                    className={styles.rail}
-                    d={path}
-                    vectorEffect="non-scaling-stroke"
-                  />
+                  {paints.map((membership, index) => (
+                    <path
+                      key={membership.pathId ?? "default"}
+                      className={styles.rail}
+                      d={path}
+                      vectorEffect="non-scaling-stroke"
+                      data-path-id={pathColors ? membership.pathId : undefined}
+                      data-path-color={membership.color}
+                      strokeDasharray={
+                        shared ? `6 ${6 * (paints.length - 1)}` : undefined
+                      }
+                      strokeDashoffset={shared ? -index * 6 : undefined}
+                      style={
+                        membership.color
+                          ? ({
+                              "--connection-path-color": membership.color,
+                            } as React.CSSProperties)
+                          : undefined
+                      }
+                    />
+                  ))}
                 </g>
               );
             })}
           {layout.nodes.map((node) => {
             const y = geometry.centers.get(node.rowIndex);
             if (y === undefined) return null;
+            const memberships = eventMemberships.get(node.eventId) ?? [];
+            const single =
+              memberships.length === 1 ? memberships[0] : undefined;
+            const shared =
+              memberships.length > 1 &&
+              memberships.some((membership) => membership.color);
             return (
               <circle
                 key={node.eventId}
@@ -201,6 +257,16 @@ export function ConnectionGraph({
                 data-event-id={node.eventId}
                 data-root={node.incomingCount === 0 || undefined}
                 data-selected={highlightedEvents.has(node.eventId) || undefined}
+                data-path-id={pathColors ? single?.pathId : undefined}
+                data-path-color={single?.color}
+                data-shared={shared || undefined}
+                style={
+                  single?.color
+                    ? ({
+                        "--connection-path-color": single.color,
+                      } as React.CSSProperties)
+                    : undefined
+                }
               />
             );
           })}
@@ -230,6 +296,10 @@ export function ConnectionGraph({
           <ul aria-label="Candidate relationships">
             {connections.map((connection) => {
               const reason = omitted.get(connection.id);
+              const memberships = resolveConnectionGraphMemberships(
+                connection.pathIds,
+                pathColors,
+              );
               return (
                 <li
                   key={connection.id}
@@ -241,6 +311,12 @@ export function ConnectionGraph({
                   </span>
                   {connection.label && (
                     <span className={styles.context}>{connection.label}</span>
+                  )}
+                  {memberships.some((membership) => membership.color) && (
+                    <span className={styles.context}>
+                      Candidate memberships:{" "}
+                      {memberships.map(({ pathId }) => pathId).join(", ")}
+                    </span>
                   )}
                   {reason && reason !== "lane-limit" && (
                     <span className={styles.context}>

@@ -7,6 +7,10 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
+import type {
+  ExpressionSpecification,
+  LineLayerSpecification,
+} from "maplibre-gl";
 import { Tabs } from "../Tabs";
 import { Checkbox } from "../Checkbox";
 import { InvestigationDetails } from "./InvestigationDetails";
@@ -55,6 +59,8 @@ export type InvestigationWorkspaceProps = InvestigationRecords & {
   header?: ReactNode;
   /** Caller-owned candidate assessment; separate from the candidate selection button. */
   renderPathTrailing?: (path: InvestigationPath) => ReactNode;
+  /** Optional controls or comparison legend below the map, only while an available candidate path is focused. */
+  renderPathComparison?: (context: InvestigationDetailsContext) => ReactNode;
   /** Reuse the timeline's optional content slots and density. */
   timeline?: Pick<
     EventTimelineProps,
@@ -66,6 +72,7 @@ export type InvestigationWorkspaceProps = InvestigationRecords & {
     | "size"
     | "variant"
     | "emptyLabel"
+    | "pathColors"
   >;
   ariaLabel?: string;
   labels?: Partial<
@@ -103,6 +110,7 @@ export function InvestigationWorkspace({
   variant = "default",
   header,
   renderPathTrailing,
+  renderPathComparison,
   ariaLabel = "Event investigation",
   labels,
 }: InvestigationWorkspaceProps) {
@@ -270,29 +278,192 @@ export function InvestigationWorkspace({
           )
         : context.paths.flatMap((item) => [...item.segmentIds]),
   );
-  // Preserve explicit caller colors and label policies. Quiet defaults are presentation only.
-  const mapLocations = useMemo(
+  const pathColors = useMemo(
     () =>
-      variant === "ledger"
-        ? locations.map((item) => ({
-            ...item,
-            labelMinZoom: item.labelMinZoom ?? 24,
-          }))
-        : locations,
-    [locations, variant],
+      new Map(
+        paths.flatMap((item) => {
+          const color = item.color?.trim();
+          return color ? [[item.id, color] as const] : [];
+        }),
+      ),
+    [paths],
   );
-  const mapSegments = useMemo(
+  const timelinePathColors = useMemo(
     () =>
-      variant === "ledger"
-        ? segments.map((item) => ({ ...item, color: item.color ?? muted }))
-        : segments,
-    [segments, variant, muted],
+      pathColors.size
+        ? { ...Object.fromEntries(pathColors), ...timeline?.pathColors }
+        : timeline?.pathColors,
+    [pathColors, timeline?.pathColors],
   );
-  // Membership is presentation only: do not infer geometry or remove conflicting records.
+  const connectionStyle =
+    map.connectionStyle ?? (variant === "ledger" ? "subtle" : "default");
+  const subtleConnections = connectionStyle === "subtle";
+  // Membership is presentation only: keep the canonical geometry and never
+  // derive event relationships from shared coordinates or candidate color.
   const geometry = useMemo(
     () => segmentData(locations, segments),
     [locations, segments],
   );
+  const candidateGeometry = useMemo(() => {
+    const result = new Map<
+      string,
+      readonly { pathId: string; offset: number }[]
+    >();
+    if (!pathColors.size) return result;
+    for (const feature of geometry.features) {
+      // An explicit segment color owns its appearance, including transparent.
+      if (feature.properties?.color !== undefined) continue;
+      const members = paths.filter((item) =>
+        item.segmentIds.includes(String(feature.id)),
+      );
+      if (!members.some((item) => pathColors.has(item.id))) continue;
+      const dashed = ["inferred", "planned"].includes(
+        feature.properties?.evidence,
+      );
+      const width = dashed
+        ? subtleConnections
+          ? 1.5
+          : 3
+        : Number(feature.properties?.width ?? 4) *
+          (subtleConnections ? 0.5 : 1);
+      // Reserve room for the emphasized width. Selecting a candidate changes
+      // width/opacity, never its color, offset, membership, or coordinates.
+      const spacing = width + (subtleConnections ? 1 : 2) + 1;
+      result.set(
+        String(feature.id),
+        members.map((item, index) => ({
+          pathId: item.id,
+          offset: (index - (members.length - 1) / 2) * spacing,
+        })),
+      );
+    }
+    return result;
+  }, [geometry, paths, pathColors, subtleConnections]);
+  const candidateLayerPaths = useMemo(() => {
+    const ids = new Set(
+      [...candidateGeometry.values()].flatMap((members) =>
+        members.map((item) => item.pathId),
+      ),
+    );
+    return paths.filter((item) => ids.has(item.id));
+  }, [candidateGeometry, paths]);
+  const pathOffsetKey = (pathId: string) =>
+    `path-offset:${encodeURIComponent(pathId)}`;
+  const candidateLayers: MapOverlay["layers"] = candidateLayerPaths.flatMap(
+    (item) => {
+      const offsetKey = pathOffsetKey(item.id);
+      const emphasized: ExpressionSpecification | boolean = path
+        ? path.id === item.id
+        : ["==", ["get", "selected"], true];
+      const baseWidth: ExpressionSpecification = [
+        "*",
+        ["get", "width"],
+        subtleConnections ? 0.5 : 1,
+      ];
+      const paint = {
+        "line-color": pathColors.get(item.id) ?? muted,
+        "line-offset": ["number", ["get", offsetKey], 0],
+        "line-opacity": ["case", emphasized, 1, 0.8],
+      } satisfies NonNullable<LineLayerSpecification["paint"]>;
+      return [
+        {
+          id: `path-${encodeURIComponent(item.id)}-solid`,
+          type: "line",
+          filter: [
+            "all",
+            ["has", offsetKey],
+            [
+              "!",
+              ["in", ["get", "evidence"], ["literal", ["planned", "inferred"]]],
+            ],
+          ],
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: {
+            ...paint,
+            "line-width": [
+              "+",
+              baseWidth,
+              ["case", emphasized, subtleConnections ? 1 : 2, 0],
+            ],
+          },
+        },
+        {
+          id: `path-${encodeURIComponent(item.id)}-dashed`,
+          type: "line",
+          filter: [
+            "all",
+            ["has", offsetKey],
+            ["in", ["get", "evidence"], ["literal", ["planned", "inferred"]]],
+          ],
+          paint: {
+            ...paint,
+            "line-width": [
+              "case",
+              emphasized,
+              subtleConnections ? 2.5 : 5,
+              subtleConnections ? 1.5 : 3,
+            ],
+            "line-dasharray": [2, 2],
+          },
+        },
+      ] satisfies MapOverlay["layers"];
+    },
+  );
+  // Only explicit event memberships establish a location's candidate identity.
+  // All visits participate, so choosing an event never recolors the same place.
+  const mapLocations = useMemo(() => {
+    if (variant !== "ledger" && !pathColors.size) return locations;
+    const members = new Map<string, Set<string>>();
+    if (pathColors.size) {
+      for (const item of events) {
+        if (!item.locationId) continue;
+        const ids = members.get(item.locationId) ?? new Set<string>();
+        item.pathIds?.forEach((pathId) => ids.add(pathId));
+        members.set(item.locationId, ids);
+      }
+    }
+    return locations.map((item) => {
+      const ids = [...(members.get(item.id) ?? [])];
+      return {
+        ...item,
+        ...(variant === "ledger"
+          ? { labelMinZoom: item.labelMinZoom ?? 24 }
+          : {}),
+        ...(pathColors.size
+          ? {
+              color:
+                item.color ??
+                (ids.length === 1 ? (pathColors.get(ids[0]) ?? muted) : muted),
+            }
+          : {}),
+      };
+    });
+  }, [locations, variant, events, pathColors, muted]);
+  const mapSegments = useMemo(
+    () =>
+      !candidateGeometry.size && variant !== "ledger"
+        ? segments
+        : segments.map((item) =>
+            candidateGeometry.has(item.id)
+              ? { ...item, color: "transparent" }
+              : variant === "ledger"
+                ? { ...item, color: item.color ?? muted }
+                : item,
+          ),
+    [segments, variant, muted, candidateGeometry],
+  );
+  const selectedUncolored: ExpressionSpecification = candidateGeometry.size
+    ? [
+        "all",
+        ["==", ["get", "selected"], true],
+        ["!", ["has", "candidateColored"]],
+      ]
+    : ["==", ["get", "selected"], true];
+  const selectionColor: NonNullable<
+    LineLayerSpecification["paint"]
+  >["line-color"] = pathColors.size
+    ? ["coalesce", ["get", "color"], primary]
+    : primary;
   const connections: MapOverlay = {
     id: overlayId,
     label: "Investigation connections",
@@ -302,12 +473,23 @@ export function InvestigationWorkspace({
         ...feature,
         properties: {
           ...feature.properties,
+          ...(candidateGeometry.has(String(feature.id))
+            ? {
+                candidateColored: true,
+                ...Object.fromEntries(
+                  candidateGeometry
+                    .get(String(feature.id))!
+                    .map((item) => [pathOffsetKey(item.pathId), item.offset]),
+                ),
+              }
+            : {}),
           selected: selectedSegments.has(String(feature.id)),
           label: segments.find((item) => item.id === feature.id)?.label,
         },
       })),
     },
     layers: [
+      ...candidateLayers,
       {
         id: "selection",
         type: "line",
@@ -315,7 +497,7 @@ export function InvestigationWorkspace({
           variant === "ledger"
             ? [
                 "all",
-                ["==", ["get", "selected"], true],
+                selectedUncolored,
                 [
                   "!",
                   [
@@ -325,9 +507,9 @@ export function InvestigationWorkspace({
                   ],
                 ],
               ]
-            : ["==", ["get", "selected"], true],
+            : selectedUncolored,
         paint: {
-          "line-color": primary,
+          "line-color": selectionColor,
           "line-width": variant === "ledger" ? 2.5 : 12,
           "line-opacity": variant === "ledger" ? 0.65 : 0.35,
         },
@@ -339,7 +521,7 @@ export function InvestigationWorkspace({
               type: "line",
               filter: [
                 "all",
-                ["==", ["get", "selected"], true],
+                selectedUncolored,
                 [
                   "in",
                   ["get", "evidence"],
@@ -347,7 +529,7 @@ export function InvestigationWorkspace({
                 ],
               ],
               paint: {
-                "line-color": primary,
+                "line-color": selectionColor,
                 "line-width": 2.5,
                 "line-opacity": 0.8,
                 "line-dasharray": [2, 2],
@@ -362,6 +544,10 @@ export function InvestigationWorkspace({
       },
     ],
   };
+  const pathComparison =
+    selection?.type === "path" && path && isAvailable
+      ? renderPathComparison?.(context)
+      : null;
   const chooseEvent = (eventId: string) =>
     onSelectionChange(selectEvent(context, eventId));
   const CandidateButton = variant === "ledger" ? UnstyledButton : Button;
@@ -463,6 +649,15 @@ export function InvestigationWorkspace({
                   onSelectionChange({ type: "path", pathId: item.id })
                 }
               >
+                {pathColors.has(item.id) && (
+                  <span
+                    className={styles.pathSwatch}
+                    style={{ backgroundColor: pathColors.get(item.id) }}
+                    data-path-id={item.id}
+                    data-path-color={pathColors.get(item.id)}
+                    aria-hidden="true"
+                  />
+                )}
                 {item.label}
               </CandidateButton>
               {renderPathTrailing && (
@@ -563,6 +758,7 @@ export function InvestigationWorkspace({
             )}
             <EventTimeline
               {...timeline}
+              pathColors={timelinePathColors}
               variant={
                 timeline?.variant ??
                 (variant === "ledger" ? "ledger" : "timeline")
@@ -653,11 +849,13 @@ export function InvestigationWorkspace({
               (variant === "ledger" ? 225 : isNarrow ? 260 : "fill")
             }
             controlPlacement={map.controlPlacement ?? "map"}
-            connectionStyle={
-              map.connectionStyle ??
-              (variant === "ledger" ? "subtle" : "default")
-            }
+            connectionStyle={connectionStyle}
           />
+          {pathComparison != null && pathComparison !== false && (
+            <div className={styles.pathComparison} data-path-comparison>
+              {pathComparison}
+            </div>
+          )}
           <details className={styles.index}>
             <summary>Browse locations and connections</summary>
             <div className={styles.indexItems}>

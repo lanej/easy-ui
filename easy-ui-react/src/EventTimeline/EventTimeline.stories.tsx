@@ -264,6 +264,20 @@ function BranchingLedgerExample(args: EventTimelineProps) {
   const [selectedId, setSelectedId] = useState<string | null>("east-delivery");
   return (
     <div className={styles.ledgerExample}>
+      {args.pathColors && (
+        <div className={styles.pathLegend} aria-label="Candidate colors">
+          {Object.entries(args.pathColors).map(([pathId, color]) => (
+            <span key={pathId}>
+              <span
+                className={styles.pathSwatch}
+                style={{ backgroundColor: color }}
+                aria-hidden="true"
+              />
+              {pathId}
+            </span>
+          ))}
+        </div>
+      )}
       <EventTimeline
         {...args}
         variant="ledger"
@@ -296,6 +310,15 @@ function BranchingLedgerExample(args: EventTimelineProps) {
 export const BranchingLedger: Story = {
   render: (args) => <BranchingLedgerExample {...args} />,
   args: { variant: "ledger", size: "compact" },
+};
+
+/** Stable candidate colors survive selection; shared observations stay canonical. */
+export const ColoredBranchingLedger: Story = {
+  ...BranchingLedger,
+  args: {
+    ...BranchingLedger.args,
+    pathColors: { north: "#2563eb", east: "#8b5cf6", south: "#0d9488" },
+  },
 };
 
 /** Full caller-owned evidence stays intact at narrow and wide widths. */

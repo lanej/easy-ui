@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import tokens from "@easypost/easy-ui-tokens/js/tokens";
 import type { FeatureCollection } from "geojson";
 import type { Map as MapInstance, StyleSpecification } from "maplibre-gl";
@@ -19,6 +19,11 @@ import {
 } from "./InvestigationLedgerEvidence.examples";
 import geography from "./InvestigationLedger.geography.json";
 import styles from "./InvestigationWorkspace.stories.module.scss";
+import {
+  PredictionComparison,
+  ledgerPredictions,
+  predictionOverlays,
+} from "./InvestigationPredictions.examples";
 
 // Published US Census geometry from https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json.
 // Converted with topojson-client 3.1.0, continental states only, rounded to 0.001 degrees.
@@ -59,6 +64,10 @@ function mapStyle(scheme: "light" | "dark"): StyleSpecification {
 }
 const lightStyle = mapStyle("light");
 const darkStyle = mapStyle("dark");
+const pathPalettes = {
+  light: { a: "#2563eb", b: "#7c3aed", c: "#087f8c" },
+  dark: { a: "#83a8ff", b: "#c4a1ff", c: "#5fd3c6" },
+} as const;
 
 function updateBasemapColors(map: MapInstance, scheme: "light" | "dark") {
   for (const [layer, property, token] of [
@@ -173,10 +182,13 @@ export function InvestigationLedgerExample({
   narrow = false,
   singleHistory = false,
   unassigned = false,
+  withPredictions = false,
 }: {
   narrow?: boolean;
   singleHistory?: boolean;
   unassigned?: boolean;
+  /** Demo preset: start focused on A with both forecasts visible. Other examples offer them on focus, initially off. */
+  withPredictions?: boolean;
 }) {
   const { resolvedColorScheme } = useColorScheme();
   const [systemDark, setSystemDark] = useState(
@@ -217,14 +229,28 @@ export function InvestigationLedgerExample({
       updateBasemapColors(mapInstance.current, colorScheme);
     }
   }, [colorScheme]);
-  const [selection, setSelection] = useState<InvestigationSelection>({
-    type: "event",
-    eventId: unassigned
-      ? "unassigned-delivery"
-      : singleHistory
-        ? "a-transit"
-        : "revisit",
-  });
+  const [selection, setSelection] = useState<InvestigationSelection>(
+    withPredictions
+      ? { type: "path", pathId: "a", eventId: "revisit" }
+      : {
+          type: "event",
+          eventId: unassigned
+            ? "unassigned-delivery"
+            : singleHistory
+              ? "a-transit"
+              : "revisit",
+        },
+  );
+  const [enabledPredictions, setEnabledPredictions] = useState<string[]>(() =>
+    withPredictions ? ledgerPredictions.map((prediction) => prediction.id) : [],
+  );
+  const pathColors = pathPalettes[colorScheme];
+  const focusedPathId =
+    selection?.type === "path" ? selection.pathId : undefined;
+  const forecasts = useMemo(
+    () => predictionOverlays(focusedPathId, pathColors.a, enabledPredictions),
+    [focusedPathId, pathColors.a, enabledPredictions],
+  );
   const records = singleHistory
     ? {
         ...ledgerRecords,
@@ -245,6 +271,14 @@ export function InvestigationLedgerExample({
         ),
       }
     : ledgerRecords;
+  const coloredPaths = useMemo(
+    () =>
+      records.paths.map((path) => ({
+        ...path,
+        color: pathColors[path.id as keyof typeof pathColors],
+      })),
+    [records.paths, pathColors],
+  );
   return (
     <div
       className={styles.ledgerExample}
@@ -252,6 +286,7 @@ export function InvestigationLedgerExample({
     >
       <InvestigationWorkspace
         {...records}
+        paths={coloredPaths}
         variant="ledger"
         header={
           <header className={styles.ledgerHeader}>
@@ -297,6 +332,16 @@ export function InvestigationLedgerExample({
           controlLabels: { fitAll: "Fit" },
           mapStyle: initialStyle.current,
           workerUrl,
+          overlays: forecasts,
+          renderOverlayDetails: ({ feature }) => (
+            <div className={styles.ledgerDetails}>
+              <strong>{feature.properties?.label}</strong>
+              <span>Illustrative forecast · Oct 22, 04:04 UTC</span>
+              <span>
+                Prediction for History A; not a recorded scan or measured route.
+              </span>
+            </div>
+          ),
           controls: {
             fitAll: true,
             latestEvent: false,
@@ -338,6 +383,15 @@ export function InvestigationLedgerExample({
           },
         }}
         renderDetails={LedgerDetails}
+        renderPathComparison={({ path }) =>
+          path?.id === "a" ? (
+            <PredictionComparison
+              color={pathColors.a}
+              enabled={enabledPredictions}
+              onChange={setEnabledPredictions}
+            />
+          ) : null
+        }
       />
       <Text as="p" variant="caption" color="subdued">
         Rows follow reported time. Lines connect supplied candidate

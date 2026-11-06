@@ -326,6 +326,10 @@ An empty array means no relationships; omission retains chronological connectors
 Never derive candidate edges from location or time order. Shared observations
 appear once; revisits require distinct event IDs. Backward or unavailable
 endpoints remain in the relationship list; more than four rails use that list.
+Optional `pathColors` maps explicit path IDs to colors. Single-membership edges
+retain their color through selection; shared edges alternate their supplied
+colors along the same geometry. Labels and the relationship list remain the
+non-color equivalent. Omit the dictionary to retain the neutral presentation.
 See [branching observations](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--branching-ledger).
 
 Use `InvestigationWorkspace` to coordinate timeline, map, and persistent details
@@ -348,12 +352,26 @@ assessment time, and available reference data in `renderDetails`. Event type,
 selection, candidate identity, and risk are separate. Missing assessment is not
 low risk. Keep disjoint roots and delivery claims separate, including unassigned
 observations. Caller map colors and label visibility remain authoritative.
+Supply `InvestigationPath.color` to match graph rails, history-control swatches,
+and map connections. Shared map geometry carries parallel candidate strokes;
+selection changes emphasis without replacing candidate colors. Provide readable
+colors for the active theme; use stable path IDs, not row or array positions.
+Explicit segment colors remain authoritative. `timeline.pathColors` can override
+the derived graph palette independently when needed.
 In a ledger, `metricsPlacement="inline"` gives `renderMetrics` a full-width strip
 below identity and outside the selection button. Compose minimal `EventMetrics`
 with `DurationDistribution` for supplied row references; expand the same bins,
 units, sample count, reference window, and exact values in the shared inspector.
 Interval evidence follows an explicit candidate connection, not the preceding
 time-sorted row. Missing reference data is not a zero value or low risk.
+Use optional `renderPathComparison(context)` for comparison controls or a legend
+below the map when a valid candidate path is focused, including scoped event
+stepping. Supply predicted geometries through the existing `map.overlays` API
+and remove them outside that focus. Keep forecast source/as-of, visibility, and
+line patterns explicit; do not turn predicted paths into recorded events or
+invent deviation scores. The example overlays two independently controlled
+synthetic predictions and preserves the map camera and user's overlay choices.
+See [focused predicted paths](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--predicted-path-comparison).
 See [compact branching investigation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--branching-histories).
 See [linked investigation](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-investigation-investigationworkspace--docs)
 and [candidate comparison](https://lanej.io/easy-ui/storybook/?path=/docs/organisms-investigation-pathcomparison--docs).

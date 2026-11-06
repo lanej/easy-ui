@@ -12,20 +12,28 @@ const events = [
 const forward: EventTimelineConnection[] = [
   { id: "a-c", fromEventId: "a", toEventId: "c" },
 ];
+const uncoloredPalettes: (Readonly<Record<string, string>> | undefined)[] = [
+  undefined,
+  {},
+  { unrelated: "#8250c4" },
+];
 
 function Harness({
   observations = events,
   connections = forward,
   selectedConnectionIds,
+  pathColors,
   anchorVersion = 0,
 }: {
   observations?: readonly {
     id: string;
     label: string;
     locationLabel?: string;
+    pathIds?: readonly string[];
   }[];
   connections?: readonly EventTimelineConnection[];
   selectedConnectionIds?: readonly string[];
+  pathColors?: Readonly<Record<string, string>>;
   anchorVersion?: number;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -53,6 +61,7 @@ function Harness({
         events={observations}
         connections={connections}
         selectedConnectionIds={selectedConnectionIds}
+        pathColors={pathColors}
         rowElements={rowElements.current}
         rootRef={rootRef}
       />
@@ -168,6 +177,141 @@ describe("ConnectionGraph", () => {
     expect(screen.getAllByRole("button")).toHaveLength(3);
     expect(screen.getByText("1 candidate relationship")).toBeInTheDocument();
   });
+
+  it("keeps supplied path colors stable through selection and color changes without rerouting", () => {
+    const observations = events.map((event) => ({ ...event, pathIds: ["A"] }));
+    const connections = [{ ...forward[0], pathIds: ["A"] }];
+    const { container, rerender } = render(
+      <Harness
+        observations={observations}
+        connections={connections}
+        pathColors={{ A: "#2457cc" }}
+      />,
+    );
+    const edge = container.querySelector('[data-connection-id="a-c"]')!;
+    const rail = edge.querySelector('[data-path-id="A"]')!;
+    const geometry = rail.getAttribute("d");
+    expect(rail).toHaveAttribute("data-path-color", "#2457cc");
+    expect(rail.getAttribute("style")).toContain(
+      "--connection-path-color: #2457cc",
+    );
+    expect(rail).not.toHaveAttribute("stroke-dasharray");
+    expect(
+      container.querySelector('circle[data-event-id="a"]'),
+    ).toHaveAttribute("data-path-color", "#2457cc");
+    rerender(
+      <Harness
+        observations={observations}
+        connections={connections}
+        pathColors={{ A: "#2457cc" }}
+        selectedConnectionIds={["a-c"]}
+      />,
+    );
+    expect(edge).toHaveAttribute("data-selected", "true");
+    expect(rail).toHaveAttribute("data-path-color", "#2457cc");
+    expect(rail).toHaveAttribute("d", geometry);
+    rerender(
+      <Harness
+        observations={observations}
+        connections={connections}
+        pathColors={{ A: "#8ba7ff" }}
+        selectedConnectionIds={["a-c"]}
+      />,
+    );
+    expect(rail).toHaveAttribute("data-path-color", "#8ba7ff");
+    expect(rail).toHaveAttribute("d", geometry);
+    expect(screen.getAllByRole("button")).toHaveLength(events.length);
+  });
+
+  it("paints every shared membership on one canonical edge and retains one neutral shared node", () => {
+    const observations = events.map((event) => ({
+      ...event,
+      pathIds: ["A", "B"],
+    }));
+    const connections = [{ ...forward[0], pathIds: ["A", "B"] }];
+    const { container } = render(
+      <Harness
+        observations={observations}
+        connections={connections}
+        pathColors={{ A: "#2457cc", B: "#8250c4" }}
+        selectedConnectionIds={["a-c"]}
+      />,
+    );
+    expect(container.querySelectorAll("[data-connection-id]")).toHaveLength(1);
+    expect(container.querySelectorAll("circle[data-event-id]")).toHaveLength(
+      events.length,
+    );
+    const edge = container.querySelector('[data-connection-id="a-c"]')!;
+    expect(edge).toHaveAttribute("data-shared", "true");
+    const rails = edge.querySelectorAll("[data-path-id]");
+    expect(rails).toHaveLength(2);
+    expect(rails[0]).toHaveAttribute("data-path-color", "#2457cc");
+    expect(rails[1]).toHaveAttribute("data-path-color", "#8250c4");
+    expect(rails[0].getAttribute("d")).toBe(rails[1].getAttribute("d"));
+    expect(rails[0]).toHaveAttribute("stroke-dasharray", "6 6");
+    expect(rails[1]).toHaveAttribute("stroke-dasharray", "6 6");
+    expect(rails[0]).toHaveAttribute("stroke-dashoffset", "0");
+    expect(rails[1]).toHaveAttribute("stroke-dashoffset", "-6");
+    const shared = container.querySelector('circle[data-event-id="a"]')!;
+    expect(shared).toHaveAttribute("data-shared", "true");
+    expect(shared).not.toHaveAttribute("data-path-color");
+    expect(screen.getByText("Candidate memberships: A, B")).toBeInTheDocument();
+  });
+
+  it("retains unmapped shared slices and never infers a node's membership from incident edges", () => {
+    const observations = [
+      { ...events[0], pathIds: ["A", "B"] },
+      events[1],
+      events[2],
+    ];
+    const connections = [{ ...forward[0], pathIds: ["A", "A", "B"] }];
+    const { container } = render(
+      <Harness
+        observations={observations}
+        connections={connections}
+        pathColors={{ A: "#2457cc" }}
+      />,
+    );
+    const edge = container.querySelector('[data-connection-id="a-c"]')!;
+    expect(edge.querySelectorAll("[data-path-id]")).toHaveLength(2);
+    expect(edge.querySelector('[data-path-id="B"]')).not.toHaveAttribute(
+      "data-path-color",
+    );
+    expect(edge.querySelector('[data-path-id="B"]')).toHaveAttribute(
+      "stroke-dasharray",
+      "6 6",
+    );
+    expect(
+      container.querySelector('circle[data-event-id="a"]'),
+    ).toHaveAttribute("data-shared", "true");
+    expect(
+      container.querySelector('circle[data-event-id="c"]'),
+    ).not.toHaveAttribute("data-path-color");
+    expect(
+      container.querySelector('circle[data-event-id="c"]'),
+    ).not.toHaveAttribute("data-path-id");
+  });
+
+  it.each(uncoloredPalettes)(
+    "retains the original continuous rail when no membership resolves a supplied color (%s)",
+    (pathColors) => {
+      const { container } = render(
+        <Harness
+          connections={[{ ...forward[0], pathIds: ["A", "B"] }]}
+          pathColors={pathColors}
+          selectedConnectionIds={["a-c"]}
+        />,
+      );
+      const edge = container.querySelector('[data-connection-id="a-c"]')!;
+      expect(edge).toHaveAttribute("data-selected", "true");
+      expect(edge).not.toHaveAttribute("data-colored");
+      expect(edge).not.toHaveAttribute("data-shared");
+      // One casing and the original one continuous rail.
+      expect(edge.querySelectorAll("path")).toHaveLength(2);
+      expect(edge.querySelector("[stroke-dasharray]")).toBeNull();
+      expect(edge.querySelector("[data-path-color]")).toBeNull();
+    },
+  );
 
   it("lists directed backward and self relationships visibly without drawing reversed edges", () => {
     const { container } = render(

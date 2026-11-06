@@ -89,8 +89,18 @@ import {
 } from "@easypost/easy-ui/EventTimeline";
 
 const connections: EventTimelineConnection[] = [
-  { id: "north", fromEventId: "shared", toEventId: "north-delivery" },
-  { id: "east", fromEventId: "shared", toEventId: "east-delivery" },
+  {
+    id: "north",
+    fromEventId: "shared",
+    toEventId: "north-delivery",
+    pathIds: ["north"],
+  },
+  {
+    id: "east",
+    fromEventId: "shared",
+    toEventId: "east-delivery",
+    pathIds: ["east"],
+  },
 ];
 
 <EventTimeline
@@ -121,6 +131,38 @@ a separate origin-to-delivery history, and an unassigned delivery. Risk remains
 an independent caller-supplied annotation.
 
 <Canvas of={Stories.BranchingLedger} />
+
+### Match candidate colors
+
+Supply `pathColors` with the same stable candidate-to-color mapping used by
+an adjacent map or path controls. The keys match explicit `pathIds` on
+connections and events; colors never create memberships or connections.
+Use valid CSS colors that remain distinguishable in the active theme.
+
+```tsx
+<EventTimeline
+  variant="ledger"
+  events={events}
+  connections={connections}
+  pathColors={{ north: "#2563eb", east: "#8b5cf6", south: "#0d9488" }}
+  selectedConnectionIds={["east"]}
+/>
+```
+
+A single-membership edge keeps its assigned color when selected; selection
+increases stroke width. Shared edges alternate their member colors along one
+canonical connection. A shared edge with an incomplete palette retains a
+default-colored slice for each unmapped membership. Nodes use only the
+event's own `pathIds`: single memberships take their supplied color, while
+shared nodes remain neutral and hollow.
+
+Omitting `pathColors`, or providing no colors for an edge's memberships,
+preserves the original neutral and selected-blue presentation. The
+relationship disclosure also lists the explicit memberships of colored
+connections. Forced-colors mode uses system colors, while relationship text
+and existing selection controls remain available.
+
+<Canvas of={Stories.ColoredBranchingLedger} />
 
 ### Complete timestamps
 

@@ -40,6 +40,8 @@ export type EventTimelineProps = {
   connections?: readonly EventTimelineConnection[];
   /** Emphasize supplied relationships without deriving them from timestamp adjacency. */
   selectedConnectionIds?: readonly string[];
+  /** Stable CSS colors keyed by explicit event/connection pathIds; selection retains them. */
+  pathColors?: Readonly<Record<string, string>>;
 };
 
 /** Evidence-oriented chronology, with controlled selection and explicit caller ordering. */
@@ -61,6 +63,7 @@ export function EventTimeline({
   variant = "timeline",
   connections,
   selectedConnectionIds,
+  pathColors,
 }: EventTimelineProps) {
   const [internalId, setInternalId] = useState<string | null>(
     defaultSelectedId,
@@ -169,6 +172,7 @@ export function EventTimeline({
         events={events}
         connections={connections}
         selectedConnectionIds={selectedConnectionIds}
+        pathColors={pathColors}
         rowElements={buttons.current}
         rootRef={graphRoot}
       />

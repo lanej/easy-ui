@@ -273,6 +273,12 @@ export const CompactLedger: Story = {
 export const BranchingHistories: Story = {
   render: () => <InvestigationLedgerExample />,
 };
+export const PredictedPathComparison: Story = {
+  render: () => <InvestigationLedgerExample withPredictions />,
+};
+export const PredictedPathComparisonNarrow: Story = {
+  render: () => <InvestigationLedgerExample withPredictions narrow />,
+};
 export const BranchingHistoriesInverted: Story = {
   render: () => (
     <ThemeProvider colorScheme="inverted">
