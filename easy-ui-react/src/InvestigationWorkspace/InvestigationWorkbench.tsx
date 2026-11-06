@@ -875,7 +875,9 @@ export function InvestigationWorkbench({
                               "Candidate connection",
                           )}
                         </strong>
-                        {hit.feature.properties?.predictionId ? (
+                        {hit.overlayId === `${id}-selected-points` ? (
+                          <span>Selected observation location</span>
+                        ) : hit.feature.properties?.predictionId ? (
                           <span>
                             Forecast · {String(hit.feature.properties.source)} ·{" "}
                             {String(hit.feature.properties.asOf)}
@@ -1266,6 +1268,26 @@ export function InvestigationWorkbench({
                 <p className={styles.muted}>
                   Select an observation to inspect its references.
                 </p>
+              )}
+              {records.connections.some((connection) => connection.segmentId) && (
+                <details className={styles.relationshipPicker}>
+                  <summary>Mapped connections</summary>
+                  <div>
+                    {records.connections.filter((connection) => connection.segmentId).map((connection) => (
+                      <button
+                        key={connection.id}
+                        type="button"
+                        aria-label={`Inspect connection ${connection.label ?? connection.id}`}
+                        onClick={() => dispatch({
+                          type: "select",
+                          selection: { type: "segment", segmentId: connection.segmentId! },
+                        })}
+                      >
+                        {connection.label ?? connection.id}
+                      </button>
+                    ))}
+                  </div>
+                </details>
               )}
             </div>
           </div>
