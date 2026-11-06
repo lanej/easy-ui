@@ -644,85 +644,6 @@ export function InvestigationWorkbench({
         </div>
       </header>
       <div className={styles.body}>
-        <details
-          className={styles.sidebar}
-          data-workbench-sidebar
-          tabIndex={-1}
-          open={!narrow || sidebarExpanded}
-          onToggle={(e) => {
-            if (narrow) setSidebarExpanded(e.currentTarget.open);
-          }}
-        >
-          <summary>Histories &amp; display options</summary>
-          <div className={styles.sidebarContent}>
-            <section aria-label="Histories">
-              <div className={styles.historyList}>
-                <button
-                  type="button"
-                  className={styles.historyButton}
-                  aria-pressed={!focused}
-                  onClick={() => dispatch({ type: "mode", mode: "overview" })}
-                >
-                  <strong>All histories</strong>
-                </button>
-                {records.paths.map((path) => {
-                  const members = records.events.filter((item) =>
-                    item.pathIds?.includes(path.id),
-                  );
-                  const isFocused = focused?.id === path.id;
-                  return (
-                    <div
-                      key={path.id}
-                      className={styles.history}
-                      data-active={isFocused || undefined}
-                    >
-                      <button
-                        type="button"
-                        className={styles.historyButton}
-                        aria-label={`${path.label} · ${members.length} observations`}
-                        title="Emphasize this history without hiding other histories"
-                        aria-pressed={isFocused}
-                        onClick={() =>
-                          dispatch({ type: "focus", pathId: path.id })
-                        }
-                      >
-                        <Swatch color={path.color!} />
-                        <span>
-                          <strong className={styles.historyName}>
-                            {path.label}
-                          </strong>
-                          <small aria-hidden="true">{members.length}</small>
-                        </span>
-                      </button>
-                    </div>
-                  );
-                })}
-                {!records.paths.length && (
-                  <p className={styles.muted}>
-                    No candidate histories supplied.
-                  </p>
-                )}
-              </div>
-            </section>
-            <section
-              className={styles.showOptions}
-              aria-label="Display options"
-            >
-              <Checkbox
-                isSelected={state.showDisconnected}
-                onChange={(show) => dispatch({ type: "disconnected", show })}
-              >
-                Unassigned observations ({disconnected.length})
-              </Checkbox>
-              <Checkbox
-                isSelected={state.showRisks}
-                onChange={(show) => dispatch({ type: "risks", show })}
-              >
-                Risk indicators ({assessments.length})
-              </Checkbox>
-            </section>
-          </div>
-        </details>
         {narrow && (
           <div
             className={styles.mobileViews}
@@ -768,6 +689,75 @@ export function InvestigationWorkbench({
               </span>
             </div>
           </header>
+          <div className={styles.timelineControls}>
+            <div className={styles.historyList} role="group" aria-label="Candidate histories">
+              <button
+                type="button"
+                className={styles.historyButton}
+                aria-pressed={!focused}
+                onClick={() => dispatch({ type: "mode", mode: "overview" })}
+              >
+                All
+              </button>
+              {records.paths.map((path) => {
+                const short = path.label.split(" · ")[0] || path.id;
+                return (
+                  <button
+                    key={path.id}
+                    type="button"
+                    className={styles.historyButton}
+                    aria-label={`Select all observations in ${path.label}`}
+                    title={path.label}
+                    aria-pressed={focused?.id === path.id}
+                    onClick={() => dispatch({ type: "focus", pathId: path.id })}
+                  >
+                    <Swatch color={path.color!} />
+                    <strong>{showHistoryLabels ? path.label : short}</strong>
+                  </button>
+                );
+              })}
+            </div>
+            <div className={styles.timelineActions}>
+              <button
+                type="button"
+                className={styles.smallControl}
+                aria-pressed={multiSelect}
+                onClick={() => setMultiSelect((value) => !value)}
+              >
+                {multiSelect ? "Selecting" : "Select points"}
+              </button>
+              {selectedEventIds.length > 0 && (
+                <button
+                  type="button"
+                  className={styles.smallControl}
+                  aria-label={`Clear ${selectedEventIds.length} selected observations`}
+                  onClick={() => {
+                    anchorId.current = null;
+                    dispatch({ type: "selectEvents", ids: [], selection: null });
+                  }}
+                >
+                  Clear ({selectedEventIds.length})
+                </button>
+              )}
+              <details className={styles.displayMenu}>
+                <summary>Display</summary>
+                <div className={styles.displayOptions}>
+                  <Checkbox
+                    isSelected={state.showDisconnected}
+                    onChange={(show) => dispatch({ type: "disconnected", show })}
+                  >
+                    Unassigned ({disconnected.length})
+                  </Checkbox>
+                  <Checkbox
+                    isSelected={state.showRisks}
+                    onChange={(show) => dispatch({ type: "risks", show })}
+                  >
+                    Risk indicators ({assessments.length})
+                  </Checkbox>
+                </div>
+              </details>
+            </div>
+          </div>
           <div className={styles.columnLabels} aria-hidden="true">
             <span>Time</span>
             <span>Event</span>
@@ -783,14 +773,11 @@ export function InvestigationWorkbench({
               ledgerColumns
               metricsPlacement="inline"
               selectedId={event?.id ?? null}
+              selectedIds={selectedEventIds}
+              multiSelectable={multiSelect}
               selectedConnectionIds={selectedConnectionIds}
               relatedIds={relatedIds}
-              onSelectedIdChange={(eventId) =>
-                dispatch({
-                  type: "select",
-                  selection: { type: "event", eventId },
-                })
-              }
+              onSelectedIdChange={activateEvent}
               renderTrailing={showEventRisks}
               renderConnectionMetrics={connectionEvidence}
             />
@@ -805,21 +792,30 @@ export function InvestigationWorkbench({
           data-workbench-map
           id={`${id}-map`}
           tabIndex={-1}
-          hidden={narrow && mobileView !== "map"}
+          hidden={narrow && mobileView !== "map" && !mapExpanded}
+          data-expanded={mapExpanded || undefined}
           aria-label="History map"
         >
+          <button
+            ref={expandButton}
+            type="button"
+            className={styles.expandMap}
+            aria-expanded={mapExpanded}
+            aria-label={mapExpanded ? "Restore map to workspace" : "Expand map to full screen"}
+            onClick={() => {
+              if (narrow) setMobileView("map");
+              setMapExpanded((value) => !value);
+            }}
+          >
+            {mapExpanded ? "Restore map" : "Expand map"}
+          </button>
           <NetworkMap
             {...map}
             facilities={mapData.facilities}
             segments={mapData.segments}
             selectedFacilityId={context.location?.id}
             selectedSegmentId={context.segment?.id}
-            onFacilitySelect={(locationId) =>
-              dispatch({
-                type: "select",
-                selection: { type: "location", locationId },
-              })
-            }
+            onFacilitySelect={selectLocation}
             overlays={overlays}
             onOverlaySelect={overlaySelection}
             onMapReady={(instance) => {
@@ -849,7 +845,7 @@ export function InvestigationWorkbench({
                   }
             }
             controlLabels={{ fitAll: "Fit", ...map.controlLabels }}
-            height={map.height ?? (narrow ? 260 : 230)}
+            height={mapExpanded ? "fill" : (map.height ?? (narrow ? 260 : 230))}
             controlPlacement={map.controlPlacement ?? "map"}
             connectionStyle="subtle"
             showLegend={false}
@@ -889,13 +885,7 @@ export function InvestigationWorkbench({
                       </div>
                     ))}
                   {external.overlays.length > 0 &&
-                    (map.renderOverlayHoverDetails
-                      ? map.renderOverlayHoverDetails(external)
-                      : external.selections.map((hit, index) => (
-                          <React.Fragment key={index}>
-                            {map.renderOverlayDetails?.(hit)}
-                          </React.Fragment>
-                        )))}
+                    map.renderOverlayHoverDetails?.(external)}
                 </div>
               );
             }}
@@ -912,34 +902,6 @@ export function InvestigationWorkbench({
               if (divergenceEvent) selectEvent(divergenceEvent);
             }}
           />
-          <div className={styles.legend} aria-label="Map legend">
-            {records.paths.map((path) => (
-              <span key={path.id}>
-                <Swatch
-                  color={path.color!}
-                  dash={
-                    records.segments.some(
-                      (segment) =>
-                        path.segmentIds.includes(segment.id) &&
-                        ["inferred", "planned"].includes(segment.evidence),
-                    )
-                      ? [2, 2]
-                      : undefined
-                  }
-                />
-                {path.label} · history
-              </span>
-            ))}
-            {visiblePredictions.map((prediction) => (
-              <span key={prediction.id}>
-                <Swatch
-                  color={prediction.color}
-                  dash={prediction.dash ?? [6, 3]}
-                />
-                {prediction.label} · forecast
-              </span>
-            ))}
-          </div>
           {focused && (
             <section
               aria-label="Forecast comparison"
@@ -1024,7 +986,9 @@ export function InvestigationWorkbench({
                   context.location?.label ??
                   context.path?.label ??
                   context.segment?.label ??
-                  "Select an observation"}
+                  (selectedEventIds.length > 1
+                    ? `${selectedEventIds.length} observations selected`
+                    : "Select an observation")}
               </h3>
             </div>
             <div
@@ -1124,6 +1088,12 @@ export function InvestigationWorkbench({
                     showEventId
                     showLocation={false}
                   />
+                  {selectedEventIds.length > 1 && (
+                    <p className={styles.notice}>
+                      {selectedEventIds.length} observations selected. Map links
+                      are highlighted only for explicit supplied connections.
+                    </p>
+                  )}
                   {!selectedAssessments.length && (
                     <p className={styles.muted}>
                       No assessment supplied for this observation.
@@ -1298,6 +1268,15 @@ export function InvestigationWorkbench({
               )}
             </div>
           </div>
+          {renderInspectorGraph && (
+            <section className={styles.inspectorGraph} aria-label="Supplemental investigation graph">
+              {renderInspectorGraph({
+                ...context,
+                selectedEventIds,
+                focusedPathId: focused?.id ?? null,
+              })}
+            </section>
+          )}
         </section>
       </div>
     </section>
