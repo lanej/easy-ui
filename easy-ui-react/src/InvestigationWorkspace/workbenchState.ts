@@ -10,6 +10,8 @@ export type InvestigationWorkbenchState = {
   comparisonPredictionId: string | null;
   showDisconnected: boolean;
   showRisks: boolean;
+  /** Explicit observation subset; separate from inspector primary selection. */
+  selectedEventIds?: readonly string[];
 };
 export const initialInvestigationWorkbenchState: InvestigationWorkbenchState = {
   mode: "overview",
@@ -19,11 +21,13 @@ export const initialInvestigationWorkbenchState: InvestigationWorkbenchState = {
   comparisonPredictionId: null,
   showDisconnected: true,
   showRisks: true,
+  selectedEventIds: [],
 };
 export type InvestigationWorkbenchAction =
   | { type: "mode"; mode: InvestigationMode }
   | { type: "focus"; pathId: string }
   | { type: "select"; selection: InvestigationSelection }
+  | { type: "selectEvents"; ids: readonly string[]; selection: InvestigationSelection }
   | { type: "prediction"; id: string; enabled: boolean }
   | { type: "compare"; id: string }
   | { type: "disconnected"; show: boolean }
@@ -36,8 +40,36 @@ export function reduceInvestigationWorkbench(
   records: InvestigationRecords,
   predictions: readonly InvestigationPrediction[],
 ): InvestigationWorkbenchState {
-  if (action.type === "select")
-    return { ...state, selection: action.selection };
+  if (action.type === "selectEvents") {
+    const valid = new Set(records.events.map((event) => event.id));
+    const selectedEventIds = [...new Set(action.ids)].filter((id) =>
+      valid.has(id),
+    );
+    return { ...state, selection: action.selection, selectedEventIds };
+  }
+  if (action.type === "select") {
+    const selection = action.selection;
+    const selectedEventIds = selection
+      ? selection.type === "event"
+        ? [selection.eventId]
+        : selection.type === "path"
+          ? records.events
+              .filter((event) => event.pathIds?.includes(selection.pathId))
+              .map((event) => event.id)
+          : selection.type === "location"
+            ? records.events
+                .filter((event) => event.locationId === selection.locationId)
+                .map((event) => event.id)
+            : records.connections
+                ?.filter((connection) => connection.segmentId === selection.segmentId)
+                .flatMap((connection) => [connection.fromEventId, connection.toEventId]) ?? []
+      : [];
+    return {
+      ...state,
+      selection,
+      selectedEventIds: [...new Set(selectedEventIds)],
+    };
+  }
   if (action.type === "risks") return { ...state, showRisks: action.show };
   if (action.type === "disconnected")
     return { ...state, showDisconnected: action.show };
@@ -50,6 +82,9 @@ export function reduceInvestigationWorkbench(
       ...state,
       mode: "focused",
       focusedPathId: action.pathId,
+      selectedEventIds: records.events
+        .filter((event) => event.pathIds?.includes(action.pathId))
+        .map((event) => event.id),
       selection: retained
         ? { type: "event", eventId }
         : { type: "path", pathId: action.pathId },
