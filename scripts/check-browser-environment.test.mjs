@@ -75,6 +75,10 @@ test("preserves real browser coverage without repeated Linux font installation",
   assert.match(mapBrowser, /shell: bash/);
   assert.match(mapBrowser, /xvfb-run -a npm run capture/);
   assert.match(mapBrowser, /MOZ_WEBRENDER: "1"/);
+  assert.match(
+    mapBrowser,
+    /MAP_BROWSER: firefox\n[^\n]*\n          HOME: \/root/,
+  );
   assert.match(mapBrowser, /npm run audit:safari/);
   assert.doesNotMatch(mapBrowser, /--with-deps/);
   assert.ok(

@@ -83,6 +83,8 @@ jobs:
         run: xvfb-run -a npm run capture
         env:
           MAP_BROWSER: firefox
+          # Firefox requires HOME to belong to the container user.
+          HOME: /root
           LIBGL_ALWAYS_SOFTWARE: "1"
           MOZ_WEBRENDER: "1"
       - if: steps.proof.outputs.reuse != 'true' && matrix.browser == 'safari'
