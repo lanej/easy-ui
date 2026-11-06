@@ -1,0 +1,18 @@
+Open branching-histories light 800
+{"ledgerGeometry":{"surfaceWidth":768,"headerHeight":47.5,"headerToEvents":93.5,"eventColumnWidth":383,"mapColumnWidth":383,"mapHeight":225,"ordinaryRowHeight":64,"transitEvidenceRowHeight":110,"revisitEvidenceRowHeight":110,"finalRowVisible":true}}
+Open branching-histories light 1200
+Open branching-histories light 390
+Open branching-histories dark 800
+{"ledgerGeometry":{"surfaceWidth":768,"headerHeight":47.5,"headerToEvents":93.5,"eventColumnWidth":383,"mapColumnWidth":383,"mapHeight":225,"ordinaryRowHeight":64,"transitEvidenceRowHeight":110,"revisitEvidenceRowHeight":110,"finalRowVisible":true}}
+Open branching-histories dark 1200
+Open branching-histories dark 390
+Open branching-histories light 1200
+Open branching-histories light 390
+Open compact-ledger light 1200
+Open branching-histories-narrow light 1200
+Open unassigned-delivery light 1200
+Open predicted-path-comparison light 800
+Open predicted-path-comparison dark 800
+Open predicted-path-comparison-narrow light 390
+Open branching-histories light 800
+{"checks":24,"violations":0}

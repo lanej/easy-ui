@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "lanej/easy-ui",
+    "revision": "467e7b927d8e9274f11b30a261733b8df2d218d5",
+    "tree": "9a5494d9f9d7347119d4ac02f92d5419e1c72f27",
+    "workingDirectory": "/workspace/scratch/421401351d04/easy-ui",
+    "sourceEditsDuringCapture": false,
+    "identityVerification": "Captured from the final verified working tree. The source commit object was created after capture; the staged tree was compared with the remote source tree and matched exactly. The rendered component inputs were unchanged between the final build, capture, and commit."
+  },
+  "build": {
+    "commands": [
+      "npm run build:storybook",
+      "npm run build:react"
+    ],
+    "renderedArtifact": "storybook-static",
+    "artifactFileCount": 604,
+    "artifactTotalBytes": 18199004,
+    "artifactTreeSha256": "eafd2230b02f6d6275e0ae463b0dcafb5e60b859e1349ff305fbd607a9bc2eec",
+    "artifactTreeHashDefinition": "SHA-256 of UTF-8 lines <file sha256><two spaces><relative POSIX path><newline>, sorted by relative path across every file in storybook-static.",
+    "scope": "Built Storybook component captures using synthetic observations, reference distributions, and predictions. Package checks are separate nonvisual evidence; these images do not assert downstream application adoption."
+  },
+  "capture": {
+    "command": "INVESTIGATION_REPORT_DIR=/workspace/scratch/421401351d04/colored-path-browser-final node /workspace/scratch/421401351d04/run-ledger-browser-checks.mjs",
+    "workingDirectory": "/workspace/scratch/421401351d04/easy-ui",
+    "serverCommand": "python3 -u -m http.server 9019 --bind 127.0.0.1 --directory storybook-static",
+    "checkCommand": "node scripts/check-investigation-workspace.mjs",
+    "checkScriptSha256": "2da205c6d8d18eac4e1c39a39587fcf6e2dc9d256b3de6ea5a02ce51811b77e5",
+    "launcherSha256": "9f6aee6fc60895db7016b52cf64a3c25a046012522be84475b65012f7adf0df5",
+    "launcherSource": "import { spawn } from 'node:child_process';\nimport { openSync, closeSync } from 'node:fs';\nconst cwd='/workspace/scratch/421401351d04/easy-ui';\nconst report=process.env.INVESTIGATION_REPORT_DIR??'/workspace/scratch/421401351d04/ledger-browser-current';\nconst log=openSync('/workspace/scratch/421401351d04/ledger-browser-server.log','w');\nconst server=spawn('python3',['-u','-m','http.server','9019','--bind','127.0.0.1','--directory','storybook-static'],{cwd,stdio:['ignore',log,log]});\ntry{\n for(let i=0;i<50;i++){\n  try{const res=await fetch('http://127.0.0.1:9019/index.json');if(res.ok)break;}catch{}\n  if(i===49)throw new Error('Storybook test server did not start');\n  await new Promise(resolve=>setTimeout(resolve,100));\n }\n const child=spawn(process.execPath,[process.env.LEDGER_BROWSER_SCRIPT??'scripts/check-investigation-workspace.mjs'],{cwd,stdio:'inherit',env:{...process.env,INVESTIGATION_LEDGER_ONLY:'1',INVESTIGATION_REPORT_DIR:report,STORYBOOK_URL:'http://127.0.0.1:9019',PLAYWRIGHT_MODULE:'/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright',BROWSER_EXECUTABLE_PATH:'/workspace/scratch/421401351d04/chromium-runtime/chromium',BROWSER_LAUNCH_ARGS:'[\"--no-sandbox\",\"--disable-dev-shm-usage\"]'}});\n process.exitCode=await new Promise((resolve,reject)=>{child.on('error',reject);child.on('exit',code=>resolve(code??1));});\n}finally{server.kill('SIGTERM');closeSync(log);}\n",
+    "browser": {
+      "name": "Chromium",
+      "version": "133.0.6943.0",
+      "headless": true,
+      "deviceScaleFactor": 1.5,
+      "launchArguments": [
+        "--use-gl=angle",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader",
+        "--no-sandbox",
+        "--disable-dev-shm-usage"
+      ]
+    },
+    "presentationChanges": "None. Actual built components, without injected CSS or generated imagery. Screenshot helper dismisses transient hover/focus popovers. The focused comparison crop is the actual map panel."
+  },
+  "validation": {
+    "result": "pass",
+    "reportFile": "report.json",
+    "reportSha256": "6469d57d587b0b748d91b7cd478ce7838a83af12460e660ea8e266a4ac059ca9",
+    "checkGroups": 24,
+    "checks": [
+      "branching-histories-light-800",
+      "branching-histories-light-1200",
+      "branching-histories-light-390",
+      "branching-histories-light-390-expanded",
+      "branching-histories-light-390-map",
+      "branching-histories-dark-800",
+      "branching-histories-dark-1200",
+      "branching-histories-dark-390",
+      "branching-histories-dark-390-expanded",
+      "branching-histories-dark-390-map",
+      "ledger-explicit-candidate-intervals-and-shared-reference-bins",
+      "ledger-fork-rejoin-disjoint-selection-filter-and-keyboard",
+      "ledger-mobile-selection-camera-and-focus",
+      "branching-histories-light-390x640",
+      "branching-histories-light-390x640-expanded",
+      "compact-ledger-light-1200",
+      "branching-histories-narrow-light-1200",
+      "unassigned-delivery-light-1200",
+      "predicted-path-comparison-light-800",
+      "focused-predictions-light-scope-visibility-camera",
+      "predicted-path-comparison-dark-800",
+      "focused-predictions-dark-scope-visibility-camera",
+      "predicted-path-comparison-narrow-map",
+      "candidate-colors-forced-color-equivalent"
+    ],
+    "runtimeErrors": [],
+    "axeViolations": 0,
+    "verifiedBehavior": [
+      "Canonical explicit event topology including forks, rejoins, revisits, independent origins and an unassigned delivery",
+      "Map, graph, markers and path swatches agree on candidate colors in light and dark themes; shared locations stay neutral",
+      "Inline and inspector histograms use the supplied candidate predecessor and exact reference bins",
+      "Two simultaneous prediction overlays have independent keyboard-operable switches and never create event rows",
+      "Prediction controls and geometry are scoped to the focused candidate; choices survive leaving and returning",
+      "Selection, view switching, prediction changes and keyboard interactions preserve camera and selected-event state",
+      "Narrow and short-screen layouts keep the selected record and inspector accessible",
+      "Forced-colors equivalents preserve shared and selected graph-node distinctions"
+    ],
+    "independentReview": "No remaining actionable findings; final marker membership derivation separately rechecked.",
+    "packageVerification": {
+      "command": "node scripts/check-style-package.mjs",
+      "result": "pass",
+      "publicImports": "CJS + ESM + SSR passed",
+      "typescript": "5.7.3",
+      "resolutions": [
+        "node",
+        "bundler"
+      ],
+      "components": 117,
+      "declarations": 886,
+      "relativeTargets": 1444,
+      "packages": [
+        {
+          "file": "easypost-easy-ui-icons-1.0.0-alpha.61.tgz",
+          "sha256": "8757ab11e88c81c8b3746fd358f4565280d6726d5e457a37c64e3c92306d6c9b",
+          "bytes": 147415
+        },
+        {
+          "file": "publish-directory/easypost-easy-ui-1.0.0-alpha.137.tgz",
+          "sha256": "6c78abd2f2f006cc42741701292e7af9e02b933b784f0440e9b75a41d6991430",
+          "bytes": 1973091
+        },
+        {
+          "file": "source/easypost-easy-ui-1.0.0-alpha.137.tgz",
+          "sha256": "c8dd7e5ad2e9221e1c71b601c5cedec49af0c93cd58fb5a849fdce9fa82a684e",
+          "bytes": 2093366
+        }
+      ],
+      "logFile": "packed-consumer.log",
+      "note": "Existing React useLayoutEffect SSR warnings are present and non-failing."
+    },
+    "storybookCoverage": {
+      "command": "npm run check:storybook",
+      "components": 117,
+      "coveredComponents": 117,
+      "resolvedSkillLinks": 57,
+      "logFile": "storybook-coverage.log"
+    },
+    "limits": [
+      "Browser capture and automation used Chromium; automated accessibility checks do not establish full conformance.",
+      "All example measurements and predictions are synthetic; no inferred shipment truth or forecast model is provided."
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "branching-histories-light-800.png",
+      "storyId": "organisms-investigation-investigationworkspace--branching-histories",
+      "url": "http://127.0.0.1:9019/iframe.html?id=organisms-investigation-investigationworkspace--branching-histories&viewMode=story&globals=colorScheme:light",
+      "theme": "light",
+      "viewportCssPixels": {
+        "width": 800,
+        "height": 1200
+      },
+      "deviceScaleFactor": 1.5,
+      "screenshotScale": "css",
+      "captureTarget": "#storybook-root",
+      "captureMode": "Playwright locator screenshot of actual element bounds",
+      "state": "All histories; revisit selected; compact header, matching candidate colors, inline and full interval histograms.",
+      "caption": "Compact ledger with matching map and graph colors, event types, risk labels, and interval histograms.",
+      "sha256": "8acec0eb383ac853e6a3eaed120e982bea558ec03b3c6a5881164a916a140349",
+      "bytes": 162656,
+      "dimensionsPixels": {
+        "width": 768,
+        "height": 1090
+      },
+      "capturedAtUtc": "2026-11-06T00:47:48.543064+00:00",
+      "visuallyInspected": true,
+      "inspection": "Inspected at readable resolution for loading, clipping, text overlap, candidate colors, risk placement, controls, and selected-state consistency."
+    },
+    {
+      "file": "predicted-path-map-light-800.png",
+      "storyId": "organisms-investigation-investigationworkspace--predicted-path-comparison",
+      "url": "http://127.0.0.1:9019/iframe.html?id=organisms-investigation-investigationworkspace--predicted-path-comparison&viewMode=story&globals=colorScheme:light",
+      "theme": "light",
+      "viewportCssPixels": {
+        "width": 800,
+        "height": 1300
+      },
+      "deviceScaleFactor": 1.5,
+      "screenshotScale": "css",
+      "captureTarget": "[data-view-panel=\"map\"]",
+      "captureMode": "Playwright locator screenshot of actual element bounds",
+      "state": "History A focused; related-only filter active; two synthetic predictions enabled; map-panel capture.",
+      "caption": "Focused history A with two independently selectable predicted paths.",
+      "sha256": "a5111cdfd904e28095c6046c5051e2dc4356750e2cfabab73c4c366a8ab74ed4",
+      "bytes": 47762,
+      "dimensionsPixels": {
+        "width": 383,
+        "height": 483
+      },
+      "capturedAtUtc": "2026-11-06T00:48:16.986017+00:00",
+      "visuallyInspected": true,
+      "inspection": "Inspected at readable resolution for loading, clipping, text overlap, candidate colors, risk placement, controls, and selected-state consistency."
+    },
+    {
+      "file": "branching-histories-dark-800.png",
+      "storyId": "organisms-investigation-investigationworkspace--branching-histories",
+      "url": "http://127.0.0.1:9019/iframe.html?id=organisms-investigation-investigationworkspace--branching-histories&viewMode=story&globals=colorScheme:dark",
+      "theme": "dark",
+      "viewportCssPixels": {
+        "width": 800,
+        "height": 1200
+      },
+      "deviceScaleFactor": 1.5,
+      "screenshotScale": "css",
+      "captureTarget": "#storybook-root",
+      "captureMode": "Playwright locator screenshot of actual element bounds",
+      "state": "All histories; revisit selected; theme-specific candidate palette.",
+      "caption": "Dark theme preserves candidate identity and separate risk labels.",
+      "sha256": "7e26e1199bf23cf0818fdf463fc890acc615c8679cc8c05f092d3e5756e6f07f",
+      "bytes": 165977,
+      "dimensionsPixels": {
+        "width": 768,
+        "height": 1090
+      },
+      "capturedAtUtc": "2026-11-06T00:47:56.749589+00:00",
+      "visuallyInspected": true,
+      "inspection": "Inspected at readable resolution for loading, clipping, text overlap, candidate colors, risk placement, controls, and selected-state consistency."
+    },
+    {
+      "file": "predicted-path-comparison-light-390-map.png",
+      "storyId": "organisms-investigation-investigationworkspace--predicted-path-comparison-narrow",
+      "url": "http://127.0.0.1:9019/iframe.html?id=organisms-investigation-investigationworkspace--predicted-path-comparison-narrow&viewMode=story&globals=colorScheme:light",
+      "theme": "light",
+      "viewportCssPixels": {
+        "width": 390,
+        "height": 900
+      },
+      "deviceScaleFactor": 1.5,
+      "screenshotScale": "css",
+      "captureTarget": "#storybook-root",
+      "captureMode": "Playwright locator screenshot of actual element bounds",
+      "state": "History A focused; Map tab active; Via Santa Rosa unchecked; Via Kansas City checked; inspector collapsed.",
+      "caption": "Narrow focused map with independent prediction controls and selected event.",
+      "sha256": "f40fe7fc4d5aafd83479c5bd5636b3c7c4df620b9c343e862136a78e597578ef",
+      "bytes": 71009,
+      "dimensionsPixels": {
+        "width": 358,
+        "height": 794
+      },
+      "capturedAtUtc": "2026-11-06T00:48:23.450166+00:00",
+      "visuallyInspected": true,
+      "inspection": "Inspected at readable resolution for loaded map, text, controls, matching path colors, risk placement, and histogram rendering. The narrow map uses its existing bounded scroll pane; controls are visible, with the remaining explanatory text and location index reachable by scrolling."
+    }
+  ],
+  "manifestCreatedAtUtc": "2026-11-06T00:54:13.017521+00:00"
+}

@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> easy-ui@0.0.0 check:storybook
+> node scripts/check-storybook-coverage.mjs
+
+Storybook coverage: 117/117 component modules have stories, docs, and skill entries; 57 skill links resolve.
