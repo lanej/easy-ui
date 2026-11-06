@@ -527,7 +527,8 @@
   background: design-token("color.primary.050");
   box-shadow: inset 2px 0 design-token("color.primary.500");
 }
-.item[data-variant="ledger"][data-marked="true"]:not([data-current="true"]) .ledgerSelect {
+.item[data-variant="ledger"][data-marked="true"]:not([data-current="true"])
+  .ledgerSelect {
   font-weight: 600;
 }
 @media (forced-colors: active) {
