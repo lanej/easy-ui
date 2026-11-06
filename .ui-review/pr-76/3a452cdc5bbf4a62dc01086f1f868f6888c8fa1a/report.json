@@ -1,0 +1,112 @@
+{
+  "checks": [
+    "light: overview/focus/deviation, forecast toggles, camera, edge evidence, keyboard tabs, accessibility",
+    "dark: overview/focus/deviation, forecast toggles, camera, edge evidence, keyboard tabs, accessibility",
+    "light 390px: no horizontal overflow, event/map switching preserves camera, persistent inspector",
+    "light: focused path and incoming connection assessments retain provenance",
+    "dark 390px: no horizontal overflow, event/map switching preserves camera, persistent inspector",
+    "dark: focused path and incoming connection assessments retain provenance"
+  ],
+  "errors": [],
+  "screenshots": [
+    {
+      "file": "workbench-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1680,
+        "height": 1120
+      },
+      "sha256": "29379ea5d4507d35366aeb4240a3deec6b29bb91d4c9be8113be1c4d2a9a6871",
+      "sourceRevision": "84ef72abf1d21facaa8ca14bb01f0084440c8bf2",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-desktop.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1680,
+        "height": 1120
+      },
+      "sha256": "4d1ab8af857ab216bc71a3afe6116e2093c555fc98a97127b1f55176243d0f0a",
+      "sourceRevision": "84ef72abf1d21facaa8ca14bb01f0084440c8bf2",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-overview.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1680,
+        "height": 1120
+      },
+      "sha256": "8783dbb15f93a1df60725d9055adf149557222751cc79cd4a580e5144f1e313f",
+      "sourceRevision": "84ef72abf1d21facaa8ca14bb01f0084440c8bf2",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-narrow-events.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "0bbf577e6a9aca0e752f5ed55a4dc9cde8f6afd8af47676336830f1b4b114354",
+      "sourceRevision": "84ef72abf1d21facaa8ca14bb01f0084440c8bf2",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-narrow-map.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "c95c3422f8c1ce8d6fe4ef3da3f75b8998f6f11a0db9d672336ce5ddf48f8063",
+      "sourceRevision": "84ef72abf1d21facaa8ca14bb01f0084440c8bf2",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-assessments-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1680,
+        "height": 1120
+      },
+      "sha256": "a44f4fdebb1fd28120b46dd3b0216ac3b2bb27eb34b6e9c44fe2d7e55c0c6697",
+      "sourceRevision": "84ef72abf1d21facaa8ca14bb01f0084440c8bf2",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-narrow-events.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "41b057a3e58c344a0213e02aef0572316f1ad1599511406d20973e227f75e967",
+      "sourceRevision": "84ef72abf1d21facaa8ca14bb01f0084440c8bf2",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-narrow-map.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "9c7ce02e04d2a6f888082f3642e477acb67af75e85f7f6a4674eee979b4956a6",
+      "sourceRevision": "84ef72abf1d21facaa8ca14bb01f0084440c8bf2",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-assessments-dark-desktop.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1680,
+        "height": 1120
+      },
+      "sha256": "69dbfab820d17050186c26b0e7ed67bf674bf50e01cf8766359578725449fd98",
+      "sourceRevision": "84ef72abf1d21facaa8ca14bb01f0084440c8bf2",
+      "actualComponent": true
+    }
+  ]
+}

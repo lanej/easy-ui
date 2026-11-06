@@ -1,0 +1,60 @@
+{
+  "reviewedHead": "3a452cdc5bbf4a62dc01086f1f868f6888c8fa1a",
+  "capturedRevision": "84ef72abf1d21facaa8ca14bb01f0084440c8bf2",
+  "identicalSourceTree": "0ad8cebbbc341b2b96f3347f1116651e532b85e8",
+  "workflowRun": "https://github.com/lanej/easy-ui/actions/runs/42156053260",
+  "artifact": {
+    "id": 13474741529,
+    "sha256": "6f1608c343d6a1174204ad5eb6629421421ab772e0157e6dfd1c2f154b1ab4f7"
+  },
+  "independentVisualReview": {
+    "result": "passed",
+    "independentOfImplementation": true,
+    "method": "Opened and inspected all nine actual component screenshots at readable resolution, and verified SHA-256 against provenance.json.",
+    "assessment": "Clear hierarchy and selection, readable controls and assessment provenance, balanced density, clean light/dark responsive layouts; no substantive overlap or unintended clipping.",
+    "scrollBoundaryNote": "Narrow event captures begin within the ledger scroll region. The partial preceding histogram is intentional scroll-boundary clipping.",
+    "files": [
+      "workbench-light-desktop.png",
+      "workbench-dark-desktop.png",
+      "workbench-overview.png",
+      "workbench-light-narrow-events.png",
+      "workbench-light-narrow-map.png",
+      "workbench-assessments-light-desktop.png",
+      "workbench-dark-narrow-events.png",
+      "workbench-dark-narrow-map.png",
+      "workbench-assessments-dark-desktop.png"
+    ],
+    "limitations": [
+      "Screenshot review, not an independent interactive run or quantified contrast audit.",
+      "No narrow assessment-inspector, dark overview, touch-device, dateline, or controls-disabled screenshot. Related nonvisual behavior is covered by tests."
+    ]
+  },
+  "independentCodeReview": {
+    "result": "passed",
+    "reviewedHead": "3a452cdc5bbf4a62dc01086f1f868f6888c8fa1a",
+    "resultDetail": "All six official findings and the browser-suite regression resolved; no remaining code-review blockers."
+  },
+  "verification": {
+    "reactTests": {
+      "passed": 2381,
+      "skipped": 2,
+      "files": 180
+    },
+    "targetedTests": 63,
+    "lint": "passed",
+    "typescript": "passed",
+    "reactPackageBuild": "passed",
+    "storybookBuild": "passed",
+    "storybookCoverage": {
+      "componentModules": 117,
+      "resolvedSkillLinks": 59
+    },
+    "packedConsumer": "Actual source and publish-directory tarballs passed CommonJS, ESM, SSR and node/bundler TypeScript resolution checks.",
+    "actionsBrowser": "Passed timeline, workspace, workbench, map-free and toolkit suites, including light/dark desktop and narrow layouts plus path/connection assessment checks."
+  },
+  "limitations": [
+    "Synthetic component fixtures, never private consumer data.",
+    "Automated accessibility checks exclude color contrast.",
+    "No downstream application adoption claimed."
+  ]
+}
