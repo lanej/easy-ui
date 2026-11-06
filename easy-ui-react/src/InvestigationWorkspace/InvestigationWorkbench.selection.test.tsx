@@ -17,7 +17,10 @@ vi.mock("../NetworkMap", () => ({
     mapProps = props;
     return (
       <div data-testid="selection-map">
-        <button type="button" onClick={() => props.onFacilitySelect?.("origin")}>
+        <button
+          type="button"
+          onClick={() => props.onFacilitySelect?.("origin")}
+        >
           Pick origin
         </button>
       </div>
@@ -27,50 +30,120 @@ vi.mock("../NetworkMap", () => ({
 
 const graph: InvestigationGraph = {
   events: [
-    { id: "a", label: "Accepted", locationId: "origin", locationLabel: "Origin", timeLabel: "09:00" },
-    { id: "b", label: "In transit", locationId: "hub", locationLabel: "Hub", timeLabel: "10:00" },
-    { id: "c", label: "Delivered", locationId: "destination", locationLabel: "Destination", timeLabel: "11:00" },
-    { id: "d", label: "Delivered", locationId: "origin", locationLabel: "Origin", timeLabel: "12:00" },
+    {
+      id: "a",
+      label: "Accepted",
+      locationId: "origin",
+      locationLabel: "Origin",
+      timeLabel: "09:00",
+    },
+    {
+      id: "b",
+      label: "In transit",
+      locationId: "hub",
+      locationLabel: "Hub",
+      timeLabel: "10:00",
+    },
+    {
+      id: "c",
+      label: "Delivered",
+      locationId: "destination",
+      locationLabel: "Destination",
+      timeLabel: "11:00",
+    },
+    {
+      id: "d",
+      label: "Delivered",
+      locationId: "origin",
+      locationLabel: "Origin",
+      timeLabel: "12:00",
+    },
   ],
   connections: [
     { id: "ab", fromEventId: "a", toEventId: "b", segmentId: "ab-map" },
     { id: "bc", fromEventId: "b", toEventId: "c", segmentId: "bc-map" },
   ],
   paths: [
-    { id: "A", label: "A · First history", connectionIds: ["ab", "bc"], color: "#2563eb" },
-    { id: "B", label: "B · Second history", isolatedEventIds: ["d"], connectionIds: [], color: "#7c3aed" },
+    {
+      id: "A",
+      label: "A · First history",
+      connectionIds: ["ab", "bc"],
+      color: "#2563eb",
+    },
+    {
+      id: "B",
+      label: "B · Second history",
+      isolatedEventIds: ["d"],
+      connectionIds: [],
+      color: "#7c3aed",
+    },
   ],
   locations: [
     { id: "origin", label: "Origin", coordinates: [-100, 40], kind: "hub" },
     { id: "hub", label: "Hub", coordinates: [-99, 39], kind: "hub" },
-    { id: "destination", label: "Destination", coordinates: [-98, 38], kind: "delivery" },
+    {
+      id: "destination",
+      label: "Destination",
+      coordinates: [-98, 38],
+      kind: "delivery",
+    },
   ],
   segments: [
-    { id: "ab-map", from: "origin", to: "hub", label: "Known A to B", evidence: "inferred" },
-    { id: "bc-map", from: "hub", to: "destination", label: "Known B to C", evidence: "inferred" },
+    {
+      id: "ab-map",
+      from: "origin",
+      to: "hub",
+      label: "Known A to B",
+      evidence: "inferred",
+    },
+    {
+      id: "bc-map",
+      from: "hub",
+      to: "destination",
+      label: "Known B to C",
+      evidence: "inferred",
+    },
   ],
 };
 const props = {
   graph,
-  map: { mapStyle: { version: 8 as const, sources: {}, layers: [] }, workerUrl: "/worker.js" },
+  map: {
+    mapStyle: { version: 8 as const, sources: {}, layers: [] },
+    workerUrl: "/worker.js",
+  },
 };
 const ledger = () => screen.getByRole("region", { name: "Observation ledger" });
-const accepted = () => within(ledger()).getByRole("button", { name: /Accepted Origin/ });
-const inTransit = () => within(ledger()).getByRole("button", { name: /In transit Hub/ });
-const delivered = () => within(ledger()).getByRole("button", { name: /Delivered Destination/ });
+const accepted = () =>
+  within(ledger()).getByRole("button", { name: /Accepted Origin/ });
+const inTransit = () =>
+  within(ledger()).getByRole("button", { name: /In transit Hub/ });
+const delivered = () =>
+  within(ledger()).getByRole("button", { name: /Delivered Destination/ });
 
 describe("InvestigationWorkbench explicit subset and expand behavior", () => {
   it("selects a full history without hiding other observations or inventing links", () => {
     const change = vi.fn();
     render(<InvestigationWorkbench {...props} onStateChange={change} />);
-    const path = within(ledger()).getByRole("button", { name: /A · First history.*3 observations/ });
+    const path = within(ledger()).getByRole("button", {
+      name: /A · First history.*3 observations/,
+    });
     expect(path).toHaveTextContent("A");
     expect(path).not.toHaveTextContent("First history");
     fireEvent.click(path);
     expect(change.mock.lastCall?.[0].selectedEventIds).toEqual(["a", "b", "c"]);
-    expect(within(ledger()).getByRole("button", { name: /Delivered Origin/ })).toBeInTheDocument();
-    expect((mapProps.overlays ?? []).some((overlay) => overlay.id.includes("selected-history-A"))).toBe(true);
-    expect((mapProps.overlays ?? []).some((overlay) => overlay.id.includes("selected-points"))).toBe(true);
+    expect(
+      within(ledger()).getByRole("button", { name: /Delivered Origin/ }),
+    ).toBeInTheDocument();
+    expect(
+      (mapProps.overlays ?? []).some((overlay) =>
+        overlay.id.includes("selected-history-A"),
+      ),
+    ).toBe(true);
+    expect(
+      (mapProps.overlays ?? []).some((overlay) =>
+        overlay.id.includes("selected-points"),
+      ),
+    ).toBe(true);
   });
 
   it("supports Shift ranges, additive selection, and touch-friendly toggles", () => {
@@ -82,7 +155,10 @@ describe("InvestigationWorkbench explicit subset and expand behavior", () => {
     fireEvent.click(inTransit(), { ctrlKey: true });
     expect(change.mock.lastCall?.[0].selectedEventIds).toEqual(["a", "c"]);
     fireEvent.click(screen.getByRole("button", { name: "Select points" }));
-    expect(screen.getByRole("button", { name: "Selecting" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Selecting" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     fireEvent.click(accepted());
     expect(change.mock.lastCall?.[0].selectedEventIds).toEqual(["c"]);
   });
@@ -101,17 +177,26 @@ describe("InvestigationWorkbench explicit subset and expand behavior", () => {
       <InvestigationWorkbench
         {...props}
         onStateChange={change}
-        renderInspectorGraph={({ selectedEventIds }) => <span>Graph scope: {selectedEventIds.length}</span>}
+        renderInspectorGraph={({ selectedEventIds }) => (
+          <span>Graph scope: {selectedEventIds.length}</span>
+        )}
       />,
     );
     fireEvent.click(accepted());
     const map = screen.getByTestId("selection-map");
     expect(screen.getByText("Graph scope: 1")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Expand map to full screen" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Expand map to full screen" }),
+    );
     expect(map).toBeInTheDocument();
-    expect(map.closest("[data-expanded]")).toHaveAttribute("data-expanded", "true");
+    expect(map.closest("[data-expanded]")).toHaveAttribute(
+      "data-expanded",
+      "true",
+    );
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.getByRole("button", { name: "Expand map to full screen" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Expand map to full screen" }),
+    ).toBeInTheDocument();
     expect(map).toBeInTheDocument();
     expect(change.mock.lastCall?.[0].selectedEventIds).toEqual(["a"]);
   });
@@ -119,10 +204,16 @@ describe("InvestigationWorkbench explicit subset and expand behavior", () => {
   it("uses only explicit edges to highlight a disjoint selection", () => {
     const records = normalizeInvestigationGraph(graph).records;
     const none = selectedObservationOverlays(records, ["a", "c", "d"], "test");
-    expect(none.some((overlay) => overlay.id.includes("selected-history"))).toBe(false);
-    expect(none.some((overlay) => overlay.id.includes("selected-points"))).toBe(true);
+    expect(
+      none.some((overlay) => overlay.id.includes("selected-history")),
+    ).toBe(false);
+    expect(none.some((overlay) => overlay.id.includes("selected-points"))).toBe(
+      true,
+    );
     const adjacent = selectedObservationOverlays(records, ["a", "b"], "test");
-    expect(adjacent.some((overlay) => overlay.id.includes("selected-history-A"))).toBe(true);
+    expect(
+      adjacent.some((overlay) => overlay.id.includes("selected-history-A")),
+    ).toBe(true);
     const focused = reduceInvestigationWorkbench(
       initialInvestigationWorkbenchState,
       { type: "focus", pathId: "A" },

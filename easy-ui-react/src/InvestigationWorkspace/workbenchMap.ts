@@ -199,8 +199,8 @@ export function selectedObservationOverlays(
       connection.segmentId ? [connection.segmentId] : [],
     ),
   );
-  const segments = segmentData(records.locations, records.segments).features
-    .filter((feature) => selectedSegmentIds.has(String(feature.id)))
+  const segments = segmentData(records.locations, records.segments)
+    .features.filter((feature) => selectedSegmentIds.has(String(feature.id)))
     .map((feature) => ({
       ...feature,
       properties: { ...feature.properties, segmentId: String(feature.id) },
@@ -217,21 +217,28 @@ export function selectedObservationOverlays(
       pathSegments.has(String(feature.id)),
     );
     return features.length
-      ? [{
-          id: `${prefix}-selected-history-${path.id}`,
-          label: `Selected connections · ${path.label}`,
-          data: { type: "FeatureCollection" as const, features },
-          layers: [{
-            id: "selection",
-            type: "line" as const,
-            layout: { "line-cap": "round" as const, "line-join": "round" as const },
-            paint: {
-              "line-color": path.color ?? "#2563eb",
-              "line-width": 5,
-              "line-opacity": 1,
-            },
-          }],
-        }]
+      ? [
+          {
+            id: `${prefix}-selected-history-${path.id}`,
+            label: `Selected connections · ${path.label}`,
+            data: { type: "FeatureCollection" as const, features },
+            layers: [
+              {
+                id: "selection",
+                type: "line" as const,
+                layout: {
+                  "line-cap": "round" as const,
+                  "line-join": "round" as const,
+                },
+                paint: {
+                  "line-color": path.color ?? "#2563eb",
+                  "line-width": 5,
+                  "line-opacity": 1,
+                },
+              },
+            ],
+          },
+        ]
       : [];
   });
   const assigned = new Set(
@@ -251,16 +258,18 @@ export function selectedObservationOverlays(
       id: `${prefix}-selected-unassigned`,
       label: "Selected unassigned connections",
       data: { type: "FeatureCollection", features: unassigned },
-      layers: [{
-        id: "selection",
-        type: "line",
-        paint: {
-          "line-color": "#64748b",
-          "line-width": 5,
-          "line-opacity": 1,
-          "line-dasharray": [2, 2],
+      layers: [
+        {
+          id: "selection",
+          type: "line",
+          paint: {
+            "line-color": "#64748b",
+            "line-width": 5,
+            "line-opacity": 1,
+            "line-dasharray": [2, 2],
+          },
         },
-      }],
+      ],
     });
   const locations = records.locations.filter((location) =>
     locationIds.has(location.id),
@@ -281,18 +290,20 @@ export function selectedObservationOverlays(
           },
         })),
       },
-      layers: [{
-        id: "selection",
-        type: "circle",
-        paint: {
-          "circle-radius": 10,
-          "circle-color": "#ffffff",
-          "circle-opacity": 0.12,
-          "circle-stroke-color": "#1e293b",
-          "circle-stroke-width": 2.5,
-          "circle-stroke-opacity": 0.95,
+      layers: [
+        {
+          id: "selection",
+          type: "circle",
+          paint: {
+            "circle-radius": 10,
+            "circle-color": "#ffffff",
+            "circle-opacity": 0.12,
+            "circle-stroke-color": "#1e293b",
+            "circle-stroke-width": 2.5,
+            "circle-stroke-opacity": 0.95,
+          },
         },
-      }],
+      ],
     });
   return overlays;
 }

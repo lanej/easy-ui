@@ -207,7 +207,10 @@ try {
       "Map and full ledger must remain side by side",
     );
     assert.equal(
-      await ledger().getByRole("group", { name: "Candidate histories" }).getByRole("button").count(),
+      await ledger()
+        .getByRole("group", { name: "Candidate histories" })
+        .getByRole("button")
+        .count(),
       4,
       "All plus three color-coded history selection controls belong in the ledger",
     );
@@ -264,7 +267,9 @@ try {
       .first()
       .waitFor();
     assert.ok(
-      await inspector().getByRole("region", { name: "Supplemental investigation graph" }).count() > 0,
+      (await inspector()
+        .getByRole("region", { name: "Supplemental investigation graph" })
+        .count()) > 0,
       "An actual optional distribution occupies the lower-right inspector",
     );
     for (const [tab, command] of [
@@ -308,14 +313,26 @@ try {
     await capture(`workbench-overview-${width}.png`, "light");
     if (width === 1100) {
       const start = await camera();
-      const accepted = ledger().getByRole("button", { name: /Accepted Ludington/ });
-      const hammond = ledger().getByRole("button", { name: /In transit Hammond/ });
+      const accepted = ledger().getByRole("button", {
+        name: /Accepted Ludington/,
+      });
+      const hammond = ledger().getByRole("button", {
+        name: /In transit Hammond/,
+      });
       await accepted.click();
       await hammond.click({ modifiers: ["Shift"] });
-      assert.ok(await ledger().locator('li[data-marked="true"]').count() >= 2);
-      await page.getByRole("button", { name: "Expand map to full screen" }).click();
+      assert.ok(
+        (await ledger().locator('li[data-marked="true"]').count()) >= 2,
+      );
+      await page
+        .getByRole("button", { name: "Expand map to full screen" })
+        .click();
       assert.equal(await map().getAttribute("data-expanded"), "true");
-      assert.ok(await page.evaluate(() => window.workbenchMap.getCanvas().clientWidth > 400));
+      assert.ok(
+        await page.evaluate(
+          () => window.workbenchMap.getCanvas().clientWidth > 400,
+        ),
+      );
       const expandedImage = await page.screenshot({
         path: resolve(output, "workbench-map-expanded.png"),
         animations: "disabled",
@@ -330,11 +347,17 @@ try {
         }).trim(),
         actualComponent: true,
       });
-      await page.getByRole("button", { name: "Restore map to workspace" }).click();
+      await page
+        .getByRole("button", { name: "Restore map to workspace" })
+        .click();
       assert.equal(await map().getAttribute("data-expanded"), null);
       sameCamera(start, await camera());
-      assert.ok(await ledger().locator('li[data-marked="true"]').count() >= 2);
-      checks.push("1100px: range selection, map expansion, and camera/selection restoration");
+      assert.ok(
+        (await ledger().locator('li[data-marked="true"]').count()) >= 2,
+      );
+      checks.push(
+        "1100px: range selection, map expansion, and camera/selection restoration",
+      );
     }
     checks.push(
       `${width}px: all histories with map alongside, one leftmost graph and no horizontal overflow`,

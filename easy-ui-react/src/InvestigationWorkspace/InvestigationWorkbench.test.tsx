@@ -141,7 +141,11 @@ describe("InvestigationWorkbench", () => {
     expect(
       screen.getByRole("button", { name: "Focused history" }),
     ).toHaveAttribute("aria-pressed", "true");
-    expect(mapProps.overlays?.some((overlay) => overlay.id.includes("-selected-history-a"))).toBe(true);
+    expect(
+      mapProps.overlays?.some((overlay) =>
+        overlay.id.includes("-selected-history-a"),
+      ),
+    ).toBe(true);
     expect(mapProps.focus).toBe(focus);
     expect(
       within(ledger()).getByRole("button", { name: /Delivered Hub/ }),
@@ -184,7 +188,11 @@ describe("InvestigationWorkbench", () => {
       type: "event",
       eventId: "e3",
     });
-    expect(mapProps.overlays?.some((overlay) => overlay.id.includes("-selected-points"))).toBe(true);
+    expect(
+      mapProps.overlays?.some((overlay) =>
+        overlay.id.includes("-selected-points"),
+      ),
+    ).toBe(true);
   });
   it("renders only caller-supplied deviations and supports accessible inspector tabs", () => {
     render(
@@ -532,19 +540,23 @@ describe("workbench review regressions", () => {
     fireEvent.click(screen.getByText("Display"));
     fireEvent.click(screen.getByRole("checkbox", { name: /Risk indicators/ }));
     expectStable();
-    fireEvent.click(
-      screen.getByRole("checkbox", { name: /Unassigned/ }),
-    );
+    fireEvent.click(screen.getByRole("checkbox", { name: /Unassigned/ }));
     expectStable();
     fireEvent.click(screen.getByRole("button", { name: "Overview" }));
     expect(mapProps.overlays).not.toBe(overlays);
-    expect(mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-"))).toHaveLength(0);
+    expect(
+      mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-")),
+    ).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
-    expect(mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-"))).toHaveLength(1);
+    expect(
+      mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-")),
+    ).toHaveLength(1);
     const compared = mapProps.overlays;
     fireEvent.click(screen.getByRole("checkbox", { name: "Forecast south" }));
     expect(mapProps.overlays).not.toBe(compared);
-    expect(mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-"))).toHaveLength(0);
+    expect(
+      mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-")),
+    ).toHaveLength(0);
   });
 
   const unassignedGraph: InvestigationGraph = {
@@ -1034,9 +1046,15 @@ it("keeps every history, fork and independent root in a single ledger while focu
   const histories = within(ledger()).getByRole("group", {
     name: "Candidate histories",
   });
-  expect(within(histories).getByRole("button", { name: /History A/ })).toBeInTheDocument();
-  expect(within(histories).getByRole("button", { name: /History B/ })).toBeInTheDocument();
-  expect(within(histories).getByRole("button", { name: /History C/ })).toBeInTheDocument();
+  expect(
+    within(histories).getByRole("button", { name: /History A/ }),
+  ).toBeInTheDocument();
+  expect(
+    within(histories).getByRole("button", { name: /History B/ }),
+  ).toBeInTheDocument();
+  expect(
+    within(histories).getByRole("button", { name: /History C/ }),
+  ).toBeInTheDocument();
   fireEvent.click(
     within(ledger()).getByRole("button", { name: /Alternative arrival/ }),
   );
@@ -1049,7 +1067,11 @@ it("keeps every history, fork and independent root in a single ledger while focu
   fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
   expect(eventIds()).toEqual(initialRows);
   expect(
-    mapProps.overlays?.filter((overlay) => overlay.id.includes("-history-") && !overlay.id.includes("-selected-history-")),
+    mapProps.overlays?.filter(
+      (overlay) =>
+        overlay.id.includes("-history-") &&
+        !overlay.id.includes("-selected-history-"),
+    ),
   ).toHaveLength(3);
   fireEvent.click(screen.getByRole("button", { name: "All histories" }));
   expect(eventIds()).toEqual(initialRows);

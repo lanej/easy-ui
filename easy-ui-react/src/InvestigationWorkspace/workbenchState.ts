@@ -27,7 +27,11 @@ export type InvestigationWorkbenchAction =
   | { type: "mode"; mode: InvestigationMode }
   | { type: "focus"; pathId: string }
   | { type: "select"; selection: InvestigationSelection }
-  | { type: "selectEvents"; ids: readonly string[]; selection: InvestigationSelection }
+  | {
+      type: "selectEvents";
+      ids: readonly string[];
+      selection: InvestigationSelection;
+    }
   | { type: "prediction"; id: string; enabled: boolean }
   | { type: "compare"; id: string }
   | { type: "disconnected"; show: boolean }
@@ -60,9 +64,14 @@ export function reduceInvestigationWorkbench(
             ? records.events
                 .filter((event) => event.locationId === selection.locationId)
                 .map((event) => event.id)
-            : records.connections
-                ?.filter((connection) => connection.segmentId === selection.segmentId)
-                .flatMap((connection) => [connection.fromEventId, connection.toEventId]) ?? []
+            : (records.connections
+                ?.filter(
+                  (connection) => connection.segmentId === selection.segmentId,
+                )
+                .flatMap((connection) => [
+                  connection.fromEventId,
+                  connection.toEventId,
+                ]) ?? [])
       : [];
     return {
       ...state,

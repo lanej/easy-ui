@@ -327,9 +327,10 @@ export function InvestigationWorkbench({
   );
   const context = resolveSelection(records, state.selection);
   const selectedEventIds = useMemo(
-    () => (state.selectedEventIds ?? []).filter((eventId) =>
-      records.events.some((event) => event.id === eventId),
-    ),
+    () =>
+      (state.selectedEventIds ?? []).filter((eventId) =>
+        records.events.some((event) => event.id === eventId),
+      ),
     [state.selectedEventIds, records.events],
   );
   const event = context.event;
@@ -444,7 +445,8 @@ export function InvestigationWorkbench({
     const anchor = anchorId.current;
     let selected: string[];
     if (modifiers?.shiftKey && anchor && ids.includes(anchor)) {
-      const a = ids.indexOf(anchor), b = ids.indexOf(eventId);
+      const a = ids.indexOf(anchor),
+        b = ids.indexOf(eventId);
       selected = ids.slice(Math.min(a, b), Math.max(a, b) + 1);
     } else if (multiSelect || modifiers?.metaKey || modifiers?.ctrlKey) {
       const current = new Set(selectedEventIds);
@@ -459,9 +461,7 @@ export function InvestigationWorkbench({
     dispatch({
       type: "selectEvents",
       ids: selected,
-      selection: selected.length
-        ? { type: "event", eventId }
-        : null,
+      selection: selected.length ? { type: "event", eventId } : null,
     });
   };
   const selectLocation = (locationId: string) => {
@@ -480,7 +480,9 @@ export function InvestigationWorkbench({
     }
     dispatch({
       type: "selectEvents",
-      ids: records.events.filter((item) => current.has(item.id)).map((item) => item.id),
+      ids: records.events
+        .filter((item) => current.has(item.id))
+        .map((item) => item.id),
       selection: { type: "location", locationId },
     });
   };
@@ -573,7 +575,8 @@ export function InvestigationWorkbench({
     if (
       hit.overlayId === `${id}-selected-points` &&
       typeof locationId === "string"
-    ) selectLocation(locationId);
+    )
+      selectLocation(locationId);
     else if (
       (hit.overlayId.startsWith(`${id}-history-`) ||
         hit.overlayId.startsWith(`${id}-selected-history-`) ||
@@ -701,7 +704,11 @@ export function InvestigationWorkbench({
             </div>
           </header>
           <div className={styles.timelineControls}>
-            <div className={styles.historyList} role="group" aria-label="Candidate histories">
+            <div
+              className={styles.historyList}
+              role="group"
+              aria-label="Candidate histories"
+            >
               <button
                 type="button"
                 className={styles.historyButton}
@@ -712,7 +719,8 @@ export function InvestigationWorkbench({
                 All
               </button>
               {records.paths.map((path) => {
-                const short = path.label.match(/\b[A-Z]\b/)?.[0] ?? path.id.slice(0, 3);
+                const short =
+                  path.label.match(/\b[A-Z]\b/)?.[0] ?? path.id.slice(0, 3);
                 return (
                   <button
                     key={path.id}
@@ -745,7 +753,11 @@ export function InvestigationWorkbench({
                   aria-label={`Clear ${selectedEventIds.length} selected observations`}
                   onClick={() => {
                     anchorId.current = null;
-                    dispatch({ type: "selectEvents", ids: [], selection: null });
+                    dispatch({
+                      type: "selectEvents",
+                      ids: [],
+                      selection: null,
+                    });
                   }}
                 >
                   Clear ({selectedEventIds.length})
@@ -756,7 +768,9 @@ export function InvestigationWorkbench({
                 <div className={styles.displayOptions}>
                   <Checkbox
                     isSelected={state.showDisconnected}
-                    onChange={(show) => dispatch({ type: "disconnected", show })}
+                    onChange={(show) =>
+                      dispatch({ type: "disconnected", show })
+                    }
                   >
                     Unassigned ({disconnected.length})
                   </Checkbox>
@@ -814,7 +828,11 @@ export function InvestigationWorkbench({
             type="button"
             className={styles.expandMap}
             aria-expanded={mapExpanded}
-            aria-label={mapExpanded ? "Restore map to workspace" : "Expand map to full screen"}
+            aria-label={
+              mapExpanded
+                ? "Restore map to workspace"
+                : "Expand map to full screen"
+            }
             onClick={() => {
               if (mapExpanded) {
                 if (document.fullscreenElement === expandedPanel.current)
@@ -825,7 +843,9 @@ export function InvestigationWorkbench({
                 setMapExpanded(true);
                 // Native Fullscreen lifts the existing MapLibre node out of
                 // container containment. CSS expansion remains the fallback.
-                void expandedPanel.current?.requestFullscreen?.().catch(() => {});
+                void expandedPanel.current
+                  ?.requestFullscreen?.()
+                  .catch(() => {});
               }
             }}
           >
@@ -1290,31 +1310,43 @@ export function InvestigationWorkbench({
                   Select an observation to inspect its references.
                 </p>
               )}
-              {records.connections.some((connection) => connection.segmentId) && (
+              {records.connections.some(
+                (connection) => connection.segmentId,
+              ) && (
                 <details className={styles.relationshipPicker}>
                   <summary>Mapped connections</summary>
                   <div className={styles.relationshipPickerItems}>
-                    {records.connections.filter((connection) => connection.segmentId).map((connection) => (
-                      <button
-                        className={styles.relationshipPickerButton}
-                        key={connection.id}
-                        type="button"
-                        aria-label={`Inspect connection ${connection.label ?? connection.id}`}
-                        onClick={() => dispatch({
-                          type: "select",
-                          selection: { type: "segment", segmentId: connection.segmentId! },
-                        })}
-                      >
-                        {connection.label ?? connection.id}
-                      </button>
-                    ))}
+                    {records.connections
+                      .filter((connection) => connection.segmentId)
+                      .map((connection) => (
+                        <button
+                          className={styles.relationshipPickerButton}
+                          key={connection.id}
+                          type="button"
+                          aria-label={`Inspect connection ${connection.label ?? connection.id}`}
+                          onClick={() =>
+                            dispatch({
+                              type: "select",
+                              selection: {
+                                type: "segment",
+                                segmentId: connection.segmentId!,
+                              },
+                            })
+                          }
+                        >
+                          {connection.label ?? connection.id}
+                        </button>
+                      ))}
                   </div>
                 </details>
               )}
             </div>
           </div>
           {inspectorGraph != null && (
-            <section className={styles.inspectorGraph} aria-label="Supplemental investigation graph">
+            <section
+              className={styles.inspectorGraph}
+              aria-label="Supplemental investigation graph"
+            >
               {inspectorGraph}
             </section>
           )}
