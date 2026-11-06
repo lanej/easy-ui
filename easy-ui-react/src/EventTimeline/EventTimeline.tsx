@@ -21,7 +21,14 @@ export type EventTimelineProps = {
   /** Emphasize observations belonging to an externally selected context without filtering. */
   relatedIds?: readonly string[];
   defaultSelectedId?: string | null;
-  onSelectedIdChange?: (id: string) => void;
+  onSelectedIdChange?: (
+    id: string,
+    modifiers?: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
+  ) => void;
+  /** Highlight a selected set without implying relationships between its members. */
+  selectedIds?: readonly string[];
+  /** Row buttons act as selection toggles, including on touch devices. */
+  multiSelectable?: boolean;
   /** Optional map coordination. This does not navigate or zoom a map itself. */
   onLocationSelect?: (locationId: string, eventId: string) => void;
   /** Optional right-side summary, separate from the selected event button. */
@@ -63,6 +70,8 @@ export function EventTimeline({
   relatedIds,
   defaultSelectedId = null,
   onSelectedIdChange,
+  selectedIds,
+  multiSelectable = false,
   onLocationSelect,
   renderInterval,
   renderConnectionMetrics,
@@ -106,9 +115,12 @@ export function EventTimeline({
     }
     return result;
   }, [events, connections]);
-  const choose = (event: EventTimelineEvent) => {
+  const choose = (
+    event: EventTimelineEvent,
+    modifiers?: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
+  ) => {
     if (selectedId === undefined) setInternalId(event.id);
-    onSelectedIdChange?.(event.id);
+    onSelectedIdChange?.(event.id, modifiers);
   };
   const navigate = (event: EventTimelineEvent, key: string) => {
     const index = events.findIndex((candidate) => candidate.id === event.id);
@@ -163,6 +175,7 @@ export function EventTimeline({
             className={styles.entry}
             key={event.id}
             data-related={related?.has(event.id) || undefined}
+            data-marked={selectedIds?.includes(event.id) || undefined}
             aria-description={
               related?.has(event.id) ? "In selected context" : undefined
             }
@@ -177,11 +190,13 @@ export function EventTimeline({
                 metricsPlacement === "inline" ? metrics : undefined
               }
               current={event.id === activeId}
+              marked={selectedIds?.includes(event.id)}
+              multiSelectable={multiSelectable}
               registerButton={(node) => {
                 if (node) buttons.current.set(event.id, node);
                 else buttons.current.delete(event.id);
               }}
-              onSelect={() => choose(event)}
+              onSelect={(modifiers) => choose(event, modifiers)}
               onKeyDown={(key) => navigate(event, key)}
             />
             {metricsPlacement === "below" && metrics != null && (
