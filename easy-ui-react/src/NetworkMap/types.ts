@@ -352,6 +352,13 @@ export type NetworkMapProps = {
   facilities?: readonly MapFacility[];
   /** Ordered connections in that cohort. */
   segments?: readonly MapSegment[];
+  /**
+   * Subtle halves evidence stroke widths, removes white casing, and reduces the
+   * selection halo. Colors, evidence dashes, relative flow widths, and supplied
+   * geometry are retained. Defaults to the original "default" presentation.
+   * Updates preserve the map instance and consumer paint-property overrides.
+   */
+  connectionStyle?: "default" | "subtle";
   /** Local groups that offer a close-up after clicking crowded nodes; insets stay closed initially. */
   zoomSections?: readonly NetworkMapZoomSection[];
   /** Optional time-filtered weather/disruption polygons. */
@@ -453,10 +460,12 @@ export type NetworkMapProps = {
    * `setPaintProperty`/`Marker` calls are guaranteed to layer on top of, never race, this
    * component's own baseline styling.
    *
-   * Consumer paint overrides survive data, selection, and layer-visibility updates. Overriding
+   * Consumer paint overrides survive data, selection, layer-visibility, and connectionStyle updates. Overriding
    * `easy-ui-observed`'s `line-color` takes ownership of that property's selection styling;
    * automatic color updates resume on the next component update after the consumer unsets the
    * property with `map.setPaintProperty("easy-ui-observed", "line-color", null)`.
+   * Clearing a connection width, casing opacity, or selection-halo property also
+   * restores the current connectionStyle's default on the next component update.
    *
    * This component's own layer ids, useful for a consumer calling `map.setPaintProperty(...)`
    * against them directly: `"easy-ui-observed"` (transfer/measured evidence line layer) and

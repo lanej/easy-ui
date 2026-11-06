@@ -12,6 +12,7 @@ import {
   resolveSelection,
   type InvestigationSelection,
   type InvestigationDetailsContext,
+  type InvestigationConnection,
 } from "./selection";
 import type { NetworkMapProps } from "../NetworkMap";
 let mapProps: NetworkMapProps;
@@ -60,7 +61,311 @@ function Controlled({ initial }: { initial: InvestigationSelection }) {
 const details = () => screen.getByRole("region", { name: "Selection details" });
 const timeline = () => screen.getByRole("list", { name: "Events" });
 
+const ledgerConnections: InvestigationConnection[] = [
+  {
+    id: "accepted-arrived",
+    fromEventId: "accepted",
+    toEventId: "arrived",
+    segmentId: "shared-leg",
+    pathIds: ["north", "south"],
+  },
+  {
+    id: "arrived-north",
+    fromEventId: "arrived",
+    toEventId: "north-scan",
+    segmentId: "north-leg",
+    pathIds: ["north"],
+  },
+  {
+    id: "arrived-south",
+    fromEventId: "arrived",
+    toEventId: "south-scan",
+    segmentId: "south-leg",
+    pathIds: ["south"],
+  },
+];
+const highlightedSegments = () =>
+  mapProps
+    .overlays![mapProps.overlays!.length - 1].data.features.filter(
+      (feature) => feature.properties?.selected,
+    )
+    .map((feature) => feature.id);
+
 describe("InvestigationWorkspace", () => {
+  it("coordinates ledger event type, explicit links, event risk and incident map emphasis", () => {
+    const change = vi.fn();
+    const inspectRisk = vi.fn();
+    const renderDetails = vi.fn((_context: InvestigationDetailsContext) => (
+      <span>Selected evidence</span>
+    ));
+    const props = {
+      ...records,
+      connections: ledgerConnections,
+      variant: "ledger" as const,
+      map,
+      onSelectionChange: change,
+      renderDetails,
+      timeline: {
+        renderTrailing: (event: { id: string }) => (
+          <button onClick={inspectRisk}>Inspect {event.id} risk</button>
+        ),
+      },
+    };
+    const { container, rerender } = render(
+      <InvestigationWorkspace
+        {...props}
+        selection={{ type: "event", eventId: "arrived" }}
+      />,
+    );
+    const arrival = within(timeline()).getByRole("button", {
+      name: /^Arrived at exchange Central Exchange 10:30 Received 10:34$/,
+    });
+    expect(arrival).toHaveAttribute("aria-current", "true");
+    expect(arrival).toHaveAccessibleDescription("Inspect arrived risk");
+    expect(
+      within(arrival.closest("li")!).getByText("Received 10:34"),
+    ).toBeVisible();
+    expect(highlightedSegments()).toEqual([
+      "shared-leg",
+      "north-leg",
+      "south-leg",
+    ]);
+    expect(
+      renderDetails.mock.lastCall?.[0].connections?.map(
+        (connection) => connection.id,
+      ),
+    ).toEqual(["accepted-arrived", "arrived-north", "arrived-south"]);
+    expect(screen.getByText("3 candidate relationships")).toBeInTheDocument();
+    fireEvent.click(
+      within(timeline()).getByRole("button", { name: "Inspect arrived risk" }),
+    );
+    expect(inspectRisk).toHaveBeenCalledOnce();
+    expect(change).not.toHaveBeenCalled();
+    expect(container.querySelector("button button")).toBeNull();
+
+    // This record shares occurrence time, place, and candidate memberships with
+    // arrived, but has no explicit event link. It must not inherit its geometry.
+    rerender(
+      <InvestigationWorkspace
+        {...props}
+        selection={{ type: "event", eventId: "duplicate" }}
+      />,
+    );
+    expect(highlightedSegments()).toEqual([]);
+    expect(renderDetails.mock.lastCall?.[0].connections).toEqual([]);
+    expect(
+      within(timeline()).getByRole("button", {
+        name: /^Arrived at exchange Central Exchange 10:30 Received 11:05$/,
+      }),
+    ).toHaveAttribute("aria-current", "true");
+  });
+
+  it("preserves caller map colors, zero label zoom, priorities and explicit camera requests in ledger mode", () => {
+    const locations = records.locations.map((location, index) =>
+      index === 0
+        ? { ...location, color: "#784bb1", labelMinZoom: 0, priority: 7 }
+        : index === 1
+          ? { ...location, labelMinZoom: 8 }
+          : { ...location },
+    );
+    const segments = records.segments.map((segment, index) =>
+      index === 0 ? { ...segment, color: "#bc492b" } : { ...segment },
+    );
+    const originalLocations = locations.map((location) => ({ ...location }));
+    const originalSegments = segments.map((segment) => ({ ...segment }));
+    const focus = { revision: "caller-request", facilityIds: ["origin"] };
+    const mapOptions = {
+      ...map,
+      focus,
+      primaryFacilityIds: ["origin", "destination"],
+    };
+    const props = {
+      ...records,
+      locations,
+      segments,
+      variant: "ledger" as const,
+      map: mapOptions,
+      onSelectionChange: vi.fn(),
+    };
+    const { rerender } = render(
+      <InvestigationWorkspace
+        {...props}
+        selection={{ type: "event", eventId: "accepted" }}
+      />,
+    );
+    expect(mapProps.facilities?.[0]).toMatchObject({
+      color: "#784bb1",
+      labelMinZoom: 0,
+      priority: 7,
+    });
+    expect(mapProps.facilities?.[1].labelMinZoom).toBe(8);
+    expect(mapProps.facilities?.[2].labelMinZoom).toBe(24);
+    expect(mapProps.segments![0].color).toBe("#bc492b");
+    expect(mapProps.segments![1].color).toEqual(expect.any(String));
+    expect(mapProps.primaryFacilityIds).toBe(mapOptions.primaryFacilityIds);
+    expect(mapProps.focus).toBe(focus);
+    rerender(
+      <InvestigationWorkspace
+        {...props}
+        selection={{ type: "event", eventId: "north-scan" }}
+      />,
+    );
+    expect(mapProps.focus).toBe(focus);
+    expect(locations).toEqual(originalLocations);
+    expect(segments).toEqual(originalSegments);
+  });
+
+  it("preserves legacy candidate emphasis when links are omitted and clears it for an explicit empty graph", () => {
+    const props = {
+      ...records,
+      variant: "ledger" as const,
+      map,
+      selection: { type: "event" as const, eventId: "accepted" },
+      onSelectionChange: vi.fn(),
+    };
+    const { rerender } = render(<InvestigationWorkspace {...props} />);
+    expect(highlightedSegments()).toEqual([
+      "shared-leg",
+      "north-leg",
+      "north-end",
+      "south-leg",
+      "south-end",
+    ]);
+    expect(
+      screen.queryByText(/candidate relationships?$/),
+    ).not.toBeInTheDocument();
+    rerender(<InvestigationWorkspace {...props} connections={[]} />);
+    expect(highlightedSegments()).toEqual([]);
+    expect(
+      within(timeline()).getByRole("button", {
+        name: "Accepted North Harbor 08:00",
+      }),
+    ).toHaveAttribute("aria-current", "true");
+  });
+
+  it("reads inherited map tokens without a provider and follows system and theme-style changes", async () => {
+    const tokenValues = {
+      primary: "#173eb8",
+      muted: "#576a83",
+    };
+    const originalGetComputedStyle = window.getComputedStyle.bind(window);
+    const computed = vi
+      .spyOn(window, "getComputedStyle")
+      .mockImplementation((element) => {
+        const css = originalGetComputedStyle(element);
+        if (element.getAttribute("aria-label") !== "Event investigation")
+          return css;
+        const getPropertyValue = css.getPropertyValue.bind(css);
+        css.getPropertyValue = (name) => {
+          if (name === "--ezui-color-primary-600")
+            return ` ${tokenValues.primary} `;
+          if (name === "--ezui-color-neutral-500")
+            return ` ${tokenValues.muted} `;
+          return getPropertyValue(name);
+        };
+        return css;
+      });
+    const listeners = new Set<() => void>();
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      media: query,
+      matches: false,
+      onchange: null,
+      addEventListener: (type: string, listener: () => void) => {
+        if (type === "change") listeners.add(listener);
+      },
+      removeEventListener: (type: string, listener: () => void) => {
+        if (type === "change") listeners.delete(listener);
+      },
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+    const themeStyle = document.createElement("style");
+    themeStyle.id = "ezui-theme-style-level-ledger-test";
+    themeStyle.textContent = ":root { --test-theme-version: 1; }";
+    document.head.appendChild(themeStyle);
+    const segments = records.segments.map((segment, index) =>
+      index === 0 ? { ...segment, color: "#bc492b" } : segment,
+    );
+    const assertColors = () => {
+      expect(mapProps.segments?.[0].color).toBe("#bc492b");
+      expect(mapProps.segments?.[1].color).toBe(tokenValues.muted);
+      expect(
+        mapProps.overlays![mapProps.overlays!.length - 1].layers.find(
+          (layer) => layer.id === "selection",
+        ),
+      ).toMatchObject({
+        paint: { "line-color": tokenValues.primary },
+      });
+    };
+    try {
+      const { unmount } = render(
+        <InvestigationWorkspace
+          {...records}
+          segments={segments}
+          variant="ledger"
+          connections={ledgerConnections}
+          map={map}
+          selection={{ type: "event", eventId: "arrived" }}
+          onSelectionChange={vi.fn()}
+        />,
+      );
+      assertColors();
+      expect(listeners.size).toBe(1);
+      await act(async () => {
+        tokenValues.primary = "#a9bcff";
+        tokenValues.muted = "#8496b3";
+        for (const listener of [...listeners]) listener();
+      });
+      assertColors();
+      // A ThemeProvider can update its style node while this child is memoized.
+      await act(async () => {
+        tokenValues.primary = "#246c57";
+        tokenValues.muted = "#526c65";
+        themeStyle.textContent = ":root { --test-theme-version: 2; }";
+        await Promise.resolve();
+      });
+      assertColors();
+      unmount();
+      expect(listeners.size).toBe(0);
+    } finally {
+      themeStyle.remove();
+      computed.mockRestore();
+      window.matchMedia = originalMatchMedia;
+    }
+  });
+
+  it("keeps candidate risk actions outside path selection buttons", () => {
+    const change = vi.fn();
+    const inspect = vi.fn();
+    const { container } = render(
+      <InvestigationWorkspace
+        {...records}
+        variant="ledger"
+        connections={ledgerConnections}
+        map={map}
+        selection={{ type: "path", pathId: "north" }}
+        onSelectionChange={change}
+        renderPathTrailing={(path) => (
+          <button onClick={inspect}>Inspect {path.id} history risk</button>
+        )}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Inspect north history risk" }),
+    );
+    expect(inspect).toHaveBeenCalledOnce();
+    expect(change).not.toHaveBeenCalled();
+    expect(container.querySelector("button button")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Via North Gate" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("button", { name: "Via North Gate" }),
+    ).toHaveAccessibleDescription("Inspect north history risk");
+  });
+
   it("preserves focus across responsive changes without taking focus from outside the workspace", () => {
     let width = 1200;
     let resize = () => {};

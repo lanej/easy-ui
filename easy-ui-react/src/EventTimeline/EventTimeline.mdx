@@ -22,6 +22,148 @@ import { EventTimeline } from "@easypost/easy-ui/EventTimeline";
 
 ## Examples
 
+### Compact event ledger
+
+Use `variant="ledger"` for a compact navigator beside a map and persistent
+inspector. Each row starts with the semibold event type (`event.label`),
+followed by its location and occurrence time on separate lines. Event types
+and times are 12px; locations are 13px. Ordinary rows have a 64px minimum
+height, with extra context and evidence increasing only the rows that need
+them. Events without a location retain their event type and time. The
+original `"timeline"` variant remains the default.
+
+`renderTrailing` supplies a separate event assessment, such as a labeled risk
+pill. It stays outside the event-selection button, remains independently
+interactive, and is associated with the button's accessible description.
+Event types, selection, and risk never share a severity color or inference.
+The example below supplies its risk labels directly; missing assessment is
+shown as **Not assessed**, never inferred to be low risk.
+
+```tsx
+<EventTimeline
+  variant="ledger"
+  size="compact"
+  events={events}
+  selectedId={selectedId}
+  onSelectedIdChange={setSelectedId}
+  renderTrailing={(event) => <EventRisk assessment={risks[event.id]} />}
+/>
+```
+
+The selected background spans the row, including its trailing assessment.
+Trailing assessments align with the event type at the top of the row. A
+persistent inspector can show unassessed states while ordinary rows remain
+free of repeated availability badges.
+Ledger rows preserve caller order and do not draw an implicit connection
+between adjacent events. Repeated locations and multiple delivery reports
+remain separate records. `detailLabel` stays visible even in compact ledger
+rows so supplied receipt or source distinctions are not lost. Detailed rows
+also show the separately labeled receipt time; an event with no occurrence
+label shows any available receipt time at every ledger size.
+
+For a shared inspector, keep rich details in that inspector rather than
+populating `renderDetails` on every row. In ledger rows, `metricsPlacement="inline"`
+places an evidence strip across the full row beneath event type, location,
+and time. Compact histograms or other supplied references keep their width
+even beside a trailing risk badge. Metrics remain outside the native
+selection button and inside the selected row; below metrics and interval
+content retain their existing separate slots. Only return a metric strip for
+events with evidence to show; rows without it keep their ordinary height.
+
+<Canvas of={Stories.Ledger} />
+<Canvas of={Stories.LedgerFullTimestamps} />
+
+### Explicit candidate relationships
+
+Supply `connections` to draw a bounded graph gutter alongside the rows. Each
+`EventTimelineConnection` names its own `id`, `fromEventId`, and `toEventId`;
+optional `pathIds` and `label` preserve caller-owned context. Connections are
+candidate relationships between observations, not a reconstructed physical
+route. Shared path membership, matching locations, equal timestamps, and
+adjacent rows never create a connection on their own.
+
+```tsx
+import {
+  EventTimeline,
+  type EventTimelineConnection,
+} from "@easypost/easy-ui/EventTimeline";
+
+const connections: EventTimelineConnection[] = [
+  {
+    id: "north",
+    fromEventId: "shared",
+    toEventId: "north-delivery",
+    pathIds: ["north"],
+  },
+  {
+    id: "east",
+    fromEventId: "shared",
+    toEventId: "east-delivery",
+    pathIds: ["east"],
+  },
+];
+
+<EventTimeline
+  variant="ledger"
+  events={events}
+  connections={connections}
+  selectedConnectionIds={["east"]}
+/>;
+```
+
+A fork has one shared event and separate outgoing links. An independent origin
+starts a new root; an unassigned delivery stays unconnected. Returning to a
+place remains a distinct event with its own ID, and only explicit links decide
+how that event relates to earlier observations. Multiple deliveries and
+duplicate-looking observations are retained.
+
+`selectedConnectionIds` emphasizes supplied relationships independently of
+event selection. Rows keep the existing keyboard controls; the decorative
+graph introduces no extra selection targets. Its native **candidate
+relationships** disclosure lists every directed connection. Backward links,
+self-links, and links with an endpoint outside the supplied event list receive
+an explanation there. If more than four rails are required, the complete list
+replaces the graph rather than hiding relationships or implying false joins.
+Supplying `connections={[]}` also suppresses the ordinary chronology connector.
+
+The example below has two candidate deliveries sharing earlier observations,
+a separate origin-to-delivery history, and an unassigned delivery. Risk remains
+an independent caller-supplied annotation.
+
+<Canvas of={Stories.BranchingLedger} />
+
+### Match candidate colors
+
+Supply `pathColors` with the same stable candidate-to-color mapping used by
+an adjacent map or path controls. The keys match explicit `pathIds` on
+connections and events; colors never create memberships or connections.
+Use valid CSS colors that remain distinguishable in the active theme.
+
+```tsx
+<EventTimeline
+  variant="ledger"
+  events={events}
+  connections={connections}
+  pathColors={{ north: "#2563eb", east: "#8b5cf6", south: "#0d9488" }}
+  selectedConnectionIds={["east"]}
+/>
+```
+
+A single-membership edge keeps its assigned color when selected; selection
+increases stroke width. Shared edges alternate their member colors along one
+canonical connection. A shared edge with an incomplete palette retains a
+default-colored slice for each unmapped membership. Nodes use only the
+event's own `pathIds`: single memberships take their supplied color, while
+shared nodes remain neutral and hollow.
+
+Omitting `pathColors`, or providing no colors for an edge's memberships,
+preserves the original neutral and selected-blue presentation. The
+relationship disclosure also lists the explicit memberships of colored
+connections. Forced-colors mode uses system colors, while relationship text
+and existing selection controls remain available.
+
+<Canvas of={Stories.ColoredBranchingLedger} />
+
 ### Complete timestamps
 
 Supply full occurrence and receipt labels, including dates and timezone, when the evidence requires them. Native timestamps stay at least 12px in narrow containers. Their 96px column keeps dates and clock values readable, wrapping complete UTC labels at spaces without shortening the supplied evidence. Receipt time remains separate from occurrence time.
@@ -67,9 +209,9 @@ import { EventMetrics } from "@easypost/easy-ui/EventMetrics";
 
 For **minimal**, use `size="compact"`, `metricsPlacement="inline"`, and `renderMetrics` with `<EventMetrics variant="minimal" />`. The event label, visible facility type and location, and individual pills flow together. Rows without metrics use the same inline identity layout. The pills remain outside the native event-selection button, so metric controls retain their own actions.
 
-`renderMetrics` is available on every event, including the final observation. `metricsPlacement` defaults to `"below"` for compact or expanded references; `"inline"` includes the content in the event's wrapping identity flow. Both placements keep metric content outside the event-selection button. `EventMetrics` accepts already formatted values and references, so durations, percentages, counts, and other measurements can share this composition without a domain dictionary in the timeline.
+`renderMetrics` is available on every event, including the final observation. `metricsPlacement` defaults to `"below"` for compact or expanded references. In the default timeline variant, `"inline"` includes content in the event's wrapping identity flow; ledger rows put inline content in the full-width evidence strip described above. Both placements keep metric content outside the event-selection button. `EventMetrics` accepts already formatted values and references, so durations, percentages, counts, and other measurements can share this composition without a domain dictionary in the timeline.
 
-`locationIcon` accepts a caller-supplied icon. Inline placement displays the facility type and location at every event size. In the default layout, compact event size keeps the icon and location while retaining the facility type for assistive technology; default and detailed sizes also display the facility type. Keep the metric presentation independent of the event's size.
+`locationIcon` accepts a caller-supplied icon. In the timeline variant, inline placement displays the facility type and location at every event size. In its default layout, compact event size keeps the icon and location while retaining the facility type for assistive technology; default and detailed sizes also display the facility type. Ledger rows place the icon beside the location and retain the facility type in the event's accessible description. Keep the metric presentation independent of the event's size.
 
 ### Narrow and map-adjacent views
 

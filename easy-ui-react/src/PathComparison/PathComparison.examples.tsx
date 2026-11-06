@@ -23,7 +23,7 @@ declare global {
 }
 
 export type ComparisonExampleData = {
-  records: Required<InvestigationRecords>;
+  records: Required<Omit<InvestigationRecords, "connections">>;
   rows: readonly PathComparisonRow[];
   initialSelection: InvestigationSelection;
   sourceLabel?: string;

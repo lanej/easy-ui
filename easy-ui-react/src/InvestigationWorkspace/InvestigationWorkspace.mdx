@@ -14,13 +14,118 @@ An organism composing `EventTimeline`, `NetworkMap`, and a persistent detail pan
 import { InvestigationWorkspace } from "@easypost/easy-ui/InvestigationWorkspace";
 ```
 
-<Canvas of={Stories.LinkedSelection} />
+For dense tracking investigations, use `variant="ledger"`: compact event-first observations, a quiet map, and one persistent inspector. Each row keeps its event type, location, and occurrence time visible. Explicit candidate relationships can add a branching gutter without treating time order as a travel route.
+
+<Canvas of={Stories.BranchingHistories} />
 
 ## Props
 
 <ArgTypes of={Stories} />
 
 ## Examples
+
+### Compact observations and candidate histories
+
+```tsx
+<InvestigationWorkspace
+  variant="ledger"
+  header={<ParcelSummary />}
+  events={observations}
+  locations={locations}
+  segments={mapSegments}
+  paths={candidateHistories}
+  connections={[
+    {
+      id: "accepted-to-arrived",
+      fromEventId: "accepted",
+      toEventId: "arrived",
+      pathIds: ["candidate-a", "candidate-b"],
+      segmentId: "origin-to-hub",
+      label: "Shared candidate connection",
+    },
+  ]}
+  map={{ mapStyle, workerUrl }}
+  selection={selection}
+  onSelectionChange={setSelection}
+  timeline={{
+    renderTrailing: (event) => <EventAssessment event={event} />,
+    metricsPlacement: "inline",
+    renderMetrics: (event) => <CompactIntervalReference event={event} />,
+  }}
+  renderPathTrailing={(path) => <HistoryAssessment path={path} />}
+  renderDetails={(context) => <InvestigationEvidence {...context} />}
+/>
+```
+
+The ledger puts `event.label` first, followed by `event.locationLabel` and the occurrence time. Occurrence and receipt labels remain separate; supplied `detailLabel` can distinguish a revisit or an observation source. Selection is independent from event status and assessment. Optional `header` content joins the same surface above the compact history controls; the application owns its title, summary counts, and overall assessment.
+
+`connections` contains explicit directed event relationships. `InvestigationConnection` extends `EventTimelineConnection` with an optional `segmentId` linking a relationship to caller-supplied map geometry. Matching times, locations, path memberships, or map endpoints never create event edges. A shared observation appears once and may have multiple `pathIds`; returning to a location requires a distinct event ID. Disjoint origins, separate delivery claims, and unassigned events remain separate. Rows retain caller order, including records after a delivery observation.
+
+Supplying `connections`, including an empty array, replaces the timeline's ordinary sequential connector. Omitting it retains the existing chronological presentation. The graph draws only forward relationships in the supplied row order. Backward links, self-links, and endpoints outside a filtered view remain in the accessible relationship list with an explanation. More than four simultaneous rails use that complete list instead of compressing unrelated connections together. The graph is a candidate relationship view; it does not establish a physical parcel split or a confirmed route.
+
+Without a candidate palette, the ledger defaults map connections to a subdued theme color. It uses `connectionStyle="subtle"` and hides ordinary labels until a location is selected. Caller-supplied segment colors, connection style, and `labelMinZoom` values remain authoritative. With explicit connections, selecting an event highlights only its incident event relationships and their supplied `segmentId` mappings; path selection highlights the candidate's supplied segments. Selection never moves the camera.
+
+<Canvas of={Stories.CompactLedger} />
+<Canvas of={Stories.UnassignedDelivery} />
+
+The ledger example's local basemap follows the active theme, including live OS preference changes for `system` and `inverted`. It updates the existing basemap's paint to retain the map camera, overlays, and selection. This example inverts the surrounding theme; choose System in the toolbar to follow the opposite OS preference. Applications supply their own `map.mapStyle`.
+
+<Canvas of={Stories.BranchingHistoriesInverted} />
+
+### Candidate colors and predicted paths
+
+Give a candidate path an optional `color` to use the same identity color in its control, event relationship graph, and mapped connections:
+
+```tsx
+const candidateHistories = [
+  {
+    id: "a",
+    label: "A",
+    color: "#2563eb",
+    segmentIds: ["shared", "a-transfer"],
+  },
+  {
+    id: "b",
+    label: "B",
+    color: "#7c3aed",
+    segmentIds: ["shared", "b-transfer"],
+  },
+];
+```
+
+Use literal MapLibre-compatible colors and supply the appropriate palette for the active theme. Colors identify caller-supplied membership and remain stable while selection changes emphasis. Shared mapped geometry displays parallel candidate strokes from one canonical segment; inferred and planned connections keep their dashes. A shared connection with only some candidate colors retains a muted stroke for each uncolored member. Shared graph links show their supplied candidate colors together, while shared event nodes remain neutral. An explicit `segment.color` takes precedence on the map. The graph derives its palette from `paths` by default; `timeline.pathColors` can override individual graph colors without changing the map or controls. Omit both palettes to retain the existing uncolored presentation.
+
+With a candidate palette, location markers use the union of explicit `event.pathIds` across all supplied events at that `locationId`. A location with exactly one colored candidate uses that color; shared, unassigned, or uncolored membership stays neutral. This makes short connections discoverable through their endpoints without inferring a candidate from nearby geometry. Selecting one visit does not recolor the location or hide another visit's membership. Explicit location `color` remains authoritative.
+
+`renderPathComparison(context)` provides optional controls or a legend immediately below the map. The workspace calls it only for an available focused path, including a path selection with a scoped `eventId`. Selecting an event, location, connection, or all histories removes this content. Return `null` for a candidate with no comparison. Its controls sit outside path and event selection buttons.
+
+The application supplies predicted geometry through existing `map.overlays` and controls its visibility. Keep those overlays scoped to the same focused candidate; the workspace does not create, filter, or score forecasts. This example focuses A and offers two independently visible synthetic alternatives with an explicit as-of time and source. They add no observations to the timeline and compute no deviation or confidence score. Changing their visibility preserves the selected event and map camera.
+
+<Canvas of={Stories.PredictedPathComparison} />
+<Canvas of={Stories.PredictedPathComparisonNarrow} />
+
+### Assessment placement
+
+| Scope                | Placement                                                     | Supplied content                                                           |
+| -------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Investigation        | Caller-owned `header` above the history controls              | Overall assessment and its meaning                                         |
+| Event                | `timeline.renderTrailing(event)` and `renderDetails(context)` | Brief labeled assessment; explanation and assessment time in the inspector |
+| Candidate history    | `renderPathTrailing(path)` and the path inspector             | Candidate assessment, independent of selection                             |
+| Interval or facility | Inspector or existing timeline metric slots                   | Only the measurements and reference data supplied by the application       |
+
+Risk is not an event type or a graph lane color. A reported delivery can carry a high-risk assessment without changing its reported event type. Use text as well as tone, and distinguish an absent assessment from a low-risk result. Keep assessment time separate from occurrence and receipt time. The example's assessments are synthetic caller data; the workspace owns no thresholds, scoring, or relationship inference. Trailing content sits outside selection buttons so it may contain its own accessible actions.
+
+The example uses sparse event badges: only supplied assessments appear in rows. Selecting an event without one explicitly shows **Unassessed** in the inspector. Candidate risk remains separately available through `renderPathTrailing`; a return visit alone does not create an assessment.
+
+### Histograms and interval evidence
+
+Use `timeline.renderMetrics` with `metricsPlacement="inline"` for a compact reference below a ledger row's identity, outside its selection button. Compose the existing `EventMetrics` and `DurationDistribution` components there. Return `null` when no measurement is supplied. The shared `renderDetails` inspector can add the full histogram, units, reference population, window, sample count, and exact-bin disclosure without expanding every row.
+
+The branching example supplies two synthetic scan-interval distributions. The return visit's **7 h 05 m** interval follows its explicit Candidate A predecessor at 04:20, not the chronologically preceding Candidate B row at 07:56. Applications supply that association and the measurement; the workspace does not infer either. With multiple incoming relationships, label each reference's candidate or connection explicitly. Time between scans is not facility dwell. Preserve missing-data states and use actual supplied bins rather than constructing a distribution from a median or percentile.
+
+On narrow containers the same observations, map, and selected event remain mounted behind Events / Map tabs. The ledger inspector follows the active view in normal page flow, so it cannot cover selected observations on short screens. Rich evidence expands from that persistent inspector.
+
+<Canvas of={Stories.BranchingHistoriesNarrow} />
 
 ### Controlled selection
 
@@ -48,7 +153,9 @@ const [selection, setSelection] = useState<InvestigationSelection>(null);
 
 Selection is `null`, `{type: "event", eventId}`, `{type: "location", locationId}`, `{type: "path", pathId}`, or `{type: "segment", segmentId}`. Location, path, and segment selections may include `eventId` for scoped stepping. Selecting a member event retains that scope; selecting an unrelated event switches to event selection. Callbacks request a change; only the caller updates the controlled value.
 
-Events use the timeline's stable IDs, `locationId`, and optional `pathIds`. Candidate paths have stable `id`, `label`, optional `description`, and `segmentIds` referencing supplied map connections. No timestamps are sorted and no duplicate descriptions are collapsed. A path choice highlights supplied connections and related timeline rows. “Related only” filters that same event list while preserving caller order and the active scope. Event selection highlights its location and all supplied candidate memberships. Shared-connection selection reports how many candidate paths share the connection. The timeline highlights events across those paths, without asserting those events occurred on the selected connection. Events with identical occurrence labels expose supplied receipt times; these are also associated with the selection buttons for screen readers. The inspector retains the location/path/connection scope and position while stepping, and never duplicates the event list.
+Events use the timeline's stable IDs, `locationId`, and optional `pathIds`. Candidate paths have stable `id`, `label`, optional `description` and `color`, and `segmentIds` referencing supplied map connections. No timestamps are sorted and no duplicate descriptions are collapsed. A path choice highlights supplied connections and related timeline rows. “Related only” filters that same event list while preserving caller order and the active scope. Event selection highlights its location and all supplied candidate memberships. Shared-connection selection reports how many candidate paths share the connection. The timeline highlights events across those paths, without asserting those events occurred on the selected connection. Events with identical occurrence labels expose supplied receipt times; these are also associated with the selection buttons for screen readers. The inspector retains the location/path/connection scope and position while stepping, and never duplicates the event list.
+
+<Canvas of={Stories.LinkedSelection} />
 
 Hovering the map previews its existing inspection card without changing the persistent panel. Changing the workspace selection dismisses map previews so they cannot obscure its navigation controls. Click, tap, Enter, and Space select. Timeline arrow keys, Home/End, and previous/next controls select events. The map's markers and the “Browse locations and connections” disclosure provide keyboard selection and remain usable if the engine fails. Unknown or invalid coordinates are left to the map's existing validation; unlocated events remain selectable. Removed selected records show an unavailable state instead of silently choosing another observation.
 
@@ -56,13 +163,13 @@ Hovering the map previews its existing inspection card without changing the pers
 
 `map` accepts the existing `NetworkMap` options except its location/segment selection and data, which the workspace coordinates. Basemap, worker, camera policy, additional overlays, inspection renderers, legend, and exact data remain available. Selection does not automatically move the camera. The workspace omits duplicate map selection details, legend, and full raw-data tables by default. Controls sit over the map by default; pass `map.controlPlacement="toolbar"` to use a separate toolbar row. Individual location inspection is required, so clustered markers are not exposed by this composition.
 
-`timeline` accepts the existing size and content slots, including `renderMetrics(event)` and `metricsPlacement`. Use `EventMetrics` there for compact or expanded measurements with the default `metricsPlacement: "below"`. For minimal presentation, use `metricsPlacement: "inline"`, `size: "compact"`, and `<EventMetrics variant="minimal" />`: the event label, facility icon and type, location, and pills share one wrapping flow within the selected event surface. Rows without metrics retain the same inline identity layout. `renderDetails(context)` adds caller-owned content below the selection summary; health assessments, distributions, facility summaries, and application actions are optional. Its context contains the selected event/location/path/segment, scoped events, all associated paths, and availability. Event time and received time remain separate.
+`timeline` accepts the existing size and content slots, including `renderMetrics(event)` and `metricsPlacement`. Use `EventMetrics` there for compact or expanded measurements with the default `metricsPlacement: "below"`. For minimal presentation, use `metricsPlacement: "inline"`, `size: "compact"`, and `<EventMetrics variant="minimal" />`. The ordinary timeline shares a wrapping flow between identity and pills; the ledger places metrics in a full-width strip beneath its three identity lines, within the selected surface and outside its button. Rows without metrics keep their compact identity. `renderDetails(context)` adds caller-owned content below the selection summary; health assessments, distributions, facility summaries, and application actions are optional. Its context contains the selected event/location/path/segment, scoped events, all associated paths, and availability. Event time and received time remain separate.
 
 The following example supplies a healthy dwell time and an elevated exception rate for the same event. Both metrics retain their own labeled current-value pill and concentration reference in the timeline; the inspector expands the references. Event dots remain neutral, and selecting another event or location still uses the same controlled selection behavior.
 
 <Canvas of={Stories.WithEventMetrics} />
 
-On wide containers, events sit beside the map and inspector with matching top and bottom boundaries. The map fills the available height above the inspector, including space released when optional detail content is omitted; an explicit numeric `map.height` retains a fixed map height. At 740px and below, Events / Map tabs switch between the same mounted views. A persistent selection panel keeps metadata and event navigation available; “Show details” reveals optional caller content without remounting it. The timeline scrolls within its panel and keeps the selected row visible. Selection, detail state, and the map camera survive switching views and resizing. Narrowing keeps the focused event or map panel visible; widening moves focus from a disappearing tab to its panel. Focus in collapsed inspector content moves to “Show details”, while focus outside the workspace is left alone. Initial camera fitting waits until a hidden map first becomes visible; subsequent switches preserve the camera. `labels` customizes headings, path selection, navigation, view tabs, the related-event filter, and detail disclosure; `ariaLabel` names the workspace.
+On wide containers, events sit beside the map and inspector. The ledger uses equal columns and a 225px map by default; its selected inspector follows immediately below the map. The default workspace retains its filling map layout. An explicit numeric `map.height` overrides either presentation. At 640px and below for the ledger, or 740px for the default workspace, Events / Map tabs switch between the same mounted views. A persistent selection panel keeps metadata and event navigation available; “Show details” reveals optional caller content without remounting it. The ledger inspector follows normal page flow so it cannot cover the selected row. The timeline scrolls within its panel and keeps the selected row visible. Selection, detail state, and the map camera survive switching views and resizing. Narrowing keeps the focused event or map panel visible; widening moves focus from a disappearing tab to its panel. Focus in collapsed inspector content moves to “Show details”, while focus outside the workspace is left alone. Initial camera fitting waits until a hidden map first becomes visible; subsequent switches preserve the camera. `labels` customizes headings, path selection, navigation, view tabs, the related-event filter, and detail disclosure; `ariaLabel` names the workspace.
 
 Change control placement without resetting a chosen map view:
 
@@ -101,9 +208,9 @@ const chooseEvent = (id: string) => setSelection(selectEvent(context, id));
 </>;
 ```
 
-`resolveSelection(records, selection)` retains caller order and marks removed records unavailable. `InvestigationRecords` requires only `events`; `locations`, `segments`, and `paths` default to empty arrays. `selectEvent(context, id)` preserves an available scope for member events. Both helpers are pure; changes remain controlled by the application.
+`resolveSelection(records, selection)` retains caller order and marks removed records unavailable. `InvestigationRecords` requires only `events`; `locations`, `segments`, `paths`, and explicit event `connections` are optional. Its returned `connections` contains the supplied relationships for the selected event, location, path, or mapped segment. Event selection uses incident endpoints; path selection uses explicit relationship membership; segment selection uses explicit `segmentId`. `selectEvent(context, id)` preserves an available scope for member events. Both helpers are pure; changes remain controlled by the application.
 
-`InvestigationDetailsProps` exposes `context`, `chooseEvent(id)`, `clear()`, optional `renderDetails(context)`, optional partial `labels`, and optional `isNarrow`. The inspector supplies previous/next boundaries and clear controls. The default labels match the workspace; `InvestigationDetailsLabels` describes the supported overrides. `InvestigationDetailsContext`, `InvestigationRecords`, `InvestigationPath`, and `InvestigationSelection` are public types from the same entrypoint.
+`InvestigationDetailsProps` exposes `context`, `chooseEvent(id)`, `clear()`, optional `renderDetails(context)`, optional partial `labels`, optional `isNarrow`, and `variant="default" | "compact"`. The compact variant heads the inspector with the selected event's location, then its event type, and omits the duplicate location fact. The ledger workspace selects it automatically. The inspector supplies previous/next boundaries and clear controls. The default labels match the workspace; `InvestigationDetailsLabels` describes the supported overrides. `InvestigationDetailsContext`, `InvestigationRecords`, `InvestigationPath`, `InvestigationConnection`, and `InvestigationSelection` are public types from the same entrypoint.
 
 The standalone inspector observes its own container at the native 740px breakpoint. It retains metadata and navigation while rich content collapses behind Show details. Content stays mounted, and focus moves to the disclosure if narrowing hides the focused action. Widening reveals the same content. If Show details or Hide details had focus, focus returns to the persistent inspector region rather than the document body. Pass `isNarrow` only when a parent layout already owns this decision; `InvestigationWorkspace` does so internally. Compose the timeline and inspector in the application's layout; timeline arrow keys and Home/End remain native.
 
@@ -118,4 +225,4 @@ The standalone inspector observes its own container at the native 740px breakpoi
 <Canvas of={Stories.Narrow} />
 <Canvas of={Stories.ScopedEvent} />
 
-All examples use synthetic observations and an offline schematic map, not measured travel geometry. The detail chart composes `HealthAssessment` and `DurationDistribution` with an independently supplied synthetic reference. No inference or assessment policy lives in this organism.
+All examples use synthetic observations and offline map data. Ledger examples use US Census state outlines and city centers; their straight map connections are candidate relationships, not measured travel geometry. Other examples use a schematic map. The detail chart composes `HealthAssessment` and `DurationDistribution` with an independently supplied synthetic reference. No inference or assessment policy lives in this organism.

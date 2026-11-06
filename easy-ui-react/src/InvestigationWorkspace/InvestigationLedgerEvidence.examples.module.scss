@@ -1,0 +1,46 @@
+@use "../styles/common" as *;
+
+.rowEvidence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: design-token("space.1");
+  min-inline-size: 0;
+  padding-block: design-token("space.0.5");
+}
+
+.rowReference {
+  flex: 1 1 64px;
+  min-inline-size: min(64px, 100%);
+  max-inline-size: 180px;
+
+  // Retain the native histogram's geometry and accessible description while
+  // giving the example's row reference a compact, non-stretching plot frame.
+  [data-visualization="histogram"] [role="img"] {
+    block-size: 32px;
+    min-block-size: 32px;
+  }
+}
+
+.rowReference,
+.selectedReference {
+  // Primary blue identifies the current observation, not a health/risk level.
+  [data-current-assessment="unassessed"] {
+    color: design-token("color.primary.600");
+  }
+}
+
+.selectedEvidence {
+  display: grid;
+  gap: design-token("space.1.5");
+  min-inline-size: 0;
+}
+
+@media (forced-colors: active) {
+  .rowReference,
+  .selectedReference {
+    [data-current-assessment="unassessed"] {
+      color: CanvasText;
+    }
+  }
+}

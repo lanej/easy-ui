@@ -196,6 +196,60 @@ const routeSegments: MapSegment[] = ["north", "south"].flatMap((id) => [
   },
 ]);
 
+const connectionStyleSegments: MapSegment[] = routeSegments.map(
+  (segment, index) =>
+    index === 0
+      ? {
+          ...segment,
+          evidence: "transfer",
+          label: "Reported transfer to North hub",
+        }
+      : segment,
+);
+
+function SubtleConnectionsExample() {
+  const [connectionStyle, setConnectionStyle] = useState<"default" | "subtle">(
+    "subtle",
+  );
+  const [selected, setSelected] = useState<string>();
+  return (
+    <div className={styles.primaryRouteExample}>
+      <label>
+        Connection style{" "}
+        <select
+          value={connectionStyle}
+          onChange={(event) =>
+            setConnectionStyle(event.target.value as "default" | "subtle")
+          }
+        >
+          <option value="subtle">Subtle</option>
+          <option value="default">Default</option>
+        </select>
+      </label>
+      <NetworkMap
+        title="Connection presentation"
+        description="Illustrative reported and inferred connections."
+        connectionStyle={connectionStyle}
+        mapStyle={routeMapStyle}
+        workerUrl={workerUrl}
+        facilities={routeFacilities}
+        segments={connectionStyleSegments}
+        selectedSegmentId="origin-south"
+        selectedFacilityId={selected}
+        onFacilitySelect={setSelected}
+        controls={{ risk: false }}
+        showSelectionDetails={false}
+        showDataTable={false}
+        height={320}
+      />
+    </div>
+  );
+}
+
+export const SubtleConnections: Story = {
+  render: () => <SubtleConnectionsExample />,
+};
+
 function PrimaryRouteMarkersExample() {
   const [route, setRoute] = useState("north");
   const [selected, setSelected] = useState("destination");

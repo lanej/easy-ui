@@ -1,0 +1,355 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+source: packed test ID contract passed (CommonJS + ESM)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at InvestigationDetails (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/InvestigationWorkspace/index.js:149:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at div
+    at ScoreColumn (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.js:178:11)
+    at div
+    at section
+    at ScoreComposition (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.js:637:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:164:3)
+    at div
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at div
+    at ScoreColumn (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.js:178:11)
+    at div
+    at section
+    at ScoreComposition (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.js:637:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at div
+    at ScoreColumn (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.js:178:11)
+    at div
+    at section
+    at ScoreComposition (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.js:637:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:164:3)
+    at div
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at div
+    at ScoreColumn (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.js:178:11)
+    at div
+    at section
+    at ScoreComposition (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.js:637:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at div
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at DrawerRow (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.js:64:14)
+    at li
+    at ul
+    at div
+    at DrawerTable (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.js:109:5)
+    at ColorSchemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:100:3)
+    at ThemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:96:33)
+    at ThemeProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:23:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:164:3)
+    at div
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at div
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at DrawerRow (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.js:64:14)
+    at li
+    at ul
+    at div
+    at DrawerTable (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.js:109:5)
+    at ColorSchemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:100:3)
+    at ThemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:96:33)
+    at ThemeProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:23:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at div
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at DrawerRow (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.js:64:14)
+    at ColorSchemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:100:3)
+    at ThemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:96:33)
+    at ThemeProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:23:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:164:3)
+    at div
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at div
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at DrawerRow (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.js:64:14)
+    at ColorSchemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:100:3)
+    at ThemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:96:33)
+    at ThemeProvider (/tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-CLr99zPn.js:23:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at InvestigationDetails (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/InvestigationWorkspace/index.mjs:131:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at div
+    at ScoreColumn (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.mjs:160:11)
+    at div
+    at section
+    at ScoreComposition (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.mjs:619:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:163:3)
+    at div
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at div
+    at ScoreColumn (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.mjs:160:11)
+    at div
+    at section
+    at ScoreComposition (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.mjs:619:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at div
+    at ScoreColumn (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.mjs:160:11)
+    at div
+    at section
+    at ScoreComposition (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.mjs:619:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:163:3)
+    at div
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at div
+    at ScoreColumn (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.mjs:160:11)
+    at div
+    at section
+    at ScoreComposition (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/ScoreComposition/index.mjs:619:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at div
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at DrawerRow (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.mjs:62:14)
+    at li
+    at ul
+    at div
+    at DrawerTable (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.mjs:107:5)
+    at ColorSchemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:99:3)
+    at ThemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:95:33)
+    at ThemeProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:22:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:163:3)
+    at div
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at div
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at DrawerRow (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.mjs:62:14)
+    at li
+    at ul
+    at div
+    at DrawerTable (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.mjs:107:5)
+    at ColorSchemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:99:3)
+    at ThemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:95:33)
+    at ThemeProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:22:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at div
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at DrawerRow (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.mjs:62:14)
+    at ColorSchemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:99:3)
+    at ThemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:95:33)
+    at ThemeProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:22:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:163:3)
+    at div
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at div
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at DrawerRow (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/DrawerTable/index.mjs:62:14)
+    at ColorSchemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:99:3)
+    at ThemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:95:33)
+    at ThemeProvider (file:///tmp/easy-ui-style-package-zVPpw4/source/consumer/node_modules/@easypost/easy-ui/dist/__chunks__/Theme-8Rvk-yw-.mjs:22:3)
+source: {"sassFiles":11,"cssBytes":37880,"productionCssBytes":30639,"publicImports":"CJS + ESM + SSR passed","typescript":"5.7.3","typeConsumers":[{"resolution":"node","components":117,"declarations":886,"relativeTargets":1707},{"resolution":"bundler","components":117,"declarations":886,"relativeTargets":1586}]}
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+publish-directory: packed test ID contract passed (CommonJS + ESM)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at InvestigationDetails (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/InvestigationWorkspace/index.js:149:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at div
+    at ScoreColumn (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.js:178:11)
+    at div
+    at section
+    at ScoreComposition (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.js:637:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:164:3)
+    at div
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at div
+    at ScoreColumn (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.js:178:11)
+    at div
+    at section
+    at ScoreComposition (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.js:637:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at div
+    at ScoreColumn (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.js:178:11)
+    at div
+    at section
+    at ScoreComposition (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.js:637:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:164:3)
+    at div
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at div
+    at ScoreColumn (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.js:178:11)
+    at div
+    at section
+    at ScoreComposition (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.js:637:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at div
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at DrawerRow (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.js:64:14)
+    at li
+    at ul
+    at div
+    at DrawerTable (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.js:109:5)
+    at ColorSchemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:100:3)
+    at ThemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:96:33)
+    at ThemeProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:23:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:164:3)
+    at div
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at div
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at DrawerRow (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.js:64:14)
+    at li
+    at ul
+    at div
+    at DrawerTable (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.js:109:5)
+    at ColorSchemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:100:3)
+    at ThemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:96:33)
+    at ThemeProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:23:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at div
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at DrawerRow (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.js:64:14)
+    at ColorSchemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:100:3)
+    at ThemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:96:33)
+    at ThemeProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:23:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:164:3)
+    at div
+    at DisclosureContent (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:123:5)
+    at div
+    at Disclosure (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-BgKHxtfd.js:81:11)
+    at DrawerRow (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.js:64:14)
+    at ColorSchemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:100:3)
+    at ThemeContextProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:96:33)
+    at ThemeProvider (/tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-CLr99zPn.js:23:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at InvestigationDetails (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/InvestigationWorkspace/index.mjs:131:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at div
+    at ScoreColumn (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.mjs:160:11)
+    at div
+    at section
+    at ScoreComposition (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.mjs:619:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:163:3)
+    at div
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at div
+    at ScoreColumn (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.mjs:160:11)
+    at div
+    at section
+    at ScoreComposition (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.mjs:619:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at div
+    at ScoreColumn (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.mjs:160:11)
+    at div
+    at section
+    at ScoreComposition (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.mjs:619:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:163:3)
+    at div
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at div
+    at ScoreColumn (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.mjs:160:11)
+    at div
+    at section
+    at ScoreComposition (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/ScoreComposition/index.mjs:619:5)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at div
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at DrawerRow (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.mjs:62:14)
+    at li
+    at ul
+    at div
+    at DrawerTable (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.mjs:107:5)
+    at ColorSchemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:99:3)
+    at ThemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:95:33)
+    at ThemeProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:22:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:163:3)
+    at div
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at div
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at DrawerRow (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.mjs:62:14)
+    at li
+    at ul
+    at div
+    at DrawerTable (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.mjs:107:5)
+    at ColorSchemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:99:3)
+    at ThemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:95:33)
+    at ThemeProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:22:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at div
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at DrawerRow (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.mjs:62:14)
+    at ColorSchemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:99:3)
+    at ThemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:95:33)
+    at ThemeProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:22:3)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at CaptureClosingFocus (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:163:3)
+    at div
+    at DisclosureContent (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:122:5)
+    at div
+    at Disclosure (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Disclosure-Bfy-RCm_.mjs:80:11)
+    at DrawerRow (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/DrawerTable/index.mjs:62:14)
+    at ColorSchemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:99:3)
+    at ThemeContextProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:95:33)
+    at ThemeProvider (file:///tmp/easy-ui-style-package-zVPpw4/publish-directory/consumer/node_modules/@easypost/easy-ui/__chunks__/Theme-8Rvk-yw-.mjs:22:3)
+publish-directory: {"sassFiles":11,"cssBytes":37880,"productionCssBytes":30639,"publicImports":"CJS + ESM + SSR passed","typescript":"5.7.3","typeConsumers":[{"resolution":"node","components":117,"declarations":886,"relativeTargets":1444},{"resolution":"bundler","components":117,"declarations":886,"relativeTargets":1444}]}
+Packed consumer evidence: /tmp/easy-ui-style-package-zVPpw4

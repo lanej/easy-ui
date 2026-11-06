@@ -21,6 +21,31 @@
   flex-wrap: wrap;
   margin-block-end: design-token("space.1.5");
 }
+.pathOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-inline-size: 0;
+}
+.pathSwatch {
+  display: inline-block;
+  inline-size: 8px;
+  block-size: 8px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+.pathComparison {
+  min-inline-size: 0;
+  padding: design-token("space.3") design-token("space.4");
+  border-block-start: 1px solid design-token("color.neutral.200");
+}
+
+@media (forced-colors: active) {
+  .pathSwatch {
+    outline: 1px solid CanvasText;
+  }
+}
 .layout {
   display: grid;
   grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.4fr);
@@ -156,6 +181,121 @@
   grid-area: views;
   min-inline-size: 0;
 }
+
+// A joined surface keeps navigation stable while selected evidence changes.
+.root[data-variant="ledger"] {
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 10px;
+  overflow: clip;
+  background: design-token("color.neutral.000");
+  .summary {
+    padding: 12px 16px 8px;
+  }
+  .paths {
+    gap: 4px;
+    margin: 0;
+    padding: 4px 12px;
+    border-block-end: 1px solid design-token("color.neutral.200");
+    background: design-token("color.neutral.050");
+    > span {
+      margin-inline-end: 8px;
+      font-size: 12px;
+    }
+  }
+  .summary + .paths {
+    border-block-start: 1px solid design-token("color.neutral.200");
+  }
+  .pathButton {
+    min-inline-size: 30px;
+    min-block-size: 28px;
+    padding: 3px 10px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    font-size: 12px;
+    line-height: 20px;
+    cursor: pointer;
+    &[aria-pressed="true"] {
+      border-color: design-token("color.neutral.300");
+      color: design-token("color.primary.600");
+      background: design-token("color.neutral.000");
+      font-weight: 600;
+    }
+    &:hover {
+      background: design-token("color.neutral.100");
+    }
+    &:focus-visible {
+      outline: 2px solid design-token("color.primary.600");
+      outline-offset: 2px;
+    }
+  }
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    gap: 0;
+  }
+  .timeline {
+    border: 0;
+    border-inline-end: 1px solid design-token("color.neutral.200");
+    border-radius: 0;
+  }
+  .timelineContent {
+    padding: 8px;
+    max-block-size: min(82dvh, 880px);
+  }
+  :where(.timeline) .heading,
+  .filter {
+    padding-inline: 8px;
+  }
+  .details {
+    border: 0;
+    border-block-start: 1px solid design-token("color.neutral.200");
+    border-radius: 0;
+    padding: 12px 16px;
+    align-self: stretch;
+    align-content: start;
+  }
+  [data-map-heading] {
+    padding: 8px 12px;
+    > div {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+  }
+  .map > div:first-child {
+    border: 0;
+    border-radius: 0;
+  }
+  .index {
+    padding: 8px 16px;
+    font-size: 11px;
+  }
+}
+
+.details[data-variant="compact"] {
+  gap: 10px;
+  .detailHeader {
+    align-items: center;
+  }
+  .identity h3 {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .scope {
+    font-size: 11px;
+  }
+  .metadata {
+    align-items: flex-start;
+  }
+}
+
+@media (pointer: coarse) {
+  .root[data-variant="ledger"] .pathButton {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+  }
+}
 .root[data-narrow="true"] {
   .layout {
     grid-template-columns: minmax(0, 1fr);
@@ -198,6 +338,29 @@
   }
   .detailHeader {
     flex-wrap: wrap;
+  }
+}
+
+.root[data-variant="ledger"][data-narrow="true"] {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .views {
+    padding: 8px 12px;
+    border-block-end: 1px solid design-token("color.neutral.200");
+  }
+  .timeline {
+    border-inline-end: 0;
+  }
+  .details {
+    // Normal page flow keeps a short viewport from covering the selected row
+    // with the inspector. Selection and optional evidence stay mounted.
+    position: static;
+    box-shadow: none;
+  }
+  .timelineContent {
+    max-block-size: min(50dvh, 420px);
   }
 }
 

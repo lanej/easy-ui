@@ -28,6 +28,8 @@ export type EventItemProps = {
   event: EventTimelineEvent;
   current?: boolean;
   size?: "compact" | "default" | "detailed";
+  /** Ledger stacks event type, location, and occurrence time in compact rows. */
+  variant?: "timeline" | "ledger";
   onSelect?: () => void;
   onKeyDown?: (key: string) => boolean;
   registerButton?: (node: HTMLButtonElement | null) => void;
@@ -44,6 +46,7 @@ export function EventItem({
   event,
   current = false,
   size = "default",
+  variant = "timeline",
   onSelect,
   onKeyDown,
   registerButton,
@@ -53,8 +56,11 @@ export function EventItem({
 }: EventItemProps) {
   const id = useId();
   const hasLocation = Boolean(event.locationLabel || event.locationTypeLabel);
-  const showDetail = size !== "compact" && Boolean(event.detailLabel);
-  const showReceived = size === "detailed" && Boolean(event.receivedTimeLabel);
+  const showDetail =
+    (size !== "compact" || variant === "ledger") && Boolean(event.detailLabel);
+  const showReceived =
+    (size === "detailed" || (variant === "ledger" && !event.timeLabel)) &&
+    Boolean(event.receivedTimeLabel);
   const showDescription = size === "detailed" && Boolean(event.description);
   const time = (
     <span id={`${id}-time`} className={styles.time}>
@@ -93,7 +99,7 @@ export function EventItem({
   );
   const context = (
     <>
-      {showDetail && (
+      {showDetail && (variant !== "ledger" || !hasLocation) && (
         <span id={`${id}-detail`} className={styles.received}>
           {event.detailLabel}
         </span>
@@ -110,6 +116,101 @@ export function EventItem({
       )}
     </>
   );
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (
+      ["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) &&
+      onKeyDown?.(e.key)
+    )
+      e.preventDefault();
+  };
+
+  if (variant === "ledger") {
+    const ledgerLocation = event.locationLabel || event.locationTypeLabel;
+    const metadata = [
+      event.locationLabel ? event.locationTypeLabel : undefined,
+      event.statusLabel !== event.label ? event.statusLabel : undefined,
+    ]
+      .filter(Boolean)
+      .join(". ");
+    return (
+      <div
+        className={styles.item}
+        data-variant="ledger"
+        data-size={size}
+        data-current={current || undefined}
+        data-has-trailing={trailing != null || undefined}
+      >
+        <div className={styles.ledgerContent} data-event-content>
+          <button
+            ref={registerButton}
+            type="button"
+            className={styles.ledgerSelect}
+            aria-current={current ? "true" : undefined}
+            aria-labelledby={[
+              `${id}-ledger-title`,
+              ledgerLocation && `${id}-ledger-location`,
+              `${id}-time`,
+              showDetail && `${id}-detail`,
+              showReceived && `${id}-received`,
+              showDescription && `${id}-description`,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-describedby={
+              [
+                metadata && `${id}-ledger-metadata`,
+                trailing != null && `${id}-trailing`,
+              ]
+                .filter(Boolean)
+                .join(" ") || undefined
+            }
+            onClick={onSelect}
+            onKeyDown={handleKeyDown}
+          >
+            <span id={`${id}-ledger-title`} className={styles.ledgerTitle}>
+              {event.label}
+            </span>
+            {ledgerLocation && (
+              <span className={styles.ledgerLocation}>
+                {event.locationIcon && (
+                  <span className={styles.locationIcon} aria-hidden="true">
+                    {event.locationIcon}
+                  </span>
+                )}
+                <span id={`${id}-ledger-location`}>{ledgerLocation}</span>
+                {showDetail && (
+                  <span id={`${id}-detail`} className={styles.ledgerQualifier}>
+                    {event.detailLabel}
+                  </span>
+                )}
+              </span>
+            )}
+            {time}
+            {context}
+          </button>
+          {metadata && (
+            <span
+              id={`${id}-ledger-metadata`}
+              className={styles.visuallyHidden}
+            >
+              {metadata}
+            </span>
+          )}
+        </div>
+        {trailing != null && (
+          <div id={`${id}-trailing`} className={styles.ledgerTrailing}>
+            {trailing}
+          </div>
+        )}
+        {inlineMetrics != null && (
+          <div className={styles.inlineMetrics} data-inline-metrics>
+            {inlineMetrics}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const selection = (
     <button
       ref={registerButton}
@@ -139,13 +240,7 @@ export function EventItem({
           : undefined
       }
       onClick={onSelect}
-      onKeyDown={(e) => {
-        if (
-          ["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) &&
-          onKeyDown?.(e.key)
-        )
-          e.preventDefault();
-      }}
+      onKeyDown={handleKeyDown}
     >
       {inline ? (
         title

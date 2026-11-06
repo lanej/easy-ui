@@ -1,0 +1,30 @@
+{
+  "checks": [
+    "branching-histories-light-800",
+    "branching-histories-light-1200",
+    "branching-histories-light-390",
+    "branching-histories-light-390-expanded",
+    "branching-histories-light-390-map",
+    "branching-histories-dark-800",
+    "branching-histories-dark-1200",
+    "branching-histories-dark-390",
+    "branching-histories-dark-390-expanded",
+    "branching-histories-dark-390-map",
+    "ledger-explicit-candidate-intervals-and-shared-reference-bins",
+    "ledger-fork-rejoin-disjoint-selection-filter-and-keyboard",
+    "ledger-mobile-selection-camera-and-focus",
+    "branching-histories-light-390x640",
+    "branching-histories-light-390x640-expanded",
+    "compact-ledger-light-1200",
+    "branching-histories-narrow-light-1200",
+    "unassigned-delivery-light-1200",
+    "predicted-path-comparison-light-800",
+    "focused-predictions-light-scope-visibility-camera",
+    "predicted-path-comparison-dark-800",
+    "focused-predictions-dark-scope-visibility-camera",
+    "predicted-path-comparison-narrow-map",
+    "candidate-colors-forced-color-equivalent"
+  ],
+  "errors": [],
+  "violations": 0
+}

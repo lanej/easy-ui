@@ -176,6 +176,146 @@
   color: design-token("color.neutral.700");
 }
 
+// Event-first rows are a navigator for a shared inspector. Their full
+// selected surface includes caller-owned summaries without nesting controls.
+.timeline[data-variant="ledger"] {
+  display: grid;
+  gap: 0;
+
+  .entry {
+    --content-inset: 9px;
+  }
+}
+
+.timeline[data-variant="ledger"] .entry::before,
+.timeline[data-connected="true"] .entry::before {
+  display: none;
+}
+
+.graphTimeline {
+  position: relative;
+  min-inline-size: 0;
+
+  > .timeline {
+    box-sizing: border-box;
+    padding-inline-start: var(--connection-gutter);
+  }
+}
+
+.item[data-variant="ledger"] {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 0 8px;
+  box-sizing: border-box;
+  min-block-size: 64px;
+  padding: 6px 9px;
+  border-radius: 6px;
+
+  &[data-has-trailing="true"] {
+    grid-template-columns: minmax(0, 1fr) fit-content(42%);
+  }
+
+  &[data-current="true"],
+  &:has(.ledgerSelect:hover) {
+    background: design-token("color.primary.050");
+  }
+
+  &[data-current="true"] {
+    box-shadow: inset 3px 0 design-token("color.primary.600");
+  }
+
+  .time {
+    padding: 0;
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  .received {
+    line-height: 16px;
+  }
+}
+
+.ledgerContent {
+  min-inline-size: 0;
+}
+
+.ledgerSelect {
+  display: grid;
+  gap: 1px;
+  border: 0;
+  padding: 0;
+  inline-size: 100%;
+  min-inline-size: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    border-radius: 6px;
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    &::after {
+      outline: 2px solid design-token("color.primary.600");
+      outline-offset: 2px;
+    }
+  }
+}
+
+.ledgerTitle {
+  min-inline-size: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.ledgerLocation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 5px;
+  min-inline-size: 0;
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+
+  .locationIcon {
+    margin-block-start: 2px;
+  }
+}
+
+.ledgerQualifier {
+  font-size: 11px;
+  color: design-token("color.neutral.700");
+}
+
+.ledgerTrailing {
+  position: relative;
+  z-index: 2;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.visuallyHidden {
+  @include visually-hidden;
+}
+
 // The timeline is normally a narrow column beside a map. Keep the summary
 // in the selected event's row; never wrap the entire trailing slot below it.
 @container (max-width: 680px) {
@@ -292,11 +432,18 @@
   z-index: 2;
 }
 
+.item[data-variant="ledger"] .inlineMetrics {
+  display: block;
+  grid-column: 1 / -1;
+  min-inline-size: 0;
+  margin-block-start: 4px;
+}
+
 // Compact row summaries share space with a readable event identity. Their
 // contents can wrap within the trailing slot without moving below the event.
 .item[data-size="compact"][data-has-trailing="true"]:not(
     [data-metrics-placement="inline"]
-  ) {
+  ):not([data-variant="ledger"]) {
   align-items: flex-start;
   gap: 8px;
 
@@ -313,6 +460,9 @@
 }
 
 @media (forced-colors: active) {
+  .item[data-variant="ledger"][data-current="true"] {
+    outline: 1px solid Highlight;
+  }
   .item[data-current="true"] .select {
     outline: 1px solid Highlight;
   }

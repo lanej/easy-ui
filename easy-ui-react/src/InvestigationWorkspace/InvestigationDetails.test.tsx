@@ -18,18 +18,25 @@ const events: EventTimelineEvent[] = [
   },
   { id: "updated", label: "Preferences updated", timeLabel: "Oct 16, 2026" },
 ];
-function Composition() {
+function Composition({
+  variant = "default",
+  observations = events,
+}: {
+  variant?: "default" | "compact";
+  observations?: EventTimelineEvent[];
+} = {}) {
   const [selection, setSelection] = useState<InvestigationSelection>(null);
-  const context = resolveSelection({ events }, selection);
+  const context = resolveSelection({ events: observations }, selection);
   const chooseEvent = (id: string) => setSelection(selectEvent(context, id));
   return (
     <>
       <EventTimeline
-        events={events}
+        events={observations}
         selectedId={context.event?.id ?? null}
         onSelectedIdChange={chooseEvent}
       />
       <InvestigationDetails
+        variant={variant}
         context={context}
         chooseEvent={chooseEvent}
         clear={() => setSelection(null)}
@@ -40,6 +47,43 @@ function Composition() {
 }
 
 describe("map-free investigation composition", () => {
+  it("keeps compact event types in the live announcement without duplicating an unlocated heading", () => {
+    render(
+      <Composition
+        variant="compact"
+        observations={[
+          {
+            id: "accepted",
+            label: "Accepted",
+            timeLabel: "Oct 22 · 04:04 UTC",
+          },
+          {
+            id: "delivered",
+            label: "Delivered",
+            locationLabel: "Avondale, AZ",
+            timeLabel: "Oct 24 · 11:25 UTC",
+            receivedTimeLabel: "Oct 24 · 11:41 UTC",
+          },
+        ]}
+      />,
+    );
+    const timeline = screen.getByRole("list", { name: "Event timeline" });
+    fireEvent.click(within(timeline).getAllByRole("button")[0]);
+    const inspector = within(
+      screen.getByRole("region", { name: "Selection details" }),
+    );
+    expect(inspector.getAllByText("Accepted", { exact: true })).toHaveLength(1);
+    expect(inspector.getByRole("heading", { name: "Accepted" })).toBeVisible();
+    expect(inspector.getByText("Not supplied")).toBeVisible();
+    fireEvent.click(inspector.getByRole("button", { name: "Next event" }));
+    expect(
+      inspector.getByRole("heading", { name: "Avondale, AZ" }),
+    ).toBeVisible();
+    expect(inspector.getByRole("status")).toHaveTextContent(
+      "Delivered · Avondale, AZ · Oct 24 · 11:25 UTC · Received Oct 24 · 11:41 UTC · Event 2 of 2",
+    );
+  });
+
   it("coordinates controlled timeline keyboard selection, stepping, rich details and clear", () => {
     render(<Composition />);
     const timeline = screen.getByRole("list", { name: "Event timeline" });
