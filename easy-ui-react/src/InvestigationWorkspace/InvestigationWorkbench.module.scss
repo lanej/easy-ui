@@ -349,7 +349,7 @@
   max-block-size: 230px;
   overflow: auto;
   overscroll-behavior: contain;
-  > div {
+  .relationshipPickerItems {
     display: grid;
     gap: 12px;
   }
@@ -602,8 +602,12 @@
 }
 .displayMenu {
   position: relative;
-  > summary { list-style: none; }
-  > summary::-webkit-details-marker { display: none; }
+  > summary {
+    list-style: none;
+  }
+  > summary::-webkit-details-marker {
+    display: none;
+  }
 }
 .displayOptions {
   display: grid;
@@ -650,8 +654,12 @@
     min-block-size: 0;
     min-inline-size: 0;
   }
-  .expandMap { inset-block-start: 52px; }
-  .forecastControls { flex: 0 0 auto; }
+  .expandMap {
+    inset-block-start: 52px;
+  }
+  .forecastControls {
+    flex: 0 0 auto;
+  }
 }
 .inspectorGraph {
   border-block-start: 1px solid design-token("color.neutral.200");
@@ -661,8 +669,12 @@
   overscroll-behavior: contain;
 }
 @container investigation-workbench (max-width: 760px) {
-  .timelineControls { align-items: flex-start; }
-  .expandMap { inset-inline-end: 64px; }
+  .timelineControls {
+    align-items: flex-start;
+  }
+  .expandMap {
+    inset-inline-end: 64px;
+  }
   .mapPanel[data-expanded="true"] {
     inset: 0;
     block-size: 100dvh;
@@ -684,7 +696,7 @@
     gap: 4px;
     padding-block-start: 8px;
   }
-  button {
+  .relationshipPickerButton {
     text-align: start;
     padding: 6px 8px;
     border: 1px solid design-token("color.neutral.200");
