@@ -1,28 +1,91 @@
-name: Investigation revision inputs
+name: Compact all-history verification
 on:
   push:
     branches: [codex/investigation-workbench]
     paths: [.github/workflows/investigation-revision-inputs.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  snapshot:
+  verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
-      - name: Package current source
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Apply source-verified revision
         shell: bash
         run: |
           set -euo pipefail
+          python3 .github/revisions/apply-all-histories.py
+          rm .github/revisions/apply-all-histories.py .github/workflows/investigation-revision-inputs.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Keep all histories in a compact ledger with leftmost Git branching'
           git rev-parse HEAD > "$RUNNER_TEMP/source-revision.txt"
-          git archive --format=tar.gz --output="$RUNNER_TEMP/source.tar.gz" HEAD
+      - run: npm ci --no-audit --no-fund
+      - name: Verify tests, lint, types and package
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run test --workspace @easypost/easy-ui -- InvestigationWorkspace EventTimeline 2>&1 | tee "$RUNNER_TEMP/targeted-tests.log"
+          npm run lint --workspace @easypost/easy-ui 2>&1 | tee "$RUNNER_TEMP/lint.log"
+          npm run build:react 2>&1 | tee "$RUNNER_TEMP/package-build.log"
+          node scripts/check-style-package.mjs 2>&1 | tee "$RUNNER_TEMP/packed-consumer.log"
+      - name: Build Storybook
+        env:
+          STORYBOOK_TEST_RECIPES: 'true'
+        run: npm run build:storybook && npm run check:storybook
+      - name: Install browser dependencies
+        working-directory: scripts/preview-metrics
+        run: npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: Check all-history graph, interactions and smaller viewports
+        shell: bash
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/scripts/preview-metrics/node_modules/playwright
+          STORYBOOK_URL: http://127.0.0.1:9019
+          WORKBENCH_REPORT_DIR: ${{ runner.temp }}/all-history-browser
+          EVENT_TIMELINE_REPORT_DIR: ${{ runner.temp }}/timeline-browser
+        run: |
+          set -euo pipefail
+          python3 -m http.server 9019 --bind 127.0.0.1 --directory storybook-static > "$RUNNER_TEMP/storybook-server.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$STORYBOOK_URL/iframe.html" > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/check-investigation-workbench.mjs 2>&1 | tee "$RUNNER_TEMP/browser-checks.log"
+          node scripts/check-event-timeline.mjs 2>&1 | tee "$RUNNER_TEMP/timeline-checks.log"
+      - name: Publish verified code and current screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE=$(git rev-parse HEAD)
+          DEST=".ui-review/pr-76/$SOURCE"
+          mkdir -p "$DEST"
+          cp "$RUNNER_TEMP/all-history-browser/"{report.json,provenance.json,workbench-overview-1100.png,workbench-overview-960.png,workbench-light-desktop.png,workbench-dark-desktop.png,workbench-light-narrow-events.png,workbench-light-narrow-map.png} "$DEST/"
+          git add "$DEST"
+          git commit -m 'Capture actual all-history workbench at compact viewports'
+          git push origin HEAD:codex/investigation-workbench
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: investigation-revision-source
+          name: compact-all-history-verification
           path: |
-            ${{ runner.temp }}/source.tar.gz
             ${{ runner.temp }}/source-revision.txt
-          retention-days: 1
+            ${{ runner.temp }}/all-history-browser
+            ${{ runner.temp }}/targeted-tests.log
+            ${{ runner.temp }}/lint.log
+            ${{ runner.temp }}/package-build.log
+            ${{ runner.temp }}/packed-consumer.log
+            ${{ runner.temp }}/browser-checks.log
+            ${{ runner.temp }}/timeline-checks.log
+            ${{ runner.temp }}/storybook-server.log
+          retention-days: 7
