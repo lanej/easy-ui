@@ -10,7 +10,6 @@ import React, {
 import type { Map as MapInstance } from "maplibre-gl";
 import { Checkbox } from "../Checkbox";
 import { Pill } from "../Pill";
-import { EventDetails } from "../EventDetails";
 import {
   EventTimeline,
   type EventTimelineConnectionContext,
@@ -58,7 +57,7 @@ export type InvestigationWorkbenchProps = {
   actions?: ReactNode;
   /** Show full descriptive history names; default is compact color + short identity. */
   showHistoryLabels?: boolean;
-  /** Optional chart or other analysis below the inspector tabs; supplied by the caller. */
+  /** Optional chart or analysis inside the active vertical drawer; supplied by the caller. */
   renderInspectorGraph?: (
     context: InvestigationDetailsContext & {
       selectedEventIds: readonly string[];
@@ -106,7 +105,7 @@ function Swatch({ color, dash }: { color: string; dash?: readonly number[] }) {
   );
 }
 
-/** Three coordinated views over one validated graph; forecasts never become scan records. */
+/** Coordinated chronology and map with vertical evidence drawers. */
 export function InvestigationWorkbench({
   graph,
   map,
@@ -174,18 +173,41 @@ export function InvestigationWorkbench({
       next.mode === "deviation" &&
       (action.type === "compare" ||
         (action.type === "mode" && action.mode === "deviation"))
-    )
+    ) {
       setTab("deviation");
+      setDrawerOpen(true);
+    }
+    if (
+      action.type === "focus" &&
+      state.selection?.type === "path" &&
+      state.selection.pathId === action.pathId
+    )
+      setDrawerOpen(true);
     if (controlledState === undefined) setInternalState(next);
     onStateChange?.(next);
   };
   const [narrow, setNarrow] = useState(false);
   const narrowMode = useRef(false);
-  const focusAfterResize = useRef<"events" | "map" | null>(null);
+  const focusAfterResize = useRef<"events" | "map" | "drawer" | null>(null);
+  const focusAfterDrawerId = useRef<string | null>(null);
   const [mobileView, setMobileView] = useState<"events" | "map">("events");
   const [mapInstance, setMapInstance] = useState<MapInstance | null>(null);
   const [tab, setTab] = useState<"event" | "deviation" | "evidence">("event");
   const [multiSelect, setMultiSelect] = useState(false);
+  const hasSelection = Boolean(state.selection);
+  const selectionKey = JSON.stringify([
+    state.selection?.type,
+    state.selection?.eventId,
+    state.selection?.type === "path" ? state.selection.pathId : null,
+    state.selection?.type === "location" ? state.selection.locationId : null,
+    state.selection?.type === "segment" ? state.selection.segmentId : null,
+  ]);
+  const [drawerOpen, setDrawerOpen] = useState(
+    hasSelection || state.mode === "deviation",
+  );
+  useEffect(() => {
+    setDrawerOpen(hasSelection || state.mode === "deviation");
+  }, [selectionKey, hasSelection, state.mode, state.comparisonPredictionId]);
   const [mapExpanded, setMapExpanded] = useState(false);
   const anchorId = useRef<string | null>(null);
   const expandButton = useRef<HTMLButtonElement>(null);
@@ -227,8 +249,13 @@ export function InvestigationWorkbench({
       const next = width <= 760;
       if (next === narrowMode.current) return;
       focusAfterResize.current = null;
+      focusAfterDrawerId.current = null;
       const active = document.activeElement;
       if (active instanceof HTMLElement && element.contains(active)) {
+        if (active.closest("[data-workbench-drawer]")) {
+          focusAfterResize.current = "drawer";
+          focusAfterDrawerId.current = active.id || null;
+        }
         if (next) {
           if (active.closest("[data-workbench-map]")) setMobileView("map");
           if (active.closest("[data-workbench-events]"))
@@ -249,10 +276,23 @@ export function InvestigationWorkbench({
   useLayoutEffect(() => {
     const target = focusAfterResize.current;
     focusAfterResize.current = null;
-    if (target)
+    if (target === "drawer") {
+      const previous = focusAfterDrawerId.current
+        ? document.getElementById(focusAfterDrawerId.current)
+        : null;
+      const next =
+        previous && root.current?.contains(previous)
+          ? previous
+          : root.current?.querySelector<HTMLElement>(
+              '[data-workbench-drawer] [role="tab"][aria-selected="true"]',
+            );
+      next?.focus({ preventScroll: true });
+      focusAfterDrawerId.current = null;
+    } else if (target) {
       root.current
         ?.querySelector<HTMLElement>(`[data-workbench-${target}]`)
         ?.focus({ preventScroll: true });
+    }
   }, [narrow]);
   useEffect(() => {
     setTab(state.mode === "deviation" ? "deviation" : "event");
@@ -406,6 +446,7 @@ export function InvestigationWorkbench({
     eventId: string,
     modifiers?: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
   ) => {
+    if (eventId === event?.id) setDrawerOpen(true);
     const ids = visibleEvents.map((item) => item.id);
     const anchor = anchorId.current;
     let selected: string[];
@@ -511,14 +552,28 @@ export function InvestigationWorkbench({
       "[data-workbench-events] > [data-workbench-scroll]",
     );
     const selected = panel?.querySelector<HTMLElement>('[aria-current="true"]');
-    if (!panel || !selected) return;
+    if (!panel) return;
+    if (!selected) {
+      if (drawerOpen && panel.querySelector("[data-workbench-drawer]"))
+        panel.scrollTop = 0;
+      return;
+    }
     const bounds = panel.getBoundingClientRect();
     const row = selected.getBoundingClientRect();
-    if (row.top < bounds.top) panel.scrollTop += row.top - bounds.top - 8;
-    else if (row.bottom > bounds.bottom)
-      panel.scrollTop += row.bottom - bounds.bottom + 8;
+    const entry = drawerOpen
+      ? selected.closest("li")?.getBoundingClientRect()
+      : undefined;
+    if (entry && entry.height > bounds.height - 16) {
+      panel.scrollTop += row.top - bounds.top - 8;
+    } else if (row.top < bounds.top + 8) {
+      panel.scrollTop += row.top - bounds.top - 8;
+    } else if ((entry?.bottom ?? row.bottom) > bounds.bottom - 8) {
+      panel.scrollTop += (entry?.bottom ?? row.bottom) - bounds.bottom + 8;
+    }
   }, [
     event?.id,
+    selectionKey,
+    drawerOpen,
     records.events,
     state.showDisconnected,
     narrow,
@@ -556,6 +611,439 @@ export function InvestigationWorkbench({
       dispatch({ type: "compare", id: predictionId });
     else map.onOverlaySelect?.(hit);
   };
+  const closeDrawer = () => {
+    const rowButton = Array.from(
+      root.current?.querySelectorAll<HTMLButtonElement>(
+        "[data-workbench-row-toggle]",
+      ) ?? [],
+    ).find((button) => button.dataset.workbenchRowToggle === event?.id);
+    const target =
+      narrow && mobileView === "map"
+        ? root.current?.querySelector<HTMLElement>("[data-workbench-map]")
+        : (rowButton ??
+          root.current?.querySelector<HTMLButtonElement>(
+            "[data-workbench-context-toggle]",
+          ));
+    target?.focus({ preventScroll: true });
+    setDrawerOpen(false);
+  };
+  const inlineEvent =
+    event && visibleEvents.find((item) => item.id === event.id);
+  const inlineDrawer =
+    Boolean(inlineEvent) && !(narrow && mobileView === "map");
+  const inspector = (
+    <section
+      className={styles.inspector}
+      aria-label="Investigation inspector"
+      id={`${id}-drawer`}
+      data-workbench-drawer
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && !e.defaultPrevented) {
+          e.stopPropagation();
+          closeDrawer();
+        }
+      }}
+    >
+      {!inlineDrawer && (
+        <header className={styles.inspectorHeader}>
+          {event && (
+            <span className={styles.muted}>
+              {event.label} · {event.timeLabel ?? "Time unknown"}
+            </span>
+          )}
+          <h3>
+            {event?.locationLabel ??
+              event?.label ??
+              context.path?.label ??
+              context.location?.label ??
+              context.segment?.label ??
+              "Investigation details"}
+          </h3>
+        </header>
+      )}
+      <div className={styles.drawerToolbar}>
+        <div
+          className={styles.inspectorTabs}
+          role="tablist"
+          aria-label="Inspector sections"
+        >
+          {inspectorTabs.map((item, index) => (
+            <button
+              key={item}
+              type="button"
+              role="tab"
+              id={`${tabsId}-${item}-tab`}
+              aria-controls={`${tabsId}-${item}-panel`}
+              aria-selected={currentTab === item}
+              tabIndex={currentTab === item ? 0 : -1}
+              onClick={() => setTab(item)}
+              onKeyDown={(e) => {
+                const next =
+                  e.key === "ArrowRight"
+                    ? inspectorTabs[(index + 1) % 3]
+                    : e.key === "ArrowLeft"
+                      ? inspectorTabs[(index + 2) % 3]
+                      : e.key === "Home"
+                        ? "event"
+                        : e.key === "End"
+                          ? "evidence"
+                          : null;
+                if (next) {
+                  e.preventDefault();
+                  changeTab(next);
+                }
+              }}
+            >
+              {item === "event"
+                ? "Details"
+                : item === "deviation"
+                  ? "Comparison"
+                  : "Evidence"}
+            </button>
+          ))}
+        </div>
+        <div
+          className={styles.eventNavigation}
+          role="group"
+          aria-label="Event navigation"
+        >
+          <button
+            type="button"
+            aria-label="Previous event"
+            disabled={selectedIndex <= 0}
+            onClick={() => selectEvent(visibleEvents[selectedIndex - 1])}
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            aria-label="Next event"
+            disabled={
+              !visibleEvents.length ||
+              selectedIndex === visibleEvents.length - 1
+            }
+            onClick={() => selectEvent(visibleEvents[selectedIndex + 1])}
+          >
+            →
+          </button>
+          <button
+            type="button"
+            aria-label="Close investigation details"
+            onClick={closeDrawer}
+          >
+            ×
+          </button>
+        </div>
+      </div>
+      <div role="status" className={styles.srOnly}>
+        {event
+          ? `Selected ${event.label}, ${event.locationLabel ?? "location unknown"}, ${event.timeLabel ?? "time unknown"}`
+          : "Selection updated"}
+      </div>
+      <div
+        className={styles.inspectorBody}
+        role="region"
+        aria-label="Inspector content"
+        tabIndex={0}
+      >
+        <div
+          role="tabpanel"
+          id={`${tabsId}-event-panel`}
+          aria-labelledby={`${tabsId}-event-tab`}
+          hidden={currentTab !== "event"}
+        >
+          {!context.isAvailable ? (
+            <p>The selected record is no longer available.</p>
+          ) : event ? (
+            <>
+              {focused && !event.pathIds?.includes(focused.id) && (
+                <p className={styles.notice}>
+                  This observation is outside {focused.label}.
+                </p>
+              )}
+              <dl className={styles.facts}>
+                {event.receivedTimeLabel &&
+                  (!inlineDrawer || event.timeLabel) && (
+                    <div>
+                      <dt>Received</dt>
+                      <dd>{event.receivedTimeLabel}</dd>
+                    </div>
+                  )}
+                <div>
+                  <dt>Event ID</dt>
+                  <dd>{event.id}</dd>
+                </div>
+              </dl>
+              {event.description && <p>{event.description}</p>}
+              {selectedEventIds.length > 1 && (
+                <p className={styles.notice}>
+                  {selectedEventIds.length} observations selected. Map links are
+                  highlighted only for explicit supplied connections.
+                </p>
+              )}
+              {!selectedAssessments.length && (
+                <p className={styles.muted}>
+                  No assessment supplied for this observation.
+                </p>
+              )}
+              {renderEvent?.(context)}
+            </>
+          ) : (
+            <>
+              {state.selection?.type === "location" && (
+                <>
+                  <p>
+                    {context.events.length} observations at this location.
+                    Repeated visits remain separate.
+                  </p>
+                  <div className={styles.locationVisits}>
+                    {context.events.map((item) => (
+                      <button
+                        type="button"
+                        key={item.id}
+                        onClick={() => selectEvent(item)}
+                      >
+                        {item.label} · {item.timeLabel ?? "Time unknown"}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+              {state.selection?.type === "path" && (
+                <p>
+                  {context.path?.description ??
+                    "Select an observation to inspect its evidence."}
+                </p>
+              )}
+              {state.selection?.type === "segment" && (
+                <>
+                  <p className={styles.muted}>
+                    {context.connections?.length ?? 0} explicit event
+                    relationships reference this connection.
+                  </p>
+                </>
+              )}
+              {!state.selection && (
+                <p className={styles.muted}>
+                  Select an event, location, or history. Selecting a location
+                  does not choose an arbitrary visit.
+                </p>
+              )}
+            </>
+          )}
+          {state.selection && context.isAvailable && (
+            <>
+              {selectedAssessments.map((assessment) => (
+                <div key={assessment.id} className={styles.assessment}>
+                  {(!inlineDrawer ||
+                    !state.showRisks ||
+                    assessment.target.type === "path") && (
+                    <Pill size="xs" tone={assessment.tone}>
+                      {assessment.label}
+                    </Pill>
+                  )}
+                  <p>{assessment.summary}</p>
+                  <small>
+                    {assessment.source} · {assessment.asOf}
+                  </small>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+        <div
+          role="tabpanel"
+          id={`${tabsId}-deviation-panel`}
+          aria-labelledby={`${tabsId}-deviation-tab`}
+          hidden={currentTab !== "deviation"}
+        >
+          {!focused ? (
+            <p className={styles.muted}>
+              Focus a history and choose a forecast to compare.
+            </p>
+          ) : (
+            <>
+              {comparedPrediction ? (
+                <>
+                  <p className={styles.comparisonContext}>
+                    <Swatch
+                      color={comparedPrediction.color}
+                      dash={comparedPrediction.dash ?? [6, 3]}
+                    />
+                    <strong>Comparing with {comparedPrediction.label}</strong>
+                    {!visiblePredictions.some(
+                      (prediction) => prediction.id === comparedPrediction.id,
+                    ) && <span className={styles.muted}>Hidden on map</span>}
+                  </p>
+                  {selectedDeviation ? (
+                    <>
+                      <p>{selectedDeviation.summary}</p>
+                      <dl className={styles.facts}>
+                        {selectedDeviation.facts.map((fact, index) => (
+                          <div key={index}>
+                            <dt>{fact.label}</dt>
+                            <dd>{fact.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </>
+                  ) : (
+                    <p className={styles.muted}>
+                      No deviation assessment supplied for the selected
+                      observation. Line separation alone is not a measured
+                      deviation.
+                    </p>
+                  )}
+                  {divergenceEvent?.id === event?.id && inlineDrawer ? (
+                    <p className={styles.muted}>
+                      First divergence in this comparison.
+                    </p>
+                  ) : (
+                    divergenceEvent && (
+                      <button
+                        type="button"
+                        className={styles.divergenceLink}
+                        onClick={() => selectEvent(divergenceEvent)}
+                      >
+                        <span>First supplied divergence</span>
+                        <strong>
+                          {divergenceEvent.locationLabel ??
+                            divergenceEvent.label}
+                        </strong>
+                        <span>{divergenceEvent.timeLabel}</span>
+                      </button>
+                    )
+                  )}
+                  {firstIds.length > 1 && (
+                    <p className={styles.notice}>
+                      Supplied assessments disagree on the first divergence. No
+                      single map callout is shown.
+                    </p>
+                  )}
+                  <details className={styles.analysisDisclosure}>
+                    <summary>Comparison evidence and sources</summary>
+                    <div>
+                      {selectedDeviation &&
+                        renderDeviationEvidence?.(selectedDeviation, context)}
+                      <p className={styles.provenance}>
+                        Forecast: {comparedPrediction.source} · issued{" "}
+                        {comparedPrediction.asOf}
+                      </p>
+                      {selectedDeviation && (
+                        <p className={styles.provenance}>
+                          Assessment: {selectedDeviation.source} ·{" "}
+                          {selectedDeviation.asOf}
+                        </p>
+                      )}
+                    </div>
+                  </details>
+                </>
+              ) : (
+                <p className={styles.muted}>
+                  Choose Compare next to a prediction to inspect its findings.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+        <div
+          role="tabpanel"
+          id={`${tabsId}-evidence-panel`}
+          aria-labelledby={`${tabsId}-evidence-tab`}
+          hidden={currentTab !== "evidence"}
+        >
+          {event ? (
+            (renderEvidence?.(context) ?? (
+              <p className={styles.muted}>
+                No additional evidence supplied for this observation.
+              </p>
+            ))
+          ) : (
+            <p className={styles.muted}>
+              Select an observation to inspect its references.
+            </p>
+          )}
+          {records.connections.some((connection) => connection.segmentId) && (
+            <details className={styles.relationshipPicker}>
+              <summary>Mapped connections</summary>
+              <div className={styles.relationshipPickerItems}>
+                {records.connections
+                  .filter((connection) => connection.segmentId)
+                  .map((connection) => (
+                    <button
+                      className={styles.relationshipPickerButton}
+                      key={connection.id}
+                      type="button"
+                      aria-label={`Inspect connection ${connection.label ?? connection.id}`}
+                      onClick={() =>
+                        dispatch({
+                          type: "select",
+                          selection: {
+                            type: "segment",
+                            segmentId: connection.segmentId!,
+                          },
+                        })
+                      }
+                    >
+                      {connection.label ?? connection.id}
+                    </button>
+                  ))}
+              </div>
+            </details>
+          )}
+        </div>
+      </div>
+      {inspectorGraph != null && (
+        <details className={styles.inspectorGraph}>
+          <summary>Additional analysis</summary>
+          <div role="region" aria-label="Supplemental investigation graph">
+            {inspectorGraph}
+          </div>
+        </details>
+      )}
+    </section>
+  );
+  const rowDetails = (item: EventTimelineEvent) =>
+    item.id === inlineEvent?.id &&
+    drawerOpen &&
+    !(narrow && mobileView === "map")
+      ? inspector
+      : null;
+  const eventTrailing = (item: EventTimelineEvent) => (
+    <span className={styles.rowActions}>
+      {showEventRisks(item)}
+      <button
+        type="button"
+        className={styles.rowToggle}
+        data-workbench-row-toggle={item.id}
+        aria-label={`${drawerOpen && event?.id === item.id ? "Collapse" : "Expand"} observation details`}
+        aria-description={`${item.label}, ${item.locationLabel ?? "Location unknown"}, ${item.timeLabel ?? "Time unknown"}`}
+        aria-expanded={drawerOpen && event?.id === item.id}
+        aria-controls={
+          drawerOpen && event?.id === item.id ? `${id}-drawer` : undefined
+        }
+        onClick={() => {
+          if (event?.id === item.id) {
+            setDrawerOpen((open) => !open);
+          } else {
+            dispatch({
+              type: "selectEvents",
+              ids: selectedEventIds.includes(item.id)
+                ? selectedEventIds
+                : [item.id],
+              selection: { type: "event", eventId: item.id },
+            });
+          }
+        }}
+      >
+        <span aria-hidden="true">
+          {drawerOpen && event?.id === item.id ? "▾" : "▸"}
+        </span>
+      </button>
+    </span>
+  );
+  const fillMap =
+    mapExpanded || map.height === undefined || map.height === "fill";
   if (issues.length)
     return (
       <section ref={root} className={styles.root} aria-label={title}>
@@ -742,6 +1230,31 @@ export function InvestigationWorkbench({
             <span>Incoming evidence</span>
           </div>
           <div className={styles.timelineScroll} data-workbench-scroll>
+            {!inlineEvent && !(narrow && mobileView === "map") && (
+              <div className={styles.contextDrawer}>
+                <button
+                  type="button"
+                  className={styles.contextToggle}
+                  data-workbench-context-toggle
+                  aria-expanded={drawerOpen}
+                  aria-controls={drawerOpen ? `${id}-drawer` : undefined}
+                  onClick={() => setDrawerOpen((open) => !open)}
+                >
+                  {drawerOpen ? "Hide" : "Show"}{" "}
+                  {state.selection?.type === "path"
+                    ? "history"
+                    : state.selection?.type === "event"
+                      ? "observation"
+                      : state.selection?.type === "location"
+                        ? "location"
+                        : state.selection?.type === "segment"
+                          ? "connection"
+                          : "investigation"}{" "}
+                  details
+                </button>
+                {drawerOpen && inspector}
+              </div>
+            )}
             <EventTimeline
               events={visibleEvents}
               connections={visibleConnections}
@@ -756,7 +1269,8 @@ export function InvestigationWorkbench({
               selectedConnectionIds={selectedConnectionIds}
               relatedIds={relatedIds}
               onSelectedIdChange={activateEvent}
-              renderTrailing={showEventRisks}
+              renderTrailing={eventTrailing}
+              renderDetails={rowDetails}
               renderConnectionMetrics={connectionEvidence}
             />
           </div>
@@ -779,6 +1293,13 @@ export function InvestigationWorkbench({
           className={styles.mapPanel}
           ref={expandedPanel}
           data-workbench-map
+          style={
+            {
+              alignSelf: fillMap ? "stretch" : "start",
+              blockSize: fillMap ? undefined : "auto",
+              "--workbench-map-flex": fillMap ? "1 1 auto" : "0 0 auto",
+            } as React.CSSProperties
+          }
           id={`${id}-map`}
           tabIndex={-1}
           hidden={narrow && mobileView !== "map" && !mapExpanded}
@@ -849,7 +1370,7 @@ export function InvestigationWorkbench({
                   }
             }
             controlLabels={{ fitAll: "Fit", ...map.controlLabels }}
-            height={mapExpanded ? "fill" : (map.height ?? (narrow ? 260 : 230))}
+            height={mapExpanded ? "fill" : (map.height ?? "fill")}
             controlPlacement={map.controlPlacement ?? "map"}
             connectionStyle="subtle"
             showLegend={false}
@@ -976,360 +1497,20 @@ export function InvestigationWorkbench({
             </section>
           )}
         </section>
-        <section
-          className={styles.inspector}
-          aria-label="Investigation inspector"
-        >
-          <div className={styles.inspectorHeader}>
-            <div>
-              <span className={styles.muted}>
-                {event
-                  ? event.label
-                  : context.path
-                    ? "History"
-                    : context.location
-                      ? "Location"
-                      : context.segment
-                        ? "Connection"
-                        : "Selection"}
-              </span>
-              <h3>
-                {event?.locationLabel ??
-                  event?.label ??
-                  context.location?.label ??
-                  context.path?.label ??
-                  context.segment?.label ??
-                  (selectedEventIds.length > 1
-                    ? `${selectedEventIds.length} observations selected`
-                    : "Select an observation")}
-              </h3>
-            </div>
-            <div
-              className={styles.eventNavigation}
-              role="group"
-              aria-label="Event navigation"
+        {narrow && mobileView === "map" && (
+          <div className={styles.mobileInspector}>
+            <button
+              type="button"
+              className={styles.contextToggle}
+              aria-expanded={drawerOpen}
+              aria-controls={drawerOpen ? `${id}-drawer` : undefined}
+              onClick={() => setDrawerOpen((open) => !open)}
             >
-              <button
-                type="button"
-                aria-label="Previous event"
-                disabled={selectedIndex <= 0}
-                onClick={() => selectEvent(visibleEvents[selectedIndex - 1])}
-              >
-                ←
-              </button>
-              <button
-                type="button"
-                aria-label="Next event"
-                disabled={
-                  !visibleEvents.length ||
-                  selectedIndex === visibleEvents.length - 1
-                }
-                onClick={() => selectEvent(visibleEvents[selectedIndex + 1])}
-              >
-                →
-              </button>
-            </div>
+              {drawerOpen ? "Hide" : "Show"} investigation details
+            </button>
+            {drawerOpen && inspector}
           </div>
-          <div
-            className={styles.inspectorTabs}
-            role="tablist"
-            aria-label="Inspector sections"
-          >
-            {inspectorTabs.map((item, index) => (
-              <button
-                key={item}
-                type="button"
-                role="tab"
-                id={`${tabsId}-${item}-tab`}
-                aria-controls={`${tabsId}-${item}-panel`}
-                aria-selected={currentTab === item}
-                tabIndex={currentTab === item ? 0 : -1}
-                onClick={() => setTab(item)}
-                onKeyDown={(e) => {
-                  const next =
-                    e.key === "ArrowRight"
-                      ? inspectorTabs[(index + 1) % 3]
-                      : e.key === "ArrowLeft"
-                        ? inspectorTabs[(index + 2) % 3]
-                        : e.key === "Home"
-                          ? "event"
-                          : e.key === "End"
-                            ? "evidence"
-                            : null;
-                  if (next) {
-                    e.preventDefault();
-                    changeTab(next);
-                  }
-                }}
-              >
-                {item === "event"
-                  ? "Details"
-                  : item === "deviation"
-                    ? "Comparison"
-                    : "Evidence"}
-              </button>
-            ))}
-          </div>
-          <div role="status" className={styles.srOnly}>
-            {event
-              ? `Selected ${event.label}, ${event.locationLabel ?? "location unknown"}, ${event.timeLabel ?? "time unknown"}`
-              : "Selection updated"}
-          </div>
-          <div
-            className={styles.inspectorBody}
-            role="region"
-            aria-label="Inspector content"
-            tabIndex={0}
-          >
-            <div
-              role="tabpanel"
-              id={`${tabsId}-event-panel`}
-              aria-labelledby={`${tabsId}-event-tab`}
-              hidden={currentTab !== "event"}
-            >
-              {!context.isAvailable ? (
-                <p>The selected record is no longer available.</p>
-              ) : event ? (
-                <>
-                  {focused && !event.pathIds?.includes(focused.id) && (
-                    <p className={styles.notice}>
-                      This observation is outside {focused.label}.
-                    </p>
-                  )}
-                  <EventDetails
-                    event={event}
-                    showEventId
-                    showLocation={false}
-                  />
-                  {selectedEventIds.length > 1 && (
-                    <p className={styles.notice}>
-                      {selectedEventIds.length} observations selected. Map links
-                      are highlighted only for explicit supplied connections.
-                    </p>
-                  )}
-                  {!selectedAssessments.length && (
-                    <p className={styles.muted}>
-                      No assessment supplied for this observation.
-                    </p>
-                  )}
-                  {renderEvent?.(context)}
-                </>
-              ) : (
-                <>
-                  {state.selection?.type === "location" && (
-                    <>
-                      <p>
-                        {context.events.length} observations at this location.
-                        Repeated visits remain separate.
-                      </p>
-                      <div className={styles.locationVisits}>
-                        {context.events.map((item) => (
-                          <button
-                            type="button"
-                            key={item.id}
-                            onClick={() => selectEvent(item)}
-                          >
-                            {item.label} · {item.timeLabel ?? "Time unknown"}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                  {state.selection?.type === "path" && (
-                    <p>
-                      {context.path?.description ??
-                        "Select an observation to inspect its evidence."}
-                    </p>
-                  )}
-                  {state.selection?.type === "segment" && (
-                    <>
-                      <p>{context.segment?.label}</p>
-                      <p className={styles.muted}>
-                        {context.connections?.length ?? 0} explicit event
-                        relationships reference this connection.
-                      </p>
-                    </>
-                  )}
-                  {!state.selection && (
-                    <p className={styles.muted}>
-                      Select an event, location, or history. Selecting a
-                      location does not choose an arbitrary visit.
-                    </p>
-                  )}
-                </>
-              )}
-              {state.selection && context.isAvailable && (
-                <>
-                  {selectedAssessments.map((assessment) => (
-                    <div key={assessment.id} className={styles.assessment}>
-                      <Pill size="xs" tone={assessment.tone}>
-                        {assessment.label}
-                      </Pill>
-                      <p>{assessment.summary}</p>
-                      <small>
-                        {assessment.source} · {assessment.asOf}
-                      </small>
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
-            <div
-              role="tabpanel"
-              id={`${tabsId}-deviation-panel`}
-              aria-labelledby={`${tabsId}-deviation-tab`}
-              hidden={currentTab !== "deviation"}
-            >
-              {!focused ? (
-                <p className={styles.muted}>
-                  Focus a history and choose a forecast to compare.
-                </p>
-              ) : (
-                <>
-                  {comparedPrediction ? (
-                    <>
-                      <p className={styles.comparisonContext}>
-                        <Swatch
-                          color={comparedPrediction.color}
-                          dash={comparedPrediction.dash ?? [6, 3]}
-                        />
-                        <strong>
-                          Comparing with {comparedPrediction.label}
-                        </strong>
-                        {!visiblePredictions.some(
-                          (prediction) =>
-                            prediction.id === comparedPrediction.id,
-                        ) && (
-                          <span className={styles.muted}>Hidden on map</span>
-                        )}
-                      </p>
-                      {selectedDeviation ? (
-                        <>
-                          <p>{selectedDeviation.summary}</p>
-                          <dl className={styles.facts}>
-                            {selectedDeviation.facts.map((fact, index) => (
-                              <div key={index}>
-                                <dt>{fact.label}</dt>
-                                <dd>{fact.value}</dd>
-                              </div>
-                            ))}
-                          </dl>
-                        </>
-                      ) : (
-                        <p className={styles.muted}>
-                          No deviation assessment supplied for the selected
-                          observation. Line separation alone is not a measured
-                          deviation.
-                        </p>
-                      )}
-                      {divergenceEvent && (
-                        <button
-                          type="button"
-                          className={styles.divergenceLink}
-                          onClick={() => selectEvent(divergenceEvent)}
-                        >
-                          <span>First supplied divergence</span>
-                          <strong>
-                            {divergenceEvent.locationLabel ??
-                              divergenceEvent.label}
-                          </strong>
-                          <span>{divergenceEvent.timeLabel}</span>
-                        </button>
-                      )}
-                      {firstIds.length > 1 && (
-                        <p className={styles.notice}>
-                          Supplied assessments disagree on the first divergence.
-                          No single map callout is shown.
-                        </p>
-                      )}
-                      <details className={styles.analysisDisclosure}>
-                        <summary>Comparison evidence and sources</summary>
-                        <div>
-                          {selectedDeviation &&
-                            renderDeviationEvidence?.(
-                              selectedDeviation,
-                              context,
-                            )}
-                          <p className={styles.provenance}>
-                            Forecast: {comparedPrediction.source} · issued{" "}
-                            {comparedPrediction.asOf}
-                          </p>
-                          {selectedDeviation && (
-                            <p className={styles.provenance}>
-                              Assessment: {selectedDeviation.source} ·{" "}
-                              {selectedDeviation.asOf}
-                            </p>
-                          )}
-                        </div>
-                      </details>
-                    </>
-                  ) : (
-                    <p className={styles.muted}>
-                      Choose Compare next to a prediction to inspect its
-                      findings.
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-            <div
-              role="tabpanel"
-              id={`${tabsId}-evidence-panel`}
-              aria-labelledby={`${tabsId}-evidence-tab`}
-              hidden={currentTab !== "evidence"}
-            >
-              {event ? (
-                (renderEvidence?.(context) ?? (
-                  <p className={styles.muted}>
-                    No additional evidence supplied for this observation.
-                  </p>
-                ))
-              ) : (
-                <p className={styles.muted}>
-                  Select an observation to inspect its references.
-                </p>
-              )}
-              {records.connections.some(
-                (connection) => connection.segmentId,
-              ) && (
-                <details className={styles.relationshipPicker}>
-                  <summary>Mapped connections</summary>
-                  <div className={styles.relationshipPickerItems}>
-                    {records.connections
-                      .filter((connection) => connection.segmentId)
-                      .map((connection) => (
-                        <button
-                          className={styles.relationshipPickerButton}
-                          key={connection.id}
-                          type="button"
-                          aria-label={`Inspect connection ${connection.label ?? connection.id}`}
-                          onClick={() =>
-                            dispatch({
-                              type: "select",
-                              selection: {
-                                type: "segment",
-                                segmentId: connection.segmentId!,
-                              },
-                            })
-                          }
-                        >
-                          {connection.label ?? connection.id}
-                        </button>
-                      ))}
-                  </div>
-                </details>
-              )}
-            </div>
-          </div>
-          {inspectorGraph != null && (
-            <details className={styles.inspectorGraph}>
-              <summary>Additional analysis</summary>
-              <div role="region" aria-label="Supplemental investigation graph">
-                {inspectorGraph}
-              </div>
-            </details>
-          )}
-        </section>
+        )}
       </div>
     </section>
   );

@@ -350,6 +350,13 @@ Ctrl/Cmd-click addition, touch-friendly Multi-select / Done toggle with a persis
 location with multiple distinct visits. Only explicitly supplied segments
 between selected events are emphasized; disjoint selected points do not become
 a fictitious route. Focused forecast controls sit below the map.
+Desktop gives the map the larger column and full workspace height. One vertical
+drawer expands beneath the inspected observation via EventTimeline.renderDetails;
+context selections use a drawer above the chronology. Close/Escape preserves
+selection and restores focus. Drawers add evidence without duplicating visible
+row identity or assessment badges. At narrow width, Events keeps the inline
+drawer and Map places contextual details below the map, retaining hidden-row
+metadata and assessment labels. Widening preserves the focused drawer tab.
 The map's Expand/Restore control preserves its map instance, camera, history,
 selections, and predictions; native fullscreen is used when available.
 `renderInspectorGraph` supplies optional chart evidence below inspector tabs
@@ -364,6 +371,8 @@ unassigned visits stay inline unless their explicit display toggle hides them.
 Selecting a visit scrolls it into view without stealing focus. Caller-owned header
 `actions` remain available at narrow widths. Widening restores focused view
 buttons to their panel without borrowing focus from sibling workbenches.
+See [location drawer](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-location-drawer)
+and [explicit fill map](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-explicit-fill).
 History chips replace the global mode switch. Compare beside each prediction
 reveals the Comparison inspector; Comparing marks the active reference. Map
 visibility remains independent in both directions, and hidden references retain

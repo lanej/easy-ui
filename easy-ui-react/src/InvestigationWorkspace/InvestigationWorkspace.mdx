@@ -29,8 +29,8 @@ For dense tracking investigations, use `variant="ledger"`: compact event-first o
 `InvestigationWorkbench` is an opt-in composition exported from
 `@easypost/easy-ui/InvestigationWorkspace`. Existing workspace and ledger
 presentations are unchanged. The workbench adds a compact header, history controls embedded in the event ledger, one Git-style branch graph at the far left of the shared
-event-and-evidence ledger, map, and Details / Comparison /
-Evidence inspector. It uses the native map, timeline, graph, pills and histogram
+event-and-evidence ledger, a larger map, and Details / Comparison /
+Evidence drawers. It uses the native map, timeline, graph, pills and histogram
 components rather than a separate prototype.
 
 ```tsx
@@ -121,7 +121,7 @@ map instance and changes only layout, not the selected observations, focused
 history, forecast toggles, comparison or camera. Restore map or press Escape to
 return. The optional `renderInspectorGraph` slot receives the current selection,
 selected event IDs, and focused history ID and places application-owned charts
-below the inspector's tabs in a collapsed Additional analysis disclosure.
+inside the active vertical drawer in a collapsed Additional analysis disclosure.
 Returning null omits the disclosure entirely. Comparison findings and supplied facts
 appear before expandable Comparison evidence and sources, keeping conclusions visible.
 
@@ -158,16 +158,25 @@ The inspector's First supplied divergence action selects the exact observation;
 disagreement is reported in text. Missing assessment means unavailable, never zero deviation.
 `renderDeviationEvidence` provides application-owned comparison charts.
 
-The examples are capped at 1100px, with a 230px map beside the ledger and a
-scrollable inspector beneath it. Findings receive more vertical room; supplemental
-charts stay collapsed until requested. Desktop validation uses 1100 × 820 and 960 × 820
-viewports rather than an oversized desktop capture. Histograms stay in compact
-connection-evidence rows; the inspector retains the full reference.
+The examples are capped at 1100px. On desktop the map occupies the larger column
+and fills the workspace height; the chronology scrolls independently beside it.
+An observation opens one vertical drawer directly below its row through the
+existing `EventTimeline.renderDetails` slot. The drawer adds receipt time,
+identifiers, findings and evidence without repeating the row's identity or risk
+badge. History, location, connection and hidden-observation selections use a
+context drawer above the chronology; they never choose an arbitrary observation.
+Closing a drawer preserves the selection and map camera. Its disclosure button
+or Escape closes it and restores keyboard focus. Opening a context drawer reveals
+it within the chronology's scroll region. Desktop validation uses 1100 × 820 and
+960 × 820 viewports.
 
 At narrow widths, Events / Map buttons switch
 between the same mounted views. Widening with focus on Events or Map moves focus
 to its retained panel. Resize handling never takes focus or view choice from a
-sibling workbench. The inspector remains in normal page flow.
+sibling workbench. In Events view the drawer remains attached to its observation. In Map view the
+same selected context appears below the map, with its identity and risk labels
+available because the originating row is hidden. Widening preserves the focused
+drawer tab as its content returns to the chronology.
 Inspector tabs support arrow keys and Home/End. Selection stays visible inside
 the ledger's own scroll region without moving keyboard focus. Unassigned visits
 are ordinary visible rows, not a closed secondary list. Caller-owned `actions`
@@ -181,6 +190,8 @@ camera. Theme changes preserve the map instance.
 <Canvas of={Stories.WorkbenchDeviation} />
 <Canvas of={Stories.WorkbenchNarrow} />
 <Canvas of={Stories.WorkbenchHiddenComparison} />
+<Canvas of={Stories.WorkbenchLocationDrawer} />
+<Canvas of={Stories.WorkbenchExplicitFill} />
 <Canvas of={Stories.WorkbenchAssessmentScopes} />
 <Canvas of={Stories.WorkbenchUnassignedEvidence} />
 

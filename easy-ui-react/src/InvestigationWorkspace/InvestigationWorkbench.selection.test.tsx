@@ -292,11 +292,95 @@ describe("InvestigationWorkbench explicit subset and expand behavior", () => {
         renderInspectorGraph={() => <span>Caller graph</span>}
       />,
     );
+    fireEvent.click(accepted());
     const summary = screen.getByText("Additional analysis");
     const disclosure = summary.closest("details");
     expect(disclosure).not.toHaveAttribute("open");
     fireEvent.click(summary);
     expect(disclosure).toHaveAttribute("open");
+  });
+
+  it("opens evidence inside its observation row and closes without clearing selection", () => {
+    const change = vi.fn();
+    render(<InvestigationWorkbench {...props} onStateChange={change} />);
+    const row = accepted().closest("li")!;
+    fireEvent.click(
+      within(row).getByRole("button", { name: "Expand observation details" }),
+    );
+    const drawer = screen.getByRole("region", {
+      name: "Investigation inspector",
+    });
+    expect(row).toContainElement(drawer);
+    expect(
+      within(drawer).queryByRole("heading", { name: "Origin" }),
+    ).not.toBeInTheDocument();
+    expect(within(drawer).queryByText("09:00")).not.toBeInTheDocument();
+    expect(within(drawer).getByText("Event ID")).toBeVisible();
+    const selected = change.mock.lastCall?.[0];
+    fireEvent.click(
+      within(drawer).getByRole("button", {
+        name: "Close investigation details",
+      }),
+    );
+    expect(
+      screen.queryByRole("region", { name: "Investigation inspector" }),
+    ).not.toBeInTheDocument();
+    expect(change.mock.lastCall?.[0]).toBe(selected);
+    expect(
+      within(row).getByRole("button", { name: "Expand observation details" }),
+    ).toHaveFocus();
+    expect(accepted()).toHaveAttribute("aria-current", "true");
+  });
+
+  it("closes a drawer with Escape and retains selected observations", () => {
+    render(<InvestigationWorkbench {...props} />);
+    fireEvent.click(accepted());
+    const drawer = screen.getByRole("region", {
+      name: "Investigation inspector",
+    });
+    fireEvent.keyDown(within(drawer).getByRole("tab", { name: "Details" }), {
+      key: "Escape",
+    });
+    expect(
+      screen.queryByRole("region", { name: "Investigation inspector" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("1 selected")).toBeVisible();
+    expect(
+      within(accepted().closest("li")!).getByRole("button", {
+        name: "Expand observation details",
+      }),
+    ).toHaveFocus();
+  });
+
+  it("moves the single drawer with the inspected observation while preserving a subset", () => {
+    render(<InvestigationWorkbench {...props} />);
+    fireEvent.click(accepted());
+    fireEvent.click(delivered(), { ctrlKey: true });
+    const firstRow = accepted().closest("li")!;
+    const lastRow = delivered().closest("li")!;
+    expect(lastRow).toContainElement(
+      screen.getByRole("region", { name: "Investigation inspector" }),
+    );
+    fireEvent.click(
+      within(firstRow).getByRole("button", {
+        name: "Expand observation details",
+      }),
+    );
+    expect(firstRow).toContainElement(
+      screen.getByRole("region", { name: "Investigation inspector" }),
+    );
+    expect(
+      screen.getAllByRole("region", { name: "Investigation inspector" }),
+    ).toHaveLength(1);
+    expect(screen.getByText("2 selected")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Pick origin" }));
+    const contextual = screen.getByRole("region", {
+      name: "Investigation inspector",
+    });
+    expect(contextual.closest("li")).toBeNull();
+    expect(
+      within(contextual).getByText(/2 observations at this location/),
+    ).toBeVisible();
   });
 
   it("uses only explicit edges to highlight a disjoint selection", () => {

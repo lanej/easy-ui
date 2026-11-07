@@ -156,7 +156,6 @@ async function checkPredictionRows(theme) {
 }
 async function capture(name, theme) {
   await page.mouse.move(0, 0);
-  await page.keyboard.press("Escape");
   await page.waitForTimeout(250);
   const image = await root().screenshot({
     path: resolve(output, name),
@@ -231,6 +230,41 @@ try {
       .locator("[data-map-label]")
       .filter({ hasText: "First divergence" })
       .waitFor({ state: "visible" });
+    const geography = await map().boundingBox();
+    const chronology = await ledger().boundingBox();
+    assert.ok(
+      geography.width > chronology.width,
+      "Map receives the larger desktop column",
+    );
+    const canvasBounds = await page
+      .locator("[data-workbench-map] canvas")
+      .first()
+      .boundingBox();
+    assert.ok(
+      canvasBounds.height >= 450,
+      "Map fills the workspace instead of remaining a thumbnail",
+    );
+    assert.equal(
+      await inspector().evaluate(
+        (el) => !!el.closest('ol[data-variant="ledger"] > li'),
+      ),
+      true,
+      "Observation evidence expands inside its timeline entry",
+    );
+    const close = inspector().getByRole("button", {
+      name: "Close investigation details",
+    });
+    await close.click();
+    assert.equal(await inspector().count(), 0);
+    const rowToggle = ledger()
+      .locator('li:has([aria-current="true"])')
+      .getByRole("button", { name: "Expand observation details" });
+    assert.equal(
+      await rowToggle.evaluate((el) => el === document.activeElement),
+      true,
+    );
+    await rowToggle.click();
+    await page.getByRole("tab", { name: "Comparison", exact: true }).waitFor();
     await checkHeaderAction();
     await accessible();
     await checkPredictionRows(theme);
@@ -505,6 +539,15 @@ try {
       `${width}px: all histories with map alongside, one leftmost graph and no horizontal overflow`,
     );
   }
+  await open("light", 1100, 820, "workbench-explicit-fill");
+  await readyMap();
+  assert.ok(
+    (await page.locator("[data-workbench-map] canvas").first().boundingBox())
+      .height >= 450,
+  );
+  checks.push(
+    "1100px: explicit map.height=fill preserves full-height bounded geography",
+  );
   for (const theme of ["light", "dark"]) {
     await open(theme, 390, 900, "workbench-narrow");
     await checkHeaderAction();
@@ -516,12 +559,68 @@ try {
     );
     await readyMap();
     await capture(`workbench-${theme}-narrow-map.png`, theme);
+    const panelBounds = await map().boundingBox();
+    for (const selector of [
+      "canvas",
+      ".maplibregl-ctrl-attrib",
+      ".maplibregl-ctrl-scale",
+    ]) {
+      const bounds = await map().locator(selector).first().boundingBox();
+      assert.ok(
+        bounds &&
+          bounds.height > 0 &&
+          bounds.y + bounds.height <= panelBounds.y + panelBounds.height + 1,
+        `${selector} remains inside the narrow map`,
+      );
+    }
+    await inspector()
+      .getByRole("button", { name: "Close investigation details" })
+      .click();
+    assert.equal(
+      await map().evaluate((el) => el === document.activeElement),
+      true,
+    );
+    const opener = page.getByRole("button", {
+      name: "Show investigation details",
+      exact: true,
+    });
+    await opener.focus();
+    await page.keyboard.press("Enter");
+    assert.equal(
+      await page
+        .getByRole("button", {
+          name: "Hide investigation details",
+          exact: true,
+        })
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
     const before = await camera();
     await page.getByRole("button", { name: "Events", exact: true }).click();
     await page.getByRole("button", { name: "Map", exact: true }).click();
     sameCamera(before, await camera());
     // Use the fluid example for resizing; the narrow story deliberately caps its container.
     await open(theme, 390, 900);
+    await readyMap();
+    await page.getByRole("tab", { name: "Comparison", exact: true }).focus();
+    await page.setViewportSize({ width: 1100, height: 900 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[aria-label="Parcel investigation"]').dataset
+          .narrow === "false",
+    );
+    assert.equal(
+      await page
+        .getByRole("tab", { name: "Comparison", exact: true })
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[aria-label="Parcel investigation"]').dataset
+          .narrow === "true",
+    );
     for (const [view, panel] of [
       ["Events", ledger()],
       ["Map", map()],
@@ -675,6 +774,27 @@ try {
       );
     }
   }
+  await open("light", 1100, 820);
+  await readyMap();
+  await ledger()
+    .locator("[data-workbench-scroll]")
+    .evaluate((el) => {
+      el.scrollTop = 1000;
+    });
+  await ledger()
+    .getByRole("button", { name: /A · Primary history.*select history/ })
+    .click();
+  assert.equal(
+    await ledger()
+      .locator("[data-workbench-scroll]")
+      .evaluate((el) => el.scrollTop),
+    0,
+  );
+  assert.equal(await inspector().evaluate((el) => !!el.closest("li")), false);
+  await capture("workbench-history-drawer-light.png", "light");
+  checks.push(
+    "Desktop and mobile: vertical/context drawers, retained selection and focus, map attribution containment and resize focus restoration",
+  );
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ checks, errors, screenshots }, null, 2));
 } finally {

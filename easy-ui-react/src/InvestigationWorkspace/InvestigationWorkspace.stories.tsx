@@ -459,3 +459,18 @@ export const WorkbenchUnassignedEvidence: Story = {
 export const WorkbenchHiddenComparison: Story = {
   render: () => <InvestigationWorkbenchExample hideComparedPrediction />,
 };
+
+/** Location selection retains distinct visits in the chronology's context drawer. */
+export const WorkbenchLocationDrawer: Story = {
+  render: () => (
+    <InvestigationWorkbenchExample
+      mode="focused"
+      initialSelection={{ type: "location", locationId: "avondale" }}
+    />
+  ),
+};
+
+/** Explicit fill height retains the same bounded, full-height map layout. */
+export const WorkbenchExplicitFill: Story = {
+  render: () => <InvestigationWorkbenchExample mapHeight="fill" />,
+};

@@ -464,10 +464,9 @@ describe("workbench review regressions", () => {
       screen.getByRole("button", { name: "Compare Forecast south" }),
     );
     expect(change.mock.lastCall?.[0].mode).toBe("deviation");
-    expect(screen.getByRole("tab", { name: "Details" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    expect(
+      screen.queryByRole("region", { name: "Investigation inspector" }),
+    ).not.toBeInTheDocument();
     rerender(
       <InvestigationWorkbench
         {...props}
@@ -488,6 +487,9 @@ describe("workbench review regressions", () => {
   it("offers no comparison command without a candidate history", () => {
     render(
       <InvestigationWorkbench graph={{ ...graph, paths: [] }} map={map} />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show investigation details" }),
     );
     fireEvent.click(screen.getByRole("tab", { name: "Evidence" }));
     expect(
@@ -618,7 +620,7 @@ describe("workbench review regressions", () => {
     );
     expect(row).toHaveAttribute("aria-current", "true");
     expect(row.closest("details")).toBeNull();
-    expect(measure).toHaveBeenCalledOnce();
+    expect(measure).toHaveBeenCalled();
     expect(mapButton).toHaveFocus();
   });
 
@@ -1038,6 +1040,7 @@ it("keeps every history, fork and independent root in a single ledger while focu
   const eventIds = () =>
     within(ledger().querySelector('ol[data-variant="ledger"]')!)
       .getAllByRole("button")
+      .filter((button) => button.hasAttribute("aria-labelledby"))
       .map((button) => button.textContent);
   const initialRows = eventIds();
   expect(initialRows).toHaveLength(6);
@@ -1096,8 +1099,11 @@ it("keeps every history, fork and independent root in a single ledger while focu
   expect(eventIds()).toEqual(initialRows);
 });
 
-it("provides a named keyboard focus target for the scrollable inspector", () => {
+it("provides a named keyboard focus target inside an expanded observation", () => {
   render(<InvestigationWorkbench {...props} />);
+  fireEvent.click(
+    within(ledger()).getByRole("button", { name: /Accepted Origin/ }),
+  );
   const content = screen.getByRole("region", { name: "Inspector content" });
   expect(content).toHaveAttribute("tabindex", "0");
   content.focus();
@@ -1164,6 +1170,171 @@ it("combines the first divergence with the collision-aware location label", () =
     labelMinZoom: 0,
   });
   expect(
-    screen.getByRole("button", { name: /First supplied divergence Origin/ }),
+    screen.getByText("First divergence in this comparison."),
   ).toBeVisible();
 });
+
+it("retains receipt and assessment context in the narrow Map drawer and restores keyboard focus", () => {
+  const observe = observeWorkbenchResize();
+  const data = {
+    ...graph,
+    events: graph.events.map((item) =>
+      item.id === "e3"
+        ? { ...item, timeLabel: undefined, receivedTimeLabel: "11:30 UTC" }
+        : item,
+    ),
+  };
+  render(
+    <InvestigationWorkbench
+      {...props}
+      graph={data}
+      defaultState={{ selection: { type: "event", eventId: "e3" } }}
+      assessments={[
+        {
+          id: "flag",
+          target: { type: "event", eventId: "e3" },
+          label: "Review required",
+          tone: "warning",
+          summary: "Supplied review finding",
+          source: "Review policy",
+          asOf: "12:00",
+        },
+      ]}
+    />,
+  );
+  const root = screen.getByRole("region", {
+    name: "Investigation",
+  });
+  observe(root)(390);
+  fireEvent.click(screen.getByRole("button", { name: "Map" }));
+  const drawer = screen.getByRole("region", {
+    name: "Investigation inspector",
+  });
+  expect(within(drawer).getByText("11:30 UTC")).toBeVisible();
+  expect(within(drawer).getByText("Review required")).toBeVisible();
+  const close = within(drawer).getByRole("button", {
+    name: "Close investigation details",
+  });
+  close.focus();
+  fireEvent.click(close);
+  expect(screen.getByRole("region", { name: "History map" })).toHaveFocus();
+  const opener = screen.getByRole("button", {
+    name: "Show investigation details",
+  });
+  opener.focus();
+  fireEvent.click(opener);
+  expect(
+    screen.getByRole("button", { name: "Hide investigation details" }),
+  ).toHaveFocus();
+  expect(
+    within(
+      screen.getByRole("region", { name: "Investigation inspector" }),
+    ).getByText("11:30 UTC"),
+  ).toBeVisible();
+  vi.unstubAllGlobals();
+});
+
+it("preserves the focused drawer tab when widening from Map view", () => {
+  const observe = observeWorkbenchResize();
+  render(
+    <InvestigationWorkbench
+      {...props}
+      defaultState={{
+        mode: "deviation",
+        focusedPathId: "a",
+        comparisonPredictionId: "p",
+        selection: { type: "event", eventId: "e3" },
+      }}
+    />,
+  );
+  const resize = observe(screen.getByRole("region", { name: "Investigation" }));
+  resize(390);
+  fireEvent.click(screen.getByRole("button", { name: "Map" }));
+  const tab = screen.getByRole("tab", { name: "Comparison" });
+  tab.focus();
+  resize(1100);
+  expect(screen.getByRole("tab", { name: "Comparison" })).toHaveFocus();
+  expect(
+    screen
+      .getByRole("region", { name: "Investigation inspector" })
+      .closest("li"),
+  ).not.toBeNull();
+  vi.unstubAllGlobals();
+});
+
+it("reveals a context drawer above a scrolled chronology and closes to its visible toggle", () => {
+  render(
+    <InvestigationWorkbench
+      {...props}
+      defaultState={{ selection: { type: "event", eventId: "e4" } }}
+    />,
+  );
+  const panel = ledger().querySelector<HTMLElement>("[data-workbench-scroll]")!;
+  panel.scrollTop = 600;
+  fireEvent.click(screen.getByText("Display"));
+  fireEvent.click(screen.getByRole("checkbox", { name: /Unassigned/ }));
+  expect(panel.scrollTop).toBe(0);
+  const close = screen.getByRole("button", {
+    name: "Close investigation details",
+  });
+  close.focus();
+  fireEvent.click(close);
+  expect(
+    screen.getByRole("button", { name: "Show observation details" }),
+  ).toHaveFocus();
+  panel.scrollTop = 600;
+  fireEvent.click(
+    screen.getByRole("button", { name: /History A.*3 observations/ }),
+  );
+  expect(panel.scrollTop).toBe(0);
+  expect(
+    screen
+      .getByRole("region", { name: "Investigation inspector" })
+      .closest("li"),
+  ).toBeNull();
+});
+
+it("retains a collapsed drawer across equivalent controlled selections and explicitly reopens its row", () => {
+  const state = {
+    mode: "overview" as const,
+    focusedPathId: null,
+    selection: { type: "event" as const, eventId: "e1" },
+    selectedEventIds: ["e1"],
+    enabledPredictionIds: [],
+    comparisonPredictionId: null,
+    showDisconnected: true,
+    showRisks: true,
+  };
+  const { rerender } = render(
+    <InvestigationWorkbench {...props} state={state} />,
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: "Close investigation details" }),
+  );
+  rerender(
+    <InvestigationWorkbench
+      {...props}
+      state={{ ...state, selection: { ...state.selection } }}
+    />,
+  );
+  expect(
+    screen.queryByRole("region", { name: "Investigation inspector" }),
+  ).not.toBeInTheDocument();
+  fireEvent.click(
+    within(ledger()).getByRole("button", { name: /Accepted Origin/ }),
+  );
+  expect(
+    screen.getByRole("region", { name: "Investigation inspector" }),
+  ).toBeVisible();
+});
+
+it.each([undefined, "fill"] as const)(
+  "keeps the map bounded for height %s",
+  (height) => {
+    render(<InvestigationWorkbench {...props} map={{ ...map, height }} />);
+    expect(screen.getByRole("region", { name: "History map" })).toHaveStyle({
+      alignSelf: "stretch",
+    });
+    expect(mapProps.height).toBe("fill");
+  },
+);

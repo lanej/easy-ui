@@ -96,7 +96,6 @@ export const workbenchDeviations: readonly InvestigationDeviation[] = [
     summary:
       "The supplied comparison flags a return to Avondale instead of progression toward El Cajon.",
     facts: [
-      { label: "Observed interval", value: "7 h 05 m" },
       { label: "Forecast median", value: "4 h" },
       { label: "Difference", value: "+3 h 05 m" },
       {
@@ -276,6 +275,7 @@ export function InvestigationWorkbenchExample({
   initialSelection = { type: "event", eventId: "revisit" },
   withUnassignedEvidence = false,
   hideComparedPrediction = false,
+  mapHeight,
 }: {
   mode?: InvestigationMode;
   narrow?: boolean;
@@ -283,6 +283,7 @@ export function InvestigationWorkbenchExample({
   initialSelection?: InvestigationSelection;
   withUnassignedEvidence?: boolean;
   hideComparedPrediction?: boolean;
+  mapHeight?: number | "fill";
 }) {
   const { resolvedColorScheme } = useColorScheme();
   const [showNotes, setShowNotes] = useState(false);
@@ -389,6 +390,7 @@ export function InvestigationWorkbenchExample({
         map={{
           mapStyle: initialStyle.current,
           workerUrl,
+          height: mapHeight,
           title: "Reported locations",
           description: "City centers · candidate connections",
           onMapReady: (instance) => {
