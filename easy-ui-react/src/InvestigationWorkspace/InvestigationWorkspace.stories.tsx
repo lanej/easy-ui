@@ -454,3 +454,8 @@ export const WorkbenchUnassignedEvidence: Story = {
     <InvestigationWorkbenchExample mode="focused" withUnassignedEvidence />
   ),
 };
+
+/** Hiding a map overlay retains the explicitly chosen comparison and its findings. */
+export const WorkbenchHiddenComparison: Story = {
+  render: () => <InvestigationWorkbenchExample hideComparedPrediction />,
+};

@@ -199,15 +199,45 @@ try {
     assert.equal(await root().getAttribute("data-mode"), "deviation");
     assert.equal(
       await page
-        .getByRole("tab", { name: "Deviation", exact: true })
+        .getByRole("tab", { name: "Comparison", exact: true })
         .getAttribute("aria-selected"),
       "true",
     );
     await page.getByText("+3 h 05 m", { exact: true }).waitFor();
+    assert.equal(
+      await root().getByRole("group", { name: "Investigation mode" }).count(),
+      0,
+    );
+    assert.equal(
+      await root()
+        .getByRole("combobox", { name: "Comparison forecast" })
+        .count(),
+      0,
+    );
+    const difference = await page
+      .getByText("+3 h 05 m", { exact: true })
+      .boundingBox();
+    assert.ok(
+      difference.y + difference.height <= 820,
+      "Key comparison facts must fit the initial desktop viewport",
+    );
+    assert.equal(
+      await page
+        .getByText("Additional analysis", { exact: true })
+        .evaluate((el) => el.closest("details").open),
+      false,
+    );
+    await page
+      .locator("[data-map-label]")
+      .filter({ hasText: "First divergence" })
+      .waitFor({ state: "visible" });
     await checkHeaderAction();
     await accessible();
     await checkPredictionRows(theme);
     await capture(`workbench-${theme}-desktop.png`, theme);
+    await page.getByText("Additional analysis", { exact: true }).click();
+    await capture(`workbench-additional-analysis-${theme}.png`, theme);
+    await page.getByText("Additional analysis", { exact: true }).click();
     const allRows = ledger().locator('ol[data-variant="ledger"] > li');
     assert.equal(
       await allRows.count(),
@@ -273,6 +303,34 @@ try {
     checks.push(
       `${theme}: all 11 observations, forks, rejoin and independent roots in one leftmost graph at 1100×820`,
     );
+    // Visibility changes must preserve the explicit reference and its findings.
+    await page
+      .getByRole("checkbox", { name: "Via Santa Rosa", exact: true })
+      .uncheck();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Compare Via Santa Rosa", exact: true })
+        .getAttribute("aria-pressed"),
+      "true",
+    );
+    await page.getByText("Hidden on map", { exact: true }).waitFor();
+    await page.getByText("+3 h 05 m", { exact: true }).waitFor();
+    await capture(`workbench-hidden-comparison-${theme}.png`, theme);
+    await page
+      .getByRole("checkbox", { name: "Via Santa Rosa", exact: true })
+      .check();
+    await page
+      .getByText("Comparison evidence and sources", { exact: true })
+      .click();
+    await page
+      .getByRole("heading", {
+        name: "Observed interval against forecast reference",
+        exact: true,
+      })
+      .waitFor();
+    await page
+      .getByText("Comparison evidence and sources", { exact: true })
+      .click();
     const before = await camera();
     await ledger()
       .getByRole("button", { name: /In transit Hammond/ })
@@ -288,13 +346,15 @@ try {
     await toggle.uncheck();
     await toggle.check();
     sameCamera(before, await camera());
-    await page.getByRole("button", { name: "Overview", exact: true }).click();
+    await page
+      .getByRole("button", { name: "All histories", exact: true })
+      .click();
     assert.equal(await root().getAttribute("data-mode"), "overview");
     assert.equal(await allRows.count(), 11);
     assert.equal(await root().locator("[data-connection-graph]").count(), 1);
     assert.equal(await map().locator('[aria-label="Map legend"]').count(), 0);
     await page
-      .getByRole("button", { name: "Focused history", exact: true })
+      .getByRole("button", { name: /A · Primary history.*select history/ })
       .click();
     assert.equal(
       await page
@@ -310,7 +370,7 @@ try {
       .click();
     sameCamera(before, await camera());
     assert.equal(await root().getAttribute("data-mode"), "deviation");
-    await page.getByRole("tab", { name: "Deviation", exact: true }).focus();
+    await page.getByRole("tab", { name: "Comparison", exact: true }).focus();
     await page.keyboard.press("ArrowRight");
     assert.equal(
       await page
@@ -322,21 +382,32 @@ try {
       .getByText(/synthetic 49-day reference/)
       .first()
       .waitFor();
-    assert.ok(
-      (await inspector()
+    const extraAnalysis = page.getByText("Additional analysis", {
+      exact: true,
+    });
+    assert.equal(
+      await inspector()
         .getByRole("region", { name: "Supplemental investigation graph" })
-        .count()) > 0,
-      "An actual optional distribution occupies the lower-right inspector",
+        .isVisible(),
+      false,
     );
+    await extraAnalysis.click();
+    assert.equal(
+      await inspector()
+        .getByRole("region", { name: "Supplemental investigation graph" })
+        .isVisible(),
+      true,
+    );
+    await extraAnalysis.click();
     for (const [tab, command] of [
       ["Evidence", "Compare Via Santa Rosa"],
-      ["Event", "Deviation analysis"],
+      ["Details", "Compare Via Santa Rosa"],
     ]) {
       await page.getByRole("tab", { name: tab, exact: true }).click();
       await page.getByRole("button", { name: command, exact: true }).click();
       assert.equal(
         await page
-          .getByRole("tab", { name: "Deviation", exact: true })
+          .getByRole("tab", { name: "Comparison", exact: true })
           .getAttribute("aria-selected"),
         "true",
       );
@@ -344,7 +415,7 @@ try {
     }
     sameCamera(before, await camera());
     checks.push(
-      `${theme}: repeated analysis commands reveal inspector; header action; overview/focus/deviation, forecast toggles, camera, edge evidence, keyboard tabs, accessibility`,
+      `${theme}: explicit history/compare controls, hidden comparison retained, collapsed evidence, key facts visible, camera, edge evidence, keyboard tabs, accessibility`,
     );
   }
   await open("light", 1100, 820, "workbench-overview");
@@ -411,8 +482,23 @@ try {
       assert.ok(
         (await ledger().locator('li[data-marked="true"]').count()) >= 2,
       );
+      await hammond.click({ modifiers: ["Control"] });
+      assert.equal(await accepted.getAttribute("aria-current"), "true");
+      assert.equal(await hammond.getAttribute("aria-current"), null);
+      await page
+        .getByRole("button", { name: "Multi-select", exact: true })
+        .click();
+      await hammond.click();
+      await page.getByRole("button", { name: "Done", exact: true }).click();
+      assert.equal(await ledger().locator('li[data-marked="true"]').count(), 2);
+      await ledger().getByText("Selection help", { exact: true }).click();
+      await ledger()
+        .getByText(/Ctrl\/Cmd-click adds or removes observations/)
+        .waitFor();
+      await ledger().getByText("Selection help", { exact: true }).click();
+      await capture("workbench-multi-selection-light.png", "light");
       checks.push(
-        "1100px: range selection, map expansion, and camera/selection restoration",
+        "1100px: deselection follows remaining point, Multi-select/Done retains subset, keyboard help, expansion and camera restoration",
       );
     }
     checks.push(
@@ -528,7 +614,7 @@ try {
       await page
         .getByRole("button", { name: "Select Santa Rosa, NM", exact: true })
         .click();
-      await page.getByRole("tab", { name: "Event", exact: true }).click();
+      await page.getByRole("tab", { name: "Details", exact: true }).click();
       await inspector()
         .getByRole("button", {
           name: "Delivered · Oct 27 · 13:42 UTC",

@@ -275,12 +275,14 @@ export function InvestigationWorkbenchExample({
   assessments = workbenchAssessments,
   initialSelection = { type: "event", eventId: "revisit" },
   withUnassignedEvidence = false,
+  hideComparedPrediction = false,
 }: {
   mode?: InvestigationMode;
   narrow?: boolean;
   assessments?: readonly InvestigationAssessment[];
   initialSelection?: InvestigationSelection;
   withUnassignedEvidence?: boolean;
+  hideComparedPrediction?: boolean;
 }) {
   const { resolvedColorScheme } = useColorScheme();
   const [showNotes, setShowNotes] = useState(false);
@@ -376,9 +378,12 @@ export function InvestigationWorkbenchExample({
           mode,
           focusedPathId: mode === "overview" ? null : "a",
           selection: initialSelection,
-          enabledPredictionIds: workbenchPredictions.map(
-            (prediction) => prediction.id,
-          ),
+          enabledPredictionIds: workbenchPredictions
+            .filter(
+              (prediction) =>
+                !hideComparedPrediction || prediction.id !== "forecast-a-south",
+            )
+            .map((prediction) => prediction.id),
           comparisonPredictionId: "forecast-a-south",
         }}
         map={{

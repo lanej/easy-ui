@@ -78,8 +78,9 @@
   color: design-token("color.neutral.700");
   font-size: 12px;
 }
-.modeSwitch,
 .mobileViews {
+  grid-area: views;
+  justify-self: start;
   display: flex;
   gap: 3px;
   padding: 3px;
@@ -311,6 +312,9 @@
     border-radius: 0;
   }
 }
+.mapPanel :global([data-map-label]) {
+  white-space: pre-line;
+}
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -374,7 +378,7 @@
   padding: 10px;
   min-block-size: 160px;
   box-sizing: border-box;
-  max-block-size: 230px;
+  max-block-size: min(65dvh, 560px);
   overflow: auto;
   overscroll-behavior: contain;
   > div {
@@ -391,22 +395,6 @@
   small {
     color: design-token("color.neutral.700");
     font-size: 11px;
-  }
-}
-.comparisonSelect {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-weight: 600;
-  select {
-    max-inline-size: 100%;
-    padding: 5px 9px;
-    border: 1px solid design-token("color.neutral.300");
-    border-radius: 5px;
-    color: inherit;
-    background: design-token("color.neutral.000");
-    font-size: 12px;
   }
 }
 .divergenceLink {
@@ -486,43 +474,16 @@
   gap: 5px;
   font-size: 12px;
 }
-.divergenceCallout {
-  display: grid;
-  gap: 2px;
-  max-inline-size: 190px;
-  padding: 7px 11px;
-  border: 1px solid design-token("color.primary.600");
-  border-radius: 7px;
-  box-shadow: 0 2px 10px #0000001a;
-  background: design-token("color.neutral.000");
-  color: design-token("color.neutral.900");
-  text-align: start;
-  cursor: pointer;
-  strong {
-    font-size: 12px;
-  }
-  span {
-    font-size: 11px;
-  }
-}
 .modelError {
   padding: 24px;
 }
 .srOnly {
   @include visually-hidden;
 }
-.mobileViews {
-  grid-area: views;
-  justify-self: start;
-}
 
 @container investigation-workbench (max-width: 1150px) {
   .headerCounts {
     display: none;
-  }
-  .modeSwitch button {
-    padding-inline: 9px;
-    font-size: 12px;
   }
 }
 @container investigation-workbench (max-width: 960px) {
@@ -540,14 +501,6 @@
   }
   .title h2 {
     font-size: 16px;
-  }
-  .modeSwitch {
-    inline-size: 100%;
-    button {
-      flex: 1;
-      padding-inline: 5px;
-      font-size: 11px;
-    }
   }
   .body {
     grid-template-columns: minmax(0, 1fr);
@@ -575,6 +528,7 @@
 }
 @media (pointer: coarse) {
   .root button {
+    min-inline-size: 44px;
     min-block-size: 44px;
   }
 }
@@ -665,6 +619,25 @@
   box-shadow: 0 1px 5px #00000025;
   font-size: 11px;
 }
+.inspectorGraph {
+  border-block-start: 1px solid design-token("color.neutral.200");
+  padding: 10px 12px;
+  > div {
+    padding-block-start: 12px;
+    max-block-size: 320px;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+}
+.analysisDisclosure {
+  border-block-start: 1px solid design-token("color.neutral.200");
+  padding-block-start: 10px;
+  > div {
+    display: grid;
+    gap: 12px;
+    padding-block-start: 12px;
+  }
+}
 .mapPanel[data-expanded="true"] {
   position: fixed;
   z-index: 1100;
@@ -689,13 +662,7 @@
     flex: 0 0 auto;
   }
 }
-.inspectorGraph {
-  border-block-start: 1px solid design-token("color.neutral.200");
-  padding: 10px 12px;
-  max-block-size: 240px;
-  overflow: auto;
-  overscroll-behavior: contain;
-}
+
 @container investigation-workbench (max-width: 760px) {
   .timelineControls {
     align-items: flex-start;
@@ -732,4 +699,27 @@
     color: inherit;
     background: design-token("color.neutral.050");
   }
+}
+
+.selectionCount {
+  color: design-token("color.neutral.700");
+  font-size: 11px;
+  white-space: nowrap;
+}
+.selectionHelp > summary,
+.inspectorGraph > summary,
+.analysisDisclosure > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.selectionHelp p {
+  padding-block: 8px;
+  max-inline-size: 60ch;
+}
+.comparisonContext {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  font-size: 12px;
 }

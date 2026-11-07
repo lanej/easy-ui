@@ -346,14 +346,14 @@ the ledger's header; `showHistoryLabels` opts into full descriptive labels.
 The ledger's Display menu holds Unassigned and Risk visibility controls.
 `selectedEventIds` tracks a selected subset independently of the primary
 inspector selection, allowing a full candidate history, Shift-click range,
-Ctrl/Cmd-click addition, touch-friendly Select points toggle, or a map
+Ctrl/Cmd-click addition, touch-friendly Multi-select / Done toggle with a persistent count, or a map
 location with multiple distinct visits. Only explicitly supplied segments
 between selected events are emphasized; disjoint selected points do not become
 a fictitious route. Focused forecast controls sit below the map.
 The map's Expand/Restore control preserves its map instance, camera, history,
 selections, and predictions; native fullscreen is used when available.
 `renderInspectorGraph` supplies optional chart evidence below inspector tabs
-and is omitted entirely when its result is null. Examples use 1100px
+in a collapsed Additional analysis disclosure, and is omitted entirely when its result is null. Examples use 1100px
 viewports. Controlled `selection: null` leaves the ledger unselected. The inspector preserves source and time for applicable event,
 connection, and focused-path assessments, including non-event selections.
 Forecast geometry never creates scan events; supplied
@@ -363,14 +363,23 @@ observations retain their metrics and risk indicators in focused history, and
 unassigned visits stay inline unless their explicit display toggle hides them.
 Selecting a visit scrolls it into view without stealing focus. Caller-owned header
 `actions` remain available at narrow widths. Widening restores focused view
-buttons to their panel without borrowing focus from sibling workbenches. Repeating Analyze deviation or
-Deviation analysis reveals the Deviation inspector; controlled mode changes
-still require the owner to accept the requested state. Existing `InvestigationWorkspace`
+buttons to their panel without borrowing focus from sibling workbenches.
+History chips replace the global mode switch. Compare beside each prediction
+reveals the Comparison inspector; Comparing marks the active reference. Map
+visibility remains independent in both directions, and hidden references retain
+their findings. There is no duplicate comparison dropdown. The Details inspector
+follows the selected history or remaining observations after deselection; initial
+default inspection initializes its subset unless explicitly supplied.
+Findings and facts precede collapsible comparison evidence and sources. The first
+divergence uses the collision-aware location label instead of a separate marker.
+Controlled changes still require the owner to accept the requested state. Existing `InvestigationWorkspace`
 consumers use `timeline.renderConnectionMetrics` for the same explicit-edge
 evidence. Forecasts split dateline crossings while preserving supplied gaps.
 Full references belong in the persistent
 inspector. See [Workbench deviation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-deviation)
 and [narrow workbench](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-narrow).
+See [hidden comparison](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-hidden-comparison)
+for independent map visibility and comparison.
 See [unassigned connection evidence](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-unassigned-evidence)
 for supplied relationships outside any candidate history.
 

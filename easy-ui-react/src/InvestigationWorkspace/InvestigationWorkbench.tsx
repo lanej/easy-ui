@@ -7,8 +7,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
-import type { Marker as MapMarker, Map as MapInstance } from "maplibre-gl";
+import type { Map as MapInstance } from "maplibre-gl";
 import { Checkbox } from "../Checkbox";
 import { Pill } from "../Pill";
 import { EventDetails } from "../EventDetails";
@@ -35,7 +34,6 @@ import {
   reduceInvestigationWorkbench,
   type InvestigationWorkbenchState,
   type InvestigationWorkbenchAction,
-  type InvestigationMode,
 } from "./workbenchState";
 import { workbenchMapData, selectedObservationOverlays } from "./workbenchMap";
 import styles from "./InvestigationWorkbench.module.scss";
@@ -83,11 +81,6 @@ export type InvestigationWorkbenchProps = {
     context: InvestigationDetailsContext,
   ) => ReactNode;
 };
-const modes: readonly { id: InvestigationMode; label: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "focused", label: "Focused history" },
-  { id: "deviation", label: "Deviation analysis" },
-];
 const noPredictions: readonly InvestigationPrediction[] = [];
 const noDeviations: readonly InvestigationDeviation[] = [];
 const noAssessments: readonly InvestigationAssessment[] = [];
@@ -113,66 +106,6 @@ function Swatch({ color, dash }: { color: string; dash?: readonly number[] }) {
   );
 }
 
-function DivergenceCallout({
-  map,
-  coordinate,
-  time,
-  onSelect,
-}: {
-  map: MapInstance | null;
-  coordinate?: readonly [number, number];
-  time?: string;
-  onSelect: () => void;
-}) {
-  const [element] = useState(() =>
-    typeof document === "undefined" ? null : document.createElement("div"),
-  );
-  const [unavailable, setUnavailable] = useState(false);
-  const lon = coordinate?.[0];
-  const lat = coordinate?.[1];
-  useEffect(() => {
-    if (!map || !element || lon === undefined || lat === undefined) return;
-    let cancelled = false;
-    let marker: MapMarker | undefined;
-    setUnavailable(false);
-    // MapLibre is ESM-only. Loading inside the effect keeps the public entry
-    // importable by CommonJS and server-rendered consumers without a DOM.
-    void import("maplibre-gl")
-      .then(({ Marker }) => {
-        if (cancelled) return;
-        marker = new Marker({ element, anchor: "bottom", offset: [0, -16] })
-          .setLngLat([lon, lat])
-          .addTo(map);
-      })
-      .catch(() => {
-        if (!cancelled) setUnavailable(true);
-      });
-    return () => {
-      cancelled = true;
-      marker?.remove();
-    };
-  }, [map, element, lon, lat]);
-  if (unavailable && coordinate)
-    return (
-      <p role="status" className={styles.muted}>
-        Map callout unavailable. Inspect the supplied divergence below.
-      </p>
-    );
-  return element && coordinate
-    ? createPortal(
-        <button
-          type="button"
-          className={styles.divergenceCallout}
-          onClick={onSelect}
-        >
-          <strong>First divergence</strong>
-          <span>{time ?? "Time not supplied"}</span>
-        </button>,
-        element,
-      )
-    : null;
-}
-
 /** Three coordinated views over one validated graph; forecasts never become scan records. */
 export function InvestigationWorkbench({
   graph,
@@ -195,14 +128,25 @@ export function InvestigationWorkbench({
 }: InvestigationWorkbenchProps) {
   const id = useId();
   const root = useRef<HTMLElement>(null);
-  const [internalState, setInternalState] =
-    useState<InvestigationWorkbenchState>(() => ({
-      ...initialInvestigationWorkbenchState,
-      ...defaultState,
-    }));
-  const state = controlledState ?? internalState;
   const normalized = useMemo(() => normalizeInvestigationGraph(graph), [graph]);
   const records = normalized.records;
+  const [internalState, setInternalState] =
+    useState<InvestigationWorkbenchState>(() => {
+      const initial = {
+        ...initialInvestigationWorkbenchState,
+        ...defaultState,
+      };
+      return defaultState?.selection &&
+        defaultState.selectedEventIds === undefined
+        ? reduceInvestigationWorkbench(
+            initial,
+            { type: "select", selection: defaultState.selection },
+            records,
+            predictions,
+          )
+        : initial;
+    });
+  const state = controlledState ?? internalState;
   const comparisonIssues = useMemo(
     () =>
       validateInvestigationComparisons(
@@ -273,6 +217,7 @@ export function InvestigationWorkbench({
     return () => cancelAnimationFrame(frame);
   }, [mapInstance, mapExpanded, narrow, mobileView]);
   const tabsId = `${id}-inspector`;
+  const selectionHelpId = `${id}-selection-help`;
   useEffect(() => {
     const element = root.current;
     if (!element || typeof ResizeObserver === "undefined") return;
@@ -322,9 +267,12 @@ export function InvestigationWorkbench({
   const visiblePredictions = availablePredictions.filter((prediction) =>
     state.enabledPredictionIds.includes(prediction.id),
   );
-  const comparedPrediction = visiblePredictions.find(
-    (prediction) => prediction.id === state.comparisonPredictionId,
-  );
+  const comparedPrediction =
+    state.mode === "deviation"
+      ? availablePredictions.find(
+          (prediction) => prediction.id === state.comparisonPredictionId,
+        )
+      : undefined;
   const context = resolveSelection(records, state.selection);
   const selectedEventIds = useMemo(
     () =>
@@ -418,6 +366,23 @@ export function InvestigationWorkbench({
       : undefined;
   const divergenceLocation = records.locations.find(
     (location) => location.id === divergenceEvent?.locationId,
+  );
+  // Reuse the map's collision-aware facility labels instead of stacking a second marker.
+  const facilities = useMemo(
+    () =>
+      state.mode === "deviation" && divergenceLocation
+        ? mapData.facilities.map((facility) =>
+            facility.id === divergenceLocation.id
+              ? {
+                  ...facility,
+                  label: `${facility.label}\nFirst divergence`,
+                  priority: Math.max(facility.priority ?? 0, 10),
+                  labelMinZoom: 0,
+                }
+              : facility,
+          )
+        : mapData.facilities,
+    [mapData.facilities, state.mode, divergenceLocation],
   );
   const selectedAssessments = assessments.filter((assessment) =>
     assessment.target.type === "event"
@@ -632,23 +597,6 @@ export function InvestigationWorkbench({
           <h2>{title}</h2>
           {summary}
         </div>
-        <div
-          className={styles.modeSwitch}
-          role="group"
-          aria-label="Investigation mode"
-        >
-          {modes.map((mode) => (
-            <button
-              key={mode.id}
-              type="button"
-              aria-pressed={state.mode === mode.id}
-              disabled={mode.id !== "overview" && !records.paths.length}
-              onClick={() => dispatch({ type: "mode", mode: mode.id })}
-            >
-              {mode.label}
-            </button>
-          ))}
-        </div>
         <div className={styles.headerMeta}>
           <span className={styles.headerCounts}>
             {records.events.length} observations · {records.paths.length}{" "}
@@ -742,10 +690,14 @@ export function InvestigationWorkbench({
                 type="button"
                 className={styles.smallControl}
                 aria-pressed={multiSelect}
+                aria-describedby={selectionHelpId}
                 onClick={() => setMultiSelect((value) => !value)}
               >
-                {multiSelect ? "Selecting" : "Select points"}
+                {multiSelect ? "Done" : "Multi-select"}
               </button>
+              <span className={styles.selectionCount} role="status">
+                {selectedEventIds.length} selected
+              </span>
               {selectedEventIds.length > 0 && (
                 <button
                   type="button"
@@ -760,7 +712,7 @@ export function InvestigationWorkbench({
                     });
                   }}
                 >
-                  Clear ({selectedEventIds.length})
+                  Clear
                 </button>
               )}
               <details className={styles.displayMenu}>
@@ -809,8 +761,18 @@ export function InvestigationWorkbench({
             />
           </div>
           <footer className={styles.timelineFootnote}>
-            Connections are supplied relationships, not proof of a traveled
-            route.
+            <details className={styles.selectionHelp}>
+              <summary>Selection help</summary>
+              <p id={selectionHelpId}>
+                Click an observation to select it. Shift-click selects a range;
+                Ctrl/Cmd-click adds or removes observations. Multi-select
+                enables additive selection for observations and map locations.
+                Done keeps the selection and returns to single selection.
+              </p>
+            </details>
+            <span>
+              Connections show reported relationships, not proof of travel.
+            </span>
           </footer>
         </section>
         <section
@@ -853,7 +815,7 @@ export function InvestigationWorkbench({
           </button>
           <NetworkMap
             {...map}
-            facilities={mapData.facilities}
+            facilities={facilities}
             segments={mapData.segments}
             selectedFacilityId={context.location?.id}
             selectedSegmentId={context.segment?.id}
@@ -946,29 +908,13 @@ export function InvestigationWorkbench({
               );
             }}
           />
-          <DivergenceCallout
-            map={mapInstance}
-            coordinate={
-              state.mode === "deviation"
-                ? divergenceLocation?.coordinates
-                : undefined
-            }
-            time={divergenceEvent?.timeLabel}
-            onSelect={() => {
-              if (divergenceEvent) selectEvent(divergenceEvent);
-            }}
-          />
           {focused && (
             <section
               aria-label="Forecast comparison"
               className={styles.forecastControls}
             >
-              <h3>Compare predictions</h3>
-              {!focused ? (
-                <p className={styles.muted}>
-                  Focus a history to reveal its forecasts.
-                </p>
-              ) : !availablePredictions.length ? (
+              <h3>Predictions</h3>
+              {!availablePredictions.length ? (
                 <p className={styles.muted}>
                   No forecasts supplied for {focused.label}.
                 </p>
@@ -1019,7 +965,10 @@ export function InvestigationWorkbench({
                         dispatch({ type: "compare", id: prediction.id })
                       }
                     >
-                      Analyze
+                      {state.mode === "deviation" &&
+                      state.comparisonPredictionId === prediction.id
+                        ? "Comparing"
+                        : "Compare"}
                     </button>
                   </div>
                 ))
@@ -1114,9 +1063,9 @@ export function InvestigationWorkbench({
                 }}
               >
                 {item === "event"
-                  ? "Event"
+                  ? "Details"
                   : item === "deviation"
-                    ? "Deviation"
+                    ? "Comparison"
                     : "Evidence"}
               </button>
             ))}
@@ -1237,30 +1186,42 @@ export function InvestigationWorkbench({
                 </p>
               ) : (
                 <>
-                  <label className={styles.comparisonSelect}>
-                    Compare with{" "}
-                    <select
-                      aria-label="Comparison forecast"
-                      value={comparedPrediction?.id ?? ""}
-                      onChange={(e) => {
-                        if (e.target.value)
-                          dispatch({ type: "compare", id: e.target.value });
-                      }}
-                    >
-                      <option value="">Select a forecast</option>
-                      {availablePredictions.map((prediction) => (
-                        <option key={prediction.id} value={prediction.id}>
-                          {prediction.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {comparedPrediction && (
+                  {comparedPrediction ? (
                     <>
-                      <p className={styles.provenance}>
-                        Forecast: {comparedPrediction.source} · issued{" "}
-                        {comparedPrediction.asOf}
+                      <p className={styles.comparisonContext}>
+                        <Swatch
+                          color={comparedPrediction.color}
+                          dash={comparedPrediction.dash ?? [6, 3]}
+                        />
+                        <strong>
+                          Comparing with {comparedPrediction.label}
+                        </strong>
+                        {!visiblePredictions.some(
+                          (prediction) =>
+                            prediction.id === comparedPrediction.id,
+                        ) && (
+                          <span className={styles.muted}>Hidden on map</span>
+                        )}
                       </p>
+                      {selectedDeviation ? (
+                        <>
+                          <p>{selectedDeviation.summary}</p>
+                          <dl className={styles.facts}>
+                            {selectedDeviation.facts.map((fact, index) => (
+                              <div key={index}>
+                                <dt>{fact.label}</dt>
+                                <dd>{fact.value}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </>
+                      ) : (
+                        <p className={styles.muted}>
+                          No deviation assessment supplied for the selected
+                          observation. Line separation alone is not a measured
+                          deviation.
+                        </p>
+                      )}
                       {divergenceEvent && (
                         <button
                           type="button"
@@ -1281,34 +1242,32 @@ export function InvestigationWorkbench({
                           No single map callout is shown.
                         </p>
                       )}
-                      {selectedDeviation ? (
-                        <>
-                          <p>{selectedDeviation.summary}</p>
-                          <dl className={styles.facts}>
-                            {selectedDeviation.facts.map((fact, index) => (
-                              <div key={index}>
-                                <dt>{fact.label}</dt>
-                                <dd>{fact.value}</dd>
-                              </div>
-                            ))}
-                          </dl>
-                          {renderDeviationEvidence?.(
-                            selectedDeviation,
-                            context,
-                          )}
+                      <details className={styles.analysisDisclosure}>
+                        <summary>Comparison evidence and sources</summary>
+                        <div>
+                          {selectedDeviation &&
+                            renderDeviationEvidence?.(
+                              selectedDeviation,
+                              context,
+                            )}
                           <p className={styles.provenance}>
-                            Assessment: {selectedDeviation.source} ·{" "}
-                            {selectedDeviation.asOf}
+                            Forecast: {comparedPrediction.source} · issued{" "}
+                            {comparedPrediction.asOf}
                           </p>
-                        </>
-                      ) : (
-                        <p className={styles.muted}>
-                          No deviation assessment supplied for the selected
-                          observation. Line separation alone is not a measured
-                          deviation.
-                        </p>
-                      )}
+                          {selectedDeviation && (
+                            <p className={styles.provenance}>
+                              Assessment: {selectedDeviation.source} ·{" "}
+                              {selectedDeviation.asOf}
+                            </p>
+                          )}
+                        </div>
+                      </details>
                     </>
+                  ) : (
+                    <p className={styles.muted}>
+                      Choose Compare next to a prediction to inspect its
+                      findings.
+                    </p>
                   )}
                 </>
               )}
@@ -1363,12 +1322,12 @@ export function InvestigationWorkbench({
             </div>
           </div>
           {inspectorGraph != null && (
-            <section
-              className={styles.inspectorGraph}
-              aria-label="Supplemental investigation graph"
-            >
-              {inspectorGraph}
-            </section>
+            <details className={styles.inspectorGraph}>
+              <summary>Additional analysis</summary>
+              <div role="region" aria-label="Supplemental investigation graph">
+                {inspectorGraph}
+              </div>
+            </details>
           )}
         </section>
       </div>

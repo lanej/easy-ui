@@ -167,8 +167,8 @@ describe("InvestigationWorkbench explicit subset and expand behavior", () => {
     expect(change.mock.lastCall?.[0].selectedEventIds).toEqual(["a", "b", "c"]);
     fireEvent.click(inTransit(), { ctrlKey: true });
     expect(change.mock.lastCall?.[0].selectedEventIds).toEqual(["a", "c"]);
-    fireEvent.click(screen.getByRole("button", { name: "Select points" }));
-    expect(screen.getByRole("button", { name: "Selecting" })).toHaveAttribute(
+    fireEvent.click(screen.getByRole("button", { name: "Multi-select" }));
+    expect(screen.getByRole("button", { name: "Done" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -179,7 +179,7 @@ describe("InvestigationWorkbench explicit subset and expand behavior", () => {
   it("can select map location visits in selection mode without merging revisits", () => {
     const change = vi.fn();
     render(<InvestigationWorkbench {...props} onStateChange={change} />);
-    fireEvent.click(screen.getByRole("button", { name: "Select points" }));
+    fireEvent.click(screen.getByRole("button", { name: "Multi-select" }));
     fireEvent.click(screen.getByRole("button", { name: "Pick origin" }));
     expect(change.mock.lastCall?.[0].selectedEventIds).toEqual(["a", "d"]);
   });
@@ -212,6 +212,91 @@ describe("InvestigationWorkbench explicit subset and expand behavior", () => {
     ).toBeInTheDocument();
     expect(map).toBeInTheDocument();
     expect(change.mock.lastCall?.[0].selectedEventIds).toEqual(["a"]);
+  });
+
+  it("moves inspection to a remaining observation when a selected row is removed", () => {
+    const change = vi.fn();
+    render(<InvestigationWorkbench {...props} onStateChange={change} />);
+    fireEvent.click(accepted());
+    fireEvent.click(delivered(), { ctrlKey: true });
+    fireEvent.click(delivered(), { ctrlKey: true });
+    expect(change.mock.lastCall?.[0]).toMatchObject({
+      selectedEventIds: ["a"],
+      selection: { type: "event", eventId: "a" },
+    });
+    expect(accepted()).toHaveAttribute("aria-current", "true");
+    expect(delivered()).not.toHaveAttribute("aria-current", "true");
+    fireEvent.click(accepted(), { metaKey: true });
+    expect(change.mock.lastCall?.[0]).toMatchObject({
+      selectedEventIds: [],
+      selection: null,
+    });
+    expect(screen.getByText("0 selected")).toBeVisible();
+  });
+
+  it("inspects a history when selecting its complete observation set", () => {
+    const change = vi.fn();
+    render(<InvestigationWorkbench {...props} onStateChange={change} />);
+    fireEvent.click(accepted());
+    fireEvent.click(screen.getByRole("button", { name: /B · Second history/ }));
+    expect(change.mock.lastCall?.[0]).toMatchObject({
+      selectedEventIds: ["d"],
+      selection: { type: "path", pathId: "B" },
+    });
+    expect(
+      screen.getByRole("heading", { name: "B · Second history" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("group", { name: "Investigation mode" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("moves inspection away from a map location when its visits are deselected", () => {
+    const change = vi.fn();
+    render(<InvestigationWorkbench {...props} onStateChange={change} />);
+    fireEvent.click(inTransit());
+    fireEvent.click(screen.getByRole("button", { name: "Multi-select" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pick origin" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pick origin" }));
+    expect(change.mock.lastCall?.[0]).toMatchObject({
+      selectedEventIds: ["b"],
+      selection: { type: "event", eventId: "b" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(
+      screen.getByRole("button", { name: "Multi-select" }),
+    ).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByText("1 selected")).toBeVisible();
+  });
+
+  it("initializes selection from the default inspected observation", () => {
+    render(
+      <InvestigationWorkbench
+        {...props}
+        defaultState={{ selection: { type: "event", eventId: "b" } }}
+      />,
+    );
+    expect(screen.getByText("1 selected")).toBeVisible();
+    expect(inTransit()).toHaveAttribute("aria-current", "true");
+    expect(
+      mapProps.overlays?.some((overlay) =>
+        overlay.id.includes("selected-points"),
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps supplemental analysis collapsed until requested", () => {
+    render(
+      <InvestigationWorkbench
+        {...props}
+        renderInspectorGraph={() => <span>Caller graph</span>}
+      />,
+    );
+    const summary = screen.getByText("Additional analysis");
+    const disclosure = summary.closest("details");
+    expect(disclosure).not.toHaveAttribute("open");
+    fireEvent.click(summary);
+    expect(disclosure).toHaveAttribute("open");
   });
 
   it("uses only explicit edges to highlight a disjoint selection", () => {

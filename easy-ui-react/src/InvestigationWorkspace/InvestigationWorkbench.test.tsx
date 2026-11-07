@@ -139,7 +139,7 @@ describe("InvestigationWorkbench", () => {
       screen.getByRole("button", { name: /History A.*3 observations/ }),
     );
     expect(
-      screen.getByRole("button", { name: "Focused history" }),
+      screen.getByRole("button", { name: /History A.*3 observations/ }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(
       mapProps.overlays?.some((overlay) =>
@@ -175,7 +175,7 @@ describe("InvestigationWorkbench", () => {
       comparisonPredictionId: "p",
       selection: { type: "location", locationId: "x" },
     });
-    fireEvent.click(screen.getByRole("tab", { name: "Event" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Details" }));
     expect(
       within(inspector()).getByText(
         "2 observations at this location. Repeated visits remain separate.",
@@ -208,14 +208,14 @@ describe("InvestigationWorkbench", () => {
         renderEvidence={() => <span>Detailed reference</span>}
       />,
     );
-    expect(screen.getByRole("tab", { name: "Deviation" })).toHaveAttribute(
+    expect(screen.getByRole("tab", { name: "Comparison" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
     expect(screen.getByText("Supplied return finding")).toBeVisible();
     expect(screen.getByText("+12 min")).toBeVisible();
     const deviationTab = screen.getByRole("tab", {
-      name: "Deviation",
+      name: "Comparison",
     });
     fireEvent.keyDown(deviationTab, { key: "ArrowRight" });
     expect(screen.getByRole("tab", { name: "Evidence" })).toHaveFocus();
@@ -223,7 +223,7 @@ describe("InvestigationWorkbench", () => {
     fireEvent.click(
       within(ledger()).getByRole("button", { name: /Arrival Hub/ }),
     );
-    fireEvent.click(screen.getByRole("tab", { name: "Deviation" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Comparison" }));
     expect(screen.getByText(/No deviation assessment supplied/)).toBeVisible();
   });
   it("keeps a removed controlled selection unavailable rather than silently replacing it", () => {
@@ -261,12 +261,13 @@ describe("InvestigationWorkbench", () => {
         onStateChange={change}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Focused history" }));
-    expect(change.mock.lastCall?.[0].mode).toBe("focused");
-    expect(screen.getByRole("button", { name: "Overview" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
+    fireEvent.click(
+      screen.getByRole("button", { name: /History A.*3 observations/ }),
     );
+    expect(change.mock.lastCall?.[0].mode).toBe("focused");
+    expect(
+      screen.getByRole("button", { name: "All histories" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
   it("fails visibly on inconsistent topology without mounting the map", () => {
     render(
@@ -412,7 +413,7 @@ it("honors an explicit false map controls setting", () => {
 });
 
 describe("workbench review regressions", () => {
-  it.each(["Event", "Evidence"])(
+  it.each(["Details", "Evidence"])(
     "reveals deviation again after inspecting the %s tab",
     (tab) => {
       render(
@@ -426,14 +427,14 @@ describe("workbench review regressions", () => {
           }}
         />,
       );
-      for (const command of ["Compare Forecast south", "Deviation analysis"]) {
+      for (const command of ["Compare Forecast south"]) {
         fireEvent.click(screen.getByRole("tab", { name: tab }));
         expect(screen.getByRole("tab", { name: tab })).toHaveAttribute(
           "aria-selected",
           "true",
         );
         fireEvent.click(screen.getByRole("button", { name: command }));
-        expect(screen.getByRole("tab", { name: "Deviation" })).toHaveAttribute(
+        expect(screen.getByRole("tab", { name: "Comparison" })).toHaveAttribute(
           "aria-selected",
           "true",
         );
@@ -443,7 +444,7 @@ describe("workbench review regressions", () => {
 
   it("keeps controlled analysis mode with its owner while repeated accepted commands reveal its tab", () => {
     const state = {
-      mode: "overview" as const,
+      mode: "focused" as const,
       focusedPathId: "a",
       selection: null,
       enabledPredictionIds: ["p"],
@@ -459,9 +460,11 @@ describe("workbench review regressions", () => {
         onStateChange={change}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare Forecast south" }),
+    );
     expect(change.mock.lastCall?.[0].mode).toBe("deviation");
-    expect(screen.getByRole("tab", { name: "Event" })).toHaveAttribute(
+    expect(screen.getByRole("tab", { name: "Details" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
@@ -472,28 +475,24 @@ describe("workbench review regressions", () => {
         onStateChange={change}
       />,
     );
-    for (const command of ["Compare Forecast south", "Deviation analysis"]) {
+    for (const command of ["Compare Forecast south"]) {
       fireEvent.click(screen.getByRole("tab", { name: "Evidence" }));
       fireEvent.click(screen.getByRole("button", { name: command }));
-      expect(screen.getByRole("tab", { name: "Deviation" })).toHaveAttribute(
+      expect(screen.getByRole("tab", { name: "Comparison" })).toHaveAttribute(
         "aria-selected",
         "true",
       );
     }
   });
 
-  it("does not navigate the inspector when analysis is unavailable", () => {
+  it("offers no comparison command without a candidate history", () => {
     render(
-      <InvestigationWorkbench
-        graph={{ ...graph, paths: [] }}
-        map={map}
-        defaultState={{ mode: "deviation" }}
-      />,
+      <InvestigationWorkbench graph={{ ...graph, paths: [] }} map={map} />,
     );
     fireEvent.click(screen.getByRole("tab", { name: "Evidence" }));
-    const command = screen.getByRole("button", { name: "Deviation analysis" });
-    expect(command).toBeDisabled();
-    fireEvent.click(command);
+    expect(
+      screen.queryByRole("button", { name: /^Compare / }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Evidence" })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -542,12 +541,17 @@ describe("workbench review regressions", () => {
     expectStable();
     fireEvent.click(screen.getByRole("checkbox", { name: /Unassigned/ }));
     expectStable();
-    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
+    fireEvent.click(screen.getByRole("button", { name: "All histories" }));
     expect(mapProps.overlays).not.toBe(overlays);
     expect(
       mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-")),
     ).toHaveLength(0);
-    fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /History A.*3 observations/ }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare Forecast south" }),
+    );
     expect(
       mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-")),
     ).toHaveLength(1);
@@ -1073,8 +1077,13 @@ it("keeps every history, fork and independent root in a single ledger while focu
   );
   expect(
     within(ledger()).getByRole("button", { name: /Alternative arrival/ }),
-  ).toHaveAttribute("aria-current", "true");
-  fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
+  ).not.toHaveAttribute("aria-current", "true");
+  expect(
+    within(inspector()).getByRole("heading", { name: "History A" }),
+  ).toBeVisible();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Compare Forecast south" }),
+  );
   expect(eventIds()).toEqual(initialRows);
   expect(
     mapProps.overlays?.filter(
@@ -1093,4 +1102,68 @@ it("provides a named keyboard focus target for the scrollable inspector", () => 
   expect(content).toHaveAttribute("tabindex", "0");
   content.focus();
   expect(content).toHaveFocus();
+});
+
+it("keeps comparison findings and visibility independent in both directions", () => {
+  const change = vi.fn();
+  const north = { ...predictions[0], id: "north", label: "Forecast north" };
+  render(
+    <InvestigationWorkbench
+      {...props}
+      predictions={[...predictions, north]}
+      onStateChange={change}
+      defaultState={{
+        mode: "deviation",
+        focusedPathId: "a",
+        enabledPredictionIds: ["p", "north"],
+        comparisonPredictionId: "p",
+        selection: { type: "event", eventId: "e3" },
+      }}
+    />,
+  );
+  fireEvent.click(screen.getByRole("checkbox", { name: "Forecast south" }));
+  expect(change.mock.lastCall?.[0].comparisonPredictionId).toBe("p");
+  expect(screen.getByText("+12 min")).toBeVisible();
+  expect(screen.getByText("Hidden on map")).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Compare Forecast south" }),
+  ).toHaveTextContent("Comparing");
+  expect(
+    mapProps.overlays?.some((overlay) => overlay.id.endsWith("-forecast-p")),
+  ).toBe(false);
+  fireEvent.click(screen.getByRole("checkbox", { name: "Forecast north" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Compare Forecast north" }),
+  );
+  expect(change.mock.lastCall?.[0]).toMatchObject({
+    comparisonPredictionId: "north",
+    enabledPredictionIds: [],
+  });
+  expect(screen.getByText("Comparing with Forecast north")).toBeVisible();
+  expect(
+    screen.queryByRole("combobox", { name: "Comparison forecast" }),
+  ).not.toBeInTheDocument();
+});
+
+it("combines the first divergence with the collision-aware location label", () => {
+  render(
+    <InvestigationWorkbench
+      {...props}
+      defaultState={{
+        mode: "deviation",
+        focusedPathId: "a",
+        comparisonPredictionId: "p",
+        selection: { type: "event", eventId: "e3" },
+      }}
+    />,
+  );
+  expect(
+    mapProps.facilities?.find((facility) => facility.id === "x"),
+  ).toMatchObject({
+    label: "Origin\nFirst divergence",
+    labelMinZoom: 0,
+  });
+  expect(
+    screen.getByRole("button", { name: /First supplied divergence Origin/ }),
+  ).toBeVisible();
 });

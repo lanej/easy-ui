@@ -308,7 +308,7 @@ describe("workbench state", () => {
     );
     expect(state.focusedPathId).toBe("a");
   });
-  it("retains event selection across history focus, including observations on other histories", () => {
+  it("inspects the chosen history rather than an observation from the previous selection", () => {
     const selected = {
       ...initial,
       selection: { type: "event" as const, eventId: "origin" },
@@ -316,7 +316,7 @@ describe("workbench state", () => {
     expect(
       reduce(selected, { type: "focus", pathId: "b" }, records, predictions)
         .selection,
-    ).toEqual(selected.selection);
+    ).toEqual({ type: "path", pathId: "b" });
     expect(
       reduce(
         { ...selected, selection: { type: "event", eventId: "return" } },
@@ -324,7 +324,7 @@ describe("workbench state", () => {
         records,
         predictions,
       ).selection,
-    ).toEqual({ type: "event", eventId: "return" });
+    ).toEqual({ type: "path", pathId: "b" });
   });
   it("preserves prediction choices across overview and selects an applicable comparison", () => {
     const focused = reduce(
@@ -345,7 +345,8 @@ describe("workbench state", () => {
       records,
       predictions,
     );
-    expect(overview.enabledPredictionIds).toContain("q");
+    expect(overview.enabledPredictionIds).toEqual([]);
+    expect(overview.comparisonPredictionId).toBe("q");
     expect(
       reduce(
         overview,
@@ -354,8 +355,16 @@ describe("workbench state", () => {
         predictions,
       ).comparisonPredictionId,
     ).toBe("q");
+    expect(
+      reduce(
+        overview,
+        { type: "mode", mode: "deviation" },
+        records,
+        predictions,
+      ).enabledPredictionIds,
+    ).toEqual([]);
   });
-  it("deduplicates forecast toggles and removes comparison when its last overlay is disabled", () => {
+  it("deduplicates forecast toggles without changing a hidden comparison", () => {
     let state = reduce(
       initial,
       { type: "focus", pathId: "a" },
@@ -376,7 +385,7 @@ describe("workbench state", () => {
       records,
       predictions,
     );
-    expect(state.comparisonPredictionId).toBeNull();
+    expect(state.comparisonPredictionId).toBe("p");
     expect(state.enabledPredictionIds).toEqual([]);
   });
   it("ignores invalid history and forecast choices", () => {
