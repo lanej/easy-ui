@@ -125,6 +125,57 @@ const inspector = () =>
   screen.getByRole("region", { name: "Investigation inspector" });
 
 describe("InvestigationWorkbench", () => {
+  it.each(["Timing", "Findings"])(
+    "changes and reopens comparison from %s without changing the analysis view",
+    (view) => {
+      render(
+        <InvestigationWorkbench
+          {...props}
+          defaultState={{
+            mode: "focused",
+            focusedPathId: "a",
+            enabledPredictionIds: ["p"],
+            selection: { type: "event", eventId: "e3" },
+          }}
+          analysisViews={["Timing", "Findings"].map((label) => ({
+            id: label,
+            label,
+            render: ({ comparisonPredictionId }) => (
+              <p>Active reference: {comparisonPredictionId ?? "none"}</p>
+            ),
+          }))}
+        />,
+      );
+      const analysis = screen.getByRole("region", {
+        name: "Investigation analysis",
+      });
+      const activeTab = () => within(analysis).getByRole("tab", { name: view });
+      fireEvent.click(activeTab());
+      expect(
+        screen.queryByRole("checkbox", { name: "Forecast south" }),
+      ).not.toBeInTheDocument();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Compare Forecast south" }),
+      );
+      expect(activeTab()).toHaveAttribute("aria-selected", "true");
+      expect(
+        within(analysis).getByRole("tabpanel", { name: view }),
+      ).toHaveTextContent("Active reference: p");
+      const comparing = () =>
+        screen.getByRole("button", { name: "Comparing Forecast south" });
+      expect(comparing()).toHaveAccessibleName(comparing().textContent!);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Close investigation details" }),
+      );
+      fireEvent.click(comparing());
+      expect(screen.getByRole("tab", { name: "Comparison" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+      expect(activeTab()).toHaveAttribute("aria-selected", "true");
+    },
+  );
+
   it("shows overview without forecasts and focuses a history without modifying the camera request", () => {
     const focus = { revision: "caller", facilityIds: ["x"] };
     render(
@@ -427,7 +478,7 @@ describe("workbench review regressions", () => {
           }}
         />,
       );
-      for (const command of ["Compare Forecast south"]) {
+      for (const command of ["Comparing Forecast south"]) {
         fireEvent.click(screen.getByRole("tab", { name: tab }));
         expect(screen.getByRole("tab", { name: tab })).toHaveAttribute(
           "aria-selected",
@@ -474,7 +525,7 @@ describe("workbench review regressions", () => {
         onStateChange={change}
       />,
     );
-    for (const command of ["Compare Forecast south"]) {
+    for (const command of ["Comparing Forecast south"]) {
       fireEvent.click(screen.getByRole("tab", { name: "Evidence" }));
       fireEvent.click(screen.getByRole("button", { name: command }));
       expect(screen.getByRole("tab", { name: "Comparison" })).toHaveAttribute(
@@ -1133,7 +1184,7 @@ it("keeps comparison findings and visibility independent in both directions", ()
   expect(screen.getByText("+12 min")).toBeVisible();
   expect(screen.getByText("Hidden on map")).toBeVisible();
   expect(
-    screen.getByRole("button", { name: "Compare Forecast south" }),
+    screen.getByRole("button", { name: "Comparing Forecast south" }),
   ).toHaveTextContent("Comparing");
   expect(
     mapProps.overlays?.some((overlay) => overlay.id.endsWith("-forecast-p")),

@@ -92,8 +92,9 @@ one arbitrarily. `state` / `onStateChange` support controlled use;
 `InvestigationWorkbenchState`, `initialInvestigationWorkbenchState`, and
 `reduceInvestigationWorkbench` expose the same state transitions.
 All / A / B / C are the only history controls; there is no separate global mode switch.
-Compare beside a prediction selects that reference and reveals the Comparison inspector,
-including when that comparison is already active. Its button reads Comparing while active. Controlled mode
+Compare controls above the analysis tabs select a forecast and reveal the Comparison
+inspector from Map, Timing, or any supplied view, including when that comparison is
+already active. Their visible and accessible names read Comparing while active. Controlled mode
 changes still wait for the application to accept the requested state. If the focused
 history is removed, remaining map histories return to undimmed context without
 choosing a replacement or discarding the unavailable selection.
@@ -106,6 +107,12 @@ entries. The ledger's Multi-select control enables the same additive toggles on
 touch devices. A persistent count reports the selection; Done leaves that selection
 intact and returns to single selection. Selection help explains mouse and keyboard gestures. In that mode, clicking a map location adds or removes all
 observations at that location while preserving distinct revisits.
+Opening an unselected observation's drawer in Multi-select adds it to the subset;
+opening a selected observation preserves the subset, including after Done. Scoped
+selections with an explicit `eventId` fall back to a remaining observation if that
+event is deselected. Previous/Next retain keyboard focus as the drawer moves between
+rows; a disabled endpoint or a disappearing visit control falls back to the active
+inspector tab. Delayed controlled updates do not take focus from elsewhere.
 `state.selectedEventIds` stores the subset alongside
 `state.selection` (the inspector's primary record). Selecting a history inspects that
 history rather than retaining an observation from another history. Removing an inspected
@@ -442,8 +449,8 @@ The standalone inspector observes its own container at the native 740px breakpoi
 
 All examples use synthetic observations and offline map data. Ledger examples use US Census state outlines and city centers; their straight map connections are candidate relationships, not measured travel geometry. Other examples use a schematic map. The detail chart composes `HealthAssessment` and `DurationDistribution` with an independently supplied synthetic reference. No inference or assessment policy lives in this organism.
 
-Prediction controls keep one complete route per row: visibility checkbox and
-route identity on the left, an Analyze action on the right. The active comparison
-is indicated independently of whether other forecast overlays are enabled.
+Forecast comparison stays above the analysis tabs, including during expansion.
+The Map pane separately exposes Show on map checkboxes for each forecast. The active
+comparison is indicated independently of whether forecast overlays are enabled.
 The optional history descriptions do not repeat in the ledger summary when
 `showHistoryLabels` is false.

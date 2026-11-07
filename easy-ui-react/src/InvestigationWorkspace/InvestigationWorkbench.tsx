@@ -161,6 +161,7 @@ export function InvestigationWorkbench({
     id: string;
     element: HTMLElement;
   } | null>(null);
+  const focusedDrawerControl = useRef<HTMLElement | null>(null);
   const [internalAnalysisId, setInternalAnalysisId] = useState(
     defaultAnalysisViewId,
   );
@@ -412,6 +413,39 @@ export function InvestigationWorkbench({
     [state.selectedEventIds, records.events],
   );
   const event = context.event;
+  useLayoutEffect(() => {
+    const previous = focusedDrawerControl.current;
+    if (
+      !previous ||
+      (previous.isConnected &&
+        !previous.matches(":disabled") &&
+        !previous.closest("[hidden]"))
+    )
+      return;
+    focusedDrawerControl.current = null;
+    if (
+      document.activeElement !== previous &&
+      document.activeElement !== document.body
+    )
+      return;
+    const drawer = root.current?.querySelector<HTMLElement>(
+      "[data-workbench-drawer]",
+    );
+    if (!drawer || drawer.closest("[hidden]")) return;
+    const replacement = previous.id
+      ? document.getElementById(previous.id)
+      : null;
+    const target =
+      replacement &&
+      drawer.contains(replacement) &&
+      !replacement.matches(":disabled") &&
+      !replacement.closest("[hidden]")
+        ? replacement
+        : drawer.querySelector<HTMLElement>(
+            '[role="tab"][aria-selected="true"]',
+          );
+    target?.focus({ preventScroll: true });
+  });
   const disconnected = useMemo(
     () => records.events.filter((item) => !item.pathIds?.length),
     [records.events],
@@ -729,6 +763,23 @@ export function InvestigationWorkbench({
       aria-label="Investigation inspector"
       id={`${id}-drawer`}
       data-workbench-drawer
+      onFocusCapture={(e) => {
+        focusedDrawerControl.current = e.target as HTMLElement;
+      }}
+      onBlurCapture={(e) => {
+        const target = e.target as HTMLElement;
+        if (
+          !target.isConnected ||
+          target.matches(":disabled") ||
+          target.closest("[hidden]")
+        )
+          return;
+        if (
+          !(e.relatedTarget instanceof Node) ||
+          !e.currentTarget.contains(e.relatedTarget)
+        )
+          focusedDrawerControl.current = null;
+      }}
       onKeyDown={(e) => {
         if (e.key === "Escape" && !e.defaultPrevented) {
           e.stopPropagation();
@@ -802,6 +853,7 @@ export function InvestigationWorkbench({
           <button
             type="button"
             aria-label="Previous event"
+            id={`${tabsId}-previous`}
             disabled={selectedIndex <= 0}
             onClick={() => selectEvent(visibleEvents[selectedIndex - 1])}
           >
@@ -810,6 +862,7 @@ export function InvestigationWorkbench({
           <button
             type="button"
             aria-label="Next event"
+            id={`${tabsId}-next`}
             disabled={
               !visibleEvents.length ||
               selectedIndex === visibleEvents.length - 1
@@ -1032,7 +1085,8 @@ export function InvestigationWorkbench({
                 </>
               ) : (
                 <p className={styles.muted}>
-                  Choose Compare next to a prediction to inspect its findings.
+                  Choose a forecast above the analysis tabs to compare its
+                  findings.
                 </p>
               )}
             </>
@@ -1122,7 +1176,15 @@ export function InvestigationWorkbench({
               type: "selectEvents",
               ids: selectedEventIds.includes(item.id)
                 ? selectedEventIds
-                : [item.id],
+                : multiSelect
+                  ? records.events
+                      .filter(
+                        (candidate) =>
+                          candidate.id === item.id ||
+                          selectedEventIds.includes(candidate.id),
+                      )
+                      .map((candidate) => candidate.id)
+                  : [item.id],
               selection: { type: "event", eventId: item.id },
             });
           }
@@ -1420,6 +1482,45 @@ export function InvestigationWorkbench({
               focusedAnalysisContent.current = null;
           }}
         >
+          {focused && (
+            <section
+              aria-label="Forecast comparison"
+              className={styles.comparisonControls}
+            >
+              <h3>Compare forecast</h3>
+              {!availablePredictions.length ? (
+                <p className={styles.muted}>
+                  No forecasts supplied for {focused.label}.
+                </p>
+              ) : (
+                <div className={styles.comparisonOptions}>
+                  {availablePredictions.map((prediction) => {
+                    const comparing = comparedPrediction?.id === prediction.id;
+                    return (
+                      <button
+                        key={prediction.id}
+                        type="button"
+                        className={styles.smallControl}
+                        aria-pressed={comparing}
+                        onClick={() =>
+                          dispatch({ type: "compare", id: prediction.id })
+                        }
+                      >
+                        <Swatch
+                          color={prediction.color}
+                          dash={prediction.dash ?? [6, 3]}
+                        />
+                        <span>
+                          {comparing ? "Comparing" : "Compare"}{" "}
+                          {prediction.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
           <WorkspaceTabs
             aria-label="Analysis views"
             ids={analysisIds}
@@ -1579,10 +1680,10 @@ export function InvestigationWorkbench({
                 />
                 {focused && (
                   <section
-                    aria-label="Forecast comparison"
+                    aria-label="Forecast visibility"
                     className={styles.forecastControls}
                   >
-                    <h3>Predictions</h3>
+                    <h3>Show on map</h3>
                     {!availablePredictions.length ? (
                       <p className={styles.muted}>
                         No forecasts supplied for {focused.label}.
@@ -1622,23 +1723,6 @@ export function InvestigationWorkbench({
                               {prediction.confidence.valueLabel}
                             </span>
                           )}
-                          <button
-                            type="button"
-                            className={styles.textButton}
-                            aria-label={`Compare ${prediction.label}`}
-                            aria-pressed={
-                              state.mode === "deviation" &&
-                              state.comparisonPredictionId === prediction.id
-                            }
-                            onClick={() =>
-                              dispatch({ type: "compare", id: prediction.id })
-                            }
-                          >
-                            {state.mode === "deviation" &&
-                            state.comparisonPredictionId === prediction.id
-                              ? "Comparing"
-                              : "Compare"}
-                          </button>
                         </div>
                       ))
                     )}

@@ -383,8 +383,13 @@ See [Timing analysis view](https://lanej.io/easy-ui/storybook/?path=/story/organ
 for a retained map beside caller-supplied statistics.
 See [location drawer](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-location-drawer)
 and [explicit fill map](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-explicit-fill).
-History chips replace the global mode switch. Compare beside each prediction
-reveals the Comparison inspector; Comparing marks the active reference. Map
+History chips replace the global mode switch. Compare controls above the analysis
+tabs reveal the Comparison inspector from every view; Comparing marks the active
+reference in both visible and accessible names. The Map pane's Show on map checkboxes
+control overlays separately. Opening an unselected row during Multi-select adds it
+to the subset; opening a selected row preserves it. Previous/Next retain focus when
+the drawer changes rows, falling back to the active inspector tab at an endpoint.
+Scoped event inspection falls back when that observation is deselected. Map
 visibility remains independent in both directions, and hidden references retain
 their findings. There is no duplicate comparison dropdown. The Details inspector
 follows the selected history or remaining observations after deselection; initial

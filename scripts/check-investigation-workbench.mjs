@@ -105,29 +105,38 @@ function sameCamera(a, b) {
 }
 async function checkPredictionRows(theme) {
   const comparison = page.getByRole("region", { name: "Forecast comparison" });
-  const rows = comparison.locator("[data-prediction-id]");
+  const commands = comparison.getByRole("button");
+  assert.equal(await commands.count(), 2);
+  const comparisonBounds = await comparison.boundingBox();
+  const tabs = await analysis()
+    .getByRole("tablist", { name: "Analysis views" })
+    .boundingBox();
+  assert.ok(comparisonBounds.y + comparisonBounds.height <= tabs.y + 1);
+  for (const command of await commands.all()) {
+    const text = (await command.innerText()).replace(/\s+/g, " ").trim();
+    assert.ok(text.startsWith("Compare ") || text.startsWith("Comparing "));
+    assert.equal(
+      await comparison.getByRole("button", { name: text, exact: true }).count(),
+      1,
+    );
+  }
+  const visibility = page.getByRole("region", { name: "Forecast visibility" });
+  const rows = visibility.locator("[data-prediction-id]");
   assert.equal(await rows.count(), 2);
-  const panel = await comparison.boundingBox();
+  const panel = await visibility.boundingBox();
   let bottom = 0;
   for (const row of await rows.all()) {
     const bounds = await row.boundingBox();
     const checkbox = await row.getByRole("checkbox").boundingBox();
-    const analyze = await row
-      .getByRole("button", { name: /^Compare / })
-      .boundingBox();
     assert.ok(
       bounds.y >= bottom,
       "Each prediction occupies its own complete row",
     );
     assert.ok(
-      analyze.x + analyze.width <= panel.x + panel.width + 1,
-      "Analyze stays within map width",
+      checkbox.x + checkbox.width <= panel.x + panel.width + 1,
+      "Forecast visibility stays within map width",
     );
-    assert.ok(
-      checkbox.y < analyze.y + analyze.height &&
-        analyze.y < checkbox.y + checkbox.height,
-      "Checkbox and Analyze action remain on the same row",
-    );
+    assert.equal(await row.getByRole("button").count(), 0);
     bottom = bounds.y + bounds.height;
   }
   const file = `prediction-controls-${theme}.png`;
@@ -155,7 +164,7 @@ async function checkPredictionRows(theme) {
     actualComponent: true,
   });
   checks.push(
-    `${theme}: prediction row alignment and compact timeline control captures`,
+    `${theme}: shared comparison commands above tabs have matching visible/accessibility names; map visibility and compact chronology controls remain separate`,
   );
 }
 async function capture(name, theme, target = root()) {
@@ -245,8 +254,8 @@ try {
       .first()
       .boundingBox();
     assert.ok(
-      canvasBounds.height >= 450,
-      "Map fills the workspace instead of remaining a thumbnail",
+      canvasBounds.height >= 380,
+      "Map retains substantial geography beneath the shared comparison toolbar",
     );
     assert.equal(
       await inspector().evaluate(
@@ -350,7 +359,7 @@ try {
       .uncheck();
     assert.equal(
       await page
-        .getByRole("button", { name: "Compare Via Santa Rosa", exact: true })
+        .getByRole("button", { name: "Comparing Via Santa Rosa", exact: true })
         .getAttribute("aria-pressed"),
       "true",
     );
@@ -441,8 +450,8 @@ try {
     );
     await extraAnalysis.click();
     for (const [tab, command] of [
-      ["Evidence", "Compare Via Santa Rosa"],
-      ["Details", "Compare Via Santa Rosa"],
+      ["Evidence", "Comparing Via Santa Rosa"],
+      ["Details", "Comparing Via Santa Rosa"],
     ]) {
       await page.getByRole("tab", { name: tab, exact: true }).click();
       await page.getByRole("button", { name: command, exact: true }).click();
@@ -550,7 +559,7 @@ try {
   await readyMap();
   assert.ok(
     (await page.locator("[data-workbench-map] canvas").first().boundingBox())
-      .height >= 450,
+      .height >= 380,
   );
   checks.push(
     "1100px: explicit map.height=fill preserves full-height bounded geography",
@@ -825,6 +834,27 @@ try {
     await analysis()
       .getByRole("heading", { name: "Wellton → Avondale", exact: true })
       .waitFor();
+    for (const reference of [
+      "Via Santa Rosa",
+      "Via Kansas City",
+      "Via Santa Rosa",
+    ]) {
+      await analysis()
+        .getByRole("button", { name: `Compare ${reference}`, exact: true })
+        .click();
+      assert.equal(
+        await analysis()
+          .getByRole("tab", { name: "Timing", exact: true })
+          .getAttribute("aria-selected"),
+        "true",
+      );
+      assert.equal(
+        await analysis()
+          .getByRole("button", { name: `Comparing ${reference}`, exact: true })
+          .getAttribute("aria-pressed"),
+        "true",
+      );
+    }
     await capture(`workbench-timing-${theme}-desktop.png`, theme);
     await page
       .getByRole("button", {
@@ -853,7 +883,19 @@ try {
       .getByRole("tab", { name: "Findings", exact: true })
       .click();
     await analysis().getByText("Moderate", { exact: true }).waitFor();
+    await analysis()
+      .getByRole("button", { name: "Compare Via Kansas City", exact: true })
+      .click();
+    assert.equal(
+      await analysis()
+        .getByRole("tab", { name: "Findings", exact: true })
+        .getAttribute("aria-selected"),
+      "true",
+    );
     await capture(`workbench-findings-${theme}-desktop.png`, theme);
+    await analysis()
+      .getByRole("button", { name: "Compare Via Santa Rosa", exact: true })
+      .click();
     await analysis().getByRole("tab", { name: "Map", exact: true }).click();
     await readyMap();
     sameCamera(before, await camera());
@@ -867,7 +909,63 @@ try {
     await retainedMap.dispose();
     await accessible();
     checks.push(
-      `${theme}: Map/Timing/Findings retain timeline scroll, history subset and map camera; native chart and supplied findings update from shared selection`,
+      `${theme}: comparison can change from Timing and Findings without switching views; Map/Timing/Findings retain timeline scroll, history subset, camera and map instance`,
+    );
+  }
+  for (const theme of ["light", "dark"]) {
+    await open(theme);
+    await readyMap();
+    await ledger()
+      .getByRole("button", { name: "Multi-select", exact: true })
+      .click();
+    await ledger()
+      .getByRole("button", { name: /Accepted Ludington/ })
+      .click();
+    const count = ledger()
+      .getByRole("status")
+      .filter({ hasText: /^\d+ selected$/ });
+    assert.equal(await count.innerText(), "2 selected");
+    await ledger()
+      .locator('[data-workbench-row-toggle][aria-description*="Hammond"]')
+      .click();
+    assert.equal(await count.innerText(), "3 selected");
+    await capture(`workbench-selection-retained-${theme}.png`, theme);
+    const next = () =>
+      inspector().getByRole("button", { name: "Next event", exact: true });
+    await next().focus();
+    let steps = 0;
+    while (await next().isEnabled()) {
+      assert.ok(steps++ < 20, "Event navigation must reach its endpoint");
+      await page.keyboard.press("Enter");
+      if (await next().isEnabled()) {
+        assert.equal(
+          await next().evaluate((el) => el === document.activeElement),
+          true,
+        );
+      } else {
+        assert.equal(
+          await inspector()
+            .getByRole("tab", { selected: true })
+            .evaluate((el) => el === document.activeElement),
+          true,
+        );
+      }
+    }
+    const previous = inspector().getByRole("button", {
+      name: "Previous event",
+      exact: true,
+    });
+    await previous.focus();
+    await page.keyboard.press("Enter");
+    assert.equal(
+      await inspector()
+        .getByRole("button", { name: "Previous event", exact: true })
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
+    await accessible();
+    checks.push(
+      `${theme}: expanding an unselected row retains all prior selections; Next/Previous retain keyboard focus across moved drawers and recover at the disabled endpoint`,
     );
   }
   await open("light", 1100, 820, "workbench-timing-view");

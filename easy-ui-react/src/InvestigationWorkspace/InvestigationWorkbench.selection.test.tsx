@@ -121,6 +121,114 @@ const delivered = () =>
   within(ledger()).getByRole("button", { name: /Delivered Destination/ });
 
 describe("InvestigationWorkbench explicit subset and expand behavior", () => {
+  it("preserves the subset when opening selected rows and adds new rows during multi-select", () => {
+    const change = vi.fn();
+    render(<InvestigationWorkbench {...props} onStateChange={change} />);
+    fireEvent.click(accepted());
+    fireEvent.click(screen.getByRole("button", { name: "Multi-select" }));
+    fireEvent.click(delivered());
+    expect(screen.getByText("2 selected")).toBeVisible();
+    fireEvent.click(
+      within(inTransit().closest("li")!).getByRole("button", {
+        name: "Expand observation details",
+      }),
+    );
+    expect(change.mock.lastCall?.[0]).toMatchObject({
+      selectedEventIds: ["a", "b", "c"],
+      selection: { type: "event", eventId: "b" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    fireEvent.click(
+      within(delivered().closest("li")!).getByRole("button", {
+        name: "Expand observation details",
+      }),
+    );
+    expect(change.mock.lastCall?.[0].selectedEventIds).toEqual(["a", "b", "c"]);
+  });
+
+  it("retains navigation focus as the drawer moves and recovers when the next control becomes disabled", () => {
+    render(<InvestigationWorkbench {...props} />);
+    fireEvent.click(accepted());
+    const next = () => screen.getByRole("button", { name: "Next event" });
+    next().focus();
+    fireEvent.click(next());
+    expect(inTransit()).toHaveAttribute("aria-current", "true");
+    expect(next()).toHaveFocus();
+    fireEvent.click(next());
+    expect(delivered()).toHaveAttribute("aria-current", "true");
+    expect(next()).toHaveFocus();
+    fireEvent.click(next());
+    expect(next()).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "Details" })).toHaveFocus();
+    const previous = screen.getByRole("button", { name: "Previous event" });
+    previous.focus();
+    fireEvent.click(previous);
+    expect(
+      screen.getByRole("button", { name: "Previous event" }),
+    ).toHaveFocus();
+  });
+
+  it("moves focus into the row drawer after choosing a visit from location details", () => {
+    render(
+      <InvestigationWorkbench
+        {...props}
+        defaultState={{ selection: { type: "location", locationId: "origin" } }}
+      />,
+    );
+    const visit = screen.getByRole("button", { name: "Accepted · 09:00" });
+    visit.focus();
+    fireEvent.click(visit);
+    expect(accepted()).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("tab", { name: "Details" })).toHaveFocus();
+  });
+
+  it("does not take focus back when a controlled navigation request is accepted later", () => {
+    const change = vi.fn();
+    const initial = {
+      ...initialInvestigationWorkbenchState,
+      selection: { type: "event" as const, eventId: "a" },
+      selectedEventIds: ["a"],
+    };
+    const content = (state: typeof initialInvestigationWorkbenchState) => (
+      <>
+        <button>Outside workspace</button>
+        <InvestigationWorkbench
+          {...props}
+          state={state}
+          onStateChange={change}
+        />
+      </>
+    );
+    const { rerender } = render(content(initial));
+    const next = screen.getByRole("button", { name: "Next event" });
+    next.focus();
+    fireEvent.click(next);
+    expect(next).toHaveFocus();
+    const outside = screen.getByRole("button", { name: "Outside workspace" });
+    outside.focus();
+    rerender(content(change.mock.lastCall?.[0]));
+    expect(inTransit()).toHaveAttribute("aria-current", "true");
+    expect(outside).toHaveFocus();
+  });
+
+  it.each([
+    { type: "location", locationId: "origin", eventId: "a" } as const,
+    { type: "path", pathId: "A", eventId: "a" } as const,
+    { type: "segment", segmentId: "ab-map", eventId: "a" } as const,
+  ])("validates the observation in a scoped $type selection", (selection) => {
+    const records = normalizeInvestigationGraph(graph).records;
+    const reduce = (ids: readonly string[]) =>
+      reduceInvestigationWorkbench(
+        initialInvestigationWorkbenchState,
+        { type: "selectEvents", ids, selection },
+        records,
+        [],
+      );
+    expect(reduce(["d"]).selection).toEqual({ type: "event", eventId: "d" });
+    expect(reduce(["a", "d"]).selection).toEqual(selection);
+    expect(reduce([]).selection).toBeNull();
+  });
+
   it("selects a full history without hiding other observations or inventing links", () => {
     const change = vi.fn();
     render(<InvestigationWorkbench {...props} onStateChange={change} />);

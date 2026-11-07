@@ -51,7 +51,7 @@ export function reduceInvestigationWorkbench(
     );
     const requested = action.selection;
     const remainsSelected =
-      requested?.type === "event"
+      requested?.eventId !== undefined
         ? selectedEventIds.includes(requested.eventId)
         : requested?.type === "location"
           ? records.events.some(

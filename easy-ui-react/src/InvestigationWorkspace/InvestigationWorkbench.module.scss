@@ -195,7 +195,7 @@
 }
 .forecastOption {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: 3px 12px;
   min-inline-size: 0;
@@ -224,23 +224,35 @@
   color: design-token("color.neutral.700");
   font-size: 11px;
 }
-.textButton {
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: end;
-  align-self: start;
-  padding: 4px 8px;
-  min-block-size: 28px;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  background: none;
-  color: design-token("color.primary.700");
-  font-size: 12px !important;
-  white-space: nowrap;
+.comparisonControls {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 10px;
+  max-block-size: min(30dvh, 180px);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-block-end: 1px solid design-token("color.neutral.200");
+  h3 {
+    font-size: 12px;
+    flex-shrink: 0;
+  }
 }
-.textButton[aria-pressed="true"] {
-  border-color: design-token("color.primary.300");
-  background: design-token("color.primary.050");
+.comparisonOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  > button {
+    white-space: normal;
+    text-align: start;
+    max-inline-size: 100%;
+  }
+  > :where(button) > span {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
 }
 .showOptions {
   display: flex;
