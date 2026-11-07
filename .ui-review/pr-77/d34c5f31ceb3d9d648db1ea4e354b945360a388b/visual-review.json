@@ -1,0 +1,31 @@
+{
+  "sourceRevision": "d34c5f31ceb3d9d648db1ea4e354b945360a388b",
+  "inspectedScreenshots": [
+    "workbench-light-desktop.png",
+    "workbench-timing-light-desktop.png",
+    "workbench-selection-retained-dark.png",
+    "workbench-findings-dark-desktop.png",
+    "workbench-timing-dark-expanded.png",
+    "workbench-timing-light-narrow.png"
+  ],
+  "sourceReview": "Separate code reviewer found no actionable issues and independently passed 30 selection/analysis tests.",
+  "visualReview": "Root inspected all six at readable resolution: shared controls, responsive wrapping, map sizing, chart clipping, selected subset and keyboard focus states are correct.",
+  "validation": {
+    "unitTests": {
+      "passed": 2456,
+      "skipped": 2,
+      "files": 183
+    },
+    "browserCheckGroups": 28,
+    "browserErrors": [],
+    "regressions": "Multi-select expansion adds the new observation; moved drawer navigation retains focus and handles disabled endpoints; delayed controlled updates respect outside focus; comparison changes from Timing and Findings; scoped event membership and accessible labels remain correct.",
+    "storybookCoverage": "117/117 modules; 64 skill links resolve",
+    "package": "React build and npm pack CJS/ESM/SSR/TypeScript consumer, style and installed-skill checks passed",
+    "staticChecks": "ESLint, Stylelint, TypeScript and git diff --check passed"
+  },
+  "limitations": [
+    "Synthetic data, not live shipments.",
+    "Automated accessibility check excludes color contrast; visual review is separate.",
+    "No claim of downstream application adoption."
+  ]
+}
