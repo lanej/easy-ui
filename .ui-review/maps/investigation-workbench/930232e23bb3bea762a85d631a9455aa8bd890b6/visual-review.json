@@ -1,0 +1,28 @@
+{
+  "sourceRevision": "930232e23bb3bea762a85d631a9455aa8bd890b6",
+  "publishedSourceRevision": "cd9043e0cadbc976181dbc11851f80213cf9e0bf",
+  "sourceTree": "541eec6a403868d2ffce722b533533679e33c9c5",
+  "inspected": [
+    "workbench-dark-desktop.png",
+    "workbench-light-desktop.png",
+    "workbench-hidden-comparison-light.png",
+    "workbench-light-narrow-map.png",
+    "workbench-additional-analysis-dark.png",
+    "workbench-multi-selection-light.png"
+  ],
+  "review": "All retained images inspected at readable resolution. Separate reviewer found no actionable source or visual defects after recheck.",
+  "checks": [
+    "No overlapping desktop location/divergence labels",
+    "Hidden comparison retains findings and visible hidden-state label",
+    "Key comparison facts fit the initial desktop viewport",
+    "Narrow controls and details fit without horizontal overflow",
+    "Expanded supplemental graph renders bars and labels",
+    "Selection count and inspected observation agree"
+  ],
+  "limitations": [
+    "Synthetic data, not live shipments.",
+    "Automated accessibility check excludes color contrast; visual review is separate.",
+    "No claim of downstream application adoption.",
+    "At narrow widths the collision-aware map may omit a label; the inspector retains the exact first-divergence action."
+  ]
+}
