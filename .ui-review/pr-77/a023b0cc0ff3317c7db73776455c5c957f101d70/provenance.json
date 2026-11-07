@@ -1,0 +1,83 @@
+{
+  "sourceRevision": "a023b0cc0ff3317c7db73776455c5c957f101d70",
+  "browser": "153.0.8010.0",
+  "command": "node scripts/check-investigation-workbench.mjs",
+  "screenshots": [
+    {
+      "file": "workbench-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "738f87e11a519c97cb0c01c18b6affc5805eb4ddcd8658cc628f0426d248c7bd",
+      "sourceRevision": "a023b0cc0ff3317c7db73776455c5c957f101d70",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-desktop.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "e27ac33eed8e6aec04a82a10df2319ddc208d1e14c31039aa97ae65f54acd6ec",
+      "sourceRevision": "a023b0cc0ff3317c7db73776455c5c957f101d70",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-additional-analysis-dark.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "b69dbac252adb48d8f66d12f9242280bbd1e36eca6492281afe91c3a241223a8",
+      "sourceRevision": "a023b0cc0ff3317c7db73776455c5c957f101d70",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-narrow-events.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "2ff2466ed53684b0579f54c0e6c5809861db00323f44844f132323891c67c923",
+      "sourceRevision": "a023b0cc0ff3317c7db73776455c5c957f101d70",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-narrow-map.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "96921f79d28a1e6719c0ec1f1215626586b30ac48a875b014b3bd77cd130e5d0",
+      "sourceRevision": "a023b0cc0ff3317c7db73776455c5c957f101d70",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-history-drawer-light.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "15485cf3ec18239b4da6fc6bbb6d7f36c7e9f882f32de61c2d354cd92c62cf0e",
+      "sourceRevision": "a023b0cc0ff3317c7db73776455c5c957f101d70",
+      "actualComponent": true
+    }
+  ],
+  "limitations": [
+    "Synthetic data, not live shipments.",
+    "Automated accessibility check excludes color contrast; visual review is separate.",
+    "No claim of downstream application adoption."
+  ],
+  "sourceTree": "d6a721bb04275f064b46a0425328a02653741b2c",
+  "publishedSourceRevision": "a8a03ff8907168fd592a01cd834a6df6c143e84d",
+  "publishedSourceTree": "d6a721bb04275f064b46a0425328a02653741b2c",
+  "publication": "Captured local source and published source commit have identical Git trees, verified before branch publication.",
+  "browserDistribution": "@sparticuz/chromium 153.0.0"
+}

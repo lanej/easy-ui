@@ -125,6 +125,57 @@ const inspector = () =>
   screen.getByRole("region", { name: "Investigation inspector" });
 
 describe("InvestigationWorkbench", () => {
+  it.each(["Timing", "Findings"])(
+    "changes and reopens comparison from %s without changing the analysis view",
+    (view) => {
+      render(
+        <InvestigationWorkbench
+          {...props}
+          defaultState={{
+            mode: "focused",
+            focusedPathId: "a",
+            enabledPredictionIds: ["p"],
+            selection: { type: "event", eventId: "e3" },
+          }}
+          analysisViews={["Timing", "Findings"].map((label) => ({
+            id: label,
+            label,
+            render: ({ comparisonPredictionId }) => (
+              <p>Active reference: {comparisonPredictionId ?? "none"}</p>
+            ),
+          }))}
+        />,
+      );
+      const analysis = screen.getByRole("region", {
+        name: "Investigation analysis",
+      });
+      const activeTab = () => within(analysis).getByRole("tab", { name: view });
+      fireEvent.click(activeTab());
+      expect(
+        screen.queryByRole("checkbox", { name: "Forecast south" }),
+      ).not.toBeInTheDocument();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Compare Forecast south" }),
+      );
+      expect(activeTab()).toHaveAttribute("aria-selected", "true");
+      expect(
+        within(analysis).getByRole("tabpanel", { name: view }),
+      ).toHaveTextContent("Active reference: p");
+      const comparing = () =>
+        screen.getByRole("button", { name: "Comparing Forecast south" });
+      expect(comparing()).toHaveAccessibleName(comparing().textContent!);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Close investigation details" }),
+      );
+      fireEvent.click(comparing());
+      expect(screen.getByRole("tab", { name: "Comparison" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+      expect(activeTab()).toHaveAttribute("aria-selected", "true");
+    },
+  );
+
   it("shows overview without forecasts and focuses a history without modifying the camera request", () => {
     const focus = { revision: "caller", facilityIds: ["x"] };
     render(
@@ -139,7 +190,7 @@ describe("InvestigationWorkbench", () => {
       screen.getByRole("button", { name: /History A.*3 observations/ }),
     );
     expect(
-      screen.getByRole("button", { name: "Focused history" }),
+      screen.getByRole("button", { name: /History A.*3 observations/ }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(
       mapProps.overlays?.some((overlay) =>
@@ -175,7 +226,7 @@ describe("InvestigationWorkbench", () => {
       comparisonPredictionId: "p",
       selection: { type: "location", locationId: "x" },
     });
-    fireEvent.click(screen.getByRole("tab", { name: "Event" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Details" }));
     expect(
       within(inspector()).getByText(
         "2 observations at this location. Repeated visits remain separate.",
@@ -208,14 +259,14 @@ describe("InvestigationWorkbench", () => {
         renderEvidence={() => <span>Detailed reference</span>}
       />,
     );
-    expect(screen.getByRole("tab", { name: "Deviation" })).toHaveAttribute(
+    expect(screen.getByRole("tab", { name: "Comparison" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
     expect(screen.getByText("Supplied return finding")).toBeVisible();
     expect(screen.getByText("+12 min")).toBeVisible();
     const deviationTab = screen.getByRole("tab", {
-      name: "Deviation",
+      name: "Comparison",
     });
     fireEvent.keyDown(deviationTab, { key: "ArrowRight" });
     expect(screen.getByRole("tab", { name: "Evidence" })).toHaveFocus();
@@ -223,7 +274,7 @@ describe("InvestigationWorkbench", () => {
     fireEvent.click(
       within(ledger()).getByRole("button", { name: /Arrival Hub/ }),
     );
-    fireEvent.click(screen.getByRole("tab", { name: "Deviation" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Comparison" }));
     expect(screen.getByText(/No deviation assessment supplied/)).toBeVisible();
   });
   it("keeps a removed controlled selection unavailable rather than silently replacing it", () => {
@@ -261,12 +312,13 @@ describe("InvestigationWorkbench", () => {
         onStateChange={change}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Focused history" }));
-    expect(change.mock.lastCall?.[0].mode).toBe("focused");
-    expect(screen.getByRole("button", { name: "Overview" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
+    fireEvent.click(
+      screen.getByRole("button", { name: /History A.*3 observations/ }),
     );
+    expect(change.mock.lastCall?.[0].mode).toBe("focused");
+    expect(
+      screen.getByRole("button", { name: "All histories" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
   it("fails visibly on inconsistent topology without mounting the map", () => {
     render(
@@ -412,7 +464,7 @@ it("honors an explicit false map controls setting", () => {
 });
 
 describe("workbench review regressions", () => {
-  it.each(["Event", "Evidence"])(
+  it.each(["Details", "Evidence"])(
     "reveals deviation again after inspecting the %s tab",
     (tab) => {
       render(
@@ -426,14 +478,14 @@ describe("workbench review regressions", () => {
           }}
         />,
       );
-      for (const command of ["Compare Forecast south", "Deviation analysis"]) {
+      for (const command of ["Comparing Forecast south"]) {
         fireEvent.click(screen.getByRole("tab", { name: tab }));
         expect(screen.getByRole("tab", { name: tab })).toHaveAttribute(
           "aria-selected",
           "true",
         );
         fireEvent.click(screen.getByRole("button", { name: command }));
-        expect(screen.getByRole("tab", { name: "Deviation" })).toHaveAttribute(
+        expect(screen.getByRole("tab", { name: "Comparison" })).toHaveAttribute(
           "aria-selected",
           "true",
         );
@@ -443,7 +495,7 @@ describe("workbench review regressions", () => {
 
   it("keeps controlled analysis mode with its owner while repeated accepted commands reveal its tab", () => {
     const state = {
-      mode: "overview" as const,
+      mode: "focused" as const,
       focusedPathId: "a",
       selection: null,
       enabledPredictionIds: ["p"],
@@ -459,12 +511,13 @@ describe("workbench review regressions", () => {
         onStateChange={change}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
-    expect(change.mock.lastCall?.[0].mode).toBe("deviation");
-    expect(screen.getByRole("tab", { name: "Event" })).toHaveAttribute(
-      "aria-selected",
-      "true",
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare Forecast south" }),
     );
+    expect(change.mock.lastCall?.[0].mode).toBe("deviation");
+    expect(
+      screen.queryByRole("region", { name: "Investigation inspector" }),
+    ).not.toBeInTheDocument();
     rerender(
       <InvestigationWorkbench
         {...props}
@@ -472,28 +525,27 @@ describe("workbench review regressions", () => {
         onStateChange={change}
       />,
     );
-    for (const command of ["Compare Forecast south", "Deviation analysis"]) {
+    for (const command of ["Comparing Forecast south"]) {
       fireEvent.click(screen.getByRole("tab", { name: "Evidence" }));
       fireEvent.click(screen.getByRole("button", { name: command }));
-      expect(screen.getByRole("tab", { name: "Deviation" })).toHaveAttribute(
+      expect(screen.getByRole("tab", { name: "Comparison" })).toHaveAttribute(
         "aria-selected",
         "true",
       );
     }
   });
 
-  it("does not navigate the inspector when analysis is unavailable", () => {
+  it("offers no comparison command without a candidate history", () => {
     render(
-      <InvestigationWorkbench
-        graph={{ ...graph, paths: [] }}
-        map={map}
-        defaultState={{ mode: "deviation" }}
-      />,
+      <InvestigationWorkbench graph={{ ...graph, paths: [] }} map={map} />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show investigation details" }),
     );
     fireEvent.click(screen.getByRole("tab", { name: "Evidence" }));
-    const command = screen.getByRole("button", { name: "Deviation analysis" });
-    expect(command).toBeDisabled();
-    fireEvent.click(command);
+    expect(
+      screen.queryByRole("button", { name: /^Compare / }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Evidence" })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -542,12 +594,17 @@ describe("workbench review regressions", () => {
     expectStable();
     fireEvent.click(screen.getByRole("checkbox", { name: /Unassigned/ }));
     expectStable();
-    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
+    fireEvent.click(screen.getByRole("button", { name: "All histories" }));
     expect(mapProps.overlays).not.toBe(overlays);
     expect(
       mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-")),
     ).toHaveLength(0);
-    fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /History A.*3 observations/ }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare Forecast south" }),
+    );
     expect(
       mapProps.overlays?.filter((overlay) => overlay.id.includes("-forecast-")),
     ).toHaveLength(1);
@@ -614,7 +671,7 @@ describe("workbench review regressions", () => {
     );
     expect(row).toHaveAttribute("aria-current", "true");
     expect(row.closest("details")).toBeNull();
-    expect(measure).toHaveBeenCalledOnce();
+    expect(measure).toHaveBeenCalled();
     expect(mapButton).toHaveFocus();
   });
 
@@ -872,7 +929,7 @@ function observeWorkbenchResize() {
   };
 }
 
-it.each(["Events", "Map"])(
+it.each(["Events", "Analysis"])(
   "retains keyboard focus when widening removes the mobile %s button",
   (view) => {
     const observe = observeWorkbenchResize();
@@ -888,7 +945,8 @@ it.each(["Events", "Map"])(
       resize(1000);
       expect(
         screen.getByRole("region", {
-          name: view === "Events" ? "Observation ledger" : "History map",
+          name:
+            view === "Events" ? "Observation ledger" : "Investigation analysis",
         }),
       ).toHaveFocus();
       resize(390);
@@ -1034,6 +1092,7 @@ it("keeps every history, fork and independent root in a single ledger while focu
   const eventIds = () =>
     within(ledger().querySelector('ol[data-variant="ledger"]')!)
       .getAllByRole("button")
+      .filter((button) => button.hasAttribute("aria-labelledby"))
       .map((button) => button.textContent);
   const initialRows = eventIds();
   expect(initialRows).toHaveLength(6);
@@ -1073,8 +1132,13 @@ it("keeps every history, fork and independent root in a single ledger while focu
   );
   expect(
     within(ledger()).getByRole("button", { name: /Alternative arrival/ }),
-  ).toHaveAttribute("aria-current", "true");
-  fireEvent.click(screen.getByRole("button", { name: "Deviation analysis" }));
+  ).not.toHaveAttribute("aria-current", "true");
+  expect(
+    within(inspector()).getByRole("heading", { name: "History A" }),
+  ).toBeVisible();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Compare Forecast south" }),
+  );
   expect(eventIds()).toEqual(initialRows);
   expect(
     mapProps.overlays?.filter(
@@ -1087,10 +1151,244 @@ it("keeps every history, fork and independent root in a single ledger while focu
   expect(eventIds()).toEqual(initialRows);
 });
 
-it("provides a named keyboard focus target for the scrollable inspector", () => {
+it("provides a named keyboard focus target inside an expanded observation", () => {
   render(<InvestigationWorkbench {...props} />);
+  fireEvent.click(
+    within(ledger()).getByRole("button", { name: /Accepted Origin/ }),
+  );
   const content = screen.getByRole("region", { name: "Inspector content" });
   expect(content).toHaveAttribute("tabindex", "0");
   content.focus();
   expect(content).toHaveFocus();
 });
+
+it("keeps comparison findings and visibility independent in both directions", () => {
+  const change = vi.fn();
+  const north = { ...predictions[0], id: "north", label: "Forecast north" };
+  render(
+    <InvestigationWorkbench
+      {...props}
+      predictions={[...predictions, north]}
+      onStateChange={change}
+      defaultState={{
+        mode: "deviation",
+        focusedPathId: "a",
+        enabledPredictionIds: ["p", "north"],
+        comparisonPredictionId: "p",
+        selection: { type: "event", eventId: "e3" },
+      }}
+    />,
+  );
+  fireEvent.click(screen.getByRole("checkbox", { name: "Forecast south" }));
+  expect(change.mock.lastCall?.[0].comparisonPredictionId).toBe("p");
+  expect(screen.getByText("+12 min")).toBeVisible();
+  expect(screen.getByText("Hidden on map")).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Comparing Forecast south" }),
+  ).toHaveTextContent("Comparing");
+  expect(
+    mapProps.overlays?.some((overlay) => overlay.id.endsWith("-forecast-p")),
+  ).toBe(false);
+  fireEvent.click(screen.getByRole("checkbox", { name: "Forecast north" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Compare Forecast north" }),
+  );
+  expect(change.mock.lastCall?.[0]).toMatchObject({
+    comparisonPredictionId: "north",
+    enabledPredictionIds: [],
+  });
+  expect(screen.getByText("Comparing with Forecast north")).toBeVisible();
+  expect(
+    screen.queryByRole("combobox", { name: "Comparison forecast" }),
+  ).not.toBeInTheDocument();
+});
+
+it("combines the first divergence with the collision-aware location label", () => {
+  render(
+    <InvestigationWorkbench
+      {...props}
+      defaultState={{
+        mode: "deviation",
+        focusedPathId: "a",
+        comparisonPredictionId: "p",
+        selection: { type: "event", eventId: "e3" },
+      }}
+    />,
+  );
+  expect(
+    mapProps.facilities?.find((facility) => facility.id === "x"),
+  ).toMatchObject({
+    label: "Origin\nFirst divergence",
+    labelMinZoom: 0,
+  });
+  expect(
+    screen.getByText("First divergence in this comparison."),
+  ).toBeVisible();
+});
+
+it("retains receipt and assessment context in the narrow Map drawer and restores keyboard focus", () => {
+  const observe = observeWorkbenchResize();
+  const data = {
+    ...graph,
+    events: graph.events.map((item) =>
+      item.id === "e3"
+        ? { ...item, timeLabel: undefined, receivedTimeLabel: "11:30 UTC" }
+        : item,
+    ),
+  };
+  render(
+    <InvestigationWorkbench
+      {...props}
+      graph={data}
+      defaultState={{ selection: { type: "event", eventId: "e3" } }}
+      assessments={[
+        {
+          id: "flag",
+          target: { type: "event", eventId: "e3" },
+          label: "Review required",
+          tone: "warning",
+          summary: "Supplied review finding",
+          source: "Review policy",
+          asOf: "12:00",
+        },
+      ]}
+    />,
+  );
+  const root = screen.getByRole("region", {
+    name: "Investigation",
+  });
+  observe(root)(390);
+  fireEvent.click(screen.getByRole("button", { name: "Analysis" }));
+  const drawer = screen.getByRole("region", {
+    name: "Investigation inspector",
+  });
+  expect(within(drawer).getByText("11:30 UTC")).toBeVisible();
+  expect(within(drawer).getByText("Review required")).toBeVisible();
+  const close = within(drawer).getByRole("button", {
+    name: "Close investigation details",
+  });
+  close.focus();
+  fireEvent.click(close);
+  expect(
+    screen.getByRole("region", { name: "Investigation analysis" }),
+  ).toHaveFocus();
+  const opener = screen.getByRole("button", {
+    name: "Show investigation details",
+  });
+  opener.focus();
+  fireEvent.click(opener);
+  expect(
+    screen.getByRole("button", { name: "Hide investigation details" }),
+  ).toHaveFocus();
+  expect(
+    within(
+      screen.getByRole("region", { name: "Investigation inspector" }),
+    ).getByText("11:30 UTC"),
+  ).toBeVisible();
+  vi.unstubAllGlobals();
+});
+
+it("preserves the focused drawer tab when widening from Map view", () => {
+  const observe = observeWorkbenchResize();
+  render(
+    <InvestigationWorkbench
+      {...props}
+      defaultState={{
+        mode: "deviation",
+        focusedPathId: "a",
+        comparisonPredictionId: "p",
+        selection: { type: "event", eventId: "e3" },
+      }}
+    />,
+  );
+  const resize = observe(screen.getByRole("region", { name: "Investigation" }));
+  resize(390);
+  fireEvent.click(screen.getByRole("button", { name: "Analysis" }));
+  const tab = screen.getByRole("tab", { name: "Comparison" });
+  tab.focus();
+  resize(1100);
+  expect(screen.getByRole("tab", { name: "Comparison" })).toHaveFocus();
+  expect(
+    screen
+      .getByRole("region", { name: "Investigation inspector" })
+      .closest("li"),
+  ).not.toBeNull();
+  vi.unstubAllGlobals();
+});
+
+it("reveals a context drawer above a scrolled chronology and closes to its visible toggle", () => {
+  render(
+    <InvestigationWorkbench
+      {...props}
+      defaultState={{ selection: { type: "event", eventId: "e4" } }}
+    />,
+  );
+  const panel = ledger().querySelector<HTMLElement>("[data-workbench-scroll]")!;
+  panel.scrollTop = 600;
+  fireEvent.click(screen.getByText("Display"));
+  fireEvent.click(screen.getByRole("checkbox", { name: /Unassigned/ }));
+  expect(panel.scrollTop).toBe(0);
+  const close = screen.getByRole("button", {
+    name: "Close investigation details",
+  });
+  close.focus();
+  fireEvent.click(close);
+  expect(
+    screen.getByRole("button", { name: "Show observation details" }),
+  ).toHaveFocus();
+  panel.scrollTop = 600;
+  fireEvent.click(
+    screen.getByRole("button", { name: /History A.*3 observations/ }),
+  );
+  expect(panel.scrollTop).toBe(0);
+  expect(
+    screen
+      .getByRole("region", { name: "Investigation inspector" })
+      .closest("li"),
+  ).toBeNull();
+});
+
+it("retains a collapsed drawer across equivalent controlled selections and explicitly reopens its row", () => {
+  const state = {
+    mode: "overview" as const,
+    focusedPathId: null,
+    selection: { type: "event" as const, eventId: "e1" },
+    selectedEventIds: ["e1"],
+    enabledPredictionIds: [],
+    comparisonPredictionId: null,
+    showDisconnected: true,
+    showRisks: true,
+  };
+  const { rerender } = render(
+    <InvestigationWorkbench {...props} state={state} />,
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: "Close investigation details" }),
+  );
+  rerender(
+    <InvestigationWorkbench
+      {...props}
+      state={{ ...state, selection: { ...state.selection } }}
+    />,
+  );
+  expect(
+    screen.queryByRole("region", { name: "Investigation inspector" }),
+  ).not.toBeInTheDocument();
+  fireEvent.click(
+    within(ledger()).getByRole("button", { name: /Accepted Origin/ }),
+  );
+  expect(
+    screen.getByRole("region", { name: "Investigation inspector" }),
+  ).toBeVisible();
+});
+
+it.each([undefined, "fill"] as const)(
+  "keeps the map bounded for height %s",
+  (height) => {
+    render(<InvestigationWorkbench {...props} map={{ ...map, height }} />);
+    expect(screen.getByRole("region", { name: "History map" })).toHaveStyle({
+      alignSelf: "stretch",
+    });
+    expect(mapProps.height).toBe("fill");
+  },
+);

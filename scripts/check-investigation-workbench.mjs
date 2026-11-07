@@ -34,6 +34,8 @@ const base = process.env.STORYBOOK_URL ?? "http://127.0.0.1:9019";
 const root = () =>
   page.getByRole("region", { name: "Parcel investigation", exact: true });
 const map = () => page.locator("[data-workbench-map]");
+const analysis = () =>
+  page.getByRole("region", { name: "Investigation analysis" });
 const ledger = () => page.getByRole("region", { name: "Observation ledger" });
 const inspector = () =>
   page.getByRole("region", { name: "Investigation inspector" });
@@ -73,8 +75,10 @@ async function open(
   });
 }
 async function readyMap() {
+  if (!(await analysis().isVisible()))
+    await page.getByRole("button", { name: "Analysis", exact: true }).click();
   if (!(await map().isVisible()))
-    await page.getByRole("button", { name: "Map", exact: true }).click();
+    await analysis().getByRole("tab", { name: "Map", exact: true }).click();
   await page.waitForFunction(
     () =>
       window.workbenchMap?.isStyleLoaded() &&
@@ -101,29 +105,38 @@ function sameCamera(a, b) {
 }
 async function checkPredictionRows(theme) {
   const comparison = page.getByRole("region", { name: "Forecast comparison" });
-  const rows = comparison.locator("[data-prediction-id]");
+  const commands = comparison.getByRole("button");
+  assert.equal(await commands.count(), 2);
+  const comparisonBounds = await comparison.boundingBox();
+  const tabs = await analysis()
+    .getByRole("tablist", { name: "Analysis views" })
+    .boundingBox();
+  assert.ok(comparisonBounds.y + comparisonBounds.height <= tabs.y + 1);
+  for (const command of await commands.all()) {
+    const text = (await command.innerText()).replace(/\s+/g, " ").trim();
+    assert.ok(text.startsWith("Compare ") || text.startsWith("Comparing "));
+    assert.equal(
+      await comparison.getByRole("button", { name: text, exact: true }).count(),
+      1,
+    );
+  }
+  const visibility = page.getByRole("region", { name: "Forecast visibility" });
+  const rows = visibility.locator("[data-prediction-id]");
   assert.equal(await rows.count(), 2);
-  const panel = await comparison.boundingBox();
+  const panel = await visibility.boundingBox();
   let bottom = 0;
   for (const row of await rows.all()) {
     const bounds = await row.boundingBox();
     const checkbox = await row.getByRole("checkbox").boundingBox();
-    const analyze = await row
-      .getByRole("button", { name: /^Compare / })
-      .boundingBox();
     assert.ok(
       bounds.y >= bottom,
       "Each prediction occupies its own complete row",
     );
     assert.ok(
-      analyze.x + analyze.width <= panel.x + panel.width + 1,
-      "Analyze stays within map width",
+      checkbox.x + checkbox.width <= panel.x + panel.width + 1,
+      "Forecast visibility stays within map width",
     );
-    assert.ok(
-      checkbox.y < analyze.y + analyze.height &&
-        analyze.y < checkbox.y + checkbox.height,
-      "Checkbox and Analyze action remain on the same row",
-    );
+    assert.equal(await row.getByRole("button").count(), 0);
     bottom = bounds.y + bounds.height;
   }
   const file = `prediction-controls-${theme}.png`;
@@ -151,14 +164,13 @@ async function checkPredictionRows(theme) {
     actualComponent: true,
   });
   checks.push(
-    `${theme}: prediction row alignment and compact timeline control captures`,
+    `${theme}: shared comparison commands above tabs have matching visible/accessibility names; map visibility and compact chronology controls remain separate`,
   );
 }
-async function capture(name, theme) {
+async function capture(name, theme, target = root()) {
   await page.mouse.move(0, 0);
-  await page.keyboard.press("Escape");
   await page.waitForTimeout(250);
-  const image = await root().screenshot({
+  const image = await target.screenshot({
     path: resolve(output, name),
     animations: "disabled",
   });
@@ -199,15 +211,83 @@ try {
     assert.equal(await root().getAttribute("data-mode"), "deviation");
     assert.equal(
       await page
-        .getByRole("tab", { name: "Deviation", exact: true })
+        .getByRole("tab", { name: "Comparison", exact: true })
         .getAttribute("aria-selected"),
       "true",
     );
     await page.getByText("+3 h 05 m", { exact: true }).waitFor();
+    assert.equal(
+      await root().getByRole("group", { name: "Investigation mode" }).count(),
+      0,
+    );
+    assert.equal(
+      await root()
+        .getByRole("combobox", { name: "Comparison forecast" })
+        .count(),
+      0,
+    );
+    const difference = await page
+      .getByText("+3 h 05 m", { exact: true })
+      .boundingBox();
+    assert.ok(
+      difference.y + difference.height <= 820,
+      "Key comparison facts must fit the initial desktop viewport",
+    );
+    assert.equal(
+      await page
+        .getByText("Additional analysis", { exact: true })
+        .evaluate((el) => el.closest("details").open),
+      false,
+    );
+    await page
+      .locator("[data-map-label]")
+      .filter({ hasText: "First divergence" })
+      .waitFor({ state: "visible" });
+    const geography = await map().boundingBox();
+    const chronology = await ledger().boundingBox();
+    assert.ok(
+      geography.width > chronology.width,
+      "Map receives the larger desktop column",
+    );
+    const canvasBounds = await page
+      .locator("[data-workbench-map] canvas")
+      .first()
+      .boundingBox();
+    assert.ok(
+      canvasBounds.height >= 380,
+      "Map retains substantial geography beneath the shared comparison toolbar",
+    );
+    assert.equal(
+      await inspector().evaluate(
+        (el) => !!el.closest('ol[data-variant="ledger"] > li'),
+      ),
+      true,
+      "Observation evidence expands inside its timeline entry",
+    );
+    const close = inspector().getByRole("button", {
+      name: "Close investigation details",
+    });
+    await close.click();
+    assert.equal(await inspector().count(), 0);
+    const rowToggle = ledger()
+      .locator('li:has([aria-current="true"])')
+      .getByRole("button", { name: "Expand observation details" });
+    assert.equal(
+      await rowToggle.evaluate((el) => el === document.activeElement),
+      true,
+    );
+    await rowToggle.click();
+    await page.getByRole("tab", { name: "Comparison", exact: true }).waitFor();
     await checkHeaderAction();
     await accessible();
     await checkPredictionRows(theme);
     await capture(`workbench-${theme}-desktop.png`, theme);
+    await page.getByText("Additional analysis", { exact: true }).click();
+    await inspector()
+      .getByRole("region", { name: "Supplemental investigation graph" })
+      .scrollIntoViewIfNeeded();
+    await capture(`workbench-additional-analysis-${theme}.png`, theme);
+    await page.getByText("Additional analysis", { exact: true }).click();
     const allRows = ledger().locator('ol[data-variant="ledger"] > li');
     assert.equal(
       await allRows.count(),
@@ -252,7 +332,7 @@ try {
       .locator("[data-connection-graph]")
       .boundingBox();
     const ledgerBounds = await ledger().boundingBox();
-    const mapBounds = await map().boundingBox();
+    const mapBounds = await analysis().boundingBox();
     assert.ok(
       graphBounds.x - ledgerBounds.x < 12,
       "Git graph must occupy the leftmost ledger column",
@@ -273,6 +353,34 @@ try {
     checks.push(
       `${theme}: all 11 observations, forks, rejoin and independent roots in one leftmost graph at 1100×820`,
     );
+    // Visibility changes must preserve the explicit reference and its findings.
+    await page
+      .getByRole("checkbox", { name: "Via Santa Rosa", exact: true })
+      .uncheck();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Comparing Via Santa Rosa", exact: true })
+        .getAttribute("aria-pressed"),
+      "true",
+    );
+    await page.getByText("Hidden on map", { exact: true }).waitFor();
+    await page.getByText("+3 h 05 m", { exact: true }).waitFor();
+    await capture(`workbench-hidden-comparison-${theme}.png`, theme);
+    await page
+      .getByRole("checkbox", { name: "Via Santa Rosa", exact: true })
+      .check();
+    await page
+      .getByText("Comparison evidence and sources", { exact: true })
+      .click();
+    await page
+      .getByRole("heading", {
+        name: "Observed interval against forecast reference",
+        exact: true,
+      })
+      .waitFor();
+    await page
+      .getByText("Comparison evidence and sources", { exact: true })
+      .click();
     const before = await camera();
     await ledger()
       .getByRole("button", { name: /In transit Hammond/ })
@@ -288,13 +396,15 @@ try {
     await toggle.uncheck();
     await toggle.check();
     sameCamera(before, await camera());
-    await page.getByRole("button", { name: "Overview", exact: true }).click();
+    await page
+      .getByRole("button", { name: "All histories", exact: true })
+      .click();
     assert.equal(await root().getAttribute("data-mode"), "overview");
     assert.equal(await allRows.count(), 11);
     assert.equal(await root().locator("[data-connection-graph]").count(), 1);
     assert.equal(await map().locator('[aria-label="Map legend"]').count(), 0);
     await page
-      .getByRole("button", { name: "Focused history", exact: true })
+      .getByRole("button", { name: /A · Primary history.*select history/ })
       .click();
     assert.equal(
       await page
@@ -310,7 +420,7 @@ try {
       .click();
     sameCamera(before, await camera());
     assert.equal(await root().getAttribute("data-mode"), "deviation");
-    await page.getByRole("tab", { name: "Deviation", exact: true }).focus();
+    await page.getByRole("tab", { name: "Comparison", exact: true }).focus();
     await page.keyboard.press("ArrowRight");
     assert.equal(
       await page
@@ -322,21 +432,32 @@ try {
       .getByText(/synthetic 49-day reference/)
       .first()
       .waitFor();
-    assert.ok(
-      (await inspector()
+    const extraAnalysis = page.getByText("Additional analysis", {
+      exact: true,
+    });
+    assert.equal(
+      await inspector()
         .getByRole("region", { name: "Supplemental investigation graph" })
-        .count()) > 0,
-      "An actual optional distribution occupies the lower-right inspector",
+        .isVisible(),
+      false,
     );
+    await extraAnalysis.click();
+    assert.equal(
+      await inspector()
+        .getByRole("region", { name: "Supplemental investigation graph" })
+        .isVisible(),
+      true,
+    );
+    await extraAnalysis.click();
     for (const [tab, command] of [
-      ["Evidence", "Compare Via Santa Rosa"],
-      ["Event", "Deviation analysis"],
+      ["Evidence", "Comparing Via Santa Rosa"],
+      ["Details", "Comparing Via Santa Rosa"],
     ]) {
       await page.getByRole("tab", { name: tab, exact: true }).click();
       await page.getByRole("button", { name: command, exact: true }).click();
       assert.equal(
         await page
-          .getByRole("tab", { name: "Deviation", exact: true })
+          .getByRole("tab", { name: "Comparison", exact: true })
           .getAttribute("aria-selected"),
         "true",
       );
@@ -344,7 +465,7 @@ try {
     }
     sameCamera(before, await camera());
     checks.push(
-      `${theme}: repeated analysis commands reveal inspector; header action; overview/focus/deviation, forecast toggles, camera, edge evidence, keyboard tabs, accessibility`,
+      `${theme}: explicit history/compare controls, hidden comparison retained, collapsed evidence, key facts visible, camera, edge evidence, keyboard tabs, accessibility`,
     );
   }
   await open("light", 1100, 820, "workbench-overview");
@@ -354,7 +475,7 @@ try {
     await open("light", width, 820, "workbench-overview");
     await readyMap();
     const ledgerBounds = await ledger().boundingBox();
-    const mapBounds = await map().boundingBox();
+    const mapBounds = await analysis().boundingBox();
     assert.ok(
       ledgerBounds.x < mapBounds.x &&
         Math.abs(ledgerBounds.y - mapBounds.y) < 2,
@@ -381,9 +502,9 @@ try {
         (await ledger().locator('li[data-marked="true"]').count()) >= 2,
       );
       await page
-        .getByRole("button", { name: "Expand map to full screen" })
+        .getByRole("button", { name: "Expand analysis to full screen" })
         .click();
-      assert.equal(await map().getAttribute("data-expanded"), "true");
+      assert.equal(await analysis().getAttribute("data-expanded"), "true");
       assert.ok(
         await page.evaluate(
           () => window.workbenchMap.getCanvas().clientWidth > 400,
@@ -404,21 +525,45 @@ try {
         actualComponent: true,
       });
       await page
-        .getByRole("button", { name: "Restore map to workspace" })
+        .getByRole("button", { name: "Restore analysis to workspace" })
         .click();
-      assert.equal(await map().getAttribute("data-expanded"), null);
+      assert.equal(await analysis().getAttribute("data-expanded"), null);
       sameCamera(start, await camera());
       assert.ok(
         (await ledger().locator('li[data-marked="true"]').count()) >= 2,
       );
+      await hammond.click({ modifiers: ["Control"] });
+      assert.equal(await accepted.getAttribute("aria-current"), "true");
+      assert.equal(await hammond.getAttribute("aria-current"), null);
+      await page
+        .getByRole("button", { name: "Multi-select", exact: true })
+        .click();
+      await hammond.click();
+      await page.getByRole("button", { name: "Done", exact: true }).click();
+      assert.equal(await ledger().locator('li[data-marked="true"]').count(), 2);
+      await ledger().getByText("Selection help", { exact: true }).click();
+      await ledger()
+        .getByText(/Ctrl\/Cmd-click adds or removes observations/)
+        .waitFor();
+      await ledger().getByText("Selection help", { exact: true }).click();
+      await capture("workbench-multi-selection-light.png", "light");
       checks.push(
-        "1100px: range selection, map expansion, and camera/selection restoration",
+        "1100px: deselection follows remaining point, Multi-select/Done retains subset, keyboard help, expansion and camera restoration",
       );
     }
     checks.push(
       `${width}px: all histories with map alongside, one leftmost graph and no horizontal overflow`,
     );
   }
+  await open("light", 1100, 820, "workbench-explicit-fill");
+  await readyMap();
+  assert.ok(
+    (await page.locator("[data-workbench-map] canvas").first().boundingBox())
+      .height >= 380,
+  );
+  checks.push(
+    "1100px: explicit map.height=fill preserves full-height bounded geography",
+  );
   for (const theme of ["light", "dark"]) {
     await open(theme, 390, 900, "workbench-narrow");
     await checkHeaderAction();
@@ -430,15 +575,71 @@ try {
     );
     await readyMap();
     await capture(`workbench-${theme}-narrow-map.png`, theme);
+    const panelBounds = await map().boundingBox();
+    for (const selector of [
+      "canvas",
+      ".maplibregl-ctrl-attrib",
+      ".maplibregl-ctrl-scale",
+    ]) {
+      const bounds = await map().locator(selector).first().boundingBox();
+      assert.ok(
+        bounds &&
+          bounds.height > 0 &&
+          bounds.y + bounds.height <= panelBounds.y + panelBounds.height + 1,
+        `${selector} remains inside the narrow map`,
+      );
+    }
+    await inspector()
+      .getByRole("button", { name: "Close investigation details" })
+      .click();
+    assert.equal(
+      await analysis().evaluate((el) => el === document.activeElement),
+      true,
+    );
+    const opener = page.getByRole("button", {
+      name: "Show investigation details",
+      exact: true,
+    });
+    await opener.focus();
+    await page.keyboard.press("Enter");
+    assert.equal(
+      await page
+        .getByRole("button", {
+          name: "Hide investigation details",
+          exact: true,
+        })
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
     const before = await camera();
     await page.getByRole("button", { name: "Events", exact: true }).click();
-    await page.getByRole("button", { name: "Map", exact: true }).click();
+    await page.getByRole("button", { name: "Analysis", exact: true }).click();
     sameCamera(before, await camera());
     // Use the fluid example for resizing; the narrow story deliberately caps its container.
     await open(theme, 390, 900);
+    await readyMap();
+    await page.getByRole("tab", { name: "Comparison", exact: true }).focus();
+    await page.setViewportSize({ width: 1100, height: 900 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[aria-label="Parcel investigation"]').dataset
+          .narrow === "false",
+    );
+    assert.equal(
+      await page
+        .getByRole("tab", { name: "Comparison", exact: true })
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[aria-label="Parcel investigation"]').dataset
+          .narrow === "true",
+    );
     for (const [view, panel] of [
       ["Events", ledger()],
-      ["Map", map()],
+      ["Analysis", analysis()],
     ]) {
       await page.getByRole("button", { name: view, exact: true }).focus();
       await page.setViewportSize({ width: 1000, height: 900 });
@@ -471,7 +672,7 @@ try {
     );
     await open(theme, 1100, 820, "workbench-assessment-scopes");
     await readyMap();
-    await page
+    await inspector()
       .getByText(
         "This supplied finding applies to history A, independently of its selected observation.",
       )
@@ -481,7 +682,7 @@ try {
     await ledger()
       .getByRole("button", { name: /In transit Avondale.*Return visit/ })
       .click();
-    await page
+    await inspector()
       .getByText(
         "This supplied finding applies to the return connection. Select its map segment or incoming observation to inspect it.",
       )
@@ -528,7 +729,7 @@ try {
       await page
         .getByRole("button", { name: "Select Santa Rosa, NM", exact: true })
         .click();
-      await page.getByRole("tab", { name: "Event", exact: true }).click();
+      await page.getByRole("tab", { name: "Details", exact: true }).click();
       await inspector()
         .getByRole("button", {
           name: "Delivered · Oct 27 · 13:42 UTC",
@@ -589,6 +790,212 @@ try {
       );
     }
   }
+  await open("light", 1100, 820);
+  await readyMap();
+  await ledger()
+    .locator("[data-workbench-scroll]")
+    .evaluate((el) => {
+      el.scrollTop = 1000;
+    });
+  await ledger()
+    .getByRole("button", { name: /A · Primary history.*select history/ })
+    .click();
+  assert.equal(
+    await ledger()
+      .locator("[data-workbench-scroll]")
+      .evaluate((el) => el.scrollTop),
+    0,
+  );
+  assert.equal(await inspector().evaluate((el) => !!el.closest("li")), false);
+  await capture("workbench-history-drawer-light.png", "light");
+  checks.push(
+    "Desktop and mobile: vertical/context drawers, retained selection and focus, map attribution containment and resize focus restoration",
+  );
+  for (const theme of ["light", "dark"]) {
+    await open(theme);
+    await readyMap();
+    const before = await camera();
+    const retainedMap = await page.evaluateHandle(() => window.workbenchMap);
+    const timelineScroll = ledger().locator("[data-workbench-scroll]");
+    const position = await timelineScroll.evaluate((el) => el.scrollTop);
+    await analysis().getByRole("tab", { name: "Timing", exact: true }).click();
+    await analysis()
+      .getByRole("heading", { name: "Scan intervals", exact: true })
+      .waitFor();
+    assert.equal(await ledger().isVisible(), true);
+    assert.equal(await map().isVisible(), false);
+    assert.equal(await timelineScroll.evaluate((el) => el.scrollTop), position);
+    await ledger()
+      .getByRole("button", { name: /A · Primary history.*select history/ })
+      .click();
+    await analysis()
+      .getByRole("heading", { name: "Hammond → Avondale", exact: true })
+      .waitFor();
+    await analysis()
+      .getByRole("heading", { name: "Wellton → Avondale", exact: true })
+      .waitFor();
+    for (const reference of [
+      "Via Santa Rosa",
+      "Via Kansas City",
+      "Via Santa Rosa",
+    ]) {
+      await analysis()
+        .getByRole("button", { name: `Compare ${reference}`, exact: true })
+        .click();
+      assert.equal(
+        await analysis()
+          .getByRole("tab", { name: "Timing", exact: true })
+          .getAttribute("aria-selected"),
+        "true",
+      );
+      assert.equal(
+        await analysis()
+          .getByRole("button", { name: `Comparing ${reference}`, exact: true })
+          .getAttribute("aria-pressed"),
+        "true",
+      );
+    }
+    await capture(`workbench-timing-${theme}-desktop.png`, theme);
+    await page
+      .getByRole("button", {
+        name: "Expand analysis to full screen",
+        exact: true,
+      })
+      .click();
+    await analysis()
+      .getByRole("heading", { name: "Scan intervals", exact: true })
+      .waitFor();
+    assert.equal(await analysis().getAttribute("data-expanded"), "true");
+    await capture(`workbench-timing-${theme}-expanded.png`, theme, analysis());
+    await page
+      .getByRole("button", {
+        name: "Restore analysis to workspace",
+        exact: true,
+      })
+      .click();
+    assert.equal(
+      await analysis()
+        .getByRole("tab", { name: "Timing", exact: true })
+        .getAttribute("aria-selected"),
+      "true",
+    );
+    await analysis()
+      .getByRole("tab", { name: "Findings", exact: true })
+      .click();
+    await analysis().getByText("Moderate", { exact: true }).waitFor();
+    await analysis()
+      .getByRole("button", { name: "Compare Via Kansas City", exact: true })
+      .click();
+    assert.equal(
+      await analysis()
+        .getByRole("tab", { name: "Findings", exact: true })
+        .getAttribute("aria-selected"),
+      "true",
+    );
+    await capture(`workbench-findings-${theme}-desktop.png`, theme);
+    await analysis()
+      .getByRole("button", { name: "Compare Via Santa Rosa", exact: true })
+      .click();
+    await analysis().getByRole("tab", { name: "Map", exact: true }).click();
+    await readyMap();
+    sameCamera(before, await camera());
+    assert.equal(
+      await page.evaluate(
+        (retained) => retained === window.workbenchMap,
+        retainedMap,
+      ),
+      true,
+    );
+    await retainedMap.dispose();
+    await accessible();
+    checks.push(
+      `${theme}: comparison can change from Timing and Findings without switching views; Map/Timing/Findings retain timeline scroll, history subset, camera and map instance`,
+    );
+  }
+  for (const theme of ["light", "dark"]) {
+    await open(theme);
+    await readyMap();
+    await ledger()
+      .getByRole("button", { name: "Multi-select", exact: true })
+      .click();
+    await ledger()
+      .getByRole("button", { name: /Accepted Ludington/ })
+      .click();
+    const count = ledger()
+      .getByRole("status")
+      .filter({ hasText: /^\d+ selected$/ });
+    assert.equal(await count.innerText(), "2 selected");
+    await ledger()
+      .locator('[data-workbench-row-toggle][aria-description*="Hammond"]')
+      .click();
+    assert.equal(await count.innerText(), "3 selected");
+    await capture(`workbench-selection-retained-${theme}.png`, theme);
+    const next = () =>
+      inspector().getByRole("button", { name: "Next event", exact: true });
+    await next().focus();
+    let steps = 0;
+    while (await next().isEnabled()) {
+      assert.ok(steps++ < 20, "Event navigation must reach its endpoint");
+      await page.keyboard.press("Enter");
+      if (await next().isEnabled()) {
+        assert.equal(
+          await next().evaluate((el) => el === document.activeElement),
+          true,
+        );
+      } else {
+        assert.equal(
+          await inspector()
+            .getByRole("tab", { selected: true })
+            .evaluate((el) => el === document.activeElement),
+          true,
+        );
+      }
+    }
+    const previous = inspector().getByRole("button", {
+      name: "Previous event",
+      exact: true,
+    });
+    await previous.focus();
+    await page.keyboard.press("Enter");
+    assert.equal(
+      await inspector()
+        .getByRole("button", { name: "Previous event", exact: true })
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
+    await accessible();
+    checks.push(
+      `${theme}: expanding an unselected row retains all prior selections; Next/Previous retain keyboard focus across moved drawers and recover at the disabled endpoint`,
+    );
+  }
+  await open("light", 1100, 820, "workbench-timing-view");
+  assert.equal(await map().isVisible(), false);
+  await readyMap();
+  await open("light", 390, 900);
+  await readyMap();
+  await analysis().getByRole("tab", { name: "Map", exact: true }).focus();
+  await page.keyboard.press("ArrowRight");
+  assert.equal(
+    await analysis()
+      .getByRole("tab", { name: "Map", exact: true })
+      .getAttribute("aria-selected"),
+    "true",
+  );
+  await page.keyboard.press("Enter");
+  assert.equal(
+    await analysis()
+      .getByRole("tab", { name: "Timing", exact: true })
+      .getAttribute("aria-selected"),
+    "true",
+  );
+  await analysis()
+    .getByRole("heading", { name: "Scan intervals", exact: true })
+    .waitFor();
+  await capture("workbench-timing-light-narrow.png", "light");
+  await accessible();
+  checks.push(
+    "Initial Timing view reveals its retained Map correctly; narrow analysis tabs support manual keyboard activation without overflow",
+  );
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ checks, errors, screenshots }, null, 2));
 } finally {

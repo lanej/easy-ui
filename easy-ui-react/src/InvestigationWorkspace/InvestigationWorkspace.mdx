@@ -28,10 +28,9 @@ For dense tracking investigations, use `variant="ledger"`: compact event-first o
 
 `InvestigationWorkbench` is an opt-in composition exported from
 `@easypost/easy-ui/InvestigationWorkspace`. Existing workspace and ledger
-presentations are unchanged. The workbench adds a compact header, collapsible
-history controls embedded in the event ledger, one Git-style branch graph at the far left of the shared
-event-and-evidence ledger, map, and Event / Deviation /
-Evidence inspector. It uses the native map, timeline, graph, pills and histogram
+presentations are unchanged. The workbench adds a compact header, history controls embedded in the event ledger, one Git-style branch graph at the far left of the shared
+event-and-evidence ledger, a larger tabbed analysis window, and Details / Comparison /
+Evidence drawers. It uses the native map, timeline, graph, pills and histogram
 components rather than a separate prototype.
 
 ```tsx
@@ -53,7 +52,9 @@ import { InvestigationWorkbench } from "@easypost/easy-ui/InvestigationWorkspace
   )}
   renderEvidence={renderApplicationEvidence}
   renderInspectorGraph={({ event, selectedEventIds }) =>
-    event ? <ApplicationDistribution event={event} selection={selectedEventIds} /> : null
+    event ? (
+      <ApplicationDistribution event={event} selection={selectedEventIds} />
+    ) : null
   }
   showHistoryLabels={false}
 />;
@@ -90,8 +91,10 @@ one arbitrarily. `state` / `onStateChange` support controlled use;
 `defaultState` supports initial uncontrolled state. The public
 `InvestigationWorkbenchState`, `initialInvestigationWorkbenchState`, and
 `reduceInvestigationWorkbench` expose the same state transitions.
-Analyze deviation and Deviation analysis reveal the Deviation inspector on every
-successful command, including when that mode is already active. Controlled mode
+All / A / B / C are the only history controls; there is no separate global mode switch.
+Compare controls above the analysis tabs select a forecast and reveal the Comparison
+inspector from Map, Timing, or any supplied view, including when that comparison is
+already active. Their visible and accessible names read Comparing while active. Controlled mode
 changes still wait for the application to accept the requested state. If the focused
 history is removed, remaining map histories return to undimmed context without
 choosing a replacement or discarding the unavailable selection.
@@ -100,21 +103,73 @@ choosing a replacement or discarding the unavailable selection.
 of its member observations without hiding other candidates. A plain event click
 inspects that observation and selects one point; Shift-click selects a contiguous
 range of supplied list entries, while Ctrl/Cmd-click adds or removes individual
-entries. The ledger's Select points control enables the same additive toggles on
-touch devices. In that mode, clicking a map location adds or removes all
+entries. The ledger's Multi-select control enables the same additive toggles on
+touch devices. A persistent count reports the selection; Done leaves that selection
+intact and returns to single selection. Selection help explains mouse and keyboard gestures. In that mode, clicking a map location adds or removes all
 observations at that location while preserving distinct revisits.
-`state.selectedEventIds` stores the subset independently of
-`state.selection` (the inspector's primary record). Only caller-supplied map
+Opening an unselected observation's drawer in Multi-select adds it to the subset;
+opening a selected observation preserves the subset, including after Done. Scoped
+selections with an explicit `eventId` fall back to a remaining observation if that
+event is deselected. Previous/Next retain keyboard focus as the drawer moves between
+rows; a disabled endpoint or a disappearing visit control falls back to the active
+inspector tab. Delayed controlled updates do not take focus from elsewhere.
+`state.selectedEventIds` stores the subset alongside
+`state.selection` (the inspector's primary record). Selecting a history inspects that
+history rather than retaining an observation from another history. Removing an inspected
+observation or map location from a multi-selection moves inspection to a remaining
+selected observation, or clears it when none remain. An initial default selection
+also initializes its selected observations unless an explicit subset is supplied. Only caller-supplied map
 segments associated with explicit connections between selected observations are
 highlighted. Disconnected selected points stay disconnected. Clearing the subset
 does not synthesize a path.
 
-**Map expansion preserves the investigation.** Expand map uses the same mounted
-map instance and changes only layout, not the selected observations, focused
-history, forecast toggles, comparison or camera. Restore map or press Escape to
-return. The optional `renderInspectorGraph` slot receives the current selection,
+**Analysis views share one selection.** Map is the built-in view in a tabbed
+analysis window beside the chronology. Supply `analysisViews` for application-owned
+charts, distributions or findings. Each view receives `InvestigationAnalysisContext`:
+the inspected record and its related context, the explicit `selectedEventIds` subset,
+`focusedPathId`, and the active `comparisonPredictionId`. Use the subset when
+computing statistics across a range or complete history; the primary inspected
+record does not replace that subset. Aggregation, units, reference populations and
+interpretation belong to the application.
+
+```tsx
+<InvestigationWorkbench
+  graph={graph}
+  map={{ mapStyle, workerUrl }}
+  analysisViews={[
+    {
+      id: "timing",
+      label: "Timing",
+      render: (context) => <IntervalStatistics context={context} />,
+    },
+    {
+      id: "findings",
+      label: "Findings",
+      render: (context) => <SelectionFindings context={context} />,
+    },
+  ]}
+  defaultAnalysisViewId="map"
+/>
+```
+
+Map reserves the ID `map`; supplied IDs must be unique. Views can supply `count`
+(including zero) and `isDisabled`. All panes remain mounted while hidden, preserving
+map camera and chart-local state. Changing an analysis tab never changes the
+investigation selection or resets the chronology scroll. The standard `WorkspaceTabs`
+bar shares `useWorkspaceTabIds` with its panels: arrow keys move focus, Enter/Space
+activate, and Home/End reach endpoints. Removing or disabling an uncontrolled active
+view returns to Map and recovers focus only when the removed content owned it.
+Use `activeAnalysisViewId` / `onAnalysisViewChange` for controlled presentation;
+the owner must accept requests. An unavailable controlled ID displays Map without
+changing the supplied value.
+
+**Window expansion preserves the investigation.** Expand analysis uses the same
+mounted window and retains its active tab, map instance, selected observations,
+focused history, forecast choices and camera. Restore or press Escape to return. The optional `renderInspectorGraph` slot receives the current selection,
 selected event IDs, and focused history ID and places application-owned charts
-below the inspector's tabs. Returning null omits the graph entirely.
+inside the active vertical drawer in a collapsed Additional analysis disclosure.
+Returning null omits the disclosure entirely. Comparison findings and supplied facts
+appear before expandable Comparison evidence and sources, keeping conclusions visible.
 
 **Evidence belongs to explicit connections.** `renderConnectionMetrics` receives
 an incoming connection and both endpoints. It can compose compact
@@ -125,7 +180,7 @@ observations or across histories, retain their incoming metrics and risk indicat
 in the shared ledger. Only the explicit Unassigned observations display toggle
 hides those rows; no other history is silently filtered. Risk annotations are supplied as `InvestigationAssessment` records
 with event, connection or path targets, labels, tone, source and assessment time.
-The Event inspector shows applicable path assessments while that history is
+The Details inspector shows applicable path assessments while that history is
 focused, event assessments for the selected observation, and connection assessments
 for a selected mapped segment or observation's incident connections, always with
 source and assessment time. Event types, path identity, selection and risk remain
@@ -135,25 +190,39 @@ the application accepts a selection change.
 **Predictions are not scans.** `InvestigationPrediction` supplies a history ID,
 label, color, source, issuance time, disjoint geographic lines and optional dash
 pattern. Each supplied line is split at antimeridian crossings without joining
-separate lines. Each has an independent visibility toggle; choices survive leaving
-and returning to the history. Optional confidence must include a formatted value
+separate lines. Each has an independent map visibility toggle; hiding the compared
+prediction retains its findings and shows Hidden on map. Compare does not change
+visibility, and there is no duplicate forecast selector in the inspector. Choices
+survive leaving and returning to the history. Optional confidence must include a formatted value
 and an explanation of what it measures. The UI derives neither probabilities
 nor risk thresholds from histogram percentiles or map separation.
 `InvestigationDeviation` supplies the comparison forecast, observation, optional
 first-divergence observation, facts, source and assessment time. A first-divergence
-map callout is shown only for one consistent supplied claim; disagreement is
-reported in text. Missing assessment means unavailable, never zero deviation.
+annotation is shown only for one consistent supplied claim, combined with the
+location label through the map's collision handling instead of a second marker.
+The inspector's First supplied divergence action selects the exact observation;
+disagreement is reported in text. Missing assessment means unavailable, never zero deviation.
 `renderDeviationEvidence` provides application-owned comparison charts.
 
-The examples are capped at 1100px, with a 230px map beside the ledger and a
-scrollable inspector beneath it. Desktop validation uses 1100 × 820 and 960 × 820
-viewports rather than an oversized desktop capture. Histograms stay in compact
-connection-evidence rows; the inspector retains the full reference.
+The examples are capped at 1100px. On desktop the analysis window occupies the larger column
+and fills the workspace height; the chronology scrolls independently beside it.
+An observation opens one vertical drawer directly below its row through the
+existing `EventTimeline.renderDetails` slot. The drawer adds receipt time,
+identifiers, findings and evidence without repeating the row's identity or risk
+badge. History, location, connection and hidden-observation selections use a
+context drawer above the chronology; they never choose an arbitrary observation.
+Closing a drawer preserves the selection and map camera. Its disclosure button
+or Escape closes it and restores keyboard focus. Opening a context drawer reveals
+it within the chronology's scroll region. Desktop validation uses 1100 × 820 and
+960 × 820 viewports.
 
-At narrow widths, Events / Map buttons switch
-between the same mounted views. Widening with focus on Events or Map moves focus
+At narrow widths, Events / Analysis buttons switch
+between the same mounted views. Widening with focus on Events or Analysis moves focus
 to its retained panel. Resize handling never takes focus or view choice from a
-sibling workbench. The inspector remains in normal page flow.
+sibling workbench. In Events view the drawer remains attached to its observation. In Analysis view the
+same selected context appears below the active pane, with its identity and risk labels
+available because the originating row is hidden. Widening preserves the focused
+drawer tab as its content returns to the chronology.
 Inspector tabs support arrow keys and Home/End. Selection stays visible inside
 the ledger's own scroll region without moving keyboard focus. Unassigned visits
 are ordinary visible rows, not a closed secondary list. Caller-owned `actions`
@@ -166,6 +235,10 @@ camera. Theme changes preserve the map instance.
 <Canvas of={Stories.WorkbenchFocused} />
 <Canvas of={Stories.WorkbenchDeviation} />
 <Canvas of={Stories.WorkbenchNarrow} />
+<Canvas of={Stories.WorkbenchHiddenComparison} />
+<Canvas of={Stories.WorkbenchLocationDrawer} />
+<Canvas of={Stories.WorkbenchExplicitFill} />
+<Canvas of={Stories.WorkbenchTimingView} />
 <Canvas of={Stories.WorkbenchAssessmentScopes} />
 <Canvas of={Stories.WorkbenchUnassignedEvidence} />
 
@@ -376,8 +449,8 @@ The standalone inspector observes its own container at the native 740px breakpoi
 
 All examples use synthetic observations and offline map data. Ledger examples use US Census state outlines and city centers; their straight map connections are candidate relationships, not measured travel geometry. Other examples use a schematic map. The detail chart composes `HealthAssessment` and `DurationDistribution` with an independently supplied synthetic reference. No inference or assessment policy lives in this organism.
 
-Prediction controls keep one complete route per row: visibility checkbox and
-route identity on the left, an Analyze action on the right. The active comparison
-is indicated independently of whether other forecast overlays are enabled.
+Forecast comparison stays above the analysis tabs, including during expansion.
+The Map pane separately exposes Show on map checkboxes for each forecast. The active
+comparison is indicated independently of whether forecast overlays are enabled.
 The optional history descriptions do not repeat in the ledger summary when
 `showHistoryLabels` is false.

@@ -1,0 +1,30 @@
+{
+  "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+  "inspectedScreenshots": [
+    "workbench-light-desktop.png",
+    "workbench-timing-light-desktop.png",
+    "workbench-timing-dark-desktop.png",
+    "workbench-findings-light-desktop.png",
+    "workbench-timing-dark-expanded.png",
+    "workbench-timing-light-narrow.png"
+  ],
+  "result": "Root and separate code reviewer inspected all six at readable resolution; no actionable layout, loading, clipping, selection, or focus findings.",
+  "sourceReview": "Separate code reviewer rechecked shared-selection analysis views, removed/disabled tab fallback, focus recovery and generic fullscreen expansion; no actionable findings.",
+  "validation": {
+    "unitTests": {
+      "passed": 2447,
+      "skipped": 2,
+      "files": 183
+    },
+    "browserCheckGroups": 26,
+    "browserErrors": [],
+    "storybookCoverage": "117/117 modules; 64 skill links resolve",
+    "package": "React build and actual npm pack CJS/ESM/SSR/TypeScript consumer, styles and installed-skill checks passed",
+    "staticChecks": "ESLint, Stylelint, TypeScript and git diff --check passed"
+  },
+  "limitations": [
+    "Synthetic data, not live shipments.",
+    "Automated accessibility check excludes color contrast; visual review is separate.",
+    "No claim of downstream application adoption."
+  ]
+}

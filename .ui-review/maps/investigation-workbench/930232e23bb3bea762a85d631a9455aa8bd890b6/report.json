@@ -1,0 +1,94 @@
+{
+  "checks": [
+    "light: prediction row alignment and compact timeline control captures",
+    "light: all 11 observations, forks, rejoin and independent roots in one leftmost graph at 1100\u00d7820",
+    "light: explicit history/compare controls, hidden comparison retained, collapsed evidence, key facts visible, camera, edge evidence, keyboard tabs, accessibility",
+    "dark: prediction row alignment and compact timeline control captures",
+    "dark: all 11 observations, forks, rejoin and independent roots in one leftmost graph at 1100\u00d7820",
+    "dark: explicit history/compare controls, hidden comparison retained, collapsed evidence, key facts visible, camera, edge evidence, keyboard tabs, accessibility",
+    "960px: all histories with map alongside, one leftmost graph and no horizontal overflow",
+    "1100px: deselection follows remaining point, Multi-select/Done retains subset, keyboard help, expansion and camera restoration",
+    "1100px: all histories with map alongside, one leftmost graph and no horizontal overflow",
+    "light 390px: no horizontal overflow, event/map switching preserves camera, persistent inspector",
+    "light: focused path and incoming connection assessments retain provenance",
+    "dark 390px: no horizontal overflow, event/map switching preserves camera, persistent inspector",
+    "dark: focused path and incoming connection assessments retain provenance",
+    "light 1150px: caller header action is visible and operable",
+    "light 960px: caller header action is visible and operable",
+    "light 1100px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained",
+    "light 390px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained",
+    "dark 1150px: caller header action is visible and operable",
+    "dark 960px: caller header action is visible and operable",
+    "dark 1100px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained",
+    "dark 390px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained"
+  ],
+  "errors": [],
+  "screenshots": [
+    {
+      "file": "workbench-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "269ec3ff75099b9a45a204b4126ae460c9e422013716bd06206eac6f29641219",
+      "sourceRevision": "930232e23bb3bea762a85d631a9455aa8bd890b6",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-hidden-comparison-light.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "91e51399fceff7d634596888155da21e1c5724ef56d1d59751d1606073a4b53a",
+      "sourceRevision": "930232e23bb3bea762a85d631a9455aa8bd890b6",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-dark-desktop.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "51ac107817e8108ca5c6cf6acabb5d7ffb0a99e117a8dbb2e7967854e57471e6",
+      "sourceRevision": "930232e23bb3bea762a85d631a9455aa8bd890b6",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-additional-analysis-dark.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "e56d04050e0826e7f0982a30713feb92607265575dd67abbdd96ceb678d63633",
+      "sourceRevision": "930232e23bb3bea762a85d631a9455aa8bd890b6",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-multi-selection-light.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "d336f03f43288668f4f2024c92cf5b8f5a995f84d528e813fdc126927022386a",
+      "sourceRevision": "930232e23bb3bea762a85d631a9455aa8bd890b6",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-light-narrow-map.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "82fe3ecc641553467a0ca821a60c915c7f60f0aa22b37a5c59edfcd2849aed5e",
+      "sourceRevision": "930232e23bb3bea762a85d631a9455aa8bd890b6",
+      "actualComponent": true
+    }
+  ]
+}

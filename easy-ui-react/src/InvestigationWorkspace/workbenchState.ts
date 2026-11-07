@@ -49,7 +49,25 @@ export function reduceInvestigationWorkbench(
     const selectedEventIds = [...new Set(action.ids)].filter((id) =>
       valid.has(id),
     );
-    return { ...state, selection: action.selection, selectedEventIds };
+    const requested = action.selection;
+    const remainsSelected =
+      requested?.eventId !== undefined
+        ? selectedEventIds.includes(requested.eventId)
+        : requested?.type === "location"
+          ? records.events.some(
+              (event) =>
+                event.locationId === requested.locationId &&
+                selectedEventIds.includes(event.id),
+            )
+          : requested !== null;
+    const fallback = selectedEventIds[selectedEventIds.length - 1];
+    const selection =
+      remainsSelected && selectedEventIds.length
+        ? requested
+        : fallback
+          ? { type: "event" as const, eventId: fallback }
+          : null;
+    return { ...state, selection, selectedEventIds };
   }
   if (action.type === "select") {
     const selection = action.selection;
@@ -84,9 +102,6 @@ export function reduceInvestigationWorkbench(
     return { ...state, showDisconnected: action.show };
   if (action.type === "focus") {
     if (!records.paths?.some((path) => path.id === action.pathId)) return state;
-    const eventId = state.selection?.eventId;
-    const retained =
-      eventId && records.events.some((event) => event.id === eventId);
     return {
       ...state,
       mode: "focused",
@@ -94,9 +109,7 @@ export function reduceInvestigationWorkbench(
       selectedEventIds: records.events
         .filter((event) => event.pathIds?.includes(action.pathId))
         .map((event) => event.id),
-      selection: retained
-        ? { type: "event", eventId }
-        : { type: "path", pathId: action.pathId },
+      selection: { type: "path", pathId: action.pathId },
     };
   }
   if (action.type === "mode") {
@@ -125,9 +138,6 @@ export function reduceInvestigationWorkbench(
       mode: "deviation",
       focusedPathId: pathId,
       comparisonPredictionId: comparison.id,
-      enabledPredictionIds: [
-        ...new Set([...state.enabledPredictionIds, comparison.id]),
-      ],
     };
   }
   const prediction = predictions.find(
@@ -139,20 +149,9 @@ export function reduceInvestigationWorkbench(
       ...state,
       mode: "deviation",
       comparisonPredictionId: action.id,
-      enabledPredictionIds: [
-        ...new Set([...state.enabledPredictionIds, action.id]),
-      ],
     };
   const enabledPredictionIds = action.enabled
     ? [...new Set([...state.enabledPredictionIds, action.id])]
     : state.enabledPredictionIds.filter((id) => id !== action.id);
-  const comparisonPredictionId =
-    !action.enabled && state.comparisonPredictionId === action.id
-      ? (predictions.find(
-          (item) =>
-            item.pathId === state.focusedPathId &&
-            enabledPredictionIds.includes(item.id),
-        )?.id ?? null)
-      : state.comparisonPredictionId;
-  return { ...state, enabledPredictionIds, comparisonPredictionId };
+  return { ...state, enabledPredictionIds };
 }

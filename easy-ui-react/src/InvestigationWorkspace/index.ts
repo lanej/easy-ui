@@ -16,7 +16,11 @@ export { resolveSelection, selectEvent } from "./selection";
 export type { InvestigationRecords } from "./selection";
 
 export { InvestigationWorkbench } from "./InvestigationWorkbench";
-export type { InvestigationWorkbenchProps } from "./InvestigationWorkbench";
+export type {
+  InvestigationWorkbenchProps,
+  InvestigationAnalysisContext,
+  InvestigationAnalysisView,
+} from "./InvestigationWorkbench";
 export {
   normalizeInvestigationGraph,
   validateInvestigationComparisons,

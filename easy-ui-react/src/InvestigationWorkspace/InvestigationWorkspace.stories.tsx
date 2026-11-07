@@ -454,3 +454,30 @@ export const WorkbenchUnassignedEvidence: Story = {
     <InvestigationWorkbenchExample mode="focused" withUnassignedEvidence />
   ),
 };
+
+/** Hiding a map overlay retains the explicitly chosen comparison and its findings. */
+export const WorkbenchHiddenComparison: Story = {
+  render: () => <InvestigationWorkbenchExample hideComparedPrediction />,
+};
+
+/** Location selection retains distinct visits in the chronology's context drawer. */
+export const WorkbenchLocationDrawer: Story = {
+  render: () => (
+    <InvestigationWorkbenchExample
+      mode="focused"
+      initialSelection={{ type: "location", locationId: "avondale" }}
+    />
+  ),
+};
+
+/** Explicit fill height retains the same bounded, full-height map layout. */
+export const WorkbenchExplicitFill: Story = {
+  render: () => <InvestigationWorkbenchExample mapHeight="fill" />,
+};
+
+/** Timing is a peer view of the same selection; the map stays mounted until revealed. */
+export const WorkbenchTimingView: Story = {
+  render: () => (
+    <InvestigationWorkbenchExample defaultAnalysisViewId="timing" />
+  ),
+};

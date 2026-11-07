@@ -346,14 +346,29 @@ the ledger's header; `showHistoryLabels` opts into full descriptive labels.
 The ledger's Display menu holds Unassigned and Risk visibility controls.
 `selectedEventIds` tracks a selected subset independently of the primary
 inspector selection, allowing a full candidate history, Shift-click range,
-Ctrl/Cmd-click addition, touch-friendly Select points toggle, or a map
+Ctrl/Cmd-click addition, touch-friendly Multi-select / Done toggle with a persistent count, or a map
 location with multiple distinct visits. Only explicitly supplied segments
 between selected events are emphasized; disjoint selected points do not become
 a fictitious route. Focused forecast controls sit below the map.
-The map's Expand/Restore control preserves its map instance, camera, history,
+Desktop keeps the chronology visible beside a tabbed analysis window. Map is the
+built-in view; `analysisViews` supplies caller-owned charts and statistics receiving
+`InvestigationAnalysisContext`, including the explicit selected subset, inspected
+record, focused history and active comparison. All panes remain mounted. Analysis
+tab changes preserve timeline scroll, record selection, map camera and chart state.
+Use `defaultAnalysisViewId`, or controlled `activeAnalysisViewId` with
+`onAnalysisViewChange`; reserve ID `map`. Duplicate IDs fail visibly, and removed or
+disabled views fall back to Map. `WorkspaceTabs` handles manual keyboard activation
+with shared `useWorkspaceTabIds` panel IDs. The window expands/restores every view. One vertical
+drawer expands beneath the inspected observation via EventTimeline.renderDetails;
+context selections use a drawer above the chronology. Close/Escape preserves
+selection and restores focus. Drawers add evidence without duplicating visible
+row identity or assessment badges. At narrow width, Events keeps the inline
+drawer and Analysis places contextual details below the active view, retaining hidden-row
+metadata and assessment labels. Widening preserves the focused drawer tab.
+The analysis window's Expand/Restore control preserves its map instance, camera, history,
 selections, and predictions; native fullscreen is used when available.
 `renderInspectorGraph` supplies optional chart evidence below inspector tabs
-and is omitted entirely when its result is null. Examples use 1100px
+in a collapsed Additional analysis disclosure, and is omitted entirely when its result is null. Examples use 1100px
 viewports. Controlled `selection: null` leaves the ledger unselected. The inspector preserves source and time for applicable event,
 connection, and focused-path assessments, including non-event selections.
 Forecast geometry never creates scan events; supplied
@@ -363,14 +378,32 @@ observations retain their metrics and risk indicators in focused history, and
 unassigned visits stay inline unless their explicit display toggle hides them.
 Selecting a visit scrolls it into view without stealing focus. Caller-owned header
 `actions` remain available at narrow widths. Widening restores focused view
-buttons to their panel without borrowing focus from sibling workbenches. Repeating Analyze deviation or
-Deviation analysis reveals the Deviation inspector; controlled mode changes
-still require the owner to accept the requested state. Existing `InvestigationWorkspace`
+buttons to their panel without borrowing focus from sibling workbenches.
+See [Timing analysis view](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-timing-view)
+for a retained map beside caller-supplied statistics.
+See [location drawer](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-location-drawer)
+and [explicit fill map](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-explicit-fill).
+History chips replace the global mode switch. Compare controls above the analysis
+tabs reveal the Comparison inspector from every view; Comparing marks the active
+reference in both visible and accessible names. The Map pane's Show on map checkboxes
+control overlays separately. Opening an unselected row during Multi-select adds it
+to the subset; opening a selected row preserves it. Previous/Next retain focus when
+the drawer changes rows, falling back to the active inspector tab at an endpoint.
+Scoped event inspection falls back when that observation is deselected. Map
+visibility remains independent in both directions, and hidden references retain
+their findings. There is no duplicate comparison dropdown. The Details inspector
+follows the selected history or remaining observations after deselection; initial
+default inspection initializes its subset unless explicitly supplied.
+Findings and facts precede collapsible comparison evidence and sources. The first
+divergence uses the collision-aware location label instead of a separate marker.
+Controlled changes still require the owner to accept the requested state. Existing `InvestigationWorkspace`
 consumers use `timeline.renderConnectionMetrics` for the same explicit-edge
 evidence. Forecasts split dateline crossings while preserving supplied gaps.
 Full references belong in the persistent
 inspector. See [Workbench deviation](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-deviation)
 and [narrow workbench](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-narrow).
+See [hidden comparison](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-hidden-comparison)
+for independent map visibility and comparison.
 See [unassigned connection evidence](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-unassigned-evidence)
 for supplied relationships outside any candidate history.
 

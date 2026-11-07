@@ -1,0 +1,36 @@
+{
+  "sourceRevision": "a023b0cc0ff3317c7db73776455c5c957f101d70",
+  "publishedSourceRevision": "a8a03ff8907168fd592a01cd834a6df6c143e84d",
+  "sourceTree": "d6a721bb04275f064b46a0425328a02653741b2c",
+  "inspected": [
+    "workbench-dark-desktop.png",
+    "workbench-light-desktop.png",
+    "workbench-light-narrow-events.png",
+    "workbench-light-narrow-map.png",
+    "workbench-additional-analysis-dark.png",
+    "workbench-history-drawer-light.png"
+  ],
+  "review": "All retained images inspected at readable resolution. Separate code and visual reviewer rechecked fixes and found no actionable issues.",
+  "checks": [
+    "Map has larger column and full desktop height",
+    "Observation drawers add evidence beneath the originating row without repeating its identity",
+    "Context drawers reveal histories and distinct location visits without choosing an arbitrary observation",
+    "Mobile map attribution and scale stay contained",
+    "Keyboard close/reopen and resize retain focus",
+    "Expanded chart scrolls within the chronology while the map remains visible"
+  ],
+  "verification": {
+    "reactTestsPassed": 2438,
+    "reactTestsSkipped": 2,
+    "browserGroups": 23,
+    "runtimeErrors": 0,
+    "storybookModules": 117,
+    "storybookLinks": 63,
+    "packedConsumers": "CJS, ESM, SSR and TypeScript checks passed"
+  },
+  "limitations": [
+    "Synthetic data, not live shipments.",
+    "Automated accessibility check excludes color contrast; visual review is separate.",
+    "No claim of downstream application adoption."
+  ]
+}
