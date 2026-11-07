@@ -11,6 +11,11 @@ import type { Map as MapInstance } from "maplibre-gl";
 import { Checkbox } from "../Checkbox";
 import { Pill } from "../Pill";
 import {
+  WorkspaceTabs,
+  useWorkspaceTabIds,
+  type WorkspaceTab,
+} from "../WorkspaceTabs";
+import {
   EventTimeline,
   type EventTimelineConnectionContext,
   type EventTimelineEvent,
@@ -47,9 +52,27 @@ type WorkbenchMapOptions = Omit<
   | "showSelectionDetails"
   | "clusterFacilities"
 >;
+export type InvestigationAnalysisContext = InvestigationDetailsContext & {
+  selectedEventIds: readonly string[];
+  focusedPathId: string | null;
+  comparisonPredictionId: string | null;
+};
+export type InvestigationAnalysisView = Pick<
+  WorkspaceTab,
+  "id" | "label" | "count" | "isDisabled"
+> & {
+  /** Render caller-owned statistics or charts for the shared investigation selection. */
+  render: (context: InvestigationAnalysisContext) => ReactNode;
+};
 export type InvestigationWorkbenchProps = {
   graph: InvestigationGraph;
   map: WorkbenchMapOptions;
+  /** Additional analysis tabs. The built-in Map tab reserves the ID "map". */
+  analysisViews?: readonly InvestigationAnalysisView[];
+  /** Controlled presentation; independent from the investigation's record selection. */
+  activeAnalysisViewId?: string;
+  defaultAnalysisViewId?: string;
+  onAnalysisViewChange?: (id: string) => void;
   title?: string;
   /** Optional investigation-level assessment; never inferred from event annotations. */
   summary?: ReactNode;
@@ -83,6 +106,7 @@ export type InvestigationWorkbenchProps = {
 const noPredictions: readonly InvestigationPrediction[] = [];
 const noDeviations: readonly InvestigationDeviation[] = [];
 const noAssessments: readonly InvestigationAssessment[] = [];
+const noAnalysisViews: readonly InvestigationAnalysisView[] = [];
 
 function Swatch({ color, dash }: { color: string; dash?: readonly number[] }) {
   return (
@@ -105,10 +129,14 @@ function Swatch({ color, dash }: { color: string; dash?: readonly number[] }) {
   );
 }
 
-/** Coordinated chronology and map with vertical evidence drawers. */
+/** A stable chronology and shared analysis views with vertical evidence drawers. */
 export function InvestigationWorkbench({
   graph,
   map,
+  analysisViews = noAnalysisViews,
+  activeAnalysisViewId,
+  defaultAnalysisViewId = "map",
+  onAnalysisViewChange,
   title = "Investigation",
   summary,
   actions,
@@ -127,6 +155,65 @@ export function InvestigationWorkbench({
 }: InvestigationWorkbenchProps) {
   const id = useId();
   const root = useRef<HTMLElement>(null);
+  const analysisIds = useWorkspaceTabIds();
+  const analysisRoot = useRef<HTMLElement>(null);
+  const focusedAnalysisContent = useRef<{
+    id: string;
+    element: HTMLElement;
+  } | null>(null);
+  const [internalAnalysisId, setInternalAnalysisId] = useState(
+    defaultAnalysisViewId,
+  );
+  const requestedAnalysisId = activeAnalysisViewId ?? internalAnalysisId;
+  const analysisTabs = useMemo<readonly WorkspaceTab[]>(
+    () => [
+      { id: "map", label: "Map" },
+      ...analysisViews.map(({ id: viewId, label, count, isDisabled }) => ({
+        id: viewId,
+        label,
+        count,
+        isDisabled,
+      })),
+    ],
+    [analysisViews],
+  );
+  const analysisId = analysisTabs.some(
+    (item) => item.id === requestedAnalysisId && !item.isDisabled,
+  )
+    ? requestedAnalysisId
+    : "map";
+  const duplicateAnalysisIds = analysisTabs.filter(
+    (item, index) =>
+      analysisTabs.findIndex((other) => other.id === item.id) !== index,
+  );
+  useEffect(() => {
+    if (
+      activeAnalysisViewId === undefined &&
+      requestedAnalysisId !== analysisId
+    )
+      setInternalAnalysisId(analysisId);
+  }, [activeAnalysisViewId, requestedAnalysisId, analysisId]);
+  useLayoutEffect(() => {
+    const previous = focusedAnalysisContent.current;
+    if (
+      !previous ||
+      (previous.id === analysisId && previous.element.isConnected)
+    )
+      return;
+    if (
+      document.activeElement === previous.element ||
+      document.activeElement === document.body
+    ) {
+      document
+        .getElementById(analysisIds.tabId(analysisId))
+        ?.focus({ preventScroll: true });
+    }
+    focusedAnalysisContent.current = null;
+  }, [analysisId, analysisIds, analysisViews]);
+  const chooseAnalysis = (viewId: string) => {
+    if (activeAnalysisViewId === undefined) setInternalAnalysisId(viewId);
+    onAnalysisViewChange?.(viewId);
+  };
   const normalized = useMemo(() => normalizeInvestigationGraph(graph), [graph]);
   const records = normalized.records;
   const [internalState, setInternalState] =
@@ -188,9 +275,11 @@ export function InvestigationWorkbench({
   };
   const [narrow, setNarrow] = useState(false);
   const narrowMode = useRef(false);
-  const focusAfterResize = useRef<"events" | "map" | "drawer" | null>(null);
+  const focusAfterResize = useRef<"events" | "analysis" | "drawer" | null>(
+    null,
+  );
   const focusAfterDrawerId = useRef<string | null>(null);
-  const [mobileView, setMobileView] = useState<"events" | "map">("events");
+  const [mobileView, setMobileView] = useState<"events" | "analysis">("events");
   const [mapInstance, setMapInstance] = useState<MapInstance | null>(null);
   const [tab, setTab] = useState<"event" | "deviation" | "evidence">("event");
   const [multiSelect, setMultiSelect] = useState(false);
@@ -208,21 +297,21 @@ export function InvestigationWorkbench({
   useEffect(() => {
     setDrawerOpen(hasSelection || state.mode === "deviation");
   }, [selectionKey, hasSelection, state.mode, state.comparisonPredictionId]);
-  const [mapExpanded, setMapExpanded] = useState(false);
+  const [analysisExpanded, setAnalysisExpanded] = useState(false);
   const anchorId = useRef<string | null>(null);
   const expandButton = useRef<HTMLButtonElement>(null);
-  const expandedPanel = useRef<HTMLElement>(null);
+  const expandedPanel = analysisRoot;
   useEffect(() => {
-    if (!mapExpanded) return;
+    if (!analysisExpanded) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setMapExpanded(false);
+        setAnalysisExpanded(false);
         expandButton.current?.focus({ preventScroll: true });
       }
     };
     const closeOnNativeExit = () => {
       if (!document.fullscreenElement) {
-        setMapExpanded(false);
+        setAnalysisExpanded(false);
         expandButton.current?.focus({ preventScroll: true });
       }
     };
@@ -232,12 +321,12 @@ export function InvestigationWorkbench({
       document.removeEventListener("keydown", closeOnEscape);
       document.removeEventListener("fullscreenchange", closeOnNativeExit);
     };
-  }, [mapExpanded]);
+  }, [analysisExpanded]);
   useEffect(() => {
-    if (!mapInstance) return;
+    if (!mapInstance || analysisId !== "map") return;
     const frame = requestAnimationFrame(() => mapInstance.resize());
     return () => cancelAnimationFrame(frame);
-  }, [mapInstance, mapExpanded, narrow, mobileView]);
+  }, [mapInstance, analysisExpanded, narrow, mobileView, analysisId]);
   const tabsId = `${id}-inspector`;
   const selectionHelpId = `${id}-selection-help`;
   useEffect(() => {
@@ -257,12 +346,13 @@ export function InvestigationWorkbench({
           focusAfterDrawerId.current = active.id || null;
         }
         if (next) {
-          if (active.closest("[data-workbench-map]")) setMobileView("map");
+          if (active.closest("[data-workbench-analysis]"))
+            setMobileView("analysis");
           if (active.closest("[data-workbench-events]"))
             setMobileView("events");
         } else if (active.dataset.workbenchView) {
           focusAfterResize.current = active.dataset.workbenchView as
-            "events" | "map";
+            "events" | "analysis";
         }
       }
       narrowMode.current = next;
@@ -538,11 +628,13 @@ export function InvestigationWorkbench({
   const selectedConnectionIds = state.selection
     ? context.connections?.map((connection) => connection.id)
     : [];
-  const inspectorGraph = renderInspectorGraph?.({
+  const analysisContext: InvestigationAnalysisContext = {
     ...context,
     selectedEventIds,
     focusedPathId: focused?.id ?? null,
-  });
+    comparisonPredictionId: comparedPrediction?.id ?? null,
+  };
+  const inspectorGraph = renderInspectorGraph?.(analysisContext);
   const selectedIndex = visibleEvents.findIndex(
     (item) => item.id === event?.id,
   );
@@ -618,8 +710,8 @@ export function InvestigationWorkbench({
       ) ?? [],
     ).find((button) => button.dataset.workbenchRowToggle === event?.id);
     const target =
-      narrow && mobileView === "map"
-        ? root.current?.querySelector<HTMLElement>("[data-workbench-map]")
+      narrow && mobileView === "analysis"
+        ? root.current?.querySelector<HTMLElement>("[data-workbench-analysis]")
         : (rowButton ??
           root.current?.querySelector<HTMLButtonElement>(
             "[data-workbench-context-toggle]",
@@ -630,7 +722,7 @@ export function InvestigationWorkbench({
   const inlineEvent =
     event && visibleEvents.find((item) => item.id === event.id);
   const inlineDrawer =
-    Boolean(inlineEvent) && !(narrow && mobileView === "map");
+    Boolean(inlineEvent) && !(narrow && mobileView === "analysis");
   const inspector = (
     <section
       className={styles.inspector}
@@ -1006,7 +1098,7 @@ export function InvestigationWorkbench({
   const rowDetails = (item: EventTimelineEvent) =>
     item.id === inlineEvent?.id &&
     drawerOpen &&
-    !(narrow && mobileView === "map")
+    !(narrow && mobileView === "analysis")
       ? inspector
       : null;
   const eventTrailing = (item: EventTimelineEvent) => (
@@ -1043,7 +1135,19 @@ export function InvestigationWorkbench({
     </span>
   );
   const fillMap =
-    mapExpanded || map.height === undefined || map.height === "fill";
+    analysisExpanded || map.height === undefined || map.height === "fill";
+  if (duplicateAnalysisIds.length)
+    return (
+      <section ref={root} className={styles.root} aria-label={title}>
+        <div role="alert" className={styles.modelError}>
+          <h2>Analysis views need distinct IDs</h2>
+          <p>
+            The Map view reserves <code>map</code>; each supplied analysis view
+            needs a unique ID.
+          </p>
+        </div>
+      </section>
+    );
   if (issues.length)
     return (
       <section ref={root} className={styles.root} aria-label={title}>
@@ -1067,7 +1171,7 @@ export function InvestigationWorkbench({
       aria-label={title}
       data-mode={state.mode}
       data-narrow={narrow}
-      data-map-expanded={mapExpanded || undefined}
+      data-analysis-expanded={analysisExpanded || undefined}
     >
       <header className={styles.header}>
         <div className={styles.title}>
@@ -1111,12 +1215,12 @@ export function InvestigationWorkbench({
             </button>
             <button
               type="button"
-              data-workbench-view="map"
-              aria-controls={`${id}-map`}
-              aria-pressed={mobileView === "map"}
-              onClick={() => setMobileView("map")}
+              data-workbench-view="analysis"
+              aria-controls={`${id}-analysis`}
+              aria-pressed={mobileView === "analysis"}
+              onClick={() => setMobileView("analysis")}
             >
-              Map
+              Analysis
             </button>
           </div>
         )}
@@ -1230,7 +1334,7 @@ export function InvestigationWorkbench({
             <span>Incoming evidence</span>
           </div>
           <div className={styles.timelineScroll} data-workbench-scroll>
-            {!inlineEvent && !(narrow && mobileView === "map") && (
+            {!inlineEvent && !(narrow && mobileView === "analysis") && (
               <div className={styles.contextDrawer}>
                 <button
                   type="button"
@@ -1290,214 +1394,275 @@ export function InvestigationWorkbench({
           </footer>
         </section>
         <section
-          className={styles.mapPanel}
-          ref={expandedPanel}
-          data-workbench-map
-          style={
-            {
-              alignSelf: fillMap ? "stretch" : "start",
-              blockSize: fillMap ? undefined : "auto",
-              "--workbench-map-flex": fillMap ? "1 1 auto" : "0 0 auto",
-            } as React.CSSProperties
-          }
-          id={`${id}-map`}
+          className={styles.analysisPanel}
+          ref={analysisRoot}
+          data-workbench-analysis
+          data-expanded={analysisExpanded || undefined}
+          id={`${id}-analysis`}
           tabIndex={-1}
-          hidden={narrow && mobileView !== "map" && !mapExpanded}
-          data-expanded={mapExpanded || undefined}
-          aria-label="History map"
+          aria-label="Investigation analysis"
+          hidden={narrow && mobileView !== "analysis" && !analysisExpanded}
+          onFocusCapture={(e) => {
+            const element = e.target as HTMLElement;
+            const panel = element.closest<HTMLElement>("[data-analysis-view]");
+            focusedAnalysisContent.current = panel
+              ? { id: panel.dataset.analysisView!, element }
+              : null;
+          }}
+          onBlurCapture={(e) => {
+            const element = e.target as HTMLElement;
+            const panel = element.closest<HTMLElement>("[data-analysis-view]");
+            if (panel?.hidden || !element.isConnected) return;
+            if (
+              !(e.relatedTarget instanceof Node) ||
+              !analysisRoot.current?.contains(e.relatedTarget)
+            )
+              focusedAnalysisContent.current = null;
+          }}
         >
-          <button
-            ref={expandButton}
-            type="button"
-            className={styles.expandMap}
-            aria-expanded={mapExpanded}
-            aria-label={
-              mapExpanded
-                ? "Restore map to workspace"
-                : "Expand map to full screen"
-            }
-            onClick={() => {
-              if (mapExpanded) {
-                if (document.fullscreenElement === expandedPanel.current)
-                  void document.exitFullscreen?.();
-                setMapExpanded(false);
-              } else {
-                if (narrow) setMobileView("map");
-                setMapExpanded(true);
-                // Native Fullscreen lifts the existing MapLibre node out of
-                // container containment. CSS expansion remains the fallback.
-                void expandedPanel.current
-                  ?.requestFullscreen?.()
-                  .catch(() => {});
-              }
-            }}
-          >
-            {mapExpanded ? "Restore map" : "Expand map"}
-          </button>
-          <NetworkMap
-            {...map}
-            facilities={facilities}
-            segments={mapData.segments}
-            selectedFacilityId={context.location?.id}
-            selectedSegmentId={context.segment?.id}
-            onFacilitySelect={selectLocation}
-            overlays={overlays}
-            onOverlaySelect={overlaySelection}
-            onMapReady={(instance) => {
-              setMapInstance(instance);
-              map.onMapReady?.(instance);
-            }}
-            title={map.title ?? "Reported locations"}
-            description={
-              map.description ??
-              (focused
-                ? `${focused.label} · ${visiblePredictions.length} forecasts visible`
-                : "Candidate histories · no predictions in overview")
-            }
-            controls={
-              map.controls === false
-                ? false
-                : {
-                    fitAll: true,
-                    latestEvent: false,
-                    selectedSegment: false,
-                    risk: false,
-                    weather: false,
-                    deliverySurface: false,
-                    navigation: true,
-                    scale: true,
-                    ...map.controls,
+          <WorkspaceTabs
+            aria-label="Analysis views"
+            ids={analysisIds}
+            pinnedTabs={analysisTabs}
+            selectedKey={analysisId}
+            onSelectionChange={chooseAnalysis}
+            trailing={
+              <button
+                ref={expandButton}
+                type="button"
+                className={styles.smallControl}
+                aria-expanded={analysisExpanded}
+                aria-label={
+                  analysisExpanded
+                    ? "Restore analysis to workspace"
+                    : "Expand analysis to full screen"
+                }
+                onClick={() => {
+                  if (analysisExpanded) {
+                    if (document.fullscreenElement === expandedPanel.current)
+                      void document.exitFullscreen?.();
+                    setAnalysisExpanded(false);
+                  } else {
+                    if (narrow) setMobileView("analysis");
+                    setAnalysisExpanded(true);
+                    // Expand the same analysis window, retaining the active tab and mounted views.
+                    // CSS expansion remains the fallback when native fullscreen is unavailable.
+                    void expandedPanel.current
+                      ?.requestFullscreen?.()
+                      .catch(() => {});
                   }
+                }}
+              >
+                {analysisExpanded ? "Restore" : "Expand"}
+              </button>
             }
-            controlLabels={{ fitAll: "Fit", ...map.controlLabels }}
-            height={mapExpanded ? "fill" : (map.height ?? "fill")}
-            controlPlacement={map.controlPlacement ?? "map"}
-            connectionStyle="subtle"
-            showLegend={false}
-            showDataTable={false}
-            showViewScale={false}
-            showSelectionDetails={false}
-            renderOverlayHoverDetails={(hover) => {
-              const external = {
-                ...hover,
-                selections: hover.selections.filter(
-                  (hit) => !hit.overlayId.startsWith(`${id}-`),
-                ),
-                overlays: hover.overlays.filter(
-                  (overlay) => !overlay.id.startsWith(`${id}-`),
-                ),
-              };
-              const owned = hover.selections.filter((hit) =>
-                hit.overlayId.startsWith(`${id}-`),
-              );
-              const externalContent = external.overlays.length
-                ? map.renderOverlayHoverDetails
-                  ? map.renderOverlayHoverDetails(external)
-                  : hover.pinned && external.selections[0]
-                    ? map.renderOverlayDetails?.(external.selections[0])
-                    : null
-                : null;
-              if (
-                !owned.length &&
-                (externalContent == null || externalContent === false)
-              )
-                return null;
-              return (
-                <div className={styles.overlayDetails}>
-                  {owned.map((hit) => (
-                    <div key={`${hit.overlayId}-${hit.feature.id}`}>
-                      <strong>
-                        {String(
-                          hit.feature.properties?.label ??
-                            "Candidate connection",
-                        )}
-                      </strong>
-                      {hit.overlayId === `${id}-selected-points` ? (
-                        <span>Selected observation location</span>
-                      ) : hit.feature.properties?.predictionId ? (
-                        <span>
-                          Forecast · {String(hit.feature.properties.source)} ·{" "}
-                          {String(hit.feature.properties.asOf)}
-                        </span>
-                      ) : (
-                        <span>Supplied candidate relationship</span>
-                      )}
-                    </div>
-                  ))}
-                  {externalContent}
-                </div>
-              );
-            }}
           />
-          {focused && (
+          <div className={styles.analysisPanels}>
             <section
-              aria-label="Forecast comparison"
-              className={styles.forecastControls}
+              role="tabpanel"
+              id={analysisIds.panelId("map")}
+              aria-labelledby={analysisIds.tabId("map")}
+              hidden={analysisId !== "map"}
+              tabIndex={0}
+              className={styles.mapViewPanel}
+              data-analysis-view="map"
             >
-              <h3>Predictions</h3>
-              {!availablePredictions.length ? (
-                <p className={styles.muted}>
-                  No forecasts supplied for {focused.label}.
-                </p>
-              ) : (
-                availablePredictions.map((prediction) => (
-                  <div
-                    className={styles.forecastOption}
-                    key={prediction.id}
-                    data-prediction-id={prediction.id}
+              <section
+                className={styles.mapPanel}
+                data-workbench-map
+                style={
+                  {
+                    alignSelf: fillMap ? "stretch" : "start",
+                    blockSize: fillMap ? undefined : "auto",
+                    "--workbench-map-flex": fillMap ? "1 1 auto" : "0 0 auto",
+                  } as React.CSSProperties
+                }
+                id={`${id}-map`}
+                tabIndex={-1}
+                aria-label="History map"
+              >
+                <NetworkMap
+                  {...map}
+                  facilities={facilities}
+                  segments={mapData.segments}
+                  selectedFacilityId={context.location?.id}
+                  selectedSegmentId={context.segment?.id}
+                  onFacilitySelect={selectLocation}
+                  overlays={overlays}
+                  onOverlaySelect={overlaySelection}
+                  onMapReady={(instance) => {
+                    setMapInstance(instance);
+                    map.onMapReady?.(instance);
+                  }}
+                  title={map.title ?? "Reported locations"}
+                  description={
+                    map.description ??
+                    (focused
+                      ? `${focused.label} · ${visiblePredictions.length} forecasts visible`
+                      : "Candidate histories · no predictions in overview")
+                  }
+                  controls={
+                    map.controls === false
+                      ? false
+                      : {
+                          fitAll: true,
+                          latestEvent: false,
+                          selectedSegment: false,
+                          risk: false,
+                          weather: false,
+                          deliverySurface: false,
+                          navigation: true,
+                          scale: true,
+                          ...map.controls,
+                        }
+                  }
+                  controlLabels={{ fitAll: "Fit", ...map.controlLabels }}
+                  height={analysisExpanded ? "fill" : (map.height ?? "fill")}
+                  controlPlacement={map.controlPlacement ?? "map"}
+                  connectionStyle="subtle"
+                  showLegend={false}
+                  showDataTable={false}
+                  showViewScale={false}
+                  showSelectionDetails={false}
+                  renderOverlayHoverDetails={(hover) => {
+                    const external = {
+                      ...hover,
+                      selections: hover.selections.filter(
+                        (hit) => !hit.overlayId.startsWith(`${id}-`),
+                      ),
+                      overlays: hover.overlays.filter(
+                        (overlay) => !overlay.id.startsWith(`${id}-`),
+                      ),
+                    };
+                    const owned = hover.selections.filter((hit) =>
+                      hit.overlayId.startsWith(`${id}-`),
+                    );
+                    const externalContent = external.overlays.length
+                      ? map.renderOverlayHoverDetails
+                        ? map.renderOverlayHoverDetails(external)
+                        : hover.pinned && external.selections[0]
+                          ? map.renderOverlayDetails?.(external.selections[0])
+                          : null
+                      : null;
+                    if (
+                      !owned.length &&
+                      (externalContent == null || externalContent === false)
+                    )
+                      return null;
+                    return (
+                      <div className={styles.overlayDetails}>
+                        {owned.map((hit) => (
+                          <div key={`${hit.overlayId}-${hit.feature.id}`}>
+                            <strong>
+                              {String(
+                                hit.feature.properties?.label ??
+                                  "Candidate connection",
+                              )}
+                            </strong>
+                            {hit.overlayId === `${id}-selected-points` ? (
+                              <span>Selected observation location</span>
+                            ) : hit.feature.properties?.predictionId ? (
+                              <span>
+                                Forecast ·{" "}
+                                {String(hit.feature.properties.source)} ·{" "}
+                                {String(hit.feature.properties.asOf)}
+                              </span>
+                            ) : (
+                              <span>Supplied candidate relationship</span>
+                            )}
+                          </div>
+                        ))}
+                        {externalContent}
+                      </div>
+                    );
+                  }}
+                />
+                {focused && (
+                  <section
+                    aria-label="Forecast comparison"
+                    className={styles.forecastControls}
                   >
-                    <Checkbox
-                      isSelected={state.enabledPredictionIds.includes(
-                        prediction.id,
-                      )}
-                      onChange={(enabled) =>
-                        dispatch({
-                          type: "prediction",
-                          id: prediction.id,
-                          enabled,
-                        })
-                      }
-                    >
-                      <span className={styles.forecastLabel}>
-                        <Swatch
-                          color={prediction.color}
-                          dash={prediction.dash ?? [6, 3]}
-                        />
-                        {prediction.label}
-                      </span>
-                    </Checkbox>
-                    {prediction.confidence && (
-                      <span
-                        className={styles.forecastConfidence}
-                        title={prediction.confidence.description}
-                      >
-                        {prediction.confidence.valueLabel}
-                      </span>
+                    <h3>Predictions</h3>
+                    {!availablePredictions.length ? (
+                      <p className={styles.muted}>
+                        No forecasts supplied for {focused.label}.
+                      </p>
+                    ) : (
+                      availablePredictions.map((prediction) => (
+                        <div
+                          className={styles.forecastOption}
+                          key={prediction.id}
+                          data-prediction-id={prediction.id}
+                        >
+                          <Checkbox
+                            isSelected={state.enabledPredictionIds.includes(
+                              prediction.id,
+                            )}
+                            onChange={(enabled) =>
+                              dispatch({
+                                type: "prediction",
+                                id: prediction.id,
+                                enabled,
+                              })
+                            }
+                          >
+                            <span className={styles.forecastLabel}>
+                              <Swatch
+                                color={prediction.color}
+                                dash={prediction.dash ?? [6, 3]}
+                              />
+                              {prediction.label}
+                            </span>
+                          </Checkbox>
+                          {prediction.confidence && (
+                            <span
+                              className={styles.forecastConfidence}
+                              title={prediction.confidence.description}
+                            >
+                              {prediction.confidence.valueLabel}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            className={styles.textButton}
+                            aria-label={`Compare ${prediction.label}`}
+                            aria-pressed={
+                              state.mode === "deviation" &&
+                              state.comparisonPredictionId === prediction.id
+                            }
+                            onClick={() =>
+                              dispatch({ type: "compare", id: prediction.id })
+                            }
+                          >
+                            {state.mode === "deviation" &&
+                            state.comparisonPredictionId === prediction.id
+                              ? "Comparing"
+                              : "Compare"}
+                          </button>
+                        </div>
+                      ))
                     )}
-                    <button
-                      type="button"
-                      className={styles.textButton}
-                      aria-label={`Compare ${prediction.label}`}
-                      aria-pressed={
-                        state.mode === "deviation" &&
-                        state.comparisonPredictionId === prediction.id
-                      }
-                      onClick={() =>
-                        dispatch({ type: "compare", id: prediction.id })
-                      }
-                    >
-                      {state.mode === "deviation" &&
-                      state.comparisonPredictionId === prediction.id
-                        ? "Comparing"
-                        : "Compare"}
-                    </button>
-                  </div>
-                ))
-              )}
+                  </section>
+                )}
+              </section>
             </section>
-          )}
+            {analysisViews.map((view) => (
+              <section
+                key={view.id}
+                role="tabpanel"
+                id={analysisIds.panelId(view.id)}
+                aria-labelledby={analysisIds.tabId(view.id)}
+                hidden={view.id !== analysisId}
+                tabIndex={0}
+                className={styles.analysisViewPanel}
+                data-analysis-view={view.id}
+              >
+                {view.render(analysisContext)}
+              </section>
+            ))}
+          </div>
         </section>
-        {narrow && mobileView === "map" && (
+        {narrow && mobileView === "analysis" && (
           <div className={styles.mobileInspector}>
             <button
               type="button"

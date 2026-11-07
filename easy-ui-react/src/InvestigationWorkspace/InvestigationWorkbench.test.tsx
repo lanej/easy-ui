@@ -878,7 +878,7 @@ function observeWorkbenchResize() {
   };
 }
 
-it.each(["Events", "Map"])(
+it.each(["Events", "Analysis"])(
   "retains keyboard focus when widening removes the mobile %s button",
   (view) => {
     const observe = observeWorkbenchResize();
@@ -894,7 +894,8 @@ it.each(["Events", "Map"])(
       resize(1000);
       expect(
         screen.getByRole("region", {
-          name: view === "Events" ? "Observation ledger" : "History map",
+          name:
+            view === "Events" ? "Observation ledger" : "Investigation analysis",
         }),
       ).toHaveFocus();
       resize(390);
@@ -1206,7 +1207,7 @@ it("retains receipt and assessment context in the narrow Map drawer and restores
     name: "Investigation",
   });
   observe(root)(390);
-  fireEvent.click(screen.getByRole("button", { name: "Map" }));
+  fireEvent.click(screen.getByRole("button", { name: "Analysis" }));
   const drawer = screen.getByRole("region", {
     name: "Investigation inspector",
   });
@@ -1217,7 +1218,9 @@ it("retains receipt and assessment context in the narrow Map drawer and restores
   });
   close.focus();
   fireEvent.click(close);
-  expect(screen.getByRole("region", { name: "History map" })).toHaveFocus();
+  expect(
+    screen.getByRole("region", { name: "Investigation analysis" }),
+  ).toHaveFocus();
   const opener = screen.getByRole("button", {
     name: "Show investigation details",
   });
@@ -1249,7 +1252,7 @@ it("preserves the focused drawer tab when widening from Map view", () => {
   );
   const resize = observe(screen.getByRole("region", { name: "Investigation" }));
   resize(390);
-  fireEvent.click(screen.getByRole("button", { name: "Map" }));
+  fireEvent.click(screen.getByRole("button", { name: "Analysis" }));
   const tab = screen.getByRole("tab", { name: "Comparison" });
   tab.focus();
   resize(1100);

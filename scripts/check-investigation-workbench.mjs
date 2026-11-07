@@ -34,6 +34,8 @@ const base = process.env.STORYBOOK_URL ?? "http://127.0.0.1:9019";
 const root = () =>
   page.getByRole("region", { name: "Parcel investigation", exact: true });
 const map = () => page.locator("[data-workbench-map]");
+const analysis = () =>
+  page.getByRole("region", { name: "Investigation analysis" });
 const ledger = () => page.getByRole("region", { name: "Observation ledger" });
 const inspector = () =>
   page.getByRole("region", { name: "Investigation inspector" });
@@ -73,8 +75,10 @@ async function open(
   });
 }
 async function readyMap() {
+  if (!(await analysis().isVisible()))
+    await page.getByRole("button", { name: "Analysis", exact: true }).click();
   if (!(await map().isVisible()))
-    await page.getByRole("button", { name: "Map", exact: true }).click();
+    await analysis().getByRole("tab", { name: "Map", exact: true }).click();
   await page.waitForFunction(
     () =>
       window.workbenchMap?.isStyleLoaded() &&
@@ -154,10 +158,10 @@ async function checkPredictionRows(theme) {
     `${theme}: prediction row alignment and compact timeline control captures`,
   );
 }
-async function capture(name, theme) {
+async function capture(name, theme, target = root()) {
   await page.mouse.move(0, 0);
   await page.waitForTimeout(250);
-  const image = await root().screenshot({
+  const image = await target.screenshot({
     path: resolve(output, name),
     animations: "disabled",
   });
@@ -319,7 +323,7 @@ try {
       .locator("[data-connection-graph]")
       .boundingBox();
     const ledgerBounds = await ledger().boundingBox();
-    const mapBounds = await map().boundingBox();
+    const mapBounds = await analysis().boundingBox();
     assert.ok(
       graphBounds.x - ledgerBounds.x < 12,
       "Git graph must occupy the leftmost ledger column",
@@ -462,7 +466,7 @@ try {
     await open("light", width, 820, "workbench-overview");
     await readyMap();
     const ledgerBounds = await ledger().boundingBox();
-    const mapBounds = await map().boundingBox();
+    const mapBounds = await analysis().boundingBox();
     assert.ok(
       ledgerBounds.x < mapBounds.x &&
         Math.abs(ledgerBounds.y - mapBounds.y) < 2,
@@ -489,9 +493,9 @@ try {
         (await ledger().locator('li[data-marked="true"]').count()) >= 2,
       );
       await page
-        .getByRole("button", { name: "Expand map to full screen" })
+        .getByRole("button", { name: "Expand analysis to full screen" })
         .click();
-      assert.equal(await map().getAttribute("data-expanded"), "true");
+      assert.equal(await analysis().getAttribute("data-expanded"), "true");
       assert.ok(
         await page.evaluate(
           () => window.workbenchMap.getCanvas().clientWidth > 400,
@@ -512,9 +516,9 @@ try {
         actualComponent: true,
       });
       await page
-        .getByRole("button", { name: "Restore map to workspace" })
+        .getByRole("button", { name: "Restore analysis to workspace" })
         .click();
-      assert.equal(await map().getAttribute("data-expanded"), null);
+      assert.equal(await analysis().getAttribute("data-expanded"), null);
       sameCamera(start, await camera());
       assert.ok(
         (await ledger().locator('li[data-marked="true"]').count()) >= 2,
@@ -580,7 +584,7 @@ try {
       .getByRole("button", { name: "Close investigation details" })
       .click();
     assert.equal(
-      await map().evaluate((el) => el === document.activeElement),
+      await analysis().evaluate((el) => el === document.activeElement),
       true,
     );
     const opener = page.getByRole("button", {
@@ -600,7 +604,7 @@ try {
     );
     const before = await camera();
     await page.getByRole("button", { name: "Events", exact: true }).click();
-    await page.getByRole("button", { name: "Map", exact: true }).click();
+    await page.getByRole("button", { name: "Analysis", exact: true }).click();
     sameCamera(before, await camera());
     // Use the fluid example for resizing; the narrow story deliberately caps its container.
     await open(theme, 390, 900);
@@ -626,7 +630,7 @@ try {
     );
     for (const [view, panel] of [
       ["Events", ledger()],
-      ["Map", map()],
+      ["Analysis", analysis()],
     ]) {
       await page.getByRole("button", { name: view, exact: true }).focus();
       await page.setViewportSize({ width: 1000, height: 900 });
@@ -659,7 +663,7 @@ try {
     );
     await open(theme, 1100, 820, "workbench-assessment-scopes");
     await readyMap();
-    await page
+    await inspector()
       .getByText(
         "This supplied finding applies to history A, independently of its selected observation.",
       )
@@ -669,7 +673,7 @@ try {
     await ledger()
       .getByRole("button", { name: /In transit Avondale.*Return visit/ })
       .click();
-    await page
+    await inspector()
       .getByText(
         "This supplied finding applies to the return connection. Select its map segment or incoming observation to inspect it.",
       )
@@ -797,6 +801,102 @@ try {
   await capture("workbench-history-drawer-light.png", "light");
   checks.push(
     "Desktop and mobile: vertical/context drawers, retained selection and focus, map attribution containment and resize focus restoration",
+  );
+  for (const theme of ["light", "dark"]) {
+    await open(theme);
+    await readyMap();
+    const before = await camera();
+    const retainedMap = await page.evaluateHandle(() => window.workbenchMap);
+    const timelineScroll = ledger().locator("[data-workbench-scroll]");
+    const position = await timelineScroll.evaluate((el) => el.scrollTop);
+    await analysis().getByRole("tab", { name: "Timing", exact: true }).click();
+    await analysis()
+      .getByRole("heading", { name: "Scan intervals", exact: true })
+      .waitFor();
+    assert.equal(await ledger().isVisible(), true);
+    assert.equal(await map().isVisible(), false);
+    assert.equal(await timelineScroll.evaluate((el) => el.scrollTop), position);
+    await ledger()
+      .getByRole("button", { name: /A · Primary history.*select history/ })
+      .click();
+    await analysis()
+      .getByRole("heading", { name: "Hammond → Avondale", exact: true })
+      .waitFor();
+    await analysis()
+      .getByRole("heading", { name: "Wellton → Avondale", exact: true })
+      .waitFor();
+    await capture(`workbench-timing-${theme}-desktop.png`, theme);
+    await page
+      .getByRole("button", {
+        name: "Expand analysis to full screen",
+        exact: true,
+      })
+      .click();
+    await analysis()
+      .getByRole("heading", { name: "Scan intervals", exact: true })
+      .waitFor();
+    assert.equal(await analysis().getAttribute("data-expanded"), "true");
+    await capture(`workbench-timing-${theme}-expanded.png`, theme, analysis());
+    await page
+      .getByRole("button", {
+        name: "Restore analysis to workspace",
+        exact: true,
+      })
+      .click();
+    assert.equal(
+      await analysis()
+        .getByRole("tab", { name: "Timing", exact: true })
+        .getAttribute("aria-selected"),
+      "true",
+    );
+    await analysis()
+      .getByRole("tab", { name: "Findings", exact: true })
+      .click();
+    await analysis().getByText("Moderate", { exact: true }).waitFor();
+    await capture(`workbench-findings-${theme}-desktop.png`, theme);
+    await analysis().getByRole("tab", { name: "Map", exact: true }).click();
+    await readyMap();
+    sameCamera(before, await camera());
+    assert.equal(
+      await page.evaluate(
+        (retained) => retained === window.workbenchMap,
+        retainedMap,
+      ),
+      true,
+    );
+    await retainedMap.dispose();
+    await accessible();
+    checks.push(
+      `${theme}: Map/Timing/Findings retain timeline scroll, history subset and map camera; native chart and supplied findings update from shared selection`,
+    );
+  }
+  await open("light", 1100, 820, "workbench-timing-view");
+  assert.equal(await map().isVisible(), false);
+  await readyMap();
+  await open("light", 390, 900);
+  await readyMap();
+  await analysis().getByRole("tab", { name: "Map", exact: true }).focus();
+  await page.keyboard.press("ArrowRight");
+  assert.equal(
+    await analysis()
+      .getByRole("tab", { name: "Map", exact: true })
+      .getAttribute("aria-selected"),
+    "true",
+  );
+  await page.keyboard.press("Enter");
+  assert.equal(
+    await analysis()
+      .getByRole("tab", { name: "Timing", exact: true })
+      .getAttribute("aria-selected"),
+    "true",
+  );
+  await analysis()
+    .getByRole("heading", { name: "Scan intervals", exact: true })
+    .waitFor();
+  await capture("workbench-timing-light-narrow.png", "light");
+  await accessible();
+  checks.push(
+    "Initial Timing view reveals its retained Map correctly; narrow analysis tabs support manual keyboard activation without overflow",
   );
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ checks, errors, screenshots }, null, 2));

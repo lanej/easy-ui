@@ -350,14 +350,22 @@ Ctrl/Cmd-click addition, touch-friendly Multi-select / Done toggle with a persis
 location with multiple distinct visits. Only explicitly supplied segments
 between selected events are emphasized; disjoint selected points do not become
 a fictitious route. Focused forecast controls sit below the map.
-Desktop gives the map the larger column and full workspace height. One vertical
+Desktop keeps the chronology visible beside a tabbed analysis window. Map is the
+built-in view; `analysisViews` supplies caller-owned charts and statistics receiving
+`InvestigationAnalysisContext`, including the explicit selected subset, inspected
+record, focused history and active comparison. All panes remain mounted. Analysis
+tab changes preserve timeline scroll, record selection, map camera and chart state.
+Use `defaultAnalysisViewId`, or controlled `activeAnalysisViewId` with
+`onAnalysisViewChange`; reserve ID `map`. Duplicate IDs fail visibly, and removed or
+disabled views fall back to Map. `WorkspaceTabs` handles manual keyboard activation
+with shared `useWorkspaceTabIds` panel IDs. The window expands/restores every view. One vertical
 drawer expands beneath the inspected observation via EventTimeline.renderDetails;
 context selections use a drawer above the chronology. Close/Escape preserves
 selection and restores focus. Drawers add evidence without duplicating visible
 row identity or assessment badges. At narrow width, Events keeps the inline
-drawer and Map places contextual details below the map, retaining hidden-row
+drawer and Analysis places contextual details below the active view, retaining hidden-row
 metadata and assessment labels. Widening preserves the focused drawer tab.
-The map's Expand/Restore control preserves its map instance, camera, history,
+The analysis window's Expand/Restore control preserves its map instance, camera, history,
 selections, and predictions; native fullscreen is used when available.
 `renderInspectorGraph` supplies optional chart evidence below inspector tabs
 in a collapsed Additional analysis disclosure, and is omitted entirely when its result is null. Examples use 1100px
@@ -371,6 +379,8 @@ unassigned visits stay inline unless their explicit display toggle hides them.
 Selecting a visit scrolls it into view without stealing focus. Caller-owned header
 `actions` remain available at narrow widths. Widening restores focused view
 buttons to their panel without borrowing focus from sibling workbenches.
+See [Timing analysis view](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-timing-view)
+for a retained map beside caller-supplied statistics.
 See [location drawer](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-location-drawer)
 and [explicit fill map](https://lanej.io/easy-ui/storybook/?path=/story/organisms-investigation-investigationworkspace--workbench-explicit-fill).
 History chips replace the global mode switch. Compare beside each prediction

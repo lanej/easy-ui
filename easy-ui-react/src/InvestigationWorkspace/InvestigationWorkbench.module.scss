@@ -106,7 +106,7 @@
   display: grid;
   grid-template-columns: minmax(340px, 0.9fr) minmax(0, 1.3fr);
   grid-template-rows: minmax(0, 1fr);
-  grid-template-areas: "timeline map";
+  grid-template-areas: "timeline analysis";
   block-size: clamp(540px, calc(100dvh - 105px), 900px);
   box-sizing: border-box;
   gap: 8px;
@@ -249,7 +249,7 @@
   font-size: 12px;
 }
 .timelinePanel,
-.mapPanel,
+.analysisPanel,
 .inspector {
   min-inline-size: 0;
   border: 1px solid design-token("color.neutral.200");
@@ -309,8 +309,34 @@
   flex-wrap: wrap;
   gap: 4px;
 }
+.analysisPanel {
+  grid-area: analysis;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  min-inline-size: 0;
+}
+.analysisPanels {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  min-inline-size: 0;
+}
+.mapViewPanel,
+.analysisViewPanel {
+  box-sizing: border-box;
+  block-size: 100%;
+  min-block-size: 0;
+  min-inline-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.analysisViewPanel {
+  padding: 16px;
+}
+
 .mapPanel {
-  grid-area: map;
+  block-size: 100%;
+  background: design-token("color.neutral.000");
   align-self: stretch;
   min-block-size: 0;
   display: flex;
@@ -522,7 +548,7 @@
     padding: 8px;
   }
   .timelinePanel,
-  .mapPanel {
+  .analysisPanel {
     grid-area: active;
   }
   .timelineScroll {
@@ -530,8 +556,8 @@
     min-block-size: 280px;
     max-block-size: min(80dvh, 720px);
   }
-  .mapPanel {
-    block-size: 480px;
+  .analysisPanel:not([data-expanded]) {
+    block-size: 528px;
   }
   .inspectorHeader {
     padding: 10px 12px;
@@ -624,19 +650,6 @@
   background: design-token("color.neutral.000");
   white-space: nowrap;
 }
-.expandMap {
-  position: absolute;
-  z-index: 5;
-  inset-block-start: 52px;
-  inset-inline-end: 65px;
-  border: 1px solid design-token("color.neutral.300");
-  background: design-token("color.neutral.000");
-  color: design-token("color.neutral.900");
-  border-radius: 5px;
-  padding: 4px 9px;
-  box-shadow: 0 1px 5px #00000025;
-  font-size: 11px;
-}
 .inspectorGraph {
   border-block-start: 1px solid design-token("color.neutral.200");
   padding: 10px 12px;
@@ -656,7 +669,7 @@
     padding-block-start: 12px;
   }
 }
-.mapPanel[data-expanded="true"] {
+.analysisPanel[data-expanded="true"] {
   position: fixed;
   z-index: 1100;
   inset: 8px;
@@ -668,14 +681,6 @@
   border: 1px solid design-token("color.neutral.300");
   border-radius: 10px;
   overflow: hidden;
-  > div:first-of-type {
-    flex: 1 1 auto;
-    min-block-size: 0;
-    min-inline-size: 0;
-  }
-  .expandMap {
-    inset-block-start: 52px;
-  }
   .forecastControls {
     flex: 0 0 auto;
   }
@@ -685,10 +690,7 @@
   .timelineControls {
     align-items: flex-start;
   }
-  .expandMap {
-    inset-inline-end: 64px;
-  }
-  .mapPanel[data-expanded="true"] {
+  .analysisPanel[data-expanded="true"] {
     inset: 0;
     block-size: 100dvh;
     border: 0;

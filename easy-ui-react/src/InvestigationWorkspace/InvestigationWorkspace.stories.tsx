@@ -474,3 +474,10 @@ export const WorkbenchLocationDrawer: Story = {
 export const WorkbenchExplicitFill: Story = {
   render: () => <InvestigationWorkbenchExample mapHeight="fill" />,
 };
+
+/** Timing is a peer view of the same selection; the map stays mounted until revealed. */
+export const WorkbenchTimingView: Story = {
+  render: () => (
+    <InvestigationWorkbenchExample defaultAnalysisViewId="timing" />
+  ),
+};

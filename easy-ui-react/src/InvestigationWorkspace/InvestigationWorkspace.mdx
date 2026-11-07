@@ -29,7 +29,7 @@ For dense tracking investigations, use `variant="ledger"`: compact event-first o
 `InvestigationWorkbench` is an opt-in composition exported from
 `@easypost/easy-ui/InvestigationWorkspace`. Existing workspace and ledger
 presentations are unchanged. The workbench adds a compact header, history controls embedded in the event ledger, one Git-style branch graph at the far left of the shared
-event-and-evidence ledger, a larger map, and Details / Comparison /
+event-and-evidence ledger, a larger tabbed analysis window, and Details / Comparison /
 Evidence drawers. It uses the native map, timeline, graph, pills and histogram
 components rather than a separate prototype.
 
@@ -116,10 +116,49 @@ segments associated with explicit connections between selected observations are
 highlighted. Disconnected selected points stay disconnected. Clearing the subset
 does not synthesize a path.
 
-**Map expansion preserves the investigation.** Expand map uses the same mounted
-map instance and changes only layout, not the selected observations, focused
-history, forecast toggles, comparison or camera. Restore map or press Escape to
-return. The optional `renderInspectorGraph` slot receives the current selection,
+**Analysis views share one selection.** Map is the built-in view in a tabbed
+analysis window beside the chronology. Supply `analysisViews` for application-owned
+charts, distributions or findings. Each view receives `InvestigationAnalysisContext`:
+the inspected record and its related context, the explicit `selectedEventIds` subset,
+`focusedPathId`, and the active `comparisonPredictionId`. Use the subset when
+computing statistics across a range or complete history; the primary inspected
+record does not replace that subset. Aggregation, units, reference populations and
+interpretation belong to the application.
+
+```tsx
+<InvestigationWorkbench
+  graph={graph}
+  map={{ mapStyle, workerUrl }}
+  analysisViews={[
+    {
+      id: "timing",
+      label: "Timing",
+      render: (context) => <IntervalStatistics context={context} />,
+    },
+    {
+      id: "findings",
+      label: "Findings",
+      render: (context) => <SelectionFindings context={context} />,
+    },
+  ]}
+  defaultAnalysisViewId="map"
+/>
+```
+
+Map reserves the ID `map`; supplied IDs must be unique. Views can supply `count`
+(including zero) and `isDisabled`. All panes remain mounted while hidden, preserving
+map camera and chart-local state. Changing an analysis tab never changes the
+investigation selection or resets the chronology scroll. The standard `WorkspaceTabs`
+bar shares `useWorkspaceTabIds` with its panels: arrow keys move focus, Enter/Space
+activate, and Home/End reach endpoints. Removing or disabling an uncontrolled active
+view returns to Map and recovers focus only when the removed content owned it.
+Use `activeAnalysisViewId` / `onAnalysisViewChange` for controlled presentation;
+the owner must accept requests. An unavailable controlled ID displays Map without
+changing the supplied value.
+
+**Window expansion preserves the investigation.** Expand analysis uses the same
+mounted window and retains its active tab, map instance, selected observations,
+focused history, forecast choices and camera. Restore or press Escape to return. The optional `renderInspectorGraph` slot receives the current selection,
 selected event IDs, and focused history ID and places application-owned charts
 inside the active vertical drawer in a collapsed Additional analysis disclosure.
 Returning null omits the disclosure entirely. Comparison findings and supplied facts
@@ -158,7 +197,7 @@ The inspector's First supplied divergence action selects the exact observation;
 disagreement is reported in text. Missing assessment means unavailable, never zero deviation.
 `renderDeviationEvidence` provides application-owned comparison charts.
 
-The examples are capped at 1100px. On desktop the map occupies the larger column
+The examples are capped at 1100px. On desktop the analysis window occupies the larger column
 and fills the workspace height; the chronology scrolls independently beside it.
 An observation opens one vertical drawer directly below its row through the
 existing `EventTimeline.renderDetails` slot. The drawer adds receipt time,
@@ -170,11 +209,11 @@ or Escape closes it and restores keyboard focus. Opening a context drawer reveal
 it within the chronology's scroll region. Desktop validation uses 1100 × 820 and
 960 × 820 viewports.
 
-At narrow widths, Events / Map buttons switch
-between the same mounted views. Widening with focus on Events or Map moves focus
+At narrow widths, Events / Analysis buttons switch
+between the same mounted views. Widening with focus on Events or Analysis moves focus
 to its retained panel. Resize handling never takes focus or view choice from a
-sibling workbench. In Events view the drawer remains attached to its observation. In Map view the
-same selected context appears below the map, with its identity and risk labels
+sibling workbench. In Events view the drawer remains attached to its observation. In Analysis view the
+same selected context appears below the active pane, with its identity and risk labels
 available because the originating row is hidden. Widening preserves the focused
 drawer tab as its content returns to the chronology.
 Inspector tabs support arrow keys and Home/End. Selection stays visible inside
@@ -192,6 +231,7 @@ camera. Theme changes preserve the map instance.
 <Canvas of={Stories.WorkbenchHiddenComparison} />
 <Canvas of={Stories.WorkbenchLocationDrawer} />
 <Canvas of={Stories.WorkbenchExplicitFill} />
+<Canvas of={Stories.WorkbenchTimingView} />
 <Canvas of={Stories.WorkbenchAssessmentScopes} />
 <Canvas of={Stories.WorkbenchUnassignedEvidence} />
 

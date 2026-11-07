@@ -3,7 +3,10 @@ import tokens from "@easypost/easy-ui-tokens/js/tokens";
 import type { FeatureCollection } from "geojson";
 import type { Map as MapInstance, StyleSpecification } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
-import { InvestigationWorkbench } from "./InvestigationWorkbench";
+import {
+  InvestigationWorkbench,
+  type InvestigationAnalysisView,
+} from "./InvestigationWorkbench";
 import type {
   InvestigationGraph,
   InvestigationPrediction,
@@ -276,6 +279,7 @@ export function InvestigationWorkbenchExample({
   withUnassignedEvidence = false,
   hideComparedPrediction = false,
   mapHeight,
+  defaultAnalysisViewId = "map",
 }: {
   mode?: InvestigationMode;
   narrow?: boolean;
@@ -284,6 +288,7 @@ export function InvestigationWorkbenchExample({
   withUnassignedEvidence?: boolean;
   hideComparedPrediction?: boolean;
   mapHeight?: number | "fill";
+  defaultAnalysisViewId?: string;
 }) {
   const { resolvedColorScheme } = useColorScheme();
   const [showNotes, setShowNotes] = useState(false);
@@ -331,10 +336,140 @@ export function InvestigationWorkbenchExample({
     if (map.current) updatePaint(map.current);
   }, [updatePaint]);
   const themedGraph = useMemoGraph(scheme, withUnassignedEvidence);
+  const suppliedAssessments: readonly InvestigationAssessment[] =
+    withUnassignedEvidence
+      ? [
+          ...assessments,
+          {
+            id: "unassigned-edge-finding",
+            target: {
+              type: "connection",
+              connectionId: "unassigned-report-link",
+            },
+            label: "Evidence review",
+            tone: "warning",
+            summary:
+              "This supplied finding belongs to the unassigned reports' explicit connection.",
+            source: "Illustrative review policy",
+            asOf: "Oct 27 · 14:05 UTC",
+          },
+        ]
+      : assessments;
+  const findingTargetLabel = (finding: InvestigationAssessment) => {
+    const target = finding.target;
+    if (target.type === "event") {
+      const item = themedGraph.events.find(
+        (event) => event.id === target.eventId,
+      );
+      return item
+        ? [item.label, item.locationLabel, item.timeLabel]
+            .filter(Boolean)
+            .join(" · ")
+        : target.eventId;
+    }
+    if (target.type === "connection")
+      return (
+        themedGraph.connections.find(
+          (connection) => connection.id === target.connectionId,
+        )?.label ?? target.connectionId
+      );
+    return (
+      themedGraph.paths.find((path) => path.id === target.pathId)?.label ??
+      target.pathId
+    );
+  };
+  const analysisViews: readonly InvestigationAnalysisView[] = [
+    {
+      id: "timing",
+      label: "Timing",
+      render: ({ selectedEventIds }) => {
+        const selected = new Set(selectedEventIds);
+        const incoming = themedGraph.connections.filter(
+          (connection) =>
+            selected.has(connection.toEventId) && references[connection.id],
+        );
+        return (
+          <div className={styles.analysisView}>
+            <h3>Scan intervals</h3>
+            <p>
+              {selectedEventIds.length}{" "}
+              {selectedEventIds.length === 1 ? "observation" : "observations"}{" "}
+              selected · {incoming.length}{" "}
+              {incoming.length === 1 ? "reference" : "references"} available
+            </p>
+            {incoming.length ? (
+              <div className={styles.analysisCharts}>
+                {incoming.map((connection) => (
+                  <section key={connection.id}>
+                    <h4>{references[connection.id]!.pair}</h4>
+                    <ReferenceChart reference={references[connection.id]!} />
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <p>No interval reference supplied for these observations.</p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "findings",
+      label: "Findings",
+      render: ({ selectedEventIds, focusedPathId }) => {
+        const selected = new Set(selectedEventIds);
+        const selectedConnections = new Set(
+          themedGraph.connections
+            .filter(
+              (connection) =>
+                selected.has(connection.fromEventId) ||
+                selected.has(connection.toEventId),
+            )
+            .map((connection) => connection.id),
+        );
+        const findings = suppliedAssessments.filter(({ target }) =>
+          target.type === "event"
+            ? selected.has(target.eventId)
+            : target.type === "connection"
+              ? selectedConnections.has(target.connectionId)
+              : target.pathId === focusedPathId,
+        );
+        return (
+          <div className={styles.analysisView}>
+            <h3>Supplied findings</h3>
+            <p>
+              {selectedEventIds.length}{" "}
+              {selectedEventIds.length === 1 ? "observation" : "observations"}{" "}
+              selected · {findings.length}{" "}
+              {findings.length === 1 ? "finding" : "findings"}
+            </p>
+            {findings.length ? (
+              findings.map((finding) => (
+                <section key={finding.id} className={styles.analysisFinding}>
+                  <h4>{findingTargetLabel(finding)}</h4>
+                  <Pill size="xs" tone={finding.tone}>
+                    {finding.label}
+                  </Pill>
+                  <p>{finding.summary}</p>
+                  <small>
+                    {finding.source} · {finding.asOf}
+                  </small>
+                </section>
+              ))
+            ) : (
+              <p>No assessment supplied for this selection.</p>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
   return (
     <div className={styles.example} style={{ maxWidth: narrow ? 390 : 1100 }}>
       <InvestigationWorkbench
         graph={themedGraph}
+        analysisViews={analysisViews}
+        defaultAnalysisViewId={defaultAnalysisViewId}
         title="Parcel investigation"
         summary={
           <Pill size="xs" tone="neutral">
@@ -355,26 +490,7 @@ export function InvestigationWorkbenchExample({
         }
         predictions={workbenchPredictions}
         deviations={workbenchDeviations}
-        assessments={
-          withUnassignedEvidence
-            ? [
-                ...assessments,
-                {
-                  id: "unassigned-edge-finding",
-                  target: {
-                    type: "connection",
-                    connectionId: "unassigned-report-link",
-                  },
-                  label: "Evidence review",
-                  tone: "warning",
-                  summary:
-                    "This supplied finding belongs to the unassigned reports' explicit connection.",
-                  source: "Illustrative review policy",
-                  asOf: "Oct 27 · 14:05 UTC",
-                },
-              ]
-            : assessments
-        }
+        assessments={suppliedAssessments}
         defaultState={{
           mode,
           focusedPathId: mode === "overview" ? null : "a",

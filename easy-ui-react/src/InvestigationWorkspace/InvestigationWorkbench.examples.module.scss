@@ -61,3 +61,28 @@
     }
   }
 }
+
+.analysisView {
+  display: grid;
+  gap: 12px;
+  h3,
+  h4,
+  p {
+    margin: 0;
+  }
+}
+.analysisCharts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 16px;
+  > section {
+    min-inline-size: 0;
+  }
+}
+.analysisFinding {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  border-block-start: 1px solid design-token("color.neutral.200");
+  padding-block-start: 12px;
+}

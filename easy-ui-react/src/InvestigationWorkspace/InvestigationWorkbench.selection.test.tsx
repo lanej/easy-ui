@@ -199,7 +199,7 @@ describe("InvestigationWorkbench explicit subset and expand behavior", () => {
     const map = screen.getByTestId("selection-map");
     expect(screen.getByText("Graph scope: 1")).toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole("button", { name: "Expand map to full screen" }),
+      screen.getByRole("button", { name: "Expand analysis to full screen" }),
     );
     expect(map).toBeInTheDocument();
     expect(map.closest("[data-expanded]")).toHaveAttribute(
@@ -208,7 +208,7 @@ describe("InvestigationWorkbench explicit subset and expand behavior", () => {
     );
     fireEvent.keyDown(document, { key: "Escape" });
     expect(
-      screen.getByRole("button", { name: "Expand map to full screen" }),
+      screen.getByRole("button", { name: "Expand analysis to full screen" }),
     ).toBeInTheDocument();
     expect(map).toBeInTheDocument();
     expect(change.mock.lastCall?.[0].selectedEventIds).toEqual(["a"]);
