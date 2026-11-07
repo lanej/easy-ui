@@ -1,0 +1,85 @@
+{
+  "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+  "browser": "153.0.8010.0",
+  "command": "node scripts/check-investigation-workbench.mjs",
+  "screenshots": [
+    {
+      "file": "workbench-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "2bbb34f54639b52182eebefa78c071d17cef210297e279a6acb931eff92bf48e",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-timing-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "391ee9ed92ea55b22c9d9ed579348642c195c4a2f75be529eafdd2ff6ca0a35e",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-findings-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "d950bd9f0f6d33b499b8db9280e4210fab5982598f66dbbe0f4c61d0be4c0c62",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-timing-dark-desktop.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "e36aa2476a940e99ac48926a32ca9522b6462bf2bdbf82bf8bf990958f24a756",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-timing-dark-expanded.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "f874cd8b06c27c3244a283e8639646b9471f270d8427962aa904d0bef73c13ef",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-timing-light-narrow.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "e0a2ae1a7b67ae77d6f107079c553552a42a40ece786eaf992a5f96cec7737f1",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    }
+  ],
+  "limitations": [
+    "Synthetic data, not live shipments.",
+    "Automated accessibility check excludes color contrast; visual review is separate.",
+    "No claim of downstream application adoption."
+  ],
+  "sourceTree": "7c0cd65f897866c005bdcf56275e87c817d0faa2",
+  "publishedSourceRevision": "d64d11c12f463c4d5b2542d617730af0f1fae0c7",
+  "publishedSourceTree": "7c0cd65f897866c005bdcf56275e87c817d0faa2",
+  "builtStorybookSourceRevision": "dc5bd7ce347e188a39ec770916d903ec3a596c77",
+  "renderedInputs": "Storybook was built at dc5bd7c. Only two browser-test selectors changed before capture at 6183671; rendered component, story, stylesheet and documentation inputs are unchanged.",
+  "publication": "The connector-created source commit has exactly the same Git tree as the local capture source; tree equality verified before publication.",
+  "browserDistribution": "@sparticuz/chromium 153.0.0; Chromium 153.0.8010.0 with SwiftShader"
+}

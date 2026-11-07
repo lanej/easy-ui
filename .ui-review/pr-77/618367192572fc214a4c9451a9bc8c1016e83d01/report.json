@@ -1,0 +1,99 @@
+{
+  "checks": [
+    "light: prediction row alignment and compact timeline control captures",
+    "light: all 11 observations, forks, rejoin and independent roots in one leftmost graph at 1100\u00d7820",
+    "light: explicit history/compare controls, hidden comparison retained, collapsed evidence, key facts visible, camera, edge evidence, keyboard tabs, accessibility",
+    "dark: prediction row alignment and compact timeline control captures",
+    "dark: all 11 observations, forks, rejoin and independent roots in one leftmost graph at 1100\u00d7820",
+    "dark: explicit history/compare controls, hidden comparison retained, collapsed evidence, key facts visible, camera, edge evidence, keyboard tabs, accessibility",
+    "960px: all histories with map alongside, one leftmost graph and no horizontal overflow",
+    "1100px: deselection follows remaining point, Multi-select/Done retains subset, keyboard help, expansion and camera restoration",
+    "1100px: all histories with map alongside, one leftmost graph and no horizontal overflow",
+    "1100px: explicit map.height=fill preserves full-height bounded geography",
+    "light 390px: no horizontal overflow, event/map switching preserves camera, persistent inspector",
+    "light: focused path and incoming connection assessments retain provenance",
+    "dark 390px: no horizontal overflow, event/map switching preserves camera, persistent inspector",
+    "dark: focused path and incoming connection assessments retain provenance",
+    "light 1150px: caller header action is visible and operable",
+    "light 960px: caller header action is visible and operable",
+    "light 1100px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained",
+    "light 390px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained",
+    "dark 1150px: caller header action is visible and operable",
+    "dark 960px: caller header action is visible and operable",
+    "dark 1100px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained",
+    "dark 390px: map-selected unassigned visit remains inline and scrolls its row; explicit connection, metrics and risks survive focus; camera retained",
+    "Desktop and mobile: vertical/context drawers, retained selection and focus, map attribution containment and resize focus restoration",
+    "light: Map/Timing/Findings retain timeline scroll, history subset and map camera; native chart and supplied findings update from shared selection",
+    "dark: Map/Timing/Findings retain timeline scroll, history subset and map camera; native chart and supplied findings update from shared selection",
+    "Initial Timing view reveals its retained Map correctly; narrow analysis tabs support manual keyboard activation without overflow"
+  ],
+  "errors": [],
+  "screenshots": [
+    {
+      "file": "workbench-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "2bbb34f54639b52182eebefa78c071d17cef210297e279a6acb931eff92bf48e",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-timing-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "391ee9ed92ea55b22c9d9ed579348642c195c4a2f75be529eafdd2ff6ca0a35e",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-findings-light-desktop.png",
+      "theme": "light",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "d950bd9f0f6d33b499b8db9280e4210fab5982598f66dbbe0f4c61d0be4c0c62",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-timing-dark-desktop.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "e36aa2476a940e99ac48926a32ca9522b6462bf2bdbf82bf8bf990958f24a756",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-timing-dark-expanded.png",
+      "theme": "dark",
+      "viewport": {
+        "width": 1100,
+        "height": 820
+      },
+      "sha256": "f874cd8b06c27c3244a283e8639646b9471f270d8427962aa904d0bef73c13ef",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    },
+    {
+      "file": "workbench-timing-light-narrow.png",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      },
+      "sha256": "e0a2ae1a7b67ae77d6f107079c553552a42a40ece786eaf992a5f96cec7737f1",
+      "sourceRevision": "618367192572fc214a4c9451a9bc8c1016e83d01",
+      "actualComponent": true
+    }
+  ]
+}
