@@ -270,6 +270,9 @@ try {
     await checkPredictionRows(theme);
     await capture(`workbench-${theme}-desktop.png`, theme);
     await page.getByText("Additional analysis", { exact: true }).click();
+    await inspector()
+      .getByRole("region", { name: "Supplemental investigation graph" })
+      .scrollIntoViewIfNeeded();
     await capture(`workbench-additional-analysis-${theme}.png`, theme);
     await page.getByText("Additional analysis", { exact: true }).click();
     const allRows = ledger().locator('ol[data-variant="ledger"] > li');
