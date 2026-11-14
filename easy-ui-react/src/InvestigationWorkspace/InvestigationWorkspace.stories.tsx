@@ -31,7 +31,9 @@ import styles from "./InvestigationWorkspace.stories.module.scss";
 import {
   InvestigationWorkbenchExample,
   workbenchAssessments,
+  workbenchGraph,
 } from "./InvestigationWorkbench.examples";
+import { InvestigationWorkbench } from "./InvestigationWorkbench";
 import { InvestigationLedgerExample } from "./InvestigationLedger.examples";
 
 // Local schematic basemap keeps the examples independent of tile credentials/network access.
@@ -479,5 +481,17 @@ export const WorkbenchExplicitFill: Story = {
 export const WorkbenchTimingView: Story = {
   render: () => (
     <InvestigationWorkbenchExample defaultAnalysisViewId="timing" />
+  ),
+};
+
+export const WorkbenchIndependentSelection: Story = {
+  render: () => (
+    <InvestigationWorkbench
+      graph={workbenchGraph}
+      map={{ mapStyle, workerUrl, height: "fill" }}
+      title="Select an observation; expand details separately"
+      openDetailsOnSelection={false}
+      renderTimeline={(timeline) => <EventTimeline {...timeline} />}
+    />
   ),
 };

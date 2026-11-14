@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { act, screen, within } from "@testing-library/react";
 import { render } from "../utilities/test";
-import { ConnectionGraph } from "./ConnectionGraph";
+import { ConnectionGraph } from "./ConnectionRail";
 import type { EventTimelineConnection } from "./connectionGraph";
 
 const events = [

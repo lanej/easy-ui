@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import { EventItem, type EventTimelineEvent } from "./EventItem";
-import { ConnectionGraph } from "./ConnectionGraph";
+import { ConnectionGraph } from "./ConnectionRail";
 import {
   getConnectionGraphLayout,
   type EventTimelineConnection,

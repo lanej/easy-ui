@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { EventTimeline } from "../EventTimeline";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { render } from "../utilities/test";
 import {
@@ -233,5 +234,103 @@ describe("InvestigationWorkbench peer analysis views", () => {
       );
       expect(panel).toHaveAttribute("aria-labelledby", button.id);
     }
+  });
+});
+
+describe("independent selection and caller chronology", () => {
+  it("selects original observations without opening details, including repeated and keyboard selection", () => {
+    const changed = vi.fn();
+    render(
+      <InvestigationWorkbench
+        graph={graph}
+        map={map}
+        openDetailsOnSelection={false}
+        onStateChange={changed}
+      />,
+    );
+    const accepted = screen.getByRole("button", { name: /Accepted 09:00/ });
+    fireEvent.click(accepted);
+    expect(changed.mock.lastCall?.[0].selection).toEqual({
+      type: "event",
+      eventId: "one",
+    });
+    expect(accepted).toHaveAttribute("aria-current", "true");
+    expect(
+      screen.queryByRole("region", { name: "Investigation inspector" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(accepted);
+    expect(
+      screen.queryByRole("region", { name: "Investigation inspector" }),
+    ).not.toBeInTheDocument();
+    fireEvent.keyDown(accepted, { key: "ArrowDown" });
+    expect(changed.mock.lastCall?.[0].selection).toEqual({
+      type: "event",
+      eventId: "two",
+    });
+    expect(
+      screen.queryByRole("region", { name: "Investigation inspector" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      within(
+        screen.getByRole("button", { name: /Arrived 10:00/ }).closest("li")!,
+      ).getByRole("button", { name: "Expand observation details" }),
+    );
+    expect(
+      screen.getByRole("region", { name: "Investigation inspector" }),
+    ).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Collapse observation details" }),
+    );
+    expect(
+      screen.queryByRole("region", { name: "Investigation inspector" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(accepted);
+    expect(
+      screen.queryByRole("region", { name: "Investigation inspector" }),
+    ).not.toBeInTheDocument();
+  });
+  it("opens an unselected observation through its explicit disclosure and retains original graph callbacks in a custom chronology", () => {
+    const changed = vi.fn();
+    const chronology = vi.fn((timeline) => <EventTimeline {...timeline} />);
+    render(
+      <InvestigationWorkbench
+        graph={graph}
+        map={map}
+        openDetailsOnSelection={false}
+        renderTimeline={chronology}
+        onStateChange={changed}
+      />,
+    );
+    const row = screen
+      .getByRole("button", { name: /Arrived 10:00/ })
+      .closest("li")!;
+    fireEvent.click(
+      within(row).getByRole("button", { name: "Expand observation details" }),
+    );
+    expect(changed.mock.lastCall?.[0].selection).toEqual({
+      type: "event",
+      eventId: "two",
+    });
+    expect(
+      screen.getByRole("region", { name: "Investigation inspector" }),
+    ).toBeVisible();
+    expect(
+      chronology.mock.lastCall?.[0].events.map(
+        (event: { id: string }) => event.id,
+      ),
+    ).toEqual(["one", "two"]);
+    expect(chronology.mock.lastCall?.[0].connections[0]).toMatchObject({
+      id: "link",
+      fromEventId: "one",
+      toEventId: "two",
+    });
+    expect(chronology.mock.lastCall?.[0].selectedIds).toEqual(["two"]);
+  });
+  it("keeps automatic disclosure as the backward-compatible default", () => {
+    render(<InvestigationWorkbench graph={graph} map={map} />);
+    fireEvent.click(screen.getByRole("button", { name: /Accepted 09:00/ }));
+    expect(
+      screen.getByRole("region", { name: "Investigation inspector" }),
+    ).toBeVisible();
   });
 });

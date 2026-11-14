@@ -216,6 +216,12 @@ or Escape closes it and restores keyboard focus. Opening a context drawer reveal
 it within the chronology's scroll region. Desktop validation uses 1100 × 820 and
 960 × 820 viewports.
 
+Set `openDetailsOnSelection={false}` to keep selecting observations separate from expanding their details. Selection still coordinates the map and analysis views; only an explicit row disclosure opens the observation drawer. An already-open drawer continues to follow the current selection. Automatic disclosure remains the default.
+
+`renderTimeline(timelineProps)` optionally replaces the chronology presentation while retaining the complete investigation graph. It receives the native `EventTimelineProps`, including original observations, connections, selected IDs, activation callbacks and the separate detail-disclosure/content slots. A consumer can collapse consecutive same-location observations without removing original records from map selection or histories. Preserve the original event IDs and caller order, forward selection modifiers and detail slots, and reveal an externally selected observation that would otherwise be hidden. Grouping is caller-owned presentation; it does not establish new observation relationships.
+
+<Canvas of={Stories.WorkbenchIndependentSelection} />
+
 At narrow widths, Events / Analysis buttons switch
 between the same mounted views. Widening with focus on Events or Analysis moves focus
 to its retained panel. Resize handling never takes focus or view choice from a

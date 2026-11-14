@@ -19,6 +19,7 @@ import {
   EventTimeline,
   type EventTimelineConnectionContext,
   type EventTimelineEvent,
+  type EventTimelineProps,
 } from "../EventTimeline";
 import { NetworkMap, type NetworkMapProps } from "../NetworkMap";
 import {
@@ -96,6 +97,10 @@ export type InvestigationWorkbenchProps = {
   renderConnectionMetrics?: (
     context: EventTimelineConnectionContext,
   ) => ReactNode;
+  /** Optional presentation of the original chronology; preserve event identities and selection callbacks. */
+  renderTimeline?: (props: EventTimelineProps) => ReactNode;
+  /** Selection and inspection are independent when false; explicit detail toggles still open the drawer. */
+  openDetailsOnSelection?: boolean;
   renderEvent?: (context: InvestigationDetailsContext) => ReactNode;
   renderEvidence?: (context: InvestigationDetailsContext) => ReactNode;
   renderDeviationEvidence?: (
@@ -149,6 +154,8 @@ export function InvestigationWorkbench({
   defaultState,
   onStateChange,
   renderConnectionMetrics,
+  renderTimeline,
+  openDetailsOnSelection = true,
   renderEvent,
   renderEvidence,
   renderDeviationEvidence,
@@ -266,6 +273,7 @@ export function InvestigationWorkbench({
       setDrawerOpen(true);
     }
     if (
+      openDetailsOnSelection &&
       action.type === "focus" &&
       state.selection?.type === "path" &&
       state.selection.pathId === action.pathId
@@ -293,11 +301,18 @@ export function InvestigationWorkbench({
     state.selection?.type === "segment" ? state.selection.segmentId : null,
   ]);
   const [drawerOpen, setDrawerOpen] = useState(
-    hasSelection || state.mode === "deviation",
+    (openDetailsOnSelection && hasSelection) || state.mode === "deviation",
   );
   useEffect(() => {
-    setDrawerOpen(hasSelection || state.mode === "deviation");
-  }, [selectionKey, hasSelection, state.mode, state.comparisonPredictionId]);
+    if (openDetailsOnSelection || !hasSelection || state.mode === "deviation")
+      setDrawerOpen(hasSelection || state.mode === "deviation");
+  }, [
+    selectionKey,
+    hasSelection,
+    state.mode,
+    state.comparisonPredictionId,
+    openDetailsOnSelection,
+  ]);
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
   const anchorId = useRef<string | null>(null);
   const expandButton = useRef<HTMLButtonElement>(null);
@@ -570,7 +585,7 @@ export function InvestigationWorkbench({
     eventId: string,
     modifiers?: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
   ) => {
-    if (eventId === event?.id) setDrawerOpen(true);
+    if (openDetailsOnSelection && eventId === event?.id) setDrawerOpen(true);
     const ids = visibleEvents.map((item) => item.id);
     const anchor = anchorId.current;
     let selected: string[];
@@ -1172,6 +1187,7 @@ export function InvestigationWorkbench({
           if (event?.id === item.id) {
             setDrawerOpen((open) => !open);
           } else {
+            setDrawerOpen(true);
             dispatch({
               type: "selectEvents",
               ids: selectedEventIds.includes(item.id)
@@ -1196,6 +1212,24 @@ export function InvestigationWorkbench({
       </button>
     </span>
   );
+  const timelineProps: EventTimelineProps = {
+    events: visibleEvents,
+    connections: visibleConnections,
+    pathColors: palette,
+    variant: "ledger",
+    size: "compact",
+    ledgerColumns: true,
+    metricsPlacement: "inline",
+    selectedId: event?.id ?? null,
+    selectedIds: selectedEventIds,
+    multiSelectable: multiSelect,
+    selectedConnectionIds,
+    relatedIds,
+    onSelectedIdChange: activateEvent,
+    renderTrailing: eventTrailing,
+    renderDetails: rowDetails,
+    renderConnectionMetrics: connectionEvidence,
+  };
   const fillMap =
     analysisExpanded || map.height === undefined || map.height === "fill";
   if (duplicateAnalysisIds.length)
@@ -1421,24 +1455,11 @@ export function InvestigationWorkbench({
                 {drawerOpen && inspector}
               </div>
             )}
-            <EventTimeline
-              events={visibleEvents}
-              connections={visibleConnections}
-              pathColors={palette}
-              variant="ledger"
-              size="compact"
-              ledgerColumns
-              metricsPlacement="inline"
-              selectedId={event?.id ?? null}
-              selectedIds={selectedEventIds}
-              multiSelectable={multiSelect}
-              selectedConnectionIds={selectedConnectionIds}
-              relatedIds={relatedIds}
-              onSelectedIdChange={activateEvent}
-              renderTrailing={eventTrailing}
-              renderDetails={rowDetails}
-              renderConnectionMetrics={connectionEvidence}
-            />
+            {renderTimeline ? (
+              renderTimeline(timelineProps)
+            ) : (
+              <EventTimeline {...timelineProps} />
+            )}
           </div>
           <footer className={styles.timelineFootnote}>
             <details className={styles.selectionHelp}>
