@@ -1,0 +1,135 @@
+[
+  {
+    "name": "desktop",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "metrics": {
+      "title": {
+        "x": 419,
+        "y": 46,
+        "width": 195.875,
+        "height": 19.59375,
+        "fontSize": "14px"
+      },
+      "lineRects": [
+        {
+          "x": 419,
+          "y": 47,
+          "width": 148.625,
+          "height": 16
+        }
+      ],
+      "hit": "<div class=\"_overMapControls_1npx1_569\" data-map-controls=\"true\"><div class=\"_toolbar_1npx1_47\" role=\"group\" aria-label=\"Synthetic observations camera and layers\" style=\"--ezui-viz-title-size: 18px; --ezui-viz-descriptio"
+    },
+    "control": {
+      "zIndex": "7",
+      "box": "{\"x\":406,\"y\":35,\"width\":588,\"height\":33,\"top\":35,\"right\":994,\"bottom\":68,\"left\":406}"
+    },
+    "sections": {
+      "zIndex": "4"
+    },
+    "errors": []
+  },
+  {
+    "name": "narrow",
+    "viewport": {
+      "width": 390,
+      "height": 900
+    },
+    "metrics": {
+      "title": {
+        "x": 53,
+        "y": 83,
+        "width": 78.03125,
+        "height": 58.78125,
+        "fontSize": "14px"
+      },
+      "lineRects": [
+        {
+          "x": 53,
+          "y": 84,
+          "width": 47.46875,
+          "height": 16
+        },
+        {
+          "x": 53,
+          "y": 103.59375,
+          "width": 31.921875,
+          "height": 16
+        },
+        {
+          "x": 53,
+          "y": 123.1875,
+          "width": 61.46875,
+          "height": 16
+        }
+      ]
+    },
+    "control": {
+      "zIndex": "7",
+      "box": "{\"x\":41,\"y\":25,\"width\":308,\"height\":49,\"top\":25,\"right\":349,\"bottom\":74,\"left\":41}"
+    },
+    "sections": {
+      "zIndex": "4"
+    },
+    "errors": []
+  },
+  {
+    "name": "narrow-large",
+    "viewport": {
+      "width": 390,
+      "height": 900
+    },
+    "metrics": {
+      "title": {
+        "x": 53,
+        "y": 84,
+        "width": 54.234375,
+        "height": 125.9375,
+        "fontSize": "18px"
+      },
+      "lineRects": [
+        {
+          "x": 53,
+          "y": 86,
+          "width": 51.03125,
+          "height": 21
+        },
+        {
+          "x": 53,
+          "y": 111.1875,
+          "width": 10.015625,
+          "height": 21
+        },
+        {
+          "x": 53,
+          "y": 136.375,
+          "width": 41.03125,
+          "height": 21
+        },
+        {
+          "x": 53,
+          "y": 161.5625,
+          "width": 47.015625,
+          "height": 21
+        },
+        {
+          "x": 53,
+          "y": 186.75,
+          "width": 32.015625,
+          "height": 21
+        }
+      ]
+    },
+    "control": {
+      "zIndex": "7",
+      "box": "{\"x\":41,\"y\":25,\"width\":308,\"height\":50,\"top\":25,\"right\":349,\"bottom\":75,\"left\":41}"
+    },
+    "sections": {
+      "zIndex": "4"
+    },
+    "errors": []
+  }
+]
