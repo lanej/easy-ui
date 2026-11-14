@@ -1,0 +1,49 @@
+{
+  "sourceRevision": "7fea4fbfa33ee89cec4e301e35b91294bedac55c",
+  "captureSource": "actual npm pack artifact built from identical component source before source commit",
+  "archiveSha256": "0ea20cc71f94c79d3d95d08c293bdb1357947feb5390aedfab46107dad89f13a",
+  "syntheticData": true,
+  "browser": "headless Chromium, Playwright",
+  "command": "node packed-browser.mjs (synthetic Vite consumer of installed npm archive)",
+  "map": "offline background, native map engine ready and idle",
+  "behavior": "selection remains independent from details; explicit row disclosure opens details; keyboard selection preserves closed state",
+  "limits": "Does not establish provider basemap rendering, downstream application adoption or production serving. Narrow images show the Events pane.",
+  "screenshots": [
+    {
+      "file": "desktop-light-selected.png",
+      "sha256": "67dc4bb9896e8d24b916e982fe6fd654c7647b254e3c66fd132007ac894c5b11",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "file": "desktop-dark-selected.png",
+      "sha256": "d9c1894e8cae50e79cc1297ad7787afb9578a0d05f5d2860578a2185d5ac9546",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "file": "narrow-light-selected.png",
+      "sha256": "b029c06ab702e33c29ab4071ff6a135c3ff0c5c1f4f7d46663e52cd094b9f757",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "file": "narrow-dark-selected.png",
+      "sha256": "074af4fa33a02d484ea2c6af32bec3a95e13bfc525ffd4f80c9f664f32db1127",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  ]
+}
