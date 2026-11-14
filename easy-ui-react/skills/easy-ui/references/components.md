@@ -336,6 +336,8 @@ non-color equivalent. Omit the dictionary to retain the neutral presentation.
 additive and range selection without changing the base chronological model.
 See [branching observations](https://lanej.io/easy-ui/storybook/?path=/story/organisms-data-display-eventtimeline--branching-ledger).
 
+`InvestigationWorkbench.openDetailsOnSelection={false}` separates observation selection from its explicit drawer disclosure. Its optional `renderTimeline(EventTimelineProps)` slot supports caller-owned chronology grouping while retaining the full graph and original selection callbacks; preserve original IDs, source order, keyboard/modifier handling and disclosure/content slots. See the [independent selection example](https://lanej.io/easy-ui/?path=/story/organisms-investigation-investigationworkspace--workbench-independent-selection).
+
 Use `InvestigationWorkbench` (exported from the `InvestigationWorkspace` entrypoint)
 for all-history overview, focused-history and deviation analysis. Its canonical
 `InvestigationGraph` derives all memberships from path connection IDs. Focus and
