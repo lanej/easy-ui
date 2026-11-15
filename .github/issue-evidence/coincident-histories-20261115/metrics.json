@@ -1,0 +1,865 @@
+[
+  {
+    "name": "distinct-light",
+    "sources": [
+      {
+        "id": "easy-ui-overlay-_r_0_-history-blue",
+        "features": [
+          {
+            "id": "segment-blue",
+            "geometry": {
+              "type": "LineString",
+              "coordinates": [
+                [
+                  -100,
+                  40
+                ],
+                [
+                  -98,
+                  41
+                ]
+              ]
+            },
+            "properties": {
+              "id": "segment-blue",
+              "evidence": "transfer",
+              "width": 4,
+              "label": "Synthetic blue connection",
+              "candidateId": "blue",
+              "segmentId": "segment-blue",
+              "offset": 0,
+              "__easy_ui_overlay_feature": 0
+            }
+          }
+        ]
+      },
+      {
+        "id": "easy-ui-overlay-_r_0_-history-orange",
+        "features": [
+          {
+            "id": "segment-orange",
+            "geometry": {
+              "type": "LineString",
+              "coordinates": [
+                [
+                  -100,
+                  40
+                ],
+                [
+                  -98,
+                  41
+                ]
+              ]
+            },
+            "properties": {
+              "id": "segment-orange",
+              "evidence": "transfer",
+              "width": 4,
+              "label": "Synthetic orange connection",
+              "candidateId": "orange",
+              "segmentId": "segment-orange",
+              "offset": 0,
+              "__easy_ui_overlay_feature": 1
+            }
+          }
+        ]
+      }
+    ],
+    "layers": [
+      {
+        "id": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "color": "#164dff",
+        "offset": [
+          "get",
+          "offset"
+        ],
+        "opacity": 0.95
+      },
+      {
+        "id": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "color": "#f2780a",
+        "offset": [
+          "get",
+          "offset"
+        ],
+        "opacity": 0.95
+      }
+    ],
+    "renderedAtMidpoint": [
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-orange",
+        "candidateId": "orange",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.9490196078431372,
+          "g": 0.47058823529411764,
+          "b": 0.0392156862745098,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-orange",
+        "candidateId": "orange",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.9490196078431372,
+          "g": 0.47058823529411764,
+          "b": 0.0392156862745098,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-orange",
+        "candidateId": "orange",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.9490196078431372,
+          "g": 0.47058823529411764,
+          "b": 0.0392156862745098,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-orange",
+        "candidateId": "orange",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.9490196078431372,
+          "g": 0.47058823529411764,
+          "b": 0.0392156862745098,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.08627450980392157,
+          "g": 0.30196078431372547,
+          "b": 1,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.08627450980392157,
+          "g": 0.30196078431372547,
+          "b": 1,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.08627450980392157,
+          "g": 0.30196078431372547,
+          "b": 1,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.08627450980392157,
+          "g": 0.30196078431372547,
+          "b": 1,
+          "a": 1
+        }
+      }
+    ],
+    "midpointPage": {
+      "x": 956.765625,
+      "y": 457.0937500000024
+    },
+    "originalGraph": {
+      "events": [
+        {
+          "id": "event-a1",
+          "label": "Blue observation A",
+          "locationId": "a",
+          "timeLabel": "08:00"
+        },
+        {
+          "id": "event-b1",
+          "label": "Blue observation B",
+          "locationId": "b",
+          "timeLabel": "09:00"
+        },
+        {
+          "id": "event-a2",
+          "label": "Orange observation A",
+          "locationId": "a",
+          "timeLabel": "10:00"
+        },
+        {
+          "id": "event-b2",
+          "label": "Orange observation B",
+          "locationId": "b",
+          "timeLabel": "11:00"
+        }
+      ],
+      "connections": [
+        {
+          "id": "connection-blue",
+          "fromEventId": "event-a1",
+          "toEventId": "event-b1",
+          "segmentId": "segment-blue"
+        },
+        {
+          "id": "connection-orange",
+          "fromEventId": "event-a2",
+          "toEventId": "event-b2",
+          "segmentId": "segment-orange"
+        }
+      ],
+      "locations": [
+        {
+          "id": "a",
+          "label": "Synthetic A",
+          "coordinates": [
+            -100,
+            40
+          ],
+          "kind": "hub"
+        },
+        {
+          "id": "b",
+          "label": "Synthetic B",
+          "coordinates": [
+            -98,
+            41
+          ],
+          "kind": "hub"
+        }
+      ],
+      "segments": [
+        {
+          "id": "segment-blue",
+          "from": "a",
+          "to": "b",
+          "label": "Synthetic blue connection",
+          "evidence": "transfer"
+        },
+        {
+          "id": "segment-orange",
+          "from": "a",
+          "to": "b",
+          "label": "Synthetic orange connection",
+          "evidence": "transfer"
+        }
+      ],
+      "paths": [
+        {
+          "id": "blue",
+          "label": "Synthetic Blue",
+          "color": "#164dff",
+          "connectionIds": [
+            "connection-blue"
+          ]
+        },
+        {
+          "id": "orange",
+          "label": "Synthetic Orange",
+          "color": "#f2780a",
+          "connectionIds": [
+            "connection-orange"
+          ]
+        }
+      ]
+    },
+    "focus": [
+      {
+        "history": "Blue",
+        "pressed": "true"
+      },
+      {
+        "history": "Orange",
+        "pressed": "true"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "name": "distinct-dark",
+    "sources": [
+      {
+        "id": "easy-ui-overlay-_r_0_-history-blue",
+        "features": [
+          {
+            "id": "segment-blue",
+            "geometry": {
+              "type": "LineString",
+              "coordinates": [
+                [
+                  -100,
+                  40
+                ],
+                [
+                  -98,
+                  41
+                ]
+              ]
+            },
+            "properties": {
+              "id": "segment-blue",
+              "evidence": "transfer",
+              "width": 4,
+              "label": "Synthetic blue connection",
+              "candidateId": "blue",
+              "segmentId": "segment-blue",
+              "offset": 0,
+              "__easy_ui_overlay_feature": 0
+            }
+          }
+        ]
+      },
+      {
+        "id": "easy-ui-overlay-_r_0_-history-orange",
+        "features": [
+          {
+            "id": "segment-orange",
+            "geometry": {
+              "type": "LineString",
+              "coordinates": [
+                [
+                  -100,
+                  40
+                ],
+                [
+                  -98,
+                  41
+                ]
+              ]
+            },
+            "properties": {
+              "id": "segment-orange",
+              "evidence": "transfer",
+              "width": 4,
+              "label": "Synthetic orange connection",
+              "candidateId": "orange",
+              "segmentId": "segment-orange",
+              "offset": 0,
+              "__easy_ui_overlay_feature": 1
+            }
+          }
+        ]
+      }
+    ],
+    "layers": [
+      {
+        "id": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "color": "#8caaff",
+        "offset": [
+          "get",
+          "offset"
+        ],
+        "opacity": 0.95
+      },
+      {
+        "id": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "color": "#ffad61",
+        "offset": [
+          "get",
+          "offset"
+        ],
+        "opacity": 0.95
+      }
+    ],
+    "renderedAtMidpoint": [
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-orange",
+        "candidateId": "orange",
+        "offset": 0,
+        "paintColor": {
+          "r": 1,
+          "g": 0.6784313725490196,
+          "b": 0.3803921568627451,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-orange",
+        "candidateId": "orange",
+        "offset": 0,
+        "paintColor": {
+          "r": 1,
+          "g": 0.6784313725490196,
+          "b": 0.3803921568627451,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-orange",
+        "candidateId": "orange",
+        "offset": 0,
+        "paintColor": {
+          "r": 1,
+          "g": 0.6784313725490196,
+          "b": 0.3803921568627451,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-orange",
+        "candidateId": "orange",
+        "offset": 0,
+        "paintColor": {
+          "r": 1,
+          "g": 0.6784313725490196,
+          "b": 0.3803921568627451,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.5490196078431373,
+          "g": 0.6666666666666666,
+          "b": 1,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.5490196078431373,
+          "g": 0.6666666666666666,
+          "b": 1,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.5490196078431373,
+          "g": 0.6666666666666666,
+          "b": 1,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": 0,
+        "paintColor": {
+          "r": 0.5490196078431373,
+          "g": 0.6666666666666666,
+          "b": 1,
+          "a": 1
+        }
+      }
+    ],
+    "midpointPage": {
+      "x": 956.765625,
+      "y": 457.0937500000024
+    },
+    "originalGraph": {
+      "events": [
+        {
+          "id": "event-a1",
+          "label": "Blue observation A",
+          "locationId": "a",
+          "timeLabel": "08:00"
+        },
+        {
+          "id": "event-b1",
+          "label": "Blue observation B",
+          "locationId": "b",
+          "timeLabel": "09:00"
+        },
+        {
+          "id": "event-a2",
+          "label": "Orange observation A",
+          "locationId": "a",
+          "timeLabel": "10:00"
+        },
+        {
+          "id": "event-b2",
+          "label": "Orange observation B",
+          "locationId": "b",
+          "timeLabel": "11:00"
+        }
+      ],
+      "connections": [
+        {
+          "id": "connection-blue",
+          "fromEventId": "event-a1",
+          "toEventId": "event-b1",
+          "segmentId": "segment-blue"
+        },
+        {
+          "id": "connection-orange",
+          "fromEventId": "event-a2",
+          "toEventId": "event-b2",
+          "segmentId": "segment-orange"
+        }
+      ],
+      "locations": [
+        {
+          "id": "a",
+          "label": "Synthetic A",
+          "coordinates": [
+            -100,
+            40
+          ],
+          "kind": "hub"
+        },
+        {
+          "id": "b",
+          "label": "Synthetic B",
+          "coordinates": [
+            -98,
+            41
+          ],
+          "kind": "hub"
+        }
+      ],
+      "segments": [
+        {
+          "id": "segment-blue",
+          "from": "a",
+          "to": "b",
+          "label": "Synthetic blue connection",
+          "evidence": "transfer"
+        },
+        {
+          "id": "segment-orange",
+          "from": "a",
+          "to": "b",
+          "label": "Synthetic orange connection",
+          "evidence": "transfer"
+        }
+      ],
+      "paths": [
+        {
+          "id": "blue",
+          "label": "Synthetic Blue",
+          "color": "#8caaff",
+          "connectionIds": [
+            "connection-blue"
+          ]
+        },
+        {
+          "id": "orange",
+          "label": "Synthetic Orange",
+          "color": "#ffad61",
+          "connectionIds": [
+            "connection-orange"
+          ]
+        }
+      ]
+    },
+    "focus": [],
+    "errors": []
+  },
+  {
+    "name": "shared-control-light",
+    "sources": [
+      {
+        "id": "easy-ui-overlay-_r_0_-history-blue",
+        "features": [
+          {
+            "id": "segment-blue",
+            "geometry": {
+              "type": "LineString",
+              "coordinates": [
+                [
+                  -100,
+                  40
+                ],
+                [
+                  -98,
+                  41
+                ]
+              ]
+            },
+            "properties": {
+              "id": "segment-blue",
+              "evidence": "transfer",
+              "width": 4,
+              "label": "Synthetic blue connection",
+              "candidateId": "blue",
+              "segmentId": "segment-blue",
+              "offset": -2,
+              "__easy_ui_overlay_feature": 0
+            }
+          }
+        ]
+      },
+      {
+        "id": "easy-ui-overlay-_r_0_-history-orange",
+        "features": [
+          {
+            "id": "segment-blue",
+            "geometry": {
+              "type": "LineString",
+              "coordinates": [
+                [
+                  -100,
+                  40
+                ],
+                [
+                  -98,
+                  41
+                ]
+              ]
+            },
+            "properties": {
+              "id": "segment-blue",
+              "evidence": "transfer",
+              "width": 4,
+              "label": "Synthetic blue connection",
+              "candidateId": "orange",
+              "segmentId": "segment-blue",
+              "offset": 2,
+              "__easy_ui_overlay_feature": 1
+            }
+          }
+        ]
+      }
+    ],
+    "layers": [
+      {
+        "id": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "color": "#164dff",
+        "offset": [
+          "get",
+          "offset"
+        ],
+        "opacity": 0.95
+      },
+      {
+        "id": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "color": "#f2780a",
+        "offset": [
+          "get",
+          "offset"
+        ],
+        "opacity": 0.95
+      }
+    ],
+    "renderedAtMidpoint": [
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "orange",
+        "offset": 2,
+        "paintColor": {
+          "r": 0.9490196078431372,
+          "g": 0.47058823529411764,
+          "b": 0.0392156862745098,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "orange",
+        "offset": 2,
+        "paintColor": {
+          "r": 0.9490196078431372,
+          "g": 0.47058823529411764,
+          "b": 0.0392156862745098,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "orange",
+        "offset": 2,
+        "paintColor": {
+          "r": 0.9490196078431372,
+          "g": 0.47058823529411764,
+          "b": 0.0392156862745098,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-orange/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "orange",
+        "offset": 2,
+        "paintColor": {
+          "r": 0.9490196078431372,
+          "g": 0.47058823529411764,
+          "b": 0.0392156862745098,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": -2,
+        "paintColor": {
+          "r": 0.08627450980392157,
+          "g": 0.30196078431372547,
+          "b": 1,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": -2,
+        "paintColor": {
+          "r": 0.08627450980392157,
+          "g": 0.30196078431372547,
+          "b": 1,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": -2,
+        "paintColor": {
+          "r": 0.08627450980392157,
+          "g": 0.30196078431372547,
+          "b": 1,
+          "a": 1
+        }
+      },
+      {
+        "layer": "easy-ui-overlay-_r_0_-history-blue/observed",
+        "segmentId": "segment-blue",
+        "candidateId": "blue",
+        "offset": -2,
+        "paintColor": {
+          "r": 0.08627450980392157,
+          "g": 0.30196078431372547,
+          "b": 1,
+          "a": 1
+        }
+      }
+    ],
+    "midpointPage": {
+      "x": 956.765625,
+      "y": 457.0937500000024
+    },
+    "originalGraph": {
+      "events": [
+        {
+          "id": "event-a1",
+          "label": "Blue observation A",
+          "locationId": "a",
+          "timeLabel": "08:00"
+        },
+        {
+          "id": "event-b1",
+          "label": "Blue observation B",
+          "locationId": "b",
+          "timeLabel": "09:00"
+        },
+        {
+          "id": "event-a2",
+          "label": "Orange observation A",
+          "locationId": "a",
+          "timeLabel": "10:00"
+        },
+        {
+          "id": "event-b2",
+          "label": "Orange observation B",
+          "locationId": "b",
+          "timeLabel": "11:00"
+        }
+      ],
+      "connections": [
+        {
+          "id": "connection-blue",
+          "fromEventId": "event-a1",
+          "toEventId": "event-b1",
+          "segmentId": "segment-blue"
+        },
+        {
+          "id": "connection-orange",
+          "fromEventId": "event-a2",
+          "toEventId": "event-b2",
+          "segmentId": "segment-blue"
+        }
+      ],
+      "locations": [
+        {
+          "id": "a",
+          "label": "Synthetic A",
+          "coordinates": [
+            -100,
+            40
+          ],
+          "kind": "hub"
+        },
+        {
+          "id": "b",
+          "label": "Synthetic B",
+          "coordinates": [
+            -98,
+            41
+          ],
+          "kind": "hub"
+        }
+      ],
+      "segments": [
+        {
+          "id": "segment-blue",
+          "from": "a",
+          "to": "b",
+          "label": "Synthetic blue connection",
+          "evidence": "transfer"
+        }
+      ],
+      "paths": [
+        {
+          "id": "blue",
+          "label": "Synthetic Blue",
+          "color": "#164dff",
+          "connectionIds": [
+            "connection-blue"
+          ]
+        },
+        {
+          "id": "orange",
+          "label": "Synthetic Orange",
+          "color": "#f2780a",
+          "connectionIds": [
+            "connection-orange"
+          ]
+        }
+      ]
+    },
+    "focus": [],
+    "errors": []
+  }
+]
