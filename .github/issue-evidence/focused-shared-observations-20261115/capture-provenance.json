@@ -1,0 +1,15 @@
+{
+  "captured_at": "2026-11-15T02:40:16.596742+00:00",
+  "source": "636142aafbbfa9a11186c1a4a019109508606bac",
+  "package_version": "1.0.0-alpha.137",
+  "archive_sha256": "0ea20cc71f94c79d3d95d08c293bdb1357947feb5390aedfab46107dad89f13a",
+  "native_cases": 8,
+  "synthetic_only": true,
+  "private_consumer_captures": false,
+  "files": {
+    "main.tsx": "cc604c3656c971ff6624bed0f37c24816587482e2bf7aeb967293f0e52ed2c7a",
+    "metrics.json": "edd5cb1a58b84803f180607b8575fedb0fb8db0337ce0d6c0ea3b3f0c275de65",
+    "shared-desktop-light-focus-blue.png": "220307676e0a92e5e584aa1862c95b68ced31254bffd85b101e55370541ad4e9",
+    "independent-desktop-light-focus-blue.png": "937b08cbc462f5bc4b2926ae24a1c1ee2c352da0455f4ca7078e31f67a0b5c7f"
+  }
+}
