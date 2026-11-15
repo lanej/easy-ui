@@ -1,0 +1,80 @@
+{
+  "observations": [
+    {
+      "mode": "light",
+      "headerText": "Time\nEvent\nIncoming evidence",
+      "headerDisplay": "grid",
+      "headerColumns": "86px 258.656px 124.156px",
+      "rows": [
+        {
+          "text": "Accepted\nFacility A\n12:00\n▸",
+          "gridTemplateColumns": "337.031px 161.766px",
+          "width": 524.8125
+        },
+        {
+          "text": "Processed\nFacility B\n12:10\n▸",
+          "gridTemplateColumns": "337.031px 161.766px",
+          "width": 524.8125
+        },
+        {
+          "text": "Delivered\nFacility C\n12:20\n▸",
+          "gridTemplateColumns": "337.031px 161.766px",
+          "width": 524.8125
+        }
+      ],
+      "inlineMetricCount": 0,
+      "timelineWidth": 548.8125
+    },
+    {
+      "mode": "dark",
+      "headerText": "Time\nEvent\nIncoming evidence",
+      "headerDisplay": "grid",
+      "headerColumns": "86px 258.656px 124.156px",
+      "rows": [
+        {
+          "text": "Accepted\nFacility A\n12:00\n▸",
+          "gridTemplateColumns": "337.031px 161.766px",
+          "width": 524.8125
+        },
+        {
+          "text": "Processed\nFacility B\n12:10\n▸",
+          "gridTemplateColumns": "337.031px 161.766px",
+          "width": 524.8125
+        },
+        {
+          "text": "Delivered\nFacility C\n12:20\n▸",
+          "gridTemplateColumns": "337.031px 161.766px",
+          "width": 524.8125
+        }
+      ],
+      "inlineMetricCount": 0,
+      "timelineWidth": 548.8125
+    },
+    {
+      "mode": "control",
+      "headerText": "Time\nEvent\nIncoming evidence",
+      "headerDisplay": "grid",
+      "headerColumns": "86px 258.656px 124.156px",
+      "rows": [
+        {
+          "text": "Accepted\nFacility A\n12:00\n▸",
+          "gridTemplateColumns": "337.031px 161.766px",
+          "width": 524.8125
+        },
+        {
+          "text": "Processed\nFacility B\n12:10\n▸\nObserved interval: 10 min",
+          "gridTemplateColumns": "337.031px 161.766px",
+          "width": 524.8125
+        },
+        {
+          "text": "Delivered\nFacility C\n12:20\n▸\nObserved interval: 10 min",
+          "gridTemplateColumns": "337.031px 161.766px",
+          "width": 524.8125
+        }
+      ],
+      "inlineMetricCount": 2,
+      "timelineWidth": 548.8125
+    }
+  ],
+  "pageErrors": []
+}
