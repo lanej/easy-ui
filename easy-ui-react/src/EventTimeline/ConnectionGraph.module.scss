@@ -113,7 +113,39 @@
   color: design-token("color.primary.700");
 }
 
+.edge[data-muted="true"],
+.routeNode[data-muted="true"] {
+  opacity: 0.45;
+}
+.routeMark {
+  fill: var(--connection-path-color, #{design-token("color.neutral.500")});
+  stroke: design-token("color.neutral.000");
+  stroke-width: 1.2px;
+}
+.routeMark[data-unassigned="true"] {
+  fill: design-token("color.neutral.000");
+  stroke: design-token("color.neutral.600");
+  stroke-width: 1.6px;
+}
+.selectionRing {
+  stroke: var(--connection-path-color, #{design-token("color.primary.600")});
+  fill: design-token("color.neutral.000");
+  stroke-width: 1.4px;
+}
+
 @media (forced-colors: active) {
+  .routeMark {
+    fill: CanvasText;
+    stroke: Canvas;
+  }
+  .routeMark[data-unassigned="true"] {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+  .selectionRing {
+    fill: Canvas;
+    stroke: Highlight;
+  }
   .casing,
   .node {
     forced-color-adjust: none;

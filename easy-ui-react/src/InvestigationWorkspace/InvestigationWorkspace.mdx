@@ -24,6 +24,55 @@ For dense tracking investigations, use `variant="ledger"`: compact event-first o
 
 ## Examples
 
+### Route history
+
+Use `RouteHistory` for a compact chronological scan ledger beside a map of
+competing historical routes. Each candidate keeps its identity across the
+branch gutter, map and route controls. Focusing a candidate emphasizes its
+observations in both views. Consecutive observations can share a location
+heading while keeping their individual timestamps, carrier codes and references.
+
+```tsx
+import { RouteHistory } from "@easypost/easy-ui/InvestigationWorkspace";
+
+<RouteHistory
+  graph={graph}
+  map={{ mapStyle, workerUrl }}
+  eventAnnotations={eventAnnotations}
+  timeZoneLabel="UTC"
+  defaultSelection={{ type: "event", eventId: "2" }}
+/>;
+```
+
+`graph` is the same `InvestigationGraph` used by the workbench. Supply
+candidate connections explicitly. A same-location connection can link two
+observations without a map segment. A map segment with inferred endpoints
+describes a proposed leg. Independent observations can remain unassigned.
+
+| Prop | Content |
+| --- | --- |
+| `graph`, `map` | Observation relationships and geographic data, including the caller's map style and worker. Set `map.showOverviewInset` for widely separated locations. |
+| `title`, `summary`, `actions` | Optional heading, summary and caller controls. |
+| `timeZoneLabel` | Display zone for caller-formatted occurrence times. |
+| `eventAnnotations` | Optional event-ID dictionary of `dayLabel`, `referenceLabel` and `scanCount`. Use the count when a source row summarizes several scans. |
+| `selection`, `onSelectionChange`, `defaultSelection` | Controlled selection and change handler, or an initial uncontrolled selection. Select an event or a location by ID. |
+
+The example places carrier status in `event.statusLabel` and the code in
+`event.detailLabel`. Select either Brooklyn arrival to compare the **A1** and
+**U1** annotations at the same map point. Opening a location from its map
+marker or timeline heading brings its associated records into the inspector.
+Closing the inspector preserves the selection.
+
+<Canvas of={Stories.RouteHistoryFork} />
+
+In the disjoint example, opening Katy brings scans **#2** and **#4** together
+even though the chronological ledger has a Bethpage record between them. Katy
+has one map point. The geographic leg belongs to the Bethpage–Brooklyn candidate.
+The national inset lets the Texas point and the New York close-up be inspected
+in the same view.
+
+<Canvas of={Stories.RouteHistoryDisjoint} />
+
 ### All-history investigation workbench
 
 `InvestigationWorkbench` is an opt-in composition exported from

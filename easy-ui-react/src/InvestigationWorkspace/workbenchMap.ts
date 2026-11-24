@@ -4,6 +4,7 @@ import { segmentData, splitAntimeridian } from "../NetworkMap/geometry";
 import type { InvestigationRecords } from "./selection";
 import type { InvestigationPrediction } from "./workbenchModel";
 import type { InvestigationWorkbenchState } from "./workbenchState";
+import { dashedRoute } from "./routeHistoryStyle";
 
 function connectionGeometry(
   records: Required<InvestigationRecords>,
@@ -68,6 +69,7 @@ function connectionLayers(
   candidateWidth: number,
   observedOpacity: number,
   candidateOpacity = observedOpacity,
+  routePattern?: "solid" | "dashed",
 ): MapOverlay["layers"] {
   return [
     {
@@ -82,6 +84,7 @@ function connectionLayers(
         "line-color": color,
         "line-width": observedWidth,
         "line-opacity": observedOpacity,
+        ...(routePattern === "dashed" ? { "line-dasharray": [4, 2] } : {}),
         "line-offset": ["get", "offset"],
       },
     },
@@ -94,7 +97,9 @@ function connectionLayers(
         "line-width": candidateWidth,
         "line-opacity": candidateOpacity,
         "line-offset": ["get", "offset"],
-        "line-dasharray": [2, 2],
+        ...(routePattern !== "solid"
+          ? { "line-dasharray": routePattern === "dashed" ? [4, 2] : [2, 2] }
+          : {}),
       },
     },
   ];
@@ -109,6 +114,7 @@ export function workbenchMapData(
   >,
   predictions: readonly InvestigationPrediction[],
   prefix: string,
+  presentation: "workbench" | "route-history" = "workbench",
 ) {
   const focused =
     state.mode !== "overview" &&
@@ -125,19 +131,45 @@ export function workbenchMapData(
     memberships.set(event.locationId, ids);
   }
   const facilities: MapFacility[] = records.locations.map((location) => {
-    const ids = [...(memberships.get(location.id) ?? [])];
+    const members = memberships.get(location.id);
+    const paths = records.paths.filter((path) => members?.has(path.id));
+    if (presentation === "route-history") {
+      const colors = paths.map((path) => path.color ?? "#8794a6");
+      // Each candidate owns an equal sector of a shared observation marker.
+      const stops = colors.map(
+        (color, i) =>
+          color +
+          " " +
+          (i / colors.length) * 100 +
+          "% " +
+          ((i + 1) / colors.length) * 100 +
+          "%",
+      );
+      return {
+        ...location,
+        labelMinZoom: location.labelMinZoom ?? 0,
+        color: colors[0] ?? "#8794a6",
+        markerShape: !paths.length
+          ? "ring"
+          : paths.length === 1 && dashedRoute(records.paths.indexOf(paths[0]))
+            ? "diamond"
+            : "circle",
+        markerFill:
+          colors.length > 1
+            ? "conic-gradient(" + stops.join(", ") + ")"
+            : undefined,
+      };
+    }
     return {
       ...location,
       labelMinZoom: location.labelMinZoom ?? 24,
       color:
         location.color ??
-        (ids.length === 1
-          ? records.paths.find((path) => path.id === ids[0])?.color
-          : undefined) ??
+        (paths.length === 1 ? paths[0].color : undefined) ??
         "#8794a6",
     };
   });
-  const overlays: MapOverlay[] = records.paths.map((path) => {
+  const overlays: MapOverlay[] = records.paths.map((path, index) => {
     const active = !focused || focused === path.id;
     return {
       id: `${prefix}-history-${path.id}`,
@@ -151,13 +183,37 @@ export function workbenchMapData(
           bySegment,
         ),
       } as FeatureCollection,
-      layers: connectionLayers(
-        path.color ?? "#8794a6",
-        focused === path.id ? 3.5 : 2.5,
-        focused === path.id ? 3 : 2,
-        active ? 0.95 : 0.55,
-        active ? 0.9 : 0.55,
-      ),
+      layers: [
+        ...connectionLayers(
+          path.color ?? "#8794a6",
+          focused === path.id ? 3.5 : 2.5,
+          focused === path.id ? 3 : 2,
+          active ? 0.95 : 0.55,
+          active ? 0.9 : 0.55,
+          presentation === "route-history"
+            ? dashedRoute(index)
+              ? "dashed"
+              : "solid"
+            : undefined,
+        ),
+        ...(presentation === "route-history"
+          ? [
+              {
+                id: "direction",
+                type: "symbol" as const,
+                layout: {
+                  "symbol-placement": "line-center" as const,
+                  "icon-image": "easy-ui-direction",
+                  "icon-size": 0.48,
+                  "icon-keep-upright": false,
+                  "icon-allow-overlap": true,
+                  "icon-ignore-placement": true,
+                },
+                paint: { "icon-opacity": active ? 0.95 : 0.4 },
+              },
+            ]
+          : []),
+      ],
     };
   });
   if (focused) {

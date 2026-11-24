@@ -283,6 +283,9 @@ export function placeLabels(
   reserved: { x: number; y: number; w: number; h: number }[] = [],
 ) {
   const occupied = [...reserved];
+  // Small overview maps reserve actual control bounds; a fixed footer would
+  // leave too little room for even a selected marker's two-line annotation.
+  const bottomMargin = height < 180 ? 5 : 35;
   const positions = new Map<string, { left: number; top: number }>();
   for (const c of [...candidates].sort(
     (a, b) => b.priority - a.priority || a.id.localeCompare(b.id),
@@ -297,7 +300,7 @@ export function placeLabels(
       [-c.width - 16, -labelHeight / 2],
       [-c.width - 16, 15],
       [-c.width / 2, -labelHeight - 17],
-      [centeredLeft, -labelHeight - 12],
+      [centeredLeft, -labelHeight - 17],
       [centeredLeft, 18],
       [24 - c.width, -labelHeight - 17],
       [24 - c.width, 18],
@@ -307,7 +310,7 @@ export function placeLabels(
         box.x < 5 ||
         box.y < 5 ||
         box.x + box.w > width - 5 ||
-        box.y + box.h > height - 35
+        box.y + box.h > height - bottomMargin
       )
         continue;
       if (

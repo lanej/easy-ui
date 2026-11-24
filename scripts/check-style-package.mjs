@@ -258,7 +258,7 @@ import { WaterfallChart } from "@easypost/easy-ui/WaterfallChart";
 import { WaffleChart, type WaffleChartProps, type WaffleChartGroupAnchor, type WaffleChartItemOrder } from "@easypost/easy-ui/WaffleChart";
 import { NetworkMapCellDetails, NetworkMapInspectionTrigger, type MapFacilityDetailsContext, type MapOverlayHoverDetailsContext, type MapInspectionTarget } from "@easypost/easy-ui/NetworkMap";
 import { MetricCard, type MetricCardProps, type MetricContentProps } from "@easypost/easy-ui/MetricCard";
-import { InvestigationDetails, resolveSelection, selectEvent, type InvestigationRecords, type InvestigationSelection, type InvestigationDetailsContext, type InvestigationDetailsProps, type InvestigationDetailsLabels } from "@easypost/easy-ui/InvestigationWorkspace";
+import { InvestigationDetails, RouteHistory, resolveSelection, selectEvent, type RouteHistoryAnnotation, type RouteHistoryProps, type InvestigationRecords, type InvestigationSelection, type InvestigationDetailsContext, type InvestigationDetailsProps, type InvestigationDetailsLabels } from "@easypost/easy-ui/InvestigationWorkspace";
 import { ScoreComposition, ScoreSignal, ScoreContribution, ScoreConnector, ScoreResult, type ScoreCompositionProps, type ScoreCompositionColumn } from "@easypost/easy-ui/ScoreComposition";
 import { Button } from "@easypost/easy-ui/Button";
 import { DataGrid } from "@easypost/easy-ui/DataGrid";
@@ -390,6 +390,15 @@ const investigationContext: InvestigationDetailsContext = resolveSelection(inves
 const investigationLabels: Partial<InvestigationDetailsLabels> = { details: "Account details" };
 const investigationProps: InvestigationDetailsProps = { context: investigationContext, labels: investigationLabels, chooseEvent: id => selectEvent(investigationContext, id), clear: () => undefined };
 const investigationInspector = <InvestigationDetails {...investigationProps} />;
+const routeAnnotation: RouteHistoryAnnotation = { dayLabel: "Oct 27", referenceLabel: "#1" };
+const routeProps: RouteHistoryProps = {
+  graph: { events: investigationRecords.events, paths: [], connections: [] },
+  map: { mapStyle: { version: 8, sources: {}, layers: [] }, workerUrl: "/map.worker.js", showOverviewInset: true },
+  defaultSelection: investigationSelection,
+  eventAnnotations: { account: routeAnnotation },
+};
+const routeHistory = <RouteHistory {...routeProps} />;
+void routeHistory;
 const scoreProps: ScoreCompositionProps = {signals: [], contributions: [], result: {score: null}, defaultCollapsedColumns: collapsedColumns, collapsedColumns, onCollapsedColumnsChange: columns => columns.includes("contributions")};
 void scoreProps;
 ${["Chart", "MetricCard", "Button", "DataGrid"]
@@ -454,6 +463,10 @@ for (const subpath of ["Drawer", "Drawer/index", "Chart", "Chart/index", "Metric
   const esm = await import(specifier);
   assert.ok(Object.keys(cjs).length > 0);
   assert.ok(Object.keys(esm).length > 0);
+  if (subpath === "InvestigationWorkspace") {
+    assert.equal(typeof cjs.RouteHistory, "function");
+    assert.equal(typeof esm.RouteHistory, "function");
+  }
 }
 for (const subpath of ["Chart/index.js", "Chart/index.mjs", "utilities/css.js", "utilities/css.mjs"]) {
   insideConsumer(require.resolve("@easypost/easy-ui/" + subpath));

@@ -397,6 +397,20 @@ it("positions measured labels around control exclusions without assuming a fixed
   expect(placeLabels([{ ...labels[0], height: 400 }], 400, 300).size).toBe(0);
 });
 
+it("fits a selected two-line annotation above a marker at the edge of an overview", () => {
+  const positions = placeLabels(
+    [{ id: "selected", x: 32, y: 77, width: 86, height: 38, priority: 1 }],
+    178,
+    100,
+    [
+      { x: 24, y: 69, w: 16, h: 16 },
+      { x: 128, y: 10, w: 16, h: 16 },
+      { x: 150, y: 70, w: 25, h: 25 },
+    ],
+  );
+  expect(positions.get("selected")).toEqual({ left: -27, top: -55 });
+});
+
 it("tiles dateline geometry at the world edges without introducing Greenwich crossings", () => {
   const facilities: MapFacility[] = [
     { id: "a", label: "A", kind: "hub", coordinates: [179, 10] },
