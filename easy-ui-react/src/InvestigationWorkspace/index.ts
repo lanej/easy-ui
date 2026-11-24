@@ -42,3 +42,11 @@ export type {
   InvestigationWorkbenchState,
   InvestigationWorkbenchAction,
 } from "./workbenchState";
+
+export { RouteHistory } from "./RouteHistory";
+export type { RouteHistoryProps } from "./RouteHistory";
+export type {
+  RouteHistorySelection,
+  RouteHistoryAnnotation,
+} from "./routeHistoryTypes";
+export type { RouteHistoryMapOptions } from "./RouteHistoryMap";

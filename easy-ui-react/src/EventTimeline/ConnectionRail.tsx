@@ -23,12 +23,20 @@ type Observation = {
   pathIds?: readonly string[];
 };
 
+type RouteAppearance = {
+  dashedPathIds: ReadonlySet<string>;
+  focusedPathId?: string;
+  selectedEventId?: string;
+};
+
 export type ConnectionGraphProps = {
   events: readonly Observation[];
   connections: readonly EventTimelineConnection[];
   selectedConnectionIds?: readonly string[];
   /** Stable CSS colors for explicit memberships; no color or topology is inferred. */
   pathColors?: Readonly<Record<string, string>>;
+  /** Match the focused map route, marker shape and inspected observation in the route-history view. */
+  routeAppearance?: RouteAppearance;
   /** Native event buttons supply the headline centers, including wrapped rows. */
   rowElements: ReadonlyMap<string, HTMLElement>;
   /** Positioned ancestor shared by the event list and this decorative layer. */
@@ -46,6 +54,67 @@ const omissionLabels: Record<ConnectionGraphOmission["reason"], string> = {
     "Shown in this list to keep overlapping relationships distinct.",
 };
 
+function RouteNode({
+  x,
+  y,
+  eventId,
+  memberships,
+  appearance,
+}: {
+  x: number;
+  y: number;
+  eventId: string;
+  memberships: ReturnType<typeof resolveConnectionGraphMemberships>;
+  appearance: RouteAppearance;
+}) {
+  const single = memberships.length === 1 ? memberships[0] : undefined;
+  const muted =
+    appearance.focusedPathId &&
+    !memberships.some((m) => m.pathId === appearance.focusedPathId);
+  const diamond = single && appearance.dashedPathIds.has(single.pathId);
+  return (
+    <g
+      className={styles.routeNode}
+      transform={`translate(${x} ${y})`}
+      data-event-id={eventId}
+      data-muted={muted || undefined}
+      data-path-id={single?.pathId}
+      style={
+        single?.color
+          ? ({ "--connection-path-color": single.color } as React.CSSProperties)
+          : undefined
+      }
+    >
+      {appearance.selectedEventId === eventId && (
+        <circle className={styles.selectionRing} r="7" />
+      )}
+      {diamond ? (
+        <path className={styles.routeMark} d="M 0 -5 L 5 0 L 0 5 L -5 0 Z" />
+      ) : (
+        <circle
+          className={styles.routeMark}
+          r="4.5"
+          data-unassigned={!memberships.length || undefined}
+        />
+      )}
+      {memberships.length > 1 &&
+        memberships.map(({ pathId, color }, index) => (
+          <circle
+            key={pathId}
+            r="2"
+            fill="none"
+            stroke={color ?? "currentColor"}
+            strokeWidth="4"
+            pathLength={memberships.length}
+            strokeDasharray={`1 ${memberships.length - 1}`}
+            strokeDashoffset={-index}
+            transform="rotate(-90)"
+          />
+        ))}
+    </g>
+  );
+}
+
 /**
  * A bounded, decorative relationship gutter. The adjacent native disclosure
  * preserves every directed relationship, including those that cannot be drawn.
@@ -56,6 +125,7 @@ export function ConnectionGraph({
   connections,
   selectedConnectionIds,
   pathColors,
+  routeAppearance,
   rowElements,
   rootRef,
 }: ConnectionGraphProps) {
@@ -205,6 +275,13 @@ export function ConnectionGraph({
                   key={edge.connection.id}
                   data-connection-id={edge.connection.id}
                   data-selected={selected.has(edge.connection.id) || undefined}
+                  data-muted={
+                    (routeAppearance?.focusedPathId &&
+                      !edge.connection.pathIds?.includes(
+                        routeAppearance.focusedPathId,
+                      )) ||
+                    undefined
+                  }
                   data-colored={hasColor || undefined}
                   data-shared={shared || undefined}
                   className={styles.edge}
@@ -223,7 +300,14 @@ export function ConnectionGraph({
                       data-path-id={pathColors ? membership.pathId : undefined}
                       data-path-color={membership.color}
                       strokeDasharray={
-                        shared ? `6 ${6 * (paints.length - 1)}` : undefined
+                        shared
+                          ? `6 ${6 * (paints.length - 1)}`
+                          : membership.pathId &&
+                              routeAppearance?.dashedPathIds.has(
+                                membership.pathId,
+                              )
+                            ? "4 3"
+                            : undefined
                       }
                       strokeDashoffset={shared ? -index * 6 : undefined}
                       style={
@@ -242,6 +326,17 @@ export function ConnectionGraph({
             const y = geometry.centers.get(node.rowIndex);
             if (y === undefined) return null;
             const memberships = eventMemberships.get(node.eventId) ?? [];
+            if (routeAppearance)
+              return (
+                <RouteNode
+                  key={node.eventId}
+                  x={connectionGraphLaneX(node.lane)}
+                  y={y}
+                  eventId={node.eventId}
+                  memberships={memberships}
+                  appearance={routeAppearance}
+                />
+              );
             const single =
               memberships.length === 1 ? memberships[0] : undefined;
             const shared =

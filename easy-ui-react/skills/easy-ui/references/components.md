@@ -338,6 +338,15 @@ See [branching observations](https://lanej.io/easy-ui/storybook/?path=/story/org
 
 `InvestigationWorkbench.openDetailsOnSelection={false}` separates observation selection from its explicit drawer disclosure. Its optional `renderTimeline(EventTimelineProps)` slot supports caller-owned chronology grouping while retaining the full graph and original selection callbacks; preserve original IDs, source order, keyboard/modifier handling and disclosure/content slots. See the [independent selection example](https://lanej.io/easy-ui/?path=/story/organisms-investigation-investigationworkspace--workbench-independent-selection).
 
+Use `RouteHistory` from `@easypost/easy-ui/InvestigationWorkspace` for a compact
+route comparison with one chronology, matching route paint on the map, and a
+location inspector that collects repeated observations. Supply
+`InvestigationGraph` connections and mapped segments separately. Put carrier
+status and code in the event's `statusLabel` and `detailLabel`, with optional
+day, reference and underlying scan count in `eventAnnotations`. See the
+[forked route](https://lanej.io/easy-ui/?path=/story/organisms-investigation-investigationworkspace--route-history-fork)
+and [independent histories](https://lanej.io/easy-ui/?path=/story/organisms-investigation-investigationworkspace--route-history-disjoint).
+
 Use `InvestigationWorkbench` (exported from the `InvestigationWorkspace` entrypoint)
 for all-history overview, focused-history and deviation analysis. Its canonical
 `InvestigationGraph` derives all memberships from path connection IDs. Focus and

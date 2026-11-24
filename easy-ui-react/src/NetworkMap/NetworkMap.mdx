@@ -23,6 +23,12 @@ import { NetworkMap } from "@easypost/easy-ui/NetworkMap";
 
 ## Examples
 
+A facility can supply `markerShape` (circle, diamond, or ring) and `markerFill`
+when candidates or series have their own identity. Its domain `kind` stays available.
+`annotation` adds a second line beside the map point, for example a selected
+scan’s carrier code. Updating that text preserves marker focus and the camera.
+See the [route history example](?path=/story/organisms-investigation-investigationworkspace--route-history-fork).
+
 The basemap supplies streets and cities across national, regional and local zoom levels. Easy UI adds collision-managed facility labels, evidence-aware connections, controlled selection, scoped risk and weather layers, and an equivalent HTML data view.
 
 Set `showDataTable={false}` to omit raw layer tables from the convenience composition. The map, legend, controls, and selection details remain independent. Tables stay enabled by default; custom compositions can omit `NetworkMapDataView` entirely.

@@ -92,6 +92,12 @@ export type MapFacility = {
   coordinates: MapCoordinate;
   /** Marker shape and accessible role description. */
   kind: "warehouse" | "hub" | "delivery" | "destination";
+  /** Optional presentation independent of the facility's domain kind. A ring marks an unassigned location. */
+  markerShape?: "circle" | "diamond" | "ring";
+  /** Optional fill for a marker shared by several series, e.g. a CSS conic-gradient. */
+  markerFill?: string;
+  /** Secondary text on the map label, e.g. the selected observation's status and code. */
+  annotation?: string;
   /** Smallest zoom at which an unselected label should appear; defaults to 0. */
   labelMinZoom?: number;
   /** Higher values receive label placement priority; defaults to 0. */

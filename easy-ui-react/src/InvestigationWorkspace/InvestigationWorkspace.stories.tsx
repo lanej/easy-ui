@@ -35,6 +35,7 @@ import {
 } from "./InvestigationWorkbench.examples";
 import { InvestigationWorkbench } from "./InvestigationWorkbench";
 import { InvestigationLedgerExample } from "./InvestigationLedger.examples";
+import { RouteHistoryExample } from "./RouteHistory.examples";
 
 // Local schematic basemap keeps the examples independent of tile credentials/network access.
 const mapStyle: StyleSpecification = {
@@ -494,4 +495,14 @@ export const WorkbenchIndependentSelection: Story = {
       renderTimeline={(timeline) => <EventTimeline {...timeline} />}
     />
   ),
+};
+
+/** Two candidate histories diverge at one recorded scan. Map and chronology share route identities. */
+export const RouteHistoryFork: Story = {
+  render: () => <RouteHistoryExample />,
+};
+
+/** Separate Texas and New York histories preserve supporting notifications and repeated city scans. */
+export const RouteHistoryDisjoint: Story = {
+  render: () => <RouteHistoryExample initialCase="excerpt" />,
 };

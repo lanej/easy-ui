@@ -224,6 +224,27 @@
   border: 2px solid design-token("color.primary.600");
   color: design-token("color.primary.600");
 }
+.marker[data-marker-shape] .pin {
+  inline-size: 12px;
+  block-size: 12px;
+  border: 2px solid design-token("color.neutral.000");
+  border-radius: 50%;
+  background: var(--map-facility-color, #{design-token("color.primary.600")});
+}
+.marker[data-marker-shape="diamond"] .pin {
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+.marker[data-marker-shape="ring"] .pin {
+  background: design-token("color.neutral.000");
+  border-color: var(--map-facility-color, #{design-token("color.neutral.600")});
+}
+.markerAnnotation {
+  display: block;
+  font-size: var(--ezui-viz-detail-size, 12px);
+  font-weight: 400;
+  color: design-token("color.neutral.700");
+}
 .marker[data-risk="elevated"] .pin {
   box-shadow: 0 0 0 6px #bf790033;
   &::after {
@@ -252,6 +273,13 @@
 .marker[data-selected="true"] .pin {
   width: 22px;
   height: 22px;
+}
+.marker[data-marker-shape][data-selected="true"] .pin {
+  width: 14px;
+  height: 14px;
+  outline: 2px solid
+    var(--map-facility-color, #{design-token("color.primary.600")});
+  outline-offset: 1px;
 }
 .markerLabel {
   position: absolute;

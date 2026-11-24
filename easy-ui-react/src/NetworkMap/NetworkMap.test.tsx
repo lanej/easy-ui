@@ -376,6 +376,29 @@ it("preserves camera and focused markers when observations or selection update, 
   view.unmount();
   expect(remove).toHaveBeenCalledTimes(1);
 });
+it("updates route annotations and shapes on the same geographic marker", async () => {
+  const view = render(<NetworkMap {...props} />);
+  await waitFor(() => expect(constructor).toHaveBeenCalledOnce());
+  act(() => listeners.load());
+  const button = screen.getByRole("button", { name: "Select Oakland" });
+  button.focus();
+  const facility: MapFacility = {
+    ...props.facilities[0],
+    markerShape: "diamond",
+    annotation: "In transit · A1",
+  };
+  view.rerender(<NetworkMap {...props} facilities={[facility]} />);
+  expect(button).toHaveAttribute("data-marker-shape", "diamond");
+  expect(button).toHaveAccessibleName("Select Oakland, In transit · A1");
+  expect(within(button).getByText("In transit · A1")).toBeInTheDocument();
+  expect(button).toHaveFocus();
+  view.rerender(<NetworkMap {...props} />);
+  expect(button).not.toHaveAttribute("data-marker-shape");
+  expect(button).toHaveAccessibleName("Select Oakland");
+  expect(button).not.toHaveTextContent("A1");
+  expect(fitBounds).toHaveBeenCalledOnce();
+});
+
 it.each([undefined, ["one", "shared"]])(
   "synchronizes primary route state on reused markers (initial IDs: %j)",
   async (initialIds) => {

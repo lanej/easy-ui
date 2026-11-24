@@ -1,0 +1,111 @@
+@use "../styles/common" as *;
+
+.root {
+  container: route-history / inline-size;
+  min-inline-size: 0;
+  overflow: clip;
+  color: design-token("color.neutral.900");
+  background: design-token("color.neutral.000");
+  border: 1px solid design-token("color.neutral.200");
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+
+  :where(button:focus-visible, [tabindex]:focus-visible) {
+    outline: 2px solid design-token("color.primary.600");
+    outline-offset: -2px;
+  }
+}
+.header,
+.inspectorHeader,
+.day {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.header {
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-block-end: 1px solid design-token("color.neutral.200");
+  h2 {
+    font-size: 22px;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+  }
+}
+.meta,
+.day,
+.status {
+  color: design-token("color.neutral.700");
+  font-size: 12px;
+  font-weight: 400;
+}
+.root .meta {
+  margin-block-start: 3px;
+}
+.body {
+  display: grid;
+  grid-template-columns: minmax(285px, 0.86fr) minmax(342px, 1.25fr);
+}
+.timeline {
+  min-inline-size: 0;
+  border-inline-end: 1px solid design-token("color.neutral.200");
+}
+.analysis {
+  min-inline-size: 0;
+  background: design-token("color.neutral.050");
+}
+.inspector {
+  padding: 12px 16px;
+  border-block-start: 1px solid design-token("color.neutral.200");
+}
+.inspectorHeader {
+  align-items: flex-start;
+  h3 {
+    font-size: 18px;
+    letter-spacing: -0.02em;
+  }
+}
+.status::before {
+  content: " · ";
+  white-space: pre;
+}
+.localEvents {
+  margin-block-start: 10px;
+}
+.day {
+  padding-block: 5px 3px;
+  border-block-start: 1px solid design-token("color.neutral.200");
+}
+.root .extra {
+  font-size: 13px;
+  margin-block-start: 8px;
+}
+.error {
+  padding: 12px 18px;
+}
+
+@container route-history (max-width: 665px) {
+  .body {
+    display: flex;
+    flex-direction: column;
+  }
+  .analysis {
+    order: -1;
+    border-block-end: 1px solid design-token("color.neutral.200");
+  }
+  .timeline {
+    border-inline-end: 0;
+  }
+  .header {
+    padding: 12px 16px;
+  }
+}

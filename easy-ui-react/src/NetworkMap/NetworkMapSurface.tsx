@@ -170,20 +170,27 @@ function NetworkMapSurfaceView() {
       const availableHeight = element.clientHeight;
       const isInset = Boolean(element.closest("[data-map-zoom-section]"));
       const compactInset = isInset && availableHeight <= 240;
+      // A composed, fill-height overview may be smaller than the standard map frame.
+      const miniature = availableHeight > 0 && availableHeight < 180;
       current.fitBounds(bounds, {
-        padding: {
-          top: compactInset
-            ? 16
-            : Math.min(70, Math.max(56, Math.round(availableHeight * 0.2))),
-          bottom: compactInset
-            ? 84
-            : Math.max(
-                isInset ? 80 : 0,
-                Math.min(65, Math.max(40, Math.round(availableHeight * 0.17))),
-              ),
-          left: 65,
-          right: 80,
-        },
+        padding: miniature
+          ? { top: 16, bottom: 22, left: 20, right: 20 }
+          : {
+              top: compactInset
+                ? 16
+                : Math.min(70, Math.max(56, Math.round(availableHeight * 0.2))),
+              bottom: compactInset
+                ? 84
+                : Math.max(
+                    isInset ? 80 : 0,
+                    Math.min(
+                      65,
+                      Math.max(40, Math.round(availableHeight * 0.17)),
+                    ),
+                  ),
+              left: 65,
+              right: 80,
+            },
         maxZoom,
         duration: window.matchMedia?.("(prefers-reduced-motion: reduce)")
           .matches
@@ -463,7 +470,7 @@ function NetworkMapSurfaceView() {
                 !candidate;
               button.setAttribute(
                 "aria-label",
-                `${!latest.current.onFacilitySelect && (latest.current.renderFacilityDetails || candidate) ? "Inspect" : "Select"} ${facility.label}${facility.detail ? `: ${facility.detail}` : ""}${candidate ? `. Close-up available: ${candidate.facilityIds.length - 1} nearby stops` : ""}`,
+                `${!latest.current.onFacilitySelect && (latest.current.renderFacilityDetails || candidate) ? "Inspect" : "Select"} ${facility.label}${facility.annotation ? `, ${facility.annotation}` : ""}${facility.detail ? `: ${facility.detail}` : ""}${candidate ? `. Close-up available: ${candidate.facilityIds.length - 1} nearby stops` : ""}`,
               );
               if (candidate) {
                 button.dataset.mapInsetAvailable = candidate.sectionId;
@@ -797,6 +804,8 @@ function NetworkMapSurfaceView() {
             button.classList.add(styles.marker);
             button.dataset.mapFacilityId = f.id;
             button.dataset.kind = f.kind;
+            if (f.markerShape) button.dataset.markerShape = f.markerShape;
+            else delete button.dataset.markerShape;
             button.dataset.selected = String(f.id === p.selectedFacilityId);
             button.dataset.latest = String(f.id === p.latestFacilityId);
             if (p.primaryFacilityIds) {
@@ -818,7 +827,7 @@ function NetworkMapSurfaceView() {
             button.disabled = !p.onFacilitySelect && !p.renderFacilityDetails;
             button.setAttribute(
               "aria-label",
-              `${!p.onFacilitySelect && p.renderFacilityDetails ? "Inspect" : "Select"} ${f.label}${f.detail ? `: ${f.detail}` : ""}`,
+              `${!p.onFacilitySelect && p.renderFacilityDetails ? "Inspect" : "Select"} ${f.label}${f.annotation ? `, ${f.annotation}` : ""}${f.detail ? `: ${f.detail}` : ""}`,
             );
             button.setAttribute(
               "aria-pressed",
@@ -833,9 +842,12 @@ function NetworkMapSurfaceView() {
             } else {
               dot.style.removeProperty("--map-facility-color");
             }
+            if (f.markerFill) dot.style.background = f.markerFill;
+            else dot.style.removeProperty("background");
             dot.setAttribute("aria-hidden", "true");
-            dot.textContent =
-              f.kind === "warehouse"
+            dot.textContent = f.markerShape
+              ? ""
+              : f.kind === "warehouse"
                 ? "▦"
                 : f.kind === "destination"
                   ? "◇"
@@ -844,6 +856,12 @@ function NetworkMapSurfaceView() {
             label.className = styles.markerLabel;
             label.dataset.mapLabel = "true";
             label.textContent = f.label;
+            if (f.annotation) {
+              const annotation = document.createElement("small");
+              annotation.className = styles.markerAnnotation;
+              annotation.textContent = f.annotation;
+              label.append(annotation);
+            }
             label.setAttribute("aria-hidden", "true");
             if (!existing) button.append(dot, label);
             if (!existing) {
@@ -1262,6 +1280,7 @@ function NetworkMapSurfaceView() {
           if (
             !insetAttributionCollapsed &&
             (element.closest("[data-map-zoom-section]") ||
+              (element.clientHeight > 0 && element.clientHeight < 180) ||
               latest.current.zoomSections?.length)
           ) {
             const attribution = element.querySelector<HTMLDetailsElement>(
