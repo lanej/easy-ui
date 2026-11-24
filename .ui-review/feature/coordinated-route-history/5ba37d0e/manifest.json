@@ -1,0 +1,78 @@
+{
+  "sourceRevision": "e857468ed2ded51fba241d320d13aa9899d14a01",
+  "reviewedRevision": "e857468ed2ded51fba241d320d13aa9899d14a01",
+  "sourceProvenance": "The screenshots render the package built from the route membership styling and location inspector changes at the source revision.",
+  "artifact": {
+    "name": "easypost-easy-ui-1.0.0-alpha.137.tgz",
+    "sha256": "d3c0e5e4e0d6cba2256b46062966ea8a793af7841fb5b7995570e26fca5fd993"
+  },
+  "browser": "Chromium 153.0.8010.0 headless shell, Playwright, software WebGL (SwiftShader)",
+  "deviceScaleFactor": 1,
+  "captureCommand": "node /tmp/route-packed-browser/build.mjs && python /tmp/route-packed-browser/qa-v2.py",
+  "captureMethod": "Playwright locator screenshot of the full Route history region after fonts and MapLibre were ready. Package exports supplied the React runtime components, styles and map worker. The Storybook fixtures supplied synthetic observations and local geography.",
+  "screenshots": [
+    {
+      "file": "fork-dark.png",
+      "viewportCssPixels": [
+        1040,
+        880
+      ],
+      "imagePixels": [
+        1040,
+        652
+      ],
+      "fixture": "fork",
+      "theme": "dark",
+      "caption": "The New York scan belongs to Route A and Route B. Each route identifier matches its color in the map legend and timeline rail.",
+      "sha256": "58f56da8821b2a0f911007994d74ad4b3656b1cc9f0fec2e44faadf249cb4400"
+    },
+    {
+      "file": "katy-dark.png",
+      "viewportCssPixels": [
+        1040,
+        880
+      ],
+      "imagePixels": [
+        1040,
+        686
+      ],
+      "fixture": "excerpt",
+      "theme": "dark",
+      "caption": "The Katy inspector brings scans #2 and #4 together and identifies Route A in its map and timeline color. The inset displays the selected departure’s SF annotation.",
+      "sha256": "ce5ca5856cb93eb5d4e1b335d65a6b29da1bdbc035cd37b1782b5be94f881b59"
+    },
+    {
+      "file": "mobile-dark.png",
+      "viewportCssPixels": [
+        375,
+        900
+      ],
+      "imagePixels": [
+        375,
+        1190
+      ],
+      "fixture": "fork",
+      "theme": "dark",
+      "caption": "The narrow layout stacks the map, Brooklyn details and chronological timeline.",
+      "sha256": "f3ceb8825f5374322dd9322922ddb7a152d200adbadc2691f458bd972d816f4d"
+    },
+    {
+      "file": "light.png",
+      "viewportCssPixels": [
+        900,
+        900
+      ],
+      "imagePixels": [
+        900,
+        680
+      ],
+      "fixture": "fork",
+      "theme": "light",
+      "caption": "The light theme preserves both candidate branches and synchronized Brooklyn selection.",
+      "sha256": "e0b7fc8672c0fa8df76944935a02275852bcfd6573af0930abf9bb594c3d03e4"
+    }
+  ],
+  "pullRequestSourceRevision": "5ba37d0e9c097f370b3d3c24b975da4bb65336b1",
+  "pullRequestSourceTree": "b28455219c25ba9bbd2e180d1ac75d5cdc07bf18",
+  "validation": "Chromium checks the accessible inspector name, absence of a redundant visible heading, and the computed route-membership text colors against both the map legend swatch and the chronological SVG rail. The desktop captures cover shared membership and nonconsecutive visits."
+}
