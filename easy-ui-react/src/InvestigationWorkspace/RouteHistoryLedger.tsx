@@ -61,7 +61,7 @@ type ScanRowProps = {
   onInspect(): void;
   color?: string;
   ariaLabel?: string;
-  membershipLabel?: string;
+  membershipLabel?: React.ReactNode;
   rowRef?: React.Ref<HTMLButtonElement>;
   ledger?: { related: boolean; muted: boolean; inspectorId: string };
 };

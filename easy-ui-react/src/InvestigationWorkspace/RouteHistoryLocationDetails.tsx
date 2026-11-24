@@ -34,11 +34,16 @@ export function RouteHistoryLocationDetails({
     0,
   );
 
-  const membership = (ids?: readonly string[]) =>
-    paths
-      .filter((path) => ids?.includes(path.id))
-      .map((path) => path.label)
-      .join(" + ") || "Supporting evidence";
+  function membership(ids?: readonly string[]) {
+    const routes = paths.filter((path) => ids?.includes(path.id));
+    if (!routes.length) return "Supporting evidence";
+    return routes.map((route, index) => (
+      <Fragment key={route.id}>
+        {index > 0 && " + "}
+        <span style={{ color: route.color }}>{route.label}</span>
+      </Fragment>
+    ));
+  }
   const sharedMembership = events.every((item) =>
     sameRouteMembership(item.pathIds, events[0]?.pathIds),
   );
@@ -56,7 +61,6 @@ export function RouteHistoryLocationDetails({
     >
       <header className={styles.inspectorHeader}>
         <div>
-          {location && <p className={styles.eyebrow}>Location details</p>}
           <h3>
             {heading}
             {sameStatus && (
@@ -64,13 +68,9 @@ export function RouteHistoryLocationDetails({
             )}
           </h3>
           <p className={styles.meta}>
-            {[
-              scope,
-              count === 1 ? "1 scan" : count + " scans",
-              location?.detail,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
+            {scope && <>{scope} · </>}
+            {count === 1 ? "1 scan" : count + " scans"}
+            {location?.detail && ` · ${location.detail}`}
           </p>
         </div>
         <IconButton

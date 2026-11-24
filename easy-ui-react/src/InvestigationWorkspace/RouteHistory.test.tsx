@@ -67,6 +67,10 @@ describe("RouteHistory", () => {
     marker.focus();
     fireEvent.click(marker);
     const details = screen.getByRole("region", { name: "Location details" });
+    expect(within(details).queryByText("Location details")).toBeNull();
+    expect(within(details).getByText("Route A")).toHaveStyle({
+      color: "#3388aa",
+    });
     expect(within(details).getByText(/2 scans/)).toBeVisible();
     expect(within(details).queryByText("Notification")).toBeNull();
     fireEvent.click(within(details).getByRole("button", { name: /Departed/ }));
@@ -93,6 +97,58 @@ describe("RouteHistory", () => {
     expect(
       screen.getByRole("region", { name: "Location details" }),
     ).toBeVisible();
+  });
+
+  it("colors each route name in shared summaries and mixed scan rows", () => {
+    const routeB = {
+      id: "b",
+      label: "Route B",
+      color: "#9966bb",
+      connectionIds: ["c"],
+    };
+    const selection = { type: "location", locationId: "katy" } as const;
+    const { rerender } = render(
+      <RouteHistory
+        {...common}
+        graph={{ ...graph, paths: [...graph.paths, routeB] }}
+        selection={selection}
+      />,
+    );
+    const details = within(
+      screen.getByRole("region", { name: "Location details" }),
+    );
+    expect(details.getByText("Route A")).toHaveStyle({ color: "#3388aa" });
+    expect(details.getByText("Route B")).toHaveStyle({ color: "#9966bb" });
+    expect(details.getByText(/2 scans/)).toHaveTextContent(
+      "Route A + Route B · 2 scans",
+    );
+
+    rerender(
+      <RouteHistory
+        {...common}
+        graph={{
+          ...graph,
+          events: graph.events.map((event) => ({
+            ...event,
+            locationId: "katy",
+          })),
+          paths: [
+            ...graph.paths,
+            { ...routeB, connectionIds: [], isolatedEventIds: ["2"] },
+          ],
+        }}
+        selection={selection}
+      />,
+    );
+    const arrived = within(details.getByRole("button", { name: /Arrived/ }));
+    expect(arrived.getByText("Route A")).toHaveStyle({ color: "#3388aa" });
+    expect(arrived.getByText("Route B")).toHaveStyle({ color: "#9966bb" });
+    const notification = within(
+      details.getByRole("button", { name: /Notification/ }),
+    );
+    expect(notification.getByText("Supporting evidence")).not.toHaveAttribute(
+      "style",
+    );
   });
 
   it("waits for controlled selection changes and isolates unlocated evidence", () => {
